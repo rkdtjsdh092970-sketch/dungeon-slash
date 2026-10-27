@@ -219,6 +219,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .pv-eqs{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;text-align:center}.pv-eq small{display:block;font-size:10px;color:#a898d8;margin-top:2px}.pv-eq.off{opacity:.5}.pv-eq .tile{margin:0 auto}
 .skbot{display:flex;gap:10px;margin-top:4px}.skbot .skgrid{flex:1;grid-template-columns:1fr;max-height:168px;overflow:auto}.skrow.picked{border-color:#ffd24a;background:#241c46}.skdet{width:340px;flex:none;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:8px 10px;font-size:12px;max-height:168px;overflow:auto}.skdet .dh{display:flex;gap:10px;align-items:center}.skdet .dd{margin:6px 0}.skdet .dbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.skdet .dbtns .btn{padding:5px 4px;font-size:12px}.tile.sktile{display:flex;align-items:center;justify-content:center}
 .skc{min-height:108px!important;padding:6px!important}.skcards{margin:6px 0!important}.skbot .skgrid,.skdet{max-height:190px!important}
+.nb{display:flex;gap:12px;height:380px}.nb-list{width:230px;flex:none;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:6px}.nb-it{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}.nb-it:hover{background:#1c1636}.nb-it.on{background:#2a2050;border-color:#ffd24a}.nb-it b{font-size:15px;color:#ffe08a}.nb-it em{font-style:normal;font-size:10px;background:#e83a3a;border-radius:7px;padding:0 6px;margin-left:6px}.nb-it small{float:right;color:#a898d8}.nb-it div{font-size:12px;color:#cfc8ee;margin-top:3px}\n.nb-body{flex:1;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:12px 16px}.nb-h b{font-size:22px;color:#ffd24a}.nb-h span{color:#a898d8;margin-left:8px}.nb-t{font-size:16px;font-weight:bold;margin:6px 0 10px}.nb-body ul{padding-left:20px}.nb-body li{margin:7px 0;line-height:1.55;font-size:14px}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -2652,6 +2653,7 @@ const TOWN_SPOTS = [
   { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
   { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
   { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "반복 의뢰(현상금)", back: true },
+  { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
 ];
 const TownView = {
@@ -2890,6 +2892,15 @@ function paintBuilding(type) {
     brick(14, -14, 24, 14, "#7a6aa8"); roofTrap(12, -22, 28, 8, "#4a3a7a", 6); R(18, -10, 6, 10, "#2a1c3a"); R(28, -11, 6, 6, "#8ad8ff"); R(29, -6, 4, 6, "#d8a0ff");
     for (const [x, y, col] of [[-30, -6, "#d84a5a"], [-26, -3, "#4ac8d8"], [-22, -1, "#a8e84a"]]) { R(x, y - 6, 5, 6, col); R(x + 1, y - 8, 3, 2, "#c8c8d8"); R(x + 1, y - 5, 1, 3, "rgba(255,255,255,.5)"); }
     R(-40, -2, 14, 2, "#4a3a2a");
+  } else if (type === "notice") {   // 업데이트 게시판: 기와 지붕 달린 큰 나무 게시판 + 두루마리
+    R(-20, -52, 4, 52, "#6a4426"); R(16, -52, 4, 52, "#6a4426"); R(-20, -52, 1, 52, "#8a5c34"); R(-22, -3, 8, 3, "#4a3220"); R(14, -3, 8, 3, "#4a3220");
+    planks(-17, -44, 34, 34, "#b0824c"); R(-18, -46, 36, 2, "#3a2414"); R(-18, -11, 36, 2, "#3a2414");
+    roofTrap(-26, -60, 52, 12, "#a83a3a", 12); R(-24, -48, 48, 2, "#3a2414"); R(-4, -64, 8, 4, "#e8b83a"); R(-1, -68, 2, 5, "#ffe070");
+    R(-13, -40, 26, 6, "#c8384a"); R(-13, -40, 26, 1, "#ff7a7a"); R(-9, -38, 18, 2, "#ffe9a0");                            // '업데이트' 띠
+    for (let i = 0; i < 5; i++) { R(-13, -31 + i * 4, 20 - (i % 3) * 3, 1, "#5a3c20"); R(-13, -30 + i * 4, 3, 1, "#8a5c34"); }
+    R(8, -32, 7, 9, "#f2ead2"); R(8, -32, 7, 1, "#fff"); R(10, -30, 3, 1, "#8a7a5a"); R(10, -28, 3, 1, "#8a7a5a"); R(11, -33, 1, 2, "#d84a5a");     // 쪽지
+    R(-6, -14, 12, 3, "#e8d8a0"); R(-8, -14, 3, 4, "#c8b070"); R(5, -14, 3, 4, "#c8b070"); R(-1, -13, 2, 2, "#c8384a");              // 두루마리
+    lantern(-24, -40); lantern(24, -40); barrel(-34, 0); bush(26, 0, 2);
   } else if (type === "gate") {   // 포탈 문
     brick(-26, -46, 14, 46, "#7a7a8a"); brick(12, -46, 14, 46, "#7a7a8a"); brick(-26, -56, 52, 10, "#8a8a9a"); R(-14, -46, 28, 46, "#2a3a7a");
     for (let i = 0; i < 46; i++) R(-12, -46 + i, 24, 1, `rgb(${50 + i},${90 + i * 2},${210})`); R(-4, -36, 8, 12, "#c8e0ff");
@@ -2904,11 +2915,15 @@ function drawBuildingAnim(g, type, x, y) {
   if (type === "guild") for (const sx of [-14, 14]) { const f = 0.85 + Math.sin(t * 11 + sx) * 0.15; g.fillStyle = `rgba(255,${150 + f * 60},50,.9)`; g.fillRect(x + sx * U - 2, y - 38 - f * 4, 5, 8 + f * 4); g.fillStyle = "rgba(255,240,170,.95)"; g.fillRect(x + sx * U - 1, y - 34, 3, 5); const gl = g.createRadialGradient(x + sx * U, y - 32, 1, x + sx * U, y - 32, 26); gl.addColorStop(0, "rgba(255,170,60,.25)"); gl.addColorStop(1, "rgba(255,170,60,0)"); g.fillStyle = gl; g.fillRect(x + sx * U - 26, y - 58, 52, 52); }
   if (type === "skillshop") for (let i = 0; i < 3; i++) { const a = t * 0.9 + i * 2.1, cx = x + Math.cos(a) * 34, cy = y - 150 + Math.sin(a * 1.3) * 8 - i * 4; g.fillStyle = ["#d8a0ff", "#8ad8ff", "#ffe45a"][i]; g.fillRect(cx - 3, cy - 5, 6, 10); g.fillStyle = "#fff"; g.fillRect(cx - 1, cy - 4, 2, 4); g.fillStyle = "rgba(200,160,255,.2)"; g.beginPath(); g.arc(cx, cy, 11, 0, 7); g.fill(); }
 }
+function drawNew(g, x, y) {   // 읽지 않은 패치 노트 표시
+  const t = performance.now() / 1000, b = Math.abs(Math.sin(t * 3)) * 6; g.save(); g.translate(x + 40, y - 150 - b); g.fillStyle = "#e83a3a"; g.beginPath(); if (g.roundRect) g.roundRect(-20, -11, 40, 22, 8); else g.rect(-20, -11, 40, 22); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke();
+  g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("NEW", 0, 1); g.restore();
+}
 function drawBuilding(g, type, x, y, theme, hot) {
   if (!TB_CACHE[type]) TB_CACHE[type] = paintBuilding(type);
   const cv = TB_CACHE[type]; g.save(); g.imageSmoothingEnabled = false; g.drawImage(cv, x - TB_OX, y - TB_OY);
   if (hot) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.22; g.drawImage(cv, x - TB_OX, y - TB_OY); }
-  g.restore(); drawBuildingAnim(g, type, x, y);
+  g.restore(); drawBuildingAnim(g, type, x, y); if (type === "notice" && typeof notesUnread === "function" && notesUnread()) drawNew(g, x, y);
 }
 
 // =========================================================
@@ -3053,7 +3068,7 @@ function mapGo() {
 
 // ---------- 마을 ----------
 function openTown(act) {
-  G.townAct = act; TownView.act = act; showScreen("town"); $("#townbar .tname").textContent = `${ACTS[act - 1].name} 마을`;
+  G.townAct = act; TownView.act = act; showScreen("town"); if (typeof notesUnread === "function" && notesUnread() && save.tut.done) setTimeout(() => toast("📜 새 패치 노트가 있습니다 — 마을의 '업데이트 게시판'"), 600); $("#townbar .tname").textContent = `${ACTS[act - 1].name} 마을`;
   if (G.guide === "map") { setGuide("마을에서는 스킬·대장간·퀘스트·상점을 이용할 수 있어요.<br>이제 위쪽의 <b>🗺 지도</b> 버튼을 눌러 첫 스테이지로 가봅시다!"); $("#b-map").classList.add("pulse"); }
   else { setGuide(null); $("#b-map").classList.remove("pulse"); }
 }
@@ -3061,7 +3076,7 @@ function townClick(s) {
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
-  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives })[s.id]();
+  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes })[s.id]();
 }
 function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다른 유저와 거래하는 장소입니다.<br>온라인 기능은 아직 준비 중입니다.</p>`, { cls: "sm" }); }
 
@@ -3805,7 +3820,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-032128";
+const BUILD_ID = "20261028-032742";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -3891,6 +3906,56 @@ function animateResult(res) {
   let i = 0, t0 = 0, dur = 0; const begin = () => { const s = segs[i]; lv.textContent = s.lv; fill.style.width = s.from * 100 + "%"; t0 = performance.now(); dur = 350 + (s.to - s.from) * 700; };
   setTimeout(() => { begin(); const step = (now) => { if (!fill.isConnected) return; const s = segs[i], p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 2); fill.style.width = (s.from + (s.to - s.from) * e) * 100 + "%";
     if (p >= 1) { if (i < segs.length - 1) { i++; lv.textContent = segs[i].lv; up.classList.remove("show"); void up.offsetWidth; up.classList.add("show"); snd("levelup"); begin(); } else { if (txt && save.level < CFG.LEVEL_CAP) txt.textContent = `${fmtN(save.exp)} / ${fmtN(expNeed(save.level))}`; return; } } requestAnimationFrame(step); }; requestAnimationFrame(step); }, 450);
+}
+
+// =========================================================
+// 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
+// =========================================================
+const PATCH_NOTES = [
+  { ver: "1.8", date: "10/28", title: "업데이트 게시판 · 반지 2칸 · 고유 확률 하향", items: [
+    "마을에 '업데이트 게시판'이 생겼습니다. 앞으로 업데이트 내용은 여기에 올라옵니다.",
+    "반지를 2칸 장착할 수 있습니다 (장비 창의 '반지 2').",
+    "고유 장비 드랍 확률을 약 10분의 1로 낮췄습니다. (보스 약 1/40, 균열 약 1/40, 무한 균열 약 1/15 클리어당)",
+    "'칸당 몹 수 + +1' 처럼 겹쳐 보이던 옵션 이름을 고쳤습니다.",
+  ] },
+  { ver: "1.7", date: "10/28", title: "스킬 · 프리셋 · 패시브 · 경매장", items: [
+    "스킬 정비소: 스킬을 클릭하면 상세 설명이 보이고 [장착] 버튼으로 장착합니다. 레벨업·룬·승급도 같은 패널에서 합니다.",
+    "경매장에 스킬을 올리고 살 수 있습니다 (장착·프리셋 스킬은 제외, 레벨·룬 포함).",
+    "프리셋: 번호를 누르면 스킬·장비 구성과 전투력 변화가 보이고 [적용]으로 바꿉니다.",
+    "패시브: 노드를 클릭하면 효과가 보이고 [찍기] 버튼으로 확정합니다. 우클릭 회수는 없앴습니다.",
+    "장비 창에서 바로 [판매]·[분해]가 가능하고, 상점 판매가를 등급별로 조정했습니다 (희귀 이상이 확실히 비쌈).",
+  ] },
+  { ver: "1.6", date: "10/28", title: "전투 종료 연출 · 결과 화면 · 체력바", items: [
+    "전투가 끝나면 슬로모션과 '스테이지 클리어/보스 처치/패배' 연출이 나온 뒤 결과창이 열립니다.",
+    "결과창 개편: 별 등급, 처치·시간·피해 통계, 경험치 바와 레벨업 연출, 골드 카운트업, 드랍 장비 팝업. Enter로 확인.",
+    "내 체력·마나, 보스, 일반·정예 몹 체력바를 새로 만들었습니다 (맞으면 흰 잔상). 스킬바에 쿨타임 숫자와 마나 소모량이 보입니다.",
+    "사거리 밖에 멈춰 선 적 때문에 전투가 끝나지 않던 문제를 고쳤습니다.",
+    "타이틀의 서버 로그인 버튼 비활성화와 로그아웃 표시, 화면 우측 하단 버전 표시, 업데이트 알림 정확도 개선.",
+  ] },
+  { ver: "1.5", date: "10/28", title: "마을 · 보스 도트 리뉴얼과 편의 개선", items: [
+    "마을 건물 8종을 새로 그렸고(벽돌·기와 질감, 명암, 움직이는 연기·횃불), 건물 모양을 다양하게 했습니다.",
+    "보스 10종을 손도트 스타일로 전면 교체했습니다.",
+    "글자가 세로로 깨지던 버튼과 패널을 모두 가로로 읽히게 고쳤습니다. 지도·패시브 노드 겹침도 수정.",
+    "창을 다시 그려도 스크롤 위치가 유지됩니다 (도감 등). 일괄 정리에서 부위·레벨 범위를 지정할 수 있습니다.",
+    "인터넷 주소로 바로 접속할 수 있고, 새 버전이 나오면 상단에 '업데이트하기'가 뜹니다.",
+  ] },
+  { ver: "1.0 ~ 1.4", date: "10/27~28", title: "대규모 개편", items: [
+    "데미지 공식에 방어력·마법저항·속성 저항, 마나, 출혈·중독·점화 상태이상을 추가했습니다.",
+    "고유 장비 약 87종과 4단계 등급(미스틱 ~ 엔젤릭), 신발 부위, 출처별 드랍 풀을 추가했습니다.",
+    "패시브 트리를 120노드 방사형으로 개편하고, 스킬 레벨·룬·시련의 탑·무한 균열을 추가했습니다.",
+    "경매장(수수료 5%, 최대 5개)과 길드를 서버로 연결했습니다.",
+    "액트 1~10 플레이타임을 줄였습니다 (봇 기준 총 약 2.4시간).",
+  ] },
+];
+const NB = { sel: 0 };
+function notesUnread() { return !!(save && PATCH_NOTES.length && save.notesSeen !== PATCH_NOTES[0].ver); }
+function openNotes() {
+  if (save) { save.notesSeen = PATCH_NOTES[0].ver; saveGame(); }
+  const n = PATCH_NOTES[Math.min(NB.sel, PATCH_NOTES.length - 1)];
+  Modal.open(`<h2>📜 업데이트 게시판</h2><div class="nb"><div class="nb-list">${PATCH_NOTES.map((p, i) => `<div class="nb-it ${i === NB.sel ? "on" : ""}" data-a="nbpick" data-i="${i}"><b>v${p.ver}</b>${i === 0 ? `<em>최신</em>` : ""}<small>${p.date}</small><div>${p.title}</div></div>`).join("")}</div>
+    <div class="nb-body"><div class="nb-h"><b>v${n.ver}</b> <span>${n.date}</span></div><div class="nb-t">${n.title}</div><ul>${n.items.map((x) => `<li>${x}</li>`).join("")}</ul></div></div>
+    <div class="dim center" style="margin-top:6px">현재 빌드 ${typeof BUILD_ID === "string" ? BUILD_ID : ""}</div>`, { cls: "wide", on: { nbpick: (el) => { NB.sel = +el.dataset.i; snd("click"); openNotes(); } } });
+  refreshTop();
 }
 
 // =========================================================

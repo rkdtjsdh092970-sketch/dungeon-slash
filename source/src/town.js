@@ -140,6 +140,15 @@ function paintBuilding(type) {
     brick(14, -14, 24, 14, "#7a6aa8"); roofTrap(12, -22, 28, 8, "#4a3a7a", 6); R(18, -10, 6, 10, "#2a1c3a"); R(28, -11, 6, 6, "#8ad8ff"); R(29, -6, 4, 6, "#d8a0ff");
     for (const [x, y, col] of [[-30, -6, "#d84a5a"], [-26, -3, "#4ac8d8"], [-22, -1, "#a8e84a"]]) { R(x, y - 6, 5, 6, col); R(x + 1, y - 8, 3, 2, "#c8c8d8"); R(x + 1, y - 5, 1, 3, "rgba(255,255,255,.5)"); }
     R(-40, -2, 14, 2, "#4a3a2a");
+  } else if (type === "notice") {   // 업데이트 게시판: 기와 지붕 달린 큰 나무 게시판 + 두루마리
+    R(-20, -52, 4, 52, "#6a4426"); R(16, -52, 4, 52, "#6a4426"); R(-20, -52, 1, 52, "#8a5c34"); R(-22, -3, 8, 3, "#4a3220"); R(14, -3, 8, 3, "#4a3220");
+    planks(-17, -44, 34, 34, "#b0824c"); R(-18, -46, 36, 2, "#3a2414"); R(-18, -11, 36, 2, "#3a2414");
+    roofTrap(-26, -60, 52, 12, "#a83a3a", 12); R(-24, -48, 48, 2, "#3a2414"); R(-4, -64, 8, 4, "#e8b83a"); R(-1, -68, 2, 5, "#ffe070");
+    R(-13, -40, 26, 6, "#c8384a"); R(-13, -40, 26, 1, "#ff7a7a"); R(-9, -38, 18, 2, "#ffe9a0");                            // '업데이트' 띠
+    for (let i = 0; i < 5; i++) { R(-13, -31 + i * 4, 20 - (i % 3) * 3, 1, "#5a3c20"); R(-13, -30 + i * 4, 3, 1, "#8a5c34"); }
+    R(8, -32, 7, 9, "#f2ead2"); R(8, -32, 7, 1, "#fff"); R(10, -30, 3, 1, "#8a7a5a"); R(10, -28, 3, 1, "#8a7a5a"); R(11, -33, 1, 2, "#d84a5a");     // 쪽지
+    R(-6, -14, 12, 3, "#e8d8a0"); R(-8, -14, 3, 4, "#c8b070"); R(5, -14, 3, 4, "#c8b070"); R(-1, -13, 2, 2, "#c8384a");              // 두루마리
+    lantern(-24, -40); lantern(24, -40); barrel(-34, 0); bush(26, 0, 2);
   } else if (type === "gate") {   // 포탈 문
     brick(-26, -46, 14, 46, "#7a7a8a"); brick(12, -46, 14, 46, "#7a7a8a"); brick(-26, -56, 52, 10, "#8a8a9a"); R(-14, -46, 28, 46, "#2a3a7a");
     for (let i = 0; i < 46; i++) R(-12, -46 + i, 24, 1, `rgb(${50 + i},${90 + i * 2},${210})`); R(-4, -36, 8, 12, "#c8e0ff");
@@ -154,9 +163,13 @@ function drawBuildingAnim(g, type, x, y) {
   if (type === "guild") for (const sx of [-14, 14]) { const f = 0.85 + Math.sin(t * 11 + sx) * 0.15; g.fillStyle = `rgba(255,${150 + f * 60},50,.9)`; g.fillRect(x + sx * U - 2, y - 38 - f * 4, 5, 8 + f * 4); g.fillStyle = "rgba(255,240,170,.95)"; g.fillRect(x + sx * U - 1, y - 34, 3, 5); const gl = g.createRadialGradient(x + sx * U, y - 32, 1, x + sx * U, y - 32, 26); gl.addColorStop(0, "rgba(255,170,60,.25)"); gl.addColorStop(1, "rgba(255,170,60,0)"); g.fillStyle = gl; g.fillRect(x + sx * U - 26, y - 58, 52, 52); }
   if (type === "skillshop") for (let i = 0; i < 3; i++) { const a = t * 0.9 + i * 2.1, cx = x + Math.cos(a) * 34, cy = y - 150 + Math.sin(a * 1.3) * 8 - i * 4; g.fillStyle = ["#d8a0ff", "#8ad8ff", "#ffe45a"][i]; g.fillRect(cx - 3, cy - 5, 6, 10); g.fillStyle = "#fff"; g.fillRect(cx - 1, cy - 4, 2, 4); g.fillStyle = "rgba(200,160,255,.2)"; g.beginPath(); g.arc(cx, cy, 11, 0, 7); g.fill(); }
 }
+function drawNew(g, x, y) {   // 읽지 않은 패치 노트 표시
+  const t = performance.now() / 1000, b = Math.abs(Math.sin(t * 3)) * 6; g.save(); g.translate(x + 40, y - 150 - b); g.fillStyle = "#e83a3a"; g.beginPath(); if (g.roundRect) g.roundRect(-20, -11, 40, 22, 8); else g.rect(-20, -11, 40, 22); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke();
+  g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("NEW", 0, 1); g.restore();
+}
 function drawBuilding(g, type, x, y, theme, hot) {
   if (!TB_CACHE[type]) TB_CACHE[type] = paintBuilding(type);
   const cv = TB_CACHE[type]; g.save(); g.imageSmoothingEnabled = false; g.drawImage(cv, x - TB_OX, y - TB_OY);
   if (hot) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.22; g.drawImage(cv, x - TB_OX, y - TB_OY); }
-  g.restore(); drawBuildingAnim(g, type, x, y);
+  g.restore(); drawBuildingAnim(g, type, x, y); if (type === "notice" && typeof notesUnread === "function" && notesUnread()) drawNew(g, x, y);
 }
