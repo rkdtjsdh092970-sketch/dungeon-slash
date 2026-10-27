@@ -305,7 +305,7 @@ function uniqueSources(def) {
       const list = uniquePool("common", 10), sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def); if (!me) continue;
       for (let st = 1; st <= 4; st++) out.push([`${KIND_LBL[kind]} ${st}단계 (추가 롤)`, COMMON_BOSS_U[st - 1] * me.w / sum, "클리어 1회당 · 공용 고유 풀에서 한 번 더"]); continue;
     }
-    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
+    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)) * VOID_U_CHANCE[3], def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
     if (isEB(kind)) { if (def.pool !== EB[kind].pool) continue; for (let st = 1; st <= 4; st++) { const L = hiveUniqueList(st, kind), me = L.find((x) => x.u === def); if (!me) continue; out.push([`${EB[kind].name} ${st}단계`, HIVE_U_CHANCE[st - 1] * me.w / L.reduce((a, x) => a + x.w, 0), "클리어 1회당 (고유는 최대 1개)"]); } continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);

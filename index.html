@@ -1383,7 +1383,7 @@ const MAP = buildMap();
 function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
-    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1 }, stats: { kills: 0, clears: 0 }, seen: {},
+    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
     passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
@@ -1704,8 +1704,9 @@ function rollUnique(sv, act, ilvl, pools) {
 }
 const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"], hive: ["fire", "common"], titan: ["phys", "common"], storm: ["light", "common"] };
 // 화염 정령왕 고유 드랍: 한 번 클리어에 고유는 최대 1개. 단계가 높을수록 좋은 등급이 나오고, 엔젤릭(고유 4등급)은 4단계에서만 나온다
-const HIVE_U_CHANCE = [0.15, 0.30, 0.50, 0.80];
-const COMMON_BOSS_U = [0.15, 0.25, 0.40, 0.60];   // 균열 이후 보스(공허·화염·물리·번개): 전용 고유와 별개로 공용 풀에서 한 번 더 굴리는 확률 (단계별)
+const HIVE_U_CHANCE = [0.07, 0.12, 0.20, 0.32];   // 속성 보스 전용 고유 (클리어당, 단계별) — 너무 잘 떠서 낮춤 (v3.19)
+const VOID_U_CHANCE = [0.12, 0.20, 0.32, 0.55];   // 공허의 군주 고유 (단계별, 4단계도 확정이 아님)
+const COMMON_BOSS_U = [0.04, 0.07, 0.11, 0.16];   // 균열 이후 보스(공허·화염·물리·번개): 전용 고유와 별개로 공용 풀에서 한 번 더 굴리는 확률 (단계별)
 const HIVE_TIER_W = [{ 1: 30, 2: 6 }, { 1: 20, 2: 20, 3: 6 }, { 1: 10, 2: 20, 3: 25 }, { 1: 5, 2: 15, 3: 30, 4: 6 }];
 function hiveUniqueList(stage, kind) {   // kind: hive(화염) / titan(물리) / storm(번개)
   const all = UNIQUES.filter((u) => u.pool === EB[kind || "hive"].pool), tw = HIVE_TIER_W[Math.max(0, Math.min(3, stage - 1))], cnt = {}; all.forEach((u) => (cnt[u.tier] = (cnt[u.tier] || 0) + 1));
@@ -1737,14 +1738,14 @@ function rollDrops(sv, node, boss, B) {
   for (let i = 0; i < (boss ? 2 : 1); i++) if (sets.length && Math.random() < sc) { const set = pick(sets); out.items.push(genItem(sv, ilvl, 4, pick(set.pieces), set.id)); }
   // 고유 장비: 지독하게 낮은 확률 (프로토타입은 PROTO_MULT 보정). 출처별 전용 풀 + 공용 풀
   if (kind === "void") {   // 공허의 군주: 1~3단계는 확률(33/66/100%)로 상대적으로 약한 고유, 4단계는 확정으로 좋은 고유 풀(최상급 확률은 낮춤)
-    const K = node.vsel || 1, pool = uniquePool("void", 10), CH = [0.33, 0.66, 1.0];   // 고른 단계의 보상만 받는다
+    const K = node.vsel || 1, pool = uniquePool("void", 10), CH = VOID_U_CHANCE;   // 고른 단계의 보상만 받는다
     if (K <= 3 && Math.random() < CH[K - 1]) {
       const list = pool.filter((x) => x.u.tier < 4).map((x) => ({ u: x.u, w: x.u.tier <= 2 ? (K === 1 ? 30 : K === 2 ? 20 : 8) : (K === 1 ? 4 : K === 2 ? 12 : 22) }));
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
     const VS = SKILLS.filter((d) => d.src === "void"), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
     if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
-    if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
+    if (K >= 4 && Math.random() < VOID_U_CHANCE[3]) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else if (isEB(kind)) {
     const st = Math.max(1, Math.min(4, node.vsel || 1));
     if (Math.random() < HIVE_U_CHANCE[st - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const list = hiveUniqueList(st, kind); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
@@ -3709,12 +3710,12 @@ function mapPanel() {
     const E = EB[n.kind], S = G[E.stage] = Math.max(1, Math.min(4, G[E.stage] || 1)), need = E.need[S - 1], ok = save.rift.best >= need, have = save[E.key] || 0;
     const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색" }[n.kind];
     h += `<div class="pline">${E.keyName} <b>${have}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="${E.sm}">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="${E.sp}">+</button> <span class="dim">난이도 균열 ${E.tiers[S - 1]}단계 수준</span></div>
-    <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 장비 ${3 + 2 * S}개 · 전용 고유 ${[15, 30, 50, 80][S - 1]}% · 전용 스킬 ${[2, 3, 5, 12][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다 (고유는 클리어당 최대 1개, 엔젤릭 '${E.angel}'은 4단계에서만 드랍)</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 장비 ${3 + 2 * S}개 · 전용 고유 ${Math.round(HIVE_U_CHANCE[S - 1] * 100)}% · 전용 스킬 ${[2, 3, 5, 12][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다 (고유는 클리어당 최대 1개, 엔젤릭 '${E.angel}'은 4단계에서만 드랍)</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
     btnOk = un && have > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : have > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
     h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="vsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="vsp">+</button> <span class="dim">난이도 균열 ${VOID_TIER[S - 1]}단계 수준</span></div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_NEED[S - 1]}</b>단계 이상 (현재 ${save.rift.best}단계) · 고른 단계의 군주 한 마리와 싸웁니다 (잡몹 포함)</div>
-    <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${[33, 66, 100][S - 1]}% 확률` : "좋은 고유 장비 1개 확정 — 엔젤릭 2종(공허의 왕관·공허의 심장)은 4단계에서만 드랍 (낮은 확률)"}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${Math.round(VOID_U_CHANCE[S - 1] * 100)}% 확률` : `좋은 고유 장비 ${Math.round(VOID_U_CHANCE[3] * 100)}% 확률 — 엔젤릭 2종(공허의 왕관·공허의 심장)은 4단계에서만 드랍 (낮은 확률)`}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_NEED[S - 1]; btn = save.rift.best < VOID_NEED[S - 1] ? `균열 ${VOID_NEED[S - 1]}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -3823,12 +3824,12 @@ function openSettings() {
   const inGame = G.screen !== "title"; const A = save ? save.auto : null;
   Modal.open(`<h2>설정</h2>${sl("master", "전체 볼륨")}${sl("bgm", "배경음악")}${sl("sfx", "효과음")}
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
-   ${save ? `<label class="setrow2">피격 시 화면 반짝임 <select data-i="hflash">${[[0, "끄기"], [0.5, "약하게"], [1, "보통"]].map(([v, t]) => `<option value="${v}" ${(save.opt && save.opt.hitflash != null ? save.opt.hitflash : 1) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><label class="setrow2">화면 흔들림 <input type="checkbox" data-i="shk" ${save.opt && save.opt.shake === 0 ? "" : "checked"}></label>` : ""}
+   ${save ? `<label class="setrow2">피격 시 화면 반짝임 <select data-i="hflash">${[[0, "끄기"], [0.5, "약하게"], [1, "보통"]].map(([v, t]) => `<option value="${v}" ${(save.opt && save.opt.hitflash != null ? save.opt.hitflash : 1) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><label class="setrow2">화면 흔들림 <input type="checkbox" data-i="shk" ${save.opt && save.opt.shake === 0 ? "" : "checked"}></label><label class="setrow2">다음 스테이지로 자동 이동 <select data-i="anext">${[[0, "끄기"], [3, "3초 후"], [5, "5초 후"], [10, "10초 후"]].map(([v, t]) => `<option value="${v}" ${((save.opt && save.opt.autoNext) || 0) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">승리 후 결과창에서 대기시간이 지나면 다음 스테이지(균열·시련은 한 단계 위)로 자동 이동합니다. 화면을 누르거나 키를 누르면 취소됩니다.</div>` : ""}
    ${A ? (() => { autoRules(save); const opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`; return `<h3>자동 반복 · 전투 후 장비 처리</h3><div class="dim">자동 반복이 끝난 전투마다 아래 규칙으로 가방을 정리합니다 (장비는 자동으로 착용하지 않습니다)</div>
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2">${x.name} 장비 <select data-i="arule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="akeepup" ${A.keepUp ? "checked" : ""}></label><div class="dim">고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다</div>`; })() : ""}
    <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
-    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked), hflash: (el) => { (save.opt = save.opt || {}).hitflash = +el.value; saveGame(); }, shk: (el) => { (save.opt = save.opt || {}).shake = el.checked ? 1 : 0; saveGame(); },
+    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked), hflash: (el) => { (save.opt = save.opt || {}).hitflash = +el.value; saveGame(); }, shk: (el) => { (save.opt = save.opt || {}).shake = el.checked ? 1 : 0; saveGame(); }, anext: (el) => { (save.opt = save.opt || {}).autoNext = +el.value; saveGame(); },
     arule: (el) => { autoRules(save).rules[+el.dataset.r] = el.value; saveGame(); }, akeepup: (el) => { save.auto.keepUp = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
     wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),
@@ -3917,6 +3918,20 @@ function showResult(res, b, replay) {
   } });
   if (!replay) animateResult(res);
   refreshTop();
+  if (!replay && win && nb && save.opt && save.opt.autoNext > 0) autoNextCountdown(res, save.opt.autoNext);
+}
+// 설정 '다음 스테이지로 자동 이동': 승리 결과창에서 대기시간이 지나면 [다음] 버튼을 자동으로 누른다. 화면을 누르거나 키를 누르면 취소된다
+function autoNextCountdown(res, sec) {
+  const btn = document.querySelector('#modal [data-a="next"]'), modal = $("#modal"); if (!btn) return;
+  const base = btn.innerHTML; let left = sec, dead = false;
+  const stop = () => { dead = true; btn.innerHTML = base; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); };
+  modal.addEventListener("pointerdown", stop, true); document.addEventListener("keydown", stop, true);
+  const tick = () => {
+    if (dead || !G.pending || G.pending[0] !== res) { stop(); return; }
+    if (left <= 0) { dead = true; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); btn.click(); return; }
+    btn.innerHTML = `${base} <small>(${left}초 후 자동 이동)</small>`; left--; setTimeout(tick, 1000);
+  };
+  tick();
 }
 function retreat() {
   if (!G.battle || G.battle.over) return; const wasPaused = G.paused; G.paused = true;
@@ -4331,7 +4346,7 @@ function uniqueSources(def) {
       const list = uniquePool("common", 10), sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def); if (!me) continue;
       for (let st = 1; st <= 4; st++) out.push([`${KIND_LBL[kind]} ${st}단계 (추가 롤)`, COMMON_BOSS_U[st - 1] * me.w / sum, "클리어 1회당 · 공용 고유 풀에서 한 번 더"]); continue;
     }
-    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
+    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)) * VOID_U_CHANCE[3], def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
     if (isEB(kind)) { if (def.pool !== EB[kind].pool) continue; for (let st = 1; st <= 4; st++) { const L = hiveUniqueList(st, kind), me = L.find((x) => x.u === def); if (!me) continue; out.push([`${EB[kind].name} ${st}단계`, HIVE_U_CHANCE[st - 1] * me.w / L.reduce((a, x) => a + x.w, 0), "클리어 1회당 (고유는 최대 1개)"]); } continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
@@ -4757,7 +4772,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-081856";
+const BUILD_ID = "20261028-082635";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4849,6 +4864,15 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.19", date: "10/28", title: "보스 고유 드랍 하향 · 자동 이동 설정", items: [
+    "균열 이후 보스의 고유 장비가 너무 잘 떠서 확률을 크게 낮췄습니다. 클리어 1회당 고유가 나올 평균 개수 — 공허의 군주 1~4단계: 0.16 / 0.27 / 0.43 / 0.72개, 화염 정령왕·철갑의 투사·뇌제: 0.11 / 0.18 / 0.31 / 0.49개 (이전의 약 1/3 수준).",
+    "공허의 군주 4단계는 더 이상 고유 확정이 아니라 55% 확률입니다. 전용 고유는 단계별 12 / 20 / 32 / 55%(공허), 7 / 12 / 20 / 32%(화염·물리·번개), 공용 고유 추가 롤은 4 / 7 / 11 / 16%입니다. 입장 화면과 도감 확률 표기도 바뀌었습니다.",
+    "설정에 '다음 스테이지로 자동 이동'이 추가됐습니다 (끄기 / 3초 / 5초 / 10초). 승리 후 결과창에서 대기시간이 지나면 다음 스테이지로 넘어가고(균열·시련은 한 단계 위, 액트 마지막은 다음 마을), 결과창 버튼에 남은 시간이 표시됩니다. 화면을 누르거나 키를 누르면 취소됩니다.",
+  ] },
+  { ver: "3.19", date: "10/28", title: "보스 고유 드랍 확률 하향", items: [
+    "균열 이후 보스의 고유 장비가 너무 잘 떠서 확률을 크게 낮췄습니다. 클리어 1회당 고유가 나올 평균 개수 — 공허의 군주: 1~4단계 0.16 / 0.27 / 0.43 / 0.72개 (이전 0.48 / 0.81 / 1.32 / 1.6), 화염 정령왕·철갑의 투사·뇌제: 0.11 / 0.18 / 0.31 / 0.49개 (이전 0.30 / 0.55 / 0.90 / 1.40).",
+    "공허의 군주 4단계 보상은 더 이상 확정이 아니고 55% 확률입니다. 전용 고유는 단계별 12% / 20% / 32% / 55%(공허)와 7% / 12% / 20% / 32%(화염·물리·번개), 공용 고유 추가 롤은 4% / 7% / 11% / 16%입니다. 입장 화면과 도감 확률 표기도 같이 바뀌었습니다.",
+  ] },
   { ver: "3.18", date: "10/28", title: "자동 분해 · 화면 효과 설정", items: [
     "인벤토리에 '자동 분해' 버튼이 생겼습니다. 등급별 유지/판매/분해, 전투력이 오르는 장비(▲) 보호, 옵션 품질 기준(옵션 수치가 범위의 어디쯤인지 평균 — 기준 미만만 처리), 아이템 레벨 상한을 정할 수 있고 '지금 정리하기'로 바로 적용됩니다. 고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.",
     "'모든 전투 후 자동 정리'를 켜면 자동 반복이 아니어도 전투에서 이길 때마다 같은 규칙으로 가방을 정리합니다 (설정 화면의 자동 반복 규칙과 같은 설정을 공유).",

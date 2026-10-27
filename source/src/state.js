@@ -9,7 +9,7 @@ const MAP = buildMap();
 function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
-    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1 }, stats: { kills: 0, clears: 0 }, seen: {},
+    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
     passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
@@ -330,8 +330,9 @@ function rollUnique(sv, act, ilvl, pools) {
 }
 const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"], hive: ["fire", "common"], titan: ["phys", "common"], storm: ["light", "common"] };
 // 화염 정령왕 고유 드랍: 한 번 클리어에 고유는 최대 1개. 단계가 높을수록 좋은 등급이 나오고, 엔젤릭(고유 4등급)은 4단계에서만 나온다
-const HIVE_U_CHANCE = [0.15, 0.30, 0.50, 0.80];
-const COMMON_BOSS_U = [0.15, 0.25, 0.40, 0.60];   // 균열 이후 보스(공허·화염·물리·번개): 전용 고유와 별개로 공용 풀에서 한 번 더 굴리는 확률 (단계별)
+const HIVE_U_CHANCE = [0.07, 0.12, 0.20, 0.32];   // 속성 보스 전용 고유 (클리어당, 단계별) — 너무 잘 떠서 낮춤 (v3.19)
+const VOID_U_CHANCE = [0.12, 0.20, 0.32, 0.55];   // 공허의 군주 고유 (단계별, 4단계도 확정이 아님)
+const COMMON_BOSS_U = [0.04, 0.07, 0.11, 0.16];   // 균열 이후 보스(공허·화염·물리·번개): 전용 고유와 별개로 공용 풀에서 한 번 더 굴리는 확률 (단계별)
 const HIVE_TIER_W = [{ 1: 30, 2: 6 }, { 1: 20, 2: 20, 3: 6 }, { 1: 10, 2: 20, 3: 25 }, { 1: 5, 2: 15, 3: 30, 4: 6 }];
 function hiveUniqueList(stage, kind) {   // kind: hive(화염) / titan(물리) / storm(번개)
   const all = UNIQUES.filter((u) => u.pool === EB[kind || "hive"].pool), tw = HIVE_TIER_W[Math.max(0, Math.min(3, stage - 1))], cnt = {}; all.forEach((u) => (cnt[u.tier] = (cnt[u.tier] || 0) + 1));
@@ -363,14 +364,14 @@ function rollDrops(sv, node, boss, B) {
   for (let i = 0; i < (boss ? 2 : 1); i++) if (sets.length && Math.random() < sc) { const set = pick(sets); out.items.push(genItem(sv, ilvl, 4, pick(set.pieces), set.id)); }
   // 고유 장비: 지독하게 낮은 확률 (프로토타입은 PROTO_MULT 보정). 출처별 전용 풀 + 공용 풀
   if (kind === "void") {   // 공허의 군주: 1~3단계는 확률(33/66/100%)로 상대적으로 약한 고유, 4단계는 확정으로 좋은 고유 풀(최상급 확률은 낮춤)
-    const K = node.vsel || 1, pool = uniquePool("void", 10), CH = [0.33, 0.66, 1.0];   // 고른 단계의 보상만 받는다
+    const K = node.vsel || 1, pool = uniquePool("void", 10), CH = VOID_U_CHANCE;   // 고른 단계의 보상만 받는다
     if (K <= 3 && Math.random() < CH[K - 1]) {
       const list = pool.filter((x) => x.u.tier < 4).map((x) => ({ u: x.u, w: x.u.tier <= 2 ? (K === 1 ? 30 : K === 2 ? 20 : 8) : (K === 1 ? 4 : K === 2 ? 12 : 22) }));
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
     const VS = SKILLS.filter((d) => d.src === "void"), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
     if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
-    if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
+    if (K >= 4 && Math.random() < VOID_U_CHANCE[3]) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else if (isEB(kind)) {
     const st = Math.max(1, Math.min(4, node.vsel || 1));
     if (Math.random() < HIVE_U_CHANCE[st - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const list = hiveUniqueList(st, kind); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
