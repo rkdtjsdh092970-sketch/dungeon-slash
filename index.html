@@ -223,6 +223,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .tile .mk.rq{left:1px;bottom:12px;top:auto;font-size:9px;font-style:normal;font-weight:bold;color:#fff;background:#b02a2a;border-radius:4px;padding:0 3px;line-height:11px;box-shadow:0 0 0 1px #000}
 #mbox.sm{max-height:508px;overflow:auto}
 .rng{color:#8a90b0;font-weight:400;font-size:11px;white-space:nowrap}.orbb.dice{background:linear-gradient(#3a1c5c,#22103a);border-color:#a070e0}
+.fwrap h3{margin:10px 0 4px;color:#ffe08a}.fml{background:#120e24;border:1px solid #3a3070;border-radius:8px;padding:8px 10px;line-height:1.7;font-size:13px;margin:4px 0}.fstep{display:grid;grid-template-columns:1fr;gap:2px;background:#15102a;border:1px solid #2e2858;border-radius:8px;padding:7px 10px;margin:5px 0}.fstep .fn{display:inline-block;min-width:20px;text-align:center;background:#4a3fa0;border-radius:10px;color:#fff;font-size:12px;padding:0 5px}.fstep .ff{line-height:1.7;font-size:13px;color:#e8e4ff}.fnote{font-size:12px;line-height:1.5}.ftab{border-collapse:collapse;margin:6px 0;font-size:12px;width:100%}.ftab th,.ftab td{border:1px solid #2e2858;padding:4px 8px;text-align:center}.ftab th{background:#1c1640;color:#cfc8ff}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -347,6 +348,7 @@ const ENEMIES = {
   grunt:  { name: "고블린",   tier: "normal", ranged: false, range: 1, hp: 30,  atk: 6,  interval: 2.0, windup: 0.5,  exp: 2,  gold: 1, sprite: "goblin", sc: 2 },
   archer: { name: "궁수",     tier: "normal", ranged: true,  range: 4, hp: 20,  atk: 6,  interval: 2.2, windup: 0.6,  exp: 2,  gold: 1, sprite: "archer", sc: 2, proj: "arrow" },
   mage:   { name: "주술사",   tier: "normal", ranged: true,  range: 5, hp: 32,  atk: 9,  interval: 3.2, windup: 0.9,  exp: 3,  gold: 2, sprite: "shaman", sc: 2, proj: "orb" },
+  sniper: { name: "포격 저격수", tier: "elite",  ranged: true,  range: 6, hp: 150, atk: 26, interval: 2.4, windup: 0.6,  exp: 18, gold: 10, sprite: "archer", sc: 3, proj: "orb", sniper: true },   // 균열·시련 50단계+: 사거리 최대, 평타가 아픈 원거리 유닛 (공격 투사체가 크고 선명함)
   brute:  { name: "정예 오크", tier: "elite",  ranged: false, range: 1, hp: 140, atk: 14, interval: 2.8, windup: 0.8,  exp: 12, gold: 8, sprite: "brute",  sc: 3 },
 };
 function actWeights(a) {
@@ -704,7 +706,7 @@ Object.assign(CFG, {
 });
 
 // 몬스터 방어 / 마법저항 계수 [물리, 마법]
-const ENEMY_DEF = { imp: [0.15, 0.15], grunt: [0.8, 0.3], archer: [0.3, 0.6], mage: [0.3, 1.0], brute: [1.4, 0.8], spec: [0.9, 0.7], warp: [0.5, 2.0], boss: [1.6, 1.6] };
+const ENEMY_DEF = { imp: [0.15, 0.15], grunt: [0.8, 0.3], archer: [0.3, 0.6], mage: [0.3, 1.0], brute: [1.4, 0.8], spec: [0.9, 0.7], warp: [0.5, 2.0], boss: [1.6, 1.6], sniper: [0.6, 0.8] };
 const TRAIT_DEF = { tank: [1.0, 0.5], regen: [0.3, 0.3], fast: [-0.3, -0.2] };
 // 지역별 속성 저항 [화염, 냉기, 번개, 공허]
 const ACT_ELEM = [[0, 0, 0, 0], [-0.1, 0.1, 0, 0], [0.1, 0, 0.3, 0], [0.4, -0.3, 0, 0], [-0.2, 0, 0.3, 0.1], [-0.3, 0.5, 0, 0], [0.6, -0.4, 0.1, 0], [0, 0, 0, 0.5], [0, 0.1, 0.5, -0.2], [0.5, 0, 0, 0.2]];
@@ -964,10 +966,15 @@ const P_ARMS = [
     L: [["속도", { cdr: 0.015 }], ["탐욕", { goldFind: 0.08 }], ["경험", { expFind: 0.08 }], ["연쇄 반응", { chainJumps: 1, chainDmg: 0.15 }, 2]],
     R: [["광역 훈련", { aoeDmg: 0.06 }], ["행운 훈련", { mf: 0.04 }], ["보물 사냥", { goldFind: 0.08 }], ["대박", { mf: 0.12 }, 2]] },
 ];
+P_ARMS.push({ id: "skill", name: "스킬", color: "#6af0c0",
+  s: [["집중 사격", { singleDmg: 0.06 }], ["스킬 숙련", { cdr: 0.015 }], ["지속의 달인", { persistDmg: 0.06 }], ["전용기 입문", { bossSkill: 0.20, boss: 0.06 }, 2], ["소환사의 길", { summonDmg: 0.06 }], ["스킬의 정점", { allDmg: 0.10, cdr: 0.04, skillDur: 0.10 }, 3]],
+  L: [["마나 절약", { manaCostRed: 0.03 }], ["지속 연장", { skillDur: 0.08 }], ["확정 일격", { singleDmg: 0.08 }], ["보스 사냥 도구", { bossSkill: 0.25, boss: 0.08 }, 2]],
+  R: [["소환 숙련", { summonDmg: 0.06 }], ["장판 숙련", { persistDmg: 0.06 }], ["상태이상 숙련", { dotDmg: 0.10 }], ["전용기 장인", { bossSkill: 0.30, cdr: 0.03 }, 2]] });
 const P_BRIDGES = [   // 계열 사이를 잇는 혼합 노드 2개씩
   [["전투 마술", { atkPct: 0.03 }], ["마검", { magPct: 0.03 }]], [["마법 원소", { magDmg: 0.05 }], ["원소 조율", { elemDmg: 0.05 }]],
   [["원소 보호", { hpPct: 0.04 }], ["저항 단련", { dmgTaken: -0.02 }]], [["마나 방벽", { manaShield: 0.06 }], ["정신 단련", { manaPct: 0.05 }]],
   [["마력 수집", { manaRegen: 0.004 }], ["마나 효율", { manaCostRed: 0.03 }]], [["사냥 본능", { normal: 0.08 }], ["민첩한 손", { cdr: 0.015 }]],
+  [["스킬 연계", { cdr: 0.01, singleDmg: 0.03 }], ["전투 기술", { persistDmg: 0.03, summonDmg: 0.03 }]],
 ];
 const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
   phys: { LL: [["출혈 숙련", { bleedChance: 0.08 }], ["피의 갈증", { dotDmg: 0.20, bleedChance: 0.10 }, 2]], RR: [["강타 숙련", { atkPct: 0.04 }], ["처형인", { critDmg: 0.15, boss: 0.10 }, 2]] },
@@ -976,6 +983,7 @@ const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
   def: { LL: [["강철 피부", { defPct: 0.06 }], ["철벽 의지", { dmgTaken: -0.04, hpPct: 0.08 }, 2]], RR: [["끈질긴 생명", { regen: 0.002 }], ["복수", { lifesteal: 0.01, atkPct: 0.06 }, 2]] },
   mana: { LL: [["마나젠", { manaRegenFlat: 3 }], ["샘의 축복", { manaRegenFlat: 5, manaRegen: 0.004 }, 2]], RR: [["마나통", { manaFlat: 25 }], ["마나 물결", { dmgPerMana: 0.01, manaPct: 0.08 }, 2]] },
   util: { LL: [["탐색", { mf: 0.04 }], ["보물 감각", { mf: 0.08, goldFind: 0.10 }, 2]], RR: [["광역 감각", { aoeDmg: 0.06 }], ["전술가", { chainJumps: 1, cdr: 0.02 }, 2]] },
+  skill: { LL: [["상처의 기술", { bleedChance: 0.06, dotDmg: 0.08 }], ["상처 벌리기", { dotDur: 0.15, dotDmg: 0.15 }, 2]], RR: [["불씨의 기술", { igniteChance: 0.06, poisonChance: 0.06 }], ["상태이상의 대가", { dotDmg: 0.20, dotDur: 0.10 }, 2]] },
 };
 const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆)으로 모인다 [이름, 효과, 비용]
   phys: [["격투의 심장", { atkPct: 0.05, critChance: 0.02 }, 1], ["베어내기", { critDmg: 0.15 }, 1], ["급소 사냥", { boss: 0.12, elite: 0.12 }, 2], ["연속 타격", { physDmg: 0.10, cdr: 0.02 }, 2], ["방어 관통", { ignoreDef: 0.06, shredDef: 0.06 }, 2], ["학살의 화신", { atkMore: 1.12, critDmg: 0.25, boss: 0.20 }, 3]],
@@ -985,6 +993,7 @@ const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆
   mana: [["마나 흡수", { manaHit: 0.0015 }, 1], ["마력 순환", { manaRegenFlat: 3 }, 1], ["마나 흡수 II", { manaHit: 0.0015, manaPct: 0.05 }, 2], ["비전 갈증", { manaOnKill: 4, manaRegen: 0.004 }, 2], ["마나 방벽", { manaShield: 0.06, manaPct: 0.06 }, 2], ["마력의 대양", { manaHit: 0.003, manaToSpell: 0.05, manaRegen: 0.006 }, 3]],
   util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { expFind: 0.10 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, expFind: 0.15, goldFind: 0.20 }, 3]],
 };
+P_OUT.skill = [["숙련된 손놀림", { cdr: 0.02, singleDmg: 0.06 }, 1], ["대지의 지배", { persistDmg: 0.08, skillDur: 0.06 }, 1], ["군주의 부름", { summonDmg: 0.10 }, 2], ["처형 의식", { bossSkill: 0.30, critDmg: 0.10 }, 2], ["마력 연동", { cdr: 0.03, manaCostRed: 0.04 }, 2], ["스킬 마스터", { singleDmg: 0.15, persistDmg: 0.15, summonDmg: 0.15, bossSkill: 0.30, cdr: 0.03 }, 3]];
 const P_OUT_GEO = [[0, 7.0, "s6"], [-0.10, 7.9, "e1"], [0.10, 7.9, "e1"], [-0.10, 8.8, "e2"], [0.10, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
 const PASSIVES = [], PASSIVE_BY_ID = {};
 (function buildPassives() {
@@ -1010,7 +1019,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   const RS = 1.7; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
   const FIL = {
     phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
-    def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
+    def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], skill: [{ cdr: 0.004 }, { singleDmg: 0.02 }, { persistDmg: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
   };
   { let fid = 0; const seen = new Set();
     for (const A of PASSIVES.slice()) for (const qid of A.links.slice()) {
@@ -1029,7 +1038,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
-    manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
+    manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", singleDmg: "단일 대상 스킬 피해", persistDmg: "지속·장판 스킬 피해", summonDmg: "소환 스킬 피해", bossSkill: "보스 전용기 피해", skillDur: "스킬 지속시간", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
   PASSIVES.forEach((p) => {
     p.text = Object.keys(p.per).map((k) => { const v = p.per[k];
       if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
@@ -1075,6 +1084,13 @@ function addPassivePath(sv, id) {
 function addPassive(sv, id) { if (!canAddPassive(sv, id)) return false; sv.pass[id] = 1; return true; }
 function removePassive(sv, id) { if (!canRemovePassive(sv, id)) return false; delete sv.pass[id]; return true; }
 function resetPassives(sv) { sv.pass = {}; }
+// 패시브 프리셋: 찍은 노드 구성을 저장했다가 한 번에 적용한다 (포인트가 모자라면 중심에서 가까운 순서로 가능한 만큼만 적용)
+function applyPassPreset(sv, p) {
+  const ids = Object.keys(p.pass || {}).filter((k) => PASSIVE_BY_ID[k]), want = new Set(ids), out = {}; let left = passivePoints(sv), n = 0;
+  const frontier = () => ids.filter((k) => !out[k] && PASSIVE_BY_ID[k].links.some((q) => q === "C" || out[q]));
+  for (let f = frontier(); f.length; f = frontier()) { for (const k of f) { const c = PASSIVE_BY_ID[k].cost; if (c <= left) { out[k] = 1; left -= c; n++; } else want.delete(k); } if (f.every((k) => !out[k])) break; }
+  sv.pass = out; return { applied: n, total: ids.length };
+}
 
 // =========================================================
 // 확장 스킬 (상태이상 · 지속형 · 난사형 · 설치형 · 소환형 · 부채꼴)  — 엔진은 battle2.js
@@ -1204,7 +1220,7 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 3, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -1212,7 +1228,7 @@ function newSave() {
 function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     if (s.rangeRev !== 1) { clampAll(s); s.rangeRev = 1; }   // v2.9: 범위 밖 수치 보정
-    if (s.passRev !== 3) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 3; }   // 패시브 트리 개편(v2.4): 기존 포인트는 전부 환급
+    if (s.passRev !== 4) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 4; }   // 패시브 트리 개편(v2.4 / v3.2 스킬 계열 추가): 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
 
 // ---- 장비/스킬 생성 ----
@@ -1303,7 +1319,8 @@ function computeStats(sv) {
     defPct: 0, hpMore: 1, atkMore: 1, magMore: 1, defMore: 1, dmgTaken: 0, regen: 0, revive: 0, dodgeCap: 0.5, cdrCap: 0.5, noDodge: 0, mf: 0, expFind: 0,
     physDmg: 0, magDmg: 0, elemDmg: 0, fireDmg: 0, coldDmg: 0, lightDmg: 0, voidDmg: 0, ignoreDef: 0, ignoreRes: 0, shredDef: 0, shredRes: 0, penElem: 0,
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
-    manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0 };
+    manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
@@ -1384,6 +1401,12 @@ function castMult(k, s) {
   }
   return m;
 }
+const PERSIST_KINDS = ["zone", "zone2", "hole", "aura", "orbit", "rain", "trap"];   // 지속·장판형 스킬
+function skillKindMul(k, s) {   // 스킬 종류별 패시브 보너스 (단일 / 지속·장판 / 소환 / 보스 전용기)
+  let m = 1; if (k.kind === "single") m *= 1 + s.singleDmg; if (PERSIST_KINDS.includes(k.kind)) m *= 1 + s.persistDmg; if (k.kind === "summon") m *= 1 + s.summonDmg;
+  if (k.bonus && k.bonus.boss >= 0.8) m *= 1 + s.bossSkill * 0.5;   // 전투력 계산에서는 보스 전용기 보너스를 절반만 반영 (보스전에서만 적용되므로)
+  return m;
+}
 function baseCastOf(k, s, act, sc) {   // 스킬 배율 1.0 기준 1타 피해: 공격력/주문력 × 피해증가 × 방어/저항 × 속성저항 × 치명 × 대상 보너스
   act = act || Math.max(1, Math.min(10, Math.round(s.avgIlvl))); sc = sc || 1 + CFG.DEF_ACT * (act - 1);
   const mag = k.dtype === "mag", base = mag ? s.mag * CFG.MAG_BASE : s.atk * CFG.PHYS_BASE;
@@ -1392,7 +1415,7 @@ function baseCastOf(k, s, act, sc) {   // 스킬 배율 1.0 기준 1타 피해: 
   const er = k.elem ? 1 - clamp(ACT_ELEM[act - 1][ELEMS.indexOf(k.elem)] - s.penElem, -0.5, CFG.RES_CAP) : 1;
   const cc = Math.min(0.9, (mag ? (s.magCrit ? s.critChance + s.spellCrit : s.spellCrit) : s.critChance) + (k.critAdd || 0)), crit = 1 + cc * s.critDmg;
   const bonus = 1 + 0.15 * (Object.values(k.bonus || {}).reduce((a, b) => a + b, 0) + s.add.boss + s.add.elite + s.add.ranged + s.add.normal);
-  return base * inc * red * er * crit * bonus;
+  return base * inc * red * er * crit * bonus * skillKindMul(k, s);
 }
 function powerDetail(s) {
   const act = Math.max(1, Math.min(10, Math.round(s.avgIlvl))), sc = 1 + CFG.DEF_ACT * (act - 1);
@@ -1837,6 +1860,7 @@ function planFor(node) {
   else if (node.kind === "endless") { nNormal = 40; elites = 3; }
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
+  if ((node.kind === "rift" || node.kind === "trial") && node.tier >= 50) { const ns = Math.min(8, 2 + Math.floor((node.tier - 50) / 12)); for (let i = 0; i < ns; i++) plan.splice(Math.floor(plan.length * (0.1 + 0.85 * (i + 0.5) / ns)), 0, "sniper"); }   // 저격수: 50단계부터, 이후 12단계마다 +1 (최대 8)
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
   if (RIFTLIKE[node.kind] && node.kind !== "void" && node.kind !== "hive" && node.kind !== "vault" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
   if ((node.kind === "rift" || node.kind === "hell") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
@@ -1858,7 +1882,7 @@ function createBattle(sv, node) {
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
-    const sk = skillOf(inst); sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
+    const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
   });
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
   b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
@@ -1992,6 +2016,7 @@ function hitEnemy(b, e, mult, sk, o) {
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
   let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
+  { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; }   // 스킬 종류 패시브
   // 방어력(물리) / 마법저항(마법): 감소 후 무시 → 피해 감소율 = X / (X + C)
   const ig = Math.min(0.9, (mag ? st.ignoreRes : st.ignoreDef) + (sk.ignoreAdd || 0)), X = Math.max(0, (mag ? e.rm * (1 - e.shR) : e.dm * (1 - e.shD)) * (1 - ig));
   dmg *= 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
@@ -2183,6 +2208,7 @@ function stepBattle(b, dt) {
         let dmg = e.atk;
         if (e.tier === "normal") { const n = occupants(b, e.lane, e.col).filter((x) => x.tier === "normal").length; dmg *= Math.pow(Math.max(1, n), CFG.STACK_EXP - 1); }
         const P = cellXY(b, e.lane, e.col, e.w, e.h);
+        if (e.def.sniper) { fx(b, { kind: "snipe", x0: e.vx != null ? e.vx : P.x, y0: (e.vy != null ? e.vy : P.y) - 40, x1: PLAYER_POS.x + 10, y1: PLAYER_POS.y - 52, t: 0.3, life: 0.3, color: "#ff7a4a" }); }
         fx(b, { kind: "proj", x0: e.vx != null ? e.vx : P.x, y0: (e.vy != null ? e.vy : P.y) - (e.tier === "boss" ? 70 : 30), x1: PLAYER_POS.x, y1: PLAYER_POS.y - 50, t: 0.25, life: 0.25, sprite: e.def.proj || (e.tier === "boss" ? "orb" : "hit"), color: e.def.color });
         if (e.traits.includes("explode")) { dmg *= 3; fx(b, { kind: "boom", x: PLAYER_POS.x + 20, y: PLAYER_POS.y - 30, t: 0.4, life: 0.4, color: "#ff8a40", r: 70 }); e.exploded = true; }
         damagePlayer(b, dmg, { shake: e.tier === "boss" || e.exploded ? 0.25 : 0 }); sfx(b, e.def.ranged ? "arrow" : "ehit");
@@ -2740,6 +2766,7 @@ const ROLE_IDX = { imp: 0, grunt: 1, archer: 2, mage: 3, brute: 4, spec: 5 };
 function spriteOf(b, e) {
   if (e.type === "warp") return ["eye", 270];
   if (e.type === "hwarp") return ["eye", 20];
+  if (e.type === "sniper") { const va0 = e.va != null ? e.va : Math.min(10, b.act) - 1, r0 = ROSTER[va0][2]; return [r0[0], 330]; }
   const va = e.va != null ? e.va : Math.min(10, b.act) - 1, r = ROSTER[va][ROLE_IDX[e.type]]; return [r[0], r[1] || 0];
 }
 function bossArt(D) { return D.art != null ? D.art : BOSSES.indexOf(D); }
@@ -2792,6 +2819,7 @@ function drawEnemy(ctx, b, e, time) {
   drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
   if (e.tier === "elite" || e.hp < e.maxHp) drawEnemyBar(ctx, e, x, top);
   if (e.winding > 0) drawPx(ctx, "!", x - 4, top - 8, "#ff5a5a", 3);
+
 }
 
 function drawFx(ctx, b, f, time) {
@@ -2801,6 +2829,7 @@ function drawFx(ctx, b, f, time) {
   switch (f.kind) {
     case "slash": { ctx.fillStyle = hexA(col, a); for (let i = 0; i < 4; i++) { const k = prog * 6 + i; ctx.fillRect(f.x - 22 + k * 8, f.y - 22 + k * 6, 10, 6); } break; }
     case "shot": { const e = f.e; if (e.vx == null) break; ctx.fillStyle = hexA(col, a); pxLine(ctx, PX, PY, PX + (e.vx - PX) * Math.min(1, prog * 2.4), PY + ((e.vy - 34) - PY) * Math.min(1, prog * 2.4), 6); ctx.fillStyle = hexA("#ffffff", a); pxLine(ctx, PX, PY, PX + (e.vx - PX) * Math.min(1, prog * 2.4), PY + ((e.vy - 34) - PY) * Math.min(1, prog * 2.4), 2); break; }
+    case "snipe": { ctx.fillStyle = hexA(col, a * 0.35); pxLine(ctx, f.x0, f.y0, f.x1, f.y1, 22); ctx.fillStyle = hexA(col, a * 0.8); pxLine(ctx, f.x0, f.y0, f.x1, f.y1, 12); ctx.fillStyle = hexA("#ffffff", a); pxLine(ctx, f.x0, f.y0, f.x1, f.y1, 4); break; }
     case "boom": { const r = f.r * (0.25 + prog * 0.85); ctx.fillStyle = hexA(col, a * 0.35); ctx.fillRect(f.x - r, f.y - r * 0.55, r * 2, r * 1.1); ctx.fillStyle = hexA("#fff", a * 0.8); const w = r * 0.6; ctx.fillRect(f.x - w, f.y - w * 0.35, w * 2, w * 0.7);
       const sd = seeded(Math.floor(f.x * 7 + f.y)); for (let i = 0; i < 16; i++) { const an = sd() * 6.28, d = r * (0.5 + sd() * 0.7) * (0.4 + prog); ctx.fillStyle = hexA(col, a); ctx.fillRect(f.x + Math.cos(an) * d - 3, f.y + Math.sin(an) * d * 0.55 - 3, 6, 6); } break; }
     case "beam": { const lane = f.lane, yy = laneTop(b) + (lane + 0.62) * laneH(b) - 26, x1 = LAY.x0 + (f.col) * LAY.cw; ctx.fillStyle = hexA(col, a * 0.4); ctx.fillRect(PX, yy - 14, x1 - PX, 28); ctx.fillStyle = hexA(col, a * 0.9); ctx.fillRect(PX, yy - 6, x1 - PX, 12); ctx.fillStyle = hexA("#fff", a); ctx.fillRect(PX, yy - 2, x1 - PX, 4); break; }
@@ -3366,7 +3395,7 @@ function mapPanel() {
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
     h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="vsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="vsp">+</button> <span class="dim">난이도 균열 ${VOID_TIER[S - 1]}단계 수준</span></div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계) · 고른 단계의 군주 한 마리와 싸웁니다 (잡몹 포함)</div>
-    <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${[33, 66, 100][S - 1]}% 확률` : "좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)"}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${[33, 66, 100][S - 1]}% 확률` : "좋은 고유 장비 1개 확정 — 엔젤릭 2종(공허의 왕관·공허의 심장)은 4단계에서만 드랍 (낮은 확률)"}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -3710,7 +3739,7 @@ function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
+  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">4단계에서만 드랍</span>` : ""}`; }
   h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods, true).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
@@ -3879,8 +3908,33 @@ function ptInfo() {
   const on = passiveHas(save, p.id), kind = { small: "", notable: "★ 주요 ", key: "◆ 핵심 ", bridge: "" }[p.kind];
   el.innerHTML = `<b style="color:${p.arm === "bridge" ? "#ccc" : P_ARMS.find((a) => a.id === p.arm).color}">${kind}${p.name}</b> <span class="dim">(${p.cost}점)</span> — ${p.text} ${on ? `<span style="color:#8dff9a">활성</span>` : canAddPassive(save, p.id) ? `<span style="color:#ffe08a">찍을 수 있음</span>` : `<span class="dim">${(() => { const P = passivePath(save, p.id), free = passivePoints(save) - passiveSpent(save); return !P ? "찍을 수 없음" : P.cost > free ? `경로 ${P.cost}점 필요 (포인트 부족)` : `경로 ${P.ids.length}개 · ${P.cost}점으로 찍을 수 있음 — 선택 후 [경로 찍기]`; })()}</span>`}`;
 }
+// ---- 패시브 프리셋 ----
+function passPresetStat(pass) {
+  const by = {}; let pts = 0, nodes = 0; const big = [];
+  for (const id in pass) { const p = PASSIVE_BY_ID[id]; if (!p) continue; nodes++; pts += p.cost; const a = p.arm === "bridge" ? "bridge" : p.arm; by[a] = (by[a] || 0) + p.cost; if (p.kind === "notable" || p.kind === "key") big.push(p); }
+  return { pts, nodes, by, big: big.sort((a, b) => b.cost - a.cost) };
+}
+function passPresetPower(pass) { const old = save.pass; save.pass = Object.assign({}, pass); let pw = 0; try { pw = playerPower(computeStats(save)); } catch (e) {} save.pass = old; return pw; }
+function openPassPreset(i) {
+  const p = (save.passPresets || [])[i], n = i + 1, cur = playerPower(computeStats(save));
+  const armTxt = (by) => P_ARMS.filter((A) => by[A.id]).map((A) => `<span style="color:${A.color}">${A.name} ${by[A.id]}점</span>`).join(" · ") || "-";
+  const curS = passPresetStat(save.pass);
+  let body;
+  if (!p) body = `<div class="center pad dim">비어 있는 프리셋입니다.<br>지금 찍어 둔 패시브 구성(${curS.nodes}개 · ${curS.pts}점)을 저장할 수 있습니다.</div>`;
+  else { const S = passPresetStat(p.pass), pw = passPresetPower(p.pass), d = pw / Math.max(1, cur) - 1;
+    body = `<div class="pline">노드 <b>${S.nodes}</b>개 · <b>${S.pts}</b>점 (내 포인트 ${passivePoints(save)}점)</div><div class="pline">${armTxt(S.by)}</div>
+     <div class="pline">주요·핵심: ${S.big.slice(0, 10).map((x) => `<span style="color:${x.kind === "key" ? "#ffe08a" : "#cfd6ff"}">${x.kind === "key" ? "◆" : "★"}${x.name}</span>`).join(", ") || "-"}${S.big.length > 10 ? ` 외 ${S.big.length - 10}개` : ""}</div>
+     <div class="pline">적용 시 전투력 <b style="color:${d >= 0 ? "#8dff9a" : "#ff8a8a"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</b> <span class="dim">(현재 ${fmtN(cur)} → ${fmtN(pw)})</span></div>`; }
+  Modal.open(`<h2>패시브 프리셋 ${n}</h2>${body}<div class="pbtns">${p ? `<button class="btn pri" data-a="ppapply">적용</button>` : ""}<button class="btn ${p ? "" : "pri"}" data-a="ppsave" ${curS.nodes ? "" : "disabled"}>${p ? "현재 구성으로 덮어쓰기" : "현재 구성 저장"}</button>${p ? `<button class="btn" data-a="ppdel">삭제</button>` : ""}<button class="btn" data-a="ppback">돌아가기</button></div>`, { cls: "sm", on: {
+    ppapply: () => { const r = applyPassPreset(save, p); snd("equip"); toast(r.applied < r.total ? `포인트가 부족해 ${r.applied}/${r.total}개만 적용했습니다` : `프리셋 ${n} 적용 (${r.applied}개)`, r.applied < r.total ? "bad" : "ok"); saveGame(); refreshTop(); openPassives(); },
+    ppsave: () => { save.passPresets[i] = { pass: Object.assign({}, save.pass) }; snd("equip"); toast(`프리셋 ${n}에 저장했습니다`, "ok"); saveGame(); openPassives(); },
+    ppdel: () => askConfirm(`패시브 프리셋 ${n}을(를) 삭제할까요?`, "삭제", () => { save.passPresets[i] = null; saveGame(); openPassives(); }, false),
+    ppback: () => openPassives(),
+  } });
+}
 function openPassives() {
-  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button></div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button> &nbsp;프리셋 ${[0, 1, 2].map((i) => `<button class="btn xs pbtn ${(save.passPresets || [])[i] ? "has" : ""}" data-a="ppick" data-n="${i}" title="${(save.passPresets || [])[i] ? "눌러서 구성을 확인하고 적용" : "비어 있음 · 눌러서 현재 구성을 저장"}">${i + 1}</button>`).join("")}</div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+    ppick: (el) => openPassPreset(+el.dataset.n),
     preset: () => { resetPassives(save); snd("close"); saveGame(); refreshTop(); ptInfo(); },
     ptadd: () => { if (PT.sel && addPassivePath(save, PT.sel.id)) snd("equip"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
     ptrm: () => { if (PT.sel && removePassive(save, PT.sel.id)) snd("click"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
@@ -3920,16 +3974,59 @@ function openTower() {
 // ---------- 장비 도감 ----------
 const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
+// 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
+const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? 5 : 21), 0);
+const isVoid4Only = (def) => !!def && def.pool === "void" && def.tier === 4;
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
   for (const kind of Object.keys(KIND_LBL)) {
-    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind], (def.tier === 4 ? 8 : 21) / sum, "처치 1회당"]); continue; }
+    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? 5 : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
     if (me) out.push([KIND_LBL[kind], CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * (me.w / sum), `드랍 1개당${def.pool === "common" && def.act > 1 ? ` · 액트 ${def.act}~` : ""}`]);
   }
   return out;
+}
+// ---- 데미지 공식 탭: 수치는 게임 상수(CFG)에서 직접 읽어 항상 실제 계산과 같다 ----
+function formulaHtml() {
+  const C = CFG, P = (v) => Math.round(v * 100) + "%", s = computeStats(save);
+  const F = (h) => `<div class="fml">${h}</div>`, V = (t) => `<b style="color:#ffe08a">${t}</b>`, S = (t) => `<span class="dim">${t}</span>`, H = (t) => `<h3>${t}</h3>`;
+  const step = (n, name, formula, note) => `<div class="fstep"><div class="fh"><span class="fn">${n}</span> <b>${name}</b></div><div class="ff">${formula}</div>${note ? `<div class="fnote dim">${note}</div>` : ""}</div>`;
+  return `<div class="fwrap">
+  ${H("최종 피해 한 줄 요약")}${F(`${V("최종 피해")} = 기본 피해 × 스킬 배율 × 피해 증가 × 대상 보너스 × 스킬 종류 보너스 × 방어 감소 × 속성 저항 × 치명타`)}
+  <div class="dim">아래 번호 순서대로 곱해집니다. ‘합’으로 적힌 항목은 안에서 더해지고, 항목끼리는 서로 곱해집니다(곱연산).</div>
+  ${H("피해 계산 순서")}
+  ${step(1, "기본 피해", `물리 스킬 = 공격력 × ${V(C.PHYS_BASE)}<br>마법 스킬 = 주문력 × ${V(C.MAG_BASE)}`, `지금 내 공격력 ${fmtN(s.atk)} · 주문력 ${fmtN(s.mag)}`)}
+  ${step(2, "스킬 배율", `스킬 기본 배율 × 등급 배율 × (1 + 5% × (스킬 레벨 − 1)) × 룬 배율`, "등급: 일반 ×1.0 · 희귀 ×1.25 · 전설 ×1.6 · 이터널 ×1.9 · 소버린 ×2.3 · 엔젤릭 ×3.0")}
+  ${step(3, "피해 증가 (합연산)", `1 + 주는 피해 + 물리 피해(또는 마법 피해)<br>속성 스킬이면 + 원소 피해 + 해당 속성 피해(화염/냉기/번개/공허)`, `내 주는 피해 ${P(s.allDmg)} · 물리 ${P(s.physDmg)} · 마법 ${P(s.magDmg)} · 원소 ${P(s.elemDmg)}`)}
+  ${step(4, "대상 보너스 (곱연산)", `(1 + 스킬 자체 보너스) × (1 + 장비·패시브 추가 피해)<br>대상 종류: 보스 / 정예 / 원거리 / 일반 (해당하는 종류의 보너스만 더해짐)`, `예: 보스에게 스킬 보너스 +80%, 장비 보스 추가 피해 +30% → ×1.8 × ×1.3 = ×2.34`)}
+  ${step(5, "버프 · 무작위", `전투 함성 버프 배율 × 무작위 0.92 ~ 1.08`)}
+  ${step(6, "연쇄 · 광역", `번개 연쇄로 맞은 타격 × (1 + 번개 피해) · 광역으로 맞은 타격 × (1 + 광역 피해)`)}
+  ${step(7, "스킬 종류 보너스 (패시브 ‘스킬’ 계열)", `단일 대상 스킬 × (1 + 단일 대상 스킬 피해)<br>지속·장판 스킬(장판/구역/구멍/오라/구체/비/지뢰) × (1 + 지속·장판 스킬 피해)<br>소환 스킬 × (1 + 소환 스킬 피해)<br>보스 전용기(보스 보너스 +80% 이상 스킬)가 보스를 칠 때 × (1 + 보스 전용기 피해)`)}
+  ${step(8, "방어력 / 마법저항 감소", `X = 대상 방어력(물리) 또는 마법저항(마법) × (1 − 방어 무시)<br>피해 감소율 = X ÷ (X + ${V(C.DEF_C)}) &nbsp;(최대 ${P(C.DEF_CAP)})`, `방어 무시 최대 80%(스킬 효과 포함 90%) · 대상 방어력 감소(파쇄)는 타격마다 쌓여 최대 50%까지 · 몬스터 방어력은 액트(+${P(C.DEF_ACT)}/액트)와 균열 단계(+${P(C.DEF_TIER)}/단계)로 증가`)}
+  ${step(9, "속성 저항", `피해 × (1 − (대상 속성 저항 − 속성 저항 관통))<br>저항은 −50%(약점) ~ ${P(C.RES_CAP)}로 제한`, "액트마다 약한/강한 속성이 다릅니다 (예: 불 속성 액트는 화염 저항이 높음).")}
+  ${step(10, "치명타", `치명타 확률 = 물리: 물리 치명타 확률 / 마법: 주문 치명타 확률 (‘마법도 물리 치명타’ 고유는 두 확률을 합산) · 최대 90%<br>치명타 시 × (1 + 치명타 피해)`, `기본 치명타 확률 ${P(C.BASE_CRIT)}, 기본 치명타 피해 +${P(C.BASE_CRITDMG)} · 내 물리 ${P(s.critChance)} / 주문 ${P(s.spellCrit)} · 치명타 피해 +${P(s.critDmg)}`)}
+  ${H("지속 피해 (출혈 · 중독 · 점화)")}
+  ${F(`타격마다 확률 판정 → 성공하면 지속 피해 부여<br>초당 피해 = 타격 피해 × 계수 × (1 + 지속 피해%) × 대상 보정 ÷ 지속시간<br>지속시간 = 기본 시간 × (1 + 지속시간%)`)}
+  <table class="ftab"><tr><th></th><th>계수</th><th>기본 시간</th><th>최대 중첩</th><th>걸리는 조건</th></tr>
+  <tr><td>출혈</td><td>×${C.BLEED.coef}</td><td>${C.BLEED.dur}초</td><td>${C.BLEED.cap}</td><td>물리 스킬</td></tr>
+  <tr><td>중독</td><td>×${C.POISON.coef}</td><td>${C.POISON.dur}초</td><td>${C.POISON.cap}</td><td>물리 스킬 또는 공허 스킬</td></tr>
+  <tr><td>점화</td><td>×${C.IGNITE.coef}</td><td>${C.IGNITE.dur}초</td><td>${C.IGNITE.cap} (가장 강한 것)</td><td>화염 스킬</td></tr></table>
+  <div class="dim">발동 확률 = 스킬 자체 확률 + (조건을 만족하면) 장비·패시브 확률. 대상 보정: 보스 ×${C.DOT_BOSS}, 정예 ×${C.DOT_ELITE}, 일반 ×1. 지속 피해는 방어력·저항의 영향을 다시 받지 않습니다.</div>
+  ${H("받는 피해 · 회복")}
+  ${step("A", "플레이어가 받는 피해", `회피 확률(상한 기본 50%)로 완전 회피<br>피해 = 원피해 × (1 − 방어력 ÷ (방어력 + 5 × 원피해))<br>× (1 + 저주 효과) × max(0.2, 1 + 받는 피해%) → 마나 방패가 일부를 마나로 대신 받음`, `방어력은 ‘원피해가 방어력의 몇 배인가’에 따라 효율이 달라지는 방식이라 고레벨 몬스터일수록 더 많이 필요합니다 · 내 방어력 ${fmtN(s.def)} · 회피 ${P(s.dodge)}`)}
+  ${step("B", "무리 칸 보정", `같은 칸의 일반 몬스터 n마리의 각 공격 피해 × n^(${C.STACK_EXP} − 1) → 칸 전체 합계는 n^${C.STACK_EXP}배`)}
+  ${step("C", "회복", `생명력 흡수 = 스킬 타격 피해 × 생명력 흡수%<br>초당 재생 = 최대 체력 × (${C.REGEN * 100}% + 재생)<br>‘작열 낙인’ 상태에서는 흡수·재생이 모두 ×0.5`)}
+  ${H("능력치 계산")}
+  ${step("a", "공격력 · 주문력", `공격력 = 장비 합계 × (1 + 공격력%) × 레벨 보정 × 공격력 more<br>주문력 = (장비 합계 × 레벨 보정 + 마나→주문력% × 최대 마나) × (1 + 주문력%) × 주문력 more<br>레벨 보정 = 1 + ${C.LEVEL_STEP} × (레벨 − 1)`)}
+  ${step("b", "체력 · 방어력", `체력 = 장비 합계 × (1 + 체력%) × 레벨 보정 × 체력 more<br>방어력 = 장비 합계 × 레벨 보정 × (1 + 방어력%) × 방어력 more`, "‘more’는 고유 장비 등에서 오는 별도 곱연산 보너스입니다 (일반 % 보너스와 따로 곱해짐).")}
+  ${step("c", "마나", `최대 마나 = (${C.BASE_MANA} + 마나 고정치) × (1 + 마나%) × (1 + ${C.MANA_LV} × (레벨 − 1))<br>초당 재생 = 최대 마나 × (${P(C.MANA_REGEN)} + 마나 재생%) + 고정 재생<br>스킬 마나 소모 = 기본 소모 × 레벨 보정 × (1 − 마나 소모 감소, 최대 60%)`, `적중 시 마나 흡수: 타격마다 최대 마나의 일정 %를 회복 (초당 최대 10회) · 내 최대 마나 ${fmtN(s.maxMana)}`)}
+  ${step("d", "쿨타임", `스킬 쿨타임 = 기본 쿨타임 × 등급 쿨타임 배율 × (1 − 쿨타임 감소, 상한 50%)`, `내 쿨타임 감소 ${P(s.cdr)}`)}
+  ${H("몬스터 강화")}
+  ${F(`몬스터 체력 = 기본 체력 × ${C.H0} × ${C.HPX}^(액트 − 1) × 지역 보정 × (1 + ${C.STAGE_HP} × (스테이지 − 1)) × 균열 보정<br>균열 보정 = ${C.RIFT_SCALE}^(균열 단계 − 1) (스킬 시련은 ${C.TRIAL_SCALE}^(단계 − 1))<br>몬스터 공격력도 같은 방식으로 증가합니다 (스테이지 보정 ${C.STAGE_ATK}).`)}
+  <div class="dim">전투력 수치는 위 공식으로 계산한 ‘예상 초당 피해 × 유효 체력’을 기준으로 한 추정값이며, 실제 전투 결과는 몬스터 구성에 따라 달라집니다.</div>
+  </div>`;
 }
 // ---- 스킬 도감 ----
 const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["boss", "보스 전용기"], ["void", "공허 전용"]];
@@ -3960,18 +4057,20 @@ function skCodexDetail(d) {
    <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀(승급 가능, 60%) → 전설(드랍 전용) → 이터널 · 소버린 · 엔젤릭(전설 드랍에서 아주 낮은 확률로 상위 등급 — 스킬 시련 고단계·공허의 군주). 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
-  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
+  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
   let left = "", right = "";
   if (CX.tab === "uniq") {
     const pools = `<div class="itbar"><select data-i="cxpool"><option value="all">전체 출처</option>${Object.keys(U_POOLS).map((k) => `<option value="${k}" ${CX.pool === k ? "selected" : ""}>${U_POOLS[k]}</option>`).join("")}</select></div>`;
     const list = UNIQUES.filter((u) => CX.pool === "all" || u.pool === CX.pool).sort((a, b) => b.tier - a.tier);
-    left = pools + list.map((u) => { const n = save.uniq[u.id] || 0; return `<div class="dexrow ${CX.sel === u.id ? "found" : ""}" data-a="cxpick" data-id="${u.id}" style="cursor:pointer"><span class="tn${u.tier}">${uniqueIconImg(u.id, 1)} ${u.name}</span> <small class="dim">${U_TIERS[u.tier].name} · ${SLOT_NAME[u.slot]} · ${U_POOLS[u.pool]}${n ? ` · 획득 ×${n}` : ""}</small></div>`; }).join("");
+    left = pools + list.map((u) => { const n = save.uniq[u.id] || 0; return `<div class="dexrow ${CX.sel === u.id ? "found" : ""}" data-a="cxpick" data-id="${u.id}" style="cursor:pointer"><span class="tn${u.tier}">${uniqueIconImg(u.id, 1)} ${u.name}</span>${isVoid4Only(u) ? ` <small style="color:#d6a0ff">공허 4단계 전용</small>` : ""} <small class="dim">${U_TIERS[u.tier].name} · ${SLOT_NAME[u.slot]} · ${U_POOLS[u.pool]}${n ? ` · 획득 ×${n}` : ""}</small></div>`; }).join("");
     const D = UNIQUE_BY_ID[CX.sel];
     if (D) { const T = U_TIERS[D.tier], src = uniqueSources(D);
-      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span><div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
+      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">공허의 군주 4단계에서만 드랍</span>` : ""}<div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
        <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
+  } else if (CX.tab === "fml") {
+    left = ""; right = formulaHtml();
   } else if (CX.tab === "skill") {
     const f = CX.skf, list = SKILLS.filter((d) => f === "all" || (f === "basic" && d.slot === "basic") || (f === "active" && d.slot === "active" && !d.voidOnly) || (f === "boss" && d.bonus && d.bonus.boss >= 0.8) || (f === "void" && d.voidOnly)).sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock);
     const got = SKILLS.filter((d) => (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id)).length;
@@ -3986,7 +4085,7 @@ function openCodex() {
     const s = SLOTS.includes(CX.sel) ? CX.sel : null;
     right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">장비 레벨이 낮으면 일부 옵션은 나오지 않습니다</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `Lv.${a.minIlvl}+` : "전 구간"}${a.minRarity ? " · 희귀 이상" : ""}</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
   }
-  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div><div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`, { cls: "wide", on: {
+  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
     cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); }, cxskf: (el) => { CX.skf = el.value; CX.sel = null; openCodex(); },
   } });
 }
@@ -4215,7 +4314,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-061158";
+const BUILD_ID = "20261028-062445";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4307,6 +4406,13 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.2", date: "10/28", title: "저격수 · 패시브 프리셋 · 스킬 계열 · 데미지 공식 도감", items: [
+    "스킬 시련·심연의 균열 50단계부터 '포격 저격수'가 나옵니다 (50단계 2마리, 이후 12단계마다 +1, 최대 8). 사거리가 가장 먼 6열에서 쉬지 않고 쏘는 원거리 유닛으로, 평타가 아주 아프고 공격 빔이 크고 선명하게 보입니다. 긴 사거리 스킬로 먼저 처치하세요.",
+    "패시브 훈련소에 프리셋 3칸이 생겼습니다. 지금 찍은 구성을 저장하고, 눌러서 구성(노드·점수·주요 노드)과 적용 시 전투력 변화를 확인한 뒤 적용합니다. 포인트가 모자라면 가능한 만큼만 적용됩니다.",
+    "패시브 트리에 '스킬' 계열(민트색)이 추가됐습니다 (39노드). 단일 대상 · 지속/장판 · 소환 스킬 피해, 보스 전용기 피해, 스킬 지속시간, 상태이상 숙련 등을 올립니다. 트리 구조가 바뀌어 기존 패시브 포인트는 전부 환급됩니다. 개편 전에 쓰던 구성은 프리셋으로 다시 저장해 두세요.",
+    "도감에 '데미지 공식' 탭이 생겼습니다. 기본 피해부터 방어·저항·치명타·지속 피해·받는 피해·회복·능력치·몬스터 강화까지 계산 순서와 실제 수치를 보여 줍니다 (게임 설정값을 그대로 읽어 표시).",
+    "공허의 군주 4단계에서만 나오는 아이템(공허의 왕관·공허의 심장)에 '4단계에서만 드랍' 표기를 붙였습니다 (도감·아이템 상세·공허 패널).",
+  ] },
   { ver: "3.1", date: "10/28", title: "스킬 등급 확장 · 승급 제한", items: [
     "특수 스킬(공허 전용 스킬, 빌드별 보스 전용기)은 이제 스킬 상점에서 팔지 않습니다. 드랍·스킬 시련·공허의 군주로만 얻습니다.",
     "스킬 등급이 늘었습니다. 일반 → 희귀 → 전설 위에 이터널 · 소버린 · 엔젤릭이 생겼습니다 (피해 ×1.9 / ×2.3 / ×3.0, 쿨타임 −13% / −16% / −20%, 추가 피해 보너스 ×2.0 / ×2.4 / ×3.0).",

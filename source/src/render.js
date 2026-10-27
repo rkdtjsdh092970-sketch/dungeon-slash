@@ -6,6 +6,7 @@ const ROLE_IDX = { imp: 0, grunt: 1, archer: 2, mage: 3, brute: 4, spec: 5 };
 function spriteOf(b, e) {
   if (e.type === "warp") return ["eye", 270];
   if (e.type === "hwarp") return ["eye", 20];
+  if (e.type === "sniper") { const va0 = e.va != null ? e.va : Math.min(10, b.act) - 1, r0 = ROSTER[va0][2]; return [r0[0], 330]; }
   const va = e.va != null ? e.va : Math.min(10, b.act) - 1, r = ROSTER[va][ROLE_IDX[e.type]]; return [r[0], r[1] || 0];
 }
 function bossArt(D) { return D.art != null ? D.art : BOSSES.indexOf(D); }
@@ -58,6 +59,7 @@ function drawEnemy(ctx, b, e, time) {
   drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
   if (e.tier === "elite" || e.hp < e.maxHp) drawEnemyBar(ctx, e, x, top);
   if (e.winding > 0) drawPx(ctx, "!", x - 4, top - 8, "#ff5a5a", 3);
+
 }
 
 function drawFx(ctx, b, f, time) {
@@ -67,6 +69,7 @@ function drawFx(ctx, b, f, time) {
   switch (f.kind) {
     case "slash": { ctx.fillStyle = hexA(col, a); for (let i = 0; i < 4; i++) { const k = prog * 6 + i; ctx.fillRect(f.x - 22 + k * 8, f.y - 22 + k * 6, 10, 6); } break; }
     case "shot": { const e = f.e; if (e.vx == null) break; ctx.fillStyle = hexA(col, a); pxLine(ctx, PX, PY, PX + (e.vx - PX) * Math.min(1, prog * 2.4), PY + ((e.vy - 34) - PY) * Math.min(1, prog * 2.4), 6); ctx.fillStyle = hexA("#ffffff", a); pxLine(ctx, PX, PY, PX + (e.vx - PX) * Math.min(1, prog * 2.4), PY + ((e.vy - 34) - PY) * Math.min(1, prog * 2.4), 2); break; }
+    case "snipe": { ctx.fillStyle = hexA(col, a * 0.35); pxLine(ctx, f.x0, f.y0, f.x1, f.y1, 22); ctx.fillStyle = hexA(col, a * 0.8); pxLine(ctx, f.x0, f.y0, f.x1, f.y1, 12); ctx.fillStyle = hexA("#ffffff", a); pxLine(ctx, f.x0, f.y0, f.x1, f.y1, 4); break; }
     case "boom": { const r = f.r * (0.25 + prog * 0.85); ctx.fillStyle = hexA(col, a * 0.35); ctx.fillRect(f.x - r, f.y - r * 0.55, r * 2, r * 1.1); ctx.fillStyle = hexA("#fff", a * 0.8); const w = r * 0.6; ctx.fillRect(f.x - w, f.y - w * 0.35, w * 2, w * 0.7);
       const sd = seeded(Math.floor(f.x * 7 + f.y)); for (let i = 0; i < 16; i++) { const an = sd() * 6.28, d = r * (0.5 + sd() * 0.7) * (0.4 + prog); ctx.fillStyle = hexA(col, a); ctx.fillRect(f.x + Math.cos(an) * d - 3, f.y + Math.sin(an) * d * 0.55 - 3, 6, 6); } break; }
     case "beam": { const lane = f.lane, yy = laneTop(b) + (lane + 0.62) * laneH(b) - 26, x1 = LAY.x0 + (f.col) * LAY.cw; ctx.fillStyle = hexA(col, a * 0.4); ctx.fillRect(PX, yy - 14, x1 - PX, 28); ctx.fillStyle = hexA(col, a * 0.9); ctx.fillRect(PX, yy - 6, x1 - PX, 12); ctx.fillStyle = hexA("#fff", a); ctx.fillRect(PX, yy - 2, x1 - PX, 4); break; }

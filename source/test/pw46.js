@@ -1,0 +1,20 @@
+const { chromium } = require('playwright');
+(async () => {
+  const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 960, height: 540 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PE ' + e.message));
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(800);
+  await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.level = 100; save.slots = 4; openTown(1); openPassives(); });
+  await pg.waitForTimeout(300);
+  await pg.evaluate(() => { const t = PASSIVE_BY_ID['skill_s4']; PT.sel = t; ptInfo(); });
+  await pg.click('#ptact .btn.pri'); await pg.waitForTimeout(200);
+  await pg.click('[data-a="ppick"][data-n="0"]'); await pg.waitForTimeout(200);
+  await pg.click('[data-a="ppsave"]'); await pg.waitForTimeout(300);
+  const saved = await pg.evaluate(() => Object.keys(save.passPresets[0].pass).length);
+  await pg.click('[data-a="preset"]'); await pg.waitForTimeout(200);
+  const afterReset = await pg.evaluate(() => Object.keys(save.pass).length);
+  await pg.click('[data-a="ppick"][data-n="0"]'); await pg.waitForTimeout(300); await pg.screenshot({ path: '/tmp/ppre.png' });
+  await pg.click('[data-a="ppapply"]'); await pg.waitForTimeout(300);
+  console.log({ saved, afterReset, afterApply: await pg.evaluate(() => Object.keys(save.pass).length) });
+  await pg.evaluate(() => { PT.sc = 0.2; PT.ox = 0; PT.oy = 0; }); await pg.waitForTimeout(300); await pg.screenshot({ path: '/tmp/ptree.png' });
+  console.log(errs.join('\n') || 'no errors'); await br.close();
+})();

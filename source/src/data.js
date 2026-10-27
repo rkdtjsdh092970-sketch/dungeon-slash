@@ -40,6 +40,7 @@ const ENEMIES = {
   grunt:  { name: "고블린",   tier: "normal", ranged: false, range: 1, hp: 30,  atk: 6,  interval: 2.0, windup: 0.5,  exp: 2,  gold: 1, sprite: "goblin", sc: 2 },
   archer: { name: "궁수",     tier: "normal", ranged: true,  range: 4, hp: 20,  atk: 6,  interval: 2.2, windup: 0.6,  exp: 2,  gold: 1, sprite: "archer", sc: 2, proj: "arrow" },
   mage:   { name: "주술사",   tier: "normal", ranged: true,  range: 5, hp: 32,  atk: 9,  interval: 3.2, windup: 0.9,  exp: 3,  gold: 2, sprite: "shaman", sc: 2, proj: "orb" },
+  sniper: { name: "포격 저격수", tier: "elite",  ranged: true,  range: 6, hp: 150, atk: 26, interval: 2.4, windup: 0.6,  exp: 18, gold: 10, sprite: "archer", sc: 3, proj: "orb", sniper: true },   // 균열·시련 50단계+: 사거리 최대, 평타가 아픈 원거리 유닛 (공격 투사체가 크고 선명함)
   brute:  { name: "정예 오크", tier: "elite",  ranged: false, range: 1, hp: 140, atk: 14, interval: 2.8, windup: 0.8,  exp: 12, gold: 8, sprite: "brute",  sc: 3 },
 };
 function actWeights(a) {

@@ -38,7 +38,7 @@ function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
+  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">4단계에서만 드랍</span>` : ""}`; }
   h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods, true).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
@@ -207,8 +207,33 @@ function ptInfo() {
   const on = passiveHas(save, p.id), kind = { small: "", notable: "★ 주요 ", key: "◆ 핵심 ", bridge: "" }[p.kind];
   el.innerHTML = `<b style="color:${p.arm === "bridge" ? "#ccc" : P_ARMS.find((a) => a.id === p.arm).color}">${kind}${p.name}</b> <span class="dim">(${p.cost}점)</span> — ${p.text} ${on ? `<span style="color:#8dff9a">활성</span>` : canAddPassive(save, p.id) ? `<span style="color:#ffe08a">찍을 수 있음</span>` : `<span class="dim">${(() => { const P = passivePath(save, p.id), free = passivePoints(save) - passiveSpent(save); return !P ? "찍을 수 없음" : P.cost > free ? `경로 ${P.cost}점 필요 (포인트 부족)` : `경로 ${P.ids.length}개 · ${P.cost}점으로 찍을 수 있음 — 선택 후 [경로 찍기]`; })()}</span>`}`;
 }
+// ---- 패시브 프리셋 ----
+function passPresetStat(pass) {
+  const by = {}; let pts = 0, nodes = 0; const big = [];
+  for (const id in pass) { const p = PASSIVE_BY_ID[id]; if (!p) continue; nodes++; pts += p.cost; const a = p.arm === "bridge" ? "bridge" : p.arm; by[a] = (by[a] || 0) + p.cost; if (p.kind === "notable" || p.kind === "key") big.push(p); }
+  return { pts, nodes, by, big: big.sort((a, b) => b.cost - a.cost) };
+}
+function passPresetPower(pass) { const old = save.pass; save.pass = Object.assign({}, pass); let pw = 0; try { pw = playerPower(computeStats(save)); } catch (e) {} save.pass = old; return pw; }
+function openPassPreset(i) {
+  const p = (save.passPresets || [])[i], n = i + 1, cur = playerPower(computeStats(save));
+  const armTxt = (by) => P_ARMS.filter((A) => by[A.id]).map((A) => `<span style="color:${A.color}">${A.name} ${by[A.id]}점</span>`).join(" · ") || "-";
+  const curS = passPresetStat(save.pass);
+  let body;
+  if (!p) body = `<div class="center pad dim">비어 있는 프리셋입니다.<br>지금 찍어 둔 패시브 구성(${curS.nodes}개 · ${curS.pts}점)을 저장할 수 있습니다.</div>`;
+  else { const S = passPresetStat(p.pass), pw = passPresetPower(p.pass), d = pw / Math.max(1, cur) - 1;
+    body = `<div class="pline">노드 <b>${S.nodes}</b>개 · <b>${S.pts}</b>점 (내 포인트 ${passivePoints(save)}점)</div><div class="pline">${armTxt(S.by)}</div>
+     <div class="pline">주요·핵심: ${S.big.slice(0, 10).map((x) => `<span style="color:${x.kind === "key" ? "#ffe08a" : "#cfd6ff"}">${x.kind === "key" ? "◆" : "★"}${x.name}</span>`).join(", ") || "-"}${S.big.length > 10 ? ` 외 ${S.big.length - 10}개` : ""}</div>
+     <div class="pline">적용 시 전투력 <b style="color:${d >= 0 ? "#8dff9a" : "#ff8a8a"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</b> <span class="dim">(현재 ${fmtN(cur)} → ${fmtN(pw)})</span></div>`; }
+  Modal.open(`<h2>패시브 프리셋 ${n}</h2>${body}<div class="pbtns">${p ? `<button class="btn pri" data-a="ppapply">적용</button>` : ""}<button class="btn ${p ? "" : "pri"}" data-a="ppsave" ${curS.nodes ? "" : "disabled"}>${p ? "현재 구성으로 덮어쓰기" : "현재 구성 저장"}</button>${p ? `<button class="btn" data-a="ppdel">삭제</button>` : ""}<button class="btn" data-a="ppback">돌아가기</button></div>`, { cls: "sm", on: {
+    ppapply: () => { const r = applyPassPreset(save, p); snd("equip"); toast(r.applied < r.total ? `포인트가 부족해 ${r.applied}/${r.total}개만 적용했습니다` : `프리셋 ${n} 적용 (${r.applied}개)`, r.applied < r.total ? "bad" : "ok"); saveGame(); refreshTop(); openPassives(); },
+    ppsave: () => { save.passPresets[i] = { pass: Object.assign({}, save.pass) }; snd("equip"); toast(`프리셋 ${n}에 저장했습니다`, "ok"); saveGame(); openPassives(); },
+    ppdel: () => askConfirm(`패시브 프리셋 ${n}을(를) 삭제할까요?`, "삭제", () => { save.passPresets[i] = null; saveGame(); openPassives(); }, false),
+    ppback: () => openPassives(),
+  } });
+}
 function openPassives() {
-  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button></div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button> &nbsp;프리셋 ${[0, 1, 2].map((i) => `<button class="btn xs pbtn ${(save.passPresets || [])[i] ? "has" : ""}" data-a="ppick" data-n="${i}" title="${(save.passPresets || [])[i] ? "눌러서 구성을 확인하고 적용" : "비어 있음 · 눌러서 현재 구성을 저장"}">${i + 1}</button>`).join("")}</div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+    ppick: (el) => openPassPreset(+el.dataset.n),
     preset: () => { resetPassives(save); snd("close"); saveGame(); refreshTop(); ptInfo(); },
     ptadd: () => { if (PT.sel && addPassivePath(save, PT.sel.id)) snd("equip"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
     ptrm: () => { if (PT.sel && removePassive(save, PT.sel.id)) snd("click"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
@@ -248,16 +273,59 @@ function openTower() {
 // ---------- 장비 도감 ----------
 const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
+// 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
+const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? 5 : 21), 0);
+const isVoid4Only = (def) => !!def && def.pool === "void" && def.tier === 4;
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
   for (const kind of Object.keys(KIND_LBL)) {
-    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind], (def.tier === 4 ? 8 : 21) / sum, "처치 1회당"]); continue; }
+    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? 5 : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
     if (me) out.push([KIND_LBL[kind], CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * (me.w / sum), `드랍 1개당${def.pool === "common" && def.act > 1 ? ` · 액트 ${def.act}~` : ""}`]);
   }
   return out;
+}
+// ---- 데미지 공식 탭: 수치는 게임 상수(CFG)에서 직접 읽어 항상 실제 계산과 같다 ----
+function formulaHtml() {
+  const C = CFG, P = (v) => Math.round(v * 100) + "%", s = computeStats(save);
+  const F = (h) => `<div class="fml">${h}</div>`, V = (t) => `<b style="color:#ffe08a">${t}</b>`, S = (t) => `<span class="dim">${t}</span>`, H = (t) => `<h3>${t}</h3>`;
+  const step = (n, name, formula, note) => `<div class="fstep"><div class="fh"><span class="fn">${n}</span> <b>${name}</b></div><div class="ff">${formula}</div>${note ? `<div class="fnote dim">${note}</div>` : ""}</div>`;
+  return `<div class="fwrap">
+  ${H("최종 피해 한 줄 요약")}${F(`${V("최종 피해")} = 기본 피해 × 스킬 배율 × 피해 증가 × 대상 보너스 × 스킬 종류 보너스 × 방어 감소 × 속성 저항 × 치명타`)}
+  <div class="dim">아래 번호 순서대로 곱해집니다. ‘합’으로 적힌 항목은 안에서 더해지고, 항목끼리는 서로 곱해집니다(곱연산).</div>
+  ${H("피해 계산 순서")}
+  ${step(1, "기본 피해", `물리 스킬 = 공격력 × ${V(C.PHYS_BASE)}<br>마법 스킬 = 주문력 × ${V(C.MAG_BASE)}`, `지금 내 공격력 ${fmtN(s.atk)} · 주문력 ${fmtN(s.mag)}`)}
+  ${step(2, "스킬 배율", `스킬 기본 배율 × 등급 배율 × (1 + 5% × (스킬 레벨 − 1)) × 룬 배율`, "등급: 일반 ×1.0 · 희귀 ×1.25 · 전설 ×1.6 · 이터널 ×1.9 · 소버린 ×2.3 · 엔젤릭 ×3.0")}
+  ${step(3, "피해 증가 (합연산)", `1 + 주는 피해 + 물리 피해(또는 마법 피해)<br>속성 스킬이면 + 원소 피해 + 해당 속성 피해(화염/냉기/번개/공허)`, `내 주는 피해 ${P(s.allDmg)} · 물리 ${P(s.physDmg)} · 마법 ${P(s.magDmg)} · 원소 ${P(s.elemDmg)}`)}
+  ${step(4, "대상 보너스 (곱연산)", `(1 + 스킬 자체 보너스) × (1 + 장비·패시브 추가 피해)<br>대상 종류: 보스 / 정예 / 원거리 / 일반 (해당하는 종류의 보너스만 더해짐)`, `예: 보스에게 스킬 보너스 +80%, 장비 보스 추가 피해 +30% → ×1.8 × ×1.3 = ×2.34`)}
+  ${step(5, "버프 · 무작위", `전투 함성 버프 배율 × 무작위 0.92 ~ 1.08`)}
+  ${step(6, "연쇄 · 광역", `번개 연쇄로 맞은 타격 × (1 + 번개 피해) · 광역으로 맞은 타격 × (1 + 광역 피해)`)}
+  ${step(7, "스킬 종류 보너스 (패시브 ‘스킬’ 계열)", `단일 대상 스킬 × (1 + 단일 대상 스킬 피해)<br>지속·장판 스킬(장판/구역/구멍/오라/구체/비/지뢰) × (1 + 지속·장판 스킬 피해)<br>소환 스킬 × (1 + 소환 스킬 피해)<br>보스 전용기(보스 보너스 +80% 이상 스킬)가 보스를 칠 때 × (1 + 보스 전용기 피해)`)}
+  ${step(8, "방어력 / 마법저항 감소", `X = 대상 방어력(물리) 또는 마법저항(마법) × (1 − 방어 무시)<br>피해 감소율 = X ÷ (X + ${V(C.DEF_C)}) &nbsp;(최대 ${P(C.DEF_CAP)})`, `방어 무시 최대 80%(스킬 효과 포함 90%) · 대상 방어력 감소(파쇄)는 타격마다 쌓여 최대 50%까지 · 몬스터 방어력은 액트(+${P(C.DEF_ACT)}/액트)와 균열 단계(+${P(C.DEF_TIER)}/단계)로 증가`)}
+  ${step(9, "속성 저항", `피해 × (1 − (대상 속성 저항 − 속성 저항 관통))<br>저항은 −50%(약점) ~ ${P(C.RES_CAP)}로 제한`, "액트마다 약한/강한 속성이 다릅니다 (예: 불 속성 액트는 화염 저항이 높음).")}
+  ${step(10, "치명타", `치명타 확률 = 물리: 물리 치명타 확률 / 마법: 주문 치명타 확률 (‘마법도 물리 치명타’ 고유는 두 확률을 합산) · 최대 90%<br>치명타 시 × (1 + 치명타 피해)`, `기본 치명타 확률 ${P(C.BASE_CRIT)}, 기본 치명타 피해 +${P(C.BASE_CRITDMG)} · 내 물리 ${P(s.critChance)} / 주문 ${P(s.spellCrit)} · 치명타 피해 +${P(s.critDmg)}`)}
+  ${H("지속 피해 (출혈 · 중독 · 점화)")}
+  ${F(`타격마다 확률 판정 → 성공하면 지속 피해 부여<br>초당 피해 = 타격 피해 × 계수 × (1 + 지속 피해%) × 대상 보정 ÷ 지속시간<br>지속시간 = 기본 시간 × (1 + 지속시간%)`)}
+  <table class="ftab"><tr><th></th><th>계수</th><th>기본 시간</th><th>최대 중첩</th><th>걸리는 조건</th></tr>
+  <tr><td>출혈</td><td>×${C.BLEED.coef}</td><td>${C.BLEED.dur}초</td><td>${C.BLEED.cap}</td><td>물리 스킬</td></tr>
+  <tr><td>중독</td><td>×${C.POISON.coef}</td><td>${C.POISON.dur}초</td><td>${C.POISON.cap}</td><td>물리 스킬 또는 공허 스킬</td></tr>
+  <tr><td>점화</td><td>×${C.IGNITE.coef}</td><td>${C.IGNITE.dur}초</td><td>${C.IGNITE.cap} (가장 강한 것)</td><td>화염 스킬</td></tr></table>
+  <div class="dim">발동 확률 = 스킬 자체 확률 + (조건을 만족하면) 장비·패시브 확률. 대상 보정: 보스 ×${C.DOT_BOSS}, 정예 ×${C.DOT_ELITE}, 일반 ×1. 지속 피해는 방어력·저항의 영향을 다시 받지 않습니다.</div>
+  ${H("받는 피해 · 회복")}
+  ${step("A", "플레이어가 받는 피해", `회피 확률(상한 기본 50%)로 완전 회피<br>피해 = 원피해 × (1 − 방어력 ÷ (방어력 + 5 × 원피해))<br>× (1 + 저주 효과) × max(0.2, 1 + 받는 피해%) → 마나 방패가 일부를 마나로 대신 받음`, `방어력은 ‘원피해가 방어력의 몇 배인가’에 따라 효율이 달라지는 방식이라 고레벨 몬스터일수록 더 많이 필요합니다 · 내 방어력 ${fmtN(s.def)} · 회피 ${P(s.dodge)}`)}
+  ${step("B", "무리 칸 보정", `같은 칸의 일반 몬스터 n마리의 각 공격 피해 × n^(${C.STACK_EXP} − 1) → 칸 전체 합계는 n^${C.STACK_EXP}배`)}
+  ${step("C", "회복", `생명력 흡수 = 스킬 타격 피해 × 생명력 흡수%<br>초당 재생 = 최대 체력 × (${C.REGEN * 100}% + 재생)<br>‘작열 낙인’ 상태에서는 흡수·재생이 모두 ×0.5`)}
+  ${H("능력치 계산")}
+  ${step("a", "공격력 · 주문력", `공격력 = 장비 합계 × (1 + 공격력%) × 레벨 보정 × 공격력 more<br>주문력 = (장비 합계 × 레벨 보정 + 마나→주문력% × 최대 마나) × (1 + 주문력%) × 주문력 more<br>레벨 보정 = 1 + ${C.LEVEL_STEP} × (레벨 − 1)`)}
+  ${step("b", "체력 · 방어력", `체력 = 장비 합계 × (1 + 체력%) × 레벨 보정 × 체력 more<br>방어력 = 장비 합계 × 레벨 보정 × (1 + 방어력%) × 방어력 more`, "‘more’는 고유 장비 등에서 오는 별도 곱연산 보너스입니다 (일반 % 보너스와 따로 곱해짐).")}
+  ${step("c", "마나", `최대 마나 = (${C.BASE_MANA} + 마나 고정치) × (1 + 마나%) × (1 + ${C.MANA_LV} × (레벨 − 1))<br>초당 재생 = 최대 마나 × (${P(C.MANA_REGEN)} + 마나 재생%) + 고정 재생<br>스킬 마나 소모 = 기본 소모 × 레벨 보정 × (1 − 마나 소모 감소, 최대 60%)`, `적중 시 마나 흡수: 타격마다 최대 마나의 일정 %를 회복 (초당 최대 10회) · 내 최대 마나 ${fmtN(s.maxMana)}`)}
+  ${step("d", "쿨타임", `스킬 쿨타임 = 기본 쿨타임 × 등급 쿨타임 배율 × (1 − 쿨타임 감소, 상한 50%)`, `내 쿨타임 감소 ${P(s.cdr)}`)}
+  ${H("몬스터 강화")}
+  ${F(`몬스터 체력 = 기본 체력 × ${C.H0} × ${C.HPX}^(액트 − 1) × 지역 보정 × (1 + ${C.STAGE_HP} × (스테이지 − 1)) × 균열 보정<br>균열 보정 = ${C.RIFT_SCALE}^(균열 단계 − 1) (스킬 시련은 ${C.TRIAL_SCALE}^(단계 − 1))<br>몬스터 공격력도 같은 방식으로 증가합니다 (스테이지 보정 ${C.STAGE_ATK}).`)}
+  <div class="dim">전투력 수치는 위 공식으로 계산한 ‘예상 초당 피해 × 유효 체력’을 기준으로 한 추정값이며, 실제 전투 결과는 몬스터 구성에 따라 달라집니다.</div>
+  </div>`;
 }
 // ---- 스킬 도감 ----
 const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["boss", "보스 전용기"], ["void", "공허 전용"]];
@@ -288,18 +356,20 @@ function skCodexDetail(d) {
    <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀(승급 가능, 60%) → 전설(드랍 전용) → 이터널 · 소버린 · 엔젤릭(전설 드랍에서 아주 낮은 확률로 상위 등급 — 스킬 시련 고단계·공허의 군주). 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
-  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
+  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
   let left = "", right = "";
   if (CX.tab === "uniq") {
     const pools = `<div class="itbar"><select data-i="cxpool"><option value="all">전체 출처</option>${Object.keys(U_POOLS).map((k) => `<option value="${k}" ${CX.pool === k ? "selected" : ""}>${U_POOLS[k]}</option>`).join("")}</select></div>`;
     const list = UNIQUES.filter((u) => CX.pool === "all" || u.pool === CX.pool).sort((a, b) => b.tier - a.tier);
-    left = pools + list.map((u) => { const n = save.uniq[u.id] || 0; return `<div class="dexrow ${CX.sel === u.id ? "found" : ""}" data-a="cxpick" data-id="${u.id}" style="cursor:pointer"><span class="tn${u.tier}">${uniqueIconImg(u.id, 1)} ${u.name}</span> <small class="dim">${U_TIERS[u.tier].name} · ${SLOT_NAME[u.slot]} · ${U_POOLS[u.pool]}${n ? ` · 획득 ×${n}` : ""}</small></div>`; }).join("");
+    left = pools + list.map((u) => { const n = save.uniq[u.id] || 0; return `<div class="dexrow ${CX.sel === u.id ? "found" : ""}" data-a="cxpick" data-id="${u.id}" style="cursor:pointer"><span class="tn${u.tier}">${uniqueIconImg(u.id, 1)} ${u.name}</span>${isVoid4Only(u) ? ` <small style="color:#d6a0ff">공허 4단계 전용</small>` : ""} <small class="dim">${U_TIERS[u.tier].name} · ${SLOT_NAME[u.slot]} · ${U_POOLS[u.pool]}${n ? ` · 획득 ×${n}` : ""}</small></div>`; }).join("");
     const D = UNIQUE_BY_ID[CX.sel];
     if (D) { const T = U_TIERS[D.tier], src = uniqueSources(D);
-      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span><div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
+      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">공허의 군주 4단계에서만 드랍</span>` : ""}<div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
        <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
+  } else if (CX.tab === "fml") {
+    left = ""; right = formulaHtml();
   } else if (CX.tab === "skill") {
     const f = CX.skf, list = SKILLS.filter((d) => f === "all" || (f === "basic" && d.slot === "basic") || (f === "active" && d.slot === "active" && !d.voidOnly) || (f === "boss" && d.bonus && d.bonus.boss >= 0.8) || (f === "void" && d.voidOnly)).sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock);
     const got = SKILLS.filter((d) => (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id)).length;
@@ -314,7 +384,7 @@ function openCodex() {
     const s = SLOTS.includes(CX.sel) ? CX.sel : null;
     right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">장비 레벨이 낮으면 일부 옵션은 나오지 않습니다</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `Lv.${a.minIlvl}+` : "전 구간"}${a.minRarity ? " · 희귀 이상" : ""}</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
   }
-  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div><div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`, { cls: "wide", on: {
+  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
     cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); }, cxskf: (el) => { CX.skf = el.value; CX.sel = null; openCodex(); },
   } });
 }

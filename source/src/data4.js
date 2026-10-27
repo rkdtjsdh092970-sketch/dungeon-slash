@@ -29,10 +29,15 @@ const P_ARMS = [
     L: [["속도", { cdr: 0.015 }], ["탐욕", { goldFind: 0.08 }], ["경험", { expFind: 0.08 }], ["연쇄 반응", { chainJumps: 1, chainDmg: 0.15 }, 2]],
     R: [["광역 훈련", { aoeDmg: 0.06 }], ["행운 훈련", { mf: 0.04 }], ["보물 사냥", { goldFind: 0.08 }], ["대박", { mf: 0.12 }, 2]] },
 ];
+P_ARMS.push({ id: "skill", name: "스킬", color: "#6af0c0",
+  s: [["집중 사격", { singleDmg: 0.06 }], ["스킬 숙련", { cdr: 0.015 }], ["지속의 달인", { persistDmg: 0.06 }], ["전용기 입문", { bossSkill: 0.20, boss: 0.06 }, 2], ["소환사의 길", { summonDmg: 0.06 }], ["스킬의 정점", { allDmg: 0.10, cdr: 0.04, skillDur: 0.10 }, 3]],
+  L: [["마나 절약", { manaCostRed: 0.03 }], ["지속 연장", { skillDur: 0.08 }], ["확정 일격", { singleDmg: 0.08 }], ["보스 사냥 도구", { bossSkill: 0.25, boss: 0.08 }, 2]],
+  R: [["소환 숙련", { summonDmg: 0.06 }], ["장판 숙련", { persistDmg: 0.06 }], ["상태이상 숙련", { dotDmg: 0.10 }], ["전용기 장인", { bossSkill: 0.30, cdr: 0.03 }, 2]] });
 const P_BRIDGES = [   // 계열 사이를 잇는 혼합 노드 2개씩
   [["전투 마술", { atkPct: 0.03 }], ["마검", { magPct: 0.03 }]], [["마법 원소", { magDmg: 0.05 }], ["원소 조율", { elemDmg: 0.05 }]],
   [["원소 보호", { hpPct: 0.04 }], ["저항 단련", { dmgTaken: -0.02 }]], [["마나 방벽", { manaShield: 0.06 }], ["정신 단련", { manaPct: 0.05 }]],
   [["마력 수집", { manaRegen: 0.004 }], ["마나 효율", { manaCostRed: 0.03 }]], [["사냥 본능", { normal: 0.08 }], ["민첩한 손", { cdr: 0.015 }]],
+  [["스킬 연계", { cdr: 0.01, singleDmg: 0.03 }], ["전투 기술", { persistDmg: 0.03, summonDmg: 0.03 }]],
 ];
 const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
   phys: { LL: [["출혈 숙련", { bleedChance: 0.08 }], ["피의 갈증", { dotDmg: 0.20, bleedChance: 0.10 }, 2]], RR: [["강타 숙련", { atkPct: 0.04 }], ["처형인", { critDmg: 0.15, boss: 0.10 }, 2]] },
@@ -41,6 +46,7 @@ const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
   def: { LL: [["강철 피부", { defPct: 0.06 }], ["철벽 의지", { dmgTaken: -0.04, hpPct: 0.08 }, 2]], RR: [["끈질긴 생명", { regen: 0.002 }], ["복수", { lifesteal: 0.01, atkPct: 0.06 }, 2]] },
   mana: { LL: [["마나젠", { manaRegenFlat: 3 }], ["샘의 축복", { manaRegenFlat: 5, manaRegen: 0.004 }, 2]], RR: [["마나통", { manaFlat: 25 }], ["마나 물결", { dmgPerMana: 0.01, manaPct: 0.08 }, 2]] },
   util: { LL: [["탐색", { mf: 0.04 }], ["보물 감각", { mf: 0.08, goldFind: 0.10 }, 2]], RR: [["광역 감각", { aoeDmg: 0.06 }], ["전술가", { chainJumps: 1, cdr: 0.02 }, 2]] },
+  skill: { LL: [["상처의 기술", { bleedChance: 0.06, dotDmg: 0.08 }], ["상처 벌리기", { dotDur: 0.15, dotDmg: 0.15 }, 2]], RR: [["불씨의 기술", { igniteChance: 0.06, poisonChance: 0.06 }], ["상태이상의 대가", { dotDmg: 0.20, dotDur: 0.10 }, 2]] },
 };
 const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆)으로 모인다 [이름, 효과, 비용]
   phys: [["격투의 심장", { atkPct: 0.05, critChance: 0.02 }, 1], ["베어내기", { critDmg: 0.15 }, 1], ["급소 사냥", { boss: 0.12, elite: 0.12 }, 2], ["연속 타격", { physDmg: 0.10, cdr: 0.02 }, 2], ["방어 관통", { ignoreDef: 0.06, shredDef: 0.06 }, 2], ["학살의 화신", { atkMore: 1.12, critDmg: 0.25, boss: 0.20 }, 3]],
@@ -50,6 +56,7 @@ const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆
   mana: [["마나 흡수", { manaHit: 0.0015 }, 1], ["마력 순환", { manaRegenFlat: 3 }, 1], ["마나 흡수 II", { manaHit: 0.0015, manaPct: 0.05 }, 2], ["비전 갈증", { manaOnKill: 4, manaRegen: 0.004 }, 2], ["마나 방벽", { manaShield: 0.06, manaPct: 0.06 }, 2], ["마력의 대양", { manaHit: 0.003, manaToSpell: 0.05, manaRegen: 0.006 }, 3]],
   util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { expFind: 0.10 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, expFind: 0.15, goldFind: 0.20 }, 3]],
 };
+P_OUT.skill = [["숙련된 손놀림", { cdr: 0.02, singleDmg: 0.06 }, 1], ["대지의 지배", { persistDmg: 0.08, skillDur: 0.06 }, 1], ["군주의 부름", { summonDmg: 0.10 }, 2], ["처형 의식", { bossSkill: 0.30, critDmg: 0.10 }, 2], ["마력 연동", { cdr: 0.03, manaCostRed: 0.04 }, 2], ["스킬 마스터", { singleDmg: 0.15, persistDmg: 0.15, summonDmg: 0.15, bossSkill: 0.30, cdr: 0.03 }, 3]];
 const P_OUT_GEO = [[0, 7.0, "s6"], [-0.10, 7.9, "e1"], [0.10, 7.9, "e1"], [-0.10, 8.8, "e2"], [0.10, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
 const PASSIVES = [], PASSIVE_BY_ID = {};
 (function buildPassives() {
@@ -75,7 +82,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   const RS = 1.7; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
   const FIL = {
     phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
-    def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
+    def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], skill: [{ cdr: 0.004 }, { singleDmg: 0.02 }, { persistDmg: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
   };
   { let fid = 0; const seen = new Set();
     for (const A of PASSIVES.slice()) for (const qid of A.links.slice()) {
@@ -94,7 +101,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
-    manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
+    manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", singleDmg: "단일 대상 스킬 피해", persistDmg: "지속·장판 스킬 피해", summonDmg: "소환 스킬 피해", bossSkill: "보스 전용기 피해", skillDur: "스킬 지속시간", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
   PASSIVES.forEach((p) => {
     p.text = Object.keys(p.per).map((k) => { const v = p.per[k];
       if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
@@ -140,3 +147,10 @@ function addPassivePath(sv, id) {
 function addPassive(sv, id) { if (!canAddPassive(sv, id)) return false; sv.pass[id] = 1; return true; }
 function removePassive(sv, id) { if (!canRemovePassive(sv, id)) return false; delete sv.pass[id]; return true; }
 function resetPassives(sv) { sv.pass = {}; }
+// 패시브 프리셋: 찍은 노드 구성을 저장했다가 한 번에 적용한다 (포인트가 모자라면 중심에서 가까운 순서로 가능한 만큼만 적용)
+function applyPassPreset(sv, p) {
+  const ids = Object.keys(p.pass || {}).filter((k) => PASSIVE_BY_ID[k]), want = new Set(ids), out = {}; let left = passivePoints(sv), n = 0;
+  const frontier = () => ids.filter((k) => !out[k] && PASSIVE_BY_ID[k].links.some((q) => q === "C" || out[q]));
+  for (let f = frontier(); f.length; f = frontier()) { for (const k of f) { const c = PASSIVE_BY_ID[k].cost; if (c <= left) { out[k] = 1; left -= c; n++; } else want.delete(k); } if (f.every((k) => !out[k])) break; }
+  sv.pass = out; return { applied: n, total: ids.length };
+}
