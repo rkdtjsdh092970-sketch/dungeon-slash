@@ -273,6 +273,13 @@ function rollUnique(sv, act, ilvl, pools) {
   if (!list.length) return null; return genUnique(sv, wpick(list, (x) => x.w).u, ilvl);
 }
 const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"], hive: ["fire", "common"] };
+// 화염 정령왕 고유 드랍: 한 번 클리어에 고유는 최대 1개. 단계가 높을수록 좋은 등급이 나오고, 엔젤릭(고유 4등급)은 4단계에서만 나온다
+const HIVE_U_CHANCE = [0.15, 0.30, 0.50, 0.80];
+const HIVE_TIER_W = [{ 1: 30, 2: 6 }, { 1: 20, 2: 20, 3: 6 }, { 1: 10, 2: 20, 3: 25 }, { 1: 5, 2: 15, 3: 30, 4: 6 }];
+function hiveUniqueList(stage) {
+  const all = UNIQUES.filter((u) => u.pool === "fire"), tw = HIVE_TIER_W[Math.max(0, Math.min(3, stage - 1))], cnt = {}; all.forEach((u) => (cnt[u.tier] = (cnt[u.tier] || 0) + 1));
+  return all.filter((u) => tw[u.tier]).map((u) => ({ u, w: tw[u.tier] / cnt[u.tier] }));
+}
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const act = Math.min(10, node.act), kind = node.kind, endlessWaves = node.waves || 0;
@@ -307,11 +314,13 @@ function rollDrops(sv, node, boss, B) {
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
     if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
+  } else if (kind === "hive") {
+    const st = Math.max(1, Math.min(4, node.vsel || 1));
+    if (Math.random() < HIVE_U_CHANCE[st - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const list = hiveUniqueList(st); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
-  if (kind === "hive" && Math.random() < [0.15, 0.3, 0.5, 0.8][(node.vsel || 1) - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
   // 스킬: 보스 첫 클리어 확정 1개, 일반 확률, 균열 탑에서 낮은 확률로 강한 스킬
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
   const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * (w[i] || 0) })), (x) => x.w).i;

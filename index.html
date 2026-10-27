@@ -1494,6 +1494,13 @@ function rollUnique(sv, act, ilvl, pools) {
   if (!list.length) return null; return genUnique(sv, wpick(list, (x) => x.w).u, ilvl);
 }
 const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"], hive: ["fire", "common"] };
+// 화염 정령왕 고유 드랍: 한 번 클리어에 고유는 최대 1개. 단계가 높을수록 좋은 등급이 나오고, 엔젤릭(고유 4등급)은 4단계에서만 나온다
+const HIVE_U_CHANCE = [0.15, 0.30, 0.50, 0.80];
+const HIVE_TIER_W = [{ 1: 30, 2: 6 }, { 1: 20, 2: 20, 3: 6 }, { 1: 10, 2: 20, 3: 25 }, { 1: 5, 2: 15, 3: 30, 4: 6 }];
+function hiveUniqueList(stage) {
+  const all = UNIQUES.filter((u) => u.pool === "fire"), tw = HIVE_TIER_W[Math.max(0, Math.min(3, stage - 1))], cnt = {}; all.forEach((u) => (cnt[u.tier] = (cnt[u.tier] || 0) + 1));
+  return all.filter((u) => tw[u.tier]).map((u) => ({ u, w: tw[u.tier] / cnt[u.tier] }));
+}
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const act = Math.min(10, node.act), kind = node.kind, endlessWaves = node.waves || 0;
@@ -1528,11 +1535,13 @@ function rollDrops(sv, node, boss, B) {
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
     if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
+  } else if (kind === "hive") {
+    const st = Math.max(1, Math.min(4, node.vsel || 1));
+    if (Math.random() < HIVE_U_CHANCE[st - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const list = hiveUniqueList(st); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
-  if (kind === "hive" && Math.random() < [0.15, 0.3, 0.5, 0.8][(node.vsel || 1) - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
   // 스킬: 보스 첫 클리어 확정 1개, 일반 확률, 균열 탑에서 낮은 확률로 강한 스킬
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
   const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * (w[i] || 0) })), (x) => x.w).i;
@@ -3419,7 +3428,7 @@ function mapPanel() {
   } else if (n.kind === "hive") {
     const S = G.hiveStage = Math.max(1, Math.min(4, G.hiveStage || 1)), need = HIVE_NEED[S - 1], ok = save.rift.best >= need;
     h += `<div class="pline">정령의 불씨 <b>${save.keys2 || 0}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="hsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="hsp">+</button> <span class="dim">난이도 균열 ${HIVE_TIERS[S - 1]}단계 수준</span></div>
-    <div class="pline">${HIVE_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">화염 빌드용 장비 ${3 + 2 * S}개 · 전용 고유 ${[15, 30, 50, 80][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 정령의 불씨(눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    <div class="pline">${HIVE_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">화염 빌드용 장비 ${3 + 2 * S}개 · 전용 고유 ${[15, 30, 50, 80][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다 (고유는 클리어당 최대 1개, 엔젤릭 '화염 정령왕의 관'은 4단계에서만 드랍)</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 정령의 불씨(눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
     btnOk = un && (save.keys2 || 0) > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : (save.keys2 || 0) > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
@@ -4008,12 +4017,13 @@ const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
 const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21), 0);
-const isVoid4Only = (def) => !!def && def.pool === "void" && def.tier === 4;
+const isVoid4Only = (def) => !!def && (def.pool === "void" || def.pool === "fire") && def.tier === 4;   // 엔젤릭: 공허의 군주·화염 정령왕 4단계에서만
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
   for (const kind of Object.keys(KIND_LBL)) {
     if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
+    if (kind === "hive") { if (def.pool !== "fire") continue; for (let st = 1; st <= 4; st++) { const L = hiveUniqueList(st), me = L.find((x) => x.u === def); if (!me) continue; out.push([`화염 정령왕 ${st}단계`, HIVE_U_CHANCE[st - 1] * me.w / L.reduce((a, x) => a + x.w, 0), "클리어 1회당 (고유는 최대 1개)"]); } continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
     if (me) out.push([KIND_LBL[kind], CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * (me.w / sum), `드랍 1개당${def.pool === "common" && def.act > 1 ? ` · 액트 ${def.act}~` : ""}`]);
@@ -4097,7 +4107,7 @@ function openCodex() {
     left = pools + list.map((u) => { const n = save.uniq[u.id] || 0; return `<div class="dexrow ${CX.sel === u.id ? "found" : ""}" data-a="cxpick" data-id="${u.id}" style="cursor:pointer"><span class="tn${u.tier}">${uniqueIconImg(u.id, 1)} ${u.name}</span>${isVoid4Only(u) ? ` <small style="color:#d6a0ff">공허 4단계 전용</small>` : ""} <small class="dim">${U_TIERS[u.tier].name} · ${SLOT_NAME[u.slot]} · ${U_POOLS[u.pool]}${n ? ` · 획득 ×${n}` : ""}</small></div>`; }).join("");
     const D = UNIQUE_BY_ID[CX.sel];
     if (D) { const T = U_TIERS[D.tier], src = uniqueSources(D);
-      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">공허의 군주 4단계에서만 드랍</span>` : ""}<div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
+      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">${D.pool === "fire" ? "화염 정령왕" : "공허의 군주"} 4단계에서만 드랍</span>` : ""}<div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
        <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
@@ -4181,7 +4191,7 @@ const TIP_CUR = {
 };
 function itemSourceLines(it) {
   const L = [];
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; if (D) { for (const s of uniqueSources(D).slice(0, 4)) L.push(`${s[0]}: <b>${fmtOdds(s[1])}</b>`); if (isVoid4Only(D)) L.push("공허의 군주 4단계에서만 드랍"); L.push("<span class=\"dim\">자세한 확률은 도감 → 고유</span>"); } }
+  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; if (D) { for (const s of uniqueSources(D).slice(0, 4)) L.push(`${s[0]}: <b>${fmtOdds(s[1])}</b>`); if (isVoid4Only(D)) L.push(`${D.pool === "fire" ? "화염 정령왕" : "공허의 군주"} 4단계에서만 드랍`); L.push("<span class=\"dim\">자세한 확률은 도감 → 고유</span>"); } }
   else if (it.setId) { const S = setOf(it); L.push(`${S.name}: 액트 ${S.acts[0]}~${S.acts[1] > 50 ? "" : S.acts[1]}의 스테이지·보스(높은 확률)·엔드게임 균열에서 드랍`); }
   else L.push(`${ITEM_RARITY[it.rarity].name} 장비: 모든 스테이지·보스·균열에서 드랍 (등급이 높을수록 확률 낮음). 대장간에서 옵션을 다듬어 완성합니다.`);
   return L;
@@ -4403,7 +4413,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-064637";
+const BUILD_ID = "20261028-065012";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4495,6 +4505,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.6", date: "10/28", title: "화염 정령왕 고유 드랍 수정", items: [
+    "화염 정령왕에서 고유 장비가 한 번에 2개 나오던 문제를 고쳤습니다. 이제 클리어 1회당 고유는 최대 1개이고, 확률은 1~4단계 15% / 30% / 50% / 80%입니다.",
+    "단계가 높을수록 좋은 등급이 나오고, 엔젤릭인 '화염 정령왕의 관'은 4단계에서만 드랍됩니다 (공허의 군주와 같은 방식). 도감에 단계별 확률이 표시됩니다.",
+  ] },
   { ver: "3.5", date: "10/28", title: "공허의 군주 3·4단계 상향 · 4단계 입장 제한", items: [
     "공허의 군주 난이도를 조정했습니다. 3단계는 균열 55 → 60단계, 4단계는 균열 75 → 82단계 수준입니다. 4단계는 이제 엔젤릭급 장비까지 갖춘 막바지 세팅이어야 잡을 수 있습니다.",
     "4단계의 확정 고유 보상에서 엔젤릭(공허의 왕관·공허의 심장) 비중을 낮췄습니다 (약 10.6% → 약 6.7%).",

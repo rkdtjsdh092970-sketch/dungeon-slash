@@ -125,7 +125,7 @@ function mapPanel() {
   } else if (n.kind === "hive") {
     const S = G.hiveStage = Math.max(1, Math.min(4, G.hiveStage || 1)), need = HIVE_NEED[S - 1], ok = save.rift.best >= need;
     h += `<div class="pline">정령의 불씨 <b>${save.keys2 || 0}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="hsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="hsp">+</button> <span class="dim">난이도 균열 ${HIVE_TIERS[S - 1]}단계 수준</span></div>
-    <div class="pline">${HIVE_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">화염 빌드용 장비 ${3 + 2 * S}개 · 전용 고유 ${[15, 30, 50, 80][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 정령의 불씨(눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    <div class="pline">${HIVE_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">화염 빌드용 장비 ${3 + 2 * S}개 · 전용 고유 ${[15, 30, 50, 80][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다 (고유는 클리어당 최대 1개, 엔젤릭 '화염 정령왕의 관'은 4단계에서만 드랍)</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 정령의 불씨(눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
     btnOk = un && (save.keys2 || 0) > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : (save.keys2 || 0) > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));

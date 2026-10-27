@@ -275,12 +275,13 @@ const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
 const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21), 0);
-const isVoid4Only = (def) => !!def && def.pool === "void" && def.tier === 4;
+const isVoid4Only = (def) => !!def && (def.pool === "void" || def.pool === "fire") && def.tier === 4;   // 엔젤릭: 공허의 군주·화염 정령왕 4단계에서만
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
   for (const kind of Object.keys(KIND_LBL)) {
     if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
+    if (kind === "hive") { if (def.pool !== "fire") continue; for (let st = 1; st <= 4; st++) { const L = hiveUniqueList(st), me = L.find((x) => x.u === def); if (!me) continue; out.push([`화염 정령왕 ${st}단계`, HIVE_U_CHANCE[st - 1] * me.w / L.reduce((a, x) => a + x.w, 0), "클리어 1회당 (고유는 최대 1개)"]); } continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
     if (me) out.push([KIND_LBL[kind], CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * (me.w / sum), `드랍 1개당${def.pool === "common" && def.act > 1 ? ` · 액트 ${def.act}~` : ""}`]);
@@ -364,7 +365,7 @@ function openCodex() {
     left = pools + list.map((u) => { const n = save.uniq[u.id] || 0; return `<div class="dexrow ${CX.sel === u.id ? "found" : ""}" data-a="cxpick" data-id="${u.id}" style="cursor:pointer"><span class="tn${u.tier}">${uniqueIconImg(u.id, 1)} ${u.name}</span>${isVoid4Only(u) ? ` <small style="color:#d6a0ff">공허 4단계 전용</small>` : ""} <small class="dim">${U_TIERS[u.tier].name} · ${SLOT_NAME[u.slot]} · ${U_POOLS[u.pool]}${n ? ` · 획득 ×${n}` : ""}</small></div>`; }).join("");
     const D = UNIQUE_BY_ID[CX.sel];
     if (D) { const T = U_TIERS[D.tier], src = uniqueSources(D);
-      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">공허의 군주 4단계에서만 드랍</span>` : ""}<div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
+      right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span>${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">${D.pool === "fire" ? "화염 정령왕" : "공허의 군주"} 4단계에서만 드랍</span>` : ""}<div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
        <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
@@ -448,7 +449,7 @@ const TIP_CUR = {
 };
 function itemSourceLines(it) {
   const L = [];
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; if (D) { for (const s of uniqueSources(D).slice(0, 4)) L.push(`${s[0]}: <b>${fmtOdds(s[1])}</b>`); if (isVoid4Only(D)) L.push("공허의 군주 4단계에서만 드랍"); L.push("<span class=\"dim\">자세한 확률은 도감 → 고유</span>"); } }
+  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; if (D) { for (const s of uniqueSources(D).slice(0, 4)) L.push(`${s[0]}: <b>${fmtOdds(s[1])}</b>`); if (isVoid4Only(D)) L.push(`${D.pool === "fire" ? "화염 정령왕" : "공허의 군주"} 4단계에서만 드랍`); L.push("<span class=\"dim\">자세한 확률은 도감 → 고유</span>"); } }
   else if (it.setId) { const S = setOf(it); L.push(`${S.name}: 액트 ${S.acts[0]}~${S.acts[1] > 50 ? "" : S.acts[1]}의 스테이지·보스(높은 확률)·엔드게임 균열에서 드랍`); }
   else L.push(`${ITEM_RARITY[it.rarity].name} 장비: 모든 스테이지·보스·균열에서 드랍 (등급이 높을수록 확률 낮음). 대장간에서 옵션을 다듬어 완성합니다.`);
   return L;
