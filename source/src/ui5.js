@@ -30,4 +30,8 @@ function showUpdateBar() {
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
   $("#app").appendChild(d); $("#updgo").onclick = () => { try { saveGame(); } catch (e) {} location.reload(); }; $("#updlater").onclick = () => d.remove();
 }
-async function checkUpdate() { try { const r = await fetch(SRV.url + "/api/ver", { cache: "no-store" }), j = await r.json(); if (j && j.ver && j.ver !== BUILD_ID) showUpdateBar(); } catch (e) {} }
+let UPD_SEEN = 0;
+async function checkUpdate() {   // 서버에 올라온 버전이 지금 화면보다 "더 새로울 때만" 배너 표시 (workers.dev로 접속했을 때만, 2번 연속 확인)
+  if (!/\.workers\.dev$/.test(location.hostname)) return;
+  try { const r = await fetch("/api/ver", { cache: "no-store" }), j = await r.json(); if (j && j.ver && j.ver > BUILD_ID) { if (++UPD_SEEN >= 2) showUpdateBar(); } else UPD_SEEN = 0; } catch (e) {}
+}
