@@ -388,23 +388,23 @@ const SKILLS = [
   { id: "strike",  name: "일격",         slot: "basic",  kind: "single", cd: 0.8,  mult: 1.0,  range: 3, bonus: {}, unlock: 1, color: "#cfe4ff", icon: "sword", sfx: "slash", desc: "기본 단일 공격" },
   { id: "rapid",   name: "연사",         slot: "basic",  kind: "single", cd: 0.45, mult: 0.55, range: 4, bonus: {}, unlock: 1, color: "#cfe4ff", icon: "dagger", sfx: "slash", desc: "빠른 단일 공격" },
   { id: "crush",   name: "파쇄타",       slot: "basic",  kind: "multi",  cd: 1.1,  mult: 0.5,  side: 0.6, range: 3, bonus: {}, unlock: 2, color: "#ffd9a0", icon: "hammer", sfx: "thud", desc: "대상 주변 3x3 타격" },
-  { id: "spark",   name: "번개 찌르기",   slot: "basic",  kind: "chain",  cd: 0.9,  mult: 0.8,  jumps: 2, decay: 0.6, range: 4, bonus: {}, unlock: 2, color: "#aee8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤로 번개가 2번 튄다" },
+  { id: "spark",   name: "번개 찌르기",   slot: "basic",  kind: "chain",  cd: 0.9,  mult: 1.08,  jumps: 2, decay: 0.6, range: 4, bonus: {}, unlock: 2, color: "#aee8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤로 번개가 2번 튄다" },
   { id: "smash",   name: "강타",         slot: "active", kind: "single", cd: 3.0,  mult: 3.2,  range: 5, bonus: { elite: 0.3 }, unlock: 1, color: "#ffe08a", icon: "fist", sfx: "thud", desc: "강한 단일 공격, 정예에게 추가 피해" },
   { id: "bomb",    name: "폭열탄",       slot: "active", kind: "multi",  cd: 5.0,  mult: 2.0,  side: 0.8, range: 5, bonus: {}, unlock: 1, color: "#ff9a50", icon: "bomb", sfx: "boom", desc: "대상 주변 3x3 폭발" },
   { id: "lance",   name: "관통창",       slot: "active", kind: "pierce", cd: 6.0,  mult: 1.7,  range: 6, bonus: {}, unlock: 1, color: "#9dffb0", icon: "spear", sfx: "pierce", desc: "같은 줄의 적을 모두 꿰뚫는다" },
-  { id: "chain",   name: "체인 라이트닝", slot: "active", kind: "chain",  cd: 5.5,  mult: 1.9,  jumps: 5, decay: 0.88, range: 5, bonus: {}, unlock: 2, color: "#9ad8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤의 대각선 위·대각선 아래·바로 뒤로 무작위로 번개가 뻗는다" },
+  { id: "chain",   name: "체인 라이트닝", slot: "active", kind: "chain",  cd: 5.5,  mult: 2.57,  jumps: 5, decay: 0.88, range: 5, bonus: {}, unlock: 2, color: "#9ad8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤의 대각선 위·대각선 아래·바로 뒤로 무작위로 번개가 뻗는다" },
   { id: "snipe",   name: "저격",         slot: "active", kind: "single", cd: 4.0,  mult: 4.0,  range: 6, bonus: { ranged: 0.6 }, unlock: 2, color: "#d0b0ff", icon: "arrow", sfx: "snipe", desc: "원거리 유닛에게 추가 피해, 사거리 6" },
   { id: "firewall", name: "화염 벽",     slot: "active", kind: "zone",   cd: 10.0, mult: 0.7,  dur: 5, range: 5, bonus: {}, unlock: 3, color: "#ff7a30", icon: "flame", sfx: "fire", desc: "대상 줄 3칸을 5초간 불태운다" },
   { id: "sweep",   name: "소탕",         slot: "active", kind: "multi",  cd: 6.0,  mult: 1.6,  side: 0.9, range: 4, bonus: { normal: 0.4 }, unlock: 3, color: "#c0ffc0", icon: "sweep", sfx: "slash", desc: "일반 몹에게 추가 피해를 주는 광역" },
   { id: "cry",     name: "전투 함성",     slot: "active", kind: "buff",   cd: 18.0, mult: 0, dur: 8, power: 0.3, range: 6, bonus: {}, unlock: 3, color: "#ffd24a", icon: "horn", sfx: "buff", desc: "8초 동안 주는 피해 +30%" },
-  { id: "execute", name: "처형",         slot: "active", kind: "single", cd: 7.0,  mult: 9.0,  range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff6a6a", icon: "skull", sfx: "snipe", desc: "보스에게 큰 추가 피해" },
+  { id: "execute", name: "처형",         slot: "active", kind: "single", cd: 7.0,  mult: 8,  range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff6a6a", icon: "skull", sfx: "snipe", desc: "보스에게 큰 추가 피해" },
   { id: "frost",   name: "빙결 파동",     slot: "active", kind: "nova",   cd: 9.0,  mult: 1.2,  range: 5, chill: 2.0, bonus: {}, unlock: 4, color: "#a8e8ff", icon: "snow", sfx: "frost", desc: "사거리 안의 모든 적에게 피해, 공격이 느려진다" },
   { id: "vamp",    name: "흡혈 참격",     slot: "active", kind: "single", cd: 4.5,  mult: 2.8,  range: 4, lifesteal: 0.25, bonus: {}, unlock: 4, color: "#ff6aa0", icon: "fang", sfx: "slash", desc: "피해의 25%를 체력으로 회복" },
   { id: "heal",    name: "치유의 빛",     slot: "active", kind: "heal",   cd: 16.0, mult: 0, power: 0.25, range: 6, bonus: {}, unlock: 4, color: "#9dffb0", icon: "heart", sfx: "heal", desc: "체력이 낮을 때 최대 체력의 25% 회복" },
-  { id: "thunder", name: "낙뢰",         slot: "active", kind: "multi",  cd: 8.0,  mult: 3.2,  side: 1.0, range: 6, bonus: {}, unlock: 5, color: "#fff0a0", icon: "cloud", sfx: "boom", desc: "강력한 3x3 낙뢰" },
+  { id: "thunder", name: "낙뢰",         slot: "active", kind: "multi",  cd: 8.0,  mult: 4.32,  side: 1.0, range: 6, bonus: {}, unlock: 5, color: "#fff0a0", icon: "cloud", sfx: "boom", desc: "강력한 3x3 낙뢰" },
   { id: "boomer",  name: "회전 도끼",     slot: "active", kind: "boomer", cd: 6.0,  mult: 1.5,  range: 6, back: 0.8, bonus: {}, unlock: 5, color: "#e0e8ff", icon: "axe", sfx: "pierce", desc: "줄을 꿰뚫고 돌아오며 한 번 더 벤다" },
   { id: "pierce2", name: "섬광 관통",     slot: "active", kind: "pierce", cd: 7.0,  mult: 2.8,  range: 6, bonus: { ranged: 0.3 }, unlock: 6, color: "#fff", icon: "spear", sfx: "pierce", desc: "원거리에 추가 피해를 주는 관통" },
-  { id: "meteor",  name: "유성",         slot: "active", kind: "meteor", cd: 12.0, mult: 1.9,  side: 1.0, range: 6, count: 3, bonus: { elite: 0.3, boss: 0.3 }, unlock: 7, color: "#ff8a4a", icon: "meteor", sfx: "meteor", desc: "유성 3개가 무작위 적 위에 떨어진다" },
+  { id: "meteor",  name: "유성",         slot: "active", kind: "meteor", cd: 12.0, mult: 1.6,  side: 1.0, range: 6, count: 3, bonus: { elite: 0.3, boss: 0.3 }, unlock: 7, color: "#ff8a4a", icon: "meteor", sfx: "meteor", desc: "유성 3개가 무작위 적 위에 떨어진다" },
 ];
 const SKILL_RARITY = [
   { name: "일반", mult: 1.0,  cdMul: 1.0,  bonusMul: 1.0, w: 70, cls: "r0" },
@@ -1131,17 +1131,17 @@ const STATUS_INFO = { bleed: { name: "출혈", color: "#e03a4a", st: "phys" }, p
     S({ id: "blizzard", name: "눈보라", kind: "zone2", zk: "snow", cd: 13, mult: 0.42, dur: 6, every: 0.5, range: 6, unlock: 5, color: "#bfeaff", icon: "snow2", sfx: "blizzard", dtype: "mag", elem: "cold", mana: 32, chill: 1.5, desc: "6초 동안 뒤쪽 넓은 구역에 눈보라가 몰아쳐 적을 둔화시킨다", shape: "wide" }),
     S({ id: "inferno", name: "화염 폭풍", kind: "zone2", zk: "flame", cd: 11, mult: 0.55, dur: 5, every: 0.5, range: 5, unlock: 6, color: "#ff7a30", icon: "inferno", sfx: "inferno", dtype: "mag", elem: "fire", mana: 30, ignite: 0.35, desc: "5초 동안 3x3 구역을 불태우고 점화시킨다", shape: "area3" }),
     S({ id: "plague", name: "역병 구름", kind: "zone2", zk: "cloud", cd: 12, mult: 0.42, dur: 6, every: 0.5, range: 5, unlock: 6, color: "#8ae04a", icon: "plague", sfx: "plague", dtype: "mag", elem: "void", mana: 28, poison: 0.5, desc: "6초 동안 3x3 독구름이 머물며 중독을 겹쳐 쌓는다", shape: "area3" }),
-    S({ id: "storm", name: "뇌우", kind: "rain", cd: 12, mult: 1.05, count: 8, over: 3.0, range: 6, unlock: 7, color: "#fff08a", icon: "storm", sfx: "storm", dtype: "mag", elem: "light", mana: 34, desc: "3초 동안 하늘에서 번개 8줄기가 무작위 적을 내리친다", shape: "rain" }),
+    S({ id: "storm", name: "뇌우", kind: "rain", cd: 12, mult: 1.42, count: 8, over: 3.0, range: 6, unlock: 7, color: "#fff08a", icon: "storm", sfx: "storm", dtype: "mag", elem: "light", mana: 34, desc: "3초 동안 하늘에서 번개 8줄기가 무작위 적을 내리친다", shape: "rain" }),
     S({ id: "spirit", name: "정령 소환", kind: "summon", cd: 15, mult: 1.3, dur: 8, every: 1.0, range: 6, unlock: 7, color: "#8affc8", icon: "spirit", sfx: "summon2", dtype: "phys", mana: 28, desc: "8초 동안 정령이 앞줄의 적을 쉬지 않고 베어낸다", shape: "front" }),
     S({ id: "voidhole", name: "공허의 심연", kind: "hole", cd: 13, mult: 0.6, dur: 3, every: 0.5, range: 5, unlock: 8, color: "#c070ff", icon: "vortex", sfx: "voidhole", dtype: "mag", elem: "void", mana: 30, desc: "3초 동안 적을 빨아들이며 갈아버리는 심연을 연다", shape: "area3" }),
     // ---- 빌드별 보스 전용기: 단일 대상, 보스에게 +100% (일반 몹에게는 평범), 빌드 고유의 상태이상/속성을 확정으로 건다 ----
-    S({ id: "gut", name: "심장 도려내기", kind: "single", cd: 8, mult: 3.0, range: 5, bonus: { boss: 1.0 }, unlock: 5, color: "#ff6a6a", icon: "claw", sfx: "claw", dtype: "phys", mana: 20, bleed: 1.0, desc: "[출혈 빌드 · 보스 전용기] 한 대상을 베어 반드시 출혈을 일으킨다. 보스에게 +100% 피해", shape: "single" }),
-    S({ id: "toxin", name: "맹독 주입", kind: "single", cd: 8, mult: 1.6, range: 5, bonus: { boss: 1.0 }, unlock: 5, color: "#6ae04a", icon: "venom", sfx: "venom", dtype: "phys", mana: 20, poison: 1.0, desc: "[중독 빌드 · 보스 전용기] 한 대상에게 맹독을 주입해 반드시 중독시킨다. 보스에게 +100% 피해", shape: "single" }),
-    S({ id: "sunbrand", name: "태양의 낙인", kind: "single", cd: 9, mult: 3.6, range: 6, bonus: { boss: 1.0 }, unlock: 6, color: "#ff8a40", icon: "inferno", sfx: "meteor", dtype: "mag", elem: "fire", mana: 30, ignite: 1.0, desc: "[점화·화염 빌드 · 보스 전용기] 한 대상에 태양의 낙인을 찍어 반드시 점화시킨다. 보스에게 +100% 피해", shape: "single" }),
-    S({ id: "zerofrost", name: "절대영도", kind: "single", cd: 9, mult: 4.2, range: 6, bonus: { boss: 1.0 }, unlock: 6, color: "#8ae0ff", icon: "snow2", sfx: "frost", dtype: "mag", elem: "cold", mana: 30, chill: 2.0, desc: "[냉기 빌드 · 보스 전용기] 한 대상을 얼려 붙이고 크게 둔화시킨다. 보스에게 +100% 피해", shape: "single" }),
-    S({ id: "judgment", name: "벼락 처형", kind: "single", cd: 8, mult: 4.2, range: 6, bonus: { boss: 1.0 }, unlock: 6, color: "#fff08a", icon: "storm", sfx: "thunder", dtype: "mag", elem: "light", mana: 28, desc: "[번개 빌드 · 보스 전용기] 한 대상에게 벼락을 내리꽂는다. 보스에게 +100% 피해", shape: "single" }),
-    S({ id: "manaburst", name: "마력 응축탄", kind: "single", cd: 9, mult: 5.0, range: 6, bonus: { boss: 1.0 }, unlock: 7, color: "#c58bff", icon: "orb2", sfx: "orbit", dtype: "mag", mana: 55, desc: "[마나·주문 빌드 · 보스 전용기] 마나를 크게 쏟아 한 대상을 폭파한다. 마나 소모가 크다. 보스에게 +100% 피해", shape: "single" }),
-    S({ id: "reaper", name: "처형자 소환", kind: "summon", cd: 18, mult: 3.0, dur: 10, every: 1.0, range: 6, bonus: { boss: 1.0 }, unlock: 8, color: "#d0a0ff", icon: "spirit", sfx: "summon2", dtype: "phys", mana: 34, desc: "[소환 빌드 · 보스 전용기] 10초 동안 처형자가 가장 강한 적을 집요하게 벤다. 보스에게 +100% 피해", shape: "front" }),
+    S({ id: "gut", name: "심장 도려내기", kind: "single", cd: 8, mult: 7, range: 5, bonus: { boss: 1.0 }, unlock: 5, color: "#ff6a6a", icon: "claw", sfx: "claw", dtype: "phys", mana: 20, bleed: 1.0, desc: "[출혈 빌드 · 보스 전용기] 한 대상을 베어 반드시 출혈을 일으킨다. 보스에게 +100% 피해", shape: "single" }),
+    S({ id: "toxin", name: "맹독 주입", kind: "single", cd: 8, mult: 6.5, range: 5, bonus: { boss: 1.0 }, unlock: 5, color: "#6ae04a", icon: "venom", sfx: "venom", dtype: "phys", mana: 20, poison: 1.0, desc: "[중독 빌드 · 보스 전용기] 한 대상에게 맹독을 주입해 반드시 중독시킨다. 보스에게 +100% 피해", shape: "single" }),
+    S({ id: "sunbrand", name: "태양의 낙인", kind: "single", cd: 9, mult: 11, range: 6, bonus: { boss: 1.0 }, unlock: 6, color: "#ff8a40", icon: "inferno", sfx: "meteor", dtype: "mag", elem: "fire", mana: 30, ignite: 1.0, desc: "[점화·화염 빌드 · 보스 전용기] 한 대상에 태양의 낙인을 찍어 반드시 점화시킨다. 보스에게 +100% 피해", shape: "single" }),
+    S({ id: "zerofrost", name: "절대영도", kind: "single", cd: 9, mult: 13, range: 6, bonus: { boss: 1.0 }, unlock: 6, color: "#8ae0ff", icon: "snow2", sfx: "frost", dtype: "mag", elem: "cold", mana: 30, chill: 2.0, desc: "[냉기 빌드 · 보스 전용기] 한 대상을 얼려 붙이고 크게 둔화시킨다. 보스에게 +100% 피해", shape: "single" }),
+    S({ id: "judgment", name: "벼락 처형", kind: "single", cd: 8, mult: 9, range: 6, bonus: { boss: 1.0 }, unlock: 6, color: "#fff08a", icon: "storm", sfx: "thunder", dtype: "mag", elem: "light", mana: 28, desc: "[번개 빌드 · 보스 전용기] 한 대상에게 벼락을 내리꽂는다. 보스에게 +100% 피해", shape: "single" }),
+    S({ id: "manaburst", name: "마력 응축탄", kind: "single", cd: 9, mult: 9.5, range: 6, bonus: { boss: 1.0 }, unlock: 7, color: "#c58bff", icon: "orb2", sfx: "orbit", dtype: "mag", mana: 55, desc: "[마나·주문 빌드 · 보스 전용기] 마나를 크게 쏟아 한 대상을 폭파한다. 마나 소모가 크다. 보스에게 +100% 피해", shape: "single" }),
+    S({ id: "reaper", name: "처형자 소환", kind: "summon", cd: 18, mult: 2.2, dur: 10, every: 1.0, range: 6, bonus: { boss: 1.0 }, unlock: 8, color: "#d0a0ff", icon: "spirit", sfx: "summon2", dtype: "phys", mana: 34, desc: "[소환 빌드 · 보스 전용기] 10초 동안 처형자가 가장 강한 적을 집요하게 벤다. 보스에게 +100% 피해", shape: "front" }),
     // ---- 공허의 군주 전용 스킬 (공허의 군주만 드랍, 매우 낮은 확률): 일반 풀·상점에는 나오지 않는다 ----
     S({ id: "voidmaw", name: "공허의 아가리", kind: "hole", cd: 14, mult: 1.1, dur: 4, every: 0.35, range: 6, unlock: 11, voidOnly: true, color: "#b070ff", icon: "voidmaw", sfx: "voidhole", dtype: "mag", elem: "void", mana: 38, bonus: { boss: 0.2, elite: 0.2 }, desc: "4초 동안 거대한 아가리가 열려 주변 적을 끌어당기며 갈아버린다", shape: "area3" }),
     S({ id: "dimslash", name: "차원 절단", kind: "pierce", cd: 7, mult: 6.0, range: 7, unlock: 11, voidOnly: true, color: "#e0a0ff", icon: "dimslash", sfx: "pierce", dtype: "mag", elem: "void", mana: 26, ignoreAdd: 0.35, bonus: { boss: 0.35 }, desc: "한 줄을 통째로 갈라 마법저항을 35% 무시하고 보스에게 추가 피해", shape: "line" }),
@@ -1242,7 +1242,7 @@ UNIQUES.push(
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
 
 // 스킬별 1회 시전당 기본 피해 배율(대상 수 포함): test/calibrate_tm.js 가 엔진에서 직접 측정한 값. 새 스킬을 추가하거나 배율을 바꾸면 다시 측정한다.
-const SKILL_TM = {"strike": 1.14, "rapid": 0.58, "crush": 2.65, "spark": 1.76, "smash": 4.08, "bomb": 17.73, "lance": 22.23, "chain": 8.02, "snipe": 4, "firewall": 14.94, "sweep": 13.94, "execute": 7.71, "frost": 37.44, "vamp": 3.17, "thunder": 20.93, "boomer": 34.01, "pierce2": 33.95, "meteor": 104, "rend": 10.76, "volley": 5.33, "venom": 6.35, "iceshard": 4.33, "orbs": 18.07, "whirl": 40.9, "trap": 59.88, "blizzard": 48.4, "inferno": 38.6, "plague": 19.71, "storm": 43.41, "spirit": 9.58, "voidhole": 31.41, "voidmaw": 178.95, "dimslash": 62.6, "doomrain": 153.5, "abyssling": 90.9, "gut": 2.75, "toxin": 1.49, "sunbrand": 6.42, "zerofrost": 4.14, "judgment": 3.67, "manaburst": 4.68, "reaper": 20.55};
+const SKILL_TM = {"strike": 1.14, "rapid": 0.58, "crush": 2.65, "spark": 2.38, "smash": 4.08, "bomb": 17.73, "lance": 22.23, "chain": 10.85, "snipe": 4, "firewall": 14.94, "sweep": 13.94, "execute": 6.85, "frost": 37.44, "vamp": 3.17, "thunder": 28.26, "boomer": 34.01, "pierce2": 33.95, "meteor": 87.58, "rend": 10.76, "volley": 5.33, "venom": 6.35, "iceshard": 4.33, "orbs": 18.07, "whirl": 40.9, "trap": 59.88, "blizzard": 48.4, "inferno": 38.6, "plague": 19.71, "storm": 58.71, "spirit": 9.58, "voidhole": 31.41, "voidmaw": 178.95, "dimslash": 62.6, "doomrain": 153.5, "abyssling": 90.9, "gut": 6.42, "toxin": 6.05, "sunbrand": 19.62, "zerofrost": 12.81, "judgment": 7.86, "manaburst": 8.89, "reaper": 15.07};
 
 // =========================================================
 // 세이브 / 장비 / 스탯 / 퀘스트 / 대장간
@@ -2024,6 +2024,7 @@ function vsMult(sk, stats, e) {
 function pickPrimary(b, sk) {
   let cand = b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= sk.range && e.hp > 0);
   if (!cand.length) return null;
+  { const open = cand.filter((e) => !e.guard); if (open.length) cand = open; }   // 정령이 남아 있어 무적인 보스는 (다른 대상이 있으면) 겨냥하지 않는다: 우선순위 규칙 때문에 교착되는 것을 막는다
   if (b.designated && !b.designated.dead && cand.includes(b.designated)) return b.designated;
   const r = sk.rule;
   if (r === "auto") {
@@ -4447,7 +4448,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-071550";
+const BUILD_ID = "20261028-072202";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4539,6 +4540,12 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.13", date: "10/28", title: "보스전 밸런스 · 정령왕 교착 수정", items: [
+    "보스전 비교 결과를 반영했습니다. 같은 장비 품질에서 보스 처치 시간이 빌드별로 최대 2.5배 차이 났습니다 (화염·마나 주문 빌드가 가장 빠르고 번개 빌드가 가장 느림).",
+    "화염 정령왕에서 스킬 타겟 규칙이 '오토'나 '보스 우선'이면 정령이 남아 무적인 보스를 계속 겨냥해 정령을 잡지 못하고 전투가 교착되던 문제를 고쳤습니다. 이제 무적 상태의 보스는 다른 대상이 있으면 겨냥하지 않습니다.",
+    "빌드별 보스 전용기가 처형(물리)에 비해 3~7배 약했던 것을 올렸습니다. 이제 단독 보스 피해가 처형의 약 0.7~1.25배입니다 (처형 9 → 8, 심장 도려내기 3 → 7, 맹독 주입 1.6 → 6.5, 태양의 낙인 3.6 → 11, 절대영도 4.2 → 13, 벼락 처형 4.2 → 9, 마력 응축탄 5 → 9.5, 처형자 소환 3 → 2.2).",
+    "번개 계열 스킬(번개 찌르기·체인 라이트닝·낙뢰·뇌우)의 피해를 약 35% 올리고 유성의 피해를 약 16% 낮췄습니다. 전투력 계산표도 같은 비율로 갱신했습니다.",
+  ] },
   { ver: "3.12", date: "10/28", title: "물리·마법 밸런스 · 마나 1당 체력", items: [
     "같은 장비 품질·같은 패시브 포인트로 물리와 마법 빌드를 맞춰 비교한 결과, '최대 마나 100당 피해' 능력이 마나를 쌓는 빌드의 모든 피해를 크게는 +690%까지 올리는 것이 가장 큰 격차였습니다 (마나 주문 빌드 피해가 물리의 약 2배, 체력은 절반). 이 능력의 효율을 약 1/7로 낮췄습니다.",
     "반대로 일반 마법 빌드는 물리보다 약했습니다 (피해 약 60~65%). 마법 스킬 기본 배율을 0.95 → 1.10으로 올려 물리와 비슷한 수준으로 맞췄습니다.",

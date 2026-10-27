@@ -187,6 +187,7 @@ function vsMult(sk, stats, e) {
 function pickPrimary(b, sk) {
   let cand = b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= sk.range && e.hp > 0);
   if (!cand.length) return null;
+  { const open = cand.filter((e) => !e.guard); if (open.length) cand = open; }   // 정령이 남아 있어 무적인 보스는 (다른 대상이 있으면) 겨냥하지 않는다: 우선순위 규칙 때문에 교착되는 것을 막는다
   if (b.designated && !b.designated.dead && cand.includes(b.designated)) return b.designated;
   const r = sk.rule;
   if (r === "auto") {
