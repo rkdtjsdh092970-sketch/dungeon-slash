@@ -26,7 +26,7 @@ function genItem(sv, ilvl, rarity, slot, setId) {
   const R = ITEM_RARITY[rarity], g = gScale(ilvl);
   const it = { uid: sv.nextUid++, slot, ilvl, rarity, base: {}, affixes: [], enh: 0 };
   if (setId) it.setId = setId;
-  for (const k in SLOT_BASE[slot]) it.base[k] = SLOT_BASE[slot][k] * g * R.mult * rnd(0.9, 1.1);
+  for (const k in SLOT_BASE[slot]) it.base[k] = SLOT_BASE[slot][k] * g * rarMul(rarity, ilvl) * rnd(0.9, 1.1);
   const pool = AFFIXES.filter((a) => (!a.minRarity || rarity >= a.minRarity || (a.minRarity === 2 && rarity === 4)) && (!a.slots || a.slots.includes(slot)) && (!a.minIlvl || ilvl >= a.minIlvl) && !(rarity === 4 && a.k === "lanes"));
   const used = new Set();
   for (let i = 0; i < R.affixes; i++) {
@@ -38,11 +38,11 @@ function genItem(sv, ilvl, rarity, slot, setId) {
 }
 // 드랍 옵션은 낮은 수치가 잘 나오고(평균 범위의 ~35%), 재굴림/구슬로 직접 뽑을 때만 높은 수치가 잘 나온다
 function rollAffix(a, g, R, rarity, crafted) {
-  const u = Math.random(), t = crafted ? Math.pow(u, 0.55) : Math.pow(u, 1.2);
+  const ilvl = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1), end = ilvl > 10;
+  const u = Math.random(), t = crafted ? Math.pow(u, end ? 0.55 : 0.8) : (end ? Math.pow(u, 1.2) : u);
   let v = a.range[0] + (a.range[1] - a.range[0]) * t;
-  const ilvl = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1);
-  if (a.flat) v *= Math.pow(g, a.gp || 1) * R.mult;
-  else if (a.pct) v *= (0.72 + 0.05 * Math.min(ilvl, 12)) * (crafted ? 1.12 : 1);
+  if (a.flat) v *= Math.pow(g, a.gp || 1) * (end ? rarMul(rarity, ilvl) : R.mult);
+  else if (a.pct) v *= (0.72 + 0.05 * Math.min(ilvl, 12)) * (crafted ? (end ? 1.12 : 1.05) : 1);
   else v = Math.round(v);
   return v;
 }
