@@ -431,6 +431,13 @@ function buyAtlas(sv, id) {
 }
 const SHOP_MIN = 20;
 const skillPrice = (d, rarity) => Math.round(70 * Math.pow(1.55, d.unlock - 1) * [1, 3.5, 12][rarity] * (d.slot === "basic" ? 0.6 : 1));
+const skillSellValue = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return Math.max(5, Math.round(skillPrice(d, inst.rarity) * 0.4 * (1 + 0.25 * ((inst.lvl || 1) - 1)))); };
+const skillInPreset = (sv, inst) => (sv.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid));
+function sellSkill(sv, inst) {
+  if (sv.loadout.some((l) => l && l.uid === inst.uid) || skillInPreset(sv, inst)) return null;
+  const v = skillSellValue(inst); sv.gold += v; if (inst.rune) sv.runes.push({ uid: sv.nextUid++, id: inst.rune });   // 장착한 룬은 돌려준다
+  sv.skills = sv.skills.filter((x) => x !== inst); return v;
+}
 function shopStock(sv, now) {
   now = now || Date.now(); const slot = Math.floor(now / (SHOP_MIN * 60000)), act = maxActUnlocked(sv);
   if (!sv.shop || sv.shop.slot !== slot) sv.shop = { slot, bought: [] };
