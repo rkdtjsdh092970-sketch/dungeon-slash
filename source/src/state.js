@@ -532,11 +532,6 @@ function buySkill(sv, idx) {
   sv.gold -= o.price; sv.shop.bought.push(idx); sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
 }
 const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
-function void4Info(sv) {   // 공허의 군주 4단계: 하루 입장 횟수 제한 (열쇠를 많이 모아 둬도 보상 인플레가 한 번에 오지 않게)
-  if (!sv.void4) sv.void4 = { day: "", used: 0 };
-  if (sv.void4.day !== localDay()) { sv.void4.day = localDay(); sv.void4.used = 0; }
-  return { max: CFG.VOID4_DAILY, used: sv.void4.used, left: Math.max(0, CFG.VOID4_DAILY - sv.void4.used) };
-}
 function endlessInfo(sv) {
   if (!sv.endless) sv.endless = { day: "", used: 0, best: 0, bestKills: 0 };
   if (sv.endless.day !== localDay()) { sv.endless.day = localDay(); sv.endless.used = 0; }
