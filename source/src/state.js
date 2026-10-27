@@ -257,7 +257,8 @@ function enhance(sv, it) {
   if (Math.random() < rate) { sv.ore -= c.ore; it.enh = (it.enh || 0) + 1; questEvent(sv, { type: "enhance" }); return { ok: true, success: true, msg: `+${it.enh} 강화 성공!` }; }
   sv.ore -= Math.ceil(c.ore / 2); return { ok: true, success: false, msg: "강화 실패 (강화석 일부만 소모)" };
 }
-const itemValue = (it) => Math.round(8 * gScale(it.ilvl) * (1 + it.rarity * 1.1 + (it.enh || 0) * 0.5));
+const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
+const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
 function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
