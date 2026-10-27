@@ -1,0 +1,12 @@
+const { chromium } = require('playwright');
+(async () => {
+  const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 960, height: 540 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PE ' + e.message));
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(800);
+  await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.slots = 2; const k = genSkill(save, 'chain', 0); save.skills.push(k); save.loadout[1] = { uid: k.uid, rule: 'front' }; openTown(1); openSkills(); });
+  await pg.waitForTimeout(300);
+  await pg.click('.skc[data-s="1"]'); await pg.waitForTimeout(300);
+  console.log(await pg.evaluate(() => [...document.querySelectorAll('.skdet .dbtns .btn')].map(b => b.textContent.replace(/\s+/g,' ') + (b.disabled ? ' [X]' : '')).join(' | ')));
+  await pg.screenshot({ path: '/tmp/sk.png' });
+  console.log(errs.join('\n') || 'no errors'); await br.close();
+})();
