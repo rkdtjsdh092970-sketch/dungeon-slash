@@ -3,6 +3,7 @@ const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers
 const J = (o, s) => new Response(JSON.stringify(o), { status: s || 200, headers: { "content-type": "application/json", ...CORS } });
 const now = () => Date.now();
 const GAME_RAW = "https://raw.githubusercontent.com/rkdtjsdh092970-sketch/dungeon-slash/main/";   // 게임 파일(index.html, ver.txt)이 올라가는 저장소
+const rawUrl = (f) => GAME_RAW + f + "?t=" + Math.floor(Date.now() / 30000);   // 30초마다 새 주소로 받아 GitHub 캐시를 피한다
 const FEE = 0.05, MAX_LISTINGS = 5, EXPIRE_MS = 3 * 86400000, GUILD_COST = 20000, NAME_RE = /^[0-9A-Za-z가-힣_]{2,12}$/;
 async function hash(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("ds1|" + s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
 const guildLevel = (exp) => Math.min(10, 1 + Math.floor(Math.sqrt(exp / 50000)));
@@ -21,11 +22,14 @@ export default {
     const url = new URL(req.url), path = url.pathname.replace(/\/+$/, ""), DB = env.DB;
     try {
       if ((path === "" || path === "/index.html") && req.method === "GET") {   // 게임 본체: 주소창에 바로 입력해서 접속
-        const r = await fetch(GAME_RAW + "index.html", { cf: { cacheTtl: 20 } }); if (!r.ok) return new Response("게임 파일을 불러오지 못했습니다", { status: 502 });
-        return new Response(r.body, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+        const r = await fetch(rawUrl("index.html"), { cf: { cacheTtl: 20 } }); if (!r.ok) return new Response("게임 파일을 불러오지 못했습니다", { status: 502 });
+        return new Response(r.body, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
       }
       if (path === "/api/ping") return J({ ok: true, t: now() });
-      if (path === "/api/ver") { let v = ""; try { v = (await (await fetch(GAME_RAW + "ver.txt", { cf: { cacheTtl: 20 } })).text()).trim(); } catch (e) {} return J({ ver: v }); }
+      if (path === "/api/ver") {   // 서비스 중인 index.html 안의 BUILD_ID를 그대로 읽는다 (게임 본체와 항상 같은 값)
+        let v = ""; try { const t = await (await fetch(rawUrl("index.html"), { cf: { cacheTtl: 20 } })).text(); const m = t.match(/const BUILD_ID = "([^"]+)"/); v = m ? m[1] : ""; } catch (e) {}
+        return new Response(JSON.stringify({ ver: v }), { headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS } });
+      }
       let body = {}; if (req.method === "POST") { try { body = await req.json(); } catch (e) {} }
 
       // ---- 로그인 / 가입 ----
