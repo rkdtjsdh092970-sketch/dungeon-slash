@@ -88,6 +88,10 @@ function paintBuilding(type) {
     R(-34, -6, 12, 6, "#3a3a46"); R(-32, -9, 8, 4, "#5a5a6a"); R(-30, -11, 4, 2, "#8a8a9a"); R(-36, -8, 3, 2, "#5a5a6a"); R(-34, -9, 10, 1, "#9a9aae");     // 모루
     for (let i = 0; i < 4; i++) { R(24 + i * 3, -4 - (i % 2) * 3, 10, 3, "#8a5a32"); R(24 + i * 3, -4 - (i % 2) * 3, 10, 1, "#b88252"); } R(24, 0, 14, 1, "#5a3c20");
     lantern(-22, -26);
+  } else if (type === "mail") {   // 우편함: 붉은 우체통 + 깃발 + 삐져나온 편지
+    shadow(14); R(-3, -26, 6, 26, "#5a3a22"); R(-3, -26, 1, 26, "#7a5232"); R(-14, -46, 28, 22, "#b83a2a"); R(-14, -46, 28, 3, "#e0644e"); R(-14, -27, 28, 3, "#8a2a1e"); R(-14, -46, 3, 22, "#d4503e"); R(11, -46, 3, 22, "#8a2a1e");
+    R(-9, -36, 18, 3, "#2a1410"); R(-7, -33, 14, 4, "#f2ead2"); R(-7, -33, 14, 1, "#fff"); R(-5, -30, 3, 1, "#c8b890"); R(14, -50, 3, 18, "#5a3a22"); R(17, -50, 9, 6, "#ffd24a"); R(17, -50, 9, 1, "#fff0a0");
+    R(-9, -49, 18, 3, "#8a2a1e"); R(-12, -3, 24, 3, "#4a3a28");
   } else if (type === "board") {   // 퀘스트 게시판: 지붕 달린 나무 게시판 + 벤치
     R(-24, -44, 4, 44, "#6a4426"); R(20, -44, 4, 44, "#6a4426"); R(-24, -44, 1, 44, "#8a5c34"); planks(-20, -38, 40, 26, "#a87a46"); R(-21, -39, 42, 2, "#3a2414"); R(-21, -13, 42, 2, "#3a2414");
     roofTrap(-30, -52, 60, 10, "#8a4a30", 14); R(-28, -42, 56, 2, "#3a2414");
@@ -177,4 +181,5 @@ function drawBuilding(g, type, x, y, theme, hot) {
   if (hot) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.22; g.drawImage(cv, x - TB_OX, y - TB_OY); }
   g.restore(); drawBuildingAnim(g, type, x, y); if (type === "notice" && typeof notesUnread === "function" && notesUnread()) drawNew(g, x, y);
   if (type === "board" && typeof questBang === "function" && questBang(TownView.act)) drawBang(g, x, y);
+  if (type === "mail" && (G.mailN || 0) > 0) drawBang(g, x, y - 12);
 }

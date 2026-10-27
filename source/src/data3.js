@@ -112,7 +112,7 @@ const U_TIERS = [
   { id: 4, name: "엔젤릭", color: "#ffffff", w: 2, mult: 2.0 },
 ];
 // 출처 풀: common(공용: 어디서나) / hell(지옥 스테이지) / tower(균열 탑) / endless(무한 균열) / void(공허의 군주)
-const U_POOLS = { common: "공용", hell: "지옥", tower: "균열 탑", endless: "무한 균열", void: "공허의 군주", fire: "화염 정령왕" };
+const U_POOLS = { common: "공용", hell: "지옥", tower: "균열 탑", endless: "무한 균열", void: "공허의 군주", fire: "화염 정령왕", phys: "철갑의 투사", light: "뇌제" };
 // mods: [키, 값 또는 [최소,최대]]   act: 이 액트 이상에서 드랍(공용)
 // 고유 능력: 부활·레인·회피 불가·쿨감/회피 상한 같은 핵심 효과만 고정이고, 나머지 수치는 모두 ±12% 범위 안에서 롤된다
 const U_FIXED = new Set(["revive", "lanes", "noDodge", "magCrit", "cdrCap", "dodgeCap", "defMore", "density", "chainJumps"]);
@@ -187,6 +187,22 @@ const UNIQUES = [
   U("salamandermail", "불도마뱀 갑피", "armor", 2, "fire", 1, [["hpPct", [0.3, 0.38]], ["fireDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "불길 속에서만 따뜻하다."),
   U("spiritflame", "정령의 불꽃 목걸이", "neck", 3, "fire", 1, [["fireDmg", [0.8, 1.0]], ["elemDmg", [0.2, 0.25]], ["igniteChance", 0.3], ["dotDur", 0.3], ["penElem", 0.2]], "목에 걸면 심장이 불꽃처럼 뛴다."),
   U("pyrelordcrown", "화염 정령왕의 관", "helm", 4, "fire", 1, [["fireDmg", [1.0, 1.2]], ["dotDmg", [0.8, 1.0]], ["igniteChance", 0.35], ["penElem", 0.3], ["magMore", [1.25, 1.32]], ["cdr", 0.1]], "불은 꺼지지 않는다. 왕이 쓰러져도."),
+  // ---- 철갑의 투사 그라크 (물리 전용 풀) ----
+  U("ironfist", "투사의 철장갑", "gloves", 1, "phys", 1, [["physDmg", [0.28, 0.36]], ["dotDmg", [0.3, 0.4]], ["atkPct", [0.08, 0.1]]], "주먹이 곧 갑옷이다."),
+  U("gladsigil", "검투사의 인장", "ring", 1, "phys", 1, [["physDmg", [0.25, 0.32]], ["critChance", [0.08, 0.1]], ["bleedChance", [0.1, 0.14]]], "관중의 함성이 반지에 새겨져 있다."),
+  U("gorecleaver", "핏빛 전투도끼", "weapon", 2, "phys", 1, [["physDmg", [0.55, 0.7]], ["bleedChance", [0.2, 0.25]], ["dotDmg", [0.4, 0.5]], ["atkPct", [0.2, 0.25]]], "한 번 휘두르면 바닥이 붉게 젖는다."),
+  U("ironhide", "철갑 흉갑", "armor", 2, "phys", 1, [["hpPct", [0.3, 0.38]], ["physDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "맞을수록 단단해진다."),
+  U("gorakneck", "그라크의 전리품 목걸이", "neck", 3, "phys", 1, [["physDmg", [0.8, 1.0]], ["bleedChance", 0.3], ["dotDur", 0.3], ["ignoreDef", 0.2], ["dotDmg", [0.4, 0.5]]], "꿰어 단 이빨은 모두 이긴 상대의 것."),
+  U("slayerseal", "학살자의 문장", "ring", 3, "phys", 1, [["critChance", [0.18, 0.22]], ["critDmg", [0.8, 1.0]], ["physDmg", [0.4, 0.5]]], "급소는 언제나 같은 곳에 있다."),
+  U("titanblade", "거신의 대검", "weapon", 4, "phys", 1, [["physDmg", [1.0, 1.2]], ["dotDmg", [0.8, 1.0]], ["bleedChance", 0.35], ["ignoreDef", 0.3], ["atkMore", [1.25, 1.32]], ["cdr", 0.1]], "강철은 부러져도 의지는 부러지지 않는다."),
+  // ---- 뇌제 라이곤 (번개 전용 풀) ----
+  U("stormglove", "뇌운의 장갑", "gloves", 1, "light", 1, [["lightDmg", [0.28, 0.36]], ["chainDmg", [0.3, 0.4]], ["magPct", [0.08, 0.1]]], "손끝에서 자꾸 불꽃이 튄다."),
+  U("staticring", "정전기 반지", "ring", 1, "light", 1, [["lightDmg", [0.25, 0.32]], ["spellCrit", [0.1, 0.14]], ["magPct", [0.06, 0.08]]], "만지면 따끔하다. 만지지 않아도."),
+  U("stormstaff", "뇌광의 지팡이", "weapon", 2, "light", 1, [["lightDmg", [0.55, 0.7]], ["chainDmg", [0.4, 0.5]], ["spellCrit", [0.12, 0.16]], ["magPct", [0.2, 0.25]]], "번개는 가장 먼저 이 끝으로 떨어진다."),
+  U("dischargerobe", "방전의 로브", "armor", 2, "light", 1, [["hpPct", [0.3, 0.38]], ["lightDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "맞은 번개는 돌려주면 그만이다."),
+  U("tempestheart", "폭풍의 심장", "neck", 3, "light", 1, [["lightDmg", [0.8, 1.0]], ["chainJumps", 2], ["chainDmg", [0.5, 0.6]], ["penElem", 0.2], ["elemDmg", [0.2, 0.25]]], "고동칠 때마다 먹구름이 모여든다."),
+  U("thundercrown", "뇌운의 관", "helm", 3, "light", 1, [["lightDmg", [0.6, 0.8]], ["spellCrit", [0.2, 0.25]], ["magPct", [0.3, 0.35]], ["cdr", 0.06]], "쓰고 있으면 머리카락이 곤두선다."),
+  U("stormsovereign", "뇌제의 심장", "neck", 4, "light", 1, [["lightDmg", [1.0, 1.2]], ["chainJumps", 5], ["chainDmg", [0.9, 1.1]], ["penElem", 0.3], ["magMore", [1.25, 1.32]], ["spellCrit", 0.2], ["cdr", 0.1]], "번개의 왕이 쓰러져도 폭풍은 멈추지 않는다."),
 ];
 const UNIQUE_BY_ID = Object.fromEntries(UNIQUES.map((u) => [u.id, u]));
 UNIQUES.forEach((u) => { u.ico = u.slot; });

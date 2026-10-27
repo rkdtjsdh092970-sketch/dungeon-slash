@@ -29,6 +29,7 @@ async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
   if (r.revokeOn && save) stripAngelicLocal();
+  setTimeout(() => { if (typeof mailPoll === "function") mailPoll(); }, 300);
   api("/api/guild/me").then((g) => { if (save && g && !g.err) { save.guildLv = g.guild ? g.guild.level : 0; } }).catch(() => {});
   SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
@@ -154,4 +155,23 @@ async function openGuild() {
     gsend: async () => { const m = $("#gd-msg").value; if (!m.trim()) return; await api("/api/guild/chat", { msg: m }); rerender(); },
   } });
   const ch = $("#gd-chat"); if (ch) ch.scrollTop = ch.scrollHeight;
+}
+
+// ---------- 우편함 (서버 우편: 운영 보상 등) ----------
+const MAILN = { poll: 0 };
+async function mailPoll() {   // 안 받은 우편 개수 → 마을 우편함에 느낌표
+  if (!SRV.on) { G.mailN = 0; return; } try { const r = await api("/api/mail/list"); G.mailN = r && r.rows ? r.rows.filter((m) => !m.claimed).length : 0; } catch (e) {}
+}
+function mailRewardText(m) { return [m.gold ? `${fmtC(m.gold)}G` : "", m.ore ? `강화석 ${fmtN(m.ore)}` : ""].filter(Boolean).join(" · ") || "첨부 없음"; }
+async function openMail() {
+  if (!SRV.on) { Modal.open(`<h2>우편함</h2><div class="center pad dim">서버에 로그인하면 우편함을 이용할 수 있습니다.<br>운영 보상과 알림이 이곳으로 도착합니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button><button class="btn" data-a="cl">닫기</button></div>`, { cls: "sm", on: { gl: () => loginDialog(openMail), cl: () => Modal.close() } }); return; }
+  const r = await api("/api/mail/list"); if (r.err) { toast(r.err, "bad"); return; }
+  const rows = r.rows || [], unc = rows.filter((m) => !m.claimed); G.mailN = unc.length;
+  const fmtD = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  Modal.open(`<h2>우편함 ${unc.length ? `<small style="color:#ffd24a">(${unc.length}통 미수령)</small>` : ""}</h2>
+   ${unc.length > 1 ? `<div class="pbtns" style="margin:4px 0"><button class="btn pri" data-a="mall">모두 받기 (${unc.length}통)</button></div>` : ""}
+   <div class="qlist" style="max-height:330px;overflow:auto">${rows.map((m) => `<div class="qrow" style="${m.claimed ? "opacity:.55" : ""}"><div class="qi"><b>${String(m.title).replace(/</g, "&lt;")}</b> <small class="dim">${fmtD(m.created)}</small><div class="dim" style="white-space:pre-wrap">${String(m.body || "").replace(/</g, "&lt;")}</div><div style="color:#ffe08a">🎁 ${mailRewardText(m)}</div></div>${m.claimed ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="mget" data-id="${m.id}">받기</button>`}</div>`).join("") || `<div class="dim center pad">받은 우편이 없습니다</div>`}</div>`, { cls: "wide", on: {
+    mget: async (el) => { const c = await api("/api/mail/claim", { id: +el.dataset.id }); if (c.err) { toast(c.err, "bad"); return openMail(); } save.gold += c.gold || 0; save.ore += c.ore || 0; saveGame(); refreshTop(); snd("coin"); toast(`우편 수령: ${mailRewardText(c)}`, "ok"); openMail(); },
+    mall: async () => { const c = await api("/api/mail/claimall", {}); if (c.err) { toast(c.err, "bad"); return openMail(); } save.gold += c.gold || 0; save.ore += c.ore || 0; saveGame(); refreshTop(); snd("coin"); toast(`우편 ${c.n}통 수령: ${mailRewardText(c)}`, "ok"); openMail(); },
+  } });
 }

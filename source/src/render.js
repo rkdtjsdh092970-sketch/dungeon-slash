@@ -6,6 +6,8 @@ const ROLE_IDX = { imp: 0, grunt: 1, archer: 2, mage: 3, brute: 4, spec: 5 };
 function spriteOf(b, e) {
   if (e.type === "warp") return ["eye", 270];
   if (e.type === "hwarp") return ["eye", 20];
+  if (e.type === "twarp") return ["eye", 45];
+  if (e.type === "swarp") return ["eye", 190];
   if (e.type === "sniper") { const va0 = e.va != null ? e.va : Math.min(10, b.act) - 1, r0 = ROSTER[va0][2]; return [r0[0], 330]; }
   const va = e.va != null ? e.va : Math.min(10, b.act) - 1, r = ROSTER[va][ROLE_IDX[e.type]]; return [r[0], r[1] || 0];
 }
@@ -50,7 +52,7 @@ function drawEnemy(ctx, b, e, time) {
     return;
   }
   const [skey, shue] = spriteOf(b, e), meta = SPR_META[skey], sheet = getSheet(skey, shue), sc = e.tier === "elite" && meta.cell === 48 ? 2.5 : D.sc, kind = skey, top = y - meta.h * sc - 6;
-  if (e.type === "warp" || e.type === "hwarp") { const g = ctx.createRadialGradient(x, y - 40, 4, x, y - 40, 60 + Math.sin(time * 6) * 8); g.addColorStop(0, (e.type === "hwarp" ? "rgba(255,150,60,.55)" : "rgba(210,140,255,.55)")); g.addColorStop(1, (e.type === "hwarp" ? "rgba(255,150,60,0)" : "rgba(210,140,255,0)")); ctx.fillStyle = g; ctx.fillRect(x - 70, y - 110, 140, 140); for (let i = 0; i < 5; i++) { const a = time * 3 + i * 1.26; ctx.fillStyle = "#f0d8ff"; ctx.fillRect(x + Math.cos(a) * 36 - 2, y - 44 + Math.sin(a) * 26 - 2, 4, 4); } }
+  if (e.type === "warp" || e.type === "hwarp" || e.type === "twarp" || e.type === "swarp") { const g = ctx.createRadialGradient(x, y - 40, 4, x, y - 40, 60 + Math.sin(time * 6) * 8); g.addColorStop(0, (e.type === "hwarp" ? "rgba(255,150,60,.55)" : e.type === "twarp" ? "rgba(210,200,170,.55)" : e.type === "swarp" ? "rgba(255,230,90,.55)" : "rgba(210,140,255,.55)")); g.addColorStop(1, (e.type === "hwarp" ? "rgba(255,150,60,0)" : "rgba(210,140,255,0)")); ctx.fillStyle = g; ctx.fillRect(x - 70, y - 110, 140, 140); for (let i = 0; i < 5; i++) { const a = time * 3 + i * 1.26; ctx.fillStyle = "#f0d8ff"; ctx.fillRect(x + Math.cos(a) * 36 - 2, y - 44 + Math.sin(a) * 26 - 2, 4, 4); } }
   let anim = "idle", t = e.age + e.id * 0.37;
   if (e.hurtT > 0) { anim = "hurt"; t = 0; } else if (e.winding > 0) { anim = "attack"; t = (1 - e.winding / e.windup) * 0.49; } else if (e.col > e.range) { anim = "walk"; t = e.age; }
   const af = animFrame(kind, anim, t);
@@ -171,6 +173,8 @@ const MapView = {
     if (n.kind === "endless") { for (let i = 0; i < 3; i++) { g.strokeStyle = `rgba(120,230,255,${0.9 - i * 0.25})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 7 + i * 5, -time * 2 + i, -time * 2 + i + 4.2); g.stroke(); } g.fillStyle = "#06141c"; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.fillStyle = "#bff4ff"; g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.fillText("∞", x, y + 4); return; }
     if (n.kind === "vault") { orb("#6a5208", "#ffd24a", 13 * pulse); g.fillStyle = "#fff0a0"; g.fillRect(x - 7, y - 4, 14, 9); g.fillStyle = "#b8860b"; g.fillRect(x - 7, y - 4, 14, 3); g.fillStyle = "#6a3a08"; g.fillRect(x - 2, y, 4, 4); g.fillStyle = "#ffe880"; g.fillRect(x - 4, y - 9, 8, 3); return; }
     if (n.kind === "hive") { orb("#7a2208", "#ff9a30", 14 * pulse); g.fillStyle = "#ffd070"; g.fillRect(x - 4, y - 9, 8, 4); g.fillRect(x - 6, y - 5, 12, 8); g.fillStyle = "#ff5a20"; g.fillRect(x - 3, y - 2, 6, 6); g.fillStyle = "#fff0b0"; g.fillRect(x - 1, y, 2, 3); return; }
+    if (n.kind === "titan") { orb("#3a3a44", "#c8d0e0", 14 * pulse); g.fillStyle = "#e8eef8"; g.fillRect(x - 6, y - 8, 12, 5); g.fillStyle = "#8a94b0"; g.fillRect(x - 7, y - 4, 14, 9); g.fillStyle = "#d83a4a"; g.fillRect(x - 4, y - 2, 3, 2); g.fillRect(x + 1, y - 2, 3, 2); g.fillStyle = "#c8d0e0"; g.fillRect(x - 2, y + 3, 4, 3); return; }
+    if (n.kind === "storm") { orb("#2a3a68", "#ffe45a", 14 * pulse); g.fillStyle = "#8a94b0"; g.fillRect(x - 8, y - 9, 16, 5); g.fillStyle = "#aab4d0"; g.fillRect(x - 5, y - 11, 10, 4); g.fillStyle = "#fff6b0"; g.fillRect(x, y - 4, 3, 4); g.fillRect(x - 3, y - 1, 4, 3); g.fillRect(x - 1, y + 2, 3, 5); g.fillStyle = "#ffd024"; g.fillRect(x + 1, y - 3, 1, 3); return; }
     if (n.kind === "void") { orb("#3a1068", "#c070ff", 14 * pulse); g.fillStyle = "#e8d0ff"; g.fillRect(x - 6, y - 7, 12, 10); g.fillRect(x - 4, y + 2, 8, 4); g.fillStyle = "#1a0830"; g.fillRect(x - 4, y - 4, 3, 3); g.fillRect(x + 1, y - 4, 3, 3); g.fillStyle = "#ff6af0"; g.fillRect(x - 3, y - 3, 1, 1); g.fillRect(x + 2, y - 3, 1, 1); return; }
     if (n.kind === "trial") { orb("#8a6a10", "#ffd24a", 13 * pulse); g.strokeStyle = "#fff6c0"; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 7, y + 7); g.lineTo(x + 7, y - 7); g.moveTo(x + 7, y + 7); g.lineTo(x - 7, y - 7); g.stroke(); return; }
     if (n.kind === "rift") { for (let i = 0; i < 4; i++) { g.strokeStyle = `rgba(200,140,255,${0.9 - i * 0.2})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 8 + i * 5 + Math.sin(time * 2 + i) * 2, time + i, time + i + 4); g.stroke(); } g.fillStyle = "#1a0830"; g.beginPath(); g.arc(x, y, 8, 0, 7); g.fill(); return; }
@@ -230,6 +234,7 @@ const TOWN_SPOTS = [
   { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
   { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
   { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "길드 · 길드 패시브 · 랭킹", back: true },
+  { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
 ];

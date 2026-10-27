@@ -116,9 +116,32 @@ BOSSES.push({ id: "flame", name: "화염 정령왕 아스카", w: 3, h: 2, hp: 2
   abilities: [{ id: "summon", every: 12, count: 9, type: "imp", text: "불꽃 정령이 몰려온다! 모두 처치해야 왕을 벨 수 있다!" }, { id: "wound", every: 13, dur: 7, mult: 0.5, text: "작열의 낙인! 생명력 흡수·회복이 반감된다!" }, { id: "rain", every: 11, hits: 5, mult: 0.5, text: "불씨가 쏟아진다!" },
     { id: "charge", every: 17, windup: 2.4, mult: 3.4, interrupt: 0.05, text: "아스카가 불길을 모은다!" }, { id: "enrage", at: 0.3, text: "아스카가 타오른다!" }], desc: "불꽃 정령 대군 · 정령을 모두 처치해야 피해를 줄 수 있음 · 치유 감소 · 불비" });
 const HIVE_BOSS = BOSSES[BOSSES.length - 1];
+// 철갑의 투사 그라크 (물리 전용): 철갑 태세 중에는 직접 타격이 거의 통하지 않아 출혈·중독 같은 지속 피해가 필요하다. 가시 갑옷은 스킬 피해를 되돌려준다. 물리 빌드 장비를 준다.
+BOSSES.push({ id: "titan", name: "철갑의 투사 그라크", w: 3, h: 2, hp: 2200, atk: 27, range: 4, interval: 2.2, windup: 0.9, exp: 320, gold: 320, sc: 4, hue: 200, art: 2, titan: true,
+  abilities: [{ id: "plate", every: 19, dur: 7, red: 0.85, text: "철갑 태세! 직접 타격이 거의 통하지 않는다 — 출혈·중독 같은 지속 피해로 뚫어라!" }, { id: "reflect", every: 24, dur: 6, pct: 0.18, text: "가시 갑옷! 스킬로 때릴수록 피해가 되돌아온다!" },
+    { id: "summon", every: 14, count: 7, type: "grunt", text: "철갑 병사들이 몰려온다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "분쇄된 뼈! 생명력 흡수·회복이 반감된다!" },
+    { id: "rain", every: 12, hits: 4, mult: 0.7, text: "대지가 갈라진다!" }, { id: "charge", every: 18, windup: 2.6, mult: 3.8, interrupt: 0.05, text: "그라크가 도끼를 높이 치켜든다!" }, { id: "enrage", at: 0.3, text: "그라크가 광란한다!" }], desc: "철갑 태세(직접 타격 감소) · 가시 갑옷(반사) · 병사 소환 · 치유 감소 · 대지 가르기" });
+const TITAN_BOSS = BOSSES[BOSSES.length - 1];
+// 뇌제 라이곤 (번개 전용): 피뢰침이 살아 있는 동안 계속 감전되어 받는 피해가 커지고, 연쇄 번개와 감전 마비가 몰아친다. 번개 빌드 장비를 준다.
+BOSSES.push({ id: "storm", name: "뇌제 라이곤", w: 3, h: 2, hp: 2000, atk: 26, range: 4, interval: 2.0, windup: 0.8, exp: 320, gold: 320, sc: 4, hue: 20, art: 8, storm: true,
+  abilities: [{ id: "pylon", every: 17, count: 3, text: "피뢰침이 솟는다! 살아 있는 동안 감전되어 받는 피해가 커진다 — 부숴라!" }, { id: "chainbolt", every: 11, hits: 8, mult: 0.32, text: "연쇄 번개!" },
+    { id: "freeze", every: 21, dur: 1.5, text: "감전! 몸이 굳는다!" }, { id: "charge", every: 17, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "라이곤이 번개를 모은다!" },
+    { id: "summon", every: 15, count: 6, type: "imp", text: "스파크가 튄다!" }, { id: "enrage", at: 0.3, text: "라이곤이 폭풍을 해방한다!" }], desc: "피뢰침(감전 누적) · 연쇄 번개 · 감전 마비 · 과부하 방전" });
+const STORM_BOSS = BOSSES[BOSSES.length - 1];
+const TWARP = { name: "철갑의 징표", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, twarp: true };
+const SWARP = { name: "뇌전의 징표", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, swarp: true };
+// 속성 보스 공통 표: 열쇠 종류·저장 필드·입장 조건·난이도 (화염=hive, 물리=titan, 번개=storm)
+const EB = {
+  hive: { boss: HIVE_BOSS, pool: "fire", name: "화염 정령왕", key: "keys2", wtype: "hwarp", keyName: "정령의 불씨", stage: "hiveStage", sm: "hsm", sp: "hsp", icon: "🔥", color: "#ffb070", angel: "화염 정령왕의 관" },
+  titan: { boss: TITAN_BOSS, pool: "phys", name: "철갑의 투사", key: "keys3", wtype: "twarp", keyName: "철갑의 징표", stage: "titanStage", sm: "tsm", sp: "tsp", icon: "⚔", color: "#d8c8b0", angel: "거신의 대검" },
+  storm: { boss: STORM_BOSS, pool: "light", name: "뇌제", key: "keys4", wtype: "swarp", keyName: "뇌전의 징표", stage: "stormStage", sm: "ssm", sp: "ssp", icon: "⚡", color: "#ffe45a", angel: "뇌제의 심장" },
+};
+const isEB = (k) => !!EB[k];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIERS = [24, 40, 62, 96], HIVE_NEED = [15, 28, 44, 64], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
+const HIVE_TIERS = [24, 40, 62, 96], HIVE_NEED = [15, 28, 44, 64], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
+EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [26, 42, 64, 98]; EB.titan.need = [17, 30, 46, 66]; EB.storm.tiers = [26, 42, 64, 98]; EB.storm.need = [17, 30, 46, 66];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
+const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP };   // 열쇠 몹 종류 → 정의
 
 const VOID_NEED = [25, 36, 48, 64];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
 const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
