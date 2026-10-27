@@ -93,7 +93,7 @@ const SKILLS = [
   { id: "thunder", name: "낙뢰",         slot: "active", kind: "multi",  cd: 8.0,  mult: 3.2,  side: 1.0, range: 6, bonus: {}, unlock: 5, color: "#fff0a0", icon: "cloud", sfx: "boom", desc: "강력한 3x3 낙뢰" },
   { id: "boomer",  name: "회전 도끼",     slot: "active", kind: "boomer", cd: 6.0,  mult: 1.5,  range: 6, back: 0.8, bonus: {}, unlock: 5, color: "#e0e8ff", icon: "axe", sfx: "pierce", desc: "줄을 꿰뚫고 돌아오며 한 번 더 벤다" },
   { id: "pierce2", name: "섬광 관통",     slot: "active", kind: "pierce", cd: 7.0,  mult: 2.8,  range: 6, bonus: { ranged: 0.3 }, unlock: 6, color: "#fff", icon: "spear", sfx: "pierce", desc: "원거리에 추가 피해를 주는 관통" },
-  { id: "meteor",  name: "유성",         slot: "active", kind: "meteor", cd: 12.0, mult: 2.8,  side: 1.0, range: 6, count: 3, bonus: { elite: 0.3, boss: 0.3 }, unlock: 7, color: "#ff8a4a", icon: "meteor", sfx: "meteor", desc: "유성 3개가 무작위 적 위에 떨어진다" },
+  { id: "meteor",  name: "유성",         slot: "active", kind: "meteor", cd: 12.0, mult: 1.9,  side: 1.0, range: 6, count: 3, bonus: { elite: 0.3, boss: 0.3 }, unlock: 7, color: "#ff8a4a", icon: "meteor", sfx: "meteor", desc: "유성 3개가 무작위 적 위에 떨어진다" },
 ];
 const SKILL_RARITY = [
   { name: "일반", mult: 1.0,  cdMul: 1.0,  bonusMul: 1.0, w: 70, cls: "r0" },

@@ -3,9 +3,9 @@
 // shape: 효과 범위 표시용(skillArea)에도 쓰인다
 // =========================================================
 Object.assign(CFG, {
-  BLEED: { coef: 0.6, dur: 4, cap: 8 },     // 출혈: 타격 피해의 75%를 4초에 걸쳐, 최대 8중첩
-  POISON: { coef: 1.7, dur: 5, cap: 20 },   // 중독: 50%를 5초에 걸쳐, 최대 20중첩
-  IGNITE: { coef: 0.55, dur: 3, cap: 1 },    // 점화: 90%를 3초에 걸쳐, 가장 강한 1개만 유지
+  BLEED: { coef: 0.5, dur: 4, cap: 8 },     // 출혈: 타격 피해의 75%를 4초에 걸쳐, 최대 8중첩
+  POISON: { coef: 3.0, dur: 5, cap: 20 },   // 중독: 50%를 5초에 걸쳐, 최대 20중첩
+  IGNITE: { coef: 0.38, dur: 3, cap: 1 },    // 점화: 90%를 3초에 걸쳐, 가장 강한 1개만 유지
   DOT_BOSS: 0.5, DOT_ELITE: 0.8,             // 보스/정예는 지속 피해를 덜 받는다
 });
 const STATUS_INFO = { bleed: { name: "출혈", color: "#e03a4a", st: "phys" }, poison: { name: "중독", color: "#6ae04a", st: "poison" }, ignite: { name: "점화", color: "#ff9a30", st: "fire" } };

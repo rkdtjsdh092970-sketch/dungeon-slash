@@ -70,6 +70,7 @@ AFFIXES.push(
   { k: "manaCostRed", name: "마나 소모 감소", pct: true, range: [0.03, 0.06], w: 4, slots: ["weapon", "ring", "neck"], minIlvl: 2 },
   { k: "manaFlat", name: "마나", flat: true, gp: 0.55, range: [8, 16], w: 8, slots: ["helm", "armor", "ring", "neck"] },
   { k: "manaPct", name: "마나 %", pct: true, range: [0.06, 0.12], w: 7, slots: ["helm", "armor", "neck"] },
+  { k: "manaHit", name: "마나 흡수 (적중 시 최대 마나)", pct: true, range: [0.0008, 0.0016], w: 6, slots: ["weapon", "gloves", "ring", "neck"], minIlvl: 3 },
   { k: "manaRegen", name: "마나 재생", pct: true, range: [0.004, 0.008], w: 5, slots: ["helm", "armor", "ring"], minIlvl: 2, unit: "/s" },
   { k: "manaRegenFlat", name: "초당 마나 재생(고정)", flat: true, gp: 0.5, range: [1.2, 2.4], w: 5, slots: ["helm", "armor", "ring", "neck"], minIlvl: 2 },
   { k: "manaOnKill", name: "처치 시 마나 회복", flat: true, gp: 0.5, range: [0.6, 1.4], w: 3, slots: ["ring", "neck", "weapon"], minIlvl: 3 },
@@ -165,12 +166,12 @@ const UNIQUES = [
   U("legion", "군단 학살자", "gloves", 3, "endless", 1, [["aoeDmg", [0.6, 0.8]], ["normal", [0.4, 0.5]], ["chainJumps", 2], ["density", 1]], "밀려오는 것은 쓸려 나간다."),
   U("eternity", "영원의 왕관", "helm", 4, "endless", 1, [["revive", 1], ["regen", 0.015], ["lifesteal", 0.05], ["allDmg", 0.35], ["manaRegen", 0.04], ["hpMore", 1.5]], "영원히 쓰러지지 않는 자의 머리 위에."),
   // ===== 공허의 군주 (6개 중 1개, 2개는 엔젤릭) =====
-  U("voidblade", "공허의 검", "weapon", 2, "void", 1, [["atkPct", [0.45, 0.55]], ["magPct", [0.45, 0.55]], ["critDmg", [0.7, 0.9]], ["ignoreDef", 0.15]], "베인 자리가 다시 닫히지 않는다."),
-  U("voidplate", "공허의 흉갑", "armor", 2, "void", 1, [["hpPct", [0.45, 0.55]], ["defPct", [0.9, 1.1]], ["dmgTaken", -0.15], ["manaShield", 0.2]], "공허는 무엇도 되돌려 주지 않는다."),
-  U("voidcrest", "공허의 문장", "helm", 3, "void", 1, [["cdr", [0.13, 0.17]], ["allDmg", [0.18, 0.22]], ["mf", [0.25, 0.35]], ["voidDmg", 0.4]], "눈을 감아도 보인다."),
-  U("voidwhisper", "공허의 속삭임", "neck", 3, "void", 1, [["manaToSpell", [0.3, 0.35]], ["magCrit", 1], ["spellCrit", 0.12], ["voidDmg", 0.3]], "마나가 속삭이면 마법이 대답한다."),
-  U("abyssalcrown", "심연의 왕관", "helm", 4, "void", 1, [["atkMore", [1.5, 1.7]], ["magMore", [1.5, 1.7]], ["hpMore", [1.5, 1.7]], ["allDmg", [0.55, 0.65]], ["cdr", 0.2], ["lanes", 1], ["revive", 1]], "왕관을 쓴 자는 무릎 꿇지 않는다."),
-  U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [2.2, 2.6]], ["lifesteal", 0.06], ["regen", 0.01], ["dmgTaken", -0.3], ["boss", 0.6], ["manaShield", 0.25]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
+  U("voidblade", "공허의 검", "weapon", 2, "void", 1, [["atkPct", [0.35, 0.42]], ["magPct", [0.35, 0.42]], ["critDmg", [0.5, 0.6]], ["ignoreDef", 0.10]], "베인 자리가 다시 닫히지 않는다."),
+  U("voidplate", "공허의 흉갑", "armor", 2, "void", 1, [["hpPct", [0.35, 0.42]], ["defPct", [0.7, 0.85]], ["dmgTaken", -0.12], ["manaShield", 0.15]], "공허는 무엇도 되돌려 주지 않는다."),
+  U("voidcrest", "공허의 문장", "helm", 3, "void", 1, [["cdr", [0.10, 0.13]], ["allDmg", [0.14, 0.17]], ["mf", [0.2, 0.28]], ["voidDmg", 0.3]], "눈을 감아도 보인다."),
+  U("voidwhisper", "공허의 속삭임", "neck", 3, "void", 1, [["manaToSpell", [0.22, 0.26]], ["magCrit", 1], ["spellCrit", 0.09], ["voidDmg", 0.22]], "마나가 속삭이면 마법이 대답한다."),
+  U("abyssalcrown", "심연의 왕관", "helm", 4, "void", 1, [["atkMore", [1.28, 1.36]], ["magMore", [1.28, 1.36]], ["hpMore", [1.28, 1.36]], ["allDmg", [0.35, 0.42]], ["cdr", 0.15], ["lanes", 1], ["revive", 1]], "왕관을 쓴 자는 무릎 꿇지 않는다."),
+  U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [1.6, 1.8]], ["lifesteal", 0.04], ["regen", 0.007], ["dmgTaken", -0.22], ["boss", 0.45], ["manaShield", 0.2]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
 ];
 const UNIQUE_BY_ID = Object.fromEntries(UNIQUES.map((u) => [u.id, u]));
 UNIQUES.forEach((u) => { u.ico = u.slot; });
@@ -196,7 +197,7 @@ const MOD_LABEL = {
   boss: ["보스 추가 피해", "%"], elite: ["정예 추가 피해", "%"], ranged: ["원거리 추가 피해", "%"], normal: ["일반 추가 피해", "%"],
   lifesteal: ["생명력 흡수", "%"], goldFind: ["골드 획득", "%"], expFind: ["경험치 획득", "%"], mf: ["매직 파운드", "%"], chainJumps: ["번개 도약", "+"], chainDmg: ["번개 피해", "%"],
   aoeDmg: ["광역 피해", "%"], allDmg: ["주는 피해", "%"], density: ["칸당 몹 수", "+"], lanes: ["레인", "+"], dmgTaken: ["받는 피해", "%"], regen: ["초당 체력 회복", "%"],
-  manaRegenFlat: ["초당 마나 재생", "+"], manaOnKill: ["처치 시 마나", "+"], dmgPerMana: ["최대 마나 100당 피해", "%"], bleedChance: ["출혈 확률", "%"], poisonChance: ["중독 확률", "%"], igniteChance: ["점화 확률", "%"], dotDmg: ["지속 피해", "%"], dotDur: ["지속 시간", "%"],
+  manaRegenFlat: ["초당 마나 재생", "+"], manaHit: ["마나 흡수 (적중 시 최대 마나)", "%"], manaOnKill: ["처치 시 마나", "+"], dmgPerMana: ["최대 마나 100당 피해", "%"], bleedChance: ["출혈 확률", "%"], poisonChance: ["중독 확률", "%"], igniteChance: ["점화 확률", "%"], dotDmg: ["지속 피해", "%"], dotDur: ["지속 시간", "%"],
   manaPct: ["마나", "%"], manaRegen: ["초당 마나 재생", "%"], manaCostRed: ["마나 소모 감소", "%"], manaToSpell: ["최대 마나의", "mts"], manaShield: ["받는 피해의", "ms"],
   fireDmg: ["화염 피해", "%"], coldDmg: ["냉기 피해", "%"], lightDmg: ["번개 피해", "%"], voidDmg: ["공허 피해", "%"], elemDmg: ["원소 피해", "%"], physDmg: ["물리 피해", "%"], magDmg: ["마법 피해", "%"],
   ignoreDef: ["방어 무시", "%"], ignoreRes: ["마법저항 무시", "%"], shredDef: ["대상 방어력 감소", "%"], shredRes: ["대상 마법저항 감소", "%"], penElem: ["속성 저항 관통", "%"],

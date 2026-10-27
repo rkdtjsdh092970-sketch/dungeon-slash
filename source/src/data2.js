@@ -106,3 +106,5 @@ BOSSES.push({ id: "void", name: "공허의 군주 모르가스", w: 3, h: 2, hp:
     { id: "curse", every: 14, dur: 6, mult: 0.35, text: "공허의 저주!" }, { id: "rain", every: 10, hits: 5, mult: 0.5, text: "공허의 별이 쏟아진다!" }, { id: "enrage", at: 0.3, text: "모르가스가 공허를 해방한다!" }], desc: "소환 · 방어막 · 충전 · 저주 · 불비 · 분노" });
 const VOID_BOSS = BOSSES[BOSSES.length - 1];
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
+
+const VOID_MIN_RIFT = 25;   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
