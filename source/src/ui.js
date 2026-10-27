@@ -154,12 +154,30 @@ function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다�
 
 // ---------- 프리셋 ----------
 function presetRow() {
-  return `<div class="presets">프리셋 ` + [0, 1, 2].map((i) => { const p = save.presets[i]; return `<span class="pre"><b>${i + 1}</b><button class="btn xs" data-a="psave" data-n="${i}">저장</button><button class="btn xs" data-a="pload" data-n="${i}" ${p ? "" : "disabled"}>적용</button></span>`; }).join("") + `</div>`;
+  return `<div class="presets">프리셋 ` + [0, 1, 2].map((i) => { const p = save.presets[i]; return `<button class="btn xs pbtn ${p ? "has" : ""}" data-a="ppick" data-n="${i}" title="${p ? "눌러서 구성을 확인하고 적용" : "비어 있음 · 눌러서 현재 구성을 저장"}">${i + 1}${p ? " ✓" : ""}</button>`; }).join("") + `</div>`;
 }
-const presetHandlers = (rerender) => ({
-  psave: (el) => { savePreset(save, +el.dataset.n); toast(`프리셋 ${+el.dataset.n + 1}에 장비와 스킬을 저장했습니다`, "ok"); saveGame(); rerender(); },
-  pload: (el) => { if (loadPreset(save, +el.dataset.n)) { snd("equip"); toast(`프리셋 ${+el.dataset.n + 1}을 적용했습니다`, "ok"); saveGame(); refreshTop(); } rerender(); },
-});
+// 프리셋 미리보기: 장착 스킬(레벨·룬·타겟)과 장비를 보여주고, 적용/덮어쓰기를 고른다
+function presetPower(i) {
+  const p = save.presets[i]; if (!p) return null; const eq0 = save.equipped, lo0 = save.loadout, eq = {};
+  for (const sl of SLOTS) { const u = p.equip[sl]; if (u == null) continue; const it = save.inv.find((x) => x.uid === u) || SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u); if (it) eq[sl] = it; }
+  save.equipped = eq; save.loadout = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; return l && save.skills.some((x) => x.uid === l.uid) ? l : null; });
+  let pw = 0; try { pw = playerPower(computeStats(save)); } catch (e) {} save.equipped = eq0; save.loadout = lo0; return pw;
+}
+function openPresetPreview(i, rerender) {
+  const p = save.presets[i], n = i + 1;
+  if (!p) { Modal.open(`<h2>프리셋 ${n}</h2><div class="center pad dim">비어 있는 프리셋입니다.<br>지금 착용한 장비와 장착한 스킬을 저장할 수 있습니다.</div><div class="pbtns"><button class="btn pri" data-a="pvsave">현재 구성 저장</button><button class="btn" data-a="pvback">돌아가기</button></div>`, { cls: "sm", on: { pvsave: () => { savePreset(save, i); toast(`프리셋 ${n}에 저장했습니다`, "ok"); saveGame(); openPresetPreview(i, rerender); }, pvback: () => rerender() } }); return; }
+  const skl = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; const inst = l && save.skills.find((x) => x.uid === l.uid); if (!inst) return `<div class="pv-sk off"><div class="pv-ic"></div><small>${l ? "사라진 스킬" : "비어 있음"}</small></div>`; const sk = skillOf(inst); return `<div class="pv-sk">${skIcon(inst.id, 3)}<div><b>${skillTitle(inst)}</b><small>Lv.${inst.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""} · 타겟 ${RULE_SHORT[l.rule] || "앞열"}</small></div></div>`; }).join("");
+  const eqs = SLOTS.map((sl) => { const u = p.equip[sl], it = u != null && (save.inv.find((x) => x.uid === u) || SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u)); return it ? `<div class="pv-eq">${tileHtml(it, { up: false })}<small>${SLOT_NAME[sl]}</small></div>` : `<div class="pv-eq off"><div class="tile empty">${iconImg(sl, 2, "ghost")}</div><small>${SLOT_NAME[sl]} · 없음</small></div>`; }).join("");
+  const cur = playerPower(computeStats(save)), pw = presetPower(i), d = pw && cur ? pw / cur - 1 : 0;
+  Modal.open(`<h2>프리셋 ${n}</h2><div class="pv-sec">스킬</div><div class="pv-skills">${skl}</div><div class="pv-sec">장비</div><div class="pv-eqs">${eqs}</div>
+  <div class="center pad">${pw ? `현재 구성 대비 전투력 <b class="${d >= 0 ? "up" : "dn"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</b>` : ""}</div>
+  <div class="pbtns"><button class="btn pri big" data-a="pvuse">적용</button><button class="btn" data-a="pvsave">현재 구성으로 덮어쓰기</button><button class="btn" data-a="pvback">돌아가기</button></div>`, { cls: "result", on: {
+    pvuse: () => { if (loadPreset(save, i)) { snd("equip"); toast(`프리셋 ${n}을 적용했습니다`, "ok"); saveGame(); refreshTop(); } rerender(); },
+    pvsave: () => { savePreset(save, i); toast(`프리셋 ${n}에 현재 구성을 저장했습니다`, "ok"); saveGame(); openPresetPreview(i, rerender); },
+    pvback: () => rerender(),
+  } });
+}
+const presetHandlers = (rerender) => ({ ppick: (el) => openPresetPreview(+el.dataset.n, rerender) });
 
 // ---------- 아이템 창 (가방 / 대장간 / 상점) ----------
 const itemIconBySlot = (slot, cls) => iconImg(slot, 1, cls);
