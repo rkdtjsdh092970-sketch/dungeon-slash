@@ -169,7 +169,7 @@ const MapView = {
     g.setLineDash([]);
     // 지역 이름
     g.textAlign = "center"; g.font = "bold 15px sans-serif";
-    REGION.forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = cy - this.cam.y + 112; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
+    REGION.forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = Math.min(cy + 112, MAP_H - 16) - this.cam.y; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
     { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); }
     // 노드
     const vis = MAP.nodes.filter((n) => n.x - this.cam.x > -40 && n.x - this.cam.x < CW + 40 && n.y - this.cam.y > -40 && n.y - this.cam.y < CH + 40);
@@ -205,14 +205,14 @@ function deco(g, act, x, y, r) {
 // 마을
 // =========================================================
 const TOWN_SPOTS = [
-  { id: "skill",     name: "스킬 정비소", x: 105, y: 452, need: 1, desc: "스킬 장착 · 타겟 규칙 설정" },
-  { id: "forge",     name: "대장간",     x: 235, y: 458, need: 1, desc: "강화 · 분해 · 옵션 재굴림 · 구슬" },
-  { id: "board",     name: "퀘스트 게시판", x: 365, y: 466, need: 1, desc: "퀘스트 수락과 보상" },
-  { id: "shop",      name: "상점 · 창고",  x: 495, y: 454, need: 1, desc: "장비 판매 · 정리" },
-  { id: "skillshop", name: "스킬 상점",   x: 625, y: 462, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
-  { id: "guild",     name: "길드",       x: 755, y: 452, need: 2, desc: "반복 의뢰(현상금)" },
-  { id: "auction",   name: "경매소",     x: 885, y: 458, need: 1, desc: "다른 유저와 골드로 장비 거래" },
-  { id: "trainer",   name: "훈련소",     x: 905, y: 335, need: 1, desc: "패시브 트리", back: true },
+  { id: "skill",     name: "스킬 정비소", x: 100, y: 452, w: 74, h: 154, need: 1, desc: "스킬 장착 · 타겟 규칙 설정" },
+  { id: "forge",     name: "대장간",     x: 245, y: 458, w: 78, h: 136, need: 1, desc: "강화 · 분해 · 옵션 재굴림 · 구슬" },
+  { id: "board",     name: "퀘스트 게시판", x: 392, y: 466, w: 62, h: 108, need: 1, desc: "퀘스트 수락과 보상" },
+  { id: "shop",      name: "상점 · 창고",  x: 545, y: 454, w: 78, h: 104, need: 1, desc: "장비 판매 · 정리" },
+  { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
+  { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
+  { id: "guild",     name: "길드",       x: 318, y: 340, w: 80, h: 132, need: 2, desc: "반복 의뢰(현상금)", back: true },
+  { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
 ];
 const TownView = {
   cv: null, g: null, hover: null, act: 1,
@@ -226,15 +226,15 @@ const TownView = {
       g.save(); if (!open) g.globalAlpha = 0.45;
       drawBuilding(g, s.id, s.x, s.y, theme, hot);
       g.restore();
-      if (hot) { g.strokeStyle = "#fff6b0"; g.lineWidth = 3; g.setLineDash([6, 4]); g.strokeRect(s.x - 55, s.y - (s.id === "skillshop" ? 250 : 150), 110, (s.id === "skillshop" ? 256 : 156)); g.setLineDash([]); }
+      if (hot) { g.strokeStyle = "#fff6b0"; g.lineWidth = 3; g.setLineDash([6, 4]); g.strokeRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.setLineDash([]); }
       g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText(s.name, s.x + 1, s.y + 22); g.fillStyle = open ? (hot ? "#fff6b0" : "#fff") : "#a09ab0"; g.fillText(s.name, s.x, s.y + 21);
       if (!open) { g.font = "11px sans-serif"; g.fillStyle = "#c8c0d8"; g.fillText(s.soon ? "준비 중" : `액트 ${s.need}에서 개방`, s.x, s.y + 36); }
     }
     // 수호 NPC 느낌: 전사
-    const af = animFrame("warrior", "idle", time); drawSprite(g, getSheet("warrior", 0), af.row, af.frame, 70, 480, 3, false, 1);
+    const af = animFrame("warrior", "idle", time); drawSprite(g, getSheet("warrior", 0), af.row, af.frame, 468, 530, 3, false, 1);
     g.fillStyle = "#fff"; g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
   },
-  pick(mx, my) { for (const s of TOWN_SPOTS.slice().sort((p, q) => q.y - p.y)) if (mx > s.x - 55 && mx < s.x + 55 && my > s.y - (s.id === "skillshop" ? 250 : 150) && my < s.y + 40) return s; return null; },
+  pick(mx, my) { for (const s of TOWN_SPOTS.slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return s; return null; },
 };
 
 // =========================================================
