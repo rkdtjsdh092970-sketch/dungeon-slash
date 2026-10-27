@@ -29,6 +29,7 @@ async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
   if (r.revokeOn && save) stripAngelicLocal();
+  api("/api/guild/me").then((g) => { if (save && g && !g.err) { save.guildLv = g.guild ? g.guild.level : 0; } }).catch(() => {});
   SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
 }
@@ -117,13 +118,13 @@ function ahPostDialog(it) {
 }
 
 // ---------- 길드 / 랭킹 ----------
-const GD = { tab: "bounty" };
+const GD = { tab: "guild" };
+const fmtC = (n) => Math.floor(+n || 0).toLocaleString("en-US");   // 1,000,000 식 표기
 async function openGuild() {
-  const tabs = `<div class="tabs"><button class="tab ${GD.tab === "bounty" ? "on" : ""}" data-a="gdtab" data-t="bounty">현상금</button><button class="tab ${GD.tab === "guild" ? "on" : ""}" data-a="gdtab" data-t="guild">길드</button><button class="tab ${GD.tab === "rank" ? "on" : ""}" data-a="gdtab" data-t="rank">랭킹</button></div>`;
+  const tabs = `<div class="tabs"><button class="tab ${GD.tab === "guild" ? "on" : ""}" data-a="gdtab" data-t="guild">길드</button><button class="tab ${GD.tab === "rank" ? "on" : ""}" data-a="gdtab" data-t="rank">랭킹</button></div>`;
   let body = "";
   const rerender = () => openGuild();
-  if (GD.tab === "bounty") {
-    body = `<div class="dim center">완료 후 다시 받을 수 있는 현상금입니다</div><div class="qlist">${guildList(save).map(({ def: d, st }) => { const pr = st ? Math.min(d.goal.n, st.p) : 0; return `<div class="qrow"><div class="qi"><b>${d.title}</b><div class="dim">${d.desc}</div><small>보상: ${fmtN(d.reward.gold)}G · 강화석 ${d.reward.ore}</small>${st ? `<div class="bar"><i style="width:${(pr / d.goal.n) * 100}%"></i><span>${pr}/${d.goal.n}</span></div>` : ""}</div>${!st ? `<button class="btn pri" data-a="gacc" data-id="${d.id}">의뢰 받기</button>` : st.state === "done" ? `<button class="btn pri" data-a="gclaim" data-id="${d.id}">보상 받기</button>` : `<span class="dim">진행 중</span>`}</div>`; }).join("")}</div>`;
+  if (false) {
   } else if (!SRV.on) body = `<div class="center pad dim">서버에 로그인해야 이용할 수 있습니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button></div>`;
   else if (GD.tab === "rank") {
     const k = GD.rk || "rift", r = await api("/api/rank?k=" + k);
@@ -131,12 +132,15 @@ async function openGuild() {
   } else {
     const r = await api("/api/guild/me");
     if (r.err) body = `<div class="warn center pad">${r.err}</div>`;
-    else if (!r.guild) { const l = await api("/api/guild/list"); save.guildLv = 0; body = `<div class="dim center">길드에 가입하면 레벨에 비례해 골드·경험치·MF 보너스를 받습니다 (길드 레벨당 +2% / +2% / +1%)</div><div class="itbar"><input class="txt" id="gd-n" placeholder="새 길드 이름" maxlength="12"><button class="btn xs pri" data-a="gcreate">창설 (${fmtN(l.cost || 20000)}G)</button></div><div class="qlist" style="height:260px">${(l.rows || []).map((g) => `<div class="qrow"><div class="qi"><b>${g.name}</b> <small class="dim">Lv.${g.level} · ${g.members}/30명 · 길드장 ${g.leader}</small></div><button class="btn xs" data-a="gjoin" data-id="${g.id}">가입</button></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`; }
+    else if (!r.guild) { const l = await api("/api/guild/list"); save.guildLv = 0; body = `<div class="dim center">길드에 가입하면 레벨에 비례해 골드·경험치·MF 보너스와 길드 패시브(최대 Lv.10)를 받습니다</div><div class="itbar"><input class="txt" id="gd-n" placeholder="새 길드 이름" maxlength="12"><button class="btn xs pri" data-a="gcreate">창설 (${fmtC(l.cost || 20000)}G)</button></div><div class="qlist" style="height:260px">${(l.rows || []).map((g) => `<div class="qrow"><div class="qi"><b>${g.name}</b> <small class="dim">Lv.${g.level} · ${g.members}/30명 · 길드장 ${g.leader}</small></div><button class="btn xs" data-a="gjoin" data-id="${g.id}">가입</button></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`; }
     else { const g = r.guild; save.guildLv = g.level; const c = await api("/api/guild/chat");
-      body = `<div class="cols" style="height:380px"><div class="col" style="width:290px;overflow:auto"><div class="dname">${g.name} <small class="dim">Lv.${g.level}</small></div><div class="dim">경험치 ${fmtN(g.exp)} · 다음 레벨 ${fmtN(Math.pow(g.level, 2) * 50000)}</div><div class="pline">보너스: 골드 +${g.level * 2}% · 경험치 +${g.level * 2}% · MF +${g.level}%</div><div class="itbar"><input class="txt" id="gd-d" type="number" min="100" placeholder="기부 골드" style="width:110px"><button class="btn xs" data-a="gdon">기부</button></div>
+      body = `<div class="cols" style="height:380px"><div class="col" style="width:290px;overflow:auto"><div class="dname">${g.name} <small class="dim">Lv.${g.level}</small></div><div class="dim">경험치 ${fmtC(g.exp)} · 다음 레벨 ${fmtC(Math.pow(g.level, 2) * 50000)}</div><div class="pline">기본 혜택: 골드 +${g.level * 2}% · 경험치 +${g.level * 2}% · MF +${g.level}%</div>
+        <div class="itbar" style="flex-wrap:wrap"><span class="dim" style="width:100%">내 보유 골드 <b style="color:#ffe08a">${fmtC(save.gold)}G</b></span><input class="txt" id="gd-d" type="text" inputmode="numeric" placeholder="기부할 골드 (최소 100)" style="width:150px"><button class="btn xs" data-a="gdon">기부</button><button class="btn xs" data-a="gdall">전액</button></div>
+        <h3>길드 패시브 <small class="dim">(길드 레벨 ${g.level})</small></h3>${GUILD_PASSIVES.map((p) => `<div class="aff" style="${g.level >= p.lv ? "color:#8dff9a" : "color:#7a7a96"}">Lv.${p.lv} · ${p.text} ${g.level >= p.lv ? "✔" : "🔒"}</div>`).join("")}
         ${g.leader === SRV.name ? `<div class="itbar"><input class="txt" id="gd-m" placeholder="공지" maxlength="60" value="${g.motd || ""}"><button class="btn xs" data-a="gmotd">저장</button></div>` : g.motd ? `<div class="pline">📢 ${g.motd}</div>` : ""}<h3>길드원 ${g.members.length}명</h3>${g.members.map((m) => `<div class="aff">${m.name === g.leader ? "👑 " : ""}${m.name} <small class="dim">Lv.${m.level} · ${m.rift}층</small></div>`).join("")}<div class="pbtns"><button class="btn warn xs" data-a="gleave">탈퇴</button></div></div>
         <div class="col" style="flex:1"><div class="chatbox" id="gd-chat">${(c.rows || []).map((m) => `<div><b>${m.name}</b>: ${m.msg.replace(/</g, "&lt;")}</div>`).join("")}</div><div class="itbar" style="margin-top:6px"><input class="txt" id="gd-msg" placeholder="메시지" maxlength="80" style="flex:1"><button class="btn xs pri" data-a="gsend">전송</button></div></div></div>`; }
   }
+  setTimeout(() => { const di = $("#gd-d"); if (di) di.addEventListener("input", () => { const d = di.value.replace(/[^0-9]/g, ""); di.value = d ? Number(d).toLocaleString("en-US") : ""; }); }, 0);
   Modal.open(`<h2>길드</h2>${tabs}${body}`, { cls: "wide", on: {
     gdtab: (el) => { GD.tab = el.dataset.t; rerender(); }, gl: () => loginDialog(rerender), rk: (el) => { GD.rk = el.dataset.k; rerender(); },
     gacc: (el) => { guildAccept(save, el.dataset.id); snd("quest"); saveGame(); rerender(); },
@@ -144,7 +148,8 @@ async function openGuild() {
     gcreate: async () => { const n = $("#gd-n").value.trim(); if (save.gold < 20000) return toast("골드가 부족합니다 (20,000G)", "bad"); const r = await api("/api/guild/create", { name: n }); if (r.err) return toast(r.err, "bad"); save.gold -= 20000; saveGame(); refreshTop(); toast("길드를 만들었습니다", "ok"); snd("legend"); rerender(); },
     gjoin: async (el) => { const r = await api("/api/guild/join", { id: +el.dataset.id }); if (r.err) return toast(r.err, "bad"); toast("길드에 가입했습니다", "ok"); rerender(); },
     gleave: () => askConfirm("길드를 탈퇴할까요?", "탈퇴", async () => { const r = await api("/api/guild/leave", {}); if (r.err) return toast(r.err, "bad"); save.guildLv = 0; rerender(); }),
-    gdon: async () => { const v = Math.floor(+$("#gd-d").value); if (!(v >= 100) || v > save.gold) return toast("기부할 수 없는 금액입니다", "bad"); const r = await api("/api/guild/donate", { gold: v }); if (r.err) return toast(r.err, "bad"); save.gold -= v; saveGame(); refreshTop(); snd("coin"); toast(`${fmtN(v)}G를 기부했습니다`, "ok"); rerender(); },
+    gdall: () => { $("#gd-d").value = fmtC(save.gold); },
+    gdon: async () => { const v = Math.floor(+String($("#gd-d").value).replace(/[^0-9]/g, "")); if (!(v >= 100) || v > save.gold) return toast("기부할 수 없는 금액입니다", "bad"); const r = await api("/api/guild/donate", { gold: v }); if (r.err) return toast(r.err, "bad"); save.gold -= v; saveGame(); refreshTop(); snd("coin"); toast(`${fmtC(v)}G를 기부했습니다`, "ok"); rerender(); },
     gmotd: async () => { await api("/api/guild/motd", { motd: $("#gd-m").value }); toast("공지를 저장했습니다"); },
     gsend: async () => { const m = $("#gd-msg").value; if (!m.trim()) return; await api("/api/guild/chat", { msg: m }); rerender(); },
   } });

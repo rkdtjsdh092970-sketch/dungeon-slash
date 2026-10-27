@@ -17,6 +17,7 @@ function newSave() {
 }
 function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
+    purgeClearedQuests(s);
     if (s.rangeRev !== 1) { clampAll(s); s.rangeRev = 1; }   // v2.9: 범위 밖 수치 보정
     if (s.passRev !== 4) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 4; }   // 패시브 트리 개편(v2.4 / v3.2 스킬 계열 추가): 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
@@ -132,6 +133,7 @@ function computeStats(sv) {
     if (it.umods) for (const m of it.umods) apply(m.k, m.v);
   }
   for (const id in (sv.pass || {})) { const p = PASSIVE_BY_ID[id]; if (p) for (const k in p.per) apply(k, p.per[k] * sv.pass[id]); }
+  if (sv.guildLv) for (const gp of GUILD_PASSIVES) if (sv.guildLv >= gp.lv) for (const k in gp.per) apply(k, gp.per[k]);   // 길드 패시브
   const sc = setCounts(sv);
   for (const set of SETS) { const n = sc[set.id] || 0; for (const th of [2, 4, 6]) if (n >= th && set.bonus[th]) for (const k in set.bonus[th]) apply(k, set.bonus[th][k]); }
   s.maxMana = Math.max(10, (CFG.BASE_MANA + s.manaFlat) * (1 + s.manaPct) * ml);
@@ -337,7 +339,12 @@ function rollDrops(sv, node, boss, B) {
 // ---- 퀘스트 ----
 const getQDef = (id) => QDEFS.find((q) => q.id === id) || GUILD_BOUNTIES.find((q) => q.id === id);
 function maxActUnlocked(sv) { let a = 1; for (let i = 1; i < CFG.ACTS; i++) if (sv.cleared[i - 1] >= CFG.STAGES) a = i + 1; return a; }
-function availableQuests(sv) { const m = maxActUnlocked(sv); return QDEFS.filter((q) => q.act <= m && !sv.q[q.id]); }
+const actCleared = (sv, a) => (sv.cleared[a - 1] || 0) >= CFG.STAGES;
+// 클리어한 액트의 퀘스트는 사라진다 (수락 전 · 진행 중). 이미 완료해서 보상만 남은 퀘스트는 받을 때까지 유지한다
+function availableQuests(sv) { const m = maxActUnlocked(sv); return QDEFS.filter((q) => q.act <= m && !sv.q[q.id] && !actCleared(sv, q.act)); }
+function purgeClearedQuests(sv) { let n = 0; for (const id in sv.q) { const st = sv.q[id], d = QDEFS.find((x) => x.id === id); if (d && st.state === "active" && actCleared(sv, d.act)) { delete sv.q[id]; n++; } } return n; }
+// 퀘스트 게시판 느낌표: 이 마을(액트)의 수락 가능한 퀘스트가 있거나, 완료해서 보상을 받을 퀘스트가 있을 때
+function questBang(act) { if (!save || !save.tut || !save.tut.done) return false; return Object.keys(save.q || {}).some((id) => save.q[id].state === "done") || availableQuests(save).some((q) => q.act === act); }
 function acceptQuest(sv, id) { if (!sv.q[id]) sv.q[id] = { state: "active", p: 0 }; }
 function questEvent(sv, ev) {
   const done = [];

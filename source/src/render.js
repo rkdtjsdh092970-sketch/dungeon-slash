@@ -229,7 +229,7 @@ const TOWN_SPOTS = [
   { id: "shop",      name: "상점 · 창고",  x: 545, y: 454, w: 78, h: 104, need: 1, desc: "장비 판매 · 정리" },
   { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
   { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
-  { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "반복 의뢰(현상금)", back: true },
+  { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "길드 · 길드 패시브 · 랭킹", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
 ];

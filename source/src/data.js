@@ -237,6 +237,13 @@ function questDefs() {
   q.push({ id: "r1", act: 10, title: "균열의 도전자", desc: "심연의 균열에서 3단계를 클리어한다.", goal: { type: "rift", n: 3 }, reward: { exp: 0, gold: 3000, ore: 30, shards: 10 } });
   return q;
 }
+// 길드 패시브: 길드 레벨이 오르면 누적으로 열린다 (길드 기본 혜택 골드·경험치·MF와 별도)
+const GUILD_PASSIVES = [
+  { lv: 1, text: "공격력 +2%", per: { atkPct: 0.02 } }, { lv: 2, text: "체력 +3%", per: { hpPct: 0.03 } }, { lv: 3, text: "쿨타임 감소 +2%", per: { cdr: 0.02 } },
+  { lv: 4, text: "방어력 +4%", per: { defPct: 0.04 } }, { lv: 5, text: "주문력 +3%", per: { magPct: 0.03 } }, { lv: 6, text: "보스 추가 피해 +5%", per: { boss: 0.05 } },
+  { lv: 7, text: "생명력 흡수 +0.5%", per: { lifesteal: 0.005 } }, { lv: 8, text: "치명타 피해 +10%", per: { critDmg: 0.10 } }, { lv: 9, text: "주는 피해 +4%", per: { allDmg: 0.04 } },
+  { lv: 10, text: "체력 +5% · 공격력/주문력 +4%", per: { hpPct: 0.05, atkPct: 0.04, magPct: 0.04 } },
+];
 const GUILD_BOUNTIES = [
   { id: "g_kill", title: "현상금: 몹 사냥", desc: "적 200마리를 처치한다.", goal: { type: "kill", n: 200 }, reward: { gold: 150, ore: 3 } },
   { id: "g_clear", title: "현상금: 전투 의뢰", desc: "스테이지를 6번 클리어한다.", goal: { type: "clear", n: 6 }, reward: { gold: 200, ore: 4 } },

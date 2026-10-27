@@ -167,9 +167,14 @@ function drawNew(g, x, y) {   // 읽지 않은 패치 노트 표시
   const t = performance.now() / 1000, b = Math.abs(Math.sin(t * 3)) * 6; g.save(); g.translate(x + 40, y - 150 - b); g.fillStyle = "#e83a3a"; g.beginPath(); if (g.roundRect) g.roundRect(-20, -11, 40, 22, 8); else g.rect(-20, -11, 40, 22); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke();
   g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("NEW", 0, 1); g.restore();
 }
+function drawBang(g, x, y) {   // 퀘스트 게시판: 받을 수 있는 퀘스트/완료된 퀘스트가 있을 때 노란 느낌표
+  const t = performance.now() / 1000, b = Math.abs(Math.sin(t * 3)) * 6; g.save(); g.translate(x, y - 132 - b); g.fillStyle = "#ffd24a"; g.strokeStyle = "#6a4a08"; g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 17, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = "#3a2604"; g.font = "bold 24px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("!", 0, 2); g.restore();
+}
 function drawBuilding(g, type, x, y, theme, hot) {
   if (!TB_CACHE[type]) TB_CACHE[type] = paintBuilding(type);
   const cv = TB_CACHE[type]; g.save(); g.imageSmoothingEnabled = false; g.drawImage(cv, x - TB_OX, y - TB_OY);
   if (hot) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.22; g.drawImage(cv, x - TB_OX, y - TB_OY); }
   g.restore(); drawBuildingAnim(g, type, x, y); if (type === "notice" && typeof notesUnread === "function" && notesUnread()) drawNew(g, x, y);
+  if (type === "board" && typeof questBang === "function" && questBang(TownView.act)) drawBang(g, x, y);
 }
