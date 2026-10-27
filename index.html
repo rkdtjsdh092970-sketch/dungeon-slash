@@ -1686,10 +1686,12 @@ function sellSkill(sv, inst) {
   const v = skillSellValue(inst); sv.gold += v; if (inst.rune) sv.runes.push({ uid: sv.nextUid++, id: inst.rune });   // 장착한 룬은 돌려준다
   sv.skills = sv.skills.filter((x) => x !== inst); return v;
 }
+// 특수 스킬(공허 전용 · 빌드별 보스 전용기)은 상점에서 팔지 않는다 — 드랍·시련·공허의 군주로만 얻는다 (기본 보스 스킬 '처형'은 상점 판매 유지)
+const isSpecialSkill = (d) => !!d.voidOnly || (d.bonus && d.bonus.boss >= 0.8 && d.id !== "execute");
 function shopStock(sv, now) {
   now = now || Date.now(); const slot = Math.floor(now / (SHOP_MIN * 60000)), act = maxActUnlocked(sv);
   if (!sv.shop || sv.shop.slot !== slot) sv.shop = { slot, bought: [] };
-  const r = seeded(slot * 31 + act * 7), pool = SKILLS.filter((d) => d.unlock <= act), out = [];
+  const r = seeded(slot * 31 + act * 7), pool = SKILLS.filter((d) => d.unlock <= act && !isSpecialSkill(d)), out = [];
   for (let i = 0; i < 6 && pool.length; i++) {
     const d = pool.splice(Math.floor(r() * pool.length), 1)[0], rr = r(), rarity = rr < 0.68 ? 0 : rr < 0.93 ? 1 : 2;
     out.push({ id: d.id, rarity, price: skillPrice(d, rarity) });
@@ -3943,7 +3945,7 @@ function skBuildTags(d) {
 function skSources(d) {
   const o = [];
   if (d.voidOnly) { o.push("공허의 군주 처치 시 매우 낮은 확률 (1~4단계 2% / 3% / 5% / 12%) — 상점·다른 곳에서는 나오지 않음"); return o; }
-  o.push(`스킬 상점에서 골드로 구매 (액트 ${d.unlock} 이후 등장)`);
+  if (!isSpecialSkill(d)) o.push(`스킬 상점에서 골드로 구매 (액트 ${d.unlock} 이후 등장)`); else o.push("특수 스킬 — 상점에서는 팔지 않습니다");
   if (d.slot === "active") { o.push(`액트 ${d.unlock <= 10 ? d.unlock : 10}~ 보스 첫 클리어·일반 드랍`); if (d.unlock >= 3) o.push("심연의 균열(낮은 확률) · 스킬 시련(단계가 오를수록 확률 증가)"); }
   return o;
 }
@@ -4213,7 +4215,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-061005";
+const BUILD_ID = "20261028-061158";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4306,6 +4308,7 @@ function animateResult(res) {
 // =========================================================
 const PATCH_NOTES = [
   { ver: "3.1", date: "10/28", title: "스킬 등급 확장 · 승급 제한", items: [
+    "특수 스킬(공허 전용 스킬, 빌드별 보스 전용기)은 이제 스킬 상점에서 팔지 않습니다. 드랍·스킬 시련·공허의 군주로만 얻습니다.",
     "스킬 등급이 늘었습니다. 일반 → 희귀 → 전설 위에 이터널 · 소버린 · 엔젤릭이 생겼습니다 (피해 ×1.9 / ×2.3 / ×3.0, 쿨타임 −13% / −16% / −20%, 추가 피해 보너스 ×2.0 / ×2.4 / ×3.0).",
     "상위 등급은 스킬 시련(단계가 높을수록)과 공허의 군주에서 전설 스킬이 나왔을 때만 아주 낮은 확률로 한 단계씩 더 올라갑니다 (시련 100단계 기준 스킬 드랍 중 이터널 약 4%, 소버린 약 0.3%, 엔젤릭 약 0.01%).",
     "장비 창에서 목걸이와 반지 1의 위치를 서로 바꿨습니다 (신발 · 목걸이 · 반지 · 반지 2 순).",

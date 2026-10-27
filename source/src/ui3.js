@@ -273,7 +273,7 @@ function skBuildTags(d) {
 function skSources(d) {
   const o = [];
   if (d.voidOnly) { o.push("공허의 군주 처치 시 매우 낮은 확률 (1~4단계 2% / 3% / 5% / 12%) — 상점·다른 곳에서는 나오지 않음"); return o; }
-  o.push(`스킬 상점에서 골드로 구매 (액트 ${d.unlock} 이후 등장)`);
+  if (!isSpecialSkill(d)) o.push(`스킬 상점에서 골드로 구매 (액트 ${d.unlock} 이후 등장)`); else o.push("특수 스킬 — 상점에서는 팔지 않습니다");
   if (d.slot === "active") { o.push(`액트 ${d.unlock <= 10 ? d.unlock : 10}~ 보스 첫 클리어·일반 드랍`); if (d.unlock >= 3) o.push("심연의 균열(낮은 확률) · 스킬 시련(단계가 오를수록 확률 증가)"); }
   return o;
 }

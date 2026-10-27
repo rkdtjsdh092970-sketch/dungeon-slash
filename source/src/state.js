@@ -492,10 +492,12 @@ function sellSkill(sv, inst) {
   const v = skillSellValue(inst); sv.gold += v; if (inst.rune) sv.runes.push({ uid: sv.nextUid++, id: inst.rune });   // 장착한 룬은 돌려준다
   sv.skills = sv.skills.filter((x) => x !== inst); return v;
 }
+// 특수 스킬(공허 전용 · 빌드별 보스 전용기)은 상점에서 팔지 않는다 — 드랍·시련·공허의 군주로만 얻는다 (기본 보스 스킬 '처형'은 상점 판매 유지)
+const isSpecialSkill = (d) => !!d.voidOnly || (d.bonus && d.bonus.boss >= 0.8 && d.id !== "execute");
 function shopStock(sv, now) {
   now = now || Date.now(); const slot = Math.floor(now / (SHOP_MIN * 60000)), act = maxActUnlocked(sv);
   if (!sv.shop || sv.shop.slot !== slot) sv.shop = { slot, bought: [] };
-  const r = seeded(slot * 31 + act * 7), pool = SKILLS.filter((d) => d.unlock <= act), out = [];
+  const r = seeded(slot * 31 + act * 7), pool = SKILLS.filter((d) => d.unlock <= act && !isSpecialSkill(d)), out = [];
   for (let i = 0; i < 6 && pool.length; i++) {
     const d = pool.splice(Math.floor(r() * pool.length), 1)[0], rr = r(), rarity = rr < 0.68 ? 0 : rr < 0.93 ? 1 : 2;
     out.push({ id: d.id, rarity, price: skillPrice(d, rarity) });
