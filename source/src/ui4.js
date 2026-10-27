@@ -47,8 +47,11 @@ const needLogin = (title) => { Modal.open(`<h2>${title}</h2><div class="center p
 // ---------- 경매장 ----------
 const AH = { tab: "buy", slot: "", minr: 0, uniq: false, sort: "price" };
 const itemBrief = (it) => { if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; return D ? uniqueLines(D, it.umods).join(" · ") : ""; } return it.affixes.map((a) => affText(a)).join(" · "); };
+const isSkillItem = (it) => it && it.slot === "skill";
 function ahRowHtml(r, act) {
-  const it = r.item; return `<div class="ahrow">${tileHtml(it, { up: true })}<div style="flex:1;min-width:0"><div>${itemTitle(it)} <small class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${baseText(it)} · ${itemBrief(it)}</small></div>
+  const it = r.item;
+  if (isSkillItem(it)) { const d = SKILLS.find((x) => x.id === it.id); if (!d) return ""; const sk = skillOf(it); return `<div class="ahrow"><div class="tile sktile">${skIcon(it.id, 2)}</div><div style="flex:1;min-width:0"><div>${skillTitle(it)} <small class="dim">스킬 · Lv.${it.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${d.desc} · 피해 ${Math.round(sk.mult * 100)}% · 쿨 ${sk.cd.toFixed(1)}s</small></div><div style="text-align:right"><div style="color:#ffe08a;font-weight:bold">${fmtN(r.price)}G</div>${act}</div></div>`; }
+  return `<div class="ahrow">${tileHtml(it, { up: true })}<div style="flex:1;min-width:0"><div>${itemTitle(it)} <small class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${baseText(it)} · ${itemBrief(it)}</small></div>
   <div style="text-align:right"><div style="color:#ffe08a;font-weight:bold">${fmtN(r.price)}G</div>${act}</div></div>`;
 }
 async function openAuction() {
@@ -57,7 +60,7 @@ async function openAuction() {
   let body = "", res = `<div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div>`;
   if (AH.tab === "buy") {
     const r = await api(`/api/ah/list?slot=${AH.slot}&minr=${AH.minr}&uniq=${AH.uniq ? 1 : 0}&sort=${AH.sort}`);
-    const bar = `<div class="itbar"><select data-i="ahslot"><option value="">전체 부위</option>${SLOTS.map((s) => `<option value="${s}" ${AH.slot === s ? "selected" : ""}>${SLOT_NAME[s]}</option>`).join("")}</select><select data-i="ahrar"><option value="0">전체 등급</option>${ITEM_RARITY.slice(1).map((x, i) => `<option value="${i + 1}" ${AH.minr === i + 1 ? "selected" : ""}>${x.name} 이상</option>`).join("")}</select><select data-i="ahsort"><option value="price" ${AH.sort === "price" ? "selected" : ""}>낮은 가격순</option><option value="new" ${AH.sort === "new" ? "selected" : ""}>최신순</option></select><label><input type="checkbox" data-i="ahuniq" ${AH.uniq ? "checked" : ""}> 고유만</label><button class="btn xs" data-a="ahref">새로고침</button></div>`;
+    const bar = `<div class="itbar"><select data-i="ahslot"><option value="">전체 부위</option>${SLOTS.map((s) => `<option value="${s}" ${AH.slot === s ? "selected" : ""}>${SLOT_NAME[s]}</option>`).join("")}<option value="skill" ${AH.slot === "skill" ? "selected" : ""}>스킬</option></select><select data-i="ahrar"><option value="0">전체 등급</option>${ITEM_RARITY.slice(1).map((x, i) => `<option value="${i + 1}" ${AH.minr === i + 1 ? "selected" : ""}>${x.name} 이상</option>`).join("")}</select><select data-i="ahsort"><option value="price" ${AH.sort === "price" ? "selected" : ""}>낮은 가격순</option><option value="new" ${AH.sort === "new" ? "selected" : ""}>최신순</option></select><label><input type="checkbox" data-i="ahuniq" ${AH.uniq ? "checked" : ""}> 고유만</label><button class="btn xs" data-a="ahref">새로고침</button></div>`;
     body = r.err ? `<div class="warn center pad">${r.err}</div>` : bar + `<div class="qlist" style="height:330px">${r.rows.map((x) => ahRowHtml(x, x.seller === SRV.name ? `<small class="dim">내 물품</small>` : `<button class="btn xs pri" data-a="ahbuy" data-id="${x.id}" data-price="${x.price}" ${save.gold >= x.price ? "" : "disabled"}>구매</button>`)).join("") || `<div class="dim center pad">등록된 물품이 없습니다</div>`}</div>`;
     window._ahRows = r.rows || [];
   } else {
@@ -71,16 +74,27 @@ async function openAuction() {
     ahtab: (el) => { AH.tab = el.dataset.t; rerender(); }, ahslot: (el) => { AH.slot = el.value; rerender(); }, ahrar: (el) => { AH.minr = +el.value; rerender(); }, ahsort: (el) => { AH.sort = el.value; rerender(); }, ahuniq: (el) => { AH.uniq = el.checked; rerender(); }, ahref: rerender,
     ahbuy: async (el) => {
       const id = +el.dataset.id, price = +el.dataset.price; if (save.gold < price) return toast("골드가 부족합니다", "bad");
-      if (save.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad");
+      const row = (window._ahRows || []).find((x) => x.id === id); if (!(row && isSkillItem(row.item)) && save.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad");
       const r = await api("/api/ah/buy", { id }); if (r.err) { toast(r.err, "bad"); snd("error"); return rerender(); }
-      save.gold -= r.price; r.item.uid = save.nextUid++; delete r.item.lock; save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1;
-      snd("coin"); toast(`${itemName(r.item)} 구매 완료 (−${fmtN(r.price)}G)`, "ok"); saveGame(); refreshTop(); srvQueue(); rerender();
+      save.gold -= r.price; r.item.uid = save.nextUid++; delete r.item.lock;
+      if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else { save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1; }
+      snd("coin"); toast(`${isSkillItem(r.item) || r.item.id ? SKILLS.find((x) => x.id === r.item.id).name : itemName(r.item)} 구매 완료 (−${fmtN(r.price)}G)`, "ok"); saveGame(); refreshTop(); srvQueue(); rerender();
     },
-    ahcancel: async (el) => { const r = await api("/api/ah/cancel", { id: +el.dataset.id }); if (r.err) { toast(r.err, "bad"); return rerender(); } r.item.uid = save.nextUid++; save.inv.push(r.item); toast("물품을 회수했습니다", "ok"); saveGame(); rerender(); },
+    ahcancel: async (el) => { const r = await api("/api/ah/cancel", { id: +el.dataset.id }); if (r.err) { toast(r.err, "bad"); return rerender(); } r.item.uid = save.nextUid++; if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else save.inv.push(r.item); toast("물품을 회수했습니다", "ok"); saveGame(); rerender(); },
     ahclaim: async () => {
       const r = await api("/api/claim", {}); if (r.err) return toast(r.err, "bad"); save.gold += r.gold; saveGame(); refreshTop(); snd("coin");
       Modal.open(`<h2>판매 완료</h2><div class="dim center">판매가 완료되었습니다. 수수료 5%를 뺀 금액이 입금되었습니다.</div><div class="qlist" style="height:220px">${r.sold.map((x) => ahRowHtml({ item: x.item, price: x.price }, `<small class="dim">판매 완료</small>`)).join("")}</div><div class="center pad">입금 합계 <b style="color:#ffe08a">${fmtN(r.gold)}G</b></div><div class="pbtns"><button class="btn pri" data-a="ok2">확인</button></div>`, { cls: "sm", on: { ok2: () => rerender() } });
     },
+  } });
+}
+function ahPostSkill(inst, rerender) {
+  if (!inst) return;
+  if (save.loadout.some((l) => l && l.uid === inst.uid)) return toast("장착 중인 스킬은 등록할 수 없습니다 (먼저 해제하세요)", "bad");
+  if ((save.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid))) return toast("프리셋에 포함된 스킬은 등록할 수 없습니다", "bad");
+  const d = SKILLS.find((x) => x.id === inst.id), sug = Math.max(100, Math.round(skillPrice(d, inst.rarity) * 1.5 * (1 + 0.15 * ((inst.lvl || 1) - 1))));
+  Modal.open(`<h2>스킬 경매 등록</h2><div class="center pad">${skIcon(inst.id, 3)}<div>${skillTitle(inst)} · Lv.${inst.lvl || 1}${inst.rune ? " · " + RUNES[inst.rune].name : ""}</div></div><div class="center">가격(골드) <input class="txt" id="ah-price" type="number" min="1" value="${sug}"></div><div class="dim center" style="margin-top:6px">수수료 5%가 판매 대금에서 빠집니다 · 최대 5개까지 등록 · 룬과 레벨이 함께 넘어갑니다</div><div class="pbtns"><button class="btn pri" data-a="ahgo">등록</button><button class="btn" data-a="ahno">취소</button></div>`, { cls: "sm", on: {
+    ahgo: async () => { const price = Math.floor(+$("#ah-price").value); if (!(price >= 1)) return toast("가격을 확인하세요", "bad"); const copy = JSON.parse(JSON.stringify(inst)); copy.slot = "skill"; copy.rarity = inst.rarity; const r = await api("/api/ah/post", { item: copy, price }); if (r.err) { toast(r.err, "bad"); snd("error"); return; } save.skills = save.skills.filter((x) => x !== inst); SK.sel = null; toast("경매에 등록했습니다", "ok"); snd("coin"); saveGame(); srvQueue(); rerender(); },
+    ahno: () => rerender(),
   } });
 }
 function ahPostDialog(it) {

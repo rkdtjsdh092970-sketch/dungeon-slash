@@ -183,7 +183,7 @@ const presetHandlers = (rerender) => ({ ppick: (el) => openPresetPreview(+el.dat
 const itemIconBySlot = (slot, cls) => iconImg(slot, 1, cls);
 
 // ---------- 스킬 정비 ----------
-const SK = { slot: 0 };
+const SK = { slot: 0, sel: null };
 const RULE_SHORT = { front: "앞열", auto: "오토", boss: "보스", ranged: "원거리", elite: "정예", normal: "일반" };
 const SLOT_HINT = ["", "튜토리얼 완료 시 개방", "액트 3 보스 처치 시 개방", "액트 6 보스 처치 시 개방"];
 const promoteCost = (inst) => (inst.rarity === 0 ? 8 : 25);

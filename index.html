@@ -217,6 +217,8 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .presets .pbtn{min-width:34px;margin-left:4px}.presets .pbtn.has{border-color:#ffd24a;color:#ffe08a}
 .pv-sec{margin:8px 0 4px;font-size:13px;font-weight:bold;color:#cfc8ee}.pv-skills{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pv-sk{display:flex;align-items:center;gap:10px;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:6px 10px}.pv-sk b{display:block;font-size:13px}.pv-sk small{font-size:11px;color:#a898d8}.pv-sk.off{opacity:.5}.pv-ic{width:48px;height:48px;border:2px dashed #4a4272;border-radius:8px}
 .pv-eqs{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;text-align:center}.pv-eq small{display:block;font-size:10px;color:#a898d8;margin-top:2px}.pv-eq.off{opacity:.5}.pv-eq .tile{margin:0 auto}
+.skbot{display:flex;gap:10px;margin-top:4px}.skbot .skgrid{flex:1;grid-template-columns:1fr;max-height:168px;overflow:auto}.skrow.picked{border-color:#ffd24a;background:#241c46}.skdet{width:340px;flex:none;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:8px 10px;font-size:12px;max-height:168px;overflow:auto}.skdet .dh{display:flex;gap:10px;align-items:center}.skdet .dd{margin:6px 0}.skdet .dbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.skdet .dbtns .btn{padding:5px 4px;font-size:12px}.tile.sktile{display:flex;align-items:center;justify-content:center}
+.skc{min-height:108px!important;padding:6px!important}.skcards{margin:6px 0!important}.skbot .skgrid,.skdet{max-height:190px!important}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -3091,7 +3093,7 @@ const presetHandlers = (rerender) => ({ ppick: (el) => openPresetPreview(+el.dat
 const itemIconBySlot = (slot, cls) => iconImg(slot, 1, cls);
 
 // ---------- 스킬 정비 ----------
-const SK = { slot: 0 };
+const SK = { slot: 0, sel: null };
 const RULE_SHORT = { front: "앞열", auto: "오토", boss: "보스", ranged: "원거리", elite: "정예", normal: "일반" };
 const SLOT_HINT = ["", "튜토리얼 완료 시 개방", "액트 3 보스 처치 시 개방", "액트 6 보스 처치 시 개방"];
 const promoteCost = (inst) => (inst.rarity === 0 ? 8 : 25);
@@ -3438,23 +3440,35 @@ function skTags(sk, st) {
 function openSkills() {
   const st = computeStats(save), lo = save.loadout, used = new Set(lo.filter(Boolean).map((l) => l.uid));
   const cards = [0, 1, 2, 3].map((i) => {
-    if (i >= save.slots) return `<div class="skc locked ${SK.slot === i ? "cursel" : ""}"><div class="sn">${i + 1}</div><div style="font-size:30px;margin:26px 0 6px">🔒</div><small class="dim">${SLOT_HINT[i]}</small></div>`;
+    if (i >= save.slots) return `<div class="skc locked ${SK.slot === i ? "cursel" : ""}"><div class="sn">${i + 1}</div><div style="font-size:26px;margin:14px 0 4px">🔒</div><small class="dim">${SLOT_HINT[i]}</small></div>`;
     const l = lo[i], inst = l && save.skills.find((x) => x.uid === l.uid);
-    if (!inst) return `<div class="skc ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="sn">${i + 1}</div><div class="dim" style="margin-top:50px">비어 있음</div></div>`;
+    if (!inst) return `<div class="skc ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="sn">${i + 1}</div><div class="dim" style="margin-top:32px">비어 있음</div></div>`;
     const sk = skillOf(inst);
-    return `<div class="skc ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="sn">${i + 1}</div>${skIcon(sk.id, 3)}<div class="sname">${skillTitle(inst)}</div><div>${skTags(sk, st)}</div><div style="margin:4px 0">${skillAreaHtml(sk, 11)}</div><small class="dim">쿨 ${sk.cd.toFixed(1)}초 · 피해 ${Math.round(sk.mult * 100)}%</small>
+    return `<div class="skc ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="sn">${i + 1}</div>${skIcon(sk.id, 3)}<div class="sname">${skillTitle(inst)}</div><div>${skTags(sk, st)}</div><small class="dim">쿨 ${sk.cd.toFixed(1)}초 · 피해 ${Math.round(sk.mult * 100)}%</small>
       <select data-i="rule" data-s="${i}">${RULE_ORDER.map((r) => `<option value="${r}" ${l.rule === r ? "selected" : ""}>${RULES[r]}</option>`).join("")}</select>${i > 0 ? `<button class="btn xs" data-a="clear" data-s="${i}">해제</button>` : ""}</div>`;
   }).join("");
   const want = SK.slot === 0 ? "basic" : "active";
   const owned = save.skills.filter((x) => SKILLS.find((d) => d.id === x.id).slot === want).sort((a, b) => b.rarity - a.rarity);
-  const row = (inst) => { const sk = skillOf(inst), d = sk.def; const bon = Object.keys(sk.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(sk.bonus[k] * 100)}%`).join(", "), pc = promoteCost(inst);
-    return `<div class="skrow ${used.has(inst.uid) ? "used" : ""}" data-a="equipsk" data-u="${inst.uid}">${skIcon(d.id, 2)}${skillAreaHtml(sk, 9)}<div class="sinfo"><div>${skillTitle(inst)} ${skTags(sk, st)}</div><small class="dim">${d.desc} · 피해 ${Math.round(sk.mult * 100)}% · 쿨 ${sk.cd.toFixed(1)}s${bon ? " · " + bon : ""}</small></div><div class="skbtns" style="display:flex;flex-direction:column;gap:3px">${inst.rarity < 2 && save.endgame ? `<button class="btn xs" data-a="promo" data-u="${inst.uid}" ${save.shards >= pc ? "" : "disabled"}>승급 ${iconImg("shard", 1)}${pc}</button>` : ""}<button class="btn xs" data-a="hone" data-u="${inst.uid}" ${(inst.lvl || 1) >= SKILL_MAX_LV || save.hone < honeCost(inst.lvl || 1) ? "disabled" : ""}>Lv.${inst.lvl || 1} ▲ ${(inst.lvl || 1) >= SKILL_MAX_LV ? "MAX" : honeCost(inst.lvl || 1)}</button><button class="btn xs" data-a="rune" data-u="${inst.uid}">${sk.rune ? `<span style="color:${sk.rune.color}">${sk.rune.name}</span>` : "룬 장착"}</button></div></div>`; };
+  const row = (inst) => { const sk = skillOf(inst), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === inst.uid);
+    return `<div class="skrow ${used.has(inst.uid) ? "used" : ""} ${SK.sel === inst.uid ? "picked" : ""}" data-a="picksk" data-u="${inst.uid}">${skIcon(d.id, 2)}${skillAreaHtml(sk, 9)}<div class="sinfo"><div>${skillTitle(inst)} ${skTags(sk, st)} <small class="dim">Lv.${inst.lvl || 1}${eqi >= 0 ? " · " + (eqi + 1) + "번 칸 장착 중" : ""}</small></div><small class="dim">피해 ${Math.round(sk.mult * 100)}% · 쿨 ${sk.cd.toFixed(1)}s${sk.rune ? " · " + sk.rune.name : ""}</small></div></div>`; };
+  const sel = save.skills.find((x) => x.uid === SK.sel), det = (() => {
+    if (!sel) return `<div class="skdet"><div class="dim center pad">스킬을 클릭하면 설명이 보이고,<br>[장착] 버튼으로 ${SK.slot + 1}번 칸에 장착합니다</div></div>`;
+    const sk = skillOf(sel), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === sel.uid), pc = promoteCost(sel), typeOk = d.slot === want, slotOk = SK.slot < save.slots;
+    const bon = Object.keys(sk.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(sk.bonus[k] * 100)}%`).join(", ");
+    return `<div class="skdet"><div class="dh">${skIcon(d.id, 3)}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><small class="dim">Lv.${sel.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""}${eqi >= 0 ? " · " + (eqi + 1) + "번 칸 장착 중" : ""}</small></div></div>
+      <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${typeOk && slotOk ? "" : "disabled"}>${typeOk ? `${SK.slot + 1}번 칸에 장착` : want === "basic" ? "1번 칸 전용 아님" : "기본 공격 스킬"}</button>${eqi > 0 ? `<button class="btn" data-a="clear" data-s="${eqi}">해제</button>` : ""}
+      <button class="btn" data-a="hone" data-u="${sel.uid}" ${(sel.lvl || 1) >= SKILL_MAX_LV || save.hone < honeCost(sel.lvl || 1) ? "disabled" : ""}>레벨업<br><small>${(sel.lvl || 1) >= SKILL_MAX_LV ? "MAX" : "연마석 " + honeCost(sel.lvl || 1)}</small></button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? `<span style="color:${sk.rune.color}">${sk.rune.name}</span>` : "룬 장착"}</button>
+      ${sel.rarity < 2 && save.endgame ? `<button class="btn" data-a="promo" data-u="${sel.uid}" ${save.shards >= pc ? "" : "disabled"}>승급<br><small>${pc} 조각</small></button>` : ""}${SRV.on && eqi < 0 ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}">경매 등록</button>` : ""}</div>
+      <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div>`;
+  })();
   Modal.open(`<h2>스킬 정비소</h2><div class="res">연마석 ${fmtN(save.hone)} · 룬 ${save.runes.length}</div>${presetRow()}<div class="dim center">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 &nbsp;|&nbsp; 적을 클릭하면 모든 스킬이 그 적을 우선 공격합니다</div><div class="skcards">${cards}</div>
-  <h3>${SK.slot + 1}번 칸에 장착 가능한 스킬 (${want === "basic" ? "기본 공격" : "액티브"}) <small class="dim">스킬 상점에서 골드로 구매할 수 있어요</small></h3><div class="slist skgrid">${owned.map(row).join("") || `<div class="dim pad">보유한 스킬이 없습니다</div>`}</div>`, { cls: "wide", on: Object.assign({
-    slot: (el) => { SK.slot = +el.dataset.s; openSkills(); },
+  <h3>${SK.slot + 1}번 칸용 스킬 (${want === "basic" ? "기본 공격" : "액티브"}) <small class="dim">클릭해서 확인 → [장착] · 스킬 상점에서 골드로 구매할 수 있어요</small></h3><div class="skbot"><div class="slist skgrid">${owned.map(row).join("") || `<div class="dim pad">보유한 스킬이 없습니다</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
+    slot: (el) => { SK.slot = +el.dataset.s; SK.sel = null; openSkills(); },
+    picksk: (el) => { SK.sel = +el.dataset.u; snd("click"); openSkills(); },
+    ahpostsk: (el) => ahPostSkill(save.skills.find((x) => x.uid === +el.dataset.u), openSkills),
     clear: (el, ev) => { ev.stopPropagation(); save.loadout[+el.dataset.s] = null; saveGame(); openSkills(); },
     rule: (el) => { const i = +el.dataset.s; if (save.loadout[i]) save.loadout[i].rule = el.value; saveGame(); },
-    equipsk: (el) => { if (SK.slot >= save.slots) return; const u = +el.dataset.u; const j = save.loadout.findIndex((l) => l && l.uid === u); const prev = save.loadout[SK.slot]; if (j >= 0 && j !== SK.slot) save.loadout[j] = j === 0 ? save.loadout[j] : null; save.loadout[SK.slot] = { uid: u, rule: (prev && prev.rule) || "front" }; snd("equip"); saveGame(); openSkills(); },
+    equipsk: (el) => { if (SK.slot >= save.slots) return; const u = +el.dataset.u; const j = save.loadout.findIndex((l) => l && l.uid === u); const prev = save.loadout[SK.slot]; if (j >= 0 && j !== SK.slot) save.loadout[j] = j === 0 ? save.loadout[j] : null; save.loadout[SK.slot] = { uid: u, rule: (prev && prev.rule) || "front" }; snd("equip"); toast("장착했습니다", "ok"); saveGame(); openSkills(); },
     promo: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); const pc = promoteCost(inst); if (save.shards < pc) return; save.shards -= pc; inst.rarity++; snd("legend"); toast("스킬이 승급했습니다!"); saveGame(); openSkills(); },
     hone: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u), cost = honeCost(inst.lvl || 1); if ((inst.lvl || 1) >= SKILL_MAX_LV || save.hone < cost) return; save.hone -= cost; inst.lvl = (inst.lvl || 1) + 1; snd("enh_ok"); toast(`${SKILLS.find((x) => x.id === inst.id).name} Lv.${inst.lvl}`, "ok"); saveGame(); openSkills(); },
     rune: (el) => openRunePicker(+el.dataset.u),
@@ -3664,8 +3678,11 @@ const needLogin = (title) => { Modal.open(`<h2>${title}</h2><div class="center p
 // ---------- 경매장 ----------
 const AH = { tab: "buy", slot: "", minr: 0, uniq: false, sort: "price" };
 const itemBrief = (it) => { if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; return D ? uniqueLines(D, it.umods).join(" · ") : ""; } return it.affixes.map((a) => affText(a)).join(" · "); };
+const isSkillItem = (it) => it && it.slot === "skill";
 function ahRowHtml(r, act) {
-  const it = r.item; return `<div class="ahrow">${tileHtml(it, { up: true })}<div style="flex:1;min-width:0"><div>${itemTitle(it)} <small class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${baseText(it)} · ${itemBrief(it)}</small></div>
+  const it = r.item;
+  if (isSkillItem(it)) { const d = SKILLS.find((x) => x.id === it.id); if (!d) return ""; const sk = skillOf(it); return `<div class="ahrow"><div class="tile sktile">${skIcon(it.id, 2)}</div><div style="flex:1;min-width:0"><div>${skillTitle(it)} <small class="dim">스킬 · Lv.${it.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${d.desc} · 피해 ${Math.round(sk.mult * 100)}% · 쿨 ${sk.cd.toFixed(1)}s</small></div><div style="text-align:right"><div style="color:#ffe08a;font-weight:bold">${fmtN(r.price)}G</div>${act}</div></div>`; }
+  return `<div class="ahrow">${tileHtml(it, { up: true })}<div style="flex:1;min-width:0"><div>${itemTitle(it)} <small class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${baseText(it)} · ${itemBrief(it)}</small></div>
   <div style="text-align:right"><div style="color:#ffe08a;font-weight:bold">${fmtN(r.price)}G</div>${act}</div></div>`;
 }
 async function openAuction() {
@@ -3674,7 +3691,7 @@ async function openAuction() {
   let body = "", res = `<div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div>`;
   if (AH.tab === "buy") {
     const r = await api(`/api/ah/list?slot=${AH.slot}&minr=${AH.minr}&uniq=${AH.uniq ? 1 : 0}&sort=${AH.sort}`);
-    const bar = `<div class="itbar"><select data-i="ahslot"><option value="">전체 부위</option>${SLOTS.map((s) => `<option value="${s}" ${AH.slot === s ? "selected" : ""}>${SLOT_NAME[s]}</option>`).join("")}</select><select data-i="ahrar"><option value="0">전체 등급</option>${ITEM_RARITY.slice(1).map((x, i) => `<option value="${i + 1}" ${AH.minr === i + 1 ? "selected" : ""}>${x.name} 이상</option>`).join("")}</select><select data-i="ahsort"><option value="price" ${AH.sort === "price" ? "selected" : ""}>낮은 가격순</option><option value="new" ${AH.sort === "new" ? "selected" : ""}>최신순</option></select><label><input type="checkbox" data-i="ahuniq" ${AH.uniq ? "checked" : ""}> 고유만</label><button class="btn xs" data-a="ahref">새로고침</button></div>`;
+    const bar = `<div class="itbar"><select data-i="ahslot"><option value="">전체 부위</option>${SLOTS.map((s) => `<option value="${s}" ${AH.slot === s ? "selected" : ""}>${SLOT_NAME[s]}</option>`).join("")}<option value="skill" ${AH.slot === "skill" ? "selected" : ""}>스킬</option></select><select data-i="ahrar"><option value="0">전체 등급</option>${ITEM_RARITY.slice(1).map((x, i) => `<option value="${i + 1}" ${AH.minr === i + 1 ? "selected" : ""}>${x.name} 이상</option>`).join("")}</select><select data-i="ahsort"><option value="price" ${AH.sort === "price" ? "selected" : ""}>낮은 가격순</option><option value="new" ${AH.sort === "new" ? "selected" : ""}>최신순</option></select><label><input type="checkbox" data-i="ahuniq" ${AH.uniq ? "checked" : ""}> 고유만</label><button class="btn xs" data-a="ahref">새로고침</button></div>`;
     body = r.err ? `<div class="warn center pad">${r.err}</div>` : bar + `<div class="qlist" style="height:330px">${r.rows.map((x) => ahRowHtml(x, x.seller === SRV.name ? `<small class="dim">내 물품</small>` : `<button class="btn xs pri" data-a="ahbuy" data-id="${x.id}" data-price="${x.price}" ${save.gold >= x.price ? "" : "disabled"}>구매</button>`)).join("") || `<div class="dim center pad">등록된 물품이 없습니다</div>`}</div>`;
     window._ahRows = r.rows || [];
   } else {
@@ -3688,16 +3705,27 @@ async function openAuction() {
     ahtab: (el) => { AH.tab = el.dataset.t; rerender(); }, ahslot: (el) => { AH.slot = el.value; rerender(); }, ahrar: (el) => { AH.minr = +el.value; rerender(); }, ahsort: (el) => { AH.sort = el.value; rerender(); }, ahuniq: (el) => { AH.uniq = el.checked; rerender(); }, ahref: rerender,
     ahbuy: async (el) => {
       const id = +el.dataset.id, price = +el.dataset.price; if (save.gold < price) return toast("골드가 부족합니다", "bad");
-      if (save.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad");
+      const row = (window._ahRows || []).find((x) => x.id === id); if (!(row && isSkillItem(row.item)) && save.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad");
       const r = await api("/api/ah/buy", { id }); if (r.err) { toast(r.err, "bad"); snd("error"); return rerender(); }
-      save.gold -= r.price; r.item.uid = save.nextUid++; delete r.item.lock; save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1;
-      snd("coin"); toast(`${itemName(r.item)} 구매 완료 (−${fmtN(r.price)}G)`, "ok"); saveGame(); refreshTop(); srvQueue(); rerender();
+      save.gold -= r.price; r.item.uid = save.nextUid++; delete r.item.lock;
+      if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else { save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1; }
+      snd("coin"); toast(`${isSkillItem(r.item) || r.item.id ? SKILLS.find((x) => x.id === r.item.id).name : itemName(r.item)} 구매 완료 (−${fmtN(r.price)}G)`, "ok"); saveGame(); refreshTop(); srvQueue(); rerender();
     },
-    ahcancel: async (el) => { const r = await api("/api/ah/cancel", { id: +el.dataset.id }); if (r.err) { toast(r.err, "bad"); return rerender(); } r.item.uid = save.nextUid++; save.inv.push(r.item); toast("물품을 회수했습니다", "ok"); saveGame(); rerender(); },
+    ahcancel: async (el) => { const r = await api("/api/ah/cancel", { id: +el.dataset.id }); if (r.err) { toast(r.err, "bad"); return rerender(); } r.item.uid = save.nextUid++; if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else save.inv.push(r.item); toast("물품을 회수했습니다", "ok"); saveGame(); rerender(); },
     ahclaim: async () => {
       const r = await api("/api/claim", {}); if (r.err) return toast(r.err, "bad"); save.gold += r.gold; saveGame(); refreshTop(); snd("coin");
       Modal.open(`<h2>판매 완료</h2><div class="dim center">판매가 완료되었습니다. 수수료 5%를 뺀 금액이 입금되었습니다.</div><div class="qlist" style="height:220px">${r.sold.map((x) => ahRowHtml({ item: x.item, price: x.price }, `<small class="dim">판매 완료</small>`)).join("")}</div><div class="center pad">입금 합계 <b style="color:#ffe08a">${fmtN(r.gold)}G</b></div><div class="pbtns"><button class="btn pri" data-a="ok2">확인</button></div>`, { cls: "sm", on: { ok2: () => rerender() } });
     },
+  } });
+}
+function ahPostSkill(inst, rerender) {
+  if (!inst) return;
+  if (save.loadout.some((l) => l && l.uid === inst.uid)) return toast("장착 중인 스킬은 등록할 수 없습니다 (먼저 해제하세요)", "bad");
+  if ((save.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid))) return toast("프리셋에 포함된 스킬은 등록할 수 없습니다", "bad");
+  const d = SKILLS.find((x) => x.id === inst.id), sug = Math.max(100, Math.round(skillPrice(d, inst.rarity) * 1.5 * (1 + 0.15 * ((inst.lvl || 1) - 1))));
+  Modal.open(`<h2>스킬 경매 등록</h2><div class="center pad">${skIcon(inst.id, 3)}<div>${skillTitle(inst)} · Lv.${inst.lvl || 1}${inst.rune ? " · " + RUNES[inst.rune].name : ""}</div></div><div class="center">가격(골드) <input class="txt" id="ah-price" type="number" min="1" value="${sug}"></div><div class="dim center" style="margin-top:6px">수수료 5%가 판매 대금에서 빠집니다 · 최대 5개까지 등록 · 룬과 레벨이 함께 넘어갑니다</div><div class="pbtns"><button class="btn pri" data-a="ahgo">등록</button><button class="btn" data-a="ahno">취소</button></div>`, { cls: "sm", on: {
+    ahgo: async () => { const price = Math.floor(+$("#ah-price").value); if (!(price >= 1)) return toast("가격을 확인하세요", "bad"); const copy = JSON.parse(JSON.stringify(inst)); copy.slot = "skill"; copy.rarity = inst.rarity; const r = await api("/api/ah/post", { item: copy, price }); if (r.err) { toast(r.err, "bad"); snd("error"); return; } save.skills = save.skills.filter((x) => x !== inst); SK.sel = null; toast("경매에 등록했습니다", "ok"); snd("coin"); saveGame(); srvQueue(); rerender(); },
+    ahno: () => rerender(),
   } });
 }
 function ahPostDialog(it) {
@@ -3770,7 +3798,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-031327";
+const BUILD_ID = "20261028-031647";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
