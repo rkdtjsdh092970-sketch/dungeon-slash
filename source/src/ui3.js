@@ -10,7 +10,7 @@ const eqKey = (it) => EQ_SLOTS.find((k) => save.equipped[k] === it);
 const isProtected = (it) => protectedItem(save, it);
 function tileHtml(it, o) {
   o = o || {}; const t = tierOfItem(it), col = itemColor(it);
-  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} title="${itemName(it)}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
+  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} title="${itemName(it)}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${o.up !== false && !isEquipped(it) && !canEquip(save, it) ? `<i class="mk rq" title="장착 레벨 부족">Lv.${reqLevel(it.ilvl)}</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
 }
 function itemTitle(it) {
   if (it.uniq) return `<span class="tn${tierOfItem(it)}">${it.enh ? "+" + it.enh + " " : ""}${itemName(it)}</span>`;
@@ -33,14 +33,14 @@ function itemDetail(it) {
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
-  h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
+  h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
   if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
-  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
+  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
-  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
+  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? (canEquip(save, it) ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn" disabled>Lv.${reqLevel(it.ilvl)} 필요</button>`) : (canEquip(save, it) ? `<button class="btn pri" data-a="equip">장착</button>` : `<button class="btn" disabled>Lv.${reqLevel(it.ilvl)} 필요</button>`);
   if (IB.mode === "forge") {
     const c = enhCost(it), rate = ENH_RATE[it.enh || 0], y = dismantleYield(it);
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}</small></button>`;
@@ -73,7 +73,7 @@ function renderItems() {
     pick: (el) => { IB.sel = find(el); renderItems(); }, tab: (el) => { IB.tab = el.dataset.t; renderItems(); },
     frar: (el) => { IB.rar = +el.value; renderItems(); }, fsort: (el) => { IB.sort = el.value; renderItems(); }, flock: () => { IB.lockOnly = !IB.lockOnly; renderItems(); },
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
-    equip: (el) => { equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
+    equip: (el) => { if (!canEquip(save, IB.sel)) { toast(`장착 레벨 Lv.${reqLevel(IB.sel.ilvl)} 이상이 필요합니다`, "bad"); snd("error"); return; } equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
     recommend: () => { const ch = recommendEquip(save); if (ch.length) { snd("equip"); toast(`추천 장비로 ${ch.length}칸을 교체했습니다`, "ok"); } done(); },
     openstat: () => { Modal.onClose = null; openStats(); },
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },

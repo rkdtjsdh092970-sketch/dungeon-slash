@@ -220,6 +220,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .skbot{display:flex;gap:10px;margin-top:4px}.skbot .skgrid{flex:1;grid-template-columns:1fr;max-height:168px;overflow:auto}.skrow.picked{border-color:#ffd24a;background:#241c46}.skdet{width:340px;flex:none;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:8px 10px;font-size:12px;max-height:168px;overflow:auto}.skdet .dh{display:flex;gap:10px;align-items:center}.skdet .dd{margin:6px 0}.skdet .dbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.skdet .dbtns .btn{padding:5px 4px;font-size:12px}.tile.sktile{display:flex;align-items:center;justify-content:center}
 .skc{min-height:108px!important;padding:6px!important}.skcards{margin:6px 0!important}.skbot .skgrid,.skdet{max-height:190px!important}
 .nb{display:flex;gap:12px;height:380px}.nb-list{width:230px;flex:none;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:6px}.nb-it{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}.nb-it:hover{background:#1c1636}.nb-it.on{background:#2a2050;border-color:#ffd24a}.nb-it b{font-size:15px;color:#ffe08a}.nb-it em{font-style:normal;font-size:10px;background:#e83a3a;border-radius:7px;padding:0 6px;margin-left:6px}.nb-it small{float:right;color:#a898d8}.nb-it div{font-size:12px;color:#cfc8ee;margin-top:3px}\n.nb-body{flex:1;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:12px 16px}.nb-h b{font-size:22px;color:#ffd24a}.nb-h span{color:#a898d8;margin-left:8px}.nb-t{font-size:16px;font-weight:bold;margin:6px 0 10px}.nb-body ul{padding-left:20px}.nb-body li{margin:7px 0;line-height:1.55;font-size:14px}
+.tile .mk.rq{left:1px;bottom:12px;top:auto;font-size:9px;font-style:normal;font-weight:bold;color:#fff;background:#b02a2a;border-radius:4px;padding:0 3px;line-height:11px;box-shadow:0 0 0 1px #000}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -1246,7 +1247,7 @@ function baseCastOf(k, s, act, sc) {   // 스킬 배율 1.0 기준 1타 피해: 
 }
 function powerDetail(s) {
   const act = Math.max(1, Math.min(10, Math.round(s.avgIlvl))), sc = 1 + CFG.DEF_ACT * (act - 1);
-  const refAtk = 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl)), mit = 1 + s.def / (s.def + 5 * refAtk);
+  const refAtk = POWER_RAW * 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl)), mit = 1 + s.def / (5 * refAtk);   // 받는 피해 = 원피해 × 5r/(def+5r) → 유효 체력 배율 = 1 + def/(5r) (제한 없이 방어력만큼 커짐)
   const out = { skills: [], dps: 0, manaFactor: 1, buff: 1 };
   let demand = 0, buffMul = 1, hasPaid = false;
   const cdMul = 1 - s.cdr;
@@ -1270,10 +1271,11 @@ function powerDetail(s) {
   for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
   out.dps *= buffMul; out.buff = buffMul;
   const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M, s.maxHp * f / (1 - f)) : 0;
-  out.ehp = (s.maxHp + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
+  out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
   out.mit = mit; out.revive = s.revive;
   return out;
 }
+const POWER_RAW = 6;   // 방어 효과 계산에 쓰는 "실제로 맞는 평균 한 방" 배율 (스테이지 스케일·몹 겹침·정예 포함)
 let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
 function playerPower(s) {
   const d = powerDetail(s);
@@ -1281,7 +1283,7 @@ function playerPower(s) {
 }
 const enemyIndex = (act, stage) => CFG.H0 * CFG.A0 * actScale(act) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * (1 + CFG.STAGE_ATK * (stage - 1));
 const recPower = (act, stage) => CFG.REC_K * (stage === CFG.STAGES ? CFG.REC_BOSS : 1) * enemyIndex(act, stage);
-function powerWith(sv, slot, item) { const old = sv.equipped[slot]; sv.equipped[slot] = item; const p = playerPower(computeStats(sv)); sv.equipped[slot] = old; return p; }
+function powerWith(sv, slot, item, fn) { const old = sv.equipped[slot]; sv.equipped[slot] = item; const p = (fn || playerPower)(computeStats(sv)); sv.equipped[slot] = old; return p; }
 
 // ---- 드랍 ----
 // 보너스 합산: 장비 MF + 패시브 + 심연 각인 + 월드 버프(엔드게임)
@@ -1414,6 +1416,10 @@ function enhance(sv, it) {
   if (Math.random() < rate) { sv.ore -= c.ore; it.enh = (it.enh || 0) + 1; questEvent(sv, { type: "enhance" }); return { ok: true, success: true, msg: `+${it.enh} 강화 성공!` }; }
   sv.ore -= Math.ceil(c.ore / 2); return { ok: true, success: false, msg: "강화 실패 (강화석 일부만 소모)" };
 }
+// 장착 레벨: 아이템 레벨이 높을수록 높은 캐릭터 레벨이 필요하다 (액트 진행 속도에 맞춘 표)
+const REQ_LV = [1, 3, 8, 16, 26, 36, 46, 56, 66, 76];
+const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.min(CFG.LEVEL_CAP, 76 + 2 * (ilvl - 10)));
+const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
 function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
@@ -1444,8 +1450,8 @@ const nodeCleared = (sv, n) => (n.kind === "stage" || n.kind === "boss") && sv.c
 // ---- 봇 (밸런스 시뮬레이션 전용) ----
 function botEquip(sv) {
   for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
-    let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best);
-    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
+    let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best, playerPowerOld);
+    for (const it of sv.inv) if (it.slot === slotType(slot) && canEquip(sv, it)) { const p = powerWith(sv, slot, it, playerPowerOld); if (p > bp) { bp = p; best = it; } }
     const cur = sv.equipped[slot] || null;
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; }
   }
@@ -1462,7 +1468,8 @@ function botEquip(sv) {
 // =========================================================
 // 추천 장비 / ▲ 표시 / 프리셋
 // =========================================================
-function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드
+function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드 (장착 레벨이 모자라면 제외)
+  if (!canEquip(sv, it)) return false;
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k]; if (cur === it) return false; }
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k], base = powerWith(sv, k, cur || null), p = powerWith(sv, k, it); if (p > base * 1.0005) return true; }
   return false;
@@ -1471,7 +1478,7 @@ function recommendEquip(sv) {
   const changed = [];
   for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
     const cur = sv.equipped[slot] || null; let best = cur, bp = powerWith(sv, slot, cur);
-    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
+    for (const it of sv.inv) if (it.slot === slotType(slot) && canEquip(sv, it)) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; changed.push(slot); }
   }
   return changed;
@@ -3422,7 +3429,7 @@ const eqKey = (it) => EQ_SLOTS.find((k) => save.equipped[k] === it);
 const isProtected = (it) => protectedItem(save, it);
 function tileHtml(it, o) {
   o = o || {}; const t = tierOfItem(it), col = itemColor(it);
-  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} title="${itemName(it)}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
+  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} title="${itemName(it)}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${o.up !== false && !isEquipped(it) && !canEquip(save, it) ? `<i class="mk rq" title="장착 레벨 부족">Lv.${reqLevel(it.ilvl)}</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
 }
 function itemTitle(it) {
   if (it.uniq) return `<span class="tn${tierOfItem(it)}">${it.enh ? "+" + it.enh + " " : ""}${itemName(it)}</span>`;
@@ -3445,14 +3452,14 @@ function itemDetail(it) {
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
-  h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
+  h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
   if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
-  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
+  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
-  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
+  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? (canEquip(save, it) ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn" disabled>Lv.${reqLevel(it.ilvl)} 필요</button>`) : (canEquip(save, it) ? `<button class="btn pri" data-a="equip">장착</button>` : `<button class="btn" disabled>Lv.${reqLevel(it.ilvl)} 필요</button>`);
   if (IB.mode === "forge") {
     const c = enhCost(it), rate = ENH_RATE[it.enh || 0], y = dismantleYield(it);
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}</small></button>`;
@@ -3485,7 +3492,7 @@ function renderItems() {
     pick: (el) => { IB.sel = find(el); renderItems(); }, tab: (el) => { IB.tab = el.dataset.t; renderItems(); },
     frar: (el) => { IB.rar = +el.value; renderItems(); }, fsort: (el) => { IB.sort = el.value; renderItems(); }, flock: () => { IB.lockOnly = !IB.lockOnly; renderItems(); },
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
-    equip: (el) => { equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
+    equip: (el) => { if (!canEquip(save, IB.sel)) { toast(`장착 레벨 Lv.${reqLevel(IB.sel.ilvl)} 이상이 필요합니다`, "bad"); snd("error"); return; } equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
     recommend: () => { const ch = recommendEquip(save); if (ch.length) { snd("equip"); toast(`추천 장비로 ${ch.length}칸을 교체했습니다`, "ok"); } done(); },
     openstat: () => { Modal.onClose = null; openStats(); },
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
@@ -3903,7 +3910,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-033600";
+const BUILD_ID = "20261028-034611";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -3995,6 +4002,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "2.0", date: "10/28", title: "방어 전투력 · 장착 레벨", items: [
+    "방어구의 방어력·체력이 전투력에 제대로 반영됩니다. 방어력이 높을수록 받는 피해가 줄어드는 만큼 유효 체력이 커지고, 체력·회복·받는 피해 감소도 함께 계산합니다.",
+    "아이템 레벨에 따른 '장착 레벨'이 생겼습니다. (아이템 Lv.2: Lv.3, Lv.3: Lv.8, Lv.4: Lv.16 … Lv.10: Lv.76 · 균열 상위 드랍은 그 이상)",
+    "캐릭터 레벨이 부족한 장비는 가방에서 빨간 'Lv.N' 표시가 붙고 장착이 막히며, 추천 장비 착용·▲ 표시에서도 제외됩니다. 이미 착용 중인 장비는 그대로 입니다.",
+  ] },
   { ver: "1.9", date: "10/28", title: "전투력 계산 개편 · 몬스터 구성 고정", items: [
     "전투력이 장착한 스킬을 하나씩 계산하는 방식으로 바뀌었습니다. 물리/마법, 원소 피해, 출혈·중독·점화, 마나(재생·소모·마나 방패) 빌드가 각자 다르게 반영됩니다. 같은 장비라도 어떤 스킬을 쓰는지에 따라 ▲/▼가 달라집니다.",
     "스탯 창 맨 앞에 '전투력' 칸이 생겼습니다. 스킬별 초당 피해와 비중, 마나 가동률(재생 대비 소모), 유효 체력을 볼 수 있습니다.",

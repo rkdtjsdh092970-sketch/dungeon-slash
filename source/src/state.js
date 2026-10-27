@@ -162,7 +162,7 @@ function baseCastOf(k, s, act, sc) {   // 스킬 배율 1.0 기준 1타 피해: 
 }
 function powerDetail(s) {
   const act = Math.max(1, Math.min(10, Math.round(s.avgIlvl))), sc = 1 + CFG.DEF_ACT * (act - 1);
-  const refAtk = 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl)), mit = 1 + s.def / (s.def + 5 * refAtk);
+  const refAtk = POWER_RAW * 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl)), mit = 1 + s.def / (5 * refAtk);   // 받는 피해 = 원피해 × 5r/(def+5r) → 유효 체력 배율 = 1 + def/(5r) (제한 없이 방어력만큼 커짐)
   const out = { skills: [], dps: 0, manaFactor: 1, buff: 1 };
   let demand = 0, buffMul = 1, hasPaid = false;
   const cdMul = 1 - s.cdr;
@@ -186,10 +186,11 @@ function powerDetail(s) {
   for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
   out.dps *= buffMul; out.buff = buffMul;
   const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M, s.maxHp * f / (1 - f)) : 0;
-  out.ehp = (s.maxHp + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
+  out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
   out.mit = mit; out.revive = s.revive;
   return out;
 }
+const POWER_RAW = 6;   // 방어 효과 계산에 쓰는 "실제로 맞는 평균 한 방" 배율 (스테이지 스케일·몹 겹침·정예 포함)
 let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
 function playerPower(s) {
   const d = powerDetail(s);
@@ -197,7 +198,7 @@ function playerPower(s) {
 }
 const enemyIndex = (act, stage) => CFG.H0 * CFG.A0 * actScale(act) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * (1 + CFG.STAGE_ATK * (stage - 1));
 const recPower = (act, stage) => CFG.REC_K * (stage === CFG.STAGES ? CFG.REC_BOSS : 1) * enemyIndex(act, stage);
-function powerWith(sv, slot, item) { const old = sv.equipped[slot]; sv.equipped[slot] = item; const p = playerPower(computeStats(sv)); sv.equipped[slot] = old; return p; }
+function powerWith(sv, slot, item, fn) { const old = sv.equipped[slot]; sv.equipped[slot] = item; const p = (fn || playerPower)(computeStats(sv)); sv.equipped[slot] = old; return p; }
 
 // ---- 드랍 ----
 // 보너스 합산: 장비 MF + 패시브 + 심연 각인 + 월드 버프(엔드게임)
@@ -330,6 +331,10 @@ function enhance(sv, it) {
   if (Math.random() < rate) { sv.ore -= c.ore; it.enh = (it.enh || 0) + 1; questEvent(sv, { type: "enhance" }); return { ok: true, success: true, msg: `+${it.enh} 강화 성공!` }; }
   sv.ore -= Math.ceil(c.ore / 2); return { ok: true, success: false, msg: "강화 실패 (강화석 일부만 소모)" };
 }
+// 장착 레벨: 아이템 레벨이 높을수록 높은 캐릭터 레벨이 필요하다 (액트 진행 속도에 맞춘 표)
+const REQ_LV = [1, 3, 8, 16, 26, 36, 46, 56, 66, 76];
+const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.min(CFG.LEVEL_CAP, 76 + 2 * (ilvl - 10)));
+const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
 function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
@@ -360,8 +365,8 @@ const nodeCleared = (sv, n) => (n.kind === "stage" || n.kind === "boss") && sv.c
 // ---- 봇 (밸런스 시뮬레이션 전용) ----
 function botEquip(sv) {
   for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
-    let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best);
-    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
+    let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best, playerPowerOld);
+    for (const it of sv.inv) if (it.slot === slotType(slot) && canEquip(sv, it)) { const p = powerWith(sv, slot, it, playerPowerOld); if (p > bp) { bp = p; best = it; } }
     const cur = sv.equipped[slot] || null;
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; }
   }
@@ -378,7 +383,8 @@ function botEquip(sv) {
 // =========================================================
 // 추천 장비 / ▲ 표시 / 프리셋
 // =========================================================
-function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드
+function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드 (장착 레벨이 모자라면 제외)
+  if (!canEquip(sv, it)) return false;
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k]; if (cur === it) return false; }
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k], base = powerWith(sv, k, cur || null), p = powerWith(sv, k, it); if (p > base * 1.0005) return true; }
   return false;
@@ -387,7 +393,7 @@ function recommendEquip(sv) {
   const changed = [];
   for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
     const cur = sv.equipped[slot] || null; let best = cur, bp = powerWith(sv, slot, cur);
-    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
+    for (const it of sv.inv) if (it.slot === slotType(slot) && canEquip(sv, it)) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; changed.push(slot); }
   }
   return changed;
