@@ -74,7 +74,7 @@ function planFor(node) {
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
   const w = wavePool(act, stage, mods), types = Object.keys(w);
-  if (node.kind === "void") { const pl = []; for (let k = 0; k < 4; k++) { for (const t of smoothSeq(w, 8)) pl.push(t); pl.splice(pl.length - 3, 0, "brute"); pl.push("boss"); } return pl; }   // 공허의 군주: 4단계, 단계마다 보스
+  if (node.kind === "void") return ["boss", "boss", "boss", "boss"];   // 공허의 군주: 단계마다 군주 한 마리만 (잡몹 없음)
   let nNormal = CFG.WAVE_BASE + CFG.WAVE_STAGE * stage, elites = eliteCount(stage), boss = false;
   if (node.kind === "boss") { nNormal = Math.round(nNormal * 0.55); boss = true; }
   else if (node.kind === "elite") { nNormal = 45; elites = 10 + act; }
