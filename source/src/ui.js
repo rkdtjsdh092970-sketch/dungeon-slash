@@ -202,10 +202,10 @@ function openSettings() {
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
    ${A ? `<h3>자동 반복</h3><label class="setrow2">승리 후 장비 자동 판매 <select data-i="asell"><option value="-1" ${A.sell < 0 ? "selected" : ""}>하지 않음</option><option value="0" ${A.sell === 0 ? "selected" : ""}>일반 이하</option><option value="1" ${A.sell === 1 ? "selected" : ""}>마법 이하</option><option value="2" ${A.sell === 2 ? "selected" : ""}>희귀 이하</option></select></label>
    <label class="setrow2">추천 장비 자동 착용 <input type="checkbox" data-i="aequip" ${A.equip ? "checked" : ""}></label>` : ""}
-   <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
+   <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
     vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked),
     asell: (el) => { save.auto.sell = +el.value; saveGame(); }, aequip: (el) => { save.auto.equip = el.checked; saveGame(); },
-    srvlg: () => loginDialog(() => {}), recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
+    srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
     wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),
   } });
 }
@@ -219,30 +219,33 @@ function startBattle(node, opt) {
 }
 function tipBox(title, text) { G.paused = true; G.tipOpen = true; const t = $("#tip"); t.classList.remove("hidden"); t.innerHTML = `<b>${title}</b><p>${text}</p><button class="btn pri" data-t="tipok">시작</button>`; }
 function battleHudBuild(b) {
-  $("#bh-name").textContent = b.node.name || "전투";
-  $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot" data-i="${i}" title="클릭: 타겟 규칙 변경">${skIcon(sk.id, 3)}<div class="cdm"></div><span class="rl"></span><span class="kn">${i + 1}</span></div>` : `<div class="bslot off"><span class="kn">${i + 1}</span>${i >= save.slots ? "🔒" : ""}</div>`).join("");
+  $("#bh-name").textContent = b.node.name || "전투"; $("#pf-ico").src = iconURL("helm", 3); $("#pf-lv").textContent = save.level; G.hpGhost = 1; G.bossGhost = 1;
+  $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot" data-i="${i}" title="클릭: 타겟 규칙 변경">${skIcon(sk.id, 3)}<div class="cdm"></div><span class="rl"></span><span class="kn">${i + 1}</span><span class="mc"></span><span class="cds"></span></div>` : `<div class="bslot off"><span class="kn">${i + 1}</span>${i >= save.slots ? "🔒" : ""}</div>`).join("");
   $$("#skillbar .bslot[data-i]").forEach((el) => el.addEventListener("click", () => { const i = +el.dataset.i, sk = G.battle.skills[i]; if (!sk) return; const n = RULE_ORDER[(RULE_ORDER.indexOf(sk.rule) + 1) % RULE_ORDER.length]; sk.rule = n; if (save.loadout[i]) save.loadout[i].rule = n; snd("click"); toast(`${SKILLS.find((d) => d.id === sk.id).name}: ${RULES[n]}`); }));
   $("#b-speed").textContent = "×" + G.speed; updateAutoBtn();
   const canAuto = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial"].includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
 }
 function updateAutoBtn() { const on = save && save.auto.on; $("#b-auto").textContent = on ? "자동 ON" : "자동 OFF"; $("#b-auto").classList.toggle("pri", !!on); }
 function battleHud(b) {
-  const hp = Math.max(0, b.hp / b.maxHp); $("#hp-fill").style.width = hp * 100 + "%"; $("#hp-txt").textContent = `${fmtN(Math.max(0, b.hp))} / ${fmtN(b.maxHp)}`; $("#mp-fill").style.width = Math.max(0, b.mana / b.maxMana) * 100 + "%"; $("#mp-txt").textContent = `${fmtN(Math.max(0, b.mana))} / ${fmtN(b.maxMana)}`;
+  const hp = Math.max(0, b.hp / b.maxHp), dt = Math.min(0.1, G.dt || 0.016);
+  G.hpGhost = hp >= G.hpGhost ? hp : Math.max(hp, G.hpGhost - dt * 0.45); $("#hp-fill").style.width = hp * 100 + "%"; $("#hp-ghost").style.width = G.hpGhost * 100 + "%"; $("#hp-txt").textContent = `${fmtN(Math.max(0, b.hp))} / ${fmtN(b.maxHp)}`;
+  $("#mp-fill").style.width = Math.max(0, b.mana / b.maxMana) * 100 + "%"; $("#mp-txt").textContent = `${fmtN(Math.max(0, b.mana))} / ${fmtN(b.maxMana)}`;
   const left = b.plan.length + b.enemies.filter((e) => !e.dead).length;
   if (b.endless) { $("#wave-fill").style.width = Math.min(100, (b.time / 1200) * 100) + "%"; $("#wave-txt").textContent = `생존 ${fmtTime(b.time * 1000)} · 웨이브 ${Math.floor(b.time / 30) + 1} · 처치 ${b.kills}`; }
   else { $("#wave-fill").style.width = Math.max(0, 100 - (left / Math.max(1, b.total)) * 100) + "%"; $("#wave-txt").textContent = `남은 적 ${left}${b.keys ? ` · 열쇠 ${b.keys}` : ""}`; }
-  b.skills.forEach((sk, i) => { if (!sk) return; const el = $$("#skillbar .bslot")[i]; if (!el) return; el.querySelector(".cdm").style.height = Math.max(0, Math.min(1, sk.cdLeft / sk.cd)) * 100 + "%"; el.querySelector(".rl").textContent = RULE_SHORT[sk.rule]; const lack = b.mana < (sk.mana || 0) * b.stats.manaCostMul; el.classList.toggle("rdy", sk.cdLeft <= 0 && !lack); el.classList.toggle("nomp", lack); });
-  const bo = b.bossRef && !b.bossRef.dead ? b.bossRef : null; $("#bossbar").classList.toggle("hidden", !bo); if (bo) { $("#boss-name").textContent = bo.def.name; $("#boss-fill").style.width = Math.max(0, bo.hp / bo.maxHp) * 100 + "%"; $("#boss-fill").className = bo.shield ? "sh" : ""; }
+  b.skills.forEach((sk, i) => { if (!sk) return; const el = $$("#skillbar .bslot")[i]; if (!el) return; el.querySelector(".cdm").style.height = Math.max(0, Math.min(1, sk.cdLeft / sk.cd)) * 100 + "%"; el.querySelector(".rl").textContent = RULE_SHORT[sk.rule]; { const cost = (sk.mana || 0) * b.stats.manaCostMul, mc = el.querySelector(".mc"); mc.textContent = cost >= 1 ? Math.round(cost) : ""; mc.style.display = cost >= 1 ? "" : "none"; mc.classList.toggle("lack", b.mana < cost); el.querySelector(".cds").textContent = sk.cdLeft > 0.05 ? (sk.cdLeft >= 10 ? Math.ceil(sk.cdLeft) : sk.cdLeft.toFixed(1)) : ""; } const lack = b.mana < (sk.mana || 0) * b.stats.manaCostMul; el.classList.toggle("rdy", sk.cdLeft <= 0 && !lack); el.classList.toggle("nomp", lack); });
+  const bo = b.bossRef && !b.bossRef.dead ? b.bossRef : null; $("#bossbar").classList.toggle("hidden", !bo); if (bo) { const r = Math.max(0, bo.hp / bo.maxHp); G.bossGhost = r >= G.bossGhost ? r : Math.max(r, G.bossGhost - dt * 0.35); $("#boss-name").textContent = bo.def.name; $("#boss-pct").textContent = Math.ceil(r * 100) + "%"; $("#boss-fill").style.width = r * 100 + "%"; $("#boss-ghost").style.width = G.bossGhost * 100 + "%"; $("#boss-fill").className = bo.shield ? "sh" : ""; }
   const bn = $("#banner"); if (b.banner) { bn.textContent = b.banner.text; bn.className = "show " + (b.banner.cls || ""); } else bn.className = "";
   const bf = []; if (b.buffs.cry) bf.push("함성"); if (b.inv > 0) bf.push("무적"); for (const k in b.debuffs) bf.push({ slow: "속박", freeze: "빙결", curse: "저주", poison: "중독" }[k] || k); $("#status").textContent = bf.join(" · ");
 }
 function finishFlow(b) {
-  const node = G.node, res = finishBattle(save, b); AU.stopBgm(); snd(res.win ? "win" : "lose");
+  const node = G.node, pre = { level: save.level, exp: save.exp, need: expNeed(save.level) }, res = finishBattle(save, b); res.pre = pre; AU.stopBgm(); snd(res.win ? "win" : "lose");
   if (node.kind === "tutorial" && b.win) save.tut.step = Math.min(TUTORIAL.length, node.step + 1);
   saveGame();
   const uniq = res.items.filter((i) => i.uniq);
   const next = () => afterBattle(res, b);
-  if (uniq.length) setTimeout(() => showUniqueFx(uniq, next), 500); else setTimeout(next, 700);
+  b.resultAt = (save.auto.on && res.win ? 0.9 : endWin(b) && (node.kind === "boss" || node.kind === "void") ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
+  b.next = () => { if (uniq.length) showUniqueFx(uniq, next); else next(); };
 }
 function afterBattle(res, b) {
   const node = G.node, A = save.auto;
@@ -260,28 +263,18 @@ function afterBattle(res, b) {
   if (A.on && !res.win) { A.on = false; saveGame(); }
   showResult(res, b);
 }
-function showResult(res, b) {
+function showResult(res, b, replay) {
   G.pending = [res, b];
-  const node = G.node, win = res.win, tut = node.kind === "tutorial", endless = node.kind === "endless";
-  const items = res.items.map((it) => tileHtml(it)).join("");
-  const sk = res.skills.map((s) => `<div class="drop">${skIcon(s.id, 2)} ${skillTitle(s)}</div>`).join("");
-  const itemList = res.items.filter((i) => i.rarity >= 2).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("");
-  if (!res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
-  const notes = res.notes.map((n) => `<div class="note">★ ${n}</div>`).join("") + res.quests.map((q) => `<div class="note">✔ 퀘스트 완료: ${q.title}</div>`).join("") + (res.levelUps ? `<div class="note">▲ 레벨 업! Lv.${save.level}</div>` : "");
-  if (res.levelUps) snd("levelup");
+  const node = G.node, tut = node.kind === "tutorial", endless = node.kind === "endless", win = res.win;
+  if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
   const nextTut = tut && win && node.step < TUTORIAL.length - 1;
   const back = () => { if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
   const canRetry = !tut && !endless && node.kind !== "void";
-  Modal.open(`<h2 class="${win ? "win" : "lose"}">${endless ? "무한 균열 종료" : win ? "승리!" : "패배..."}</h2><div class="rgrid"><div>처치 <b>${res.kills}</b></div><div>시간 <b>${Math.round(res.time)}초</b></div><div>경험치 <b>+${fmtN(res.exp)}</b></div><div>골드 <b>+${fmtN(res.gold)}</b></div>
-   ${res.ore ? `<div>강화석 <b>+${res.ore}</b></div>` : ""}${res.shards ? `<div>균열 조각 <b>+${res.shards}</b></div>` : ""}${res.orbC ? `<div>혼돈 구슬 <b>+${res.orbC}</b></div>` : ""}${res.orbD ? `<div>신성한 구슬 <b>+${res.orbD}</b></div>` : ""}${res.keys ? `<div>공허의 열쇠 <b>+${res.keys}</b></div>` : ""}${res.hone ? `<div>연마석 <b>+${res.hone}</b></div>` : ""}${(res.runes || []).map((r) => `<div style="color:${RUNES[r].color}">${RUNES[r].name} 획득</div>`).join("")}</div>
-   ${res.buffs && res.buffs.length ? `<div class="dim center">적용된 월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>` : ""}
-   ${items ? `<div class="grid small">${items}</div>` : ""}${itemList}${sk}${notes}
-   <div class="pbtns"><button class="btn pri" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"}</button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${!tut && quickList().length ? `<button class="btn" data-a="quick">불필요 장비 ${quickList().length}개 한번에 판매</button>` : ""}${canRetry ? `<button class="btn" data-a="retry">다시 도전</button>` : ""}</div>`,
-   { cls: "sm", persistent: true, noClose: true, on: {
+  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay), { cls: "result", persistent: true, noClose: true, on: {
     ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { G.pending = null; Modal.close(true); startBattle(node, G.retry); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
-    quick: () => { const n = quickClean(); if (n) { snd("coin"); } else toast("정리할 장비가 없습니다"); showResult(res, b); },
   } });
+  if (!replay) animateResult(res);
   refreshTop();
 }
 function retreat() {

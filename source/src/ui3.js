@@ -29,7 +29,7 @@ function itemDetail(it) {
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
-  h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div>`;
+  h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
   if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
@@ -45,6 +45,7 @@ function itemDetail(it) {
     h += `<button class="btn orbb" data-a="divine" ${it.uniq || !it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
+  if (IB.mode === "inv") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매<br><small>${fmtN(itemValue(it))}G</small></button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
   if (IB.mode === "inv" && SRV.on && !prot) h += `<button class="btn" data-a="ahpost">경매 등록</button>`;
   return h + `</div>`;
 }
@@ -57,7 +58,7 @@ function renderItems() {
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
-  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="quick">한번에 정리 (${quickList().length})</button><button class="btn xs" data-a="bulk">상세 정리</button></div>`;
+  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button></div>`;
   const html = `<h2>${title}</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)} &nbsp; ${iconImg("ore", 1)} ${fmtN(save.ore)} &nbsp; ${iconImg("orb", 1)} ${save.orbC} / ${save.orbD}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
@@ -74,7 +75,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(), quick: () => { if (quickClean()) snd("coin"); else toast("정리할 장비가 없습니다"); renderItems(); },
+    bulk: () => openBulk(),
     ahpost: () => ahPostDialog(IB.sel),
     reroll: (el) => { if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
@@ -82,9 +83,6 @@ function renderItems() {
   }, presetHandlers(renderItems)) });
 }
 
-// ---------- 한번에 정리: 부위 상관없이 쓸모없는 장비(희귀 이하, 고유/세트/잠금/프리셋/착용/▲ 제외) ----------
-const quickList = () => save.inv.filter((it) => !it.uniq && !it.setId && it.rarity <= 2 && !isProtected(it) && !isUpgrade(save, it));
-function quickClean() { const l = quickList(); let g = 0; for (const it of l) { g += itemValue(it); removeItem(save, it); } if (l.length) { save.gold += g; toast(`${l.length}개 판매 +${fmtN(g)}G`, "ok"); IB.sel = null; saveGame(); refreshTop(); } return l.length; }
 // ---------- 일괄 정리 ----------
 const BK = { rar: [true, true, false, false, false], slots: Object.fromEntries(SLOTS.map((x) => [x, true])), minIlvl: 1, maxIlvl: 99, keepUp: true, act: "sell", sets: false };
 function bulkList() {

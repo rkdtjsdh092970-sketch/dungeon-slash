@@ -16,7 +16,7 @@ const { chromium } = require('playwright');
   console.log('result:', await pg.evaluate(() => $('#mbox h2').textContent));
   await pg.click('[data-a=inv]'); await pg.waitForTimeout(200);
   await pg.evaluate(() => { const it = save.inv[0]; IB.sel = it; renderItems(); });
-  await pg.click('.itbar [data-a=quick]'); await pg.waitForTimeout(200);
+  
   await pg.click('#mbox .x'); await pg.waitForTimeout(400);
   console.log('after X modal visible:', await pg.evaluate(() => !$('#modal').classList.contains('hidden') && $('#mbox h2').textContent));
   await pg.click('[data-a=ok]'); await pg.waitForTimeout(300);

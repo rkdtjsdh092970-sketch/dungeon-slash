@@ -10,6 +10,7 @@ function pickEnemy(b, mx, my) {
   for (const e of b.enemies) { if (e.dead || e.vx == null) continue; const R = e.tier === "boss" ? 70 * e.def.sc / 2 + 30 : 30 + e.def.sc * 6; const cy = e.tier === "boss" ? e.vy - e.def.sc * 20 : e.vy - 26; const d = Math.hypot(e.vx - mx, cy - my); if (d < R && d < bd) { bd = d; best = e; } }
   return best;
 }
+const ev_ok = (el) => el.click();
 function bindInput() {
   CV.addEventListener("mousedown", (ev) => { AU.init(); AU.resume(); const [x, y] = canvasPos(ev); const m = MapView; m.drag = { x, y, cx: m.cam.x, cy: m.cam.y }; m.moved = false; });
   window.addEventListener("mousemove", (ev) => {
@@ -52,6 +53,7 @@ function bindInput() {
       const k = e.key.toLowerCase();
       if (k === "m") $("#b-map").click(); else if (k === "i") $("#b-inv").click(); else if (k === "k") $("#b-skill").click(); else if (k === "p") $("#b-pass").click(); else if (k === "c") $("#b-stat").click(); else if (k === "q") $("#b-quest").click(); else if (k === "d") $("#b-codex").click(); else if (k === "t") $("#b-daily").click(); else if (k === "r") openRecords();
     }
+    if (e.key === "Enter" && G.pending && !$("#modal").classList.contains("hidden")) { const ok = document.querySelector('#mbox [data-a="ok"]'); if (ok) { ev_ok(ok); return; } }
     if (G.screen === "battle" && !e.repeat) { if (e.key === " ") { e.preventDefault(); $("#b-pause").click(); } } });
 }
 
@@ -66,8 +68,10 @@ function frame(ms) {
       const steps = G.speed; for (let i = 0; i < steps; i++) stepBattle(b, rawDt);
     }
     for (const n of b.sfxq) AU.sfx(n); b.sfxq.length = 0;
-    drawBattle(g, b, rawDt, gtime); battleHud(b);
-    if (b.over && b.fin && G.pending && $("#modal").classList.contains("hidden")) showResult(G.pending[0], G.pending[1]);
+    if (b.over) { if (b.endT == null) initEndFx(b); fxTick(b, rawDt * (b.endT < 0.8 ? 0.4 : 1)); b.endT += rawDt; }
+    G.dt = rawDt; drawBattle(g, b, rawDt, gtime); if (b.over) drawEndOverlay(g, b); battleHud(b);
+    if (b.next && b.endT >= b.resultAt) { const nx = b.next; b.next = null; nx(); }
+    if (b.over && b.fin && !b.next && G.pending && $("#modal").classList.contains("hidden") && $("#unique").classList.contains("hidden")) showResult(G.pending[0], G.pending[1], true);
     if (b.over && !b.fin) { b.fin = true; finishFlow(b); }
     if (b.bossRef && !b.bossRef.dead && b.node.kind !== "boss" && b.node.kind !== "rift" && AU.trackName !== "boss") AU.bgm("boss");
   }

@@ -20,6 +20,18 @@ function unitPos(b, e, dt) {
   if (e.vx == null) { e.vx = tx + (e.tier === "normal" ? 40 : 0); e.vy = ty - 30; }
   const k = Math.min(1, dt * 11); e.vx += (tx - e.vx) * k; e.vy += (ty - e.vy) * k;
 }
+function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+function drawEnemyBar(ctx, e, x, top) {   // 맞으면 흰 잔상이 천천히 줄어드는 체력바. 정예는 금색 테두리
+  const el = e.tier === "elite", w = el ? 50 : 30, h = el ? 7 : 5, r = Math.max(0, Math.min(1, e.hp / e.maxHp)), dt = Math.min(0.1, G.dt || 0.016);
+  e.gh = e.gh == null || r >= e.gh ? r : Math.max(r, e.gh - dt * 0.8); const x0 = x - w / 2;
+  ctx.save(); ctx.fillStyle = "rgba(0,0,0,.65)"; rrect(ctx, x0 - 1, top - 1, w + 2, h + 2, 3); ctx.fill();
+  if (e.gh > r) { ctx.fillStyle = "rgba(255,255,255,.85)"; rrect(ctx, x0, top, Math.max(2, w * e.gh), h, 2); ctx.fill(); }
+  const col = el ? ["#ff8a6a", "#c0342a"] : r > 0.5 ? ["#9af07a", "#3aa83a"] : r > 0.25 ? ["#ffe070", "#d09a20"] : ["#ff8a6a", "#c0342a"]; const gr = ctx.createLinearGradient(0, top, 0, top + h); gr.addColorStop(0, col[0]); gr.addColorStop(1, col[1]);
+  ctx.fillStyle = gr; rrect(ctx, x0, top, Math.max(r > 0 ? 2 : 0, w * r), h, 2); ctx.fill();
+  ctx.strokeStyle = el ? "#ffc04a" : "rgba(255,255,255,.35)"; ctx.lineWidth = el ? 1.5 : 1; rrect(ctx, x0 - 1, top - 1, w + 2, h + 2, 3); ctx.stroke();
+  if (el) { ctx.fillStyle = "#ffc04a"; ctx.fillRect(x0 - 3, top + 1, 2, 5); ctx.fillRect(x0 + w + 1, top + 1, 2, 5); }
+  ctx.restore();
+}
 function drawEnemy(ctx, b, e, time) {
   const D = e.def, x = Math.round(e.vx), y = Math.round(e.vy), appear = Math.min(1, e.age / 0.25);
   if (e.tier === "boss") {
@@ -43,8 +55,7 @@ function drawEnemy(ctx, b, e, time) {
   ctx.save(); ctx.globalAlpha = 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x, y, 13 * sc / 2 + 6, 4, 0, 0, 7); ctx.fill(); ctx.restore();
   let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.6)"; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
   drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
-  if (e.tier === "elite") { ctx.fillStyle = "#000"; ctx.fillRect(x - 24, top, 48, 5); ctx.fillStyle = "#e8564a"; ctx.fillRect(x - 24, top, 48 * Math.max(0, e.hp / e.maxHp), 5); ctx.strokeStyle = "#ffb04a"; ctx.lineWidth = 2; ctx.strokeRect(x - 25, top - 1, 50, 7); }
-  else if (e.hp < e.maxHp) { ctx.fillStyle = "#000"; ctx.fillRect(x - 14, top, 28, 4); ctx.fillStyle = "#e8564a"; ctx.fillRect(x - 14, top, 28 * Math.max(0, e.hp / e.maxHp), 4); }
+  if (e.tier === "elite" || e.hp < e.maxHp) drawEnemyBar(ctx, e, x, top);
   if (e.winding > 0) drawPx(ctx, "!", x - 4, top - 8, "#ff5a5a", 3);
 }
 

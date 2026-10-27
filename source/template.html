@@ -164,6 +164,55 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 #acct{position:absolute;top:46px;right:8px;z-index:40;display:flex;gap:6px;align-items:center;font-size:11px;color:#bfe6ff;background:#1a1430d0;border:1px solid #4a4272;border-radius:10px;padding:2px 4px 2px 8px}#acct button{font:inherit;font-size:10px;color:#fff;background:#3b3560;border:1px solid #8a7ab0;border-radius:8px;padding:1px 6px;cursor:pointer}#acct button:hover{background:#5a4a90}body[data-screen=battle] #acct{display:none}body[data-screen=title] #acct{top:8px}
 #verlab{position:absolute;right:6px;bottom:3px;z-index:5;font-size:10px;color:#fff;opacity:.45;pointer-events:none}
 .tbtns .btn[disabled]{opacity:.7}
+
+/* v5 전투 HUD */
+.hpw{left:12px;top:10px;width:330px;display:flex;gap:8px;align-items:center;background:linear-gradient(#1c1634dd,#120e26dd);border:2px solid #4a4272;border-radius:14px;padding:6px 10px 6px 6px;box-shadow:0 3px 10px #0008}
+.pf{position:relative;width:46px;height:46px;flex:none;border-radius:50%;background:radial-gradient(#4a4a8a,#1c1a3c);border:3px solid #ffd24a;box-shadow:0 0 8px #ffd24a66;display:flex;align-items:center;justify-content:center}.pf img{width:34px;height:34px;image-rendering:pixelated}.pf b{position:absolute;right:-6px;bottom:-6px;min-width:22px;height:18px;border-radius:9px;background:#2a1c50;border:2px solid #ffd24a;font-size:11px;line-height:14px;text-align:center;color:#fff}
+.bars{flex:1;min-width:0}
+.hpbar2{position:relative;height:20px;border-radius:10px;background:#0b0816;border:2px solid #6a5a9a;overflow:hidden}.hpbar2 i{position:absolute;left:0;top:0;bottom:0;border-radius:8px}
+#hp-ghost{background:#fff;opacity:.75;width:100%}#hp-fill{background:linear-gradient(#ff8a7a 0,#e0443a 45%,#a82420 100%);width:100%;box-shadow:inset 0 2px 0 #ffffff55}
+#hp-txt{position:absolute;inset:0;text-align:center;font-size:12px;font-weight:bold;line-height:17px;text-shadow:0 1px 2px #000,0 0 3px #000;letter-spacing:.3px}
+.mpbar2{position:relative;height:12px;margin-top:4px;border-radius:6px;background:#0b0816;border:2px solid #4a6aa0;overflow:hidden}#mp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(#8adcff,#2a78d0);width:100%;box-shadow:inset 0 1px 0 #ffffff66}
+#mp-txt{position:absolute;inset:0;text-align:center;font-size:9px;font-weight:bold;line-height:9px;text-shadow:0 1px 1px #000}
+#status{left:20px;top:68px}
+.wavew{margin-left:-30px;width:240px;top:8px;background:#1a1430cc;border:2px solid #4a4272;border-radius:12px;padding:4px 10px 5px}
+.wavebar{height:9px;border:0;border-radius:5px;background:#0b0816;box-shadow:inset 0 0 0 1px #4a4272}#wave-fill{background:linear-gradient(#9ae4ff,#3a90e0);border-radius:5px;transition:width .2s}
+#bh-name{margin:0 0 3px;font-size:12px}#wave-txt{font-size:11px;color:#cfe}
+#bossbar{top:66px;width:440px;margin-left:-220px}
+#bossbar .bn{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px}#bossbar .bn b{font-size:15px;font-weight:900;color:#ffb0a0;text-shadow:0 2px 3px #000,0 0 8px #a02020}#bossbar .skl{color:#e8d8d8;font-size:14px;text-shadow:0 1px 2px #000}#bossbar em{font-style:normal;font-size:12px;color:#fff;opacity:.9;text-shadow:0 1px 2px #000}
+#bossbar .bb{position:relative;height:16px;border:3px solid #8a3a3a;border-radius:9px;background:#0b0408;overflow:hidden;box-shadow:0 0 12px #a0202055,inset 0 0 6px #000}#bossbar .bb i{position:absolute;left:0;top:0;bottom:0}
+#boss-ghost{background:#fff;opacity:.7;width:100%}#boss-fill{background:linear-gradient(#ff7a6a,#c02a2a 50%,#7a1010);width:100%;box-shadow:inset 0 2px 0 #ffffff44}#boss-fill.sh{background:linear-gradient(#aae8ff,#3a78b8)}
+#bossbar u{position:absolute;top:0;bottom:0;width:2px;background:#0008}
+#skillbar{left:50%;transform:translateX(-50%);bottom:10px;gap:8px;padding:6px 10px;background:linear-gradient(#1c1634dd,#120e26dd);border:2px solid #4a4272;border-radius:14px;box-shadow:0 3px 10px #0008}
+.bslot{width:58px;height:58px;border-radius:10px;border:2px solid #6a5a9a;background:#120e24}
+.bslot .cdm{background:#000c}.bslot.rdy{border-color:#ffd24a;box-shadow:0 0 10px #ffd24a77}
+.bslot .mc{position:absolute;right:2px;top:2px;min-width:16px;padding:0 3px;height:14px;border-radius:7px;background:#16346a;border:1px solid #5aa0f0;color:#bfe6ff;font-size:10px;font-weight:bold;line-height:12px;text-align:center}.bslot .mc.lack{background:#6a1616;border-color:#f05a5a;color:#ffd0d0}
+.bslot .cds{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#fff;text-shadow:0 0 4px #000,0 1px 2px #000}
+.ctrl{top:10px}.ctrl .btn{border-radius:10px;padding:4px 10px}
+/* 결과 화면 */
+#mbox.result{width:640px;max-height:520px;overflow:auto;padding:14px 18px 16px;border-radius:18px;background:linear-gradient(#1c1634,#120e26);border:2px solid #6a5a9a;box-shadow:0 10px 40px #000c,0 0 0 4px #0008;animation:rsBox .45s cubic-bezier(.2,1.2,.3,1)}
+@keyframes rsBox{from{transform:translateY(30px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+.rs-head{text-align:center;margin:-4px 0 6px}.rs-ribbon{display:inline-block;position:relative;padding:6px 44px;font-size:30px;font-weight:900;letter-spacing:1px}
+.rs.win .rs-ribbon span{background:linear-gradient(#fff6b0,#ffd24a 55%,#e08a20);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #3a1c00) drop-shadow(0 0 10px #f9a82888)}
+.rs.lose .rs-ribbon span{background:linear-gradient(#f0dede,#b08a8a 55%,#6a3a3a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #1a0606)}
+.rs-ribbon:before,.rs-ribbon:after{content:"";position:absolute;top:50%;width:70px;height:2px}.rs.win .rs-ribbon:before{left:-40px;background:linear-gradient(90deg,transparent,#ffd24a)}.rs.win .rs-ribbon:after{right:-40px;background:linear-gradient(270deg,transparent,#ffd24a)}.rs.lose .rs-ribbon:before{left:-40px;background:linear-gradient(90deg,transparent,#a06060)}.rs.lose .rs-ribbon:after{right:-40px;background:linear-gradient(270deg,transparent,#a06060)}
+.rs-en{font-size:11px;letter-spacing:6px;color:#b8a8e8;margin-top:-4px}
+.rs-stars{margin:4px 0 0}.rs-stars i{font-style:normal;display:inline-block;font-size:34px;margin:0 4px;color:#3a3458;text-shadow:0 2px 0 #0008}.rs-stars i.on{color:#ffd24a;text-shadow:0 0 12px #ffb02088,0 2px 0 #7a4a00}
+.rs-anim .rs-stars i.on{animation:rsStar .5s calc(var(--d)) both cubic-bezier(.2,1.6,.4,1);transform:scale(0);opacity:0}@keyframes rsStar{from{transform:scale(2.4) rotate(-30deg);opacity:0}to{transform:scale(1);opacity:1}}
+.rs-node{font-size:12px;color:#a898d8;margin-top:2px}
+.rs-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.rs-stat{background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:6px 4px;text-align:center}.rs-stat small{display:block;font-size:11px;color:#a898d8}.rs-stat b{font-size:16px;color:#fff}
+.rs-exp{position:relative;display:flex;align-items:center;gap:10px;margin:8px 0;background:#0e0a1b;border:1px solid #382f60;border-radius:12px;padding:8px 12px}.rs-lv{font-size:13px;color:#ffd24a;white-space:nowrap}.rs-lv b{font-size:22px;color:#fff}
+.rs-bar{position:relative;flex:1;height:16px;border-radius:8px;background:#05030c;border:2px solid #4a3a8a;overflow:hidden}.rs-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#c8a0ff,#7a4ad8);box-shadow:inset 0 2px 0 #ffffff55}.rs-bar span{position:absolute;inset:0;text-align:center;font-size:10px;line-height:12px;font-weight:bold;text-shadow:0 1px 1px #000}
+.rs-gain{font-size:13px;color:#cfc0ff;white-space:nowrap}.rs-gain b{color:#ffe08a;font-size:15px}
+.rs-up{position:absolute;right:12px;top:-14px;font-weight:900;font-size:18px;color:#8dff9a;text-shadow:0 0 10px #3adf5a,0 2px 0 #063;opacity:0;pointer-events:none}.rs-up.show{animation:rsUp 1.4s both}@keyframes rsUp{0%{opacity:0;transform:translateY(8px) scale(.6)}20%{opacity:1;transform:translateY(-4px) scale(1.2)}80%{opacity:1}100%{opacity:0;transform:translateY(-22px)}}
+.rs-rew{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0}.rs-chip{display:flex;align-items:center;gap:8px;background:#0e0a1b;border:1px solid #4a3f78;border-radius:10px;padding:4px 12px 4px 8px}.rs-chip small{display:block;font-size:10px;color:#a898d8}.rs-chip b{font-size:15px;color:#ffe08a}.rs-chip.gem{border-color:#c07aff}.rs-chip.rune{border-color:#6ac8ff}
+.rs-anim .rs-chip{animation:rsPop .4s both;animation-delay:.15s}@keyframes rsPop{from{transform:translateY(10px) scale(.8);opacity:0}to{transform:none;opacity:1}}
+.rs-sec{margin:8px 0 4px;font-size:13px;color:#cfc8ee;font-weight:bold}.rs-sec em{font-style:normal;background:#3a2c70;border-radius:8px;padding:0 7px;margin-left:4px;font-size:11px}
+.rs-drops{display:flex;flex-wrap:wrap;gap:6px;max-height:138px;overflow:auto;padding:4px;background:#0a0716;border:1px solid #2c2552;border-radius:10px}
+.rs-anim .rs-pop{animation:rsDrop .45s both cubic-bezier(.2,1.4,.4,1);animation-delay:calc(.55s + var(--i)*70ms)}@keyframes rsDrop{from{transform:translateY(-26px) scale(.3);opacity:0}to{transform:none;opacity:1}}
+.rs-sk{display:flex;align-items:center;gap:10px;margin:8px auto 0;padding:6px 14px;background:linear-gradient(90deg,#1c2a50,#2a1c50);border:1px solid #6a8ad8;border-radius:10px;width:max-content}.rs-sk small{display:block;font-size:10px;color:#9ac0ff}
+.rs-btns{margin-top:12px}.rs-btns .btn.big{font-size:17px;padding:8px 36px;border-radius:12px}.rs-btns small{font-size:10px;opacity:.7;margin-left:6px}
+#acct{display:none}body[data-screen=title] #acct{display:flex;top:8px}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -180,10 +229,10 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 <div id="mappanel" class="hidden"></div>
 <div id="guide" class="hidden"></div>
 <div id="battlehud" class="hidden">
- <div class="hpw"><div class="hpbar"><div id="hp-fill"></div><div id="hp-txt"></div></div><div class="mpbar"><div id="mp-fill"></div><div id="mp-txt"></div></div></div><div id="status"></div>
+ <div class="hpw"><div class="pf"><img id="pf-ico" alt=""><b id="pf-lv">1</b></div><div class="bars"><div class="hpbar2"><i id="hp-ghost"></i><i id="hp-fill"></i><span id="hp-txt"></span></div><div class="mpbar2"><i id="mp-fill"></i><span id="mp-txt"></span></div></div></div><div id="status"></div>
  <div class="wavew"><div id="bh-name"></div><div class="wavebar"><div id="wave-fill"></div></div><div id="wave-txt"></div></div>
  <div class="ctrl"><button class="btn" id="b-auto">자동 OFF</button><button class="btn" id="b-pause">❚❚</button><button class="btn" id="b-speed">×1</button><button class="btn warn" id="b-flee">퇴각</button></div>
- <div id="bossbar" class="hidden"><div id="boss-name"></div><div class="bb"><div id="boss-fill"></div></div></div>
+ <div id="bossbar" class="hidden"><div class="bn"><span class="skl">☠</span><b id="boss-name"></b><em id="boss-pct"></em></div><div class="bb"><i id="boss-ghost"></i><i id="boss-fill"></i><u style="left:25%"></u><u style="left:50%"></u><u style="left:75%"></u></div></div>
  <div id="banner"></div><div id="skillbar"></div><div id="tip" class="hidden"></div>
 </div>
 <div id="modal" class="hidden"><div id="mbox"></div></div>
