@@ -13,12 +13,12 @@ const { chromium } = require('playwright');
   // 정지 시나리오
   await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.level = 30; save.slots = 4; save.cleared = [10,10,10,10,10,10,10,10,10,10]; for (const s of SLOTS) save.equipped[s] = genItem(save, 6, 2, s); for (let i = 0; i < 12; i++) save.inv.push(genItem(save, 2, i % 3, SLOTS[i % SLOTS.length])); openTown(1); startBattle({ kind: 'stage', act: 1, stage: 1, name: 't' }, {}); const b = G.battle; b.plan.length = 3; G.speed = 3; });
   await pg.waitForFunction(() => !$('#modal').classList.contains('hidden'), null, { timeout: 60000 });
-  console.log('result:', await pg.evaluate(() => $('#mbox h2').textContent));
+  console.log('result:', await pg.evaluate(() => $('#mbox .rs-ribbon, #mbox h2').textContent));
   await pg.click('[data-a=inv]'); await pg.waitForTimeout(200);
   await pg.evaluate(() => { const it = save.inv[0]; IB.sel = it; renderItems(); });
   
   await pg.click('#mbox .x'); await pg.waitForTimeout(400);
-  console.log('after X modal visible:', await pg.evaluate(() => !$('#modal').classList.contains('hidden') && $('#mbox h2').textContent));
+  console.log('after X modal visible:', await pg.evaluate(() => !$('#modal').classList.contains('hidden') && $('#mbox .rs-ribbon, #mbox h2').textContent));
   await pg.click('[data-a=ok]'); await pg.waitForTimeout(300);
   console.log('screen:', await pg.evaluate(() => G.screen));
   // 설정 초기화
