@@ -3389,7 +3389,7 @@ function openRunePicker(uid) {
 // =========================================================
 // 온라인: 서버 연결 / 로그인 / 경매장 / 길드 / 랭킹 (Cloudflare Worker + D1)
 // =========================================================
-const SRV = { url: /\.workers\.dev$/.test(location.hostname) ? location.origin : "https://dungeon-slash.dungeonslash.workers.dev", name: "", pass: "", on: false, timer: 0, last: 0, err: "" };
+const SRV = { url: /\.workers\.dev$/.test(location.hostname) ? location.origin : "https://dungeon-slash.jjy1.workers.dev", name: "", pass: "", on: false, timer: 0, last: 0, err: "" };
 async function api(path, body) {
   try {
     const r = await fetch(SRV.url + path, { method: body === undefined ? "GET" : "POST", headers: { "content-type": "application/json", "x-name": encodeURIComponent(SRV.name), "x-pass": encodeURIComponent(SRV.pass) }, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -3535,7 +3535,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-022632";
+const BUILD_ID = "20261028-023151";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;

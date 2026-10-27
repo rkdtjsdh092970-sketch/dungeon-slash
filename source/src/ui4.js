@@ -1,7 +1,7 @@
 // =========================================================
 // 온라인: 서버 연결 / 로그인 / 경매장 / 길드 / 랭킹 (Cloudflare Worker + D1)
 // =========================================================
-const SRV = { url: /\.workers\.dev$/.test(location.hostname) ? location.origin : "https://dungeon-slash.dungeonslash.workers.dev", name: "", pass: "", on: false, timer: 0, last: 0, err: "" };
+const SRV = { url: /\.workers\.dev$/.test(location.hostname) ? location.origin : "https://dungeon-slash.jjy1.workers.dev", name: "", pass: "", on: false, timer: 0, last: 0, err: "" };
 async function api(path, body) {
   try {
     const r = await fetch(SRV.url + path, { method: body === undefined ? "GET" : "POST", headers: { "content-type": "application/json", "x-name": encodeURIComponent(SRV.name), "x-pass": encodeURIComponent(SRV.pass) }, body: body === undefined ? undefined : JSON.stringify(body) });
