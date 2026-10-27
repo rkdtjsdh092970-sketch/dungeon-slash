@@ -662,6 +662,8 @@ const VOID_BOSS = BOSSES[BOSSES.length - 1];
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 
 const VOID_MIN_RIFT = 25;   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
+const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
+CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다
 
 // =========================================================
 // 전투 계산 · 마나 · 옵션 풀 · 고유 장비(등급/출처) 데이터
@@ -962,6 +964,26 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   });
   // 양방향 연결표
   PASSIVES.forEach((p) => p.links.forEach((q) => { if (q !== "C" && PASSIVE_BY_ID[q] && !PASSIVE_BY_ID[q].links.includes(p.id)) PASSIVE_BY_ID[q].links.push(p.id); }));
+  // ---- 전체를 바깥으로 넓히고, 중요한 노드(주요/핵심) 사이에 흰색 연결 특성을 끼워 넣는다: 좋은 특성은 멀리 있고, 가는 길에 작은 보너스를 먹는다 ----
+  const RS = 1.7; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
+  const FIL = {
+    phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
+    def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
+  };
+  { let fid = 0; const seen = new Set();
+    for (const A of PASSIVES.slice()) for (const qid of A.links.slice()) {
+      if (qid === "C") continue; const B = PASSIVE_BY_ID[qid]; if (!B || B.kind === "filler" || A.kind === "filler") continue;
+      const key = A.id < B.id ? A.id + "|" + B.id : B.id + "|" + A.id; if (seen.has(key)) continue; seen.add(key);
+      const mc = Math.max(A.cost, B.cost), dd = Math.hypot(A.x - B.x, A.y - B.y), n = Math.min(mc >= 3 ? 2 : mc >= 2 ? 1 : 0, Math.floor(dd / 36) - 1); if (n <= 0) continue;   // 노드 간격이 좁으면 끼워 넣지 않는다
+      A.links = A.links.filter((x) => x !== B.id); B.links = B.links.filter((x) => x !== A.id);
+      const arm = A.arm === "bridge" ? B.arm : A.arm; let prev = A;
+      for (let i = 1; i <= n; i++) {
+        const t = i / (n + 1), id = `f${++fid}`, F = { id, name: "연결 특성", per: FIL[arm][fid % 3], cost: 1, x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, links: [prev.id], arm, kind: "filler" };
+        PASSIVES.push(F); PASSIVE_BY_ID[id] = F; prev.links.push(id); prev = F;
+      }
+      prev.links.push(B.id); B.links.push(prev.id);
+    }
+  }
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
@@ -1021,6 +1043,11 @@ const STATUS_INFO = { bleed: { name: "출혈", color: "#e03a4a", st: "phys" }, p
     S({ id: "storm", name: "뇌우", kind: "rain", cd: 12, mult: 1.05, count: 8, over: 3.0, range: 6, unlock: 7, color: "#fff08a", icon: "storm", sfx: "storm", dtype: "mag", elem: "light", mana: 34, desc: "3초 동안 하늘에서 번개 8줄기가 무작위 적을 내리친다", shape: "rain" }),
     S({ id: "spirit", name: "정령 소환", kind: "summon", cd: 15, mult: 1.3, dur: 8, every: 1.0, range: 6, unlock: 7, color: "#8affc8", icon: "spirit", sfx: "summon2", dtype: "phys", mana: 28, desc: "8초 동안 정령이 앞줄의 적을 쉬지 않고 베어낸다", shape: "front" }),
     S({ id: "voidhole", name: "공허의 심연", kind: "hole", cd: 13, mult: 0.6, dur: 3, every: 0.5, range: 5, unlock: 8, color: "#c070ff", icon: "vortex", sfx: "voidhole", dtype: "mag", elem: "void", mana: 30, desc: "3초 동안 적을 빨아들이며 갈아버리는 심연을 연다", shape: "area3" }),
+    // ---- 공허의 군주 전용 스킬 (공허의 군주만 드랍, 매우 낮은 확률): 일반 풀·상점에는 나오지 않는다 ----
+    S({ id: "voidmaw", name: "공허의 아가리", kind: "hole", cd: 14, mult: 1.1, dur: 4, every: 0.35, range: 6, unlock: 11, voidOnly: true, color: "#b070ff", icon: "voidmaw", sfx: "voidhole", dtype: "mag", elem: "void", mana: 38, bonus: { boss: 0.2, elite: 0.2 }, desc: "4초 동안 거대한 아가리가 열려 주변 적을 끌어당기며 갈아버린다", shape: "area3" }),
+    S({ id: "dimslash", name: "차원 절단", kind: "pierce", cd: 7, mult: 6.0, range: 7, unlock: 11, voidOnly: true, color: "#e0a0ff", icon: "dimslash", sfx: "pierce", dtype: "mag", elem: "void", mana: 26, ignoreAdd: 0.35, bonus: { boss: 0.35 }, desc: "한 줄을 통째로 갈라 마법저항을 35% 무시하고 보스에게 추가 피해", shape: "line" }),
+    S({ id: "doomrain", name: "종말의 비", kind: "rain", cd: 12, mult: 1.8, count: 14, over: 4.0, range: 7, unlock: 11, voidOnly: true, color: "#c070ff", icon: "doomrain", sfx: "storm", dtype: "mag", elem: "void", mana: 44, desc: "4초 동안 공허의 빛줄기 14개가 무작위 적을 내리치고 주변을 휩쓴다", shape: "rain" }),
+    S({ id: "abyssling", name: "심연의 사도", kind: "summon", cd: 16, mult: 5.5, dur: 10, every: 0.6, range: 7, unlock: 11, voidOnly: true, color: "#9a6aff", icon: "abyssling", sfx: "summon2", dtype: "mag", elem: "void", mana: 36, desc: "10초 동안 사도가 앞줄의 적을 쉬지 않고 찢어발긴다", shape: "front" }),
   );
 })();
 
@@ -1095,7 +1122,7 @@ UNIQUES.push(
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
 
 // 스킬별 1회 시전당 기본 피해 배율(대상 수 포함): test/calibrate_tm.js 가 엔진에서 직접 측정한 값. 새 스킬을 추가하거나 배율을 바꾸면 다시 측정한다.
-const SKILL_TM = {"strike": 1.13, "rapid": 0.54, "crush": 2.53, "spark": 1.58, "smash": 4.02, "bomb": 20.1, "lance": 22.1, "chain": 7.61, "snipe": 4.02, "firewall": 14.05, "sweep": 14.38, "execute": 7.29, "frost": 36.9, "vamp": 3.2, "thunder": 22.3, "boomer": 32.34, "pierce2": 34.16, "meteor": 99.59, "rend": 9.88, "volley": 5.38, "venom": 6.64, "iceshard": 4.61, "orbs": 18.84, "whirl": 39.77, "trap": 58.85, "blizzard": 43.61, "inferno": 33.39, "plague": 16.14, "storm": 42.63, "spirit": 9.72, "voidhole": 26.36};
+const SKILL_TM = {"strike": 1.14, "rapid": 0.58, "crush": 2.65, "spark": 1.76, "smash": 4.08, "bomb": 17.73, "lance": 22.23, "chain": 8.02, "snipe": 4, "firewall": 14.94, "sweep": 13.94, "execute": 7.71, "frost": 37.44, "vamp": 3.17, "thunder": 20.93, "boomer": 34.01, "pierce2": 33.95, "meteor": 104, "rend": 10.76, "volley": 5.33, "venom": 6.35, "iceshard": 4.33, "orbs": 18.07, "whirl": 40.9, "trap": 59.88, "blizzard": 48.4, "inferno": 38.6, "plague": 19.71, "storm": 43.41, "spirit": 9.58, "voidhole": 31.41, "voidmaw": 178.95, "dimslash": 62.6, "doomrain": 153.5, "abyssling": 90.9};
 
 // =========================================================
 // 세이브 / 장비 / 스탯 / 퀘스트 / 대장간
@@ -1109,13 +1136,15 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
 }
 function saveGame() { if (save) save.lastSeen = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
-function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k]; return s; } catch (e) { return null; } }
+function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
+    if (s.passRev !== 3) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 3; }   // 패시브 트리 개편(v2.4): 기존 포인트는 전부 환급
+    return s; } catch (e) { return null; } }
 
 // ---- 장비/스킬 생성 ----
 function genItem(sv, ilvl, rarity, slot, setId) {
@@ -1308,6 +1337,7 @@ function dropBonus(sv, now) {
   if (sv.endgame) for (const w of worldBuffs(now)) { B.buffs.push(w); B.mf += w.mf || 0; B.exp *= w.exp || 1; B.gold *= w.gold || 1; B.qty *= w.qty || 1; B.orb *= w.orb || 1; B.unique *= w.unique || 1; B.key *= w.key || 1; }
   return B;
 }
+const trialSkillChance = (T) => Math.min(0.95, 0.06 + 0.009 * T);   // 시련 단계가 오를수록 스킬 확률 증가 (100단계 95%)
 const UNIQUE_SRC = { boss: 4, elite: 2, treasure: 1.5, rift: 3, hell: 3.5, endless: 5, stage: 1, trial: 1.5 };
 function genUnique(sv, def, ilvl) {
   const R = ITEM_RARITY[5], g = gScale(ilvl), it = { uid: sv.nextUid++, slot: def.slot, ilvl, rarity: 5, uniq: def.id, utier: def.tier, base: {}, affixes: [], umods: [], enh: 0 };
@@ -1352,6 +1382,8 @@ function rollDrops(sv, node, boss, B) {
       const list = pool.filter((x) => x.u.tier < 4).map((x) => ({ u: x.u, w: x.u.tier <= 2 ? (st === 1 ? 30 : st === 2 ? 20 : 8) : (st === 1 ? 4 : st === 2 ? 12 : 22) }));
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
+    const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
+    for (let st = 1; st <= Math.min(4, K); st++) if (VS.length && Math.random() < SC[st - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * [0.3, 1, 1.6][i] })), (x) => x.w).i));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
@@ -1361,8 +1393,9 @@ function rollDrops(sv, node, boss, B) {
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
   const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * w[i] })), (x) => x.w).i;
   if (node.firstClear && kind === "boss") { const d = wpick(SKILLS.filter((x) => x.unlock <= act && x.slot === "active"), (x) => (x.unlock >= act - 1 ? 2 : 1)); out.skills.push(genSkill(sv, d.id, rr([1, 1, 0.3]))); }
-  else if (kind === "trial") { const T = node.tier || 1; if (Math.random() < Math.min(0.6, 0.18 + 0.01 * T)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.4, 1.2, 1 + T / 15]))); }
-    out.hone = Math.round((4 + Math.floor(T * 0.8)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.4) out.runes.push(pick(RUNE_IDS)); }
+  else if (kind === "trial") { const T = node.tier || 1;
+    for (let k = 0; k < (T >= 50 ? 2 : 1); k++) if (Math.random() < trialSkillChance(T) * (k ? 0.5 : 1)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([Math.max(0.05, 0.5 - T / 200), 1.2, 0.6 + T / 25]))); }
+    out.hone = Math.round((4 + Math.floor(T * 0.9)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.5) out.runes.push(pick(RUNE_IDS)); if (T >= 60 && Math.random() < 0.3) out.runes.push(pick(RUNE_IDS)); }
   else if (kind === "rift") { if (Math.random() < Math.min(0.12, 0.015 + 0.002 * (node.tier || 1))) { const d = pick(poolFor(5).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.2, 1, 2]))); } }
   else if (Math.random() < (boss ? CFG.SKILL_DROP_BOSS : CFG.SKILL_DROP * (kind === "elite" ? 2 : 1))) {
     const pool = SKILLS.filter((d) => d.unlock <= act);
@@ -1697,7 +1730,7 @@ function planFor(node) {
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.min(10, node.act), stage = RIFTLIKE[node.kind] ? 4 : node.stage || 10;
-  const riftMul = node.tier ? Math.pow(CFG.RIFT_SCALE, node.tier - 1) : 1;
+  const riftMul = node.tier ? Math.pow(node.kind === "trial" ? CFG.TRIAL_SCALE : CFG.RIFT_SCALE, node.tier - 1) : 1;
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
@@ -2286,6 +2319,10 @@ const ICON_FN = {
   spirit: (p) => { p(5, 2, 6, 5, "#8affc8"); p(4, 5, 8, 6, "#6ae0b0"); p(5, 11, 2, 3, "#6ae0b0"); p(9, 11, 2, 3, "#6ae0b0"); p(6, 4, 1, 2, "#103a2a"); p(9, 4, 1, 2, "#103a2a"); },
   vortex: (p) => { for (let i = 0; i < 6; i++) { p(2 + i, 8 - (i > 3 ? 6 - i : i), 2, 2, "#c070ff"); p(12 - i, 7 + (i > 3 ? 6 - i : i), 2, 2, "#8a40d0"); } p(7, 7, 2, 2, "#1a0830"); },
   boots: (p) => { p(3, 3, 5, 8, "#8a5a32"); p(3, 10, 10, 4, "#6a4222"); p(2, 13, 11, 2, "#3a2a1c"); p(3, 3, 5, 2, "#c8a060"); p(4, 6, 1, 3, "#a87a42"); p(11, 10, 2, 1, "#a87a42"); },
+  voidmaw: (p) => { p(2, 4, 12, 8, "#2a1048"); p(3, 5, 10, 6, "#6a2ab8"); p(4, 6, 8, 4, "#12041c"); for (let i = 0; i < 4; i++) { p(3 + i * 3, 4, 2, 2, "#f0e8ff"); p(3 + i * 3, 10, 2, 2, "#f0e8ff"); } p(7, 7, 2, 2, "#ff70e0"); },
+  dimslash: (p) => { for (let i = 0; i < 11; i++) { p(2 + i, 13 - i, 2, 2, i > 8 ? "#fff" : "#e0a0ff"); } p(1, 11, 3, 3, "#7a3ad8"); p(11, 1, 3, 3, "#7a3ad8"); p(7, 7, 2, 2, "#ff70e0"); },
+  doomrain: (p) => { p(1, 1, 14, 4, "#3a1c68"); p(3, 0, 10, 3, "#5a2ca0"); for (let i = 0; i < 4; i++) { p(3 + i * 3, 5 + (i % 2) * 2, 2, 6 - (i % 2) * 2, "#d890ff"); p(3 + i * 3, 12, 2, 2, "#fff"); } },
+  abyssling: (p) => { p(5, 2, 6, 5, "#9a6aff"); p(4, 6, 8, 6, "#6a3ad0"); p(3, 8, 2, 5, "#4a2a98"); p(11, 8, 2, 5, "#4a2a98"); p(6, 4, 1, 2, "#ffe8ff"); p(9, 4, 1, 2, "#ffe8ff"); p(6, 12, 2, 3, "#3a1c70"); p(9, 12, 2, 3, "#3a1c70"); },
   weapon: (p) => ICON_FN.sword(p),
   helm: (p) => { p(3, 3, 10, 9, "#aab4cc"); p(3, 3, 10, 2, "#dfe8f5"); p(5, 7, 6, 2, "#2a2030"); p(7, 9, 2, 4, "#2a2030"); p(7, 0, 2, 3, "#d83a4a"); },
   armor: (p) => { p(3, 3, 10, 11, "#6a8fd0"); p(1, 3, 3, 5, "#aab4cc"); p(12, 3, 3, 5, "#aab4cc"); p(6, 2, 4, 2, "#2a2030"); p(3, 11, 10, 2, "#e8b83a"); },
@@ -3141,6 +3178,7 @@ function openTitle() {
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
   const s = loadGame(); if (!s) return; save = s; AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
+  if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
   if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
 
@@ -3183,8 +3221,14 @@ function mapPanel() {
     const E = endlessInfo(save);
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
     btnOk = un && E.left > 0; btn = E.left > 0 ? "도전" : "횟수 소진";
+  } else if (n.kind === "trial") {
+    G.trialTier = Math.max(1, Math.min(G.trialTier, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)));
+    const T = G.trialTier;
+    h += `<div class="pline">엔드게임 · 최고 <b>${save.trialBest || 0}</b> / ${MAX_TRIAL}단계</div><div class="pline tier"><button class="btn xs" data-p="ttm">−</button> <b style="font-size:18px">${T}단계</b> <button class="btn xs" data-p="ttp">+</button></div>
+    <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
+    btnOk = un; btn = "도전";
   } else if (n.kind === "void") {
-    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">4단계로 나뉘며 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">4단계로 나뉘며 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">공허의 군주 전용 스킬 4종 (단계별 2% / 3% / 5% / 12% 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -3354,14 +3398,26 @@ function afterBattle(res, b) {
   if (A.on && !res.win) { A.on = false; saveGame(); }
   showResult(res, b);
 }
+// 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
+function nextBattleOf(node, res) {
+  if (!res.win) return null;
+  if (node.kind === "stage" || node.kind === "boss") {
+    if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
+    if (!nxt || !nodeUnlocked(save, nxt)) return null; return { label: nxt.kind === "boss" ? "보스 도전 ▶" : nxt.stage === 1 ? "다음 지역 ▶" : "다음 스테이지 ▶", node: nxt, battle: nodeToBattle(nxt) };
+  }
+  if (node.kind === "rift" && node.tier + 1 <= save.rift.best + 1) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
+  if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
+  return null;
+}
 function showResult(res, b, replay) {
   G.pending = [res, b];
   const node = G.node, tut = node.kind === "tutorial", endless = node.kind === "endless", win = res.win;
   if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
   const nextTut = tut && win && node.step < TUTORIAL.length - 1;
   const back = () => { if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
-  const canRetry = !tut && !endless && node.kind !== "void";
-  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay), { cls: "result", persistent: true, noClose: true, on: {
+  const canRetry = !tut && !endless && node.kind !== "void", nb = tut ? null : nextBattleOf(node, res);
+  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay, nb), { cls: "result", persistent: true, noClose: true, on: {
+    next: () => { if (!nb) return; G.pending = null; Modal.close(true); const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },
     ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { G.pending = null; Modal.close(true); startBattle(node, G.retry); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
   } });
@@ -3646,17 +3702,17 @@ function openSkills() {
 }
 
 // ---------- 패시브 (방사형 트리) ----------
-const PT = { sel: null, sc: 0.3, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
+const PT = { sel: null, sc: 0.17, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
 function ptDraw() {
   const cv = PT.cv; if (!cv || !cv.isConnected) return; const g = cv.getContext("2d"), W = cv.width, H = cv.height, t = performance.now() / 1000;
   g.clearRect(0, 0, W, H); g.save(); g.translate(W / 2 + PT.ox, H / 2 + PT.oy); g.scale(PT.sc, PT.sc);
-  const col = (p) => (p.arm === "bridge" ? "#9a9ab8" : P_ARMS.find((a) => a.id === p.arm).color);
+  const col = (p) => (p.kind === "filler" ? "#e8e8f6" : p.arm === "bridge" ? "#9a9ab8" : P_ARMS.find((a) => a.id === p.arm).color);
   g.lineWidth = 3 / PT.sc * 0.9;
   for (const p of PASSIVES) for (const q of p.links) { if (q === "C") { g.strokeStyle = passiveHas(save, p.id) ? col(p) : "#2e2850"; g.beginPath(); g.moveTo(0, 0); g.lineTo(p.x, p.y); g.stroke(); continue; } const o = PASSIVE_BY_ID[q]; if (!o || o.id < p.id) continue; const a = passiveHas(save, p.id), b = passiveHas(save, o.id); g.strokeStyle = a && b ? col(p) : a || b ? "#5a5090" : "#2a2448"; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(o.x, o.y); g.stroke(); }
   g.fillStyle = "#ffd24a"; g.beginPath(); g.arc(0, 0, 16, 0, 7); g.fill(); g.fillStyle = "#3a2a08"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("시작", 0, 5);
-  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 740, Math.sin(ang) * 740 + 8); g.globalAlpha = 1; }
+  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 1200, Math.sin(ang) * 1200 + 8); g.globalAlpha = 1; }
   for (const p of PASSIVES) {
-    const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = p.kind === "key" ? 16 : p.kind === "notable" ? 12 : 8, c = col(p);
+    const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = p.kind === "key" ? 16 : p.kind === "notable" ? 12 : p.kind === "filler" ? 5.5 : 8, c = col(p);
     g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);
     g.fillStyle = on ? c : "#14102a"; g.fill(); g.lineWidth = (p.kind === "small" ? 2 : 3) / PT.sc * 0.9; g.strokeStyle = on ? "#fff" : can ? `rgba(255,255,255,${0.55 + 0.4 * Math.sin(t * 5)})` : c + "88"; g.stroke();
     if (p.kind === "notable") { g.beginPath(); g.arc(p.x, p.y, r - 4, 0, 7); g.strokeStyle = on ? "#0008" : c + "66"; g.stroke(); }
@@ -3666,7 +3722,7 @@ function ptDraw() {
   g.restore();
   PT.raf = requestAnimationFrame(ptDraw);
 }
-function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 16 : p.kind === "notable" ? 12 : 8) + 6; if (d < r && d < bd) { bd = d; best = p; } } return best; }
+function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 16 : p.kind === "notable" ? 12 : p.kind === "filler" ? 6 : 8) + 6; if (d < r && d < bd) { bd = d; best = p; } } return best; }
 function ptInfo() {
   const el = $("#ptinfo"); if (!el) return; const p = PT.hover || PT.sel;
   { const a = $("#ptact"), q = PT.sel; if (a) a.innerHTML = q ? `<span>선택: <b style="color:${q.arm === "bridge" ? "#ccc" : P_ARMS.find((x) => x.id === q.arm).color}">${q.name}</b> <span class="dim">(${q.cost}점)</span></span><button class="btn pri" data-a="ptadd" ${canAddPassive(save, q.id) ? "" : "disabled"}>찍기</button><button class="btn" data-a="ptrm" ${canRemovePassive(save, q.id) ? "" : "disabled"}>회수</button>` : `<span class="dim">노드를 클릭하면 효과가 보이고, 아래 [찍기] 버튼으로 찍습니다</span>`; }
@@ -3686,7 +3742,7 @@ function openPassives() {
   cv.addEventListener("mousedown", (ev) => { const [x, y] = pos(ev); PT.drag = { x, y, ox: PT.ox, oy: PT.oy }; PT.moved = false; });
   cv.addEventListener("mousemove", (ev) => { const [x, y] = pos(ev); if (PT.drag && ev.buttons) { const dx = x - PT.drag.x, dy = y - PT.drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) PT.moved = true; if (PT.moved) { PT.ox = PT.drag.ox + dx; PT.oy = PT.drag.oy + dy; } } else { const h = ptPick(x, y); if (h !== PT.hover) { PT.hover = h; ptInfo(); } cv.style.cursor = h ? "pointer" : "grab"; } });
   window.addEventListener("mouseup", () => { PT.drag = null; }, { once: true });
-  cv.addEventListener("wheel", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), k = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = clamp(PT.sc * k, 0.18, 1.6), wx = (x - cv.width / 2 - PT.ox) / PT.sc, wy = (y - cv.height / 2 - PT.oy) / PT.sc; PT.sc = ns; PT.ox = x - cv.width / 2 - wx * ns; PT.oy = y - cv.height / 2 - wy * ns; }, { passive: false });
+  cv.addEventListener("wheel", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), k = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = clamp(PT.sc * k, 0.1, 1.6), wx = (x - cv.width / 2 - PT.ox) / PT.sc, wy = (y - cv.height / 2 - PT.oy) / PT.sc; PT.sc = ns; PT.ox = x - cv.width / 2 - wx * ns; PT.oy = y - cv.height / 2 - wy * ns; }, { passive: false });
   const act = (ev) => { if (PT.moved) return; const [x, y] = pos(ev), p = ptPick(x, y); PT.sel = p || null; snd("click"); ptInfo(); };   // 클릭은 선택만: 효과를 보고 [찍기]로 확정
   cv.addEventListener("click", act);
   cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); });
@@ -3968,7 +4024,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-043537";
+const BUILD_ID = "20261028-044509";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4023,7 +4079,7 @@ function drawEndOverlay(g, b) {
 
 // ---------------- 결과 화면 ----------------
 function starCount(res, b) { if (!res.win || b.node.kind === "tutorial") return 0; const hp = b.hp / b.maxHp; return 1 + (hp >= 0.4 ? 1 : 0) + (hp >= 0.75 ? 1 : 0); }
-function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay) {
+function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
   const win = res.win, T = endTitle(b), stars = starCount(res, b), pre = res.pre || { level: save.level, exp: save.exp, need: expNeed(save.level) };
   const A = replay ? "" : "rs-anim";
   const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
@@ -4044,7 +4100,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay) {
     <div class="rs-rew">${rew}</div>
     ${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>` : ""}${res.buffs && res.buffs.length ? `<div class="dim center">월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}
     ${tiles ? `<div class="rs-sec">획득 장비 <em>${res.items.length}</em></div><div class="rs-drops">${tiles}</div>${rareLines}` : ""}${sk}${notes}
-    <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry">다시 도전</button>` : ""}</div></div>`;
+    <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry">다시 도전</button>` : ""}${nb ? `<button class="btn pri" data-a="next">${nb.label}</button>` : ""}</div></div>`;
 }
 function animateResult(res) {
   $$("#mbox [data-cnt]").forEach((el, k) => { const to = +el.dataset.cnt, t0 = performance.now() + 250, dur = 1000; const f = (now) => { if (!el.isConnected) return; const p = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - p, 3); el.textContent = fmtN(Math.round(to * e)); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); });
@@ -4060,6 +4116,13 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "2.4", date: "10/28", title: "다음 스테이지 버튼 · 스킬 시련 100단계 · 공허 전용 스킬 · 패시브 재배치", items: [
+    "결과창에 [다음 스테이지 ▶] 버튼이 생겼습니다. 일반 스테이지·보스는 다음 노드로, 심연의 균열과 스킬 시련은 한 단계 위로 바로 이어집니다.",
+    "스킬 시련이 최대 100단계가 되었습니다. 균열보다 가파르게 강해지고(단계당 1.085배), 단계가 오를수록 스킬 드랍 확률이 6%에서 95%까지 올라갑니다. 50단계부터는 스킬이 한 번 더 나올 수 있고 룬 확률과 스킬 등급도 오릅니다. 시련 패널에서 단계를 고르고 확률을 확인할 수 있습니다.",
+    "공허의 군주 전용 스킬 4종이 생겼습니다: 공허의 아가리 · 차원 절단 · 종말의 비 · 심연의 사도. 공허의 군주만 단계별 2% / 3% / 5% / 12% 낮은 확률로 줍니다 (상점·다른 곳에서는 나오지 않음).",
+    "패시브 트리를 전부 바깥으로 넓혔고, 주요·핵심 노드 사이에 흰색 '연결 특성'을 끼워 넣었습니다. 좋은 특성은 멀리 있고 가는 길에 작은 보너스를 얻습니다 (첫 주요 노드까지 6점, 첫 핵심까지 12점, 바깥 핵심까지 23점). 총 245노드.",
+    "트리 개편으로 이전에 찍어 둔 패시브 포인트는 전부 환급되었습니다. 훈련소에서 다시 찍어 주세요.",
+  ] },
   { ver: "2.3", date: "10/28", title: "공허의 군주 4단계 · 무한 균열 위험도 · 마나 흡수 · 패시브 확장", items: [
     "공허의 군주가 4단계로 나뉩니다. 난이도는 단계마다 심연의 균열 30 / 40 / 55 / 75단계 수준이고, 4단계는 막바지 세팅이 있어야 잡을 수 있습니다. 입장하려면 균열 최고 25단계 이상과 공허의 열쇠가 필요합니다.",
     "단계별 보상: 1단계 33% · 2단계 66% · 3단계 100% 확률로 상대적으로 낮은 등급의 공허 고유 장비. 4단계 격파 시 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률 약 10%). 도중에 쓰러져도 격파한 단계의 보상은 받습니다.",
@@ -4158,7 +4221,7 @@ function bindInput() {
   window.addEventListener("mouseup", () => { MapView.drag = null; });
   CV.addEventListener("click", (ev) => {
     AU.init(); AU.resume(); const [x, y] = canvasPos(ev);
-    if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, save.rift.best + 1)); snd("click"); } else MapView.sel = null; mapPanel(); }
+    if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, save.rift.best + 1)); if (n.kind === "trial" && !G.trialInit) { G.trialInit = true; G.trialTier = Math.max(1, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)); } snd("click"); } else MapView.sel = null; mapPanel(); }
     else if (G.screen === "town") townClick(TownView.pick(x, y));
     else if (G.screen === "battle" && G.battle && !G.battle.over && !G.paused) { const e = pickEnemy(G.battle, x, y); if (e) { G.battle.designated = G.battle.designated === e ? null : e; snd("click"); } }
   });
@@ -4169,7 +4232,7 @@ function bindInput() {
     else if (a === "tipok") { $("#tip").classList.add("hidden"); G.paused = false; G.tipOpen = false; snd("click"); }
   });
   $("#mappanel").addEventListener("click", (ev) => { const p = ev.target.closest("[data-p]"); if (!p) return; const a = p.dataset.p; snd("click");
-    if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min((save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
+    if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min(MAX_TRIAL, (save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
   $("#b-inv").onclick = () => { snd("click"); IB.mode = "inv"; IB.sel = null; renderItems(); };
   $("#b-skill").onclick = () => { snd("click"); SK.slot = 0; openSkills(); };
   $("#b-quest").onclick = () => { snd("click"); openQuests(false); };

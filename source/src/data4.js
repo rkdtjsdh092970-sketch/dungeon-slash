@@ -71,6 +71,26 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   });
   // 양방향 연결표
   PASSIVES.forEach((p) => p.links.forEach((q) => { if (q !== "C" && PASSIVE_BY_ID[q] && !PASSIVE_BY_ID[q].links.includes(p.id)) PASSIVE_BY_ID[q].links.push(p.id); }));
+  // ---- 전체를 바깥으로 넓히고, 중요한 노드(주요/핵심) 사이에 흰색 연결 특성을 끼워 넣는다: 좋은 특성은 멀리 있고, 가는 길에 작은 보너스를 먹는다 ----
+  const RS = 1.7; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
+  const FIL = {
+    phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
+    def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
+  };
+  { let fid = 0; const seen = new Set();
+    for (const A of PASSIVES.slice()) for (const qid of A.links.slice()) {
+      if (qid === "C") continue; const B = PASSIVE_BY_ID[qid]; if (!B || B.kind === "filler" || A.kind === "filler") continue;
+      const key = A.id < B.id ? A.id + "|" + B.id : B.id + "|" + A.id; if (seen.has(key)) continue; seen.add(key);
+      const mc = Math.max(A.cost, B.cost), dd = Math.hypot(A.x - B.x, A.y - B.y), n = Math.min(mc >= 3 ? 2 : mc >= 2 ? 1 : 0, Math.floor(dd / 36) - 1); if (n <= 0) continue;   // 노드 간격이 좁으면 끼워 넣지 않는다
+      A.links = A.links.filter((x) => x !== B.id); B.links = B.links.filter((x) => x !== A.id);
+      const arm = A.arm === "bridge" ? B.arm : A.arm; let prev = A;
+      for (let i = 1; i <= n; i++) {
+        const t = i / (n + 1), id = `f${++fid}`, F = { id, name: "연결 특성", per: FIL[arm][fid % 3], cost: 1, x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, links: [prev.id], arm, kind: "filler" };
+        PASSIVES.push(F); PASSIVE_BY_ID[id] = F; prev.links.push(id); prev = F;
+      }
+      prev.links.push(B.id); B.links.push(prev.id);
+    }
+  }
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",

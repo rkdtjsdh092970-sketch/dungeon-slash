@@ -10,13 +10,15 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
 }
 function saveGame() { if (save) save.lastSeen = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
-function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k]; return s; } catch (e) { return null; } }
+function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
+    if (s.passRev !== 3) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 3; }   // 패시브 트리 개편(v2.4): 기존 포인트는 전부 환급
+    return s; } catch (e) { return null; } }
 
 // ---- 장비/스킬 생성 ----
 function genItem(sv, ilvl, rarity, slot, setId) {
@@ -209,6 +211,7 @@ function dropBonus(sv, now) {
   if (sv.endgame) for (const w of worldBuffs(now)) { B.buffs.push(w); B.mf += w.mf || 0; B.exp *= w.exp || 1; B.gold *= w.gold || 1; B.qty *= w.qty || 1; B.orb *= w.orb || 1; B.unique *= w.unique || 1; B.key *= w.key || 1; }
   return B;
 }
+const trialSkillChance = (T) => Math.min(0.95, 0.06 + 0.009 * T);   // 시련 단계가 오를수록 스킬 확률 증가 (100단계 95%)
 const UNIQUE_SRC = { boss: 4, elite: 2, treasure: 1.5, rift: 3, hell: 3.5, endless: 5, stage: 1, trial: 1.5 };
 function genUnique(sv, def, ilvl) {
   const R = ITEM_RARITY[5], g = gScale(ilvl), it = { uid: sv.nextUid++, slot: def.slot, ilvl, rarity: 5, uniq: def.id, utier: def.tier, base: {}, affixes: [], umods: [], enh: 0 };
@@ -253,6 +256,8 @@ function rollDrops(sv, node, boss, B) {
       const list = pool.filter((x) => x.u.tier < 4).map((x) => ({ u: x.u, w: x.u.tier <= 2 ? (st === 1 ? 30 : st === 2 ? 20 : 8) : (st === 1 ? 4 : st === 2 ? 12 : 22) }));
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
+    const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
+    for (let st = 1; st <= Math.min(4, K); st++) if (VS.length && Math.random() < SC[st - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * [0.3, 1, 1.6][i] })), (x) => x.w).i));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
@@ -262,8 +267,9 @@ function rollDrops(sv, node, boss, B) {
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
   const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * w[i] })), (x) => x.w).i;
   if (node.firstClear && kind === "boss") { const d = wpick(SKILLS.filter((x) => x.unlock <= act && x.slot === "active"), (x) => (x.unlock >= act - 1 ? 2 : 1)); out.skills.push(genSkill(sv, d.id, rr([1, 1, 0.3]))); }
-  else if (kind === "trial") { const T = node.tier || 1; if (Math.random() < Math.min(0.6, 0.18 + 0.01 * T)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.4, 1.2, 1 + T / 15]))); }
-    out.hone = Math.round((4 + Math.floor(T * 0.8)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.4) out.runes.push(pick(RUNE_IDS)); }
+  else if (kind === "trial") { const T = node.tier || 1;
+    for (let k = 0; k < (T >= 50 ? 2 : 1); k++) if (Math.random() < trialSkillChance(T) * (k ? 0.5 : 1)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([Math.max(0.05, 0.5 - T / 200), 1.2, 0.6 + T / 25]))); }
+    out.hone = Math.round((4 + Math.floor(T * 0.9)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.5) out.runes.push(pick(RUNE_IDS)); if (T >= 60 && Math.random() < 0.3) out.runes.push(pick(RUNE_IDS)); }
   else if (kind === "rift") { if (Math.random() < Math.min(0.12, 0.015 + 0.002 * (node.tier || 1))) { const d = pick(poolFor(5).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.2, 1, 2]))); } }
   else if (Math.random() < (boss ? CFG.SKILL_DROP_BOSS : CFG.SKILL_DROP * (kind === "elite" ? 2 : 1))) {
     const pool = SKILLS.filter((d) => d.unlock <= act);

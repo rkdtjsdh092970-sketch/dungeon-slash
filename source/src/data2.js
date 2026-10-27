@@ -108,3 +108,5 @@ const VOID_BOSS = BOSSES[BOSSES.length - 1];
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 
 const VOID_MIN_RIFT = 25;   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
+const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
+CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다

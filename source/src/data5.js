@@ -25,6 +25,11 @@ const STATUS_INFO = { bleed: { name: "출혈", color: "#e03a4a", st: "phys" }, p
     S({ id: "storm", name: "뇌우", kind: "rain", cd: 12, mult: 1.05, count: 8, over: 3.0, range: 6, unlock: 7, color: "#fff08a", icon: "storm", sfx: "storm", dtype: "mag", elem: "light", mana: 34, desc: "3초 동안 하늘에서 번개 8줄기가 무작위 적을 내리친다", shape: "rain" }),
     S({ id: "spirit", name: "정령 소환", kind: "summon", cd: 15, mult: 1.3, dur: 8, every: 1.0, range: 6, unlock: 7, color: "#8affc8", icon: "spirit", sfx: "summon2", dtype: "phys", mana: 28, desc: "8초 동안 정령이 앞줄의 적을 쉬지 않고 베어낸다", shape: "front" }),
     S({ id: "voidhole", name: "공허의 심연", kind: "hole", cd: 13, mult: 0.6, dur: 3, every: 0.5, range: 5, unlock: 8, color: "#c070ff", icon: "vortex", sfx: "voidhole", dtype: "mag", elem: "void", mana: 30, desc: "3초 동안 적을 빨아들이며 갈아버리는 심연을 연다", shape: "area3" }),
+    // ---- 공허의 군주 전용 스킬 (공허의 군주만 드랍, 매우 낮은 확률): 일반 풀·상점에는 나오지 않는다 ----
+    S({ id: "voidmaw", name: "공허의 아가리", kind: "hole", cd: 14, mult: 1.1, dur: 4, every: 0.35, range: 6, unlock: 11, voidOnly: true, color: "#b070ff", icon: "voidmaw", sfx: "voidhole", dtype: "mag", elem: "void", mana: 38, bonus: { boss: 0.2, elite: 0.2 }, desc: "4초 동안 거대한 아가리가 열려 주변 적을 끌어당기며 갈아버린다", shape: "area3" }),
+    S({ id: "dimslash", name: "차원 절단", kind: "pierce", cd: 7, mult: 6.0, range: 7, unlock: 11, voidOnly: true, color: "#e0a0ff", icon: "dimslash", sfx: "pierce", dtype: "mag", elem: "void", mana: 26, ignoreAdd: 0.35, bonus: { boss: 0.35 }, desc: "한 줄을 통째로 갈라 마법저항을 35% 무시하고 보스에게 추가 피해", shape: "line" }),
+    S({ id: "doomrain", name: "종말의 비", kind: "rain", cd: 12, mult: 1.8, count: 14, over: 4.0, range: 7, unlock: 11, voidOnly: true, color: "#c070ff", icon: "doomrain", sfx: "storm", dtype: "mag", elem: "void", mana: 44, desc: "4초 동안 공허의 빛줄기 14개가 무작위 적을 내리치고 주변을 휩쓴다", shape: "rain" }),
+    S({ id: "abyssling", name: "심연의 사도", kind: "summon", cd: 16, mult: 5.5, dur: 10, every: 0.6, range: 7, unlock: 11, voidOnly: true, color: "#9a6aff", icon: "abyssling", sfx: "summon2", dtype: "mag", elem: "void", mana: 36, desc: "10초 동안 사도가 앞줄의 적을 쉬지 않고 찢어발긴다", shape: "front" }),
   );
 })();
 

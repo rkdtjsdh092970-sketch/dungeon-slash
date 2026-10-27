@@ -69,6 +69,7 @@ function openTitle() {
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
   const s = loadGame(); if (!s) return; save = s; AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
+  if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
   if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
 
@@ -111,8 +112,14 @@ function mapPanel() {
     const E = endlessInfo(save);
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
     btnOk = un && E.left > 0; btn = E.left > 0 ? "도전" : "횟수 소진";
+  } else if (n.kind === "trial") {
+    G.trialTier = Math.max(1, Math.min(G.trialTier, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)));
+    const T = G.trialTier;
+    h += `<div class="pline">엔드게임 · 최고 <b>${save.trialBest || 0}</b> / ${MAX_TRIAL}단계</div><div class="pline tier"><button class="btn xs" data-p="ttm">−</button> <b style="font-size:18px">${T}단계</b> <button class="btn xs" data-p="ttp">+</button></div>
+    <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
+    btnOk = un; btn = "도전";
   } else if (n.kind === "void") {
-    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">4단계로 나뉘며 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">4단계로 나뉘며 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">공허의 군주 전용 스킬 4종 (단계별 2% / 3% / 5% / 12% 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -282,14 +289,26 @@ function afterBattle(res, b) {
   if (A.on && !res.win) { A.on = false; saveGame(); }
   showResult(res, b);
 }
+// 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
+function nextBattleOf(node, res) {
+  if (!res.win) return null;
+  if (node.kind === "stage" || node.kind === "boss") {
+    if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
+    if (!nxt || !nodeUnlocked(save, nxt)) return null; return { label: nxt.kind === "boss" ? "보스 도전 ▶" : nxt.stage === 1 ? "다음 지역 ▶" : "다음 스테이지 ▶", node: nxt, battle: nodeToBattle(nxt) };
+  }
+  if (node.kind === "rift" && node.tier + 1 <= save.rift.best + 1) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
+  if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
+  return null;
+}
 function showResult(res, b, replay) {
   G.pending = [res, b];
   const node = G.node, tut = node.kind === "tutorial", endless = node.kind === "endless", win = res.win;
   if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
   const nextTut = tut && win && node.step < TUTORIAL.length - 1;
   const back = () => { if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
-  const canRetry = !tut && !endless && node.kind !== "void";
-  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay), { cls: "result", persistent: true, noClose: true, on: {
+  const canRetry = !tut && !endless && node.kind !== "void", nb = tut ? null : nextBattleOf(node, res);
+  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay, nb), { cls: "result", persistent: true, noClose: true, on: {
+    next: () => { if (!nb) return; G.pending = null; Modal.close(true); const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },
     ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { G.pending = null; Modal.close(true); startBattle(node, G.retry); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
   } });

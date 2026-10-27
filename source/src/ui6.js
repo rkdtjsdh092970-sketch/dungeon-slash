@@ -41,7 +41,7 @@ function drawEndOverlay(g, b) {
 
 // ---------------- 결과 화면 ----------------
 function starCount(res, b) { if (!res.win || b.node.kind === "tutorial") return 0; const hp = b.hp / b.maxHp; return 1 + (hp >= 0.4 ? 1 : 0) + (hp >= 0.75 ? 1 : 0); }
-function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay) {
+function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
   const win = res.win, T = endTitle(b), stars = starCount(res, b), pre = res.pre || { level: save.level, exp: save.exp, need: expNeed(save.level) };
   const A = replay ? "" : "rs-anim";
   const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
@@ -62,7 +62,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay) {
     <div class="rs-rew">${rew}</div>
     ${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>` : ""}${res.buffs && res.buffs.length ? `<div class="dim center">월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}
     ${tiles ? `<div class="rs-sec">획득 장비 <em>${res.items.length}</em></div><div class="rs-drops">${tiles}</div>${rareLines}` : ""}${sk}${notes}
-    <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry">다시 도전</button>` : ""}</div></div>`;
+    <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry">다시 도전</button>` : ""}${nb ? `<button class="btn pri" data-a="next">${nb.label}</button>` : ""}</div></div>`;
 }
 function animateResult(res) {
   $$("#mbox [data-cnt]").forEach((el, k) => { const to = +el.dataset.cnt, t0 = performance.now() + 250, dur = 1000; const f = (now) => { if (!el.isConnected) return; const p = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - p, 3); el.textContent = fmtN(Math.round(to * e)); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); });

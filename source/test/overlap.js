@@ -1,4 +1,4 @@
-const sim=require('./simlib.js'); const R={small:8,notable:12,key:16,bridge:8};
+const sim=require('./simlib.js'); const R={small:8,notable:12,key:16,bridge:8,filler:5.5};
 let bad=[]; const P=sim.PASSIVES;
 for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const a=P[i],b=P[j];const d=Math.hypot(a.x-b.x,a.y-b.y);const need=(R[a.kind]||8)+(R[b.kind]||8)+10;if(d<need)bad.push([a.id,b.id,d.toFixed(1),need].join(' '));}
 console.log('passive overlaps:',bad.length,bad.slice(0,10));

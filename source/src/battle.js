@@ -91,7 +91,7 @@ function planFor(node) {
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.min(10, node.act), stage = RIFTLIKE[node.kind] ? 4 : node.stage || 10;
-  const riftMul = node.tier ? Math.pow(CFG.RIFT_SCALE, node.tier - 1) : 1;
+  const riftMul = node.tier ? Math.pow(node.kind === "trial" ? CFG.TRIAL_SCALE : CFG.RIFT_SCALE, node.tier - 1) : 1;
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
