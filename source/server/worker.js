@@ -70,6 +70,21 @@ export default {
         return J({ rows: rows.results });
       }
 
+      // ---- 우편함 (운영 보상 등) ----
+      if (path === "/api/mail/list") {
+        const rows = await DB.prepare("SELECT id,title,body,gold,ore,created,claimed FROM mail WHERE name=? ORDER BY claimed ASC, id DESC LIMIT 40").bind(me.name).all();
+        return J({ rows: rows.results });
+      }
+      if (path === "/api/mail/claim") {   // 한 번만 수령 (UPDATE ... WHERE claimed=0 이 원자적으로 중복 수령을 막는다)
+        const a = await DB.prepare("UPDATE mail SET claimed=1 WHERE id=? AND name=? AND claimed=0 RETURNING gold,ore").bind(+body.id, me.name).first();
+        if (!a) return J({ err: "이미 받았거나 없는 우편입니다" }, 400); return J({ ok: true, gold: a.gold, ore: a.ore });
+      }
+      if (path === "/api/mail/claimall") {
+        const a = await DB.prepare("UPDATE mail SET claimed=1 WHERE name=? AND claimed=0 RETURNING gold,ore").bind(me.name).all();
+        const rs = a.results || []; if (!rs.length) return J({ err: "받을 우편이 없습니다" }, 400);
+        return J({ ok: true, n: rs.length, gold: rs.reduce((x, r) => x + (r.gold || 0), 0), ore: rs.reduce((x, r) => x + (r.ore || 0), 0) });
+      }
+
       // ---- 경매장 ----
       if (path === "/api/ah/list") {
         const q = url.searchParams, slot = q.get("slot") || "", minR = +q.get("minr") || 0, uniq = q.get("uniq") === "1", sort = q.get("sort") === "new" ? "id DESC" : "price ASC";

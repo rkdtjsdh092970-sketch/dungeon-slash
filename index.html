@@ -3060,6 +3060,7 @@ const TOWN_SPOTS = [
   { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
   { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
   { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "길드 · 길드 패시브 · 랭킹", back: true },
+  { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
 ];
@@ -3247,6 +3248,10 @@ function paintBuilding(type) {
     R(-34, -6, 12, 6, "#3a3a46"); R(-32, -9, 8, 4, "#5a5a6a"); R(-30, -11, 4, 2, "#8a8a9a"); R(-36, -8, 3, 2, "#5a5a6a"); R(-34, -9, 10, 1, "#9a9aae");     // 모루
     for (let i = 0; i < 4; i++) { R(24 + i * 3, -4 - (i % 2) * 3, 10, 3, "#8a5a32"); R(24 + i * 3, -4 - (i % 2) * 3, 10, 1, "#b88252"); } R(24, 0, 14, 1, "#5a3c20");
     lantern(-22, -26);
+  } else if (type === "mail") {   // 우편함: 붉은 우체통 + 깃발 + 삐져나온 편지
+    shadow(14); R(-3, -26, 6, 26, "#5a3a22"); R(-3, -26, 1, 26, "#7a5232"); R(-14, -46, 28, 22, "#b83a2a"); R(-14, -46, 28, 3, "#e0644e"); R(-14, -27, 28, 3, "#8a2a1e"); R(-14, -46, 3, 22, "#d4503e"); R(11, -46, 3, 22, "#8a2a1e");
+    R(-9, -36, 18, 3, "#2a1410"); R(-7, -33, 14, 4, "#f2ead2"); R(-7, -33, 14, 1, "#fff"); R(-5, -30, 3, 1, "#c8b890"); R(14, -50, 3, 18, "#5a3a22"); R(17, -50, 9, 6, "#ffd24a"); R(17, -50, 9, 1, "#fff0a0");
+    R(-9, -49, 18, 3, "#8a2a1e"); R(-12, -3, 24, 3, "#4a3a28");
   } else if (type === "board") {   // 퀘스트 게시판: 지붕 달린 나무 게시판 + 벤치
     R(-24, -44, 4, 44, "#6a4426"); R(20, -44, 4, 44, "#6a4426"); R(-24, -44, 1, 44, "#8a5c34"); planks(-20, -38, 40, 26, "#a87a46"); R(-21, -39, 42, 2, "#3a2414"); R(-21, -13, 42, 2, "#3a2414");
     roofTrap(-30, -52, 60, 10, "#8a4a30", 14); R(-28, -42, 56, 2, "#3a2414");
@@ -3336,6 +3341,7 @@ function drawBuilding(g, type, x, y, theme, hot) {
   if (hot) { g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.22; g.drawImage(cv, x - TB_OX, y - TB_OY); }
   g.restore(); drawBuildingAnim(g, type, x, y); if (type === "notice" && typeof notesUnread === "function" && notesUnread()) drawNew(g, x, y);
   if (type === "board" && typeof questBang === "function" && questBang(TownView.act)) drawBang(g, x, y);
+  if (type === "mail" && (G.mailN || 0) > 0) drawBang(g, x, y - 12);
 }
 
 // =========================================================
@@ -3499,6 +3505,7 @@ function mapGo() {
 
 // ---------- 마을 ----------
 function openTown(act) {
+  if (typeof mailPoll === "function") mailPoll();
   G.townAct = act; TownView.act = act; showScreen("town"); if (typeof notesUnread === "function" && notesUnread() && save.tut.done) setTimeout(() => toast("📜 새 패치 노트가 있습니다 — 마을의 '업데이트 게시판'"), 600); $("#townbar .tname").textContent = `${ACTS[act - 1].name} 마을`;
   if (G.guide === "map") { setGuide("마을에서는 스킬·대장간·퀘스트·상점을 이용할 수 있어요.<br>이제 위쪽의 <b>🗺 지도</b> 버튼을 눌러 첫 스테이지로 가봅시다!"); $("#b-map").classList.add("pulse"); }
   else { setGuide(null); $("#b-map").classList.remove("pulse"); }
@@ -3507,7 +3514,7 @@ function townClick(s) {
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
-  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes })[s.id]();
+  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes })[s.id]();
 }
 function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다른 유저와 거래하는 장소입니다.<br>온라인 기능은 아직 준비 중입니다.</p>`, { cls: "sm" }); }
 
@@ -4295,6 +4302,7 @@ async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
   if (r.revokeOn && save) stripAngelicLocal();
+  setTimeout(() => { if (typeof mailPoll === "function") mailPoll(); }, 300);
   api("/api/guild/me").then((g) => { if (save && g && !g.err) { save.guildLv = g.guild ? g.guild.level : 0; } }).catch(() => {});
   SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
@@ -4422,6 +4430,25 @@ async function openGuild() {
   const ch = $("#gd-chat"); if (ch) ch.scrollTop = ch.scrollHeight;
 }
 
+// ---------- 우편함 (서버 우편: 운영 보상 등) ----------
+const MAILN = { poll: 0 };
+async function mailPoll() {   // 안 받은 우편 개수 → 마을 우편함에 느낌표
+  if (!SRV.on) { G.mailN = 0; return; } try { const r = await api("/api/mail/list"); G.mailN = r && r.rows ? r.rows.filter((m) => !m.claimed).length : 0; } catch (e) {}
+}
+function mailRewardText(m) { return [m.gold ? `${fmtC(m.gold)}G` : "", m.ore ? `강화석 ${fmtN(m.ore)}` : ""].filter(Boolean).join(" · ") || "첨부 없음"; }
+async function openMail() {
+  if (!SRV.on) { Modal.open(`<h2>우편함</h2><div class="center pad dim">서버에 로그인하면 우편함을 이용할 수 있습니다.<br>운영 보상과 알림이 이곳으로 도착합니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button><button class="btn" data-a="cl">닫기</button></div>`, { cls: "sm", on: { gl: () => loginDialog(openMail), cl: () => Modal.close() } }); return; }
+  const r = await api("/api/mail/list"); if (r.err) { toast(r.err, "bad"); return; }
+  const rows = r.rows || [], unc = rows.filter((m) => !m.claimed); G.mailN = unc.length;
+  const fmtD = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  Modal.open(`<h2>우편함 ${unc.length ? `<small style="color:#ffd24a">(${unc.length}통 미수령)</small>` : ""}</h2>
+   ${unc.length > 1 ? `<div class="pbtns" style="margin:4px 0"><button class="btn pri" data-a="mall">모두 받기 (${unc.length}통)</button></div>` : ""}
+   <div class="qlist" style="max-height:330px;overflow:auto">${rows.map((m) => `<div class="qrow" style="${m.claimed ? "opacity:.55" : ""}"><div class="qi"><b>${String(m.title).replace(/</g, "&lt;")}</b> <small class="dim">${fmtD(m.created)}</small><div class="dim" style="white-space:pre-wrap">${String(m.body || "").replace(/</g, "&lt;")}</div><div style="color:#ffe08a">🎁 ${mailRewardText(m)}</div></div>${m.claimed ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="mget" data-id="${m.id}">받기</button>`}</div>`).join("") || `<div class="dim center pad">받은 우편이 없습니다</div>`}</div>`, { cls: "wide", on: {
+    mget: async (el) => { const c = await api("/api/mail/claim", { id: +el.dataset.id }); if (c.err) { toast(c.err, "bad"); return openMail(); } save.gold += c.gold || 0; save.ore += c.ore || 0; saveGame(); refreshTop(); snd("coin"); toast(`우편 수령: ${mailRewardText(c)}`, "ok"); openMail(); },
+    mall: async () => { const c = await api("/api/mail/claimall", {}); if (c.err) { toast(c.err, "bad"); return openMail(); } save.gold += c.gold || 0; save.ore += c.ore || 0; saveGame(); refreshTop(); snd("coin"); toast(`우편 ${c.n}통 수령: ${mailRewardText(c)}`, "ok"); openMail(); },
+  } });
+}
+
 // =========================================================
 // 일일 목표 / 오프라인 보상 / 기록 창
 // =========================================================
@@ -4448,7 +4475,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-072202";
+const BUILD_ID = "20261028-072809";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4540,6 +4567,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.14", date: "10/28", title: "마을 우편함", items: [
+    "모든 마을에 '우편함'이 생겼습니다 (길드 왼쪽). 운영 보상과 알림이 서버 우편으로 도착하며, 받을 우편이 있으면 노란 느낌표가 뜹니다. 서버에 로그인해야 이용할 수 있고 [받기] / [모두 받기]로 수령합니다.",
+    "밸런싱 테스트를 위해 현재 등록된 모든 계정에 골드 10,000,000G 우편을 보냈습니다. 우편함에서 받으세요.",
+  ] },
   { ver: "3.13", date: "10/28", title: "보스전 밸런스 · 정령왕 교착 수정", items: [
     "보스전 비교 결과를 반영했습니다. 같은 장비 품질에서 보스 처치 시간이 빌드별로 최대 2.5배 차이 났습니다 (화염·마나 주문 빌드가 가장 빠르고 번개 빌드가 가장 느림).",
     "화염 정령왕에서 스킬 타겟 규칙이 '오토'나 '보스 우선'이면 정령이 남아 무적인 보스를 계속 겨냥해 정령을 잡지 못하고 전투가 교착되던 문제를 고쳤습니다. 이제 무적 상태의 보스는 다른 대상이 있으면 겨냥하지 않습니다.",
@@ -4826,7 +4857,7 @@ function frame(ms) {
 window.addEventListener("load", () => {
   CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
-  loadAssets(() => { if (typeof tipInit === "function") tipInit(); $("#iorb").src = iconURL("orb", 1); $("#ikey").src = iconURL("skull", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); });
+  loadAssets(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#iorb").src = iconURL("orb", 1); $("#ikey").src = iconURL("skull", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); });
 });
 
 </script></body></html>
