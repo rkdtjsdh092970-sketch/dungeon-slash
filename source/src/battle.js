@@ -84,7 +84,7 @@ function planFor(node) {
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
-  if (RIFTLIKE[node.kind] && node.kind !== "void") for (let i = 0; i < plan.length; i++) if (Math.random() < 0.012) plan[i] = "warp";
+  if (RIFTLIKE[node.kind] && node.kind !== "void") for (let i = 0; i < plan.length; i++) if (Math.random() < 0.0012) plan[i] = "warp";
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }

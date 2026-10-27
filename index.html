@@ -1728,7 +1728,7 @@ function planFor(node) {
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
-  if (RIFTLIKE[node.kind] && node.kind !== "void") for (let i = 0; i < plan.length; i++) if (Math.random() < 0.012) plan[i] = "warp";
+  if (RIFTLIKE[node.kind] && node.kind !== "void") for (let i = 0; i < plan.length; i++) if (Math.random() < 0.0012) plan[i] = "warp";
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
@@ -4038,7 +4038,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-050253";
+const BUILD_ID = "20261028-050511";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4134,6 +4134,7 @@ const PATCH_NOTES = [
     "엔드게임(아이템 레벨 11 이상) 드랍의 전설·세트·희귀 장비 기본 수치가 낮아지고, 드랍 옵션은 낮은 수치가 더 자주 나옵니다. 액트 1~10 진행 난이도는 그대로입니다.",
     "옵션 재굴림·혼돈 구슬·신성한 구슬로 직접 뽑은 옵션은 높은 수치가 잘 나옵니다. 원하는 옵션을 맞춘 장비만 진짜 좋은 장비가 됩니다.",
     "공허의 군주는 한 마리만 등장합니다. 체력이 4단계로 나뉘어 한 단계를 격파할 때마다 더 강해진 상태로 이어지며, 그동안 잡몹도 계속 나옵니다.",
+    "공허의 열쇠(왜곡체) 출현 확률을 약 1/10로 크게 줄였습니다.",
     "심연의 군주 세트 효과가 약해졌습니다 (6세트 모든 피해 +40% → +25% 등). 고유 장비의 가치가 상대적으로 올라갑니다.",
   ] },
 
