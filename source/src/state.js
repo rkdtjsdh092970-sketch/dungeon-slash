@@ -59,7 +59,7 @@ const itemName = (it) => it.uniq ? (UNIQUE_BY_ID[it.uniq] ? UNIQUE_BY_ID[it.uniq
 
 // ---- 스탯 ----
 const expNeed = (level) => CFG.EXP_BASE * Math.pow(CFG.EXP_GROWTH, (level - 1) / 10);
-function setCounts(sv) { const c = {}; for (const slot of SLOTS) { const it = sv.equipped[slot]; if (it && it.setId) c[it.setId] = (c[it.setId] || 0) + 1; } return c; }
+function setCounts(sv) { const c = {}; for (const slot of EQ_SLOTS) { const it = sv.equipped[slot]; if (it && it.setId) c[it.setId] = (c[it.setId] || 0) + 1; } return c; }
 const mfEff = (mf) => { mf = Math.max(0, mf); return mf / (1 + mf / CFG.MF_HALF); };   // MF 체감
 const towerMf = (tier) => (tier ? CFG.MF_TOWER_STEP * tier + CFG.MF_TOWER_20 * Math.floor(tier / 20) : 0);
 function computeStats(sv) {
@@ -82,7 +82,7 @@ function computeStats(sv) {
     }
   };
   let ilvlSum = 0, ilvlCnt = 0;
-  for (const slot of SLOTS) {
+  for (const slot of EQ_SLOTS) {
     const it = sv.equipped[slot]; if (!it) continue;
     ilvlSum += it.ilvl; ilvlCnt++;
     const ef = 1 + 0.08 * (it.enh || 0), pf = 1 + 0.04 * (it.enh || 0);
@@ -260,7 +260,7 @@ function enhance(sv, it) {
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
 function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
-function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
+function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
 const rerollCost = (it) => ({ gold: Math.round(itemValue(it) * 2.5), ore: 3 });
@@ -286,9 +286,9 @@ const nodeCleared = (sv, n) => (n.kind === "stage" || n.kind === "boss") && sv.c
 
 // ---- 봇 (밸런스 시뮬레이션 전용) ----
 function botEquip(sv) {
-  for (let pass = 0; pass < 2; pass++) for (const slot of SLOTS) {
+  for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
     let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best);
-    for (const it of sv.inv) if (it.slot === slot) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
+    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
     const cur = sv.equipped[slot] || null;
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; }
   }
@@ -305,28 +305,28 @@ function botEquip(sv) {
 // =========================================================
 // 추천 장비 / ▲ 표시 / 프리셋
 // =========================================================
-function isUpgrade(sv, it) {
-  const cur = sv.equipped[it.slot]; if (cur === it) return false;
-  const base = powerWith(sv, it.slot, cur || null), p = powerWith(sv, it.slot, it);
-  return p > base * 1.0005;
+function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드
+  for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k]; if (cur === it) return false; }
+  for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k], base = powerWith(sv, k, cur || null), p = powerWith(sv, k, it); if (p > base * 1.0005) return true; }
+  return false;
 }
 function recommendEquip(sv) {
   const changed = [];
-  for (let pass = 0; pass < 2; pass++) for (const slot of SLOTS) {
+  for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
     const cur = sv.equipped[slot] || null; let best = cur, bp = powerWith(sv, slot, cur);
-    for (const it of sv.inv) if (it.slot === slot) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
+    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; changed.push(slot); }
   }
   return changed;
 }
 function hasAnyUpgrade(sv) { for (const it of sv.inv) if (isUpgrade(sv, it)) return true; return false; }
 function savePreset(sv, i) {
-  sv.presets[i] = { equip: Object.fromEntries(SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])), loadout: JSON.parse(JSON.stringify(sv.loadout)) };
+  sv.presets[i] = { equip: Object.fromEntries(EQ_SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])), loadout: JSON.parse(JSON.stringify(sv.loadout)) };
 }
 function loadPreset(sv, i) {
   const p = sv.presets[i]; if (!p) return false;
-  for (const s of SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
-  for (const s of SLOTS) { const u = p.equip[s]; if (u == null) continue; const it = sv.inv.find((x) => x.uid === u); if (it) { sv.inv = sv.inv.filter((x) => x !== it); sv.equipped[s] = it; } }
+  for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
+  for (const s of EQ_SLOTS) { const u = p.equip[s]; if (u == null) continue; const it = sv.inv.find((x) => x.uid === u); if (it) { sv.inv = sv.inv.filter((x) => x !== it); sv.equipped[s] = it; } }
   sv.loadout = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; return l && sv.skills.some((x) => x.uid === l.uid) ? { uid: l.uid, rule: l.rule } : null; });
   return true;
 }
@@ -375,7 +375,7 @@ function endlessInfo(sv) {
 
 // 잠금/프리셋/착용 중인 장비는 판매·분해·자동 삭제에서 보호된다
 function protectedItem(sv, it) {
-  if (it.lock || sv.equipped[it.slot] === it) return true;
+  if (it.lock || EQ_SLOTS.some((k) => sv.equipped[k] === it)) return true;
   for (const p of sv.presets || []) if (p) for (const k in p.equip) if (p.equip[k] === it.uid) return true;
   return false;
 }

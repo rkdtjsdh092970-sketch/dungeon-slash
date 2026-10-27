@@ -407,7 +407,10 @@ const RULE_ORDER = ["front", "auto", "boss", "ranged", "elite", "normal"];
 
 // ---- 장비 ----
 const SLOTS = ["weapon", "helm", "armor", "gloves", "boots", "ring", "neck"];
-const SLOT_NAME = { weapon: "무기", helm: "투구", armor: "갑옷", gloves: "장갑", ring: "반지", neck: "목걸이", boots: "신발" };
+const SLOT_NAME = { weapon: "무기", helm: "투구", armor: "갑옷", gloves: "장갑", ring: "반지", ring2: "반지 2", neck: "목걸이", boots: "신발" };
+const EQ_SLOTS = [...SLOTS, "ring2"];   // 장비 칸: 반지는 2칸 (아이템 종류는 SLOTS, 착용 칸은 EQ_SLOTS)
+const slotType = (k) => (k === "ring2" ? "ring" : k);
+const slotKeys = (type) => (type === "ring" ? ["ring", "ring2"] : [type]);
 const SLOT_BASE = { weapon: { atk: 6 }, helm: { def: 3, hp: 20 }, armor: { hp: 55, def: 4 }, gloves: { atk: 2, def: 1.5 }, ring: { hp: 15 }, neck: { atk: 1.5 }, boots: { hp: 22, def: 2 } };
 const ITEM_RARITY = [
   { name: "일반", mult: 1.0,  affixes: 0, cls: "r0", drop: 55, bossDrop: 0 },
@@ -433,7 +436,7 @@ const AFFIXES = [
   { k: "lifesteal", name: "생명력 흡수",    pct: true,  range: [0.01, 0.02], w: 3, minRarity: 2 },
   { k: "goldFind", name: "골드 획득",       pct: true,  range: [0.08, 0.20], w: 4 },
   { k: "chainJumps", name: "번개 도약 +",   count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck", "weapon"], minIlvl: 3 },
-  { k: "density", name: "칸당 몹 수 +",    count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck"], minIlvl: 3 },
+  { k: "density", name: "칸당 몹 수",    count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck"], minIlvl: 3 },
   { k: "lanes",   name: "레인 확장 +",     count: true, range: [1, 1], w: 1.2, minRarity: 3, slots: ["neck"], minIlvl: 6 },
 ];
 // 세트: acts = 드랍 액트 범위, bonus = 착용 수별 효과
@@ -551,7 +554,7 @@ const planSize = (stage) => CFG.WAVE_BASE + CFG.WAVE_STAGE * stage + eliteCount(
 // =========================================================
 CFG.BASE_DODGE = 0;                // 기본 회피 없음 — 패시브·장비로만 얻는다
 CFG.UNIQUE_BASE = 0.0005;          // 고유 장비: 드랍 1개당 기준 확률 (0.05%)
-CFG.PROTO_MULT = 20;               // 프로토타입 보정 ×20 (정식 출시 때 1로)
+CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은 너무 후했음, 정식 출시 때 1로)
 CFG.WORLD_MIN = 20;                // 월드 버프/지옥 스테이지 갱신 주기 (분)
 CFG.ENDLESS_DAILY = 3;             // 무한 균열 하루 입장 횟수
 CFG.ILVL_RIFT_STEP = 8;            // 균열 N단계마다 드랍 아이템 레벨 +1
@@ -1136,7 +1139,7 @@ const itemName = (it) => it.uniq ? (UNIQUE_BY_ID[it.uniq] ? UNIQUE_BY_ID[it.uniq
 
 // ---- 스탯 ----
 const expNeed = (level) => CFG.EXP_BASE * Math.pow(CFG.EXP_GROWTH, (level - 1) / 10);
-function setCounts(sv) { const c = {}; for (const slot of SLOTS) { const it = sv.equipped[slot]; if (it && it.setId) c[it.setId] = (c[it.setId] || 0) + 1; } return c; }
+function setCounts(sv) { const c = {}; for (const slot of EQ_SLOTS) { const it = sv.equipped[slot]; if (it && it.setId) c[it.setId] = (c[it.setId] || 0) + 1; } return c; }
 const mfEff = (mf) => { mf = Math.max(0, mf); return mf / (1 + mf / CFG.MF_HALF); };   // MF 체감
 const towerMf = (tier) => (tier ? CFG.MF_TOWER_STEP * tier + CFG.MF_TOWER_20 * Math.floor(tier / 20) : 0);
 function computeStats(sv) {
@@ -1159,7 +1162,7 @@ function computeStats(sv) {
     }
   };
   let ilvlSum = 0, ilvlCnt = 0;
-  for (const slot of SLOTS) {
+  for (const slot of EQ_SLOTS) {
     const it = sv.equipped[slot]; if (!it) continue;
     ilvlSum += it.ilvl; ilvlCnt++;
     const ef = 1 + 0.08 * (it.enh || 0), pf = 1 + 0.04 * (it.enh || 0);
@@ -1337,7 +1340,7 @@ function enhance(sv, it) {
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
 function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
-function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
+function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
 const rerollCost = (it) => ({ gold: Math.round(itemValue(it) * 2.5), ore: 3 });
@@ -1363,9 +1366,9 @@ const nodeCleared = (sv, n) => (n.kind === "stage" || n.kind === "boss") && sv.c
 
 // ---- 봇 (밸런스 시뮬레이션 전용) ----
 function botEquip(sv) {
-  for (let pass = 0; pass < 2; pass++) for (const slot of SLOTS) {
+  for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
     let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best);
-    for (const it of sv.inv) if (it.slot === slot) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
+    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
     const cur = sv.equipped[slot] || null;
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; }
   }
@@ -1382,28 +1385,28 @@ function botEquip(sv) {
 // =========================================================
 // 추천 장비 / ▲ 표시 / 프리셋
 // =========================================================
-function isUpgrade(sv, it) {
-  const cur = sv.equipped[it.slot]; if (cur === it) return false;
-  const base = powerWith(sv, it.slot, cur || null), p = powerWith(sv, it.slot, it);
-  return p > base * 1.0005;
+function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드
+  for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k]; if (cur === it) return false; }
+  for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k], base = powerWith(sv, k, cur || null), p = powerWith(sv, k, it); if (p > base * 1.0005) return true; }
+  return false;
 }
 function recommendEquip(sv) {
   const changed = [];
-  for (let pass = 0; pass < 2; pass++) for (const slot of SLOTS) {
+  for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
     const cur = sv.equipped[slot] || null; let best = cur, bp = powerWith(sv, slot, cur);
-    for (const it of sv.inv) if (it.slot === slot) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
+    for (const it of sv.inv) if (it.slot === slotType(slot)) { const p = powerWith(sv, slot, it); if (p > bp * 1.0005) { bp = p; best = it; } }
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; changed.push(slot); }
   }
   return changed;
 }
 function hasAnyUpgrade(sv) { for (const it of sv.inv) if (isUpgrade(sv, it)) return true; return false; }
 function savePreset(sv, i) {
-  sv.presets[i] = { equip: Object.fromEntries(SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])), loadout: JSON.parse(JSON.stringify(sv.loadout)) };
+  sv.presets[i] = { equip: Object.fromEntries(EQ_SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])), loadout: JSON.parse(JSON.stringify(sv.loadout)) };
 }
 function loadPreset(sv, i) {
   const p = sv.presets[i]; if (!p) return false;
-  for (const s of SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
-  for (const s of SLOTS) { const u = p.equip[s]; if (u == null) continue; const it = sv.inv.find((x) => x.uid === u); if (it) { sv.inv = sv.inv.filter((x) => x !== it); sv.equipped[s] = it; } }
+  for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
+  for (const s of EQ_SLOTS) { const u = p.equip[s]; if (u == null) continue; const it = sv.inv.find((x) => x.uid === u); if (it) { sv.inv = sv.inv.filter((x) => x !== it); sv.equipped[s] = it; } }
   sv.loadout = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; return l && sv.skills.some((x) => x.uid === l.uid) ? { uid: l.uid, rule: l.rule } : null; });
   return true;
 }
@@ -1452,7 +1455,7 @@ function endlessInfo(sv) {
 
 // 잠금/프리셋/착용 중인 장비는 판매·분해·자동 삭제에서 보호된다
 function protectedItem(sv, it) {
-  if (it.lock || sv.equipped[it.slot] === it) return true;
+  if (it.lock || EQ_SLOTS.some((k) => sv.equipped[k] === it)) return true;
   for (const p of sv.presets || []) if (p) for (const k in p.equip) if (p.equip[k] === it.uid) return true;
   return false;
 }
@@ -3069,7 +3072,7 @@ function presetRow() {
 // 프리셋 미리보기: 장착 스킬(레벨·룬·타겟)과 장비를 보여주고, 적용/덮어쓰기를 고른다
 function presetPower(i) {
   const p = save.presets[i]; if (!p) return null; const eq0 = save.equipped, lo0 = save.loadout, eq = {};
-  for (const sl of SLOTS) { const u = p.equip[sl]; if (u == null) continue; const it = save.inv.find((x) => x.uid === u) || SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u); if (it) eq[sl] = it; }
+  for (const sl of EQ_SLOTS) { const u = p.equip[sl]; if (u == null) continue; const it = save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u); if (it) eq[sl] = it; }
   save.equipped = eq; save.loadout = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; return l && save.skills.some((x) => x.uid === l.uid) ? l : null; });
   let pw = 0; try { pw = playerPower(computeStats(save)); } catch (e) {} save.equipped = eq0; save.loadout = lo0; return pw;
 }
@@ -3077,7 +3080,7 @@ function openPresetPreview(i, rerender) {
   const p = save.presets[i], n = i + 1;
   if (!p) { Modal.open(`<h2>프리셋 ${n}</h2><div class="center pad dim">비어 있는 프리셋입니다.<br>지금 착용한 장비와 장착한 스킬을 저장할 수 있습니다.</div><div class="pbtns"><button class="btn pri" data-a="pvsave">현재 구성 저장</button><button class="btn" data-a="pvback">돌아가기</button></div>`, { cls: "sm", on: { pvsave: () => { savePreset(save, i); toast(`프리셋 ${n}에 저장했습니다`, "ok"); saveGame(); openPresetPreview(i, rerender); }, pvback: () => rerender() } }); return; }
   const skl = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; const inst = l && save.skills.find((x) => x.uid === l.uid); if (!inst) return `<div class="pv-sk off"><div class="pv-ic"></div><small>${l ? "사라진 스킬" : "비어 있음"}</small></div>`; const sk = skillOf(inst); return `<div class="pv-sk">${skIcon(inst.id, 3)}<div><b>${skillTitle(inst)}</b><small>Lv.${inst.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""} · 타겟 ${RULE_SHORT[l.rule] || "앞열"}</small></div></div>`; }).join("");
-  const eqs = SLOTS.map((sl) => { const u = p.equip[sl], it = u != null && (save.inv.find((x) => x.uid === u) || SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u)); return it ? `<div class="pv-eq">${tileHtml(it, { up: false })}<small>${SLOT_NAME[sl]}</small></div>` : `<div class="pv-eq off"><div class="tile empty">${iconImg(sl, 2, "ghost")}</div><small>${SLOT_NAME[sl]} · 없음</small></div>`; }).join("");
+  const eqs = EQ_SLOTS.map((sl) => { const u = p.equip[sl], it = u != null && (save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u)); return it ? `<div class="pv-eq">${tileHtml(it, { up: false })}<small>${SLOT_NAME[sl]}</small></div>` : `<div class="pv-eq off"><div class="tile empty">${iconImg(slotType(sl), 2, "ghost")}</div><small>${SLOT_NAME[sl]} · 없음</small></div>`; }).join("");
   const cur = playerPower(computeStats(save)), pw = presetPower(i), d = pw && cur ? pw / cur - 1 : 0;
   Modal.open(`<h2>프리셋 ${n}</h2><div class="pv-sec">스킬</div><div class="pv-skills">${skl}</div><div class="pv-sec">장비</div><div class="pv-eqs">${eqs}</div>
   <div class="center pad">${pw ? `현재 구성 대비 전투력 <b class="${d >= 0 ? "up" : "dn"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</b>` : ""}</div>
@@ -3318,7 +3321,8 @@ const tierOfItem = (it) => (it.uniq ? it.utier || (UNIQUE_BY_ID[it.uniq] ? UNIQU
 const tcls = (it) => (it.uniq ? "ut" + tierOfItem(it) : RCLS(it));
 const presetUids = () => { const s = new Set(); for (const p of save.presets || []) if (p) for (const k in p.equip) s.add(p.equip[k]); return s; };
 const inPreset = (it) => presetUids().has(it.uid);
-const isEquipped = (it) => save.equipped[it.slot] === it;
+const isEquipped = (it) => EQ_SLOTS.some((k) => save.equipped[k] === it);
+const eqKey = (it) => EQ_SLOTS.find((k) => save.equipped[k] === it);
 const isProtected = (it) => protectedItem(save, it);
 function tileHtml(it, o) {
   o = o || {}; const t = tierOfItem(it), col = itemColor(it);
@@ -3334,9 +3338,12 @@ function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return
 
 // ---------- 장비 창 ----------
 const IB = { mode: "inv", tab: "all", sel: null, rar: -1, sort: "rar", lockOnly: false };
-function equipItem(it) { const old = save.equipped[it.slot]; save.inv = save.inv.filter((x) => x !== it); if (old) save.inv.push(old); save.equipped[it.slot] = it; }
+function equipItem(it, key) {   // 반지는 비어 있는 칸에 먼저, 둘 다 차 있으면 지정한 칸(없으면 반지 1)과 교체
+  key = key || (it.slot === "ring" ? (!save.equipped.ring ? "ring" : !save.equipped.ring2 ? "ring2" : "ring") : it.slot);
+  const old = save.equipped[key]; save.inv = save.inv.filter((x) => x !== it); if (old) save.inv.push(old); save.equipped[key] = it;
+}
 function unequipSlot(slot) { const it = save.equipped[slot]; if (it) { save.inv.push(it); delete save.equipped[slot]; } }
-function openItems(mode) { IB.mode = mode; if (!IB.sel || (!save.inv.includes(IB.sel) && !SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
+function openItems(mode) { IB.mode = mode; if (!IB.sel || (!save.inv.includes(IB.sel) && !EQ_SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
 function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
@@ -3349,7 +3356,7 @@ function itemDetail(it) {
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = powerWith(save, it.slot, it), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
-  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
+  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
   if (IB.mode === "forge") {
     const c = enhCost(it), rate = ENH_RATE[it.enh || 0], y = dismantleYield(it);
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}</small></button>`;
@@ -3367,7 +3374,7 @@ function renderItems() {
   let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
   const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, powerWith(save, it.slot, it));
   list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => b.rarity - a.rarity || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
-  const eqCol = `<div class="doll">` + SLOTS.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(s, 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
+  const eqCol = `<div class="doll">` + EQ_SLOTS.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
@@ -3376,13 +3383,13 @@ function renderItems() {
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${itemDetail(IB.sel)}</div></div>`;
-  const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
+  const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
   Modal.open(html, { cls: "wide", on: Object.assign({
     pick: (el) => { IB.sel = find(el); renderItems(); }, tab: (el) => { IB.tab = el.dataset.t; renderItems(); },
     frar: (el) => { IB.rar = +el.value; renderItems(); }, fsort: (el) => { IB.sort = el.value; renderItems(); }, flock: () => { IB.lockOnly = !IB.lockOnly; renderItems(); },
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
-    equip: () => { equipItem(IB.sel); snd("equip"); done(); }, unequip: () => { unequipSlot(IB.sel.slot); done(); },
+    equip: (el) => { equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
     recommend: () => { const ch = recommendEquip(save); if (ch.length) { snd("equip"); toast(`추천 장비로 ${ch.length}칸을 교체했습니다`, "ok"); } done(); },
     openstat: () => { Modal.onClose = null; openStats(); },
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
@@ -3798,7 +3805,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-031647";
+const BUILD_ID = "20261028-032128";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;

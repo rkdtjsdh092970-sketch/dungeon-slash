@@ -105,7 +105,10 @@ const RULE_ORDER = ["front", "auto", "boss", "ranged", "elite", "normal"];
 
 // ---- 장비 ----
 const SLOTS = ["weapon", "helm", "armor", "gloves", "boots", "ring", "neck"];
-const SLOT_NAME = { weapon: "무기", helm: "투구", armor: "갑옷", gloves: "장갑", ring: "반지", neck: "목걸이", boots: "신발" };
+const SLOT_NAME = { weapon: "무기", helm: "투구", armor: "갑옷", gloves: "장갑", ring: "반지", ring2: "반지 2", neck: "목걸이", boots: "신발" };
+const EQ_SLOTS = [...SLOTS, "ring2"];   // 장비 칸: 반지는 2칸 (아이템 종류는 SLOTS, 착용 칸은 EQ_SLOTS)
+const slotType = (k) => (k === "ring2" ? "ring" : k);
+const slotKeys = (type) => (type === "ring" ? ["ring", "ring2"] : [type]);
 const SLOT_BASE = { weapon: { atk: 6 }, helm: { def: 3, hp: 20 }, armor: { hp: 55, def: 4 }, gloves: { atk: 2, def: 1.5 }, ring: { hp: 15 }, neck: { atk: 1.5 }, boots: { hp: 22, def: 2 } };
 const ITEM_RARITY = [
   { name: "일반", mult: 1.0,  affixes: 0, cls: "r0", drop: 55, bossDrop: 0 },
@@ -131,7 +134,7 @@ const AFFIXES = [
   { k: "lifesteal", name: "생명력 흡수",    pct: true,  range: [0.01, 0.02], w: 3, minRarity: 2 },
   { k: "goldFind", name: "골드 획득",       pct: true,  range: [0.08, 0.20], w: 4 },
   { k: "chainJumps", name: "번개 도약 +",   count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck", "weapon"], minIlvl: 3 },
-  { k: "density", name: "칸당 몹 수 +",    count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck"], minIlvl: 3 },
+  { k: "density", name: "칸당 몹 수",    count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck"], minIlvl: 3 },
   { k: "lanes",   name: "레인 확장 +",     count: true, range: [1, 1], w: 1.2, minRarity: 3, slots: ["neck"], minIlvl: 6 },
 ];
 // 세트: acts = 드랍 액트 범위, bonus = 착용 수별 효과

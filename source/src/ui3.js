@@ -5,7 +5,8 @@ const tierOfItem = (it) => (it.uniq ? it.utier || (UNIQUE_BY_ID[it.uniq] ? UNIQU
 const tcls = (it) => (it.uniq ? "ut" + tierOfItem(it) : RCLS(it));
 const presetUids = () => { const s = new Set(); for (const p of save.presets || []) if (p) for (const k in p.equip) s.add(p.equip[k]); return s; };
 const inPreset = (it) => presetUids().has(it.uid);
-const isEquipped = (it) => save.equipped[it.slot] === it;
+const isEquipped = (it) => EQ_SLOTS.some((k) => save.equipped[k] === it);
+const eqKey = (it) => EQ_SLOTS.find((k) => save.equipped[k] === it);
 const isProtected = (it) => protectedItem(save, it);
 function tileHtml(it, o) {
   o = o || {}; const t = tierOfItem(it), col = itemColor(it);
@@ -21,9 +22,12 @@ function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return
 
 // ---------- 장비 창 ----------
 const IB = { mode: "inv", tab: "all", sel: null, rar: -1, sort: "rar", lockOnly: false };
-function equipItem(it) { const old = save.equipped[it.slot]; save.inv = save.inv.filter((x) => x !== it); if (old) save.inv.push(old); save.equipped[it.slot] = it; }
+function equipItem(it, key) {   // 반지는 비어 있는 칸에 먼저, 둘 다 차 있으면 지정한 칸(없으면 반지 1)과 교체
+  key = key || (it.slot === "ring" ? (!save.equipped.ring ? "ring" : !save.equipped.ring2 ? "ring2" : "ring") : it.slot);
+  const old = save.equipped[key]; save.inv = save.inv.filter((x) => x !== it); if (old) save.inv.push(old); save.equipped[key] = it;
+}
 function unequipSlot(slot) { const it = save.equipped[slot]; if (it) { save.inv.push(it); delete save.equipped[slot]; } }
-function openItems(mode) { IB.mode = mode; if (!IB.sel || (!save.inv.includes(IB.sel) && !SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
+function openItems(mode) { IB.mode = mode; if (!IB.sel || (!save.inv.includes(IB.sel) && !EQ_SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
 function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
@@ -36,7 +40,7 @@ function itemDetail(it) {
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = powerWith(save, it.slot, it), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
-  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
+  if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
   if (IB.mode === "forge") {
     const c = enhCost(it), rate = ENH_RATE[it.enh || 0], y = dismantleYield(it);
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}</small></button>`;
@@ -54,7 +58,7 @@ function renderItems() {
   let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
   const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, powerWith(save, it.slot, it));
   list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => b.rarity - a.rarity || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
-  const eqCol = `<div class="doll">` + SLOTS.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(s, 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
+  const eqCol = `<div class="doll">` + EQ_SLOTS.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
@@ -63,13 +67,13 @@ function renderItems() {
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${itemDetail(IB.sel)}</div></div>`;
-  const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
+  const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
   Modal.open(html, { cls: "wide", on: Object.assign({
     pick: (el) => { IB.sel = find(el); renderItems(); }, tab: (el) => { IB.tab = el.dataset.t; renderItems(); },
     frar: (el) => { IB.rar = +el.value; renderItems(); }, fsort: (el) => { IB.sort = el.value; renderItems(); }, flock: () => { IB.lockOnly = !IB.lockOnly; renderItems(); },
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
-    equip: () => { equipItem(IB.sel); snd("equip"); done(); }, unequip: () => { unequipSlot(IB.sel.slot); done(); },
+    equip: (el) => { equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
     recommend: () => { const ch = recommendEquip(save); if (ch.length) { snd("equip"); toast(`추천 장비로 ${ch.length}칸을 교체했습니다`, "ok"); } done(); },
     openstat: () => { Modal.onClose = null; openStats(); },
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
