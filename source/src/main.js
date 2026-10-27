@@ -57,6 +57,24 @@ function bindInput() {
     if (G.screen === "battle" && !e.repeat) { if (e.key === " ") { e.preventDefault(); $("#b-pause").click(); } } });
 }
 
+// ---- 백그라운드 전투: 탭이 가려져도 (워커 타이머로) 실제 경과 시간만큼 전투를 진행한다 ----
+let bgW = null, bgLast = 0, bgTimer = 0;
+function bgTick() {
+  if (!document.hidden) return; const now = performance.now(); let dt = Math.min(60, (now - bgLast) / 1000); bgLast = now;
+  if (G.screen === "battle" && G.battle) {
+    const b = G.battle; b.noFx = true; b.sfxq.length = 0;
+    if (!G.paused && !G.tipOpen && $("#modal").classList.contains("hidden")) { let t = dt * G.speed; while (t > 0 && !b.over) { const h = Math.min(0.1, t); stepBattle(b, h); t -= h; } }
+    if (b.over && !b.fin) { b.fin = true; b.endT = 99; finishFlow(b); }
+    if (b.next) { const nx = b.next; b.next = null; nx(); }
+  }
+  if (save && G.screen !== "title") { accumSave += dt; if (accumSave > 30) { accumSave = 0; saveGame(); } }
+}
+function bgStart() {
+  if (bgW || bgTimer) return; bgLast = performance.now();
+  try { const blob = new Blob(["setInterval(()=>postMessage(0),500)"], { type: "text/javascript" }); bgW = new Worker(URL.createObjectURL(blob)); bgW.onmessage = bgTick; } catch (e) { bgW = null; bgTimer = setInterval(bgTick, 1000); }
+}
+function bgStop() { if (bgW) { bgW.terminate(); bgW = null; } if (bgTimer) { clearInterval(bgTimer); bgTimer = 0; } if (G.battle) G.battle.noFx = false; lastT = performance.now(); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) bgStart(); else bgStop(); });
 function frame(ms) {
   requestAnimationFrame(frame); const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX;
   if (G.screen === "title") drawTitle(g, gtime);

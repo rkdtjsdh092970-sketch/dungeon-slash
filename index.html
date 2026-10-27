@@ -221,6 +221,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .skc{min-height:108px!important;padding:6px!important}.skcards{margin:6px 0!important}.skbot .skgrid,.skdet{max-height:190px!important}
 .nb{display:flex;gap:12px;height:380px}.nb-list{width:230px;flex:none;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:6px}.nb-it{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}.nb-it:hover{background:#1c1636}.nb-it.on{background:#2a2050;border-color:#ffd24a}.nb-it b{font-size:15px;color:#ffe08a}.nb-it em{font-style:normal;font-size:10px;background:#e83a3a;border-radius:7px;padding:0 6px;margin-left:6px}.nb-it small{float:right;color:#a898d8}.nb-it div{font-size:12px;color:#cfc8ee;margin-top:3px}\n.nb-body{flex:1;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:12px 16px}.nb-h b{font-size:22px;color:#ffd24a}.nb-h span{color:#a898d8;margin-left:8px}.nb-t{font-size:16px;font-weight:bold;margin:6px 0 10px}.nb-body ul{padding-left:20px}.nb-body li{margin:7px 0;line-height:1.55;font-size:14px}
 .tile .mk.rq{left:1px;bottom:12px;top:auto;font-size:9px;font-style:normal;font-weight:bold;color:#fff;background:#b02a2a;border-radius:4px;padding:0 3px;line-height:11px;box-shadow:0 0 0 1px #000}
+#mbox.sm{max-height:508px;overflow:auto}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -1468,8 +1469,8 @@ function botEquip(sv) {
 // =========================================================
 // 추천 장비 / ▲ 표시 / 프리셋
 // =========================================================
-function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드 (장착 레벨이 모자라면 제외)
-  if (!canEquip(sv, it)) return false;
+function isUpgrade(sv, it, ignoreLv) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드 (장착 레벨이 모자라면 제외, ignoreLv면 레벨 무시)
+  if (!ignoreLv && !canEquip(sv, it)) return false;
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k]; if (cur === it) return false; }
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k], base = powerWith(sv, k, cur || null), p = powerWith(sv, k, it); if (p > base * 1.0005) return true; }
   return false;
@@ -1561,6 +1562,21 @@ function offlineReward(sv) {
   if (!sv.tut.done || !sv.lastSeen) return null; const away = (Date.now() - sv.lastSeen) / 60000; if (away < 10) return null;
   const mins = Math.min(away, 480), g = Math.round((sv.rate.gold || 0) * mins * 0.35), e = Math.round((sv.rate.exp || 0) * mins * 0.35), ore = Math.floor(mins / 20);
   if (g + e + ore <= 0) return null; return { away, mins, gold: g, exp: e, ore };
+}
+
+// ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
+function autoRules(sv) {
+  const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
+  if (A.keepUp == null) A.keepUp = true; return A;
+}
+function autoProcess(sv) {
+  const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
+  for (const it of sv.inv.slice()) {
+    const rule = A.rules[it.rarity]; if (!rule || rule === "keep" || it.uniq || protectedItem(sv, it)) continue;
+    if (A.keepUp && isUpgrade(sv, it, true)) continue;
+    if (rule === "sell") { const v = itemValue(it); sv.gold += v; res.gold += v; removeItem(sv, it); res.sold++; } else { const y = dismantleItem(sv, it); res.gold += y.gold; res.ore += y.ore; res.dis++; }
+  }
+  return res;
 }
 
 // =========================================================
@@ -3234,11 +3250,12 @@ function openSettings() {
   const inGame = G.screen !== "title"; const A = save ? save.auto : null;
   Modal.open(`<h2>설정</h2>${sl("master", "전체 볼륨")}${sl("bgm", "배경음악")}${sl("sfx", "효과음")}
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
-   ${A ? `<h3>자동 반복</h3><label class="setrow2">승리 후 장비 자동 판매 <select data-i="asell"><option value="-1" ${A.sell < 0 ? "selected" : ""}>하지 않음</option><option value="0" ${A.sell === 0 ? "selected" : ""}>일반 이하</option><option value="1" ${A.sell === 1 ? "selected" : ""}>마법 이하</option><option value="2" ${A.sell === 2 ? "selected" : ""}>희귀 이하</option></select></label>
-   <label class="setrow2">추천 장비 자동 착용 <input type="checkbox" data-i="aequip" ${A.equip ? "checked" : ""}></label>` : ""}
+   ${A ? (() => { autoRules(save); const opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`; return `<h3>자동 반복 · 전투 후 장비 처리</h3><div class="dim">자동 반복이 끝난 전투마다 아래 규칙으로 가방을 정리합니다 (장비는 자동으로 착용하지 않습니다)</div>
+   ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2">${x.name} 장비 <select data-i="arule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
+   <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="akeepup" ${A.keepUp ? "checked" : ""}></label><div class="dim">고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다</div>`; })() : ""}
    <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
     vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked),
-    asell: (el) => { save.auto.sell = +el.value; saveGame(); }, aequip: (el) => { save.auto.equip = el.checked; saveGame(); },
+    arule: (el) => { autoRules(save).rules[+el.dataset.r] = el.value; saveGame(); }, akeepup: (el) => { save.auto.keepUp = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
     wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),
   } });
@@ -3279,19 +3296,19 @@ function finishFlow(b) {
   const uniq = res.items.filter((i) => i.uniq);
   const next = () => afterBattle(res, b);
   b.resultAt = (save.auto.on && res.win ? 0.9 : endWin(b) && (node.kind === "boss" || node.kind === "void") ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
-  b.next = () => { if (uniq.length) showUniqueFx(uniq, next); else next(); };
+  b.next = () => { if (uniq.length && !document.hidden) showUniqueFx(uniq, next); else next(); };
 }
 function afterBattle(res, b) {
   const node = G.node, A = save.auto;
   if (A.on && res.win && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial"].includes(node.kind)) {   // 자동 반복
-    let note = "";
-    if (A.equip) { const ch = recommendEquip(save); if (ch.length) note += ` · 장비 ${ch.length}칸 교체`; }
-    if (A.sell >= 0) { let g = 0, n = 0; for (const it of save.inv.slice()) if (it.rarity <= A.sell && !it.uniq && !it.setId && !isProtected(it)) { g += itemValue(it); removeItem(save, it); n++; } if (n) { save.gold += g; note += ` · ${n}개 판매`; } }
+    let note = ""; const pr = autoProcess(save);
+    if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`;
     saveGame(); refreshTop();
     toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
     if (save.inv.length >= CFG.INV_MAX - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
-    setTimeout(() => { if (G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden")) startBattle(node, G.retry); }, 1400);
+    const go = () => { if (G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden")) startBattle(node, G.retry); };
+    if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
     return;
   }
   if (A.on && !res.win) { A.on = false; saveGame(); }
@@ -3910,7 +3927,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-034611";
+const BUILD_ID = "20261028-035125";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4002,6 +4019,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "2.1", date: "10/28", title: "백그라운드 전투 · 자동 반복 장비 처리 설정", items: [
+    "탭이나 창이 가려져도 전투가 계속 진행됩니다 (가려진 동안 흐른 실제 시간만큼 진행). 자동 반복을 켜 두면 백그라운드에서도 다음 전투로 이어집니다.",
+    "자동 반복 후 '추천 장비 자동 착용'을 없앴습니다. 장비는 직접 착용합니다.",
+    "설정에서 자동 반복 후 장비 처리를 등급별로 정합니다 (일반·마법·희귀·전설·세트 각각 유지/판매/분해). '전투력이 오르는 장비(▲)는 처리하지 않음' 옵션도 있습니다. 고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.",
+  ] },
   { ver: "2.0", date: "10/28", title: "방어 전투력 · 장착 레벨", items: [
     "방어구의 방어력·체력이 전투력에 제대로 반영됩니다. 방어력이 높을수록 받는 피해가 줄어드는 만큼 유효 체력이 커지고, 체력·회복·받는 피해 감소도 함께 계산합니다.",
     "아이템 레벨에 따른 '장착 레벨'이 생겼습니다. (아이템 Lv.2: Lv.3, Lv.3: Lv.8, Lv.4: Lv.16 … Lv.10: Lv.76 · 균열 상위 드랍은 그 이상)",
@@ -4118,6 +4140,24 @@ function bindInput() {
     if (G.screen === "battle" && !e.repeat) { if (e.key === " ") { e.preventDefault(); $("#b-pause").click(); } } });
 }
 
+// ---- 백그라운드 전투: 탭이 가려져도 (워커 타이머로) 실제 경과 시간만큼 전투를 진행한다 ----
+let bgW = null, bgLast = 0, bgTimer = 0;
+function bgTick() {
+  if (!document.hidden) return; const now = performance.now(); let dt = Math.min(60, (now - bgLast) / 1000); bgLast = now;
+  if (G.screen === "battle" && G.battle) {
+    const b = G.battle; b.noFx = true; b.sfxq.length = 0;
+    if (!G.paused && !G.tipOpen && $("#modal").classList.contains("hidden")) { let t = dt * G.speed; while (t > 0 && !b.over) { const h = Math.min(0.1, t); stepBattle(b, h); t -= h; } }
+    if (b.over && !b.fin) { b.fin = true; b.endT = 99; finishFlow(b); }
+    if (b.next) { const nx = b.next; b.next = null; nx(); }
+  }
+  if (save && G.screen !== "title") { accumSave += dt; if (accumSave > 30) { accumSave = 0; saveGame(); } }
+}
+function bgStart() {
+  if (bgW || bgTimer) return; bgLast = performance.now();
+  try { const blob = new Blob(["setInterval(()=>postMessage(0),500)"], { type: "text/javascript" }); bgW = new Worker(URL.createObjectURL(blob)); bgW.onmessage = bgTick; } catch (e) { bgW = null; bgTimer = setInterval(bgTick, 1000); }
+}
+function bgStop() { if (bgW) { bgW.terminate(); bgW = null; } if (bgTimer) { clearInterval(bgTimer); bgTimer = 0; } if (G.battle) G.battle.noFx = false; lastT = performance.now(); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) bgStart(); else bgStop(); });
 function frame(ms) {
   requestAnimationFrame(frame); const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX;
   if (G.screen === "title") drawTitle(g, gtime);

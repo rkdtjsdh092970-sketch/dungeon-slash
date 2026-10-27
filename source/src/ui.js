@@ -218,11 +218,12 @@ function openSettings() {
   const inGame = G.screen !== "title"; const A = save ? save.auto : null;
   Modal.open(`<h2>설정</h2>${sl("master", "전체 볼륨")}${sl("bgm", "배경음악")}${sl("sfx", "효과음")}
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
-   ${A ? `<h3>자동 반복</h3><label class="setrow2">승리 후 장비 자동 판매 <select data-i="asell"><option value="-1" ${A.sell < 0 ? "selected" : ""}>하지 않음</option><option value="0" ${A.sell === 0 ? "selected" : ""}>일반 이하</option><option value="1" ${A.sell === 1 ? "selected" : ""}>마법 이하</option><option value="2" ${A.sell === 2 ? "selected" : ""}>희귀 이하</option></select></label>
-   <label class="setrow2">추천 장비 자동 착용 <input type="checkbox" data-i="aequip" ${A.equip ? "checked" : ""}></label>` : ""}
+   ${A ? (() => { autoRules(save); const opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`; return `<h3>자동 반복 · 전투 후 장비 처리</h3><div class="dim">자동 반복이 끝난 전투마다 아래 규칙으로 가방을 정리합니다 (장비는 자동으로 착용하지 않습니다)</div>
+   ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2">${x.name} 장비 <select data-i="arule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
+   <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="akeepup" ${A.keepUp ? "checked" : ""}></label><div class="dim">고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다</div>`; })() : ""}
    <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
     vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked),
-    asell: (el) => { save.auto.sell = +el.value; saveGame(); }, aequip: (el) => { save.auto.equip = el.checked; saveGame(); },
+    arule: (el) => { autoRules(save).rules[+el.dataset.r] = el.value; saveGame(); }, akeepup: (el) => { save.auto.keepUp = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
     wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),
   } });
@@ -263,19 +264,19 @@ function finishFlow(b) {
   const uniq = res.items.filter((i) => i.uniq);
   const next = () => afterBattle(res, b);
   b.resultAt = (save.auto.on && res.win ? 0.9 : endWin(b) && (node.kind === "boss" || node.kind === "void") ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
-  b.next = () => { if (uniq.length) showUniqueFx(uniq, next); else next(); };
+  b.next = () => { if (uniq.length && !document.hidden) showUniqueFx(uniq, next); else next(); };
 }
 function afterBattle(res, b) {
   const node = G.node, A = save.auto;
   if (A.on && res.win && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial"].includes(node.kind)) {   // 자동 반복
-    let note = "";
-    if (A.equip) { const ch = recommendEquip(save); if (ch.length) note += ` · 장비 ${ch.length}칸 교체`; }
-    if (A.sell >= 0) { let g = 0, n = 0; for (const it of save.inv.slice()) if (it.rarity <= A.sell && !it.uniq && !it.setId && !isProtected(it)) { g += itemValue(it); removeItem(save, it); n++; } if (n) { save.gold += g; note += ` · ${n}개 판매`; } }
+    let note = ""; const pr = autoProcess(save);
+    if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`;
     saveGame(); refreshTop();
     toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
     if (save.inv.length >= CFG.INV_MAX - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
-    setTimeout(() => { if (G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden")) startBattle(node, G.retry); }, 1400);
+    const go = () => { if (G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden")) startBattle(node, G.retry); };
+    if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
     return;
   }
   if (A.on && !res.win) { A.on = false; saveGame(); }

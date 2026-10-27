@@ -383,8 +383,8 @@ function botEquip(sv) {
 // =========================================================
 // 추천 장비 / ▲ 표시 / 프리셋
 // =========================================================
-function isUpgrade(sv, it) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드 (장착 레벨이 모자라면 제외)
-  if (!canEquip(sv, it)) return false;
+function isUpgrade(sv, it, ignoreLv) {   // 반지는 두 칸 중 하나라도 더 좋아지면 업그레이드 (장착 레벨이 모자라면 제외, ignoreLv면 레벨 무시)
+  if (!ignoreLv && !canEquip(sv, it)) return false;
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k]; if (cur === it) return false; }
   for (const k of slotKeys(it.slot)) { const cur = sv.equipped[k], base = powerWith(sv, k, cur || null), p = powerWith(sv, k, it); if (p > base * 1.0005) return true; }
   return false;
@@ -476,4 +476,19 @@ function offlineReward(sv) {
   if (!sv.tut.done || !sv.lastSeen) return null; const away = (Date.now() - sv.lastSeen) / 60000; if (away < 10) return null;
   const mins = Math.min(away, 480), g = Math.round((sv.rate.gold || 0) * mins * 0.35), e = Math.round((sv.rate.exp || 0) * mins * 0.35), ore = Math.floor(mins / 20);
   if (g + e + ore <= 0) return null; return { away, mins, gold: g, exp: e, ore };
+}
+
+// ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
+function autoRules(sv) {
+  const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
+  if (A.keepUp == null) A.keepUp = true; return A;
+}
+function autoProcess(sv) {
+  const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
+  for (const it of sv.inv.slice()) {
+    const rule = A.rules[it.rarity]; if (!rule || rule === "keep" || it.uniq || protectedItem(sv, it)) continue;
+    if (A.keepUp && isUpgrade(sv, it, true)) continue;
+    if (rule === "sell") { const v = itemValue(it); sv.gold += v; res.gold += v; removeItem(sv, it); res.sold++; } else { const y = dismantleItem(sv, it); res.gold += y.gold; res.ore += y.ore; res.dis++; }
+  }
+  return res;
 }
