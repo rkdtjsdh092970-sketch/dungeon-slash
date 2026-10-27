@@ -10,13 +10,14 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 3, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
 }
 function saveGame() { if (save) save.lastSeen = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
+    if (s.rangeRev !== 1) { clampAll(s); s.rangeRev = 1; }   // v2.9: 범위 밖 수치 보정
     if (s.passRev !== 3) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 3; }   // 패시브 트리 개편(v2.4): 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
 
@@ -53,6 +54,18 @@ function rollAffix(a, g, R, rarity, crafted) {
 }
 function affixRange(a, ilvl, rarity) { const g = gScale(ilvl), sc = a.count ? 1 : affixScale(a, g, rarity); return [a.range[0] * sc, a.range[1] * sc]; }
 // 공허의 주사위: 옵션/고유 능력의 수치를 범위 안에서 균등하게 다시 굴린다 (고유 장비도 가능)
+// 범위 밖으로 튄 옵션을 현재 범위 안으로 맞춘다 (이전 버전의 보정 배율로 만들어진 장비, 경매에서 사 온 장비 등)
+function clampItem(it) {
+  if (!it) return 0; let n = 0;
+  if (it.uniq) {
+    const D = UNIQUE_BY_ID[it.uniq]; if (!D || !it.umods) return 0;
+    for (const m of it.umods) { const def = D.mods.find((x) => x[0] === m.k); if (!def || !Array.isArray(def[1])) continue; const a = umodScale(D, m.k, def[1][0]), b = umodScale(D, m.k, def[1][1]), lo = Math.min(a, b), hi = Math.max(a, b); const v = Math.min(hi, Math.max(lo, m.v)); if (v !== m.v) { m.v = v; n++; } }
+  } else if (it.affixes) {
+    for (const a of it.affixes) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4)); const v = Math.min(hi, Math.max(lo, a.v)); if (v !== a.v) { a.v = v; n++; } }
+  }
+  return n;
+}
+function clampAll(sv) { let n = 0; for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k]); return n; }
 function diceItem(sv, it) {
   if ((sv.dice || 0) < 1) return false;
   if (it.uniq) {
@@ -235,7 +248,7 @@ function dropBonus(sv, now) {
   return B;
 }
 const trialSkillChance = (T) => Math.min(0.95, 0.06 + 0.009 * T);   // 시련 단계가 오를수록 스킬 확률 증가 (100단계 95%)
-const UNIQUE_SRC = { hive: 5, boss: 4, elite: 2, treasure: 1.5, rift: 3, hell: 3.5, endless: 5, stage: 1, trial: 1.5 };
+const UNIQUE_SRC = { vault: 0.3, hive: 5, boss: 4, elite: 2, treasure: 1.5, rift: 3, hell: 3.5, endless: 5, stage: 1, trial: 1.5 };
 function genUnique(sv, def, ilvl) {
   const R = ITEM_RARITY[5], g = gScale(ilvl), it = { uid: sv.nextUid++, slot: def.slot, ilvl, rarity: 5, uniq: def.id, utier: def.tier, base: {}, affixes: [], umods: [], enh: 0 };
   for (const k in SLOT_BASE[def.slot]) it.base[k] = SLOT_BASE[def.slot][k] * g * R.mult * rnd(0.95, 1.05);
@@ -252,7 +265,7 @@ const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["comm
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const act = Math.min(10, node.act), kind = node.kind, endlessWaves = node.waves || 0;
-  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || kind === "trial" || kind === "hive";
+  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || kind === "trial" || kind === "hive" || kind === "vault";
   const ilvl = late ? 10 + Math.floor((node.tier || 1) / CFG.ILVL_RIFT_STEP) : node.act;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [] };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 6 ? 1 : 0);
@@ -261,6 +274,7 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = Math.max(1, node.vsel || 1);
   if (kind === "hive") n = 3 + 2 * (node.vsel || 1);
+  if (kind === "vault") n = 2;   // 골드 전용: 장비는 적게
   if (kind === "trial") n = 2 + Math.floor((node.tier || 1) / 8);
   n = Math.max(1, Math.round(n * B.qty * (kind === "hell" ? B.hell : 1)));
   const rare = kind === "elite" || late || boss;
@@ -303,7 +317,7 @@ function rollDrops(sv, node, boss, B) {
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 2) + endlessWaves * 2) * B.ore);
   if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
-  const oc = { hive: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
+  const oc = { vault: 0.15, hive: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   out.dice = Math.random() < diceChance(kind, node) * Math.min(2, B.orb) ? 1 : 0;   // 공허의 주사위: 아주 낮은 확률
@@ -382,6 +396,7 @@ function rerollAffix(sv, it, idx) {
   const c = rerollCost(it); if (sv.gold < c.gold || sv.ore < c.ore) return false;
   const old = it.affixes[idx]; if (!old) return false;
   const pool = AFFIXES.filter((a) => !it.affixes.some((x, i) => i !== idx && x.k === a.k) && (!a.minRarity || it.rarity >= a.minRarity || (a.minRarity === 2 && it.rarity === 4)) && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl) && a.k !== "lanes");
+  if (!pool.length) return false;
   const a = wpick(pool, (x) => x.w); it.affixes[idx] = { k: a.k, v: rollAffix(a, gScale(it.ilvl), ITEM_RARITY[it.rarity], it.rarity, true) };
   sv.gold -= c.gold; sv.ore -= c.ore; return true;
 }
@@ -391,7 +406,7 @@ function townUnlocked(sv, act) { return sv.tut.done && (act === 1 || sv.cleared[
 function nodeUnlocked(sv, n) {
   if (!sv.tut.done) return false;
   if (n.kind === "town") return townUnlocked(sv, n.act);
-  if (n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || n.kind === "hive") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
+  if (n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || n.kind === "hive" || n.kind === "vault") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (!townUnlocked(sv, n.act)) return false;
   if (n.kind === "elite" || n.kind === "treasure") return sv.cleared[n.act - 1] >= n.need;
   return n.stage <= sv.cleared[n.act - 1] + 1;
@@ -453,6 +468,7 @@ function addAffix(sv, it) {   // 혼돈 구슬: 옵션 1개 추가 (최대 6)
   if (it.uniq || it.affixes.length >= 6 || sv.orbC < 1) return false;
   const used = new Set(it.affixes.map((a) => a.k)), g = gScale(it.ilvl);
   const pool = AFFIXES.filter((a) => !used.has(a.k) && a.k !== "lanes" && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl));
+  if (!pool.length) return false;   // 붙일 수 있는 옵션이 더 없다
   const a = wpick(pool, (x) => x.w); const R = ITEM_RARITY[Math.min(it.rarity, 4)];
   it.affixes.push({ k: a.k, v: rollAffix(a, g, R, it.rarity, true) }); sv.orbC--; return a;
 }

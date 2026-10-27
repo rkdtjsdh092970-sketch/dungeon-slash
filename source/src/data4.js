@@ -119,6 +119,24 @@ function canRemovePassive(sv, id) {   // 제거 후에도 남은 노드가 모�
   while (st.length) { const c = st.pop(); for (const q of PASSIVE_BY_ID[c].links) if (q !== "C" && !seen.has(q) && keep.includes(q)) { seen.add(q); st.push(q); } }
   return keep.every((k) => seen.has(k));
 }
+// 먼 노드를 눌렀을 때: 이미 찍은 노드(또는 시작점)에서 그 노드까지 가장 포인트가 적게 드는 경로 (찍지 않은 노드들, 순서대로)
+function passivePath(sv, id) {
+  const T = PASSIVE_BY_ID[id]; if (!T || passiveHas(sv, id)) return null;
+  const dist = {}, prev = {}, todo = new Set();
+  for (const p of PASSIVES) if (!passiveHas(sv, p.id) && p.links.some((q) => q === "C" || passiveHas(sv, q))) { dist[p.id] = p.cost; prev[p.id] = null; todo.add(p.id); }
+  while (todo.size) {
+    let cur = null; for (const k of todo) if (cur === null || dist[k] < dist[cur]) cur = k; todo.delete(cur);
+    if (cur === id) break;
+    for (const q of PASSIVE_BY_ID[cur].links) { if (q === "C" || passiveHas(sv, q)) continue; const nd = dist[cur] + PASSIVE_BY_ID[q].cost; if (dist[q] === undefined || nd < dist[q]) { dist[q] = nd; prev[q] = cur; todo.add(q); } }
+  }
+  if (dist[id] === undefined) return null;
+  const path = []; for (let c = id; c; c = prev[c]) path.unshift(c);
+  return { ids: path, cost: dist[id] };
+}
+function addPassivePath(sv, id) {
+  const P = passivePath(sv, id); if (!P || P.cost > passivePoints(sv) - passiveSpent(sv)) return 0;
+  for (const k of P.ids) sv.pass[k] = 1; return P.ids.length;
+}
 function addPassive(sv, id) { if (!canAddPassive(sv, id)) return false; sv.pass[id] = 1; return true; }
 function removePassive(sv, id) { if (!canRemovePassive(sv, id)) return false; delete sv.pass[id]; return true; }
 function resetPassives(sv) { sv.pass = {}; }

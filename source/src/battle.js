@@ -52,7 +52,7 @@ const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
 
 // ---------------- 생성 ----------------
-const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1 };
+const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, vault: 1 };
 const specDef = (va) => Object.assign({ tier: "normal", ranged: ACT_SPECIAL[va].range >= 3, proj: va === 7 ? "orb" : null }, ACT_SPECIAL[va]);
 function wavePool(act, stage, mods) {
   const w = actWeights(act); w.spec = SPEC_W(act, stage);
@@ -80,12 +80,13 @@ function planFor(node) {
   if (node.kind === "boss") { nNormal = Math.round(nNormal * 0.55); boss = true; }
   else if (node.kind === "elite") { nNormal = 45; elites = 10 + act; }
   else if (node.kind === "treasure") { nNormal = 95; elites = 0; }
+  else if (node.kind === "vault") { nNormal = 110; elites = 0; }
   else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = 70 + 4 * t; elites = 3 + Math.floor(t / 2); boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
   else if (node.kind === "endless") { nNormal = 40; elites = 3; }
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
-  if (RIFTLIKE[node.kind] && node.kind !== "void" && node.kind !== "hive" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
+  if (RIFTLIKE[node.kind] && node.kind !== "void" && node.kind !== "hive" && node.kind !== "vault" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
   if ((node.kind === "rift" || node.kind === "hell") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
@@ -264,7 +265,7 @@ function killEnemy(b, e) {
   if (e.vstage) b.voidCleared = e.vstage;
   b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { b.bossKills++; b.shake = 0.8; say(b, `${e.def.name} 처치!`, "boss"); }
   const ex = e.def.exp * Math.pow(1.5, b.act - 1) * (1 + 0.05 * (b.stage - 1)) * (b.kind === "rift" ? 1 + b.tier * 0.08 : 1);
-  b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" ? 3 : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
+  b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" || b.kind === "vault" ? 3 : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
   if (b.designated === e) b.designated = null;
   sfx(b, e.tier === "boss" ? "bossdie" : e.tier === "elite" ? "kill2" : "kill");
   if (e.summoned && e.owner) { const o = b.enemies.find((x) => x.id === e.owner); if (o && o.shield) { o.shield.need--; if (o.shield.need <= 0) { o.shield = null; say(b, "방어막이 깨졌다!"); sfx(b, "shatter"); } } }

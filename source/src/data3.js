@@ -113,7 +113,14 @@ const U_TIERS = [
 // 출처 풀: common(공용: 어디서나) / hell(지옥 스테이지) / tower(균열 탑) / endless(무한 균열) / void(공허의 군주)
 const U_POOLS = { common: "공용", hell: "지옥", tower: "균열 탑", endless: "무한 균열", void: "공허의 군주", fire: "화염 정령왕" };
 // mods: [키, 값 또는 [최소,최대]]   act: 이 액트 이상에서 드랍(공용)
-const U = (id, name, slot, tier, pool, act, mods, flavor, text) => ({ id, name, slot, tier, pool, act, mods, flavor, text: text || null, w: 1 });
+// 고유 능력: 부활·레인·회피 불가·쿨감/회피 상한 같은 핵심 효과만 고정이고, 나머지 수치는 모두 ±12% 범위 안에서 롤된다
+const U_FIXED = new Set(["revive", "lanes", "noDodge", "magCrit", "cdrCap", "dodgeCap", "defMore", "density", "chainJumps"]);
+const uRoll = (k, v) => {
+  if (Array.isArray(v) || U_FIXED.has(k) || typeof v !== "number" || v === 0) return v;
+  if (k.endsWith("More")) return v > 1 ? [1 + (v - 1) * 0.88, 1 + (v - 1) * 1.12] : v;   // "~%가 된다" 같은 패널티성(1 미만)은 고정
+  return v > 0 ? [v * 0.88, v * 1.12] : [v * 1.12, v * 0.88];
+};
+const U = (id, name, slot, tier, pool, act, mods, flavor, text) => ({ id, name, slot, tier, pool, act, mods: mods.map(([k, v]) => [k, uRoll(k, v)]), flavor, text: text || null, w: 1 });
 const UNIQUES = [
   // ===== 공용 · 미스틱 =====
   U("ironwall", "철벽의 갑주", "armor", 1, "common", 3, [["defPct", [1.4, 1.8]], ["hpPct", [0.15, 0.2]], ["noDodge", 1]], "맞아도 아프지 않다면 피할 필요가 없다."),

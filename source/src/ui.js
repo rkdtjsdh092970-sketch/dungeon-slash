@@ -96,6 +96,7 @@ function nodeToBattle(n) {
   if (n.kind === "rift") return { kind: "rift", act: 11, tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void") return { kind: "void", act: 10, tier: 30, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
+  if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, save.rift.best - 3), name: "황금 보물고", level: 100 };
   if (n.kind === "hive") return { kind: "hive", act: 10, tier: HIVE_TIERS[(G.hiveStage || 1) - 1], vsel: G.hiveStage || 1, name: `화염 정령왕 ${G.hiveStage || 1}단계`, level: 100 };
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
   if (n.kind === "elite" || n.kind === "treasure") return Object.assign({}, n, { stage: n.need + (n.kind === "elite" ? 1 : 3) });
@@ -119,6 +120,8 @@ function mapPanel() {
     h += `<div class="pline">엔드게임 · 최고 <b>${save.trialBest || 0}</b> / ${MAX_TRIAL}단계</div><div class="pline tier"><button class="btn xs" data-p="ttm">−</button> <b style="font-size:18px">${T}단계</b> <button class="btn xs" data-p="ttp">+</button></div>
     <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
     btnOk = un; btn = "도전";
+  } else if (n.kind === "vault") {
+    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×3 (내 최고 균열 단계 −3 난이도)</div><div class="pline dim">장비·재료 드랍은 적고 골드가 중심입니다. 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
   } else if (n.kind === "hive") {
     const S = G.hiveStage = Math.max(1, Math.min(4, G.hiveStage || 1)), need = HIVE_NEED[S - 1], ok = save.rift.best >= need;
     h += `<div class="pline">정령의 불씨 <b>${save.keys2 || 0}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="hsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="hsp">+</button> <span class="dim">난이도 균열 ${HIVE_TIERS[S - 1]}단계 수준</span></div>
@@ -139,7 +142,7 @@ function mapPanel() {
     if (n.kind === "treasure") h += `<div class="pline dim">보물 지하실 · 아이템·강화석 풍부</div>`;
     if (n.kind === "stage" || n.kind === "boss") h += `<div class="pline dim">${ACT_SPECIAL[n.act - 1].name}: ${ACT_SPECIAL[n.act - 1].desc}</div>`;
   }
-  if (!un) h += `<div class="pline warn">${!save.tut.done ? "튜토리얼을 먼저 완료하세요" : n.kind === "elite" || n.kind === "treasure" ? `스테이지 ${n.need} 클리어 후 개방` : n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || n.kind === "hive" ? "액트 10 보스를 처치하면 개방" : "이전 노드를 클리어하세요"}</div>`;
+  if (!un) h += `<div class="pline warn">${!save.tut.done ? "튜토리얼을 먼저 완료하세요" : n.kind === "elite" || n.kind === "treasure" ? `스테이지 ${n.need} 클리어 후 개방` : n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || n.kind === "hive" || n.kind === "vault" ? "액트 10 보스를 처치하면 개방" : "이전 노드를 클리어하세요"}</div>`;
   h += `<div class="pbtns"><button class="btn pri" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button><button class="btn" data-p="back">뒤로</button>${extra}</div>`;
   p.innerHTML = h;
 }
@@ -258,7 +261,7 @@ function battleHudBuild(b) {
   $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot" data-i="${i}" title="클릭: 타겟 규칙 변경">${skIcon(sk.id, 3)}<div class="cdm"></div><span class="rl"></span><span class="kn">${i + 1}</span><span class="mc"></span><span class="cds"></span></div>` : `<div class="bslot off"><span class="kn">${i + 1}</span>${i >= save.slots ? "🔒" : ""}</div>`).join("");
   $$("#skillbar .bslot[data-i]").forEach((el) => el.addEventListener("click", () => { const i = +el.dataset.i, sk = G.battle.skills[i]; if (!sk) return; const n = RULE_ORDER[(RULE_ORDER.indexOf(sk.rule) + 1) % RULE_ORDER.length]; sk.rule = n; if (save.loadout[i]) save.loadout[i].rule = n; snd("click"); toast(`${SKILLS.find((d) => d.id === sk.id).name}: ${RULES[n]}`); }));
   $("#b-speed").textContent = "×" + G.speed; updateAutoBtn();
-  const canAuto = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial"].includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
+  const canAuto = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault"].includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
 }
 function updateAutoBtn() { const on = save && save.auto.on; $("#b-auto").textContent = on ? "자동 ON" : "자동 OFF"; $("#b-auto").classList.toggle("pri", !!on); }
 function battleHud(b) {
@@ -284,7 +287,7 @@ function finishFlow(b) {
 }
 function afterBattle(res, b) {
   const node = G.node, A = save.auto;
-  if (A.on && res.win && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial"].includes(node.kind)) {   // 자동 반복
+  if (A.on && res.win && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault"].includes(node.kind)) {   // 자동 반복
     let note = ""; const pr = autoProcess(save);
     if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`;
     saveGame(); refreshTop();
