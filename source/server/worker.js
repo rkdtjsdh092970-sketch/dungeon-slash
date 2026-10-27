@@ -8,6 +8,11 @@ const FEE = 0.05, MAX_LISTINGS = 5, EXPIRE_MS = 3 * 86400000, GUILD_COST = 20000
 async function hash(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("ds1|" + s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
 const guildLevel = (exp) => Math.min(10, 1 + Math.floor(Math.sqrt(exp / 50000)));
 
+// 운영자 회수: revoked 표에 이름이 있으면 엔젤릭(고유 4등급) 장비를 저장·로그인 때마다 걸러 낸다
+const ANGELIC_IDS = new Set("halo judgment hellcrown apex eternity abyssalcrown voidheart pyrelordcrown plaguebearer angelstep dimshoes godhand hellverdict everarmor startear soulpact".split(" "));
+const isAngelic = (it) => !!it && (it.utier === 4 || ANGELIC_IDS.has(it.uniq));
+function stripAngelic(s) { let n = 0; if (Array.isArray(s.inv)) { const k = s.inv.length; s.inv = s.inv.filter((it) => !isAngelic(it)); n += k - s.inv.length; } if (s.equipped) for (const k of Object.keys(s.equipped)) if (isAngelic(s.equipped[k])) { delete s.equipped[k]; n++; } return n; }
+async function isRevoked(DB, name) { try { return !!(await DB.prepare("SELECT 1 FROM revoked WHERE name=?").bind(name).first()); } catch (e) { return false; } }
 async function auth(req, env) {
   let name = ""; try { name = decodeURIComponent(req.headers.get("x-name") || "").trim(); } catch (e) {} let pass = ""; try { pass = decodeURIComponent(req.headers.get("x-pass") || ""); } catch (e) {}
   if (!NAME_RE.test(name) || pass.length < 2) return null;
@@ -40,15 +45,18 @@ export default {
         const h = await hash(name + pass), row = await DB.prepare("SELECT * FROM players WHERE name=?").bind(name).first();
         if (!row) { await DB.prepare("INSERT INTO players(name,pass,created,updated) VALUES(?,?,?,?)").bind(name, h, now(), now()).run(); return J({ ok: true, created: true, save: null, pending: 0, guild: 0 }); }
         if (row.pass !== h) return J({ err: "비밀번호가 다릅니다" }, 403);
-        return J({ ok: true, created: false, save: row.save ? JSON.parse(row.save) : null, pending: row.gold_pending, guild: row.guild });
+        let sv = row.save ? JSON.parse(row.save) : null, revoked = 0;
+        if (sv && await isRevoked(DB, name)) { revoked = stripAngelic(sv); if (revoked) await DB.prepare("UPDATE players SET save=? WHERE name=?").bind(JSON.stringify(sv), name).run(); }
+        return J({ ok: true, created: false, save: sv, pending: row.gold_pending, guild: row.guild, revoked, revokeOn: await isRevoked(DB, name) });
       }
       const me = await auth(req, env); if (!me) return J({ err: "로그인이 필요합니다" }, 401);
 
       if (path === "/api/save") {
         const s = body.save; if (!s || typeof s !== "object") return J({ err: "bad save" }, 400);
+        let stripped = 0; if (await isRevoked(DB, me.name)) stripped = stripAngelic(s);
         const txt = JSON.stringify(s); if (txt.length > 900000) return J({ err: "세이브가 너무 큽니다" }, 400);
         await DB.prepare("UPDATE players SET save=?, level=?, rift=?, endless=?, updated=? WHERE name=?").bind(txt, s.level | 0, ((s.rift && s.rift.best) | 0), ((s.endless && s.endless.best) | 0), now(), me.name).run();
-        return J({ ok: true });
+        return J({ ok: true, stripped });
       }
       if (path === "/api/claim") {   // 판매 완료 확인 + 대금 수령
         const sold = await DB.prepare("SELECT id,item,price FROM auctions WHERE seller=? AND status='sold' AND claimed=0").bind(me.name).all();

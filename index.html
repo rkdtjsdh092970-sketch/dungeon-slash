@@ -673,7 +673,7 @@ BOSSES.push({ id: "flame", name: "화염 정령왕 아스카", w: 3, h: 2, hp: 2
     { id: "charge", every: 17, windup: 2.4, mult: 3.4, interrupt: 0.05, text: "아스카가 불길을 모은다!" }, { id: "enrage", at: 0.3, text: "아스카가 타오른다!" }], desc: "불꽃 정령 대군 · 정령을 모두 처치해야 피해를 줄 수 있음 · 치유 감소 · 불비" });
 const HIVE_BOSS = BOSSES[BOSSES.length - 1];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIER = 22, HIVE_MIN_RIFT = 15;   // 난이도 = 균열 22단계 수준, 입장은 균열 15단계 이상
+const HIVE_TIERS = [22, 32, 45, 60], HIVE_NEED = [15, 22, 32, 45], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 
 const VOID_MIN_RIFT = 25;   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
@@ -1222,7 +1222,7 @@ function diceItem(sv, it) {
   }
   sv.dice--; return true;
 }
-const diceChance = (kind, node) => ({ rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: 0.05, void: 0.06 * (node.voidCleared || 0) }[kind] || 0);
+const diceChance = (kind, node) => ({ rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], void: [0.02, 0.04, 0.07, 0.15][(node.vsel || 1) - 1] }[kind] || 0);
 function genSkill(sv, id, rarity) { return { uid: sv.nextUid++, id, rarity }; }
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
@@ -1415,8 +1415,8 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = 3 + Math.floor(node.tier / 5) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
-  if (kind === "void") n = Math.max(1, node.voidCleared || 0);
-  if (kind === "hive") n = 6;
+  if (kind === "void") n = Math.max(1, node.vsel || 1);
+  if (kind === "hive") n = 3 + 2 * (node.vsel || 1);
   if (kind === "trial") n = 2 + Math.floor((node.tier || 1) / 8);
   n = Math.max(1, Math.round(n * B.qty * (kind === "hell" ? B.hell : 1)));
   const rare = kind === "elite" || late || boss;
@@ -1430,20 +1430,19 @@ function rollDrops(sv, node, boss, B) {
   for (let i = 0; i < (boss ? 2 : 1); i++) if (sets.length && Math.random() < sc) { const set = pick(sets); out.items.push(genItem(sv, ilvl, 4, pick(set.pieces), set.id)); }
   // 고유 장비: 지독하게 낮은 확률 (프로토타입은 PROTO_MULT 보정). 출처별 전용 풀 + 공용 풀
   if (kind === "void") {   // 공허의 군주: 1~3단계는 확률(33/66/100%)로 상대적으로 약한 고유, 4단계는 확정으로 좋은 고유 풀(최상급 확률은 낮춤)
-    const K = node.voidCleared || 0, pool = uniquePool("void", 10), CH = [0.33, 0.66, 1.0];
-    for (let st = 1; st <= Math.min(3, K); st++) {
-      if (Math.random() >= CH[st - 1]) continue;
-      const list = pool.filter((x) => x.u.tier < 4).map((x) => ({ u: x.u, w: x.u.tier <= 2 ? (st === 1 ? 30 : st === 2 ? 20 : 8) : (st === 1 ? 4 : st === 2 ? 12 : 22) }));
+    const K = node.vsel || 1, pool = uniquePool("void", 10), CH = [0.33, 0.66, 1.0];   // 고른 단계의 보상만 받는다
+    if (K <= 3 && Math.random() < CH[K - 1]) {
+      const list = pool.filter((x) => x.u.tier < 4).map((x) => ({ u: x.u, w: x.u.tier <= 2 ? (K === 1 ? 30 : K === 2 ? 20 : 8) : (K === 1 ? 4 : K === 2 ? 12 : 22) }));
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
-    for (let st = 1; st <= Math.min(4, K); st++) if (VS.length && Math.random() < SC[st - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * [0.3, 1, 1.6][i] })), (x) => x.w).i));
+    if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * [0.3, 1, 1.6][i] })), (x) => x.w).i));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
-  if (kind === "hive" && Math.random() < 0.4 * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
+  if (kind === "hive" && Math.random() < [0.15, 0.3, 0.5, 0.8][(node.vsel || 1) - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
   // 스킬: 보스 첫 클리어 확정 1개, 일반 확률, 균열 탑에서 낮은 확률로 강한 스킬
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
   const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * w[i] })), (x) => x.w).i;
@@ -1458,9 +1457,9 @@ function rollDrops(sv, node, boss, B) {
     out.skills.push(genSkill(sv, d.id, rr([1, 1, 1])));
   }
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 2) + endlessWaves * 2) * B.ore);
-  if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.voidCleared || 0) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
+  if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
-  const oc = { hive: 3, stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.voidCleared || 0) }[kind] || 0.03;
+  const oc = { hive: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   out.dice = Math.random() < diceChance(kind, node) * Math.min(2, B.orb) ? 1 : 0;   // 공허의 주사위: 아주 낮은 확률
@@ -1836,7 +1835,8 @@ function makeEnemy(b, type, lane, col) {
   { const dd = (isBoss ? ENEMY_DEF.boss : ENEMY_DEF[type] || ENEMY_DEF.grunt).slice(); for (const t of e.traits) if (TRAIT_DEF[t]) { dd[0] += TRAIT_DEF[t][0]; dd[1] += TRAIT_DEF[t][1]; }
     const sc = (1 + CFG.DEF_ACT * (Math.min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier || 0)); e.dm = Math.max(0, dd[0] * sc); e.rm = Math.max(0, dd[1] * sc); e.shD = 0; e.shR = 0; e.eres = b.kind === "hive" ? [0, 0, 0, 0] : ACT_ELEM[Math.min(9, Math.max(0, va))]; }   // 화염 정령왕: 화염 저항 없음 (화염 빌드가 통한다)
   if (isBoss) {
-    if (b.kind === "void") { e.vbaseHp = e.maxHp; e.vbaseAtk = e.atk; e.vstage = 1; voidPhase(b, e, 1); }
+    if (b.kind === "void") { e.vbaseHp = e.maxHp; e.vbaseAtk = e.atk; voidPhase(b, e, Math.max(1, Math.min(4, b.node.vsel || 1))); }   // 입장할 때 고른 단계의 군주 한 마리
+    if (b.kind === "hive") e.label = `${D.name} · ${b.node.vsel || 1}단계`;
     e.hp *= 1; e.abil = D.abilities.map((a) => ({ d: a, t: (a.every || 0) * rnd(0.55, 0.9), done: false })); e.dmgBase = e.atk;
     b.bossRef = e;
   }
@@ -1925,11 +1925,6 @@ function applyDamage(b, e, dmg, o) {
   if (e.reflect && o.src === "skill") damagePlayer(b, dmg * e.reflect.pct, { undodgeable: true });
   const ls = ((o.lifesteal || 0) + b.stats.lifesteal) * (b.debuffs.wound ? b.debuffs.wound.mult : 1);   // 작열의 낙인: 흡수 반감
   if (ls && o.src === "skill") b.hp = Math.min(b.maxHp, b.hp + dmg * ls);
-  if (e.hp <= 0 && e.vstage && e.vstage < 4) {   // 군주는 쓰러지지 않고 다음 단계로 진입한다
-    b.voidCleared = e.vstage; say(b, `공허의 군주 ${e.vstage}단계 격파! 군주가 더 강해진다`, "good"); b.shake = 0.8;
-    voidPhase(b, e, e.vstage + 1); e.shield = null; e.dots = []; e.chill = 0; b.inv = Math.max(b.inv || 0, 0); e.flash = 0.4;
-    return dmg;
-  }
   if (e.hp <= 0) killEnemy(b, e);
   return dmg;
 }
@@ -1960,7 +1955,7 @@ function killEnemy(b, e) {
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
-  if (e.vstage) { b.voidCleared = e.vstage; if (e.vstage < 4) say(b, `공허의 군주 ${e.vstage}단계 격파!`, "good"); }
+  if (e.vstage) b.voidCleared = e.vstage;
   b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { b.bossKills++; b.shake = 0.8; say(b, `${e.def.name} 처치!`, "boss"); }
   const ex = e.def.exp * Math.pow(1.5, b.act - 1) * (1 + 0.05 * (b.stage - 1)) * (b.kind === "rift" ? 1 + b.tier * 0.08 : 1);
   b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" ? 3 : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
@@ -2209,12 +2204,6 @@ function finishBattle(sv, b) {
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
     while (sv.inv.length > CFG.INV_MAX) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) || it.uniq ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }
-  }
-  if (!win && node.kind === "void" && (b.voidCleared || 0) > 0) {   // 공허의 군주: 중간에 쓰러져도 격파한 단계의 보상은 받는다
-    const d = rollDrops(sv, Object.assign({}, node, { voidCleared: b.voidCleared }), true, B);
-    res.items = d.items; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.ore = d.ore; res.uniques = d.uniques; sv.inv.push(...d.items); sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0; sv.ore += d.ore;
-    for (const it of d.items) if (it.uniq) sv.uniq[it.uniq] = (sv.uniq[it.uniq] || 0) + 1;
-    res.notes.push(`공허의 군주 ${b.voidCleared}단계까지 격파했습니다.`);
   }
   res.voidCleared = b.voidCleared || 0;
   res.quests = qd;
@@ -3282,8 +3271,8 @@ function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
   if (n.kind === "rift") return { kind: "rift", act: 11, tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
-  if (n.kind === "void") return { kind: "void", act: 10, tier: 30, name: "공허의 군주", level: 100 };
-  if (n.kind === "hive") return { kind: "hive", act: 10, tier: HIVE_TIER, name: "화염 정령왕", level: 100 };
+  if (n.kind === "void") return { kind: "void", act: 10, tier: 30, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
+  if (n.kind === "hive") return { kind: "hive", act: 10, tier: HIVE_TIERS[(G.hiveStage || 1) - 1], vsel: G.hiveStage || 1, name: `화염 정령왕 ${G.hiveStage || 1}단계`, level: 100 };
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
   if (n.kind === "elite" || n.kind === "treasure") return Object.assign({}, n, { stage: n.need + (n.kind === "elite" ? 1 : 3) });
   return n;
@@ -3307,10 +3296,14 @@ function mapPanel() {
     <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
     btnOk = un; btn = "도전";
   } else if (n.kind === "hive") {
-    h += `<div class="pline">정령의 불씨 <b>${save.keys2 || 0}</b>개 보유 (1개 소모)</div><div class="pline">${HIVE_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${HIVE_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계) · 난이도 균열 ${HIVE_TIER}단계 수준</div><div class="pline dim">화염 빌드용 장비를 줍니다 (화염 피해·점화·지속 피해 옵션이 잘 붙고, 전용 고유 6종)</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 정령의 불씨(눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
-    btnOk = un && (save.keys2 || 0) > 0 && save.rift.best >= HIVE_MIN_RIFT; btn = save.rift.best < HIVE_MIN_RIFT ? `균열 ${HIVE_MIN_RIFT}단계 필요` : (save.keys2 || 0) > 0 ? "도전" : "열쇠 필요";
+    const S = G.hiveStage = Math.max(1, Math.min(4, G.hiveStage || 1)), need = HIVE_NEED[S - 1], ok = save.rift.best >= need;
+    h += `<div class="pline">정령의 불씨 <b>${save.keys2 || 0}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="hsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="hsp">+</button> <span class="dim">난이도 균열 ${HIVE_TIERS[S - 1]}단계 수준</span></div>
+    <div class="pline">${HIVE_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">화염 빌드용 장비 ${3 + 2 * S}개 · 전용 고유 ${[15, 30, 50, 80][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 정령의 불씨(눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    btnOk = un && (save.keys2 || 0) > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : (save.keys2 || 0) > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
-    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">군주는 한 마리이며 체력이 4단계로 나뉘고, 단계별 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">공허의 군주 전용 스킬 4종 (단계별 2% / 3% / 5% / 12% 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
+    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="vsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="vsp">+</button> <span class="dim">난이도 균열 ${VOID_TIER[S - 1]}단계 수준</span></div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계) · 고른 단계의 군주 한 마리와 싸웁니다 (잡몹 포함)</div>
+    <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${[33, 66, 100][S - 1]}% 확률` : "좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)"}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -3330,7 +3323,7 @@ function mapGo() {
   const n = MapView.sel; if (!n || !nodeUnlocked(save, n)) return;
   if (n.kind === "town") return openTown(n.act);
   if (n.kind === "endless") { const E = endlessInfo(save); if (E.left < 1) return; save.endless.used++; saveGame(); }
-  if (n.kind === "hive") { if ((save.keys2 || 0) < 1 || save.rift.best < HIVE_MIN_RIFT) return; save.keys2--; saveGame(); }
+  if (n.kind === "hive") { if ((save.keys2 || 0) < 1 || save.rift.best < HIVE_NEED[(G.hiveStage || 1) - 1]) return; save.keys2--; saveGame(); }
   if (n.kind === "void") { if (save.keys < 1 || save.rift.best < VOID_MIN_RIFT) return; save.keys--; saveGame(); }
   let tip = null, title = null;
   if (G.guide === "stage" && n.id === "S1-1") { G.guide = null; save.seen.guide = true; MapView.pulse = null; setGuide(null); title = "첫 모험 · 초원 1"; tip = "스킬은 쿨타임마다 자동 발동합니다. 적을 클릭하면 그 적을 우선 공격해요.<br>전투가 끝나면 장비가 떨어지고, 장비 창에 <b style='color:#5dff7a'>▲</b> 가 뜨면 더 강한 장비입니다. <b>[추천 장비 착용]</b>으로 한 번에 갈아입으세요!"; }
@@ -3962,10 +3955,20 @@ function srvMark() {
   const t = document.querySelector('[data-t="login"]'); if (t) { t.disabled = SRV.on; t.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
   const b = document.querySelector('[data-a="srvlg"]'); if (b) { b.disabled = SRV.on; b.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
 }
-function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) SRV.last = Date.now(); }, 6000); }
+// 운영자 회수 규칙: 서버가 알려 주면 이 기기의 엔젤릭(고유 4등급) 장비도 함께 제거한다
+const ANG_IDS = new Set("halo judgment hellcrown apex eternity abyssalcrown voidheart pyrelordcrown plaguebearer angelstep dimshoes godhand hellverdict everarmor startear soulpact".split(" "));
+function stripAngelicLocal() {
+  if (!save) return 0; const bad = (it) => !!it && (it.utier === 4 || ANG_IDS.has(it.uniq)); let n = 0;
+  const k = save.inv.length; save.inv = save.inv.filter((it) => !bad(it)); n += k - save.inv.length;
+  for (const s of Object.keys(save.equipped || {})) if (bad(save.equipped[s])) { delete save.equipped[s]; n++; }
+  if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
+  return n;
+}
+function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
+  if (r.revokeOn && save) stripAngelicLocal();
   SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
 }
@@ -4114,7 +4117,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-052317";
+const BUILD_ID = "20261028-053600";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4206,6 +4209,12 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "2.8", date: "10/28", title: "공허의 군주 · 화염 정령왕 단계 선택 입장", items: [
+    "공허의 군주와 화염 정령왕은 입장할 때 1~4단계를 직접 골라 들어갑니다. 고른 단계의 보스 한 마리와만 싸우고(잡몹 포함), 그 단계의 보상만 받습니다. 열쇠는 입장 한 번에 1개입니다.",
+    "공허의 군주 4단계는 4단계 군주만 나옵니다. 1~3단계는 낮은 등급 고유 장비를 33/66/100% 확률로, 4단계는 좋은 고유 장비를 확정으로 줍니다.",
+    "운영 조치: 부정 획득이 의심되는 계정의 엔젤릭 장비를 회수했습니다.",
+    "화염 정령왕은 단계별 난이도가 균열 22/32/45/60단계 수준이고, 입장에 필요한 균열 단계도 15/22/32/45입니다. 단계가 높을수록 장비 개수와 전용 고유·주사위 확률이 커집니다.",
+  ] },
   { ver: "2.7", date: "10/28", title: "옵션 수치 범위 표시 · 공허의 주사위", items: [
     "고유 장비의 능력과 일반 장비의 옵션에 (최소 ~ 최대) 수치 범위가 표시됩니다. 도감의 고유 아이템도 범위로 보입니다.",
     "새 재화 '공허의 주사위'가 아주 낮은 확률로 드랍됩니다 (균열·지옥·무한 균열·스킬 시련, 공허의 군주, 화염 정령왕).",
@@ -4342,7 +4351,7 @@ function bindInput() {
     else if (a === "tipok") { $("#tip").classList.add("hidden"); G.paused = false; G.tipOpen = false; snd("click"); }
   });
   $("#mappanel").addEventListener("click", (ev) => { const p = ev.target.closest("[data-p]"); if (!p) return; const a = p.dataset.p; snd("click");
-    if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min(MAX_TRIAL, (save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
+    if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min(MAX_TRIAL, (save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "vsp") { G.voidStage = Math.min(4, (G.voidStage || 1) + 1); mapPanel(); } else if (a === "vsm") { G.voidStage = Math.max(1, (G.voidStage || 1) - 1); mapPanel(); } else if (a === "hsp") { G.hiveStage = Math.min(4, (G.hiveStage || 1) + 1); mapPanel(); } else if (a === "hsm") { G.hiveStage = Math.max(1, (G.hiveStage || 1) - 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
   $("#b-inv").onclick = () => { snd("click"); IB.mode = "inv"; IB.sel = null; renderItems(); };
   $("#b-skill").onclick = () => { snd("click"); SK.slot = 0; openSkills(); };
   $("#b-quest").onclick = () => { snd("click"); openQuests(false); };

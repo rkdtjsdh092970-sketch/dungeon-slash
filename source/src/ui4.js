@@ -15,10 +15,20 @@ function srvMark() {
   const t = document.querySelector('[data-t="login"]'); if (t) { t.disabled = SRV.on; t.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
   const b = document.querySelector('[data-a="srvlg"]'); if (b) { b.disabled = SRV.on; b.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
 }
-function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) SRV.last = Date.now(); }, 6000); }
+// 운영자 회수 규칙: 서버가 알려 주면 이 기기의 엔젤릭(고유 4등급) 장비도 함께 제거한다
+const ANG_IDS = new Set("halo judgment hellcrown apex eternity abyssalcrown voidheart pyrelordcrown plaguebearer angelstep dimshoes godhand hellverdict everarmor startear soulpact".split(" "));
+function stripAngelicLocal() {
+  if (!save) return 0; const bad = (it) => !!it && (it.utier === 4 || ANG_IDS.has(it.uniq)); let n = 0;
+  const k = save.inv.length; save.inv = save.inv.filter((it) => !bad(it)); n += k - save.inv.length;
+  for (const s of Object.keys(save.equipped || {})) if (bad(save.equipped[s])) { delete save.equipped[s]; n++; }
+  if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
+  return n;
+}
+function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
+  if (r.revokeOn && save) stripAngelicLocal();
   SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
 }
