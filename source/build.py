@@ -9,5 +9,6 @@ code='\n'.join(open(f'{D}/src/{f}.js').read() for f in ['util','data','data2','d
 t=open(f'{D}/template.html').read()
 t=t.replace('//__SPRITES__','const SPRITE_DATA='+json.dumps(sp)+';').replace('//__CODE__',code)
 import time
+os.makedirs(f'{D}/dist',exist_ok=True)
 BID=time.strftime('%Y%m%d-%H%M%S'); t=t.replace('__BUILD__',BID); open(f'{D}/dist/ver.txt','w').write(BID)
 os.makedirs(f'{D}/dist',exist_ok=True); open(f'{D}/dist/game.html','w').write(t); print(len(t)//1024,'KB')
