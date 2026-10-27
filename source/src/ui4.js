@@ -24,14 +24,14 @@ function stripAngelicLocal() {
   if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
   return n;
 }
-function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
+function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save, power: curPower() }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
   if (r.revokeOn && save) stripAngelicLocal();
   setTimeout(() => { if (typeof mailPoll === "function") mailPoll(); }, 300);
   api("/api/guild/me").then((g) => { if (save && g && !g.err) { save.guildLv = g.guild ? g.guild.level : 0; } }).catch(() => {});
-  SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
+  SRV.on = true; srvMark(); setTimeout(() => { if (typeof srvQueue === "function") srvQueue(); }, 1500); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
 }
 async function srvAutoLogin() { try { const t = localStorage.getItem("ds_srv"); if (!t) return; const c = JSON.parse(t); const r = await srvLogin(c.name, c.pass); return r; } catch (e) {} }
@@ -119,6 +119,34 @@ function ahPostDialog(it) {
   } });
 }
 
+// ---------- 랭킹 ----------
+const RK = { k: "power", rows: [], mine: null };
+const RK_TABS = [["power", "전투력"], ["rift", "균열 최고층"], ["trial", "스킬 시련"], ["endless", "무한 균열"], ["level", "레벨"], ["guild", "길드"]];
+const RK_VAL = { power: (x) => fmtPow(x.power), rift: (x) => `${x.rift}층`, trial: (x) => `${x.trial}단계`, endless: (x) => `${x.endless}초`, level: (x) => `Lv.${x.level}` };
+const rkEsc = (t) => String(t == null ? "" : t).replace(/</g, "&lt;");
+async function rankBody(k) {
+  if (!SRV.on) return `<div class="center pad dim">서버에 로그인하면 랭킹을 볼 수 있고, 내 기록이 올라갑니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button></div>`;
+  if (k === "guild") {
+    const l = await api("/api/guild/list"); if (l.err) return `<div class="warn center pad">${l.err}</div>`;
+    RK.rows = l.rows || [];
+    return `<div class="qlist" style="max-height:340px;overflow:auto">${RK.rows.map((g, i) => `<div class="qrow"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(g.name)} <small class="dim">길드장 ${rkEsc(g.leader)} · ${g.members}명</small></div><div style="text-align:right"><b style="color:#ffe08a">Lv.${g.level}</b><br><small class="dim">경험치 ${fmtC(g.exp)}</small></div></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`;
+  }
+  const r = await api("/api/rank?k=" + k); if (r.err) return `<div class="warn center pad">${r.err}</div>`;
+  RK.rows = r.rows || []; RK.mine = r.mine || null; const me = SRV.name, mv = k === "power" ? fmtPow(r.mine ? r.mine.value : 0) : (RK_VAL[k] ? RK_VAL[k]({ [k]: r.mine ? r.mine.value : 0, level: r.mine ? r.mine.value : 0 }) : "");
+  const sum = r.mine && r.mine.rank ? `<div class="pline">내 순위 <b style="color:#ffe08a;font-size:18px">${r.mine.rank}위</b> <span class="dim">/ ${r.total}명 · 내 기록 ${mv}</span></div>` : `<div class="pline dim">내 기록이 아직 서버에 올라가지 않았습니다 (플레이하면 몇 초 안에 반영됩니다)</div>`;
+  return `${sum}<div class="qlist" style="max-height:310px;overflow:auto">${RK.rows.map((x, i) => `<div class="qrow" data-a="rkprof" data-n="${i}" style="cursor:pointer;${x.name === me ? "background:#2a2450;border-color:#8a7ae0" : ""}"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(x.name)} ${x.guild ? `<small class="dim">[${rkEsc(x.guild)}]</small>` : ""}<br><small class="dim">Lv.${x.level}${k !== "power" ? " · 전투력 " + fmtPow(x.power) : ""}${k !== "rift" && x.rift ? " · " + x.rift + "층" : ""}</small></div><div style="text-align:right"><b style="color:#ffe08a;font-size:15px">${RK_VAL[k](x)}</b></div></div>`).join("") || `<div class="dim center pad">아직 기록이 없습니다</div>`}</div>`;
+}
+async function openRanking() {
+  const k = RK.k;
+  const tabs = `<div class="tabs">${RK_TABS.map(([a, n]) => `<button class="tab ${k === a ? "on" : ""}" data-a="rkt" data-k="${a}">${n}</button>`).join("")}</div>`;
+  const body = await rankBody(k);
+  Modal.open(`<h2>랭킹</h2>${tabs}${body}<div class="pbtns"><button class="btn xs" data-a="rkre">새로고침</button><button class="btn xs" data-a="rkx">닫기</button></div>`, { cls: "wide", on: {
+    rkt: (el) => { RK.k = el.dataset.k; openRanking(); }, rkre: () => openRanking(), rkx: () => Modal.close(), gl: () => loginDialog(openRanking),
+    rkprof: (el) => { const x = RK.rows[+el.dataset.n]; if (!x) return;
+      Modal.open(`<h2>${rkEsc(x.name)}</h2><div class="center">${x.guild ? `<div class="dim">길드 ${rkEsc(x.guild)}</div>` : ""}</div><div class="statgrid" style="margin:8px 0"><div class="aff">레벨 <b>Lv.${x.level}</b></div><div class="aff">전투력 <b style="color:#ffe08a">${fmtPow(x.power)}</b></div><div class="aff">균열 최고층 <b>${x.rift}층</b></div><div class="aff">스킬 시련 <b>${x.trial}단계</b></div><div class="aff">무한 균열 <b>${x.endless}초</b></div></div><div class="pbtns"><button class="btn" data-a="rkb">랭킹으로</button></div>`, { cls: "sm", on: { rkb: () => openRanking() } }); },
+  } });
+}
+
 // ---------- 길드 / 랭킹 ----------
 const GD = { tab: "guild" };
 const fmtC = (n) => Math.floor(+n || 0).toLocaleString("en-US");   // 1,000,000 식 표기
@@ -144,7 +172,7 @@ async function openGuild() {
   }
   setTimeout(() => { const di = $("#gd-d"); if (di) di.addEventListener("input", () => { const d = di.value.replace(/[^0-9]/g, ""); di.value = d ? Number(d).toLocaleString("en-US") : ""; }); }, 0);
   Modal.open(`<h2>길드</h2>${tabs}${body}`, { cls: "wide", on: {
-    gdtab: (el) => { GD.tab = el.dataset.t; rerender(); }, gl: () => loginDialog(rerender), rk: (el) => { GD.rk = el.dataset.k; rerender(); },
+    gdtab: (el) => { if (el.dataset.t === "rank") { openRanking(); return; } GD.tab = el.dataset.t; rerender(); }, gl: () => loginDialog(rerender), rk: (el) => { GD.rk = el.dataset.k; rerender(); },
     gacc: (el) => { guildAccept(save, el.dataset.id); snd("quest"); saveGame(); rerender(); },
     gclaim: (el) => { const r = guildClaim(save, el.dataset.id); if (r) { snd("quest"); toast("보상을 받았습니다", "ok"); saveGame(); refreshTop(); } rerender(); },
     gcreate: async () => { const n = $("#gd-n").value.trim(); if (save.gold < 20000) return toast("골드가 부족합니다 (20,000G)", "bad"); const r = await api("/api/guild/create", { name: n }); if (r.err) return toast(r.err, "bad"); save.gold -= 20000; saveGame(); refreshTop(); toast("길드를 만들었습니다", "ok"); snd("legend"); rerender(); },

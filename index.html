@@ -22,7 +22,7 @@
 #top{position:absolute;left:0;right:0;top:0;height:44px;background:linear-gradient(#150f26f0,#150f26cc);border-bottom:3px solid #6a5a9a;display:flex;align-items:center;gap:8px;padding:0 8px}
 #top .lv{font-weight:900;color:#ffd24a;font-size:18px;min-width:56px}.xp{width:110px;height:10px;background:#000;border:2px solid #555;border-radius:3px;overflow:hidden}.xp i{display:block;height:100%;background:#6ad0ff}
 .cur{display:flex;align-items:center;gap:4px;font-weight:bold;font-size:14px}.sp{flex:1}
-#top .btn{padding:3px 7px;font-size:12px;position:relative;white-space:nowrap;flex:none}#top .cur{font-size:12px}#top .xp{width:70px}#top .lv{font-size:15px;min-width:44px}.dot{position:absolute;right:-4px;top:-6px;width:12px;height:12px;border-radius:50%;background:#ff4a4a;border:2px solid #fff}
+#top .btn{padding:3px 7px;font-size:12px;position:relative;white-space:nowrap;flex:none}#top .pw{white-space:nowrap;flex:none;font-size:12px}#top{gap:5px;padding:0 6px}#top .btn{padding:3px 5px}#top .xp{width:44px}#top .lv{min-width:36px;font-size:14px}#top .cur{white-space:nowrap}#top .cur{font-size:12px}#top .xp{width:70px}#top .lv{font-size:15px;min-width:44px}.dot{position:absolute;right:-4px;top:-6px;width:12px;height:12px;border-radius:50%;background:#ff4a4a;border:2px solid #fff}
 #townbar{position:absolute;left:0;top:44px;padding:8px 14px;pointer-events:none}.tname{font-size:0}
 #mappanel{position:absolute;right:10px;bottom:10px;width:250px;background:#1a1430f0;border:3px solid #8a7ab0;border-radius:6px;padding:10px 12px;box-shadow:0 4px 0 #0008}
 .ptitle{font-size:17px;font-weight:900;color:#ffd24a;margin-bottom:6px}.pline{font-size:13px;margin:3px 0}.dim{color:#a8a0c4;font-size:12px}.warn{color:#ff8a6a}.hint{font-size:12px;color:#b8b0d0;text-align:center}
@@ -231,6 +231,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 <canvas id="cv" width="960" height="540"></canvas>
 <div id="title" class="hidden"></div>
 <div id="top" class="hidden"><span class="lv" id="t-lv"></span><div class="xp"><i id="t-exp"></i></div>
+ <span class="cur pw" id="t-pow-w" data-tipk="pow" style="color:#ffd070;cursor:pointer;font-weight:700"><small style="opacity:.8">전투력</small>&nbsp;<span id="t-pow">0</span></span>
  <span class="cur" id="t-gold-w" data-tipk="gold"><img class="ico" id="ig" width="16" height="16"><span id="t-gold"></span></span>
  <span class="cur" data-tipk="ore"><img class="ico" id="io" width="16" height="16"><span id="t-ore"></span></span>
  <span class="cur" id="t-shard-w" data-tipk="shard"><img class="ico" id="is" width="16" height="16"><span id="t-shard"></span></span>
@@ -240,7 +241,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
  <span class="cur" id="t-key3-w" data-tipk="keys3" style="color:#d8c8b0"><span style="font-size:13px">⚔</span><span id="t-key3"></span></span>
  <span class="cur" id="t-key4-w" data-tipk="keys4" style="color:#ffe45a"><span style="font-size:13px">⚡</span><span id="t-key4"></span></span>
  <span class="srvdot" id="t-srv" title="서버 연결 상태">☁</span><span class="sp"></span><span id="t-world"></span>
- <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">스킬</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
+ <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">스킬</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-rank">랭킹</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
 <div id="townbar" class="hidden"><span class="tname"></span></div>
 <div id="mappanel" class="hidden"></div>
 <div id="guide" class="hidden"></div>
@@ -270,6 +271,10 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function wpick(list, wf) { let t = 0; for (const x of list) t += wf(x); let r = Math.random() * t; for (const x of list) { if ((r -= wf(x)) <= 0) return x; } return list[list.length - 1]; }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function seeded(seed) { let a = seed >>> 0; return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const fmtPow = (v) => {   // 전투력 표기: 만 · 억 · 조 · 경 · 해 단위
+  if (!(v >= 1)) return "0"; const U = [["", 1], ["만", 1e4], ["억", 1e8], ["조", 1e12], ["경", 1e16], ["해", 1e20]]; let u = U[0]; for (const x of U) if (v >= x[1]) u = x;
+  const m = v / u[1]; return (m >= 1000 ? Math.round(m).toLocaleString("en-US") : m >= 100 ? m.toFixed(0) : m >= 10 ? m.toFixed(1) : m.toFixed(2)) + u[0];
+};
 const fmtN = (v) => (v >= 1e9 ? (v / 1e9).toFixed(1) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e4 ? (v / 1e3).toFixed(1) + "K" : Math.round(v).toString());
 const fmt = (v) => (v >= 100 ? Math.round(v).toString() : v >= 10 ? v.toFixed(1) : v.toFixed(2));
 const pct = (v) => Math.round(v * 100) + "%";
@@ -3643,8 +3648,13 @@ function initModal() {
 }
 
 // ---------- 상단 바 (맵 / 마을) ----------
+let _pwCache = 0;
+function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산값을 쓴다)
+  if (!save) return 0; if (G.screen === "battle" && _pwCache) return _pwCache;
+  try { _pwCache = playerPower(computeStats(save)); } catch (e) {} return _pwCache;
+}
 function refreshTop() {
-  const s = save; $("#t-lv").textContent = "Lv." + s.level;
+  const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
   const need = expNeed(s.level); $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp / need) * 100)) + "%";
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";
@@ -4182,7 +4192,7 @@ function openStats() {
   const G = (title, rows) => `<div class="sg"><h4>${title}</h4>${rows.filter(Boolean).map((r) => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}</div>`;
   const elems = ELEMS.map((e) => [ELEM_NAME[e] + " 피해", P(s[e + "Dmg"], 0)]);
   const pd = powerDetail(s), tot = pd.skills.reduce((a, x) => a + x.dps, 0) || 1;
-  const pw = G("전투력", [["전투력", `<b style="color:#ffe08a">${N(playerPower(s))}</b>`], ["예상 초당 피해", N(pd.dps)], ...pd.skills.map((x) => [`${x.name} <small class="dim">${x.mag ? "마법" : "물리"}${x.dot > 0.05 ? " · 지속" : ""}${x.paid ? "" : " · 마나 0"}</small>`, `${N(x.dps)} (${Math.round(x.dps / tot * 100)}%)`]), pd.demand > 0 ? ["마나 가동률", `${Math.round(pd.manaFactor * 100)}% <small class="dim">재생 ${pd.supply.toFixed(1)}/s · 소모 ${pd.demand.toFixed(1)}/s</small>`] : null, pd.buff > 1.001 ? ["버프 효과", "×" + pd.buff.toFixed(2)] : null, ["유효 체력", N(pd.ehp)]]);
+  const pw = G("전투력", [["전투력", `<b style="color:#ffe08a">${fmtPow(playerPower(s))}</b>`], ["예상 초당 피해", N(pd.dps)], ...pd.skills.map((x) => [`${x.name} <small class="dim">${x.mag ? "마법" : "물리"}${x.dot > 0.05 ? " · 지속" : ""}${x.paid ? "" : " · 마나 0"}</small>`, `${N(x.dps)} (${Math.round(x.dps / tot * 100)}%)`]), pd.demand > 0 ? ["마나 가동률", `${Math.round(pd.manaFactor * 100)}% <small class="dim">재생 ${pd.supply.toFixed(1)}/s · 소모 ${pd.demand.toFixed(1)}/s</small>`] : null, pd.buff > 1.001 ? ["버프 효과", "×" + pd.buff.toFixed(2)] : null, ["유효 체력", N(pd.ehp)]]);
   Modal.open(`<h2>스탯</h2><div class="statgrid">${pw}
    ${G("공격", [["물리 공격력", N(s.atk)], ["주문력", N(s.mag)], ["물리 피해", P(s.physDmg, 0)], ["마법 피해", P(s.magDmg, 0)], ["주는 피해", P(s.allDmg, 0)], ["물리 치명타", `${P(s.critChance)} / +${P(s.critDmg, 0)}`], ["주문 치명타", s.magCrit ? `${P(s.critChance + s.spellCrit)} (물리와 동일)` : P(s.spellCrit)], ["쿨타임 감소", P(s.cdr)], ["생명력 흡수", P(s.lifesteal)]])}
    ${G("방어", [["체력", N(s.maxHp)], ["방어력", N(s.def)], ["회피", P(s.dodge)], ["받는 피해", (s.dmgTaken > 0 ? "+" : "") + P(s.dmgTaken, 0)], s.regen ? ["초당 회복", P(s.regen)] : null, s.revive ? ["부활", s.revive + "회"] : null, s.manaShield ? ["마나 방패", P(s.manaShield, 0)] : null])}
@@ -4552,6 +4562,7 @@ const TIP_CUR = {
   dice: ["공허의 주사위", "옵션 / 고유 능력의 수치를 범위 안에서 균등하게 다시 굴립니다. 고유 장비에도 쓸 수 있습니다.", "균열 · 지옥 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제에서 아주 낮은 확률"],
   hone: ["연마석", "스킬 레벨업(최대 Lv.20)에 쓰입니다.", "스킬 시련 · 스킬 분해/보상 등 (스킬 시련의 주 보상)"],
   keys: ["공허의 열쇠", "공허의 군주에 입장할 때 1개를 소모합니다.", "균열·지옥·무한 균열·스킬 시련에서 전투당 1% 확률로 나오는 왜곡체(보라색 눈알)를 처치"],
+  pow: ["전투력", "장비 · 스킬 · 패시브 · 레벨을 모두 반영한 '예상 초당 피해 × 유효 체력' 기준의 추정값입니다. 몬스터 구성에 따라 실제 전투 결과는 달라집니다. 누르면 스탯 창이 열립니다. 서버에 로그인해 있으면 랭킹에 올라갑니다.", "장비 강화·옵션·패시브·스킬 레벨업으로 올립니다"],
   keys2: ["정령의 불씨", "화염 정령왕에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 정령의 불씨(주황색 눈알)를 처치"],
   keys3: ["철갑의 징표", "철갑의 투사에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 철갑의 징표(회백색 눈알)를 처치"],
   keys4: ["뇌전의 징표", "뇌제에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 뇌전의 징표(노란색 눈알)를 처치"],
@@ -4622,14 +4633,14 @@ function stripAngelicLocal() {
   if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
   return n;
 }
-function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
+function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save, power: curPower() }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r.err) { SRV.on = false; srvMark(); return r; }
   if (r.revokeOn && save) stripAngelicLocal();
   setTimeout(() => { if (typeof mailPoll === "function") mailPoll(); }, 300);
   api("/api/guild/me").then((g) => { if (save && g && !g.err) { save.guildLv = g.guild ? g.guild.level : 0; } }).catch(() => {});
-  SRV.on = true; srvMark(); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
+  SRV.on = true; srvMark(); setTimeout(() => { if (typeof srvQueue === "function") srvQueue(); }, 1500); try { localStorage.setItem("ds_srv", JSON.stringify({ name, pass })); } catch (e) {}
   return r;
 }
 async function srvAutoLogin() { try { const t = localStorage.getItem("ds_srv"); if (!t) return; const c = JSON.parse(t); const r = await srvLogin(c.name, c.pass); return r; } catch (e) {} }
@@ -4717,6 +4728,34 @@ function ahPostDialog(it) {
   } });
 }
 
+// ---------- 랭킹 ----------
+const RK = { k: "power", rows: [], mine: null };
+const RK_TABS = [["power", "전투력"], ["rift", "균열 최고층"], ["trial", "스킬 시련"], ["endless", "무한 균열"], ["level", "레벨"], ["guild", "길드"]];
+const RK_VAL = { power: (x) => fmtPow(x.power), rift: (x) => `${x.rift}층`, trial: (x) => `${x.trial}단계`, endless: (x) => `${x.endless}초`, level: (x) => `Lv.${x.level}` };
+const rkEsc = (t) => String(t == null ? "" : t).replace(/</g, "&lt;");
+async function rankBody(k) {
+  if (!SRV.on) return `<div class="center pad dim">서버에 로그인하면 랭킹을 볼 수 있고, 내 기록이 올라갑니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button></div>`;
+  if (k === "guild") {
+    const l = await api("/api/guild/list"); if (l.err) return `<div class="warn center pad">${l.err}</div>`;
+    RK.rows = l.rows || [];
+    return `<div class="qlist" style="max-height:340px;overflow:auto">${RK.rows.map((g, i) => `<div class="qrow"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(g.name)} <small class="dim">길드장 ${rkEsc(g.leader)} · ${g.members}명</small></div><div style="text-align:right"><b style="color:#ffe08a">Lv.${g.level}</b><br><small class="dim">경험치 ${fmtC(g.exp)}</small></div></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`;
+  }
+  const r = await api("/api/rank?k=" + k); if (r.err) return `<div class="warn center pad">${r.err}</div>`;
+  RK.rows = r.rows || []; RK.mine = r.mine || null; const me = SRV.name, mv = k === "power" ? fmtPow(r.mine ? r.mine.value : 0) : (RK_VAL[k] ? RK_VAL[k]({ [k]: r.mine ? r.mine.value : 0, level: r.mine ? r.mine.value : 0 }) : "");
+  const sum = r.mine && r.mine.rank ? `<div class="pline">내 순위 <b style="color:#ffe08a;font-size:18px">${r.mine.rank}위</b> <span class="dim">/ ${r.total}명 · 내 기록 ${mv}</span></div>` : `<div class="pline dim">내 기록이 아직 서버에 올라가지 않았습니다 (플레이하면 몇 초 안에 반영됩니다)</div>`;
+  return `${sum}<div class="qlist" style="max-height:310px;overflow:auto">${RK.rows.map((x, i) => `<div class="qrow" data-a="rkprof" data-n="${i}" style="cursor:pointer;${x.name === me ? "background:#2a2450;border-color:#8a7ae0" : ""}"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(x.name)} ${x.guild ? `<small class="dim">[${rkEsc(x.guild)}]</small>` : ""}<br><small class="dim">Lv.${x.level}${k !== "power" ? " · 전투력 " + fmtPow(x.power) : ""}${k !== "rift" && x.rift ? " · " + x.rift + "층" : ""}</small></div><div style="text-align:right"><b style="color:#ffe08a;font-size:15px">${RK_VAL[k](x)}</b></div></div>`).join("") || `<div class="dim center pad">아직 기록이 없습니다</div>`}</div>`;
+}
+async function openRanking() {
+  const k = RK.k;
+  const tabs = `<div class="tabs">${RK_TABS.map(([a, n]) => `<button class="tab ${k === a ? "on" : ""}" data-a="rkt" data-k="${a}">${n}</button>`).join("")}</div>`;
+  const body = await rankBody(k);
+  Modal.open(`<h2>랭킹</h2>${tabs}${body}<div class="pbtns"><button class="btn xs" data-a="rkre">새로고침</button><button class="btn xs" data-a="rkx">닫기</button></div>`, { cls: "wide", on: {
+    rkt: (el) => { RK.k = el.dataset.k; openRanking(); }, rkre: () => openRanking(), rkx: () => Modal.close(), gl: () => loginDialog(openRanking),
+    rkprof: (el) => { const x = RK.rows[+el.dataset.n]; if (!x) return;
+      Modal.open(`<h2>${rkEsc(x.name)}</h2><div class="center">${x.guild ? `<div class="dim">길드 ${rkEsc(x.guild)}</div>` : ""}</div><div class="statgrid" style="margin:8px 0"><div class="aff">레벨 <b>Lv.${x.level}</b></div><div class="aff">전투력 <b style="color:#ffe08a">${fmtPow(x.power)}</b></div><div class="aff">균열 최고층 <b>${x.rift}층</b></div><div class="aff">스킬 시련 <b>${x.trial}단계</b></div><div class="aff">무한 균열 <b>${x.endless}초</b></div></div><div class="pbtns"><button class="btn" data-a="rkb">랭킹으로</button></div>`, { cls: "sm", on: { rkb: () => openRanking() } }); },
+  } });
+}
+
 // ---------- 길드 / 랭킹 ----------
 const GD = { tab: "guild" };
 const fmtC = (n) => Math.floor(+n || 0).toLocaleString("en-US");   // 1,000,000 식 표기
@@ -4742,7 +4781,7 @@ async function openGuild() {
   }
   setTimeout(() => { const di = $("#gd-d"); if (di) di.addEventListener("input", () => { const d = di.value.replace(/[^0-9]/g, ""); di.value = d ? Number(d).toLocaleString("en-US") : ""; }); }, 0);
   Modal.open(`<h2>길드</h2>${tabs}${body}`, { cls: "wide", on: {
-    gdtab: (el) => { GD.tab = el.dataset.t; rerender(); }, gl: () => loginDialog(rerender), rk: (el) => { GD.rk = el.dataset.k; rerender(); },
+    gdtab: (el) => { if (el.dataset.t === "rank") { openRanking(); return; } GD.tab = el.dataset.t; rerender(); }, gl: () => loginDialog(rerender), rk: (el) => { GD.rk = el.dataset.k; rerender(); },
     gacc: (el) => { guildAccept(save, el.dataset.id); snd("quest"); saveGame(); rerender(); },
     gclaim: (el) => { const r = guildClaim(save, el.dataset.id); if (r) { snd("quest"); toast("보상을 받았습니다", "ok"); saveGame(); refreshTop(); } rerender(); },
     gcreate: async () => { const n = $("#gd-n").value.trim(); if (save.gold < 20000) return toast("골드가 부족합니다 (20,000G)", "bad"); const r = await api("/api/guild/create", { name: n }); if (r.err) return toast(r.err, "bad"); save.gold -= 20000; saveGame(); refreshTop(); toast("길드를 만들었습니다", "ok"); snd("legend"); rerender(); },
@@ -4809,7 +4848,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-084312";
+const BUILD_ID = "20261028-085127";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4901,6 +4940,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.23", date: "10/28", title: "전투력 표시 · 랭킹", items: [
+    "상단 바에 '전투력'이 항상 표시됩니다 (만 · 억 · 조 · 경 단위). 누르면 스탯 창이 열리고, 마우스를 올리면 설명이 나옵니다. 스탯 창의 전투력도 같은 단위로 바뀌었습니다.",
+    "상단 메뉴에 '랭킹'이 추가됐습니다 (길드 건물의 랭킹 탭도 같은 창으로 연결). 탭: 전투력 / 균열 최고층 / 스킬 시련 / 무한 균열 / 레벨 / 길드. 상위 50명과 내 순위·기록, 1~3위 메달, 내 줄 강조, 줄을 누르면 레벨·전투력·균열·시련·무한 균열 프로필 카드가 열립니다. 서버 로그인이 필요합니다.",
+    "전투력은 저장할 때 서버로 함께 올라갑니다. 새 버전으로 접속해 플레이하면 몇 초 안에 랭킹에 반영됩니다. 스킬 시련 기록은 기존 세이브에서 가져와 바로 반영했습니다.",
+  ] },
   { ver: "3.22", date: "10/28", title: "열쇠 드랍 하향", items: [
     "열쇠(공허의 열쇠 · 정령의 불씨 · 철갑의 징표 · 뇌전의 징표)가 너무 잘 나와서 전투당 나올 확률을 12%에서 1%로 낮췄습니다. 네 종류 모두 같은 확률입니다.",
   ] },
@@ -5173,6 +5217,7 @@ function bindInput() {
     if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min(MAX_TRIAL, (save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "vsp") { G.voidStage = Math.min(4, (G.voidStage || 1) + 1); mapPanel(); } else if (a === "vsm") { G.voidStage = Math.max(1, (G.voidStage || 1) - 1); mapPanel(); } else if (a === "hsp") { G.hiveStage = Math.min(4, (G.hiveStage || 1) + 1); mapPanel(); } else if (a === "hsm") { G.hiveStage = Math.max(1, (G.hiveStage || 1) - 1); mapPanel(); } else if (a === "tsp") { G.titanStage = Math.min(4, (G.titanStage || 1) + 1); mapPanel(); } else if (a === "tsm") { G.titanStage = Math.max(1, (G.titanStage || 1) - 1); mapPanel(); } else if (a === "ssp") { G.stormStage = Math.min(4, (G.stormStage || 1) + 1); mapPanel(); } else if (a === "ssm") { G.stormStage = Math.max(1, (G.stormStage || 1) - 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
   $("#b-inv").onclick = () => { snd("click"); IB.mode = "inv"; IB.sel = null; renderItems(); };
   $("#b-skill").onclick = () => { snd("click"); SK.slot = 0; openSkills(); };
+  $("#t-pow-w").onclick = () => { snd("click"); openStats(); }; $("#b-rank").onclick = () => { snd("click"); openRanking(); };
   $("#b-quest").onclick = () => { snd("click"); openQuests(false); };
   $("#b-opt").onclick = () => { snd("click"); openSettings(); };
   $("#b-map").onclick = () => { snd("click"); if (G.screen === "map") openTown(G.townAct); else openMap(G.townAct); };

@@ -39,8 +39,13 @@ function initModal() {
 }
 
 // ---------- 상단 바 (맵 / 마을) ----------
+let _pwCache = 0;
+function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산값을 쓴다)
+  if (!save) return 0; if (G.screen === "battle" && _pwCache) return _pwCache;
+  try { _pwCache = playerPower(computeStats(save)); } catch (e) {} return _pwCache;
+}
 function refreshTop() {
-  const s = save; $("#t-lv").textContent = "Lv." + s.level;
+  const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
   const need = expNeed(s.level); $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp / need) * 100)) + "%";
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";

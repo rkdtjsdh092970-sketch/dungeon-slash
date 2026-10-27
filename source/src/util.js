@@ -10,6 +10,10 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function wpick(list, wf) { let t = 0; for (const x of list) t += wf(x); let r = Math.random() * t; for (const x of list) { if ((r -= wf(x)) <= 0) return x; } return list[list.length - 1]; }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function seeded(seed) { let a = seed >>> 0; return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const fmtPow = (v) => {   // 전투력 표기: 만 · 억 · 조 · 경 · 해 단위
+  if (!(v >= 1)) return "0"; const U = [["", 1], ["만", 1e4], ["억", 1e8], ["조", 1e12], ["경", 1e16], ["해", 1e20]]; let u = U[0]; for (const x of U) if (v >= x[1]) u = x;
+  const m = v / u[1]; return (m >= 1000 ? Math.round(m).toLocaleString("en-US") : m >= 100 ? m.toFixed(0) : m >= 10 ? m.toFixed(1) : m.toFixed(2)) + u[0];
+};
 const fmtN = (v) => (v >= 1e9 ? (v / 1e9).toFixed(1) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e4 ? (v / 1e3).toFixed(1) + "K" : Math.round(v).toString());
 const fmt = (v) => (v >= 100 ? Math.round(v).toString() : v >= 10 ? v.toFixed(1) : v.toFixed(2));
 const pct = (v) => Math.round(v * 100) + "%";

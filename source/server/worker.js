@@ -66,7 +66,8 @@ export default {
         let stripped = 0; if (await isRevoked(DB, me.name)) stripped = stripAngelic(s);
         const txt = JSON.stringify(s); if (txt.length > 900000) return J({ err: "세이브가 너무 큽니다" }, 400);
         { const nb = (s.rift && s.rift.best) | 0; if (nb > (me.rift | 0)) { try { await riftMails(DB, me.name, nb); } catch (e) {} } }
-        await DB.prepare("UPDATE players SET save=?, level=?, rift=?, endless=?, updated=? WHERE name=?").bind(txt, s.level | 0, ((s.rift && s.rift.best) | 0), ((s.endless && s.endless.best) | 0), now(), me.name).run();
+        const pw = Number(body.power), power = isFinite(pw) && pw > 0 ? Math.min(pw, 1e30) : (me.power || 0);   // 전투력은 클라이언트가 계산해 보낸다 (느슨한 보안)
+        await DB.prepare("UPDATE players SET save=?, level=?, rift=?, endless=?, power=?, trial=?, updated=? WHERE name=?").bind(txt, s.level | 0, ((s.rift && s.rift.best) | 0), ((s.endless && s.endless.best) | 0), power, s.trialBest | 0, now(), me.name).run();
         return J({ ok: true, stripped });
       }
       if (path === "/api/claim") {   // 판매 완료 확인 + 대금 수령
@@ -75,10 +76,11 @@ export default {
         await DB.prepare("UPDATE players SET gold_pending=0 WHERE name=?").bind(me.name).run();
         return J({ ok: true, gold: me.gold_pending, sold: sold.results.map((r) => ({ id: r.id, price: r.price, item: JSON.parse(r.item) })) });
       }
-      if (path === "/api/rank") {
-        const kind = url.searchParams.get("k") === "endless" ? "endless" : url.searchParams.get("k") === "level" ? "level" : "rift";
-        const rows = await DB.prepare("SELECT p.name, p.level, p.rift, p.endless, g.name AS guild FROM players p LEFT JOIN guilds g ON g.id=p.guild ORDER BY p." + kind + " DESC, p.level DESC LIMIT 30").all();
-        return J({ rows: rows.results });
+      if (path === "/api/rank") {   // 전투력 · 균열 · 스킬 시련 · 무한 균열 · 레벨 랭킹 (상위 50 + 내 순위)
+        const KM = { power: "power", rift: "rift", trial: "trial", endless: "endless", level: "level" }, kind = KM[url.searchParams.get("k")] || "rift";
+        const rows = await DB.prepare("SELECT p.name, p.level, p.power, p.rift, p.trial, p.endless, g.name AS guild FROM players p LEFT JOIN guilds g ON g.id=p.guild WHERE p." + kind + ">0 ORDER BY p." + kind + " DESC, p.level DESC LIMIT 50").all();
+        const mv = +me[kind] || 0, better = mv > 0 ? await DB.prepare("SELECT COUNT(*) c FROM players WHERE " + kind + " > ?").bind(mv).first() : null, total = await DB.prepare("SELECT COUNT(*) c FROM players WHERE " + kind + " > 0").first();
+        return J({ rows: rows.results, mine: { rank: mv > 0 ? better.c + 1 : 0, value: mv }, total: total.c, k: kind });
       }
 
       // ---- 우편함 (운영 보상 등) ----

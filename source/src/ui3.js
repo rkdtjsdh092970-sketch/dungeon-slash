@@ -121,7 +121,7 @@ function openStats() {
   const G = (title, rows) => `<div class="sg"><h4>${title}</h4>${rows.filter(Boolean).map((r) => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}</div>`;
   const elems = ELEMS.map((e) => [ELEM_NAME[e] + " 피해", P(s[e + "Dmg"], 0)]);
   const pd = powerDetail(s), tot = pd.skills.reduce((a, x) => a + x.dps, 0) || 1;
-  const pw = G("전투력", [["전투력", `<b style="color:#ffe08a">${N(playerPower(s))}</b>`], ["예상 초당 피해", N(pd.dps)], ...pd.skills.map((x) => [`${x.name} <small class="dim">${x.mag ? "마법" : "물리"}${x.dot > 0.05 ? " · 지속" : ""}${x.paid ? "" : " · 마나 0"}</small>`, `${N(x.dps)} (${Math.round(x.dps / tot * 100)}%)`]), pd.demand > 0 ? ["마나 가동률", `${Math.round(pd.manaFactor * 100)}% <small class="dim">재생 ${pd.supply.toFixed(1)}/s · 소모 ${pd.demand.toFixed(1)}/s</small>`] : null, pd.buff > 1.001 ? ["버프 효과", "×" + pd.buff.toFixed(2)] : null, ["유효 체력", N(pd.ehp)]]);
+  const pw = G("전투력", [["전투력", `<b style="color:#ffe08a">${fmtPow(playerPower(s))}</b>`], ["예상 초당 피해", N(pd.dps)], ...pd.skills.map((x) => [`${x.name} <small class="dim">${x.mag ? "마법" : "물리"}${x.dot > 0.05 ? " · 지속" : ""}${x.paid ? "" : " · 마나 0"}</small>`, `${N(x.dps)} (${Math.round(x.dps / tot * 100)}%)`]), pd.demand > 0 ? ["마나 가동률", `${Math.round(pd.manaFactor * 100)}% <small class="dim">재생 ${pd.supply.toFixed(1)}/s · 소모 ${pd.demand.toFixed(1)}/s</small>`] : null, pd.buff > 1.001 ? ["버프 효과", "×" + pd.buff.toFixed(2)] : null, ["유효 체력", N(pd.ehp)]]);
   Modal.open(`<h2>스탯</h2><div class="statgrid">${pw}
    ${G("공격", [["물리 공격력", N(s.atk)], ["주문력", N(s.mag)], ["물리 피해", P(s.physDmg, 0)], ["마법 피해", P(s.magDmg, 0)], ["주는 피해", P(s.allDmg, 0)], ["물리 치명타", `${P(s.critChance)} / +${P(s.critDmg, 0)}`], ["주문 치명타", s.magCrit ? `${P(s.critChance + s.spellCrit)} (물리와 동일)` : P(s.spellCrit)], ["쿨타임 감소", P(s.cdr)], ["생명력 흡수", P(s.lifesteal)]])}
    ${G("방어", [["체력", N(s.maxHp)], ["방어력", N(s.def)], ["회피", P(s.dodge)], ["받는 피해", (s.dmgTaken > 0 ? "+" : "") + P(s.dmgTaken, 0)], s.regen ? ["초당 회복", P(s.regen)] : null, s.revive ? ["부활", s.revive + "회"] : null, s.manaShield ? ["마나 방패", P(s.manaShield, 0)] : null])}
@@ -491,6 +491,7 @@ const TIP_CUR = {
   dice: ["공허의 주사위", "옵션 / 고유 능력의 수치를 범위 안에서 균등하게 다시 굴립니다. 고유 장비에도 쓸 수 있습니다.", "균열 · 지옥 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제에서 아주 낮은 확률"],
   hone: ["연마석", "스킬 레벨업(최대 Lv.20)에 쓰입니다.", "스킬 시련 · 스킬 분해/보상 등 (스킬 시련의 주 보상)"],
   keys: ["공허의 열쇠", "공허의 군주에 입장할 때 1개를 소모합니다.", "균열·지옥·무한 균열·스킬 시련에서 전투당 1% 확률로 나오는 왜곡체(보라색 눈알)를 처치"],
+  pow: ["전투력", "장비 · 스킬 · 패시브 · 레벨을 모두 반영한 '예상 초당 피해 × 유효 체력' 기준의 추정값입니다. 몬스터 구성에 따라 실제 전투 결과는 달라집니다. 누르면 스탯 창이 열립니다. 서버에 로그인해 있으면 랭킹에 올라갑니다.", "장비 강화·옵션·패시브·스킬 레벨업으로 올립니다"],
   keys2: ["정령의 불씨", "화염 정령왕에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 정령의 불씨(주황색 눈알)를 처치"],
   keys3: ["철갑의 징표", "철갑의 투사에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 철갑의 징표(회백색 눈알)를 처치"],
   keys4: ["뇌전의 징표", "뇌제에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 뇌전의 징표(노란색 눈알)를 처치"],
