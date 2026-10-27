@@ -213,6 +213,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .rs-sk{display:flex;align-items:center;gap:10px;margin:8px auto 0;padding:6px 14px;background:linear-gradient(90deg,#1c2a50,#2a1c50);border:1px solid #6a8ad8;border-radius:10px;width:max-content}.rs-sk small{display:block;font-size:10px;color:#9ac0ff}
 .rs-btns{margin-top:12px}.rs-btns .btn.big{font-size:17px;padding:8px 36px;border-radius:12px}.rs-btns small{font-size:10px;opacity:.7;margin-left:6px}
 #acct{display:none}body[data-screen=title] #acct{display:flex;top:8px}
+.ptact{display:flex;gap:10px;align-items:center;margin-top:6px;padding:6px 10px;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;font-size:13px}.ptact span{flex:1}.ptact .btn{padding:5px 22px}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -937,7 +938,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   });
   // 양방향 연결표
   PASSIVES.forEach((p) => p.links.forEach((q) => { if (q !== "C" && PASSIVE_BY_ID[q] && !PASSIVE_BY_ID[q].links.includes(p.id)) PASSIVE_BY_ID[q].links.push(p.id); }));
-  const LBL = { atkPct: "공격력 +%", magPct: "주문력 +%", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
+  const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
     manaPct: "마나", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
@@ -1572,6 +1573,7 @@ function createBattle(sv, node) {
     const sk = skillOf(inst); sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
   });
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
+  b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
   return b;
 }
 
@@ -1676,7 +1678,7 @@ function applyDamage(b, e, dmg, o) {
   if (e.dead) return 0;
   o = o || {};
   if (e.shield) dmg *= 0.1;
-  e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg;
+  e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time;
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   if (!b.noFx && !o.noText) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
   if (e.charge) e.charge.dealt += dmg;
@@ -1852,7 +1854,8 @@ function stepBattle(b, dt) {
     if (e.tier === "boss") bossTick(b, e, dt);
     if (e.traits.length && e.traits.includes("regen")) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.025 * dt);
     if (e.stun > 0) continue;
-    if (e.col > e.range || (e.tier === "normal" && e.col === 2 && e.range <= 2 && !occupants(b, e.lane, 1).length && !e.charge)) {   // 앞줄이 비면 근거리 유닛이 채운다
+    const stalled = b.time - b.lastDealT > 8 && e.col > b.maxReach;   // 사거리 밖에 멈춘 적 때문에 전투가 끝나지 않는 경우: 8초간 피해가 없으면 앞으로 다가온다
+    if (e.col > e.range || stalled || (e.tier === "normal" && e.col === 2 && e.range <= 2 && !occupants(b, e.lane, 1).length && !e.charge)) {   // 앞줄이 비면 근거리 유닛이 채운다
       e.moveCd -= d2;
       if (e.moveCd <= 0) {
         if (canPlace(b, e, e.lane, e.col - 1, true)) { e.col -= 1; e.moveCd = e.moveT; if (e.tier !== "normal") displace(b, e); }
@@ -3438,7 +3441,7 @@ function openSkills() {
 }
 
 // ---------- 패시브 (방사형 트리) ----------
-const PT = { sc: 0.4, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
+const PT = { sel: null, sc: 0.4, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
 function ptDraw() {
   const cv = PT.cv; if (!cv || !cv.isConnected) return; const g = cv.getContext("2d"), W = cv.width, H = cv.height, t = performance.now() / 1000;
   g.clearRect(0, 0, W, H); g.save(); g.translate(W / 2 + PT.ox, H / 2 + PT.oy); g.scale(PT.sc, PT.sc);
@@ -3452,6 +3455,7 @@ function ptDraw() {
     g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);
     g.fillStyle = on ? c : "#14102a"; g.fill(); g.lineWidth = (p.kind === "small" ? 2 : 3) / PT.sc * 0.9; g.strokeStyle = on ? "#fff" : can ? `rgba(255,255,255,${0.55 + 0.4 * Math.sin(t * 5)})` : c + "88"; g.stroke();
     if (p.kind === "notable") { g.beginPath(); g.arc(p.x, p.y, r - 4, 0, 7); g.strokeStyle = on ? "#0008" : c + "66"; g.stroke(); }
+    if (PT.sel === p) { g.strokeStyle = "#fff"; g.lineWidth = 3; g.setLineDash([5, 4]); g.beginPath(); g.arc(p.x, p.y, r + 9, 0, 7); g.stroke(); g.setLineDash([]); }
     if (PT.hover === p) { g.strokeStyle = "#ffd24a"; g.lineWidth = 3; g.beginPath(); g.arc(p.x, p.y, r + 6, 0, 7); g.stroke(); }
   }
   g.restore();
@@ -3459,15 +3463,18 @@ function ptDraw() {
 }
 function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 16 : p.kind === "notable" ? 12 : 8) + 6; if (d < r && d < bd) { bd = d; best = p; } } return best; }
 function ptInfo() {
-  const el = $("#ptinfo"); if (!el) return; const p = PT.hover;
+  const el = $("#ptinfo"); if (!el) return; const p = PT.hover || PT.sel;
+  { const a = $("#ptact"), q = PT.sel; if (a) a.innerHTML = q ? `<span>선택: <b style="color:${q.arm === "bridge" ? "#ccc" : P_ARMS.find((x) => x.id === q.arm).color}">${q.name}</b> <span class="dim">(${q.cost}점)</span></span><button class="btn pri" data-a="ptadd" ${canAddPassive(save, q.id) ? "" : "disabled"}>찍기</button><button class="btn" data-a="ptrm" ${canRemovePassive(save, q.id) ? "" : "disabled"}>회수</button>` : `<span class="dim">노드를 클릭하면 효과가 보이고, 아래 [찍기] 버튼으로 찍습니다</span>`; }
   const sp = passivePoints(save) - passiveSpent(save); $("#ptpts").textContent = `${sp} / ${passivePoints(save)}`;
-  if (!p) { el.innerHTML = `<span class="dim">노드에 마우스를 올려 효과를 확인하세요 · 클릭: 찍기 · 우클릭/Shift+클릭: 회수 · 드래그: 이동 · 휠: 확대</span>`; return; }
+  if (!p) { el.innerHTML = `<span class="dim">노드를 클릭하거나 마우스를 올려 효과를 확인하세요 · 드래그: 이동 · 휠: 확대</span>`; return; }
   const on = passiveHas(save, p.id), kind = { small: "", notable: "★ 주요 ", key: "◆ 핵심 ", bridge: "" }[p.kind];
   el.innerHTML = `<b style="color:${p.arm === "bridge" ? "#ccc" : P_ARMS.find((a) => a.id === p.arm).color}">${kind}${p.name}</b> <span class="dim">(${p.cost}점)</span> — ${p.text} ${on ? `<span style="color:#8dff9a">활성</span>` : canAddPassive(save, p.id) ? `<span style="color:#ffe08a">찍을 수 있음</span>` : `<span class="dim">${passivePoints(save) - passiveSpent(save) < p.cost ? "포인트 부족" : "인접 노드를 먼저 찍으세요"}</span>`}`;
 }
 function openPassives() {
-  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button></div><canvas id="ptree" width="860" height="360"></canvas><div class="ptip" id="ptinfo"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button></div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
     preset: () => { resetPassives(save); snd("close"); saveGame(); refreshTop(); ptInfo(); },
+    ptadd: () => { if (PT.sel && addPassive(save, PT.sel.id)) snd("equip"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
+    ptrm: () => { if (PT.sel && removePassive(save, PT.sel.id)) snd("click"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
   } });
   const cv = PT.cv = $("#ptree"); cancelAnimationFrame(PT.raf);
   const pos = (ev) => { const r = cv.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * cv.width, ((ev.clientY - r.top) / r.height) * cv.height]; };
@@ -3475,9 +3482,9 @@ function openPassives() {
   cv.addEventListener("mousemove", (ev) => { const [x, y] = pos(ev); if (PT.drag && ev.buttons) { const dx = x - PT.drag.x, dy = y - PT.drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) PT.moved = true; if (PT.moved) { PT.ox = PT.drag.ox + dx; PT.oy = PT.drag.oy + dy; } } else { const h = ptPick(x, y); if (h !== PT.hover) { PT.hover = h; ptInfo(); } cv.style.cursor = h ? "pointer" : "grab"; } });
   window.addEventListener("mouseup", () => { PT.drag = null; }, { once: true });
   cv.addEventListener("wheel", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), k = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = clamp(PT.sc * k, 0.3, 1.6), wx = (x - cv.width / 2 - PT.ox) / PT.sc, wy = (y - cv.height / 2 - PT.oy) / PT.sc; PT.sc = ns; PT.ox = x - cv.width / 2 - wx * ns; PT.oy = y - cv.height / 2 - wy * ns; }, { passive: false });
-  const act = (ev, rm) => { if (PT.moved) return; const [x, y] = pos(ev), p = ptPick(x, y); if (!p) return; if (rm) { if (removePassive(save, p.id)) snd("click"); else snd("error"); } else if (addPassive(save, p.id)) snd("equip"); else snd("error"); saveGame(); refreshTop(); ptInfo(); };
-  cv.addEventListener("click", (ev) => act(ev, ev.shiftKey || ev.ctrlKey));
-  cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); act(ev, true); });
+  const act = (ev) => { if (PT.moved) return; const [x, y] = pos(ev), p = ptPick(x, y); PT.sel = p || null; snd("click"); ptInfo(); };   // 클릭은 선택만: 효과를 보고 [찍기]로 확정
+  cv.addEventListener("click", act);
+  cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); });
   ptInfo(); ptDraw();
 }
 
@@ -3742,7 +3749,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-025858";
+const BUILD_ID = "20261028-030805";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;

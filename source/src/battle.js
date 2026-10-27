@@ -100,6 +100,7 @@ function createBattle(sv, node) {
     const sk = skillOf(inst); sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
   });
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
+  b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
   return b;
 }
 
@@ -204,7 +205,7 @@ function applyDamage(b, e, dmg, o) {
   if (e.dead) return 0;
   o = o || {};
   if (e.shield) dmg *= 0.1;
-  e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg;
+  e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time;
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   if (!b.noFx && !o.noText) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
   if (e.charge) e.charge.dealt += dmg;
@@ -380,7 +381,8 @@ function stepBattle(b, dt) {
     if (e.tier === "boss") bossTick(b, e, dt);
     if (e.traits.length && e.traits.includes("regen")) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.025 * dt);
     if (e.stun > 0) continue;
-    if (e.col > e.range || (e.tier === "normal" && e.col === 2 && e.range <= 2 && !occupants(b, e.lane, 1).length && !e.charge)) {   // 앞줄이 비면 근거리 유닛이 채운다
+    const stalled = b.time - b.lastDealT > 8 && e.col > b.maxReach;   // 사거리 밖에 멈춘 적 때문에 전투가 끝나지 않는 경우: 8초간 피해가 없으면 앞으로 다가온다
+    if (e.col > e.range || stalled || (e.tier === "normal" && e.col === 2 && e.range <= 2 && !occupants(b, e.lane, 1).length && !e.charge)) {   // 앞줄이 비면 근거리 유닛이 채운다
       e.moveCd -= d2;
       if (e.moveCd <= 0) {
         if (canPlace(b, e, e.lane, e.col - 1, true)) { e.col -= 1; e.moveCd = e.moveT; if (e.tier !== "normal") displace(b, e); }

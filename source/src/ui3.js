@@ -151,7 +151,7 @@ function openSkills() {
 }
 
 // ---------- 패시브 (방사형 트리) ----------
-const PT = { sc: 0.4, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
+const PT = { sel: null, sc: 0.4, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
 function ptDraw() {
   const cv = PT.cv; if (!cv || !cv.isConnected) return; const g = cv.getContext("2d"), W = cv.width, H = cv.height, t = performance.now() / 1000;
   g.clearRect(0, 0, W, H); g.save(); g.translate(W / 2 + PT.ox, H / 2 + PT.oy); g.scale(PT.sc, PT.sc);
@@ -165,6 +165,7 @@ function ptDraw() {
     g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);
     g.fillStyle = on ? c : "#14102a"; g.fill(); g.lineWidth = (p.kind === "small" ? 2 : 3) / PT.sc * 0.9; g.strokeStyle = on ? "#fff" : can ? `rgba(255,255,255,${0.55 + 0.4 * Math.sin(t * 5)})` : c + "88"; g.stroke();
     if (p.kind === "notable") { g.beginPath(); g.arc(p.x, p.y, r - 4, 0, 7); g.strokeStyle = on ? "#0008" : c + "66"; g.stroke(); }
+    if (PT.sel === p) { g.strokeStyle = "#fff"; g.lineWidth = 3; g.setLineDash([5, 4]); g.beginPath(); g.arc(p.x, p.y, r + 9, 0, 7); g.stroke(); g.setLineDash([]); }
     if (PT.hover === p) { g.strokeStyle = "#ffd24a"; g.lineWidth = 3; g.beginPath(); g.arc(p.x, p.y, r + 6, 0, 7); g.stroke(); }
   }
   g.restore();
@@ -172,15 +173,18 @@ function ptDraw() {
 }
 function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 16 : p.kind === "notable" ? 12 : 8) + 6; if (d < r && d < bd) { bd = d; best = p; } } return best; }
 function ptInfo() {
-  const el = $("#ptinfo"); if (!el) return; const p = PT.hover;
+  const el = $("#ptinfo"); if (!el) return; const p = PT.hover || PT.sel;
+  { const a = $("#ptact"), q = PT.sel; if (a) a.innerHTML = q ? `<span>선택: <b style="color:${q.arm === "bridge" ? "#ccc" : P_ARMS.find((x) => x.id === q.arm).color}">${q.name}</b> <span class="dim">(${q.cost}점)</span></span><button class="btn pri" data-a="ptadd" ${canAddPassive(save, q.id) ? "" : "disabled"}>찍기</button><button class="btn" data-a="ptrm" ${canRemovePassive(save, q.id) ? "" : "disabled"}>회수</button>` : `<span class="dim">노드를 클릭하면 효과가 보이고, 아래 [찍기] 버튼으로 찍습니다</span>`; }
   const sp = passivePoints(save) - passiveSpent(save); $("#ptpts").textContent = `${sp} / ${passivePoints(save)}`;
-  if (!p) { el.innerHTML = `<span class="dim">노드에 마우스를 올려 효과를 확인하세요 · 클릭: 찍기 · 우클릭/Shift+클릭: 회수 · 드래그: 이동 · 휠: 확대</span>`; return; }
+  if (!p) { el.innerHTML = `<span class="dim">노드를 클릭하거나 마우스를 올려 효과를 확인하세요 · 드래그: 이동 · 휠: 확대</span>`; return; }
   const on = passiveHas(save, p.id), kind = { small: "", notable: "★ 주요 ", key: "◆ 핵심 ", bridge: "" }[p.kind];
   el.innerHTML = `<b style="color:${p.arm === "bridge" ? "#ccc" : P_ARMS.find((a) => a.id === p.arm).color}">${kind}${p.name}</b> <span class="dim">(${p.cost}점)</span> — ${p.text} ${on ? `<span style="color:#8dff9a">활성</span>` : canAddPassive(save, p.id) ? `<span style="color:#ffe08a">찍을 수 있음</span>` : `<span class="dim">${passivePoints(save) - passiveSpent(save) < p.cost ? "포인트 부족" : "인접 노드를 먼저 찍으세요"}</span>`}`;
 }
 function openPassives() {
-  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button></div><canvas id="ptree" width="860" height="360"></canvas><div class="ptip" id="ptinfo"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button></div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
     preset: () => { resetPassives(save); snd("close"); saveGame(); refreshTop(); ptInfo(); },
+    ptadd: () => { if (PT.sel && addPassive(save, PT.sel.id)) snd("equip"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
+    ptrm: () => { if (PT.sel && removePassive(save, PT.sel.id)) snd("click"); else snd("error"); saveGame(); refreshTop(); ptInfo(); },
   } });
   const cv = PT.cv = $("#ptree"); cancelAnimationFrame(PT.raf);
   const pos = (ev) => { const r = cv.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * cv.width, ((ev.clientY - r.top) / r.height) * cv.height]; };
@@ -188,9 +192,9 @@ function openPassives() {
   cv.addEventListener("mousemove", (ev) => { const [x, y] = pos(ev); if (PT.drag && ev.buttons) { const dx = x - PT.drag.x, dy = y - PT.drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) PT.moved = true; if (PT.moved) { PT.ox = PT.drag.ox + dx; PT.oy = PT.drag.oy + dy; } } else { const h = ptPick(x, y); if (h !== PT.hover) { PT.hover = h; ptInfo(); } cv.style.cursor = h ? "pointer" : "grab"; } });
   window.addEventListener("mouseup", () => { PT.drag = null; }, { once: true });
   cv.addEventListener("wheel", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), k = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = clamp(PT.sc * k, 0.3, 1.6), wx = (x - cv.width / 2 - PT.ox) / PT.sc, wy = (y - cv.height / 2 - PT.oy) / PT.sc; PT.sc = ns; PT.ox = x - cv.width / 2 - wx * ns; PT.oy = y - cv.height / 2 - wy * ns; }, { passive: false });
-  const act = (ev, rm) => { if (PT.moved) return; const [x, y] = pos(ev), p = ptPick(x, y); if (!p) return; if (rm) { if (removePassive(save, p.id)) snd("click"); else snd("error"); } else if (addPassive(save, p.id)) snd("equip"); else snd("error"); saveGame(); refreshTop(); ptInfo(); };
-  cv.addEventListener("click", (ev) => act(ev, ev.shiftKey || ev.ctrlKey));
-  cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); act(ev, true); });
+  const act = (ev) => { if (PT.moved) return; const [x, y] = pos(ev), p = ptPick(x, y); PT.sel = p || null; snd("click"); ptInfo(); };   // 클릭은 선택만: 효과를 보고 [찍기]로 확정
+  cv.addEventListener("click", act);
+  cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); });
   ptInfo(); ptDraw();
 }
 
