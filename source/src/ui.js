@@ -96,7 +96,7 @@ function nodeToBattle(n) {
   if (n.kind === "rift") return { kind: "rift", act: 11, tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void") return { kind: "void", act: 10, tier: 30, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
-  if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, save.rift.best - 3), name: "황금 보물고", level: 100 };
+  if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
   if (n.kind === "hive") return { kind: "hive", act: 10, tier: HIVE_TIERS[(G.hiveStage || 1) - 1], vsel: G.hiveStage || 1, name: `화염 정령왕 ${G.hiveStage || 1}단계`, level: 100 };
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
   if (n.kind === "elite" || n.kind === "treasure") return Object.assign({}, n, { stage: n.need + (n.kind === "elite" ? 1 : 3) });
@@ -121,7 +121,7 @@ function mapPanel() {
     <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
     btnOk = un; btn = "도전";
   } else if (n.kind === "vault") {
-    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×3 (내 최고 균열 단계 −3 난이도)</div><div class="pline dim">장비·재료 드랍은 적고 골드가 중심입니다. 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
+    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">장비·재료 드랍은 적고 골드가 중심입니다. 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
   } else if (n.kind === "hive") {
     const S = G.hiveStage = Math.max(1, Math.min(4, G.hiveStage || 1)), need = HIVE_NEED[S - 1], ok = save.rift.best >= need;
     h += `<div class="pline">정령의 불씨 <b>${save.keys2 || 0}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="hsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="hsp">+</button> <span class="dim">난이도 균열 ${HIVE_TIERS[S - 1]}단계 수준</span></div>
