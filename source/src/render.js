@@ -41,7 +41,7 @@ function drawEnemy(ctx, b, e, time) {
   if (e.tier === "boss") {
     const bob = Math.sin(time * 2.2 + e.id) * 3, p = e.winding > 0 ? 1 - e.winding / e.windup : 0;
     const opt = { alpha: appear, sy: 1 + Math.sin(time * 2.2 + e.id) * 0.012 + p * 0.05, sx: 1 - p * 0.02 };
-    let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.65)"; else if (e.charge) tint = `rgba(255,${60 + Math.sin(time * 18) * 40},40,${0.35 + 0.2 * Math.sin(time * 18)})`; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
+    let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.65)"; else if (e.charge) tint = `rgba(255,${60 + Math.sin(time * 18) * 40},40,${0.35 + 0.2 * Math.sin(time * 18)})`; else if (e.shock > 0) tint = "rgba(255,240,110,.35)"; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
     const off = e.charge ? Math.sin(time * 40) * 3 : 0;
     ctx.save(); ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(x, y - 2, D.w * 50, 14, 0, 0, 7); ctx.fill(); ctx.restore();
     drawBossSprite(ctx, bossArt(D), x + off - p * 10, y + bob * 0.3, D.sc, Object.assign(opt, { tint, hue: D.hue }));
@@ -57,7 +57,7 @@ function drawEnemy(ctx, b, e, time) {
   if (e.hurtT > 0) { anim = "hurt"; t = 0; } else if (e.winding > 0) { anim = "attack"; t = (1 - e.winding / e.windup) * 0.49; } else if (e.col > e.range) { anim = "walk"; t = e.age; }
   const af = animFrame(kind, anim, t);
   ctx.save(); ctx.globalAlpha = 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x, y, 13 * sc / 2 + 6, 4, 0, 0, 7); ctx.fill(); ctx.restore();
-  let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.6)"; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
+  let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.6)"; else if (e.shock > 0) tint = "rgba(255,240,110,.35)"; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
   drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
   if (e.tier === "elite" || e.hp < e.maxHp) drawEnemyBar(ctx, e, x, top);
   if (e.winding > 0) drawPx(ctx, "!", x - 4, top - 8, "#ff5a5a", 3);

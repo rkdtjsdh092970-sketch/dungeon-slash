@@ -140,7 +140,7 @@ function makeEnemy(b, type, lane, col) {
   const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX : 1;
   const e = { id: b.nextId++, type, def: D, tier: isBoss ? "boss" : D.tier, w: isBoss ? D.w : 1, h: isBoss ? D.h : 1, lane, col, va, traits: D.traits || [],
     hp: D.hp * b.hpM * bx * gh, maxHp: D.hp * b.hpM * bx * gh, atk: D.atk * b.atkM * ga, range: D.range, interval: D.interval / b.haste, windup: D.windup,
-    moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, vx: null, vy: null, age: 0, dead: false };
+    moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, shock: 0, vx: null, vy: null, age: 0, dead: false };
   e.moveT = CFG.MOVE_TIME * (e.traits.includes("fast") ? 0.55 : 1); e.moveCd = e.moveT;
   e.dots = []; e.dotMul = isBoss ? CFG.DOT_BOSS : e.tier === "elite" ? CFG.DOT_ELITE : 1;
   { const dd = (isBoss ? ENEMY_DEF.boss : ENEMY_DEF[type] || ENEMY_DEF.grunt).slice(); for (const t of e.traits) if (TRAIT_DEF[t]) { dd[0] += TRAIT_DEF[t][0]; dd[1] += TRAIT_DEF[t][1]; }
@@ -184,6 +184,15 @@ function vsMult(sk, stats, e) {
   let sb = 0, gb = 0;
   for (const t of tagsOf(e)) { sb += sk.bonus[t] || 0; gb += stats.add[t] || 0; }
   return (1 + sb) * (1 + gb);
+}
+function statusMul(st, sk, e) {   // 출혈·중독·점화·둔화·감전 중인 적에게 주는 추가 피해 (곱연산 · 스킬 자체 보너스 + 장비 보너스)
+  let m = 1; const has = (k) => e.dots.some((d) => d.k === k), v = sk.vs;
+  if (has("bleed")) m *= (1 + st.vsBleed + (v && v.bleed || 0)) * st.bleedMore;
+  if (has("poison")) m *= (1 + st.vsPoison + (v && v.poison || 0)) * st.poisonMore;
+  if (has("ignite")) m *= (1 + st.vsIgnite + (v && v.ignite || 0)) * st.igniteMore;
+  if (e.chill > 0) m *= (1 + st.vsChill + (v && v.chill || 0)) * st.chillMore;
+  if (e.shock > 0) m *= (1 + st.vsShock + (v && v.shock || 0)) * st.shockMore;
+  return m;
 }
 function pickPrimary(b, sk) {
   let cand = b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= sk.range && e.hp > 0);
@@ -246,7 +255,7 @@ function applyDamage(b, e, dmg, o) {
 function hitEnemy(b, e, mult, sk, o) {
   o = o || {}; const st = b.stats, mag = sk.dtype === "mag";
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
-  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
+  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
   { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; if (st.executeDmg && e.hp < e.maxHp * 0.3) dmg *= 1 + st.executeDmg; }   // 스킬 종류 패시브
   // 방어력(물리) / 마법저항(마법): 감소 후 무시 → 피해 감소율 = X / (X + C)
@@ -425,7 +434,7 @@ function stepBattle(b, dt) {
   for (const e of b.enemies.slice()) {
     if (e.dead) continue;
     e.flash = Math.max(0, e.flash - dt); e.hurtT = Math.max(0, e.hurtT - dt); e.age += dt;
-    const sp = e.chill > 0 ? 0.5 : 1; if (e.chill > 0) e.chill -= dt; const d2 = dt * sp;
+    const sp = (e.chill > 0 ? 0.5 : 1) * (e.shock > 0 ? 0.75 : 1); if (e.chill > 0) e.chill -= dt; if (e.shock > 0) e.shock -= dt; const d2 = dt * sp;
     if (e.tier === "boss") bossTick(b, e, dt);
     if (e.traits.length && e.traits.includes("regen")) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.025 * dt);
     if (e.stun > 0) continue;

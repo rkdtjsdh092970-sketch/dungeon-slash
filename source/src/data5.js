@@ -8,7 +8,7 @@ Object.assign(CFG, {
   IGNITE: { coef: 0.38, dur: 3, cap: 1 },    // 점화: 90%를 3초에 걸쳐, 가장 강한 1개만 유지
   DOT_BOSS: 0.5, DOT_ELITE: 0.8,             // 보스/정예는 지속 피해를 덜 받는다
 });
-const STATUS_INFO = { bleed: { name: "출혈", color: "#e03a4a", st: "phys" }, poison: { name: "중독", color: "#6ae04a", st: "poison" }, ignite: { name: "점화", color: "#ff9a30", st: "fire" } };
+const STATUS_INFO = { shock: { name: "감전", color: "#ffe45a", st: "light" }, bleed: { name: "출혈", color: "#e03a4a", st: "phys" }, poison: { name: "중독", color: "#6ae04a", st: "poison" }, ignite: { name: "점화", color: "#ff9a30", st: "fire" } };
 (function () {
   const S = (o) => Object.assign({ slot: "active", bonus: {}, side: 1 }, o);
   SKILLS.push(
@@ -178,3 +178,41 @@ const UX_PATCH = {
   apex: [["atkPct", 0.07], ["magPct", 0.07]], dimshoes: [["atkPct", 0.07], ["magPct", 0.07], ["hpPct", 0.1]], startear: [["atkPct", 0.07], ["magPct", 0.07]], soulpact: [["atkPct", 0.07], ["magPct", 0.07]],
 };
 for (const id in UX_PATCH) { const u = UNIQUE_BY_ID[id]; if (u) for (const [k, v] of UX_PATCH[id]) if (!u.mods.some((m) => m[0] === k)) u.mods.push([k, uRoll(k, v)]); }
+
+// ---- 상태이상 대상 추가 피해 (v3.17): 출혈·중독·점화(화상)·둔화·감전 중인 적을 더 세게 때리는 스킬 · 옵션 · 핵심 고유 ----
+Object.assign(MOD_LABEL, {
+  bleedMore: ["출혈 중인 적에게 주는 피해 (곱연산)", "more"], poisonMore: ["중독 중인 적에게 주는 피해 (곱연산)", "more"], igniteMore: ["점화 중인 적에게 주는 피해 (곱연산)", "more"], chillMore: ["둔화 중인 적에게 주는 피해 (곱연산)", "more"], shockMore: ["감전 중인 적에게 주는 피해 (곱연산)", "more"],
+  vsBleed: ["출혈 중인 적 추가 피해", "%"], vsPoison: ["중독 중인 적 추가 피해", "%"], vsIgnite: ["점화 중인 적 추가 피해", "%"], vsChill: ["둔화 중인 적 추가 피해", "%"], vsShock: ["감전 중인 적 추가 피해", "%"], shockChance: ["감전 확률", "%"],
+});
+["vsBleed", "vsPoison", "vsIgnite", "vsChill", "vsShock", "shockChance"].forEach((k) => U_SCALE.add(k));
+{
+  const A4 = ["weapon", "gloves", "ring", "neck"];
+  AFFIXES.push(
+    { k: "vsBleed", name: "출혈 중인 적에게 피해 %", pct: true, range: [0.06, 0.12], w: 3, slots: A4, minIlvl: 6 }, { k: "vsPoison", name: "중독 중인 적에게 피해 %", pct: true, range: [0.06, 0.12], w: 3, slots: A4, minIlvl: 6 },
+    { k: "vsIgnite", name: "점화 중인 적에게 피해 %", pct: true, range: [0.06, 0.12], w: 3, slots: A4, minIlvl: 6 }, { k: "vsChill", name: "둔화 중인 적에게 피해 %", pct: true, range: [0.06, 0.12], w: 3, slots: A4, minIlvl: 6 },
+    { k: "vsShock", name: "감전 중인 적에게 피해 %", pct: true, range: [0.06, 0.12], w: 3, slots: A4, minIlvl: 6 }, { k: "shockChance", name: "감전 확률", pct: true, range: [0.05, 0.1], w: 4, slots: ["weapon", "gloves", "ring"], minIlvl: 4 },
+  );
+  const T = (o) => Object.assign({ slot: "active", bonus: {}, side: 1, unlock: 6 }, o);
+  SKILLS.push(
+    T({ id: "butcher", name: "도살의 낫질", kind: "cone", cd: 5, mult: 2.2, sideM: 0.8, range: 3, unlock: 5, color: "#ff6a6a", icon: "butcher", sfx: "claw", dtype: "phys", mana: 16, bleed: 0.4, vs: { bleed: 0.9 }, desc: "[출혈 연계] 부채꼴로 베어 출혈을 일으킨다. 이미 출혈 중인 적에게는 +90% 피해", shape: "cone" }),
+    T({ id: "venomburst", name: "독 폭발", kind: "single", cd: 8, mult: 6, range: 5, unlock: 6, color: "#8aff6a", icon: "venomburst", sfx: "venom", dtype: "phys", mana: 20, poison: 0.6, vs: { poison: 1.0 }, desc: "[중독 연계] 한 대상에 독을 터뜨려 중독시킨다. 이미 중독된 적에게는 +100% 피해", shape: "single" }),
+    T({ id: "scorchbrand", name: "작열 낙인", kind: "single", cd: 8, mult: 8, range: 6, unlock: 6, color: "#ff9a30", icon: "scorchbrand", sfx: "meteor", dtype: "mag", elem: "fire", mana: 28, ignite: 0.8, vs: { ignite: 1.0 }, desc: "[점화 연계] 한 대상에 낙인을 찍어 점화시킨다. 이미 점화된 적에게는 +100% 피해", shape: "single" }),
+    T({ id: "shatter", name: "빙결 파쇄", kind: "single", cd: 8, mult: 8, range: 6, unlock: 6, color: "#8ae0ff", icon: "shatter", sfx: "frost", dtype: "mag", elem: "cold", mana: 28, chill: 1.0, vs: { chill: 1.2 }, desc: "[냉기 연계] 한 대상을 얼려 둔화시킨다. 이미 둔화된 적은 산산이 부서져 +120% 피해", shape: "single" }),
+    T({ id: "shockspray", name: "전자기 난사", kind: "spray", cd: 6, mult: 0.55, count: 8, range: 5, unlock: 7, color: "#ffe45a", icon: "shockspray", sfx: "shard", dtype: "mag", elem: "light", mana: 24, shock: 0.5, proj: "shard", desc: "[감전 연계] 번개 구슬 8발을 난사한다. 맞은 적은 감전되어 4초간 25% 느려진다", shape: "spray" }),
+    T({ id: "discharge", name: "방전 처형", kind: "single", cd: 8, mult: 9, range: 6, unlock: 7, color: "#fff6b0", icon: "discharge", sfx: "thunder", dtype: "mag", elem: "light", mana: 30, shock: 1.0, vs: { shock: 1.0 }, desc: "[감전 연계] 한 대상에 벼락을 내리꽂아 반드시 감전시킨다. 이미 감전된 적에게는 +100% 피해", shape: "single" }),
+  );
+  // ---- 핵심 고유 (소버린): 상태이상 중인 적에게 곱연산으로 큰 피해. 두 부위를 모두 갖추면 확실히 강하다 ----
+  UNIQUES.push(
+    U("hookblade", "도살자의 갈고리", "weapon", 3, "common", 8, [["bleedChance", [0.38, 0.45]], ["bleedMore", 1.35], ["dotDmg", [0.45, 0.55]], ["physDmg", [0.3, 0.38]]], "한 번 걸리면 놓아주지 않는다."),
+    U("bloodbrand", "붉은 낙인 장갑", "gloves", 3, "common", 8, [["bleedMore", 1.2], ["vsBleed", [0.3, 0.4]], ["bleedChance", [0.25, 0.3]], ["dotDur", [0.25, 0.3]]], "피 묻은 자국이 낙인이 된다."),
+    U("toxheart", "맹독의 심장", "neck", 3, "common", 8, [["poisonChance", [0.38, 0.45]], ["poisonMore", 1.35], ["dotDmg", [0.5, 0.6]], ["dotDur", 0.3]], "뛸 때마다 독이 돈다."),
+    U("fangseal", "독니 인장", "ring", 3, "common", 8, [["poisonMore", 1.2], ["vsPoison", [0.3, 0.4]], ["poisonChance", [0.25, 0.3]], ["physDmg", [0.2, 0.25]]], "물린 곳에서 번진다."),
+    U("cinderstaff", "작열의 불씨 지팡이", "weapon", 3, "common", 8, [["igniteChance", [0.38, 0.45]], ["igniteMore", 1.35], ["fireDmg", [0.6, 0.75]], ["magPct", [0.25, 0.3]]], "불붙은 것은 더 잘 탄다."),
+    U("scorchrobe", "화상의 예복", "armor", 3, "common", 8, [["igniteMore", 1.2], ["vsIgnite", [0.3, 0.4]], ["igniteChance", [0.28, 0.34]], ["fireDmg", [0.35, 0.45]], ["hpPct", [0.2, 0.26]]], "입은 자도 데이지 않는 불길."),
+    U("rimescepter", "서리결정 홀", "weapon", 3, "common", 8, [["chillMore", 1.35], ["coldDmg", [0.6, 0.75]], ["magPct", [0.25, 0.3]], ["spellCrit", [0.08, 0.1]]], "얼어붙은 것은 부서지기 쉽다."),
+    U("shatterglove", "빙결 쇄도의 장갑", "gloves", 3, "common", 8, [["chillMore", 1.2], ["vsChill", [0.3, 0.4]], ["coldDmg", [0.35, 0.45]], ["penElem", 0.12]], "쥐면 소리 없이 금이 간다."),
+    U("arcspear", "뇌전의 심판창", "weapon", 3, "common", 8, [["shockChance", [0.4, 0.5]], ["shockMore", 1.35], ["lightDmg", [0.6, 0.75]], ["chainDmg", [0.4, 0.5]]], "번개는 이미 흔들리는 것을 노린다."),
+    U("shockcrown", "감전의 왕관", "helm", 3, "common", 8, [["shockChance", [0.28, 0.34]], ["shockMore", 1.2], ["vsShock", [0.3, 0.4]], ["spellCrit", [0.1, 0.13]], ["magPct", [0.2, 0.25]]], "머리카락이 곤두서는 순간 승부가 난다."),
+  );
+  UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
+}

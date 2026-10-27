@@ -24,9 +24,9 @@ function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) re
 
 // ---- 장비/스킬 생성 ----
 // 화염 정령왕 드랍: 화염·점화·지속 피해 계열 옵션이 잘 붙는다
-const FIRE_BIAS = { fireDmg: 6, igniteChance: 6, dotDmg: 5, elemDmg: 4, penElem: 4, magPct: 2, dotDur: 3 };
-const PHYS_BIAS = { physDmg: 6, atkPct: 4, critChance: 4, critDmg: 4, bleedChance: 6, poisonChance: 4, dotDmg: 4, ignoreDef: 5, shredDef: 4, dotDur: 3 };
-const LIGHT_BIAS = { lightDmg: 7, elemDmg: 4, penElem: 4, magPct: 4, spellCrit: 4, chainDmg: 5, critDmg: 2, ignoreRes: 4, shredRes: 3 };
+const FIRE_BIAS = { vsIgnite: 4, fireDmg: 6, igniteChance: 6, dotDmg: 5, elemDmg: 4, penElem: 4, magPct: 2, dotDur: 3 };
+const PHYS_BIAS = { vsBleed: 4, vsPoison: 3, physDmg: 6, atkPct: 4, critChance: 4, critDmg: 4, bleedChance: 6, poisonChance: 4, dotDmg: 4, ignoreDef: 5, shredDef: 4, dotDur: 3 };
+const LIGHT_BIAS = { vsShock: 4, shockChance: 4, lightDmg: 7, elemDmg: 4, penElem: 4, magPct: 4, spellCrit: 4, chainDmg: 5, critDmg: 2, ignoreRes: 4, shredRes: 3 };
 EB.hive.bias = FIRE_BIAS; EB.titan.bias = PHYS_BIAS; EB.storm.bias = LIGHT_BIAS;
 function genItem(sv, ilvl, rarity, slot, setId, bias) {
   slot = slot || pick(SLOTS);
@@ -70,7 +70,7 @@ function remapUniqueItem(it) {
 }
 // 이터널 이상 고유 장비: 고정 능력 외에 등급별로 추가 옵션이 붙는다 (이터널 2개 · 소버린 3개 · 엔젤릭 4개) — 전설보다 확실히 좋아야 한다. 이미 가진 장비는 불러올 때 한 번 붙는다.
 const UX_COUNT = { 2: 2, 3: 3, 4: 3 }, UX_BASE = { 2: 1.05, 3: 1.2, 4: 1.35 };
-const UX_PHYS = new Set(["atkPct", "atkMore", "physDmg", "critChance", "bleedChance", "poisonChance", "ignoreDef", "shredDef", "atkFlat"]), UX_MAG = new Set(["magPct", "magMore", "spellCrit", "fireDmg", "coldDmg", "lightDmg", "voidDmg", "elemDmg", "igniteChance", "chainDmg", "chainJumps", "ignoreRes", "penElem", "magDmg", "magFlat", "manaPct", "manaCostRed", "manaToSpell", "dmgPerMana"]), UX_DEF = new Set(["hpPct", "hpMore", "defPct", "defMore", "regen", "dmgTaken", "dodge", "bossTaken", "rangedTaken", "lifesteal", "killHeal"]);
+const UX_PHYS = new Set(["atkPct", "atkMore", "physDmg", "critChance", "bleedChance", "poisonChance", "ignoreDef", "shredDef", "atkFlat", "vsBleed", "vsPoison", "bleedMore", "poisonMore"]), UX_MAG = new Set(["magPct", "magMore", "spellCrit", "fireDmg", "coldDmg", "lightDmg", "voidDmg", "elemDmg", "igniteChance", "chainDmg", "chainJumps", "ignoreRes", "penElem", "magDmg", "magFlat", "manaPct", "manaCostRed", "manaToSpell", "dmgPerMana", "vsIgnite", "vsChill", "vsShock", "shockChance", "igniteMore", "chillMore", "shockMore"]), UX_DEF = new Set(["hpPct", "hpMore", "defPct", "defMore", "regen", "dmgTaken", "dodge", "bossTaken", "rangedTaken", "lifesteal", "killHeal"]);
 function uxBias(D) {   // 고유의 성격(물리/마법/방어)에 맞는 옵션이 잘 붙는다. 골드·경험치 옵션은 잘 붙지 않는다
   const base = { goldFind: 0.15, expFind: 0.15, mf: 0.4 };
   if (D.pool === "fire") return Object.assign(base, FIRE_BIAS); if (D.pool === "phys") return Object.assign(base, PHYS_BIAS); if (D.pool === "light") return Object.assign(base, LIGHT_BIAS);
@@ -149,6 +149,13 @@ const expNeed = (level) => CFG.EXP_BASE * Math.pow(CFG.EXP_GROWTH, (level - 1) /
 function setCounts(sv) { const c = {}; for (const slot of EQ_SLOTS) { const it = sv.equipped[slot]; if (it && it.setId) c[it.setId] = (c[it.setId] || 0) + 1; } return c; }
 const mfEff = (mf) => { mf = Math.max(0, mf); return mf / (1 + mf / CFG.MF_HALF); };   // MF 체감
 const towerMf = (tier) => (tier ? CFG.MF_TOWER_STEP * tier + CFG.MF_TOWER_20 * Math.floor(tier / 20) : 0);
+// 상태이상 대상 추가 피해: 해당 상태가 걸려 있을 확률(가동률)을 확률 스탯에서 어림해 전투력에 반영한다
+function statusPow(s) {
+  const up = (c) => Math.min(0.85, (c || 0) * 1.2);
+  let f = 1;
+  for (const [ch, v, m] of [[s.bleedChance, s.vsBleed, s.bleedMore], [s.poisonChance, s.vsPoison, s.poisonMore], [s.igniteChance, s.vsIgnite, s.igniteMore], [s.shockChance, s.vsShock, s.shockMore], [s.coldDmg > 0.3 ? 0.5 : 0, s.vsChill, s.chillMore]]) f *= 1 + up(ch) * ((1 + v) * m - 1);
+  return f;
+}
 function computeStats(sv) {
   const lm = 1 + CFG.LEVEL_STEP * (sv.level - 1), ml = 1 + CFG.MANA_LV * (sv.level - 1);
   const s = { lm, atkFlat: CFG.BASE_ATK, magFlat: CFG.BASE_ATK, hpFlat: CFG.BASE_HP, def: 0, atkPct: 0, magPct: 0, hpPct: 0, dodge: CFG.BASE_DODGE, cdr: 0, critChance: CFG.BASE_CRIT, critDmg: CFG.BASE_CRITDMG,
@@ -157,13 +164,14 @@ function computeStats(sv) {
     physDmg: 0, magDmg: 0, elemDmg: 0, fireDmg: 0, coldDmg: 0, lightDmg: 0, voidDmg: 0, ignoreDef: 0, ignoreRes: 0, shredDef: 0, shredRes: 0, penElem: 0,
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
+    vsBleed: 0, vsPoison: 0, vsIgnite: 0, vsChill: 0, vsShock: 0, bleedMore: 1, poisonMore: 1, igniteMore: 1, chillMore: 1, shockMore: 1, shockChance: 0,
     singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
       case "boss": case "elite": case "ranged": case "normal": s.add[k] += v; break;
       case "lanes": s.laneBonus += v; break;
-      case "hpMore": case "atkMore": case "magMore": case "defMore": s[k] *= v; break;
+      case "hpMore": case "atkMore": case "magMore": case "defMore": case "bleedMore": case "poisonMore": case "igniteMore": case "chillMore": case "shockMore": s[k] *= v; break;
       case "dodgeCap": case "cdrCap": s[k] = Math.max(s[k], v); break;
       case "magCrit": case "noDodge": s[k] = 1; break;
       default: if (k in s) s[k] += v;
@@ -290,7 +298,7 @@ const POWER_RAW = 6;   // 방어 효과 계산에 쓰는 "실제로 맞는 평�
 let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
 function playerPower(s) {
   const d = powerDetail(s);
-  return POWER_K * d.dps * d.ehp * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
+  return POWER_K * d.dps * d.ehp * statusPow(s) * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
 }
 const enemyIndex = (act, stage) => CFG.H0 * CFG.A0 * actScale(act) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * (1 + CFG.STAGE_ATK * (stage - 1));
 const recPower = (act, stage) => CFG.REC_K * (stage === CFG.STAGES ? CFG.REC_BOSS : 1) * enemyIndex(act, stage);
@@ -457,7 +465,8 @@ function addExp(sv, amount) {
 const ENH_EFF = [0.6, 0.6, 0.6, 0.75, 0.9, 1.0];
 const enhMul = (it) => (it.ilvl > 10 ? ENH_EFF[Math.min(5, it.rarity | 0)] : 1);   // 액트(아이템 레벨 10 이하) 장비는 그대로 — 엔드게임 장비에만 적용
 const ENH_RATE = [1, 1, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3];
-const enhCost = (it) => ({ gold: Math.round(40 * gScale(it.ilvl) * (1 + (it.enh || 0) * 0.6)), ore: 2 + (it.enh || 0) });
+const gGold = (ilvl) => Math.pow(gScale(ilvl), 0.8);   // 골드 비용은 아이템 레벨에 따라 장비 능력치(1.55배씩)보다 완만하게 오른다 — 엔드게임에서 골드가 모자라 강화·재굴림이 막히지 않게
+const enhCost = (it) => ({ gold: Math.round(40 * gGold(it.ilvl) * (1 + (it.enh || 0) * 0.6)), ore: 2 + (it.enh || 0) });
 function enhance(sv, it) {
   if ((it.enh || 0) >= 10) return { ok: false, msg: "최대 강화입니다" };
   const c = enhCost(it); if (sv.gold < c.gold || sv.ore < c.ore) return { ok: false, msg: "재료가 부족합니다" };
@@ -475,7 +484,7 @@ function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), or
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
-const rerollCost = (it) => { const n = Math.min(14, it.rr || 0), m = Math.pow(1.45, n); return { gold: Math.round(itemValue(it) * 2.5 * m * (it.ilvl > 10 ? 1.6 : 1)), ore: Math.round((3 + n) * (it.ilvl > 10 ? 1.5 : 1)) }; };   // 같은 장비를 거듭 재굴림할수록 비싸진다
+const rerollCost = (it) => { const n = Math.min(14, it.rr || 0), m = Math.pow(1.45, n); return { gold: Math.round(7 * gGold(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5) * 2.5 * m), ore: Math.round((3 + n) * (it.ilvl > 10 ? 1.5 : 1)) }; };   // 같은 장비를 거듭 재굴림할수록 비싸진다
 function rerollAffix(sv, it, idx) {
   const c = rerollCost(it); if (sv.gold < c.gold || sv.ore < c.ore) return false;
   const old = it.affixes[idx]; if (!old) return false;

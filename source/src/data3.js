@@ -209,7 +209,7 @@ UNIQUES.forEach((u) => { u.ico = u.slot; });
 const uniqTier = (id) => (UNIQUE_BY_ID[id] ? U_TIERS[UNIQUE_BY_ID[id].tier] : U_TIERS[1]);
 // 등급 보정: 높은 등급일수록 유리한 수치가 커진다 (페널티·플래그·상한은 그대로)
 const U_SCALE = new Set(["executeDmg", "killHeal", "bossTaken", "rangedTaken", "atkPct", "magPct", "hpPct", "defPct", "cdr", "critChance", "critDmg", "spellCrit", "allDmg", "aoeDmg", "lifesteal", "boss", "elite", "normal", "ranged", "fireDmg", "coldDmg", "lightDmg", "voidDmg", "elemDmg", "physDmg", "magDmg", "dotDmg", "penElem", "ignoreDef", "ignoreRes", "shredDef", "shredRes", "manaPct", "manaToSpell", "dmgPerMana", "bleedChance", "poisonChance", "igniteChance", "chainDmg", "manaCostRed", "regen", "manaRegen", "manaRegenFlat", "manaShield", "mf", "goldFind", "expFind", "dotDur"]);
-const U_MORE = new Set(["atkMore", "magMore", "hpMore"]);
+const U_MORE = new Set(["atkMore", "magMore", "hpMore", "bleedMore", "poisonMore", "igniteMore", "chillMore", "shockMore"]);
 function umodScale(def, k, v) {
   const f = U_TIERS[def.tier].mult; if (f === 1) return v;
   if (U_SCALE.has(k) && v > 0) return v * f; if (k === "dmgTaken" && v < 0) return v * Math.min(1.8, f);

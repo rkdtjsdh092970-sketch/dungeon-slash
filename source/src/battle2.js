@@ -10,6 +10,7 @@ function applyStatus(b, e, sk, dealt) {
     if (list.length >= C.cap) { const w = list.reduce((a, d) => (d.dps < a.dps ? d : a)); if (w.dps >= dps) { w.t = Math.max(w.t, dur); continue; } e.dots.splice(e.dots.indexOf(w), 1); }
     e.dots.push({ k, dps, t: dur });
   }
+  { const sc = (sk.shock || 0) + (sk.elem === "light" ? st.shockChance : 0); if (sc > 0 && Math.random() < sc) e.shock = Math.max(e.shock || 0, 4 * (1 + st.dotDur)); }   // 감전: 4초간 적이 25% 느려지고 감전 보너스가 적용된다
 }
 function tickDots(b, e, dt) {
   let sum = 0; const col = {};

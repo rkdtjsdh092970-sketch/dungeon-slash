@@ -331,6 +331,8 @@ function formulaHtml() {
   ${step("d", "쿨타임", `스킬 쿨타임 = 기본 쿨타임 × 등급 쿨타임 배율 × (1 − 쿨타임 감소, 상한 50%)`, `내 쿨타임 감소 ${P(s.cdr)}`)}
   ${H("몬스터 강화")}
   ${F(`몬스터 체력 = 기본 체력 × ${C.H0} × ${C.HPX}^(액트 − 1) × 지역 보정 × (1 + ${C.STAGE_HP} × (스테이지 − 1)) × 균열 보정<br>균열 보정 = ${C.RIFT_SCALE}^(균열 단계 − 1) (스킬 시련은 ${C.TRIAL_SCALE}^(단계 − 1))<br>몬스터 공격력도 같은 방식으로 증가합니다 (스테이지 보정 ${C.STAGE_ATK}).`)}
+  ${H("상태이상 대상 추가 피해")}
+  ${F(`출혈·중독·점화·둔화·감전 중인 적을 때리면 그 상태의 추가 피해가 곱해집니다.<br>피해 × (1 + 해당 상태 추가 피해% + 스킬 자체 보너스) × 해당 상태 곱연산 보너스 (상태마다 따로 곱해짐)<br>감전: 4초간 적이 25% 느려지고, 번개 스킬이 감전 확률로 건다<br>${S("출혈 중인 적에게 주는 피해 곱연산이 장비에 있어도, 적에게 출혈이 걸려 있어야 적용됩니다.")}`)}
   <div class="dim">전투력 수치는 위 공식으로 계산한 ‘예상 초당 피해 × 유효 체력’을 기준으로 한 추정값이며, 실제 전투 결과는 몬스터 구성에 따라 달라집니다.</div>
   </div>`;
 }
@@ -340,6 +342,7 @@ function skBuildTags(d) {
   const t = [];
   if (d.bonus && d.bonus.boss >= 0.8) t.push(["보스 전용기", "#ff9a9a"]);
   if (d.voidOnly) t.push([(d.src === "void" ? "공허" : POOL_BOSS[d.src] || "보스") + " 전용", SRC_COLOR[d.src] || "#c070ff"]);
+  if (d.vs) t.push(["상태이상 연계", "#ffd070"]); if (d.shock) t.push(["감전 빌드", "#ffe45a"]);
   if (d.bleed >= 0.5) t.push(["출혈 빌드", "#e03a4a"]); if (d.poison >= 0.5) t.push(["중독 빌드", "#6ae04a"]); if (d.ignite >= 0.35) t.push(["점화 빌드", "#ff9a30"]);
   if (d.elem && ELEM_NAME[d.elem]) t.push([ELEM_NAME[d.elem] + " 속성", ELEM_COLOR[d.elem]]);
   if (d.dtype === "mag" && !d.elem) t.push(["마법·마나 빌드", "#c58bff"]); if (d.kind === "summon") t.push(["소환", "#8affc8"]);
@@ -427,7 +430,8 @@ function skillDescFull(sk, st) {
   st = st || computeStats(save); const L = [], T = { phys: "물리", mag: "마법", buff: "버프", heal: "회복" }[sk.dtype] || "물리";
   L.push(`${T}${sk.elem ? " · " + ELEM_NAME[sk.elem] : ""} · 사거리 ${sk.range}칸 · 쿨 ${sk.cd.toFixed(1)}초 · 마나 ${skCost(sk, st)}`);
   if (sk.mult) L.push(`피해 ${Math.round(sk.mult * 100)}%${sk.count ? ` × ${sk.count}회` : ""}${sk.dur ? ` · ${sk.dur}초 지속` : ""}`);
-  for (const k of ["bleed", "poison", "ignite"]) if (sk[k]) L.push(`${STATUS_INFO[k].name} 확률 ${Math.round(sk[k] * 100)}%`);
+  for (const k of ["bleed", "poison", "ignite", "shock"]) if (sk[k]) L.push(`${STATUS_INFO[k].name} 확률 ${Math.round(sk[k] * 100)}%`);
+  if (sk.vs) for (const k of Object.keys(sk.vs)) L.push(`${{ bleed: "출혈", poison: "중독", ignite: "점화", chill: "둔화", shock: "감전" }[k]} 중인 적에게 +${Math.round(sk.vs[k] * 100)}% 피해`);
   if (sk.chill) L.push("적 둔화");
   return L.join("<br>");
 }
