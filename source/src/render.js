@@ -5,6 +5,7 @@ const CW = 960, CH = 540;
 const ROLE_IDX = { imp: 0, grunt: 1, archer: 2, mage: 3, brute: 4, spec: 5 };
 function spriteOf(b, e) {
   if (e.type === "warp") return ["eye", 270];
+  if (e.type === "hwarp") return ["eye", 20];
   const va = e.va != null ? e.va : Math.min(10, b.act) - 1, r = ROSTER[va][ROLE_IDX[e.type]]; return [r[0], r[1] || 0];
 }
 function bossArt(D) { return D.art != null ? D.art : BOSSES.indexOf(D); }
@@ -41,14 +42,14 @@ function drawEnemy(ctx, b, e, time) {
     const off = e.charge ? Math.sin(time * 40) * 3 : 0;
     ctx.save(); ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(x, y - 2, D.w * 50, 14, 0, 0, 7); ctx.fill(); ctx.restore();
     drawBossSprite(ctx, bossArt(D), x + off - p * 10, y + bob * 0.3, D.sc, Object.assign(opt, { tint, hue: D.hue }));
-    if (e.shield) { ctx.save(); ctx.strokeStyle = `rgba(140,220,255,${0.5 + 0.3 * Math.sin(time * 6)})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(x, y - D.sc * 30, D.sc * 34, D.sc * 34, 0, 0, 7); ctx.stroke(); ctx.fillStyle = "rgba(120,200,255,.12)"; ctx.fill(); ctx.restore(); }
+    if (e.shield || e.guard) { ctx.save(); ctx.strokeStyle = `rgba(140,220,255,${0.5 + 0.3 * Math.sin(time * 6)})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(x, y - D.sc * 30, D.sc * 34, D.sc * 34, 0, 0, 7); ctx.stroke(); ctx.fillStyle = "rgba(120,200,255,.12)"; ctx.fill(); ctx.restore(); }
     if (e.reflect) { ctx.save(); ctx.strokeStyle = `rgba(255,120,220,${0.5 + 0.3 * Math.sin(time * 8)})`; ctx.setLineDash([10, 8]); ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(x, y - D.sc * 30, D.sc * 34, D.sc * 34, 0, 0, 7); ctx.stroke(); ctx.restore(); }
     if (e.stun > 0) { for (let i = 0; i < 3; i++) { const a = time * 5 + i * 2.1; ctx.fillStyle = "#ffe45a"; ctx.fillRect(x + Math.cos(a) * 30 - 4, y - D.sc * 62 + Math.sin(a) * 8, 8, 8); } }
     if (e.charge) { const f = 1 - e.charge.t / (e.charge.t + 0.001); ctx.fillStyle = "#ff5a3a"; drawPx(ctx, "!", x - 6, y - D.sc * 66, "#ff5a3a", 4); }
     return;
   }
   const [skey, shue] = spriteOf(b, e), meta = SPR_META[skey], sheet = getSheet(skey, shue), sc = e.tier === "elite" && meta.cell === 48 ? 2.5 : D.sc, kind = skey, top = y - meta.h * sc - 6;
-  if (e.type === "warp") { const g = ctx.createRadialGradient(x, y - 40, 4, x, y - 40, 60 + Math.sin(time * 6) * 8); g.addColorStop(0, "rgba(210,140,255,.55)"); g.addColorStop(1, "rgba(210,140,255,0)"); ctx.fillStyle = g; ctx.fillRect(x - 70, y - 110, 140, 140); for (let i = 0; i < 5; i++) { const a = time * 3 + i * 1.26; ctx.fillStyle = "#f0d8ff"; ctx.fillRect(x + Math.cos(a) * 36 - 2, y - 44 + Math.sin(a) * 26 - 2, 4, 4); } }
+  if (e.type === "warp" || e.type === "hwarp") { const g = ctx.createRadialGradient(x, y - 40, 4, x, y - 40, 60 + Math.sin(time * 6) * 8); g.addColorStop(0, (e.type === "hwarp" ? "rgba(255,150,60,.55)" : "rgba(210,140,255,.55)")); g.addColorStop(1, (e.type === "hwarp" ? "rgba(255,150,60,0)" : "rgba(210,140,255,0)")); ctx.fillStyle = g; ctx.fillRect(x - 70, y - 110, 140, 140); for (let i = 0; i < 5; i++) { const a = time * 3 + i * 1.26; ctx.fillStyle = "#f0d8ff"; ctx.fillRect(x + Math.cos(a) * 36 - 2, y - 44 + Math.sin(a) * 26 - 2, 4, 4); } }
   let anim = "idle", t = e.age + e.id * 0.37;
   if (e.hurtT > 0) { anim = "hurt"; t = 0; } else if (e.winding > 0) { anim = "attack"; t = (1 - e.winding / e.windup) * 0.49; } else if (e.col > e.range) { anim = "walk"; t = e.age; }
   const af = animFrame(kind, anim, t);
@@ -135,6 +136,7 @@ function drawBattle(ctx, b, dt, time) {
   if (b.flash > 0) { ctx.fillStyle = `rgba(255,30,30,${0.22 * b.flash / 0.18})`; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.freeze) { ctx.fillStyle = "rgba(120,200,255,.14)"; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.curse) { ctx.fillStyle = "rgba(160,40,200,.10)"; ctx.fillRect(0, 0, CW, CH); }
+  if (b.debuffs.wound) { ctx.fillStyle = "rgba(255,80,20,.10)"; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.poison) { ctx.fillStyle = "rgba(60,200,60,.08)"; ctx.fillRect(0, 0, CW, CH); }
 }
 
@@ -164,6 +166,7 @@ const MapView = {
     if (n.kind === "treasure") { orb("#c8a02a", "#ffe880", 12); g.fillStyle = "#6a3a1a"; g.fillRect(x - 8, y - 4, 16, 10); g.fillStyle = "#e8b83a"; g.fillRect(x - 8, y - 6, 16, 4); g.fillStyle = "#fff"; g.fillRect(x - 2, y - 1, 4, 4); return; }
     if (st === "hell") { orb("#6a1010", "#ff6a30", 13 * pulse); g.fillStyle = "#ffb040"; for (let i = 0; i < 4; i++) g.fillRect(x - 6 + i * 4, y - 8 - ((Math.sin(time * 9 + i * 1.7) * 3) | 0), 3, 9); g.fillStyle = "#fff0b0"; g.fillRect(x - 1, y - 2, 3, 5); return; }
     if (n.kind === "endless") { for (let i = 0; i < 3; i++) { g.strokeStyle = `rgba(120,230,255,${0.9 - i * 0.25})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 7 + i * 5, -time * 2 + i, -time * 2 + i + 4.2); g.stroke(); } g.fillStyle = "#06141c"; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.fillStyle = "#bff4ff"; g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.fillText("∞", x, y + 4); return; }
+    if (n.kind === "hive") { orb("#7a2208", "#ff9a30", 14 * pulse); g.fillStyle = "#ffd070"; g.fillRect(x - 4, y - 9, 8, 4); g.fillRect(x - 6, y - 5, 12, 8); g.fillStyle = "#ff5a20"; g.fillRect(x - 3, y - 2, 6, 6); g.fillStyle = "#fff0b0"; g.fillRect(x - 1, y, 2, 3); return; }
     if (n.kind === "void") { orb("#3a1068", "#c070ff", 14 * pulse); g.fillStyle = "#e8d0ff"; g.fillRect(x - 6, y - 7, 12, 10); g.fillRect(x - 4, y + 2, 8, 4); g.fillStyle = "#1a0830"; g.fillRect(x - 4, y - 4, 3, 3); g.fillRect(x + 1, y - 4, 3, 3); g.fillStyle = "#ff6af0"; g.fillRect(x - 3, y - 3, 1, 1); g.fillRect(x + 2, y - 3, 1, 1); return; }
     if (n.kind === "trial") { orb("#8a6a10", "#ffd24a", 13 * pulse); g.strokeStyle = "#fff6c0"; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 7, y + 7); g.lineTo(x + 7, y - 7); g.moveTo(x + 7, y + 7); g.lineTo(x - 7, y - 7); g.stroke(); return; }
     if (n.kind === "rift") { for (let i = 0; i < 4; i++) { g.strokeStyle = `rgba(200,140,255,${0.9 - i * 0.2})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 8 + i * 5 + Math.sin(time * 2 + i) * 2, time + i, time + i + 4); g.stroke(); } g.fillStyle = "#1a0830"; g.beginPath(); g.arc(x, y, 8, 0, 7); g.fill(); return; }

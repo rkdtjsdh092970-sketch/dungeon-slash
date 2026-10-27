@@ -13,7 +13,7 @@ function initEndFx(b) {
   b.endT = 0; b.zones = []; b.persist = []; b.events = []; b.conf = [];
   if (endWin(b)) for (let i = 0; i < 90; i++) b.conf.push({ x: Math.random() * CW, y: -Math.random() * 360, vx: rnd(-30, 30), vy: rnd(90, 230), r: rnd(0, 6.28), vr: rnd(-6, 6), c: pick(["#ffd24a", "#ff8a5a", "#8ad8ff", "#a8f08a", "#d8a0ff", "#ffffff"]), w: rnd(4, 8), h: rnd(6, 12) });
 }
-function endTitle(b) { const k = b.node.kind; return endWin(b) ? (k === "endless" ? ["무한 균열 종료", "ENDLESS RIFT"] : k === "boss" || k === "void" ? ["보스 처치!", "BOSS DEFEATED"] : k === "tutorial" ? ["훈련 완료", "WELL DONE"] : ["스테이지 클리어", "STAGE CLEAR"]) : ["패배...", "DEFEAT"]; }
+function endTitle(b) { const k = b.node.kind; return endWin(b) ? (k === "endless" ? ["무한 균열 종료", "ENDLESS RIFT"] : k === "boss" || k === "void" || k === "hive" ? ["보스 처치!", "BOSS DEFEATED"] : k === "tutorial" ? ["훈련 완료", "WELL DONE"] : ["스테이지 클리어", "STAGE CLEAR"]) : ["패배...", "DEFEAT"]; }
 function drawEndOverlay(g, b) {
   const t = b.endT || 0, W = CW, H = CH, win = endWin(b), dt = Math.min(0.1, G.dt || 0.016), [title, sub] = endTitle(b); g.save();
   if (win) {
@@ -46,7 +46,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
   const A = replay ? "" : "rs-anim";
   const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
   const stat = (label, val) => `<div class="rs-stat"><small>${label}</small><b>${val}</b></div>`;
-  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.hone ? chip(iconImg("ore", 2), "연마석", "+" + res.hone) : "",
+  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.hone ? chip(iconImg("ore", 2), "연마석", "+" + res.hone) : "",
     ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
   const tiles = res.items.slice().sort((x, y) => (y.uniq ? 9 : 0) + y.rarity - ((x.uniq ? 9 : 0) + x.rarity)).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
   const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");

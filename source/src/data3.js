@@ -111,7 +111,7 @@ const U_TIERS = [
   { id: 4, name: "엔젤릭", color: "#ffffff", w: 2, mult: 2.0 },
 ];
 // 출처 풀: common(공용: 어디서나) / hell(지옥 스테이지) / tower(균열 탑) / endless(무한 균열) / void(공허의 군주)
-const U_POOLS = { common: "공용", hell: "지옥", tower: "균열 탑", endless: "무한 균열", void: "공허의 군주" };
+const U_POOLS = { common: "공용", hell: "지옥", tower: "균열 탑", endless: "무한 균열", void: "공허의 군주", fire: "화염 정령왕" };
 // mods: [키, 값 또는 [최소,최대]]   act: 이 액트 이상에서 드랍(공용)
 const U = (id, name, slot, tier, pool, act, mods, flavor, text) => ({ id, name, slot, tier, pool, act, mods, flavor, text: text || null, w: 1 });
 const UNIQUES = [
@@ -172,6 +172,13 @@ const UNIQUES = [
   U("voidwhisper", "공허의 속삭임", "neck", 3, "void", 1, [["manaToSpell", [0.22, 0.26]], ["magCrit", 1], ["spellCrit", 0.09], ["voidDmg", 0.22]], "마나가 속삭이면 마법이 대답한다."),
   U("abyssalcrown", "심연의 왕관", "helm", 4, "void", 1, [["atkMore", [1.28, 1.36]], ["magMore", [1.28, 1.36]], ["hpMore", [1.28, 1.36]], ["allDmg", [0.35, 0.42]], ["cdr", 0.15], ["lanes", 1], ["revive", 1]], "왕관을 쓴 자는 무릎 꿇지 않는다."),
   U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [1.6, 1.8]], ["lifesteal", 0.04], ["regen", 0.007], ["dmgTaken", -0.22], ["boss", 0.45], ["manaShield", 0.2]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
+  // 화염 정령왕: 화염·점화·지속 피해 빌드용
+  U("sparkcoil", "불꽃 정령의 고리", "ring", 1, "fire", 1, [["fireDmg", [0.3, 0.4]], ["igniteChance", [0.08, 0.12]], ["hpPct", -0.08]], "작은 불꽃이 쉬지 않고 맴돈다."),
+  U("emberglove", "잿불 장갑", "gloves", 1, "fire", 1, [["fireDmg", [0.28, 0.36]], ["dotDmg", [0.3, 0.4]], ["atkPct", [0.08, 0.1]]], "불씨가 손가락마다 깃든다."),
+  U("moltenblade", "녹아내린 정령검", "weapon", 2, "fire", 1, [["fireDmg", [0.55, 0.7]], ["igniteChance", [0.2, 0.25]], ["dotDmg", [0.4, 0.5]], ["magPct", [0.2, 0.25]]], "베는 순간 칼날이 흘러내린다."),
+  U("salamandermail", "불도마뱀 갑피", "armor", 2, "fire", 1, [["hpPct", [0.3, 0.38]], ["fireDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "불길 속에서만 따뜻하다."),
+  U("spiritflame", "정령의 불꽃 목걸이", "neck", 3, "fire", 1, [["fireDmg", [0.8, 1.0]], ["elemDmg", [0.2, 0.25]], ["igniteChance", 0.3], ["dotDur", 0.3], ["penElem", 0.2]], "목에 걸면 심장이 불꽃처럼 뛴다."),
+  U("pyrelordcrown", "화염 정령왕의 관", "helm", 4, "fire", 1, [["fireDmg", [1.0, 1.2]], ["dotDmg", [0.8, 1.0]], ["igniteChance", 0.35], ["penElem", 0.3], ["magMore", [1.25, 1.32]], ["cdr", 0.1]], "불은 꺼지지 않는다. 왕이 쓰러져도."),
 ];
 const UNIQUE_BY_ID = Object.fromEntries(UNIQUES.map((u) => [u.id, u]));
 UNIQUES.forEach((u) => { u.ico = u.slot; });

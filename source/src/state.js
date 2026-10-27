@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -21,7 +21,9 @@ function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) re
     return s; } catch (e) { return null; } }
 
 // ---- 장비/스킬 생성 ----
-function genItem(sv, ilvl, rarity, slot, setId) {
+// 화염 정령왕 드랍: 화염·점화·지속 피해 계열 옵션이 잘 붙는다
+const FIRE_BIAS = { fireDmg: 6, igniteChance: 6, dotDmg: 5, elemDmg: 4, penElem: 4, magPct: 2, dotDur: 3 };
+function genItem(sv, ilvl, rarity, slot, setId, bias) {
   slot = slot || pick(SLOTS);
   const R = ITEM_RARITY[rarity], g = gScale(ilvl);
   const it = { uid: sv.nextUid++, slot, ilvl, rarity, base: {}, affixes: [], enh: 0 };
@@ -31,7 +33,7 @@ function genItem(sv, ilvl, rarity, slot, setId) {
   const used = new Set();
   for (let i = 0; i < R.affixes; i++) {
     const cand = pool.filter((a) => !used.has(a.k)); if (!cand.length) break;
-    const a = wpick(cand, (x) => x.w); used.add(a.k);
+    const a = wpick(cand, (x) => x.w * (bias && bias[x.k] || 1)); used.add(a.k);
     it.affixes.push({ k: a.k, v: rollAffix(a, g, R, rarity) });
   }
   return it;
@@ -214,7 +216,7 @@ function dropBonus(sv, now) {
   return B;
 }
 const trialSkillChance = (T) => Math.min(0.95, 0.06 + 0.009 * T);   // 시련 단계가 오를수록 스킬 확률 증가 (100단계 95%)
-const UNIQUE_SRC = { boss: 4, elite: 2, treasure: 1.5, rift: 3, hell: 3.5, endless: 5, stage: 1, trial: 1.5 };
+const UNIQUE_SRC = { hive: 5, boss: 4, elite: 2, treasure: 1.5, rift: 3, hell: 3.5, endless: 5, stage: 1, trial: 1.5 };
 function genUnique(sv, def, ilvl) {
   const R = ITEM_RARITY[5], g = gScale(ilvl), it = { uid: sv.nextUid++, slot: def.slot, ilvl, rarity: 5, uniq: def.id, utier: def.tier, base: {}, affixes: [], umods: [], enh: 0 };
   for (const k in SLOT_BASE[def.slot]) it.base[k] = SLOT_BASE[def.slot][k] * g * R.mult * rnd(0.95, 1.05);
@@ -227,11 +229,11 @@ function rollUnique(sv, act, ilvl, pools) {
   for (const p of pools) for (const x of uniquePool(p, act)) list.push(x);
   if (!list.length) return null; return genUnique(sv, wpick(list, (x) => x.w).u, ilvl);
 }
-const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"] };
+const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"], hive: ["fire", "common"] };
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const act = Math.min(10, node.act), kind = node.kind, endlessWaves = node.waves || 0;
-  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || kind === "trial";
+  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || kind === "trial" || kind === "hive";
   const ilvl = late ? 10 + Math.floor((node.tier || 1) / CFG.ILVL_RIFT_STEP) : node.act;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, uniques: 0, hone: 0, runes: [] };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 6 ? 1 : 0);
@@ -239,13 +241,14 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "rift" || kind === "hell") n = 3 + Math.floor(node.tier / 5) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = Math.max(1, node.voidCleared || 0);
+  if (kind === "hive") n = 6;
   if (kind === "trial") n = 2 + Math.floor((node.tier || 1) / 8);
   n = Math.max(1, Math.round(n * B.qty * (kind === "hell" ? B.hell : 1)));
   const rare = kind === "elite" || late || boss;
   const mfv = mfEff(B.mf + (kind === "rift" ? towerMf(node.tier || 1) : 0)), mfw = 1 + mfv;   // MF 체감 적용
   for (let i = 0; i < n; i++) {
     const r = wpick(ITEM_RARITY.slice(0, 4).map((x, idx) => ({ idx, w: (rare ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
-    out.items.push(genItem(sv, ilvl, r));
+    out.items.push(genItem(sv, ilvl, r, undefined, undefined, kind === "hive" ? FIRE_BIAS : null));
   }
   const sc = (boss ? CFG.SET_DROP_BOSS : kind === "rift" || kind === "hell" || kind === "endless" ? 0.3 : kind === "elite" ? 0.25 : CFG.SET_DROP) * Math.min(2.5, Math.pow(mfw, 0.4));
   const sets = SETS.filter((s) => ilvl >= s.acts[0] && ilvl <= s.acts[1]);
@@ -265,6 +268,7 @@ function rollDrops(sv, node, boss, B) {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
+  if (kind === "hive" && Math.random() < 0.4 * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
   // 스킬: 보스 첫 클리어 확정 1개, 일반 확률, 균열 탑에서 낮은 확률로 강한 스킬
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
   const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * w[i] })), (x) => x.w).i;
@@ -281,7 +285,7 @@ function rollDrops(sv, node, boss, B) {
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 2) + endlessWaves * 2) * B.ore);
   if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.voidCleared || 0) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
-  const oc = { stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.voidCleared || 0) }[kind] || 0.03;
+  const oc = { hive: 3, stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.voidCleared || 0) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   const odE = ocE * 0.25; out.orbD = Math.floor(odE) + (Math.random() < odE - Math.floor(odE) ? 1 : 0);
@@ -368,7 +372,7 @@ function townUnlocked(sv, act) { return sv.tut.done && (act === 1 || sv.cleared[
 function nodeUnlocked(sv, n) {
   if (!sv.tut.done) return false;
   if (n.kind === "town") return townUnlocked(sv, n.act);
-  if (n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
+  if (n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || n.kind === "hive") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (!townUnlocked(sv, n.act)) return false;
   if (n.kind === "elite" || n.kind === "treasure") return sv.cleared[n.act - 1] >= n.need;
   return n.stage <= sv.cleared[n.act - 1] + 1;

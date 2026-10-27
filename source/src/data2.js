@@ -4,7 +4,8 @@
 CFG.BASE_DODGE = 0;                // 기본 회피 없음 — 패시브·장비로만 얻는다
 CFG.UNIQUE_BASE = 0.0005;          // 고유 장비: 드랍 1개당 기준 확률 (0.05%)
 CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은 너무 후했음, 정식 출시 때 1로)
-CFG.WARP_CHANCE = 0.12;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
+CFG.WARP_CHANCE = 0.12;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
+CFG._unused = 0;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
 CFG.WORLD_MIN = 20;                // 월드 버프/지옥 스테이지 갱신 주기 (분)
 CFG.ENDLESS_DAILY = 3;             // 무한 균열 하루 입장 횟수
 CFG.ILVL_RIFT_STEP = 8;            // 균열 N단계마다 드랍 아이템 레벨 +1
@@ -104,8 +105,15 @@ function hellNodes(now) {
 // ---------------------------------------------------------------
 BOSSES.push({ id: "void", name: "공허의 군주 모르가스", w: 3, h: 2, hp: 2100, atk: 28, range: 4, interval: 2.2, windup: 0.9, exp: 400, gold: 400, sc: 4, hue: 250, art: 9,
   abilities: [{ id: "summon", every: 11, count: 5, type: "imp", text: "공허의 졸개가 몰려온다!" }, { id: "shield", every: 22, dur: 9, adds: 5, text: "공허의 장막! 졸개를 처치하라!" }, { id: "charge", every: 15, windup: 2.4, mult: 3.8, interrupt: 0.05, text: "공허의 일격을 모은다!" },
-    { id: "curse", every: 14, dur: 6, mult: 0.35, text: "공허의 저주!" }, { id: "rain", every: 10, hits: 5, mult: 0.5, text: "공허의 별이 쏟아진다!" }, { id: "enrage", at: 0.3, text: "모르가스가 공허를 해방한다!" }], desc: "소환 · 방어막 · 충전 · 저주 · 불비 · 분노" });
+    { id: "curse", every: 14, dur: 6, mult: 0.35, text: "공허의 저주!" }, { id: "rain", every: 10, hits: 5, mult: 0.5, text: "공허의 별이 쏟아진다!" }, { id: "enrage", at: 0.3, text: "모르가스가 공허를 해방한다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "소환 · 방어막 · 충전 · 저주 · 불비 · 분노 · 치유 감소" });
 const VOID_BOSS = BOSSES[BOSSES.length - 1];
+// 화염 정령왕: 불꽃 정령이 끝없이 몰려오고, 정령을 모두 처치해야만 왕에게 피해를 줄 수 있다. 화염 빌드 장비를 준다.
+BOSSES.push({ id: "flame", name: "화염 정령왕 아스카", w: 3, h: 2, hp: 2000, atk: 26, range: 4, interval: 2.2, windup: 0.9, exp: 300, gold: 300, sc: 4, hue: 330, art: 6, hive: true,
+  abilities: [{ id: "summon", every: 12, count: 9, type: "imp", text: "불꽃 정령이 몰려온다! 모두 처치해야 왕을 벨 수 있다!" }, { id: "wound", every: 13, dur: 7, mult: 0.5, text: "작열의 낙인! 생명력 흡수·회복이 반감된다!" }, { id: "rain", every: 11, hits: 5, mult: 0.5, text: "불씨가 쏟아진다!" },
+    { id: "charge", every: 17, windup: 2.4, mult: 3.4, interrupt: 0.05, text: "아스카가 불길을 모은다!" }, { id: "enrage", at: 0.3, text: "아스카가 타오른다!" }], desc: "불꽃 정령 대군 · 정령을 모두 처치해야 피해를 줄 수 있음 · 치유 감소 · 불비" });
+const HIVE_BOSS = BOSSES[BOSSES.length - 1];
+const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
+const HIVE_TIER = 22, HIVE_MIN_RIFT = 15;   // 난이도 = 균열 22단계 수준, 입장은 균열 15단계 이상
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 
 const VOID_MIN_RIFT = 25;   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에

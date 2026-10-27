@@ -56,7 +56,7 @@ const BOSSES = [
   { id: "golem",   name: "광산 감독관 볼트",    w: 2, h: 2, hp: 760, atk: 17, range: 3, interval: 3.0, windup: 1.0, exp: 80, gold: 80, sc: 3,
     abilities: [{ id: "charge", every: 12, windup: 2.4, mult: 3.2, interrupt: 0.07, text: "볼트가 힘을 모은다! (큰 피해를 주면 저지)" }, { id: "summon", every: 16, count: 3, type: "grunt", text: "광부들이 나타난다!" }], desc: "강타 충전(저지 가능) · 광부 소환" },
   { id: "sultan",  name: "모래폭풍의 술탄",     w: 3, h: 1, hp: 700, atk: 18, range: 3, interval: 2.5, windup: 0.9, exp: 90, gold: 90, sc: 3,
-    abilities: [{ id: "shield", every: 18, dur: 8, adds: 4, text: "모래 장막! 졸개를 처치해야 한다!" }, { id: "poison", every: 10, dps: 0.012, dur: 6, text: "독침에 맞았다!" }], desc: "방어막(졸개 처치로 해제) · 독" },
+    abilities: [{ id: "shield", every: 18, dur: 8, adds: 4, text: "모래 장막! 졸개를 처치해야 한다!" }, { id: "poison", every: 10, dps: 0.012, dur: 6, text: "독침에 맞았다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "방어막(졸개 처치로 해제) · 독" },
   { id: "hydra",   name: "독안개 마녀 히드라",   w: 2, h: 2, hp: 800, atk: 16, range: 3, interval: 2.4, windup: 0.9, exp: 100, gold: 100, sc: 3,
     abilities: [{ id: "poison", every: 8, dps: 0.015, dur: 7, text: "독안개가 퍼진다!" }, { id: "summon", every: 14, count: 5, type: "imp", text: "새끼들이 몰려온다!" }, { id: "heal", every: 15, pct: 0.04, text: "머리가 재생한다!" }], desc: "독안개 · 소환 · 재생" },
   { id: "frost",   name: "서리 거인 요툰",      w: 2, h: 2, hp: 900, atk: 19, range: 3, interval: 3.0, windup: 1.0, exp: 110, gold: 110, sc: 3,
@@ -64,11 +64,11 @@ const BOSSES = [
   { id: "ignis",   name: "용암 군주 이그니스",   w: 2, h: 2, hp: 950, atk: 20, range: 3, interval: 2.6, windup: 0.9, exp: 120, gold: 120, sc: 3,
     abilities: [{ id: "rain", every: 9, hits: 4, mult: 0.55, text: "불덩이가 쏟아진다!" }, { id: "enrage", at: 0.35, text: "이그니스가 폭주한다!" }], desc: "불비 · 체력 35% 이하 폭주" },
   { id: "eye",     name: "심연의 눈 아가론",     w: 2, h: 2, hp: 1000, atk: 20, range: 3, interval: 2.8, windup: 1.0, exp: 130, gold: 130, sc: 3,
-    abilities: [{ id: "reflect", every: 16, dur: 5, pct: 0.35, text: "반사 막! 공격하면 피해를 입는다!" }, { id: "curse", every: 13, dur: 6, mult: 0.3, text: "저주! 받는 피해가 늘어난다!" }], desc: "피해 반사 · 저주" },
+    abilities: [{ id: "reflect", every: 16, dur: 5, pct: 0.35, text: "반사 막! 공격하면 피해를 입는다!" }, { id: "curse", every: 13, dur: 6, mult: 0.3, text: "저주! 받는 피해가 늘어난다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "피해 반사 · 저주" },
   { id: "angel",   name: "폐허의 대천사",       w: 2, h: 2, hp: 1050, atk: 21, range: 3, interval: 2.6, windup: 0.9, exp: 140, gold: 140, sc: 3,
-    abilities: [{ id: "shield", every: 20, dur: 8, adds: 5, text: "성스러운 방어막!" }, { id: "heal", every: 12, pct: 0.05, text: "천사가 치유한다!" }, { id: "summon", every: 18, count: 4, type: "archer", text: "성가대가 나타난다!" }], desc: "방어막 · 치유 · 소환" },
+    abilities: [{ id: "shield", every: 20, dur: 8, adds: 5, text: "성스러운 방어막!" }, { id: "heal", every: 12, pct: 0.05, text: "천사가 치유한다!" }, { id: "summon", every: 18, count: 4, type: "archer", text: "성가대가 나타난다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "방어막 · 치유 · 소환" },
   { id: "demon",   name: "마왕 바알제뷔트",     w: 3, h: 2, hp: 1400, atk: 23, range: 4, interval: 2.4, windup: 0.9, exp: 220, gold: 220, sc: 4,
-    abilities: [{ id: "summon", every: 12, count: 5, type: "imp", text: "마왕이 군단을 부른다!" }, { id: "charge", every: 16, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "마왕이 종말의 일격을 준비한다!" }, { id: "curse", every: 15, dur: 6, mult: 0.3, text: "마왕의 저주!" }, { id: "enrage", at: 0.3, text: "마왕이 진정한 힘을 드러낸다!" }], desc: "소환 · 일격 충전 · 저주 · 분노" },
+    abilities: [{ id: "summon", every: 12, count: 5, type: "imp", text: "마왕이 군단을 부른다!" }, { id: "charge", every: 16, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "마왕이 종말의 일격을 준비한다!" }, { id: "curse", every: 15, dur: 6, mult: 0.3, text: "마왕의 저주!" }, { id: "enrage", at: 0.3, text: "마왕이 진정한 힘을 드러낸다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "소환 · 일격 충전 · 저주 · 분노" },
 ];
 
 // ---- 스킬 ----
@@ -198,8 +198,9 @@ function buildMap() {
   edges.push(["S10-10", rift.id]);
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
   const voidn = add({ id: "RV", kind: "void", act: 11, x: RIFT_POS[0] + 130, y: RIFT_POS[1] + 40, name: "공허의 군주", level: 100 });
+  const flame = add({ id: "RH", kind: "hive", act: 11, x: RIFT_POS[0] + 120, y: RIFT_POS[1] - 110, name: "화염 정령왕", level: 100 });
   const trial = add({ id: "TR", kind: "trial", act: 11, x: RIFT_POS[0] - 140, y: RIFT_POS[1] - 100, name: "스킬 시련", level: 100 });
-  edges.push([rift.id, endless.id]); edges.push([rift.id, voidn.id]); edges.push([rift.id, trial.id]);
+  edges.push([rift.id, endless.id]); edges.push([rift.id, voidn.id]); edges.push([rift.id, trial.id]); edges.push([rift.id, flame.id]);
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift";
   for (let it = 0; it < 80; it++) {
