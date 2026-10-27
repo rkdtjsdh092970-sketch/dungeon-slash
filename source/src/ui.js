@@ -205,7 +205,8 @@ const itemIconBySlot = (slot, cls) => iconImg(slot, 1, cls);
 const SK = { slot: 0, sel: null };
 const RULE_SHORT = { front: "앞열", auto: "오토", boss: "보스", ranged: "원거리", elite: "정예", normal: "일반" };
 const SLOT_HINT = ["", "튜토리얼 완료 시 개방", "액트 3 보스 처치 시 개방", "액트 6 보스 처치 시 개방"];
-const promoteCost = (inst) => (inst.rarity === 0 ? 8 : 25);
+const promoteCost = (inst) => 25;   // 일반 → 희귀만 가능 (희귀 이상은 승급 불가, 드랍으로만)
+const PROMO_RATE = 0.6;
 
 // ---------- 퀘스트 ----------
 const QT = { tab: "active" };

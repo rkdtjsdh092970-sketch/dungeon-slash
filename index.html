@@ -406,6 +406,10 @@ const SKILL_RARITY = [
   { name: "일반", mult: 1.0,  cdMul: 1.0,  bonusMul: 1.0, w: 70, cls: "r0" },
   { name: "희귀", mult: 1.25, cdMul: 0.95, bonusMul: 1.3, w: 25, cls: "r2" },
   { name: "전설", mult: 1.6,  cdMul: 0.9,  bonusMul: 1.7, w: 5,  cls: "r3" },
+  // 전설 위 등급: 일반 드랍 풀에는 없고, 엔드게임(스킬 시련·공허의 군주)에서 전설이 나왔을 때 아주 낮은 확률로 한 단계씩 더 올라간다. 승급으로는 얻을 수 없다
+  { name: "이터널", mult: 1.9, cdMul: 0.87, bonusMul: 2.0, w: 0, cls: "tn2" },
+  { name: "소버린", mult: 2.3, cdMul: 0.84, bonusMul: 2.4, w: 0, cls: "tn3" },
+  { name: "엔젤릭", mult: 3.0, cdMul: 0.80, bonusMul: 3.0, w: 0, cls: "tn4" },
 ];
 const RULES = { front: "앞열(기본)", auto: "오토", boss: "보스 우선", ranged: "원거리 우선", elite: "정예 우선", normal: "일반 우선" };
 const RULE_ORDER = ["front", "auto", "boss", "ranged", "elite", "normal"];
@@ -1270,7 +1274,9 @@ function diceItem(sv, it) {
   sv.dice--; return true;
 }
 const diceChance = (kind, node) => ({ rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], void: [0.02, 0.04, 0.07, 0.15][(node.vsel || 1) - 1] }[kind] || 0);
-function genSkill(sv, id, rarity) { return { uid: sv.nextUid++, id, rarity }; }
+// 전설이 나왔을 때만 아주 낮은 확률로 이터널 → 소버린 → 엔젤릭 순으로 한 단계씩 더 올라간다 (chance는 첫 단계 확률, 이후 단계마다 ×0.4)
+function skillTierUp(r, chance) { let c = chance || 0; while (r >= 2 && r < SKILL_RARITY.length - 1 && Math.random() < c) { r++; c *= 0.4; } return r; }
+function genSkill(sv, id, rarity, tierUp) { return { uid: sv.nextUid++, id, rarity: tierUp ? skillTierUp(rarity, tierUp) : rarity }; }
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
   const bonus = {}; for (const k in d.bonus) bonus[k] = d.bonus[k] * R.bonusMul;
@@ -1484,7 +1490,7 @@ function rollDrops(sv, node, boss, B) {
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
-    if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * [0.3, 1, 1.6][i] })), (x) => x.w).i));
+    if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
@@ -1493,10 +1499,10 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "hive" && Math.random() < [0.15, 0.3, 0.5, 0.8][(node.vsel || 1) - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
   // 스킬: 보스 첫 클리어 확정 1개, 일반 확률, 균열 탑에서 낮은 확률로 강한 스킬
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
-  const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * w[i] })), (x) => x.w).i;
+  const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * (w[i] || 0) })), (x) => x.w).i;
   if (node.firstClear && kind === "boss") { const d = wpick(SKILLS.filter((x) => x.unlock <= act && x.slot === "active"), (x) => (x.unlock >= act - 1 ? 2 : 1)); out.skills.push(genSkill(sv, d.id, rr([1, 1, 0.3]))); }
   else if (kind === "trial") { const T = node.tier || 1;
-    for (let k = 0; k < (T >= 50 ? 2 : 1); k++) if (Math.random() < trialSkillChance(T) * (k ? 0.5 : 1)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([Math.max(0.05, 0.5 - T / 200), 1.2, 0.6 + T / 25]))); }
+    for (let k = 0; k < (T >= 50 ? 2 : 1); k++) if (Math.random() < trialSkillChance(T) * (k ? 0.5 : 1)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([Math.max(0.05, 0.5 - T / 200), 1.2, 0.6 + T / 25]), 0.12 * T / 100)); }
     out.hone = Math.round((4 + Math.floor(T * 0.9)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.5) out.runes.push(pick(RUNE_IDS)); if (T >= 60 && Math.random() < 0.3) out.runes.push(pick(RUNE_IDS)); }
   else if (kind === "rift") { if (Math.random() < Math.min(0.12, 0.015 + 0.002 * (node.tier || 1))) { const d = pick(poolFor(5).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.2, 1, 2]))); } }
   else if (Math.random() < (boss ? CFG.SKILL_DROP_BOSS : CFG.SKILL_DROP * (kind === "elite" ? 2 : 1))) {
@@ -1672,7 +1678,7 @@ function buyAtlas(sv, id) {
   const c = atlasCost(n, r); if (sv.shards < c) return false; sv.shards -= c; sv.atlas[id] = r + 1; return true;
 }
 const SHOP_MIN = 20;
-const skillPrice = (d, rarity) => Math.round(70 * Math.pow(1.55, d.unlock - 1) * [1, 3.5, 12][rarity] * (d.slot === "basic" ? 0.6 : 1));
+const skillPrice = (d, rarity) => Math.round(70 * Math.pow(1.55, d.unlock - 1) * [1, 3.5, 12, 40, 130, 500][rarity] * (d.slot === "basic" ? 0.6 : 1));
 const skillSellValue = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return Math.max(5, Math.round(skillPrice(d, inst.rarity) * 0.4 * (1 + 0.25 * ((inst.lvl || 1) - 1)))); };
 const skillInPreset = (sv, inst) => (sv.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid));
 function sellSkill(sv, inst) {
@@ -3433,7 +3439,8 @@ const itemIconBySlot = (slot, cls) => iconImg(slot, 1, cls);
 const SK = { slot: 0, sel: null };
 const RULE_SHORT = { front: "앞열", auto: "오토", boss: "보스", ranged: "원거리", elite: "정예", normal: "일반" };
 const SLOT_HINT = ["", "튜토리얼 완료 시 개방", "액트 3 보스 처치 시 개방", "액트 6 보스 처치 시 개방"];
-const promoteCost = (inst) => (inst.rarity === 0 ? 8 : 25);
+const promoteCost = (inst) => 25;   // 일반 → 희귀만 가능 (희귀 이상은 승급 불가, 드랍으로만)
+const PROMO_RATE = 0.6;
 
 // ---------- 퀘스트 ----------
 const QT = { tab: "active" };
@@ -3690,6 +3697,7 @@ function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return
 
 // ---------- 장비 창 ----------
 const IB = { mode: "inv", tab: "all", sel: null, rar: -1, sort: "rar", lockOnly: false };
+const DOLL_ORDER = ["weapon", "helm", "armor", "gloves", "boots", "neck", "ring", "ring2"];   // 장비 칸 표시 순서 (목걸이가 반지 1 자리, 반지 1이 그 다음)
 function equipItem(it, key) {   // 반지는 비어 있는 칸에 먼저, 둘 다 차 있으면 지정한 칸(없으면 반지 1)과 교체
   key = key || (it.slot === "ring" ? (!save.equipped.ring ? "ring" : !save.equipped.ring2 ? "ring2" : "ring") : it.slot);
   const old = save.equipped[key]; save.inv = save.inv.filter((x) => x !== it); if (old) save.inv.push(old); save.equipped[key] = it;
@@ -3727,14 +3735,14 @@ function renderItems() {
   let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
   const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))));
   list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => b.rarity - a.rarity || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
-  const eqCol = `<div class="doll">` + EQ_SLOTS.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
+  const eqCol = `<div class="doll">` + DOLL_ORDER.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button></div>`;
   const html = `<h2>${title}</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)} &nbsp; ${iconImg("ore", 1)} ${fmtN(save.ore)} &nbsp; ${iconImg("orb", 1)} ${save.orbC} / ${save.orbD} &nbsp; 🎲 ${save.dice || 0}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
-  <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
+  <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${itemDetail(IB.sel)}</div></div>`;
   const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
@@ -3821,11 +3829,11 @@ function openSkills() {
     return `<div class="skdet"><div class="dh">${skIcon(d.id, 3)}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><small class="dim">Lv.${sel.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""}${eqi >= 0 ? " · " + (eqi + 1) + "번 칸 장착 중" : ""}</small></div></div>
       <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${typeOk && slotOk && eqi !== SK.slot ? "" : "disabled"}>${typeOk ? (eqi === SK.slot ? `${SK.slot + 1}번 칸 장착 중` : `${SK.slot + 1}번 칸에 장착`) : want === "basic" ? "1번 칸 전용 아님" : "기본 공격 스킬"}</button>${eqi > 0 ? `<button class="btn" data-a="clear" data-s="${eqi}">해제</button>` : ""}
       <button class="btn" data-a="hone" data-u="${sel.uid}" ${(sel.lvl || 1) >= SKILL_MAX_LV || save.hone < honeCost(sel.lvl || 1) ? "disabled" : ""}>레벨업<br><small>${(sel.lvl || 1) >= SKILL_MAX_LV ? "MAX" : "연마석 " + honeCost(sel.lvl || 1)}</small></button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? `<span style="color:${sk.rune.color}">${sk.rune.name}</span>` : "룬 장착"}</button>
-      ${sel.rarity < 2 && save.endgame ? `<button class="btn" data-a="promo" data-u="${sel.uid}" ${save.shards >= pc ? "" : "disabled"}>승급<br><small>${pc} 조각</small></button>` : ""}<button class="btn" data-a="sellsk" data-u="${sel.uid}" ${eqi >= 0 || skillInPreset(save, sel) ? "disabled" : ""}>판매<br><small>${eqi >= 0 ? "장착 중" : fmtN(skillSellValue(sel)) + "G" + (skillInPreset(save, sel) ? " · 프리셋 포함" : "")}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록${eqi >= 0 ? "<br><small>장착 중</small>" : ""}</button>` : ""}</div>
+      ${sel.rarity === 0 && save.endgame ? `<button class="btn" data-a="promo" data-u="${sel.uid}" ${save.shards >= pc ? "" : "disabled"}>승급 (${Math.round(PROMO_RATE * 100)}%)<br><small>${pc} 조각 · 실패 시 소멸</small></button>` : ""}<button class="btn" data-a="sellsk" data-u="${sel.uid}" ${eqi >= 0 || skillInPreset(save, sel) ? "disabled" : ""}>판매<br><small>${eqi >= 0 ? "장착 중" : fmtN(skillSellValue(sel)) + "G" + (skillInPreset(save, sel) ? " · 프리셋 포함" : "")}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록${eqi >= 0 ? "<br><small>장착 중</small>" : ""}</button>` : ""}</div>
       <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div>`;
   })();
   Modal.open(`<h2>스킬 정비소</h2><div class="res">연마석 ${fmtN(save.hone)} · 룬 ${save.runes.length}</div>${presetRow()}<div class="dim center">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 &nbsp;|&nbsp; 적을 클릭하면 모든 스킬이 그 적을 우선 공격합니다</div><div class="skcards">${cards}</div>
-  <h3>${SK.slot + 1}번 칸용 스킬 (${want === "basic" ? "기본 공격" : "액티브"}) <small class="dim">클릭해서 확인 → [장착] · 스킬 상점에서 골드로 구매할 수 있어요</small></h3><div class="skbot"><div class="slist skgrid">${owned.map(row).join("") || `<div class="dim pad">보유한 스킬이 없습니다</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
+  <h3>${SK.slot + 1}번 칸용 스킬 (${want === "basic" ? "기본 공격" : "액티브"}) <small class="dim">클릭해서 확인 → [장착] · 스킬 상점에서 골드로 구매할 수 있어요</small></h3><div class="skbot"><div class="slist skgrid">${owned.map(row).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">보유한 스킬이 없습니다</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
     slot: (el) => { SK.slot = +el.dataset.s; const l = save.loadout[SK.slot]; SK.sel = l ? l.uid : null; if (l) snd("click"); openSkills(); },   // 장착 중인 스킬 카드를 눌러도 정보가 보인다
     picksk: (el) => { SK.sel = +el.dataset.u; snd("click"); openSkills(); },
     sellsk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) <b style="color:#ffe08a">${fmtN(skillSellValue(inst))}G</b>에 판매할까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "판매", () => { const v = sellSkill(save, inst); if (v == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 팔 수 없습니다", "bad"); return; } SK.sel = null; snd("coin"); toast(`+${fmtN(v)}G`, "ok"); saveGame(); refreshTop(); openSkills(); }, false); },
@@ -3833,7 +3841,7 @@ function openSkills() {
     clear: (el, ev) => { ev.stopPropagation(); save.loadout[+el.dataset.s] = null; saveGame(); openSkills(); },
     rule: (el) => { const i = +el.dataset.s; if (save.loadout[i]) save.loadout[i].rule = el.value; saveGame(); },
     equipsk: (el) => { if (SK.slot >= save.slots) return; const u = +el.dataset.u; const j = save.loadout.findIndex((l) => l && l.uid === u); const prev = save.loadout[SK.slot]; if (j >= 0 && j !== SK.slot) save.loadout[j] = j === 0 ? save.loadout[j] : null; save.loadout[SK.slot] = { uid: u, rule: (prev && prev.rule) || "front" }; snd("equip"); toast("장착했습니다", "ok"); saveGame(); openSkills(); },
-    promo: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); const pc = promoteCost(inst); if (save.shards < pc) return; save.shards -= pc; inst.rarity++; snd("legend"); toast("스킬이 승급했습니다!"); saveGame(); openSkills(); },
+    promo: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); const pc = promoteCost(inst); if (save.shards < pc) return; save.shards -= pc; if (inst.rarity !== 0) return; if (Math.random() < PROMO_RATE) { inst.rarity = 1; snd("legend"); toast("스킬이 희귀로 승급했습니다!"); } else { snd("error"); toast("승급에 실패했습니다 (조각 소멸)", "bad"); } saveGame(); refreshTop(); openSkills(); },
     hone: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u), cost = honeCost(inst.lvl || 1); if ((inst.lvl || 1) >= SKILL_MAX_LV || save.hone < cost) return; save.hone -= cost; inst.lvl = (inst.lvl || 1) + 1; snd("enh_ok"); toast(`${SKILLS.find((x) => x.id === inst.id).name} Lv.${inst.lvl}`, "ok"); saveGame(); openSkills(); },
     rune: (el) => openRunePicker(+el.dataset.u),
   }, presetHandlers(openSkills)) });
@@ -3947,7 +3955,7 @@ function skCodexDetail(d) {
   const sk = skillOf({ uid: 0, id: d.id, rarity: 0, lvl: 1 }), st = computeStats(save);
   return `<div class="dname">${iconImg(d.icon, 3)} <b>${d.name}</b></div><div>${skTags(sk, st)} ${skBuildTags(d).map((t) => `<span class="chip" style="background:${t[1]}33;color:${t[1]}">${t[0]}</span>`).join("")}</div>
    <div class="dd" style="margin-top:6px">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc || ""}${Object.keys(d.bonus || {}).length ? " · " + Object.keys(d.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(d.bonus[k] * 100)}%`).join(", ") : ""}</div></div>
-   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급(일반/희귀/전설)이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
+   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀(승급 가능, 60%) → 전설(드랍 전용) → 이터널 · 소버린 · 엔젤릭(전설 드랍에서 아주 낮은 확률로 상위 등급 — 스킬 시련 고단계·공허의 군주). 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
   const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
@@ -4205,7 +4213,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-055954";
+const BUILD_ID = "20261028-061005";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4297,6 +4305,12 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.1", date: "10/28", title: "스킬 등급 확장 · 승급 제한", items: [
+    "스킬 등급이 늘었습니다. 일반 → 희귀 → 전설 위에 이터널 · 소버린 · 엔젤릭이 생겼습니다 (피해 ×1.9 / ×2.3 / ×3.0, 쿨타임 −13% / −16% / −20%, 추가 피해 보너스 ×2.0 / ×2.4 / ×3.0).",
+    "상위 등급은 스킬 시련(단계가 높을수록)과 공허의 군주에서 전설 스킬이 나왔을 때만 아주 낮은 확률로 한 단계씩 더 올라갑니다 (시련 100단계 기준 스킬 드랍 중 이터널 약 4%, 소버린 약 0.3%, 엔젤릭 약 0.01%).",
+    "장비 창에서 목걸이와 반지 1의 위치를 서로 바꿨습니다 (신발 · 목걸이 · 반지 · 반지 2 순).",
+    "스킬 승급은 일반 → 희귀만 가능하고 60% 확률이며 실패하면 조각이 사라집니다 (25조각). 희귀 이상은 승급할 수 없고 드랍으로만 얻습니다.",
+  ] },
   { ver: "3.0", date: "10/28", title: "스킬 도감 · 빌드별 보스 전용기", items: [
     "도감에 '스킬' 탭이 생겼습니다. 모든 스킬의 범위·설명·획득처와 보유 이력을 볼 수 있고, 기본 공격/액티브/보스 전용기/공허 전용으로 거를 수 있습니다.",
     "빌드마다 보스 전용기를 추가했습니다 (단일 대상, 보스에게 +100% 피해, 빌드 고유 효과 확정): 심장 도려내기(출혈) · 맹독 주입(중독) · 태양의 낙인(점화·화염) · 절대영도(냉기) · 벼락 처형(번개) · 마력 응축탄(마나·주문) · 처형자 소환(소환). 물리 빌드는 기존 '처형'이 보스 전용기입니다.",

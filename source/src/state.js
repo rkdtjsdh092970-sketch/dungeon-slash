@@ -80,7 +80,9 @@ function diceItem(sv, it) {
   sv.dice--; return true;
 }
 const diceChance = (kind, node) => ({ rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], void: [0.02, 0.04, 0.07, 0.15][(node.vsel || 1) - 1] }[kind] || 0);
-function genSkill(sv, id, rarity) { return { uid: sv.nextUid++, id, rarity }; }
+// 전설이 나왔을 때만 아주 낮은 확률로 이터널 → 소버린 → 엔젤릭 순으로 한 단계씩 더 올라간다 (chance는 첫 단계 확률, 이후 단계마다 ×0.4)
+function skillTierUp(r, chance) { let c = chance || 0; while (r >= 2 && r < SKILL_RARITY.length - 1 && Math.random() < c) { r++; c *= 0.4; } return r; }
+function genSkill(sv, id, rarity, tierUp) { return { uid: sv.nextUid++, id, rarity: tierUp ? skillTierUp(rarity, tierUp) : rarity }; }
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
   const bonus = {}; for (const k in d.bonus) bonus[k] = d.bonus[k] * R.bonusMul;
@@ -294,7 +296,7 @@ function rollDrops(sv, node, boss, B) {
       if (list.length) { out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     }
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
-    if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * [0.3, 1, 1.6][i] })), (x) => x.w).i));
+    if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
     if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
@@ -303,10 +305,10 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "hive" && Math.random() < [0.15, 0.3, 0.5, 0.8][(node.vsel || 1) - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const u = rollUnique(sv, 10, ilvl, ["fire"]); if (u) { out.items.push(u); out.uniques++; } }   // 화염 정령왕 전용 고유 (40%)
   // 스킬: 보스 첫 클리어 확정 1개, 일반 확률, 균열 탑에서 낮은 확률로 강한 스킬
   const poolFor = (min) => SKILLS.filter((d) => d.unlock <= Math.max(act, kind === "rift" ? 10 : 0) && d.unlock >= min);
-  const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * w[i] })), (x) => x.w).i;
+  const rr = (w) => wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * (w[i] || 0) })), (x) => x.w).i;
   if (node.firstClear && kind === "boss") { const d = wpick(SKILLS.filter((x) => x.unlock <= act && x.slot === "active"), (x) => (x.unlock >= act - 1 ? 2 : 1)); out.skills.push(genSkill(sv, d.id, rr([1, 1, 0.3]))); }
   else if (kind === "trial") { const T = node.tier || 1;
-    for (let k = 0; k < (T >= 50 ? 2 : 1); k++) if (Math.random() < trialSkillChance(T) * (k ? 0.5 : 1)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([Math.max(0.05, 0.5 - T / 200), 1.2, 0.6 + T / 25]))); }
+    for (let k = 0; k < (T >= 50 ? 2 : 1); k++) if (Math.random() < trialSkillChance(T) * (k ? 0.5 : 1)) { const d = pick(poolFor(3).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([Math.max(0.05, 0.5 - T / 200), 1.2, 0.6 + T / 25]), 0.12 * T / 100)); }
     out.hone = Math.round((4 + Math.floor(T * 0.9)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.5) out.runes.push(pick(RUNE_IDS)); if (T >= 60 && Math.random() < 0.3) out.runes.push(pick(RUNE_IDS)); }
   else if (kind === "rift") { if (Math.random() < Math.min(0.12, 0.015 + 0.002 * (node.tier || 1))) { const d = pick(poolFor(5).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.2, 1, 2]))); } }
   else if (Math.random() < (boss ? CFG.SKILL_DROP_BOSS : CFG.SKILL_DROP * (kind === "elite" ? 2 : 1))) {
@@ -482,7 +484,7 @@ function buyAtlas(sv, id) {
   const c = atlasCost(n, r); if (sv.shards < c) return false; sv.shards -= c; sv.atlas[id] = r + 1; return true;
 }
 const SHOP_MIN = 20;
-const skillPrice = (d, rarity) => Math.round(70 * Math.pow(1.55, d.unlock - 1) * [1, 3.5, 12][rarity] * (d.slot === "basic" ? 0.6 : 1));
+const skillPrice = (d, rarity) => Math.round(70 * Math.pow(1.55, d.unlock - 1) * [1, 3.5, 12, 40, 130, 500][rarity] * (d.slot === "basic" ? 0.6 : 1));
 const skillSellValue = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return Math.max(5, Math.round(skillPrice(d, inst.rarity) * 0.4 * (1 + 0.25 * ((inst.lvl || 1) - 1)))); };
 const skillInPreset = (sv, inst) => (sv.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid));
 function sellSkill(sv, inst) {

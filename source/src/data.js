@@ -99,6 +99,10 @@ const SKILL_RARITY = [
   { name: "일반", mult: 1.0,  cdMul: 1.0,  bonusMul: 1.0, w: 70, cls: "r0" },
   { name: "희귀", mult: 1.25, cdMul: 0.95, bonusMul: 1.3, w: 25, cls: "r2" },
   { name: "전설", mult: 1.6,  cdMul: 0.9,  bonusMul: 1.7, w: 5,  cls: "r3" },
+  // 전설 위 등급: 일반 드랍 풀에는 없고, 엔드게임(스킬 시련·공허의 군주)에서 전설이 나왔을 때 아주 낮은 확률로 한 단계씩 더 올라간다. 승급으로는 얻을 수 없다
+  { name: "이터널", mult: 1.9, cdMul: 0.87, bonusMul: 2.0, w: 0, cls: "tn2" },
+  { name: "소버린", mult: 2.3, cdMul: 0.84, bonusMul: 2.4, w: 0, cls: "tn3" },
+  { name: "엔젤릭", mult: 3.0, cdMul: 0.80, bonusMul: 3.0, w: 0, cls: "tn4" },
 ];
 const RULES = { front: "앞열(기본)", auto: "오토", boss: "보스 우선", ranged: "원거리 우선", elite: "정예 우선", normal: "일반 우선" };
 const RULE_ORDER = ["front", "auto", "boss", "ranged", "elite", "normal"];
