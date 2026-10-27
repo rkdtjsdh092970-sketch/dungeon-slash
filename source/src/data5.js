@@ -54,12 +54,33 @@ UNIQUES.push(
   U("plaguebearer", "만병의 근원", "neck", 4, "tower", 1, [["bleedChance", 0.3], ["poisonChance", 0.3], ["igniteChance", 0.3], ["dotDmg", [1.1, 1.3]], ["dotDur", 0.4], ["allDmg", 0.2]], "모든 상처는 하나로 이어진다."),
   U("manafall", "마나 폭포", "armor", 1, "common", 3, [["manaPct", [0.55, 0.65]], ["manaRegenFlat", [7, 9]], ["defMore", 0.8]], "넘쳐흘러 방어를 잊었다."),
   U("archmage", "대마도사의 지팡이", "weapon", 2, "common", 6, [["manaToSpell", [0.28, 0.34]], ["magPct", [0.28, 0.34]], ["manaRegen", 0.02]], "마나의 흐름을 지팡이로 모은다."),
-  U("manabarrier", "마나 방벽 갑주", "armor", 3, "common", 7, [["manaShield", [0.55, 0.65]], ["manaPct", [0.45, 0.55]], ["hpMore", 0.6]], "마나가 있는 한 쓰러지지 않는다."),
+  U("manabarrier", "마력 순환 갑주", "armor", 3, "common", 7, [["manaRegen", [0.02, 0.03]], ["manaPct", [0.45, 0.55]], ["manaCostRed", 0.10], ["hpMore", 0.6]], "마나가 흐르는 한 쓰러지지 않는다."),
   U("abyssmind", "마력의 심연", "helm", 3, "endless", 1, [["manaToSpell", [0.38, 0.45]], ["manaPct", [0.55, 0.65]], ["manaCostRed", 0.2], ["dmgPerMana", 0.02]], "들여다볼수록 깊어진다."),
   U("soulreap", "영혼 수확 반지", "ring", 2, "hell", 1, [["manaOnKill", [5, 7]], ["dmgPerMana", [0.011, 0.014]], ["manaRegenFlat", 5]], "죽음이 곧 마나."),
   U("spellblade", "마법검", "weapon", 3, "tower", 1, [["magCrit", 1], ["critChance", [0.1, 0.14]], ["atkPct", [0.28, 0.34]], ["magPct", [0.28, 0.34]]], "벤 자리에 마법이 터진다."),
   U("cycle", "원소 순환", "neck", 2, "common", 5, [["elemDmg", [0.45, 0.55]], ["penElem", [0.13, 0.17]], ["fireDmg", 0.28], ["coldDmg", 0.28], ["lightDmg", 0.28]], "불, 얼음, 번개. 다시 불."),
   U("whistle", "군단장의 호각", "neck", 2, "endless", 1, [["aoeDmg", [0.55, 0.65]], ["normal", [0.35, 0.45]], ["cdr", 0.08]], "한 번 불면 모두 몰려온다."),
+);
+// ---- 다양성 추가: 처형·처치 회복·보스/원거리 피해 감소·상태이상·골드 계열 등 ----
+UNIQUES.push(
+  U("butcheraxe", "도살자의 손도끼", "weapon", 1, "common", 1, [["atkPct", [0.15, 0.2]], ["executeDmg", [0.25, 0.35]], ["bleedChance", 0.10]], "끝을 보는 일에 익숙하다."),
+  U("huntermark", "사냥꾼의 표식", "ring", 1, "common", 1, [["boss", 0.18], ["ranged", 0.18], ["critChance", 0.04]], "한 번 찍히면 놓치지 않는다."),
+  U("bloodhood", "피 묻은 두건", "helm", 1, "common", 2, [["killHeal", 0.001], ["lifesteal", 0.008], ["hpPct", 0.10]], "쓰러진 것의 온기를 마신다."),
+  U("stalkerboots", "추적자의 장화", "boots", 2, "common", 3, [["cdr", 0.05], ["dodge", 0.05], ["rangedTaken", 0.08]], "발소리가 없다."),
+  U("viperfang", "독사의 송곳니", "weapon", 2, "common", 4, [["poisonChance", 0.15], ["dotDmg", 0.35], ["dotDur", 0.20], ["atkPct", 0.15]], "물린 곳은 오래 아프다."),
+  U("frostsigil", "한파의 인장", "ring", 2, "common", 4, [["coldDmg", 0.35], ["penElem", 0.08], ["cdr", 0.03]], "손끝이 시리다."),
+  U("stormarbiter", "폭풍의 중재자", "gloves", 2, "common", 5, [["lightDmg", 0.35], ["chainDmg", 0.25], ["chainJumps", 1]], "번개가 말을 듣는다."),
+  U("bulwarkplate", "철벽의 수호자", "armor", 2, "common", 5, [["defPct", 0.25], ["bossTaken", 0.08], ["hpPct", 0.12]], "거인의 발에도 버틴다."),
+  U("greedcharm", "탐욕의 목걸이", "neck", 2, "common", 3, [["goldFind", 0.35], ["mf", 0.12], ["expFind", 0.15]], "금화 소리를 따라 걷는다."),
+  U("slaughtergloves", "학살자의 장갑", "gloves", 3, "common", 8, [["executeDmg", 0.45], ["critDmg", 0.35], ["normal", 0.20], ["killHeal", 0.001]], "서 있는 자가 없을 때까지."),
+  U("manaleech", "마나 기생충", "neck", 3, "common", 7, [["manaHit", 0.003], ["manaOnKill", 10], ["manaCostRed", 0.08], ["magPct", 0.12]], "주인의 마나를 먹고 자란다."),
+  U("phoenixfeather", "불사조의 깃털", "helm", 3, "common", 8, [["revive", 1], ["fireDmg", 0.30], ["regen", 0.004]], "재가 된 뒤에야 날개를 편다."),
+  U("shadowcloak", "그림자 외투", "armor", 3, "common", 8, [["dodge", 0.08], ["dodgeCap", 0.6], ["rangedTaken", 0.12], ["cdr", 0.05]], "그림자는 맞지 않는다."),
+  U("reaperscythe", "저승사자의 낫", "weapon", 3, "tower", 1, [["executeDmg", 0.6], ["boss", 0.25], ["critChance", 0.08], ["lifesteal", 0.01]], "마지막 한 번을 위해 휘두른다."),
+  U("executorring", "집행관의 반지", "ring", 2, "endless", 1, [["elite", 0.35], ["aoeDmg", 0.15], ["killHeal", 0.001]], "정예는 줄 세워서."),
+  U("endlessboots", "무한의 장화", "boots", 3, "endless", 1, [["cdr", 0.08], ["dodge", 0.06], ["killHeal", 0.0012], ["mf", 0.08]], "멈추면 쓰러진다."),
+  U("emberheart", "불씨 박힌 심장석", "neck", 2, "hell", 1, [["fireDmg", 0.40], ["igniteChance", 0.15], ["dotDmg", 0.25]], "식지 않는 숯."),
+  U("hellhound", "지옥견의 두개골", "helm", 3, "hell", 1, [["fireDmg", 0.35], ["killHeal", 0.001], ["normal", 0.25], ["dodge", 0.05]], "짖지 않는다. 물 뿐이다.")
 );
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
 
@@ -103,7 +124,7 @@ UNIQUES.push(
   U("hellverdict", "지옥불의 심판자", "weapon", 4, "hell", 1, [["atkMore", 1.45], ["magMore", 1.45], ["fireDmg", 0.55], ["igniteChance", 0.3], ["ignoreRes", 0.2]], "불꽃이 판결문을 읽는다."),
   // 갑옷
   U("riftwatch", "균열 파수꾼의 갑옷", "armor", 1, "tower", 1, [["hpPct", [0.35, 0.45]], ["defPct", [0.4, 0.5]], ["manaPct", -0.15]], "문 앞에서 영원히 선다."),
-  U("everarmor", "영원의 갑주", "armor", 4, "endless", 1, [["hpMore", 1.9], ["regen", 0.02], ["dmgTaken", -0.25], ["manaShield", 0.3], ["lifesteal", 0.04], ["hpPct", 0.3]], "쓰러지는 법을 잊어버렸다."),
+  U("everarmor", "영원의 갑주", "armor", 4, "endless", 1, [["hpMore", 1.9], ["regen", 0.02], ["dmgTaken", -0.25], ["bossTaken", 0.12], ["lifesteal", 0.04], ["hpPct", 0.3]], "쓰러지는 법을 잊어버렸다."),
   // 목걸이 / 반지
   U("ashnecklace", "재의 목걸이", "neck", 1, "hell", 1, [["fireDmg", [0.28, 0.35]], ["manaPct", 0.2], ["hpPct", -0.1]], "목에 얹힌 열기."),
   U("startear", "별의 눈물", "neck", 4, "common", 8, [["allDmg", 0.28], ["mf", 0.9], ["critDmg", 0.45], ["cdr", 0.1], ["manaPct", 0.3], ["expFind", 0.4]], "하늘이 떨군 단 한 방울."),

@@ -207,7 +207,7 @@ function damagePlayer(b, raw, opt) {
   if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
   let d = raw * (1 - b.stats.def / (b.stats.def + 5 * raw));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
-  d *= Math.max(0.2, 1 + b.stats.dmgTaken);
+  d *= Math.max(0.2, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
   d = Math.max(1, d);
   if (b.stats.manaShield && b.mana > 0) { const ab = Math.min(b.mana, d * b.stats.manaShield); b.mana -= ab; d -= ab; }
   b.hp -= d; b.taken += d;
@@ -241,7 +241,7 @@ function hitEnemy(b, e, mult, sk, o) {
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
   let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
-  { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; }   // 스킬 종류 패시브
+  { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; if (st.executeDmg && e.hp < e.maxHp * 0.3) dmg *= 1 + st.executeDmg; }   // 스킬 종류 패시브
   // 방어력(물리) / 마법저항(마법): 감소 후 무시 → 피해 감소율 = X / (X + C)
   const ig = Math.min(0.9, (mag ? st.ignoreRes : st.ignoreDef) + (sk.ignoreAdd || 0)), X = Math.max(0, (mag ? e.rm * (1 - e.shR) : e.dm * (1 - e.shD)) * (1 - ig));
   dmg *= 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
@@ -263,6 +263,7 @@ function killEnemy(b, e) {
   if (e.type === "hwarp") { b.keys2++; say(b, "정령의 불씨를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
+  if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
   if (e.vstage) b.voidCleared = e.vstage;
   b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { b.bossKills++; b.shake = 0.8; say(b, `${e.def.name} 처치!`, "boss"); }
@@ -358,7 +359,7 @@ function bossAbility(b, e, a) {
     case "reflect": e.reflect = { t: d.dur, pct: d.pct }; sfx(b, "buff"); break;
     case "shield": { e.shield = { t: d.dur, need: d.adds }; const n = summonAdds(b, "grunt", d.adds, e); e.shield.need = Math.max(1, n); sfx(b, "buff"); break; }
     case "charge": e.charge = { t: d.windup, dealt: 0, mult: d.mult, interrupt: d.interrupt }; sfx(b, "charge"); break;
-    case "rain": for (let i = 0; i < d.hits; i++) b.events.push({ t: 0.8 + i * 0.45, fn: () => { damagePlayer(b, e.atk * d.mult, { shake: 0.2 }); fx(b, { kind: "boom", x: PLAYER_POS.x + rnd(-30, 60), y: PLAYER_POS.y - 20, t: 0.4, life: 0.4, color: "#ff8030", r: 70 }); sfx(b, "boom"); } }); break;
+    case "rain": for (let i = 0; i < d.hits; i++) b.events.push({ t: 0.8 + i * 0.45, fn: () => { damagePlayer(b, e.atk * d.mult, { shake: 0.2, boss: true }); fx(b, { kind: "boom", x: PLAYER_POS.x + rnd(-30, 60), y: PLAYER_POS.y - 20, t: 0.4, life: 0.4, color: "#ff8030", r: 70 }); sfx(b, "boom"); } }); break;
   }
 }
 function bossTick(b, e, dt) {
@@ -373,7 +374,7 @@ function bossTick(b, e, dt) {
   if (e.charge) {
     e.charge.t -= dt;
     if (e.charge.dealt >= e.charge.interrupt * e.maxHp) { e.charge = null; e.stun = 2.5; say(b, "저지 성공!", "good"); sfx(b, "shatter"); }
-    else if (e.charge.t <= 0) { damagePlayer(b, e.atk * e.charge.mult, { undodgeable: false, shake: 0.7 }); e.charge = null; sfx(b, "boom"); fx(b, { kind: "boom", x: PLAYER_POS.x + 10, y: PLAYER_POS.y - 30, t: 0.5, life: 0.5, color: "#ff5030", r: 120 }); }
+    else if (e.charge.t <= 0) { damagePlayer(b, e.atk * e.charge.mult, { undodgeable: false, shake: 0.7, boss: true }); e.charge = null; sfx(b, "boom"); fx(b, { kind: "boom", x: PLAYER_POS.x + 10, y: PLAYER_POS.y - 30, t: 0.5, life: 0.5, color: "#ff5030", r: 120 }); }
   }
 }
 
@@ -436,7 +437,7 @@ function stepBattle(b, dt) {
         if (e.def.sniper) { fx(b, { kind: "snipe", x0: e.vx != null ? e.vx : P.x, y0: (e.vy != null ? e.vy : P.y) - 40, x1: PLAYER_POS.x + 10, y1: PLAYER_POS.y - 52, t: 0.3, life: 0.3, color: "#ff7a4a" }); }
         fx(b, { kind: "proj", x0: e.vx != null ? e.vx : P.x, y0: (e.vy != null ? e.vy : P.y) - (e.tier === "boss" ? 70 : 30), x1: PLAYER_POS.x, y1: PLAYER_POS.y - 50, t: 0.25, life: 0.25, sprite: e.def.proj || (e.tier === "boss" ? "orb" : "hit"), color: e.def.color });
         if (e.traits.includes("explode")) { dmg *= 3; fx(b, { kind: "boom", x: PLAYER_POS.x + 20, y: PLAYER_POS.y - 30, t: 0.4, life: 0.4, color: "#ff8a40", r: 70 }); e.exploded = true; }
-        damagePlayer(b, dmg, { shake: e.tier === "boss" || e.exploded ? 0.25 : 0 }); sfx(b, e.def.ranged ? "arrow" : "ehit");
+        damagePlayer(b, dmg, { shake: e.tier === "boss" || e.exploded ? 0.25 : 0, boss: e.tier === "boss", ranged: !!e.def.ranged }); sfx(b, e.def.ranged ? "arrow" : "ehit");
         if (e.traits.length) traitHit(b, e);
         if (e.exploded) { killEnemy(b, e); continue; }
         e.atkCd = e.interval * rnd(1 - CFG.JITTER, 1 + CFG.JITTER);

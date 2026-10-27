@@ -865,7 +865,7 @@ const UNIQUES = [
   U("towerseal", "탑의 인장", "ring", 2, "tower", 1, [["mf", [0.9, 1.1]], ["boss", [0.3, 0.4]], ["elite", [0.3, 0.4]]], "오를수록 눈이 밝아진다."),
   U("voidlens", "공허의 렌즈", "helm", 2, "tower", 1, [["voidDmg", [0.5, 0.6]], ["penElem", 0.2], ["manaToSpell", 0.18], ["manaPct", 0.25]], "공허를 들여다보는 눈."),
   U("stormcaller", "폭풍을 부르는 자", "weapon", 2, "tower", 1, [["lightDmg", [0.5, 0.6]], ["chainJumps", 3], ["chainDmg", 0.5], ["magPct", 0.2]], "구름이 먼저 알아챈다."),
-  U("riftmantle", "균열의 외투", "armor", 3, "tower", 1, [["hpMore", [1.7, 1.9]], ["dmgTaken", -0.2], ["regen", 0.008], ["manaShield", 0.3]], "마나가 먼저 맞는다."),
+  U("riftmantle", "균열의 외투", "armor", 3, "tower", 1, [["hpMore", [1.7, 1.9]], ["dmgTaken", -0.2], ["regen", 0.008], ["rangedTaken", 0.15]], "먼 곳의 화살은 이 외투에 닿지 않는다."),
   U("apex", "정점의 인장", "ring", 4, "tower", 1, [["mf", [2.2, 2.6]], ["allDmg", 0.3], ["critDmg", 0.5], ["cdr", 0.1], ["penElem", 0.15]], "끝없는 탑의 끝에서 빛나는 것."),
   // ===== 무한 균열 전용 =====
   U("endlessloop", "끝없는 고리", "ring", 2, "endless", 1, [["regen", [0.006, 0.008]], ["manaRegen", [0.02, 0.025]], ["cdr", 0.1]], "끝이 없으니 멈출 이유도 없다."),
@@ -875,11 +875,11 @@ const UNIQUES = [
   U("eternity", "영원의 왕관", "helm", 4, "endless", 1, [["revive", 1], ["regen", 0.015], ["lifesteal", 0.05], ["allDmg", 0.35], ["manaRegen", 0.04], ["hpMore", 1.5]], "영원히 쓰러지지 않는 자의 머리 위에."),
   // ===== 공허의 군주 (6개 중 1개, 2개는 엔젤릭) =====
   U("voidblade", "공허의 검", "weapon", 2, "void", 1, [["atkPct", [0.35, 0.42]], ["magPct", [0.35, 0.42]], ["critDmg", [0.5, 0.6]], ["ignoreDef", 0.10]], "베인 자리가 다시 닫히지 않는다."),
-  U("voidplate", "공허의 흉갑", "armor", 2, "void", 1, [["hpPct", [0.35, 0.42]], ["defPct", [0.7, 0.85]], ["dmgTaken", -0.12], ["manaShield", 0.15]], "공허는 무엇도 되돌려 주지 않는다."),
+  U("voidplate", "공허의 흉갑", "armor", 2, "void", 1, [["hpPct", [0.35, 0.42]], ["defPct", [0.7, 0.85]], ["dmgTaken", -0.12], ["bossTaken", 0.10]], "공허는 무엇도 되돌려 주지 않는다."),
   U("voidcrest", "공허의 문장", "helm", 3, "void", 1, [["cdr", [0.10, 0.13]], ["allDmg", [0.14, 0.17]], ["mf", [0.2, 0.28]], ["voidDmg", 0.3]], "눈을 감아도 보인다."),
   U("voidwhisper", "공허의 속삭임", "neck", 3, "void", 1, [["manaToSpell", [0.22, 0.26]], ["magCrit", 1], ["spellCrit", 0.09], ["voidDmg", 0.22]], "마나가 속삭이면 마법이 대답한다."),
   U("abyssalcrown", "심연의 왕관", "helm", 4, "void", 1, [["atkMore", [1.28, 1.36]], ["magMore", [1.28, 1.36]], ["hpMore", [1.28, 1.36]], ["allDmg", [0.35, 0.42]], ["cdr", 0.15], ["lanes", 1], ["revive", 1]], "왕관을 쓴 자는 무릎 꿇지 않는다."),
-  U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [1.6, 1.8]], ["lifesteal", 0.04], ["regen", 0.007], ["dmgTaken", -0.22], ["boss", 0.45], ["manaShield", 0.2]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
+  U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [1.6, 1.8]], ["lifesteal", 0.04], ["regen", 0.007], ["dmgTaken", -0.22], ["boss", 0.45], ["killHeal", 0.0015]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
   // 화염 정령왕: 화염·점화·지속 피해 빌드용
   U("sparkcoil", "불꽃 정령의 고리", "ring", 1, "fire", 1, [["fireDmg", [0.3, 0.4]], ["igniteChance", [0.08, 0.12]], ["hpPct", -0.08]], "작은 불꽃이 쉬지 않고 맴돈다."),
   U("emberglove", "잿불 장갑", "gloves", 1, "fire", 1, [["fireDmg", [0.28, 0.36]], ["dotDmg", [0.3, 0.4]], ["atkPct", [0.08, 0.1]]], "불씨가 손가락마다 깃든다."),
@@ -892,7 +892,7 @@ const UNIQUE_BY_ID = Object.fromEntries(UNIQUES.map((u) => [u.id, u]));
 UNIQUES.forEach((u) => { u.ico = u.slot; });
 const uniqTier = (id) => (UNIQUE_BY_ID[id] ? U_TIERS[UNIQUE_BY_ID[id].tier] : U_TIERS[1]);
 // 등급 보정: 높은 등급일수록 유리한 수치가 커진다 (페널티·플래그·상한은 그대로)
-const U_SCALE = new Set(["atkPct", "magPct", "hpPct", "defPct", "cdr", "critChance", "critDmg", "spellCrit", "allDmg", "aoeDmg", "lifesteal", "boss", "elite", "normal", "ranged", "fireDmg", "coldDmg", "lightDmg", "voidDmg", "elemDmg", "physDmg", "magDmg", "dotDmg", "penElem", "ignoreDef", "ignoreRes", "shredDef", "shredRes", "manaPct", "manaToSpell", "dmgPerMana", "bleedChance", "poisonChance", "igniteChance", "chainDmg", "manaCostRed", "regen", "manaRegen", "manaRegenFlat", "manaShield", "mf", "goldFind", "expFind", "dotDur"]);
+const U_SCALE = new Set(["executeDmg", "killHeal", "bossTaken", "rangedTaken", "atkPct", "magPct", "hpPct", "defPct", "cdr", "critChance", "critDmg", "spellCrit", "allDmg", "aoeDmg", "lifesteal", "boss", "elite", "normal", "ranged", "fireDmg", "coldDmg", "lightDmg", "voidDmg", "elemDmg", "physDmg", "magDmg", "dotDmg", "penElem", "ignoreDef", "ignoreRes", "shredDef", "shredRes", "manaPct", "manaToSpell", "dmgPerMana", "bleedChance", "poisonChance", "igniteChance", "chainDmg", "manaCostRed", "regen", "manaRegen", "manaRegenFlat", "manaShield", "mf", "goldFind", "expFind", "dotDur"]);
 const U_MORE = new Set(["atkMore", "magMore", "hpMore"]);
 function umodScale(def, k, v) {
   const f = U_TIERS[def.tier].mult; if (f === 1) return v;
@@ -913,7 +913,7 @@ const MOD_LABEL = {
   lifesteal: ["생명력 흡수", "%"], goldFind: ["골드 획득", "%"], expFind: ["경험치 획득", "%"], mf: ["매직 파운드", "%"], chainJumps: ["번개 도약", "+"], chainDmg: ["번개 피해", "%"],
   aoeDmg: ["광역 피해", "%"], allDmg: ["주는 피해", "%"], density: ["칸당 몹 수", "+"], lanes: ["레인", "+"], dmgTaken: ["받는 피해", "%"], regen: ["초당 체력 회복", "%"],
   manaRegenFlat: ["초당 마나 재생", "+"], manaHit: ["마나 흡수 (적중 시 최대 마나)", "%"], manaOnKill: ["처치 시 마나", "+"], dmgPerMana: ["최대 마나 100당 피해", "%"], bleedChance: ["출혈 확률", "%"], poisonChance: ["중독 확률", "%"], igniteChance: ["점화 확률", "%"], dotDmg: ["지속 피해", "%"], dotDur: ["지속 시간", "%"],
-  manaPct: ["마나", "%"], manaRegen: ["초당 마나 재생", "%"], manaCostRed: ["마나 소모 감소", "%"], manaToSpell: ["최대 마나의", "mts"], manaShield: ["받는 피해의", "ms"],
+  manaPct: ["마나", "%"], manaRegen: ["초당 마나 재생", "%"], manaCostRed: ["마나 소모 감소", "%"], manaToSpell: ["최대 마나의", "mts"], manaShield: ["받는 피해의", "ms"], executeDmg: ["체력 30% 이하 적에게 추가 피해", "%"], killHeal: ["처치 시 최대 체력 회복", "%"], bossTaken: ["보스에게 받는 피해 감소", "%"], rangedTaken: ["원거리 적에게 받는 피해 감소", "%"],
   fireDmg: ["화염 피해", "%"], coldDmg: ["냉기 피해", "%"], lightDmg: ["번개 피해", "%"], voidDmg: ["공허 피해", "%"], elemDmg: ["원소 피해", "%"], physDmg: ["물리 피해", "%"], magDmg: ["마법 피해", "%"],
   ignoreDef: ["방어 무시", "%"], ignoreRes: ["마법저항 무시", "%"], shredDef: ["대상 방어력 감소", "%"], shredRes: ["대상 마법저항 감소", "%"], penElem: ["속성 저항 관통", "%"],
 };
@@ -934,10 +934,10 @@ function uniqueLines(def, mods, withRange) {   // mods: 실제 굴려진 값(없
     if (k === "manaShield") return `받는 피해의 ${P(v)}%를 마나가 대신 받는다`;
     if (k === "dodge") return `회피 ${v >= 0 ? "+" : ""}${P(v)}%`;
     if (L && L[1] === "+") return `${L[0]} ${v >= 0 ? "+" : ""}${Math.round(v)}`;
-    if (L) return `${L[0]} ${v >= 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0)}%`;
+    if (L) return `${L[0]} ${v >= 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.01 ? 2 : Math.abs(v) < 0.1 ? 1 : 0)}%`;
     return null;
   };
-  const num = (k, v) => { const L = MOD_LABEL[k]; if (L && L[1] === "+") return String(Math.round(v)); if (L && L[1] === "more") return P(v - 1) + "%"; if (k === "hpMore") return P(v - 1) + "%"; if (["manaToSpell", "manaShield", "dodge"].includes(k)) return P(v) + "%"; return (v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0) + "%"; };
+  const num = (k, v) => { const L = MOD_LABEL[k]; if (L && L[1] === "+") return String(Math.round(v)); if (L && L[1] === "more") return P(v - 1) + "%"; if (k === "hpMore") return P(v - 1) + "%"; if (["manaToSpell", "manaShield", "dodge"].includes(k)) return P(v) + "%"; return (v * 100).toFixed(Math.abs(v) < 0.01 ? 2 : Math.abs(v) < 0.1 ? 1 : 0) + "%"; };
   const list = mods || def.mods.map((x) => ({ k: x[0], v: umodScale(def, x[0], Array.isArray(x[1]) ? (x[1][0] + x[1][1]) / 2 : x[1]) }));
   for (const m of list) {
     const t = line(m.k, m.v); if (t == null) continue;
@@ -1160,12 +1160,33 @@ UNIQUES.push(
   U("plaguebearer", "만병의 근원", "neck", 4, "tower", 1, [["bleedChance", 0.3], ["poisonChance", 0.3], ["igniteChance", 0.3], ["dotDmg", [1.1, 1.3]], ["dotDur", 0.4], ["allDmg", 0.2]], "모든 상처는 하나로 이어진다."),
   U("manafall", "마나 폭포", "armor", 1, "common", 3, [["manaPct", [0.55, 0.65]], ["manaRegenFlat", [7, 9]], ["defMore", 0.8]], "넘쳐흘러 방어를 잊었다."),
   U("archmage", "대마도사의 지팡이", "weapon", 2, "common", 6, [["manaToSpell", [0.28, 0.34]], ["magPct", [0.28, 0.34]], ["manaRegen", 0.02]], "마나의 흐름을 지팡이로 모은다."),
-  U("manabarrier", "마나 방벽 갑주", "armor", 3, "common", 7, [["manaShield", [0.55, 0.65]], ["manaPct", [0.45, 0.55]], ["hpMore", 0.6]], "마나가 있는 한 쓰러지지 않는다."),
+  U("manabarrier", "마력 순환 갑주", "armor", 3, "common", 7, [["manaRegen", [0.02, 0.03]], ["manaPct", [0.45, 0.55]], ["manaCostRed", 0.10], ["hpMore", 0.6]], "마나가 흐르는 한 쓰러지지 않는다."),
   U("abyssmind", "마력의 심연", "helm", 3, "endless", 1, [["manaToSpell", [0.38, 0.45]], ["manaPct", [0.55, 0.65]], ["manaCostRed", 0.2], ["dmgPerMana", 0.02]], "들여다볼수록 깊어진다."),
   U("soulreap", "영혼 수확 반지", "ring", 2, "hell", 1, [["manaOnKill", [5, 7]], ["dmgPerMana", [0.011, 0.014]], ["manaRegenFlat", 5]], "죽음이 곧 마나."),
   U("spellblade", "마법검", "weapon", 3, "tower", 1, [["magCrit", 1], ["critChance", [0.1, 0.14]], ["atkPct", [0.28, 0.34]], ["magPct", [0.28, 0.34]]], "벤 자리에 마법이 터진다."),
   U("cycle", "원소 순환", "neck", 2, "common", 5, [["elemDmg", [0.45, 0.55]], ["penElem", [0.13, 0.17]], ["fireDmg", 0.28], ["coldDmg", 0.28], ["lightDmg", 0.28]], "불, 얼음, 번개. 다시 불."),
   U("whistle", "군단장의 호각", "neck", 2, "endless", 1, [["aoeDmg", [0.55, 0.65]], ["normal", [0.35, 0.45]], ["cdr", 0.08]], "한 번 불면 모두 몰려온다."),
+);
+// ---- 다양성 추가: 처형·처치 회복·보스/원거리 피해 감소·상태이상·골드 계열 등 ----
+UNIQUES.push(
+  U("butcheraxe", "도살자의 손도끼", "weapon", 1, "common", 1, [["atkPct", [0.15, 0.2]], ["executeDmg", [0.25, 0.35]], ["bleedChance", 0.10]], "끝을 보는 일에 익숙하다."),
+  U("huntermark", "사냥꾼의 표식", "ring", 1, "common", 1, [["boss", 0.18], ["ranged", 0.18], ["critChance", 0.04]], "한 번 찍히면 놓치지 않는다."),
+  U("bloodhood", "피 묻은 두건", "helm", 1, "common", 2, [["killHeal", 0.001], ["lifesteal", 0.008], ["hpPct", 0.10]], "쓰러진 것의 온기를 마신다."),
+  U("stalkerboots", "추적자의 장화", "boots", 2, "common", 3, [["cdr", 0.05], ["dodge", 0.05], ["rangedTaken", 0.08]], "발소리가 없다."),
+  U("viperfang", "독사의 송곳니", "weapon", 2, "common", 4, [["poisonChance", 0.15], ["dotDmg", 0.35], ["dotDur", 0.20], ["atkPct", 0.15]], "물린 곳은 오래 아프다."),
+  U("frostsigil", "한파의 인장", "ring", 2, "common", 4, [["coldDmg", 0.35], ["penElem", 0.08], ["cdr", 0.03]], "손끝이 시리다."),
+  U("stormarbiter", "폭풍의 중재자", "gloves", 2, "common", 5, [["lightDmg", 0.35], ["chainDmg", 0.25], ["chainJumps", 1]], "번개가 말을 듣는다."),
+  U("bulwarkplate", "철벽의 수호자", "armor", 2, "common", 5, [["defPct", 0.25], ["bossTaken", 0.08], ["hpPct", 0.12]], "거인의 발에도 버틴다."),
+  U("greedcharm", "탐욕의 목걸이", "neck", 2, "common", 3, [["goldFind", 0.35], ["mf", 0.12], ["expFind", 0.15]], "금화 소리를 따라 걷는다."),
+  U("slaughtergloves", "학살자의 장갑", "gloves", 3, "common", 8, [["executeDmg", 0.45], ["critDmg", 0.35], ["normal", 0.20], ["killHeal", 0.001]], "서 있는 자가 없을 때까지."),
+  U("manaleech", "마나 기생충", "neck", 3, "common", 7, [["manaHit", 0.003], ["manaOnKill", 10], ["manaCostRed", 0.08], ["magPct", 0.12]], "주인의 마나를 먹고 자란다."),
+  U("phoenixfeather", "불사조의 깃털", "helm", 3, "common", 8, [["revive", 1], ["fireDmg", 0.30], ["regen", 0.004]], "재가 된 뒤에야 날개를 편다."),
+  U("shadowcloak", "그림자 외투", "armor", 3, "common", 8, [["dodge", 0.08], ["dodgeCap", 0.6], ["rangedTaken", 0.12], ["cdr", 0.05]], "그림자는 맞지 않는다."),
+  U("reaperscythe", "저승사자의 낫", "weapon", 3, "tower", 1, [["executeDmg", 0.6], ["boss", 0.25], ["critChance", 0.08], ["lifesteal", 0.01]], "마지막 한 번을 위해 휘두른다."),
+  U("executorring", "집행관의 반지", "ring", 2, "endless", 1, [["elite", 0.35], ["aoeDmg", 0.15], ["killHeal", 0.001]], "정예는 줄 세워서."),
+  U("endlessboots", "무한의 장화", "boots", 3, "endless", 1, [["cdr", 0.08], ["dodge", 0.06], ["killHeal", 0.0012], ["mf", 0.08]], "멈추면 쓰러진다."),
+  U("emberheart", "불씨 박힌 심장석", "neck", 2, "hell", 1, [["fireDmg", 0.40], ["igniteChance", 0.15], ["dotDmg", 0.25]], "식지 않는 숯."),
+  U("hellhound", "지옥견의 두개골", "helm", 3, "hell", 1, [["fireDmg", 0.35], ["killHeal", 0.001], ["normal", 0.25], ["dodge", 0.05]], "짖지 않는다. 물 뿐이다.")
 );
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
 
@@ -1209,7 +1230,7 @@ UNIQUES.push(
   U("hellverdict", "지옥불의 심판자", "weapon", 4, "hell", 1, [["atkMore", 1.45], ["magMore", 1.45], ["fireDmg", 0.55], ["igniteChance", 0.3], ["ignoreRes", 0.2]], "불꽃이 판결문을 읽는다."),
   // 갑옷
   U("riftwatch", "균열 파수꾼의 갑옷", "armor", 1, "tower", 1, [["hpPct", [0.35, 0.45]], ["defPct", [0.4, 0.5]], ["manaPct", -0.15]], "문 앞에서 영원히 선다."),
-  U("everarmor", "영원의 갑주", "armor", 4, "endless", 1, [["hpMore", 1.9], ["regen", 0.02], ["dmgTaken", -0.25], ["manaShield", 0.3], ["lifesteal", 0.04], ["hpPct", 0.3]], "쓰러지는 법을 잊어버렸다."),
+  U("everarmor", "영원의 갑주", "armor", 4, "endless", 1, [["hpMore", 1.9], ["regen", 0.02], ["dmgTaken", -0.25], ["bossTaken", 0.12], ["lifesteal", 0.04], ["hpPct", 0.3]], "쓰러지는 법을 잊어버렸다."),
   // 목걸이 / 반지
   U("ashnecklace", "재의 목걸이", "neck", 1, "hell", 1, [["fireDmg", [0.28, 0.35]], ["manaPct", 0.2], ["hpPct", -0.1]], "목에 얹힌 열기."),
   U("startear", "별의 눈물", "neck", 4, "common", 8, [["allDmg", 0.28], ["mf", 0.9], ["critDmg", 0.45], ["cdr", 0.1], ["manaPct", 0.3], ["expFind", 0.4]], "하늘이 떨군 단 한 방울."),
@@ -1239,7 +1260,7 @@ function newSave() {
 }
 function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 2) return null; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
-    purgeClearedQuests(s);
+    purgeClearedQuests(s); clampAll(s);
     if (s.rangeRev !== 1) { clampAll(s); s.rangeRev = 1; }   // v2.9: 범위 밖 수치 보정
     if (s.passRev !== 4) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 4; }   // 패시브 트리 개편(v2.4 / v3.2 스킬 계열 추가): 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
@@ -1278,8 +1299,17 @@ function rollAffix(a, g, R, rarity, crafted) {
 function affixRange(a, ilvl, rarity) { const g = gScale(ilvl), sc = a.count ? 1 : affixScale(a, g, rarity); return [a.range[0] * sc, a.range[1] * sc]; }
 // 공허의 주사위: 옵션/고유 능력의 수치를 범위 안에서 균등하게 다시 굴린다 (고유 장비도 가능)
 // 범위 밖으로 튄 옵션을 현재 범위 안으로 맞춘다 (이전 버전의 보정 배율로 만들어진 장비, 경매에서 사 온 장비 등)
+// 마나 방패 고유 능력 교체(v3.10): 이미 가진 장비의 해당 능력을 새 능력으로 바꾼다
+const UNIQ_REMAP = { riftmantle: "rangedTaken", voidplate: "bossTaken", voidheart: "killHeal", everarmor: "bossTaken", manabarrier: "manaRegen" };
+function remapUniqueItem(it) {
+  const D = UNIQUE_BY_ID[it.uniq]; if (!D || !it.umods) return 0; const i = it.umods.findIndex((m) => m.k === "manaShield"); if (i < 0 || D.mods.some((m) => m[0] === "manaShield")) return 0;
+  const nk = UNIQ_REMAP[it.uniq], def = nk && D.mods.find((m) => m[0] === nk);
+  if (!def || it.umods.some((m) => m.k === nk)) { it.umods.splice(i, 1); return 1; }
+  const v = Array.isArray(def[1]) ? (def[1][0] + def[1][1]) / 2 : def[1]; it.umods[i] = { k: nk, v: umodScale(D, nk, v) }; return 1;
+}
 function clampItem(it) {
   if (!it) return 0; let n = 0;
+  if (it.uniq) n += remapUniqueItem(it);
   if (it.uniq) {
     const D = UNIQUE_BY_ID[it.uniq]; if (!D || !it.umods) return 0;
     for (const m of it.umods) { const def = D.mods.find((x) => x[0] === m.k); if (!def || !Array.isArray(def[1])) continue; const a = umodScale(D, m.k, def[1][0]), b = umodScale(D, m.k, def[1][1]), lo = Math.min(a, b), hi = Math.max(a, b); const v = Math.min(hi, Math.max(lo, m.v)); if (v !== m.v) { m.v = v; n++; } }
@@ -1333,7 +1363,7 @@ function computeStats(sv) {
     physDmg: 0, magDmg: 0, elemDmg: 0, fireDmg: 0, coldDmg: 0, lightDmg: 0, voidDmg: 0, ignoreDef: 0, ignoreRes: 0, shredDef: 0, shredRes: 0, penElem: 0,
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
-    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
@@ -1366,6 +1396,7 @@ function computeStats(sv) {
   s.maxHp = Math.max(10, s.hpFlat * (1 + Math.max(-0.9, s.hpPct)) * lm * s.hpMore); s.def = s.def * lm * (1 + s.defPct) * s.defMore;
   s.dodge = s.noDodge ? 0 : Math.max(0, Math.min(s.dodgeCap, s.dodge)); s.cdr = Math.min(s.cdrCap, s.cdr); s.critChance = Math.min(0.8, s.critChance); s.spellCrit = Math.min(0.8, s.spellCrit);
   s.ignoreDef = Math.min(0.8, s.ignoreDef); s.ignoreRes = Math.min(0.8, s.ignoreRes); s.shredDef = Math.min(0.5, s.shredDef); s.shredRes = Math.min(0.5, s.shredRes);
+  s.bossTaken = Math.min(0.6, s.bossTaken); s.rangedTaken = Math.min(0.6, s.rangedTaken); s.killHeal = Math.min(0.02, s.killHeal);
   s.stackCap = Math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density);
   s.lanes = Math.min(CFG.MAX_LANES, sv.lanesBase + s.laneBonus);
   s.avgIlvl = ilvlCnt ? ilvlSum / ilvlCnt : 1; s.sets = sc;
@@ -2010,7 +2041,7 @@ function damagePlayer(b, raw, opt) {
   if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
   let d = raw * (1 - b.stats.def / (b.stats.def + 5 * raw));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
-  d *= Math.max(0.2, 1 + b.stats.dmgTaken);
+  d *= Math.max(0.2, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
   d = Math.max(1, d);
   if (b.stats.manaShield && b.mana > 0) { const ab = Math.min(b.mana, d * b.stats.manaShield); b.mana -= ab; d -= ab; }
   b.hp -= d; b.taken += d;
@@ -2044,7 +2075,7 @@ function hitEnemy(b, e, mult, sk, o) {
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
   let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
-  { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; }   // 스킬 종류 패시브
+  { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; if (st.executeDmg && e.hp < e.maxHp * 0.3) dmg *= 1 + st.executeDmg; }   // 스킬 종류 패시브
   // 방어력(물리) / 마법저항(마법): 감소 후 무시 → 피해 감소율 = X / (X + C)
   const ig = Math.min(0.9, (mag ? st.ignoreRes : st.ignoreDef) + (sk.ignoreAdd || 0)), X = Math.max(0, (mag ? e.rm * (1 - e.shR) : e.dm * (1 - e.shD)) * (1 - ig));
   dmg *= 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
@@ -2066,6 +2097,7 @@ function killEnemy(b, e) {
   if (e.type === "hwarp") { b.keys2++; say(b, "정령의 불씨를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
+  if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
   if (e.vstage) b.voidCleared = e.vstage;
   b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { b.bossKills++; b.shake = 0.8; say(b, `${e.def.name} 처치!`, "boss"); }
@@ -2161,7 +2193,7 @@ function bossAbility(b, e, a) {
     case "reflect": e.reflect = { t: d.dur, pct: d.pct }; sfx(b, "buff"); break;
     case "shield": { e.shield = { t: d.dur, need: d.adds }; const n = summonAdds(b, "grunt", d.adds, e); e.shield.need = Math.max(1, n); sfx(b, "buff"); break; }
     case "charge": e.charge = { t: d.windup, dealt: 0, mult: d.mult, interrupt: d.interrupt }; sfx(b, "charge"); break;
-    case "rain": for (let i = 0; i < d.hits; i++) b.events.push({ t: 0.8 + i * 0.45, fn: () => { damagePlayer(b, e.atk * d.mult, { shake: 0.2 }); fx(b, { kind: "boom", x: PLAYER_POS.x + rnd(-30, 60), y: PLAYER_POS.y - 20, t: 0.4, life: 0.4, color: "#ff8030", r: 70 }); sfx(b, "boom"); } }); break;
+    case "rain": for (let i = 0; i < d.hits; i++) b.events.push({ t: 0.8 + i * 0.45, fn: () => { damagePlayer(b, e.atk * d.mult, { shake: 0.2, boss: true }); fx(b, { kind: "boom", x: PLAYER_POS.x + rnd(-30, 60), y: PLAYER_POS.y - 20, t: 0.4, life: 0.4, color: "#ff8030", r: 70 }); sfx(b, "boom"); } }); break;
   }
 }
 function bossTick(b, e, dt) {
@@ -2176,7 +2208,7 @@ function bossTick(b, e, dt) {
   if (e.charge) {
     e.charge.t -= dt;
     if (e.charge.dealt >= e.charge.interrupt * e.maxHp) { e.charge = null; e.stun = 2.5; say(b, "저지 성공!", "good"); sfx(b, "shatter"); }
-    else if (e.charge.t <= 0) { damagePlayer(b, e.atk * e.charge.mult, { undodgeable: false, shake: 0.7 }); e.charge = null; sfx(b, "boom"); fx(b, { kind: "boom", x: PLAYER_POS.x + 10, y: PLAYER_POS.y - 30, t: 0.5, life: 0.5, color: "#ff5030", r: 120 }); }
+    else if (e.charge.t <= 0) { damagePlayer(b, e.atk * e.charge.mult, { undodgeable: false, shake: 0.7, boss: true }); e.charge = null; sfx(b, "boom"); fx(b, { kind: "boom", x: PLAYER_POS.x + 10, y: PLAYER_POS.y - 30, t: 0.5, life: 0.5, color: "#ff5030", r: 120 }); }
   }
 }
 
@@ -2239,7 +2271,7 @@ function stepBattle(b, dt) {
         if (e.def.sniper) { fx(b, { kind: "snipe", x0: e.vx != null ? e.vx : P.x, y0: (e.vy != null ? e.vy : P.y) - 40, x1: PLAYER_POS.x + 10, y1: PLAYER_POS.y - 52, t: 0.3, life: 0.3, color: "#ff7a4a" }); }
         fx(b, { kind: "proj", x0: e.vx != null ? e.vx : P.x, y0: (e.vy != null ? e.vy : P.y) - (e.tier === "boss" ? 70 : 30), x1: PLAYER_POS.x, y1: PLAYER_POS.y - 50, t: 0.25, life: 0.25, sprite: e.def.proj || (e.tier === "boss" ? "orb" : "hit"), color: e.def.color });
         if (e.traits.includes("explode")) { dmg *= 3; fx(b, { kind: "boom", x: PLAYER_POS.x + 20, y: PLAYER_POS.y - 30, t: 0.4, life: 0.4, color: "#ff8a40", r: 70 }); e.exploded = true; }
-        damagePlayer(b, dmg, { shake: e.tier === "boss" || e.exploded ? 0.25 : 0 }); sfx(b, e.def.ranged ? "arrow" : "ehit");
+        damagePlayer(b, dmg, { shake: e.tier === "boss" || e.exploded ? 0.25 : 0, boss: e.tier === "boss", ranged: !!e.def.ranged }); sfx(b, e.def.ranged ? "arrow" : "ehit");
         if (e.traits.length) traitHit(b, e);
         if (e.exploded) { killEnemy(b, e); continue; }
         e.atkCd = e.interval * rnd(1 - CFG.JITTER, 1 + CFG.JITTER);
@@ -4407,7 +4439,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-070042";
+const BUILD_ID = "20261028-070725";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4499,6 +4531,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.10", date: "10/28", title: "마나 방패 고유 능력 교체 · 새 고유 18종", items: [
+    "'받는 피해의 N%를 마나가 대신 받는다' 능력이 붙은 고유 5종(균열의 외투·공허의 흉갑·공허의 심장·영원의 갑주·마나 방벽 갑주)에서 이 능력을 없애고 다른 능력으로 바꿨습니다. 이미 가진 장비도 자동으로 새 능력으로 바뀝니다. 마나 방벽 갑주는 '마력 순환 갑주'로 이름이 바뀌었습니다.",
+    "새 능력치 4종: 체력 30% 이하 적에게 추가 피해(처형), 처치 시 최대 체력 회복, 보스에게 받는 피해 감소, 원거리 적에게 받는 피해 감소.",
+    "새 고유 장비 18종이 추가됐습니다 (도살자의 손도끼, 사냥꾼의 표식, 피 묻은 두건, 추적자의 장화, 독사의 송곳니, 한파의 인장, 폭풍의 중재자, 철벽의 수호자, 탐욕의 목걸이, 학살자의 장갑, 마나 기생충, 불사조의 깃털, 그림자 외투, 저승사자의 낫, 집행관의 반지, 무한의 장화, 불씨 박힌 심장석, 지옥견의 두개골). 처형·상태이상·원소·골드·생존 등 다양한 빌드를 노릴 수 있습니다.",
+  ] },
   { ver: "3.9", date: "10/28", title: "화염 정령왕 상향 · 입장 조건 강화", items: [
     "화염 정령왕 난이도를 균열 22/32/45/60 → 24/40/62/96단계 수준으로 올렸습니다. 4단계는 롤을 최대로 맞춘 전설 풀세트(아이템 레벨 18)가 엔젤릭 없이는 잡을 수 없고, 엔젤릭(화염 정령왕의 관)까지 갖춘 높은 레벨 장비가 필요합니다.",
     "입장에 필요한 심연의 균열 최고 단계가 15/22/32/45 → 15/28/44/64로 올랐습니다. 균열에서 충분히 파밍한 뒤에 도전하세요.",
