@@ -92,6 +92,7 @@ function planFor(node) {
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
+const riftAtkExtra = (node) => (node.tier > CFG.RIFT_ATK_PIVOT ? Math.pow(Math.pow(CFG.RIFT_SCALE, node.tier - CFG.RIFT_ATK_PIVOT), CFG.RIFT_ATK_EXP - 1) : 1);
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.min(10, node.act), stage = RIFTLIKE[node.kind] ? 4 : node.stage || 10;
@@ -100,8 +101,9 @@ function createBattle(sv, node) {
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
     hpM: CFG.H0 * Math.pow(CFG.HPX, act - 1) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
-    atkM: CFG.A0 * actScale(act) * (1 + CFG.STAGE_ATK * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
+    atkM: CFG.A0 * actScale(act) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0 };
+  b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = planFor(node);
   b.bossDef = node.kind === "void" ? VOID_BOSS : node.kind === "hive" ? HIVE_BOSS : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
@@ -232,7 +234,9 @@ function applyDamage(b, e, dmg, o) {
   if (e.charge) e.charge.dealt += dmg;
   if (e.reflect && o.src === "skill") damagePlayer(b, dmg * e.reflect.pct, { undodgeable: true });
   const ls = ((o.lifesteal || 0) + b.stats.lifesteal) * (b.debuffs.wound ? b.debuffs.wound.mult : 1);   // 작열의 낙인: 흡수 반감
-  if (ls && o.src === "skill") b.hp = Math.min(b.maxHp, b.hp + dmg * ls);
+  if (ls && o.src === "skill") {   // 흡수 회복은 초당 상한(토큰 버킷)을 넘지 못한다: 피해가 아무리 커져도 흡혈만으로 불사가 되지 않게
+    const want = Math.min(dmg * ls, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0);
+  }
   if (e.hp <= 0) killEnemy(b, e);
   return dmg;
 }
@@ -388,7 +392,8 @@ function traitHit(b, e) {
 function stepBattle(b, dt) {
   if (b.over) return;
   b.time += dt; if (b.endless) b.ddt = (b.ddt || 0) + dt;
-  b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound ? b.debuffs.wound.mult : 1) * dt); if (b.inv > 0) b.inv -= dt;
+  b.lsTok = Math.min(b.lsRate * 2, b.lsTok + b.lsRate * dt);
+  { const h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound ? b.debuffs.wound.mult : 1) * dt); b.healRg = (b.healRg || 0) + (b.hp - h0); } if (b.inv > 0) b.inv -= dt;
   b.mana = Math.min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt);
   if (b.endless && b.plan.length < 10) extendPlan(b, 40);
   if (b.kind === "void" && b.bossRef && !b.bossRef.dead && b.plan.length < 2 && b.enemies.length < 5) extendPlan(b, 6);   // 군주가 살아 있는 동안 잡몹이 계속 나온다
