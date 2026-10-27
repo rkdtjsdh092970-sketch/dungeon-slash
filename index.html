@@ -1383,7 +1383,7 @@ const MAP = buildMap();
 function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
-    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
+    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1 }, stats: { kills: 0, clears: 0 }, seen: {},
     passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
@@ -2009,13 +2009,20 @@ function offlineReward(sv) {
 // ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
 function autoRules(sv) {
   const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
-  if (A.keepUp == null) A.keepUp = true; return A;
+  if (A.keepUp == null) A.keepUp = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; return A;
+}
+// 옵션 품질: 옵션 수치가 범위의 어디쯤인지 평균 (0~1). 옵션이 없는 장비는 0
+function itemQuality(it) {
+  let n = 0, s = 0; for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d || d.count) continue; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4)); if (hi > lo) { s += clamp((a.v - lo) / (hi - lo), 0, 1); n++; } }
+  return n ? s / n : 0;
 }
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
   for (const it of sv.inv.slice()) {
     const rule = A.rules[it.rarity]; if (!rule || rule === "keep" || it.uniq || protectedItem(sv, it)) continue;
     if (A.keepUp && isUpgrade(sv, it, true)) continue;
+    if (A.maxIlvl && it.ilvl > A.maxIlvl) continue;   // 아이템 레벨 상한: 이보다 높은 장비는 처리하지 않는다
+    if (A.minQ && itemQuality(it) >= A.minQ) continue;   // 옵션 품질이 기준 이상이면 유지
     if (rule === "sell") { const v = itemValue(it); sv.gold += v; res.gold += v; removeItem(sv, it); res.sold++; } else { const y = dismantleItem(sv, it); res.gold += y.gold; res.ore += y.ore; res.dis++; }
   }
   return res;
@@ -3169,7 +3176,7 @@ function drawRoads(ctx, b, time) {
 }
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
-  const sk = b.shake > 0 ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
+  const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
   ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
   drawRoads(ctx, b, time);
@@ -3194,7 +3201,7 @@ function drawBattle(ctx, b, dt, time) {
   for (const f of b.fx) drawFx(ctx, b, f, time);
   for (const t of b.texts) { const a = clamp(t.t / (t.life * 0.5), 0, 1); ctx.globalAlpha = a; if (t.word) { ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#000"; ctx.fillText(t.text, t.x + 2, t.y + 2); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y); } else drawPx(ctx, t.text, t.x - pxWidth(t.text, t.big ? 4 : 3) / 2, t.y, t.color, t.big ? 4 : 3); ctx.globalAlpha = 1; }
   ctx.restore();
-  if (b.flash > 0) { ctx.fillStyle = `rgba(255,30,30,${0.22 * b.flash / 0.18})`; ctx.fillRect(0, 0, CW, CH); }
+  if (b.flash > 0 && save && save.opt && save.opt.hitflash) { ctx.fillStyle = `rgba(255,30,30,${0.22 * save.opt.hitflash * b.flash / 0.18})`; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.freeze) { ctx.fillStyle = "rgba(120,200,255,.14)"; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.curse) { ctx.fillStyle = "rgba(160,40,200,.10)"; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.wound) { ctx.fillStyle = "rgba(255,80,20,.10)"; ctx.fillRect(0, 0, CW, CH); }
@@ -3816,11 +3823,12 @@ function openSettings() {
   const inGame = G.screen !== "title"; const A = save ? save.auto : null;
   Modal.open(`<h2>설정</h2>${sl("master", "전체 볼륨")}${sl("bgm", "배경음악")}${sl("sfx", "효과음")}
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
+   ${save ? `<label class="setrow2">피격 시 화면 반짝임 <select data-i="hflash">${[[0, "끄기"], [0.5, "약하게"], [1, "보통"]].map(([v, t]) => `<option value="${v}" ${(save.opt && save.opt.hitflash != null ? save.opt.hitflash : 1) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><label class="setrow2">화면 흔들림 <input type="checkbox" data-i="shk" ${save.opt && save.opt.shake === 0 ? "" : "checked"}></label>` : ""}
    ${A ? (() => { autoRules(save); const opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`; return `<h3>자동 반복 · 전투 후 장비 처리</h3><div class="dim">자동 반복이 끝난 전투마다 아래 규칙으로 가방을 정리합니다 (장비는 자동으로 착용하지 않습니다)</div>
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2">${x.name} 장비 <select data-i="arule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="akeepup" ${A.keepUp ? "checked" : ""}></label><div class="dim">고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다</div>`; })() : ""}
    <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
-    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked),
+    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked), hflash: (el) => { (save.opt = save.opt || {}).hitflash = +el.value; saveGame(); }, shk: (el) => { (save.opt = save.opt || {}).shake = el.checked ? 1 : 0; saveGame(); },
     arule: (el) => { autoRules(save).rules[+el.dataset.r] = el.value; saveGame(); }, akeepup: (el) => { save.auto.keepUp = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
     wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),
@@ -3878,6 +3886,9 @@ function afterBattle(res, b) {
     return;
   }
   if (A.on && !res.win) { A.on = false; saveGame(); }
+  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "endless", "void", "hive", "titan", "storm"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
+    const pr = autoProcess(save); if (pr.sold || pr.dis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? pr.sold + "개 판매 " : ""}${pr.dis ? pr.dis + "개 분해" : ""}`, "ok"); }
+  }
   showResult(res, b);
 }
 // 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
@@ -4084,7 +4095,7 @@ function renderItems() {
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
-  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button></div>`;
+  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button></div>`;
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span> &nbsp; <span data-tipk="dice">🎲 주사위 ${save.dice || 0}</span></div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
@@ -4101,7 +4112,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(),
+    bulk: () => openBulk(), autodis: () => openAutoDis(),
     ahpost: () => ahPostDialog(IB.sel),
     reroll: (el) => { if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
@@ -4284,6 +4295,25 @@ function openTower() {
     tgo: () => { Modal.close(true); const n = MAP.byId["R"]; MapView.sel = n; mapGo(); }, tatlas: () => openAtlas(),
   } });
   const sel = $("#towerlist .fl.sel"); if (sel) sel.scrollIntoView({ block: "center" });
+}
+
+// ---------- 자동 분해 설정 (인벤토리) ----------
+function openAutoDis() {
+  const A = autoRules(save), opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`;
+  const nowN = save.inv.filter((it) => { const r = A.rules[it.rarity]; return r && r !== "keep" && !it.uniq && !protectedItem(save, it) && !(A.keepUp && isUpgrade(save, it, true)) && !(A.maxIlvl && it.ilvl > A.maxIlvl) && !(A.minQ && itemQuality(it) >= A.minQ); }).length;
+  Modal.open(`<h2>자동 분해 설정</h2><div class="dim">전투가 끝날 때마다 아래 규칙으로 가방의 장비를 자동 정리합니다.<br>고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.</div>
+   <label class="setrow2" style="margin-top:6px"><b>모든 전투 후 자동 정리</b> <input type="checkbox" data-i="adall" ${A.always ? "checked" : ""}></label><div class="dim">끄면 자동 반복 중에만 정리합니다</div>
+   ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
+   <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
+   <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
+   <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
+   <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
+   <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
+    adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
+    adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
+    adnow: () => { const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 (+${fmtN(r.gold)}G${r.ore ? " · 강화석 " + r.ore : ""})`, "ok"); openAutoDis(); renderItems(); },
+    adx: () => { Modal.close(); renderItems(); },
+  } });
 }
 
 // ---------- 장비 도감 ----------
@@ -4727,7 +4757,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-080907";
+const BUILD_ID = "20261028-081856";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4819,6 +4849,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.18", date: "10/28", title: "자동 분해 · 화면 효과 설정", items: [
+    "인벤토리에 '자동 분해' 버튼이 생겼습니다. 등급별 유지/판매/분해, 전투력이 오르는 장비(▲) 보호, 옵션 품질 기준(옵션 수치가 범위의 어디쯤인지 평균 — 기준 미만만 처리), 아이템 레벨 상한을 정할 수 있고 '지금 정리하기'로 바로 적용됩니다. 고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.",
+    "'모든 전투 후 자동 정리'를 켜면 자동 반복이 아니어도 전투에서 이길 때마다 같은 규칙으로 가방을 정리합니다 (설정 화면의 자동 반복 규칙과 같은 설정을 공유).",
+    "설정에 '피격 시 화면 반짝임'(끄기 / 약하게 / 보통)과 '화면 흔들림' 켜기·끄기가 추가됐습니다.",
+  ] },
   { ver: "3.17", date: "10/28", title: "상태이상 연계 · 핵심 고유 · 골드 비용 조정", items: [
     "새 전투 규칙 — 상태이상 대상 추가 피해: 출혈·중독·점화·둔화·감전 중인 적을 때리면 그 상태 전용 추가 피해가 곱해집니다 (스킬 자체 보너스 · 장비 옵션 · 장비 곱연산 보너스가 상태마다 따로 적용).",
     "새 상태이상 '감전' (번개 빌드): 감전된 적은 4초간 25% 느려지고, 감전 중인 적 추가 피해가 적용됩니다. 번개 스킬이 '감전 확률'로 겁니다.",

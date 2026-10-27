@@ -113,7 +113,7 @@ function drawRoads(ctx, b, time) {
 }
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
-  const sk = b.shake > 0 ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
+  const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
   ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
   drawRoads(ctx, b, time);
@@ -138,7 +138,7 @@ function drawBattle(ctx, b, dt, time) {
   for (const f of b.fx) drawFx(ctx, b, f, time);
   for (const t of b.texts) { const a = clamp(t.t / (t.life * 0.5), 0, 1); ctx.globalAlpha = a; if (t.word) { ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#000"; ctx.fillText(t.text, t.x + 2, t.y + 2); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y); } else drawPx(ctx, t.text, t.x - pxWidth(t.text, t.big ? 4 : 3) / 2, t.y, t.color, t.big ? 4 : 3); ctx.globalAlpha = 1; }
   ctx.restore();
-  if (b.flash > 0) { ctx.fillStyle = `rgba(255,30,30,${0.22 * b.flash / 0.18})`; ctx.fillRect(0, 0, CW, CH); }
+  if (b.flash > 0 && save && save.opt && save.opt.hitflash) { ctx.fillStyle = `rgba(255,30,30,${0.22 * save.opt.hitflash * b.flash / 0.18})`; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.freeze) { ctx.fillStyle = "rgba(120,200,255,.14)"; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.curse) { ctx.fillStyle = "rgba(160,40,200,.10)"; ctx.fillRect(0, 0, CW, CH); }
   if (b.debuffs.wound) { ctx.fillStyle = "rgba(255,80,20,.10)"; ctx.fillRect(0, 0, CW, CH); }

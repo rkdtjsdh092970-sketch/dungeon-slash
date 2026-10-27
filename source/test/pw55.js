@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async () => {
+  const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 960, height: 540 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PE ' + e.message));
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(900);
+  await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.level = 100; save.endgame = true; for (let i = 0; i < 12; i++) save.inv.push(genItem(save, 12, i % 4, SLOTS[i % 7])); openTown(1); openItems('inv'); });
+  await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/inv_ad.png' });
+  await pg.click('[data-a="autodis"]'); await pg.waitForTimeout(300);
+  await pg.selectOption('[data-i="adrule"][data-r="0"]', 'dis'); await pg.waitForTimeout(200);
+  await pg.selectOption('[data-i="adrule"][data-r="1"]', 'sell'); await pg.waitForTimeout(200);
+  await pg.click('[data-i="adup"]'); await pg.waitForTimeout(200); await pg.selectOption('[data-i="adq"]', '0.5'); await pg.waitForTimeout(200);
+  await pg.screenshot({ path: '/tmp/autodis.png' });
+  console.log('rules', await pg.evaluate(() => JSON.stringify([save.auto.rules, save.auto.minQ, save.auto.always])));
+  const before = await pg.evaluate(() => save.inv.length);
+  await pg.click('[data-a="adnow"]'); await pg.waitForTimeout(300);
+  console.log('inv', before, '->', await pg.evaluate(() => save.inv.length));
+  await pg.evaluate(() => { Modal.close(true); openSettings(); }); await pg.waitForTimeout(300);
+  await pg.selectOption('[data-i="hflash"]', '0'); await pg.click('[data-i="shk"]'); await pg.waitForTimeout(200);
+  console.log('opt', await pg.evaluate(() => JSON.stringify(save.opt)));
+  await pg.screenshot({ path: '/tmp/settings.png' });
+  console.log(errs.join('\n') || 'no errors'); await br.close();
+})();

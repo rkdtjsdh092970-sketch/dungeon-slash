@@ -9,7 +9,7 @@ const MAP = buildMap();
 function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
-    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
+    nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1 }, stats: { kills: 0, clears: 0 }, seen: {},
     passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
@@ -635,13 +635,20 @@ function offlineReward(sv) {
 // ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
 function autoRules(sv) {
   const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
-  if (A.keepUp == null) A.keepUp = true; return A;
+  if (A.keepUp == null) A.keepUp = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; return A;
+}
+// 옵션 품질: 옵션 수치가 범위의 어디쯤인지 평균 (0~1). 옵션이 없는 장비는 0
+function itemQuality(it) {
+  let n = 0, s = 0; for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d || d.count) continue; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4)); if (hi > lo) { s += clamp((a.v - lo) / (hi - lo), 0, 1); n++; } }
+  return n ? s / n : 0;
 }
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
   for (const it of sv.inv.slice()) {
     const rule = A.rules[it.rarity]; if (!rule || rule === "keep" || it.uniq || protectedItem(sv, it)) continue;
     if (A.keepUp && isUpgrade(sv, it, true)) continue;
+    if (A.maxIlvl && it.ilvl > A.maxIlvl) continue;   // 아이템 레벨 상한: 이보다 높은 장비는 처리하지 않는다
+    if (A.minQ && itemQuality(it) >= A.minQ) continue;   // 옵션 품질이 기준 이상이면 유지
     if (rule === "sell") { const v = itemValue(it); sv.gold += v; res.gold += v; removeItem(sv, it); res.sold++; } else { const y = dismantleItem(sv, it); res.gold += y.gold; res.ore += y.ore; res.dis++; }
   }
   return res;

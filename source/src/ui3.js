@@ -69,7 +69,7 @@ function renderItems() {
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
-  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button></div>`;
+  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button></div>`;
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span> &nbsp; <span data-tipk="dice">🎲 주사위 ${save.dice || 0}</span></div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
@@ -86,7 +86,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(),
+    bulk: () => openBulk(), autodis: () => openAutoDis(),
     ahpost: () => ahPostDialog(IB.sel),
     reroll: (el) => { if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
@@ -269,6 +269,25 @@ function openTower() {
     tgo: () => { Modal.close(true); const n = MAP.byId["R"]; MapView.sel = n; mapGo(); }, tatlas: () => openAtlas(),
   } });
   const sel = $("#towerlist .fl.sel"); if (sel) sel.scrollIntoView({ block: "center" });
+}
+
+// ---------- 자동 분해 설정 (인벤토리) ----------
+function openAutoDis() {
+  const A = autoRules(save), opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`;
+  const nowN = save.inv.filter((it) => { const r = A.rules[it.rarity]; return r && r !== "keep" && !it.uniq && !protectedItem(save, it) && !(A.keepUp && isUpgrade(save, it, true)) && !(A.maxIlvl && it.ilvl > A.maxIlvl) && !(A.minQ && itemQuality(it) >= A.minQ); }).length;
+  Modal.open(`<h2>자동 분해 설정</h2><div class="dim">전투가 끝날 때마다 아래 규칙으로 가방의 장비를 자동 정리합니다.<br>고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.</div>
+   <label class="setrow2" style="margin-top:6px"><b>모든 전투 후 자동 정리</b> <input type="checkbox" data-i="adall" ${A.always ? "checked" : ""}></label><div class="dim">끄면 자동 반복 중에만 정리합니다</div>
+   ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
+   <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
+   <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
+   <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
+   <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
+   <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
+    adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
+    adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
+    adnow: () => { const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 (+${fmtN(r.gold)}G${r.ore ? " · 강화석 " + r.ore : ""})`, "ok"); openAutoDis(); renderItems(); },
+    adx: () => { Modal.close(); renderItems(); },
+  } });
 }
 
 // ---------- 장비 도감 ----------
