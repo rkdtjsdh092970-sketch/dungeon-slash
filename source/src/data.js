@@ -113,9 +113,9 @@ const SLOT_BASE = { weapon: { atk: 6 }, helm: { def: 3, hp: 20 }, armor: { hp: 5
 const ITEM_RARITY = [
   { name: "일반", mult: 1.0,  affixes: 0, cls: "r0", drop: 55, bossDrop: 0 },
   { name: "마법", mult: 1.15, affixes: 2, cls: "r1", drop: 30, bossDrop: 35 },
-  { name: "희귀", mult: 1.3,  affixes: 4, cls: "r2", drop: 13, bossDrop: 50 },
-  { name: "전설", mult: 1.55, affixes: 5, cls: "r3", drop: 2,  bossDrop: 15 },
-  { name: "세트", mult: 1.4,  affixes: 3, cls: "r4", drop: 0,  bossDrop: 0 },
+  { name: "희귀", mult: 1.15, affixes: 4, cls: "r2", drop: 13, bossDrop: 50 },
+  { name: "전설", mult: 1.45, affixes: 5, cls: "r3", drop: 2,  bossDrop: 15 },
+  { name: "세트", mult: 1.3, affixes: 3, cls: "r4", drop: 0,  bossDrop: 0 },
 ];
 const AFFIXES = [
   { k: "atkFlat", name: "공격력",          flat: true, range: [2, 4],    w: 10 },
@@ -140,15 +140,15 @@ const AFFIXES = [
 // 세트: acts = 드랍 액트 범위, bonus = 착용 수별 효과
 const SETS = [
   { id: "guardian", name: "초원의 수호자", acts: [1, 4], pieces: ["helm", "armor", "gloves", "boots", "neck"], color: "#7fe08a",
-    bonus: { 2: { hpPct: 0.15 }, 4: { cdr: 0.10, dodge: 0.05 } }, text: { 2: "체력 +15%", 4: "쿨타임 감소 +10%, 회피 +5%" } },
+    bonus: { 2: { hpPct: 0.10 }, 4: { cdr: 0.07, dodge: 0.04 } }, text: { 2: "체력 +10%", 4: "쿨타임 감소 +7%, 회피 +4%" } },
   { id: "storm", name: "폭풍술사의 정수", acts: [2, 7], pieces: ["weapon", "helm", "boots", "ring", "neck"], color: "#8ad8ff",
-    bonus: { 2: { chainJumps: 2 }, 4: { chainDmg: 0.5 } }, text: { 2: "번개 도약 +2", 4: "번개 피해 +50%" } },
+    bonus: { 2: { chainJumps: 2 }, 4: { chainDmg: 0.3 } }, text: { 2: "번개 도약 +2", 4: "번개 피해 +30%" } },
   { id: "legion", name: "군단 파괴자", acts: [4, 9], pieces: ["weapon", "armor", "gloves", "boots", "ring"], color: "#ffb060",
-    bonus: { 2: { density: 1 }, 4: { aoeDmg: 0.35, normal: 0.3 } }, text: { 2: "칸당 몹 수 +1", 4: "광역 피해 +35%, 일반 추가 피해 +30%" } },
+    bonus: { 2: { density: 1 }, 4: { aoeDmg: 0.22, normal: 0.2 } }, text: { 2: "칸당 몹 수 +1", 4: "광역 피해 +22%, 일반 추가 피해 +20%" } },
   { id: "slayer", name: "처형인의 맹세", acts: [5, 10], pieces: ["weapon", "helm", "armor", "boots", "neck"], color: "#ff7a8a",
-    bonus: { 2: { boss: 0.3, elite: 0.2 }, 4: { critDmg: 0.5, boss: 0.3 } }, text: { 2: "보스 +30%, 정예 +20%", 4: "치명타 피해 +50%, 보스 +30%" } },
+    bonus: { 2: { boss: 0.2, elite: 0.15 }, 4: { critDmg: 0.35, boss: 0.2 } }, text: { 2: "보스 +20%, 정예 +15%", 4: "치명타 피해 +35%, 보스 +20%" } },
   { id: "abyss", name: "심연의 군주", acts: [8, 99], pieces: ["weapon", "helm", "armor", "gloves", "boots", "ring", "neck"], color: "#c8a0ff",
-    bonus: { 2: { atkPct: 0.12 }, 4: { lifesteal: 0.04, critChance: 0.10 }, 6: { allDmg: 0.4, lanes: 1 } }, text: { 2: "공격력 +12%", 4: "생명력 흡수 +4%, 치명타 확률 +10%", 6: "모든 피해 +40%, 레인 +1" } },
+    bonus: { 2: { atkPct: 0.08 }, 4: { lifesteal: 0.03, critChance: 0.06 }, 6: { allDmg: 0.25, lanes: 1 } }, text: { 2: "공격력 +8%", 4: "생명력 흡수 +3%, 치명타 확률 +6%", 6: "모든 피해 +25%, 레인 +1" } },
 ];
 
 // ---- 균열(엔드게임) 변이 ----

@@ -36,11 +36,13 @@ function genItem(sv, ilvl, rarity, slot, setId) {
   }
   return it;
 }
-function rollAffix(a, g, R, rarity) {
-  let v = rnd(a.range[0], a.range[1]);
+// 드랍 옵션은 낮은 수치가 잘 나오고(평균 범위의 ~35%), 재굴림/구슬로 직접 뽑을 때만 높은 수치가 잘 나온다
+function rollAffix(a, g, R, rarity, crafted) {
+  const u = Math.random(), t = crafted ? Math.pow(u, 0.55) : Math.pow(u, 1.2);
+  let v = a.range[0] + (a.range[1] - a.range[0]) * t;
   const ilvl = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1);
   if (a.flat) v *= Math.pow(g, a.gp || 1) * R.mult;
-  else if (a.pct) v *= (0.72 + 0.05 * Math.min(ilvl, 12)) * (rarity === 3 ? 1.2 : rarity === 2 ? 1.08 : 1);
+  else if (a.pct) v *= (0.72 + 0.05 * Math.min(ilvl, 12)) * (crafted ? 1.12 : 1);
   else v = Math.round(v);
   return v;
 }
@@ -357,7 +359,7 @@ function rerollAffix(sv, it, idx) {
   const c = rerollCost(it); if (sv.gold < c.gold || sv.ore < c.ore) return false;
   const old = it.affixes[idx]; if (!old) return false;
   const pool = AFFIXES.filter((a) => !it.affixes.some((x, i) => i !== idx && x.k === a.k) && (!a.minRarity || it.rarity >= a.minRarity || (a.minRarity === 2 && it.rarity === 4)) && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl) && a.k !== "lanes");
-  const a = wpick(pool, (x) => x.w); it.affixes[idx] = { k: a.k, v: rollAffix(a, gScale(it.ilvl), ITEM_RARITY[it.rarity], it.rarity) };
+  const a = wpick(pool, (x) => x.w); it.affixes[idx] = { k: a.k, v: rollAffix(a, gScale(it.ilvl), ITEM_RARITY[it.rarity], it.rarity, true) };
   sv.gold -= c.gold; sv.ore -= c.ore; return true;
 }
 
@@ -429,12 +431,12 @@ function addAffix(sv, it) {   // 혼돈 구슬: 옵션 1개 추가 (최대 6)
   const used = new Set(it.affixes.map((a) => a.k)), g = gScale(it.ilvl);
   const pool = AFFIXES.filter((a) => !used.has(a.k) && a.k !== "lanes" && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl));
   const a = wpick(pool, (x) => x.w); const R = ITEM_RARITY[Math.min(it.rarity, 4)];
-  it.affixes.push({ k: a.k, v: rollAffix(a, g, R, it.rarity) }); sv.orbC--; return a;
+  it.affixes.push({ k: a.k, v: rollAffix(a, g, R, it.rarity, true) }); sv.orbC--; return a;
 }
 function divineItem(sv, it) {  // 신성한 구슬: 옵션 수치 재굴림
   if (it.uniq || !it.affixes.length || sv.orbD < 1) return false;
   const g = gScale(it.ilvl), R = ITEM_RARITY[Math.min(it.rarity, 4)];
-  it.affixes = it.affixes.map((a) => ({ k: a.k, v: rollAffix(AFFIXES.find((x) => x.k === a.k), g, R, it.rarity) })); sv.orbD--; return true;
+  it.affixes = it.affixes.map((a) => ({ k: a.k, v: rollAffix(AFFIXES.find((x) => x.k === a.k), g, R, it.rarity, true) })); sv.orbD--; return true;
 }
 function buyAtlas(sv, id) {
   const n = ATLAS.find((x) => x.id === id), r = (sv.atlas[id] || 0); if (r >= n.max) return false;
