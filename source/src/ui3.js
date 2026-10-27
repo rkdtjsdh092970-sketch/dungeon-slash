@@ -159,19 +159,20 @@ function openSkills() {
     return `<div class="skdet"><div class="dh">${skIcon(d.id, 3)}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><small class="dim">Lv.${sel.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""}${eqi >= 0 ? " · " + (eqi + 1) + "번 칸 장착 중" : ""}</small></div></div>
       <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${typeOk && slotOk && eqi !== SK.slot ? "" : "disabled"}>${typeOk ? (eqi === SK.slot ? `${SK.slot + 1}번 칸 장착 중` : `${SK.slot + 1}번 칸에 장착`) : want === "basic" ? "1번 칸 전용 아님" : "기본 공격 스킬"}</button>${eqi > 0 ? `<button class="btn" data-a="clear" data-s="${eqi}">해제</button>` : ""}
       <button class="btn" data-a="hone" data-u="${sel.uid}" ${(sel.lvl || 1) >= SKILL_MAX_LV || save.hone < honeCost(sel.lvl || 1) ? "disabled" : ""}>레벨업<br><small>${(sel.lvl || 1) >= SKILL_MAX_LV ? "MAX" : "연마석 " + honeCost(sel.lvl || 1)}</small></button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? `<span style="color:${sk.rune.color}">${sk.rune.name}</span>` : "룬 장착"}</button>
-      ${sel.rarity === 0 && save.endgame ? `<button class="btn" data-a="promo" data-u="${sel.uid}" ${save.shards >= pc ? "" : "disabled"}>승급 (${Math.round(PROMO_RATE * 100)}%)<br><small>${pc} 조각 · 실패 시 소멸</small></button>` : ""}<button class="btn" data-a="sellsk" data-u="${sel.uid}" ${eqi >= 0 || skillInPreset(save, sel) ? "disabled" : ""}>판매<br><small>${eqi >= 0 ? "장착 중" : fmtN(skillSellValue(sel)) + "G" + (skillInPreset(save, sel) ? " · 프리셋 포함" : "")}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록${eqi >= 0 ? "<br><small>장착 중</small>" : ""}</button>` : ""}</div>
+      <button class="btn" data-a="sellsk" data-u="${sel.uid}" ${eqi >= 0 || skillInPreset(save, sel) ? "disabled" : ""}>판매<br><small>${eqi >= 0 ? "장착 중" : fmtN(skillSellValue(sel)) + "G" + (skillInPreset(save, sel) ? " · 프리셋 포함" : "")}</small></button><button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 ? "장착 중" : "연마석 +" + skillDisYield(sel)}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록${eqi >= 0 ? "<br><small>장착 중</small>" : ""}</button>` : ""}</div>
       <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div>`;
   })();
-  Modal.open(`<h2>스킬 정비소</h2><div class="res"><span data-tipk="hone">연마석 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length}</div>${presetRow()}<div class="dim center">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 &nbsp;|&nbsp; 적을 클릭하면 모든 스킬이 그 적을 우선 공격합니다</div><div class="skcards">${cards}</div>
+  Modal.open(`<h2>스킬 정비소</h2><div class="res"><span data-tipk="hone">연마석 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">스킬 자동 정리</button></div>${presetRow()}<div class="dim center">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 &nbsp;|&nbsp; 적을 클릭하면 모든 스킬이 그 적을 우선 공격합니다</div><div class="skcards">${cards}</div>
   <h3>${SK.slot + 1}번 칸용 스킬 (${want === "basic" ? "기본 공격" : "액티브"}) <small class="dim">클릭해서 확인 → [장착] · 스킬 상점에서 골드로 구매할 수 있어요</small></h3><div class="skbot"><div class="slist skgrid">${owned.map(row).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">보유한 스킬이 없습니다</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
     slot: (el) => { SK.slot = +el.dataset.s; const l = save.loadout[SK.slot]; SK.sel = l ? l.uid : null; if (l) snd("click"); openSkills(); },   // 장착 중인 스킬 카드를 눌러도 정보가 보인다
     picksk: (el) => { SK.sel = +el.dataset.u; snd("click"); openSkills(); },
+    autosk: () => openAutoSkill(),
+    dissk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) 분해해 <b style="color:#ffe08a">연마석 ${skillDisYield(inst)}개</b>를 얻을까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "분해", () => { const h = dismantleSkill(save, inst); if (h == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 분해할 수 없습니다", "bad"); return; } if (SK.sel === inst.uid) SK.sel = null; snd("coin"); toast(`분해: 연마석 +${h}`, "ok"); saveGame(); refreshTop(); openSkills(); }); },
     sellsk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) <b style="color:#ffe08a">${fmtN(skillSellValue(inst))}G</b>에 판매할까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "판매", () => { const v = sellSkill(save, inst); if (v == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 팔 수 없습니다", "bad"); return; } SK.sel = null; snd("coin"); toast(`+${fmtN(v)}G`, "ok"); saveGame(); refreshTop(); openSkills(); }, false); },
     ahpostsk: (el) => ahPostSkill(save.skills.find((x) => x.uid === +el.dataset.u), openSkills),
     clear: (el, ev) => { ev.stopPropagation(); save.loadout[+el.dataset.s] = null; saveGame(); openSkills(); },
     rule: (el) => { const i = +el.dataset.s; if (save.loadout[i]) save.loadout[i].rule = el.value; saveGame(); },
     equipsk: (el) => { if (SK.slot >= save.slots) return; const u = +el.dataset.u; const j = save.loadout.findIndex((l) => l && l.uid === u); const prev = save.loadout[SK.slot]; if (j >= 0 && j !== SK.slot) save.loadout[j] = j === 0 ? save.loadout[j] : null; save.loadout[SK.slot] = { uid: u, rule: (prev && prev.rule) || "front" }; snd("equip"); toast("장착했습니다", "ok"); saveGame(); openSkills(); },
-    promo: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); const pc = promoteCost(inst); if (save.shards < pc) return; save.shards -= pc; if (inst.rarity !== 0) return; if (Math.random() < PROMO_RATE) { inst.rarity = 1; snd("legend"); toast("스킬이 희귀로 승급했습니다!"); } else { snd("error"); toast("승급에 실패했습니다 (조각 소멸)", "bad"); } saveGame(); refreshTop(); openSkills(); },
     hone: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u), cost = honeCost(inst.lvl || 1); if ((inst.lvl || 1) >= SKILL_MAX_LV || save.hone < cost) return; save.hone -= cost; inst.lvl = (inst.lvl || 1) + 1; snd("enh_ok"); toast(`${SKILLS.find((x) => x.id === inst.id).name} Lv.${inst.lvl}`, "ok"); saveGame(); openSkills(); },
     rune: (el) => openRunePicker(+el.dataset.u),
   }, presetHandlers(openSkills)) });
@@ -271,6 +272,22 @@ function openTower() {
   const sel = $("#towerlist .fl.sel"); if (sel) sel.scrollIntoView({ block: "center" });
 }
 
+// ---------- 스킬 자동 정리 설정 ----------
+function openAutoSkill() {
+  const A = autoRules(save), opt = (r, v, t) => `<option value="${v}" ${A.srules[r] === v ? "selected" : ""}>${t}</option>`;
+  const best = {}; if (A.sBest) for (const k of save.skills) { const b = best[k.id]; if (!b || k.rarity > b.rarity || (k.rarity === b.rarity && (k.lvl || 1) > (b.lvl || 1))) best[k.id] = k; }
+  const nowN = save.skills.filter((k) => { const rule = A.srules[k.rarity], d = SKILLS.find((x) => x.id === k.id); return rule && rule !== "keep" && k.rarity <= 2 && d && !isSpecialSkill(d) && !k.rune && (k.lvl || 1) <= 1 && !save.loadout.some((l) => l && l.uid === k.uid) && !skillInPreset(save, k) && !(A.sBest && best[k.id] === k); }).length;
+  Modal.open(`<h2>스킬 자동 정리</h2><div class="dim">전투가 끝날 때마다 새로 얻은 스킬을 등급별 규칙으로 판매하거나 분해(연마석)합니다. 장비 자동 분해와 같은 시점에 적용됩니다.<br>장착 중·프리셋·룬이 박힌·레벨업한 스킬, 보스 전용기·전용 스킬, 이터널 이상 등급은 항상 유지됩니다.</div>
+   ${[0, 1, 2].map((r) => `<label class="setrow2"><span class="${SKILL_RARITY[r].cls}">${SKILL_RARITY[r].name}</span> 스킬 <select data-i="asrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해 (연마석)")}</select></label>`).join("")}
+   <label class="setrow2">같은 스킬의 가장 좋은 1개는 유지 <input type="checkbox" data-i="asbest" ${A.sBest ? "checked" : ""}></label><div class="dim">중복된 스킬만 정리하고 처음 얻은 스킬은 남깁니다 (끄면 새로 얻은 스킬도 규칙대로 처리)</div>
+   <div class="center" style="margin-top:8px">지금 정리될 스킬 <b style="color:#ffd070">${nowN}개</b> <small class="dim">· 전투 후 자동 정리는 인벤토리 '자동 분해'의 '모든 전투 후 자동 정리' 또는 자동 반복에서 실행됩니다</small></div>
+   <div class="pbtns"><button class="btn pri" data-a="asnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="asx">닫기</button></div>`, { cls: "sm", on: {
+    asrule: (el) => { A.srules[+el.dataset.r] = el.value; saveGame(); openAutoSkill(); }, asbest: (el) => { A.sBest = el.checked; saveGame(); openAutoSkill(); },
+    asnow: () => { const r = autoProcessSkills(save); saveGame(); refreshTop(); toast(`스킬 정리: ${r.sold}개 판매 (+${fmtN(r.gold)}G) · ${r.dis}개 분해 (연마석 +${r.hone})`, "ok"); openAutoSkill(); },
+    asx: () => { Modal.close(); },
+  } });
+}
+
 // ---------- 자동 분해 설정 (인벤토리) ----------
 function openAutoDis() {
   const A = autoRules(save), opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`;
@@ -282,11 +299,11 @@ function openAutoDis() {
    <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
    <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
    <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
-   <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
+   <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adsk">스킬 정리 설정</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
     adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
     adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
     adnow: () => { const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 (+${fmtN(r.gold)}G${r.ore ? " · 강화석 " + r.ore : ""})`, "ok"); openAutoDis(); renderItems(); },
-    adx: () => { Modal.close(); renderItems(); },
+    adsk: () => openAutoSkill(), adx: () => { Modal.close(); renderItems(); },
   } });
 }
 
@@ -382,7 +399,7 @@ function skCodexDetail(d) {
   const sk = skillOf({ uid: 0, id: d.id, rarity: 0, lvl: 1 }), st = computeStats(save);
   return `<div class="dname">${iconImg(d.icon, 3)} <b>${d.name}</b></div><div>${skTags(sk, st)} ${skBuildTags(d).map((t) => `<span class="chip" style="background:${t[1]}33;color:${t[1]}">${t[0]}</span>`).join("")}</div>
    <div class="dd" style="margin-top:6px">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc || ""}${Object.keys(d.bonus || {}).length ? " · " + Object.keys(d.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(d.bonus[k] * 100)}%`).join(", ") : ""}</div></div>
-   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀(승급 가능, 60%) → 전설(드랍 전용) → 이터널 · 소버린 · 엔젤릭(전설 드랍에서 아주 낮은 확률로 상위 등급 — 스킬 시련 고단계·공허의 군주). 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
+   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀 → 전설 (모두 드랍으로만 얻음) → 이터널 · 소버린 · 엔젤릭(전설 드랍에서 아주 낮은 확률로 상위 등급 — 스킬 시련 고단계·공허의 군주). 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
   const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
@@ -468,7 +485,7 @@ function openRunePicker(uid) {
 const TIP_CUR = {
   gold: ["골드", "상점 구매, 장비 강화·재굴림, 길드 창설·기부, 경매 거래에 쓰는 기본 재화입니다.", "몬스터 처치(액트가 높을수록 많이) · 장비 판매·분해 · 퀘스트·일일 목표 · 경매 판매 · 황금 보물고(골드 ×3)"],
   ore: ["강화석", "장비 강화(+10까지)와 옵션 재굴림에 쓰입니다.", "모든 전투의 드랍 · 장비 분해 · 보물 지하실 · 퀘스트"],
-  shard: ["균열 조각", "엔드게임 재화입니다. 심연 각인(아틀라스) 강화와 스킬 승급(일반 → 희귀)에 씁니다.", "심연의 균열 · 지옥 스테이지 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕"],
+  shard: ["균열 조각", "엔드게임 재화입니다. 심연 각인(아틀라스) 강화에 씁니다.", "심연의 균열 · 지옥 스테이지 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕"],
   orbC: ["혼돈 구슬", "장비(고유 제외)에 옵션을 1개 추가합니다 (최대 6개, 엔드게임 장비는 5개). 대장간에서 사용합니다.", "심연의 균열 · 지옥 · 무한 균열 · 공허의 군주 · 화염 정령왕 · 일부 보스 (확률)"],
   orbD: ["신성한 구슬", "장비 옵션 수치를 높은 수치가 잘 나오게 다시 굴립니다 (고유 제외). 대장간에서 사용합니다.", "혼돈 구슬이 나올 때 그 약 1/4 확률로 함께 드랍"],
   dice: ["공허의 주사위", "옵션 / 고유 능력의 수치를 범위 안에서 균등하게 다시 굴립니다. 고유 장비에도 쓸 수 있습니다.", "균열 · 지옥 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제에서 아주 낮은 확률"],

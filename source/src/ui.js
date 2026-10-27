@@ -293,7 +293,7 @@ function afterBattle(res, b) {
   const node = G.node, A = save.auto;
   if (A.on && res.win && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault"].includes(node.kind)) {   // 자동 반복
     let note = ""; const pr = autoProcess(save);
-    if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`;
+    if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`; if (pr.sSold || pr.sDis) note += ` · 스킬 ${pr.sSold ? pr.sSold + "개 판매 " : ""}${pr.sDis ? pr.sDis + "개 분해" : ""}`;
     saveGame(); refreshTop();
     toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
     if (save.inv.length >= CFG.INV_MAX - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
@@ -304,7 +304,7 @@ function afterBattle(res, b) {
   }
   if (A.on && !res.win) { A.on = false; saveGame(); }
   if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "endless", "void", "hive", "titan", "storm"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
-    const pr = autoProcess(save); if (pr.sold || pr.dis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? pr.sold + "개 판매 " : ""}${pr.dis ? pr.dis + "개 분해" : ""}`, "ok"); }
+    const pr = autoProcess(save); if (pr.sold || pr.dis || pr.sSold || pr.sDis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? "장비 " + pr.sold + "개 판매 " : ""}${pr.dis ? "장비 " + pr.dis + "개 분해 " : ""}${pr.sSold ? "스킬 " + pr.sSold + "개 판매 " : ""}${pr.sDis ? "스킬 " + pr.sDis + "개 분해" : ""}`, "ok"); }
   }
   showResult(res, b);
 }

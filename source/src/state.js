@@ -395,9 +395,9 @@ function rollDrops(sv, node, boss, B) {
     out.hone = Math.round((4 + Math.floor(T * 0.9)) * (T > (sv.trialBest || 0) ? 2 : 1) * B.ore); const rn = Math.min(0.9, 0.25 + 0.02 * T); if (Math.random() < rn) out.runes.push(pick(RUNE_IDS)); if (Math.random() < rn * 0.5) out.runes.push(pick(RUNE_IDS)); if (T >= 60 && Math.random() < 0.3) out.runes.push(pick(RUNE_IDS)); }
   else if (kind === "rift") { if (Math.random() < Math.min(0.12, 0.015 + 0.002 * (node.tier || 1))) { const d = pick(poolFor(5).filter((x) => x.slot === "active")); if (d) out.skills.push(genSkill(sv, d.id, rr([0.2, 1, 2]))); } }
   else if (Math.random() < (boss ? CFG.SKILL_DROP_BOSS : CFG.SKILL_DROP * (kind === "elite" ? 2 : 1))) {
-    const pool = SKILLS.filter((d) => d.unlock <= act);
-    const d = wpick(pool, (x) => (x.unlock >= act - 1 ? 2.0 : 1.0));
-    out.skills.push(genSkill(sv, d.id, rr([1, 1, 1])));
+    const pool = SKILLS.filter((d) => d.unlock <= act + 1 && !d.voidOnly && !isSpecialSkill(d));   // 초반부터 여러 스킬을 써 볼 수 있게: 한 단계 앞선 스킬까지, 아직 못 본 스킬이 3배 잘 나온다
+    const d = wpick(pool, (x) => (save_dexHas(sv, x.id) ? 1.0 : 3.0));
+    out.skills.push(genSkill(sv, d.id, rr([1.5, 0.9, 0.35])));
   }
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 2) + endlessWaves * 2) * B.ore);
   if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
@@ -579,6 +579,13 @@ const SHOP_MIN = 20;
 const skillPrice = (d, rarity) => Math.round(70 * Math.pow(1.55, d.unlock - 1) * [1, 3.5, 12, 40, 130, 500][rarity] * (d.slot === "basic" ? 0.6 : 1));
 const skillSellValue = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return Math.max(5, Math.round(skillPrice(d, inst.rarity) * 0.4 * (1 + 0.25 * ((inst.lvl || 1) - 1)))); };
 const skillInPreset = (sv, inst) => (sv.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid));
+const save_dexHas = (sv, id) => !!(sv.skdex && sv.skdex[id]) || sv.skills.some((x) => x.id === id);
+// 스킬 분해: 연마석을 준다 (등급이 높을수록 많이). 장착 중·프리셋 스킬은 못 한다
+const skillDisYield = (inst) => Math.max(1, Math.round([1, 3, 8, 20, 45, 100][inst.rarity] * (1 + 0.5 * ((inst.lvl || 1) - 1))));
+function dismantleSkill(sv, inst) {
+  if (sv.loadout.some((l) => l && l.uid === inst.uid) || skillInPreset(sv, inst)) return null;
+  const h = skillDisYield(inst); sv.hone += h; if (inst.rune) sv.runes.push({ uid: sv.nextUid++, id: inst.rune }); sv.skills = sv.skills.filter((x) => x !== inst); return h;
+}
 function sellSkill(sv, inst) {
   if (sv.loadout.some((l) => l && l.uid === inst.uid) || skillInPreset(sv, inst)) return null;
   const v = skillSellValue(inst); sv.gold += v; if (inst.rune) sv.runes.push({ uid: sv.nextUid++, id: inst.rune });   // 장착한 룬은 돌려준다
@@ -636,7 +643,7 @@ function offlineReward(sv) {
 // ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
 function autoRules(sv) {
   const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
-  if (A.keepUp == null) A.keepUp = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; return A;
+  if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; return A;
 }
 // 옵션 품질: 옵션 수치가 범위의 어디쯤인지 평균 (0~1). 옵션이 없는 장비는 0
 function itemQuality(it) {
@@ -651,6 +658,19 @@ function autoProcess(sv) {
     if (A.maxIlvl && it.ilvl > A.maxIlvl) continue;   // 아이템 레벨 상한: 이보다 높은 장비는 처리하지 않는다
     if (A.minQ && itemQuality(it) >= A.minQ) continue;   // 옵션 품질이 기준 이상이면 유지
     if (rule === "sell") { const v = itemValue(it); sv.gold += v; res.gold += v; removeItem(sv, it); res.sold++; } else { const y = dismantleItem(sv, it); res.gold += y.gold; res.ore += y.ore; res.dis++; }
+  }
+  { const sr = autoProcessSkills(sv); res.sSold = sr.sold; res.sDis = sr.dis; res.gold += sr.gold; res.hone = sr.hone; }
+  return res;
+}
+// 스킬 자동 정리: 등급별 유지/판매/분해. 같은 스킬의 가장 좋은 1개는 남기고, 장착·프리셋·룬·레벨업한 스킬과 특수 스킬(전용기·보스 전용)·이터널 이상은 건드리지 않는다
+function autoProcessSkills(sv) {
+  const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, hone: 0 }, best = {};
+  if (A.sBest) for (const k of sv.skills) { const b = best[k.id]; if (!b || k.rarity > b.rarity || (k.rarity === b.rarity && (k.lvl || 1) > (b.lvl || 1))) best[k.id] = k; }
+  for (const k of sv.skills.slice()) {
+    const rule = A.srules[k.rarity]; if (!rule || rule === "keep" || k.rarity > 2) continue;
+    const d = SKILLS.find((x) => x.id === k.id); if (!d || isSpecialSkill(d) || k.rune || (k.lvl || 1) > 1 || sv.loadout.some((l) => l && l.uid === k.uid) || skillInPreset(sv, k)) continue;
+    if (A.sBest && best[k.id] === k) continue;
+    if (rule === "sell") { const v = sellSkill(sv, k); if (v != null) { res.sold++; res.gold += v; } } else { const h = dismantleSkill(sv, k); if (h != null) { res.dis++; res.hone += h; } }
   }
   return res;
 }
