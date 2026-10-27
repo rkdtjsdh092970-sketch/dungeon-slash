@@ -1,0 +1,5 @@
+const A = require('./simlib.js'); const { make } = require('./pvm.js');
+function fight(sv, kind, st) { const E = A.EB[kind]; const b = A.createBattle(sv, { kind, act: 10, tier: E.tiers[st - 1], vsel: st, name: 'x' }); b.noFx = true; let t = 0, hm = b.maxHp; while (!b.over && t < 600) { A.stepBattle(b, 0.05); t += 0.05; hm = Math.min(hm, b.hp); } const bo = b.bossRef; return `${b.win ? 'WIN ' : 'lose'}${String(Math.round(b.time)).padStart(4)}s hp${String(Math.round(Math.max(0, hm) / b.maxHp * 100)).padStart(3)}%${b.win ? '' : ' boss' + Math.round(Math.max(0, bo ? bo.hp / bo.maxHp : 1) * 100) + '%'}`; }
+const IL = +process.env.IL || 16;
+const pairs = (process.env.PAIRS || '물리:titan,마법(번개):storm,마법(화염):hive,마법(번개):titan,물리:storm,마법(화염):titan').split(',').map((x) => x.split(':'));
+for (const [bn, kind] of pairs) { const row = []; for (let st = 1; st <= 4; st++) row.push(`S${st} ` + fight(make(bn, IL), kind, st)); console.log(`${bn.padEnd(8)} vs ${kind.padEnd(5)} il${IL} | ` + row.join(' | ')); }
