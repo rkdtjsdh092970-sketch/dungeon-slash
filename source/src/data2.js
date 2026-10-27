@@ -4,6 +4,7 @@
 CFG.BASE_DODGE = 0;                // 기본 회피 없음 — 패시브·장비로만 얻는다
 CFG.UNIQUE_BASE = 0.0005;          // 고유 장비: 드랍 1개당 기준 확률 (0.05%)
 CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은 너무 후했음, 정식 출시 때 1로)
+CFG.WARP_CHANCE = 0.12;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
 CFG.WORLD_MIN = 20;                // 월드 버프/지옥 스테이지 갱신 주기 (분)
 CFG.ENDLESS_DAILY = 3;             // 무한 균열 하루 입장 횟수
 CFG.ILVL_RIFT_STEP = 8;            // 균열 N단계마다 드랍 아이템 레벨 +1
