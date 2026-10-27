@@ -245,8 +245,8 @@ function openTower() {
 }
 
 // ---------- 장비 도감 ----------
-const CX = { tab: "uniq", pool: "all", sel: null };
-const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", void: "공허의 군주" };
+const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
+const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
@@ -258,8 +258,36 @@ function uniqueSources(def) {
   }
   return out;
 }
+// ---- 스킬 도감 ----
+const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["boss", "보스 전용기"], ["void", "공허 전용"]];
+function skBuildTags(d) {
+  const t = [];
+  if (d.bonus && d.bonus.boss >= 0.8) t.push(["보스 전용기", "#ff9a9a"]);
+  if (d.voidOnly) t.push(["공허 전용", "#c070ff"]);
+  if (d.bleed >= 0.5) t.push(["출혈 빌드", "#e03a4a"]); if (d.poison >= 0.5) t.push(["중독 빌드", "#6ae04a"]); if (d.ignite >= 0.35) t.push(["점화 빌드", "#ff9a30"]);
+  if (d.elem && ELEM_NAME[d.elem]) t.push([ELEM_NAME[d.elem] + " 속성", ELEM_COLOR[d.elem]]);
+  if (d.dtype === "mag" && !d.elem) t.push(["마법·마나 빌드", "#c58bff"]); if (d.kind === "summon") t.push(["소환", "#8affc8"]);
+  return t;
+}
+function skSources(d) {
+  const o = [];
+  if (d.voidOnly) { o.push("공허의 군주 처치 시 매우 낮은 확률 (1~4단계 2% / 3% / 5% / 12%) — 상점·다른 곳에서는 나오지 않음"); return o; }
+  o.push(`스킬 상점에서 골드로 구매 (액트 ${d.unlock} 이후 등장)`);
+  if (d.slot === "active") { o.push(`액트 ${d.unlock <= 10 ? d.unlock : 10}~ 보스 첫 클리어·일반 드랍`); if (d.unlock >= 3) o.push("심연의 균열(낮은 확률) · 스킬 시련(단계가 오를수록 확률 증가)"); }
+  return o;
+}
+function skCodexRow(d) {
+  const got = (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id);
+  return `<div class="dexrow ${CX.sel === d.id ? "found" : ""}" data-a="cxpick" data-id="${d.id}" style="cursor:pointer;${got ? "" : "opacity:.6"}">${iconImg(d.icon, 1)} <b>${d.name}</b> <small class="dim">${d.slot === "basic" ? "기본" : "액티브"} · ${got ? "보유 이력 ✓" : "미획득"}</small>${skBuildTags(d).slice(0, 2).map((t) => ` <small style="color:${t[1]}">${t[0]}</small>`).join("")}</div>`;
+}
+function skCodexDetail(d) {
+  const sk = skillOf({ uid: 0, id: d.id, rarity: 0, lvl: 1 }), st = computeStats(save);
+  return `<div class="dname">${iconImg(d.icon, 3)} <b>${d.name}</b></div><div>${skTags(sk, st)} ${skBuildTags(d).map((t) => `<span class="chip" style="background:${t[1]}33;color:${t[1]}">${t[0]}</span>`).join("")}</div>
+   <div class="dd" style="margin-top:6px">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc || ""}${Object.keys(d.bonus || {}).length ? " · " + Object.keys(d.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(d.bonus[k] * 100)}%`).join(", ") : ""}</div></div>
+   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급(일반/희귀/전설)이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
+}
 function openCodex() {
-  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
+  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
   let left = "", right = "";
   if (CX.tab === "uniq") {
     const pools = `<div class="itbar"><select data-i="cxpool"><option value="all">전체 출처</option>${Object.keys(U_POOLS).map((k) => `<option value="${k}" ${CX.pool === k ? "selected" : ""}>${U_POOLS[k]}</option>`).join("")}</select></div>`;
@@ -271,6 +299,11 @@ function openCodex() {
        <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
+  } else if (CX.tab === "skill") {
+    const f = CX.skf, list = SKILLS.filter((d) => f === "all" || (f === "basic" && d.slot === "basic") || (f === "active" && d.slot === "active" && !d.voidOnly) || (f === "boss" && d.bonus && d.bonus.boss >= 0.8) || (f === "void" && d.voidOnly)).sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock);
+    const got = SKILLS.filter((d) => (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id)).length;
+    left = `<div class="itbar"><select data-i="cxskf">${SK_FILTERS.map(([k, n]) => `<option value="${k}" ${f === k ? "selected" : ""}>${n}</option>`).join("")}</select> <small class="dim">${got} / ${SKILLS.length} 종 보유 이력</small></div>` + list.map(skCodexRow).join("");
+    const D = SKILLS.find((x) => x.id === CX.sel); right = D ? skCodexDetail(D) : `<div class="dim center pad">스킬을 선택하면 설명·범위·획득처를 볼 수 있습니다</div>`;
   } else if (CX.tab === "set") {
     left = SETS.map((s) => `<div class="dexrow ${CX.sel === s.id ? "found" : ""}" data-a="cxpick" data-id="${s.id}" style="cursor:pointer"><span style="color:${s.color}"><b>${s.name}</b></span> <small class="dim">액트 ${s.acts[0]}~${s.acts[1] > 50 ? "" : s.acts[1]} · ${s.pieces.length}부위</small></div>`).join("");
     const S = SETS.find((x) => x.id === CX.sel);
@@ -280,8 +313,8 @@ function openCodex() {
     const s = SLOTS.includes(CX.sel) ? CX.sel : null;
     right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">장비 레벨이 낮으면 일부 옵션은 나오지 않습니다</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `Lv.${a.minIlvl}+` : "전 구간"}${a.minRarity ? " · 희귀 이상" : ""}</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
   }
-  Modal.open(`<h2>장비 도감</h2><div class="tabs">${tabs}</div><div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`, { cls: "wide", on: {
-    cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); },
+  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div><div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`, { cls: "wide", on: {
+    cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); }, cxskf: (el) => { CX.skf = el.value; CX.sel = null; openCodex(); },
   } });
 }
 

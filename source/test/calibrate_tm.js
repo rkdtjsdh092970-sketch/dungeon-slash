@@ -8,6 +8,7 @@ function makeSave(skillId) {
   sv.skills = []; const k = A.genSkill(sv, skillId, 0); sv.skills.push(k); sv.loadout = [{ uid: k.uid, rule: 'front' }, null, null, null]; return sv;
 }
 for (const def of A.SKILLS) {
+  if (process.env.ONLY && !process.env.ONLY.split(',').includes(def.id)) continue;
   if (def.dtype === 'buff' || def.dtype === 'heal') continue;
   let tot = 0, n = 0;
   for (let rep = 0; rep < 3; rep++) {

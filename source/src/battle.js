@@ -287,7 +287,7 @@ function castSkillRaw(b, sk) {
   const ctr = (e) => ({ lane: e.lane + (e.h > 1 ? rint(0, e.h - 1) : 0), col: e.col });
   const col = sk.color;
   if (K === "single") {
-    hitEnemy(b, p, 1, sk); const P = cellXY(b, p.lane, p.col, p.w, p.h);
+    hitEnemy(b, p, 1, sk); if (sk.chill) p.chill = Math.max(p.chill, sk.chill); const P = cellXY(b, p.lane, p.col, p.w, p.h);
     fx(b, { kind: "slash", x: p.vx != null ? p.vx : P.x, y: (p.vy != null ? p.vy : P.y) - 30, t: 0.2, life: 0.2, color: col }); fx(b, { kind: "shot", t: 0.14, life: 0.14, e: p, color: col });
   } else if (K === "multi") {
     const c = ctr(p), cx = cellXY(b, c.lane, c.col); const box = [c.lane - 1, c.lane + 1, c.col - 1, c.col + 1];
