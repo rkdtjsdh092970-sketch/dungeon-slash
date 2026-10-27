@@ -74,7 +74,7 @@ function planFor(node) {
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
   const w = wavePool(act, stage, mods), types = Object.keys(w);
-  if (node.kind === "void") return ["boss", "boss", "boss", "boss"];   // 공허의 군주: 단계마다 군주 한 마리만 (잡몹 없음)
+  if (node.kind === "void") { const pl = smoothSeq(w, 5); pl.push("boss"); pl.push(...smoothSeq(w, 8)); return pl; }   // 공허의 군주: 군주는 한 마리, 체력이 4단계로 나뉜다 (잡몹은 계속 등장)
   let nNormal = CFG.WAVE_BASE + CFG.WAVE_STAGE * stage, elites = eliteCount(stage), boss = false;
   if (node.kind === "boss") { nNormal = Math.round(nNormal * 0.55); boss = true; }
   else if (node.kind === "elite") { nNormal = 45; elites = 10 + act; }
@@ -139,7 +139,7 @@ function makeEnemy(b, type, lane, col) {
   { const dd = (isBoss ? ENEMY_DEF.boss : ENEMY_DEF[type] || ENEMY_DEF.grunt).slice(); for (const t of e.traits) if (TRAIT_DEF[t]) { dd[0] += TRAIT_DEF[t][0]; dd[1] += TRAIT_DEF[t][1]; }
     const sc = (1 + CFG.DEF_ACT * (Math.min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier || 0)); e.dm = Math.max(0, dd[0] * sc); e.rm = Math.max(0, dd[1] * sc); e.shD = 0; e.shR = 0; e.eres = ACT_ELEM[Math.min(9, Math.max(0, va))]; }
   if (isBoss) {
-    if (b.kind === "void") { const si = b.voidIdx = (b.voidIdx || 0) + 1, hm = VOID_HP[Math.min(3, si - 1)], am = VOID_ATK[Math.min(3, si - 1)]; e.hp *= hm; e.maxHp *= hm; e.atk *= am; e.vstage = si; e.label = `${D.name} · ${si}단계`; }
+    if (b.kind === "void") { e.vbaseHp = e.maxHp; e.vbaseAtk = e.atk; e.vstage = 1; voidPhase(b, e, 1); }
     e.hp *= 1; e.abil = D.abilities.map((a) => ({ d: a, t: (a.every || 0) * rnd(0.55, 0.9), done: false })); e.dmgBase = e.atk;
     b.bossRef = e;
   }
@@ -151,7 +151,6 @@ function spawnNear(b, type, lane, col) {
 }
 function spawnAt(b, type, lane, col) { const e = makeEnemy(b, type, lane, col); b.enemies.push(e); if (e.tier !== "normal") displace(b, e); return e; }
 function trySpawn(b) {
-  if (b.plan[0] === "boss" && b.kind === "void" && b.bossRef && !b.bossRef.dead) { b.spawnCd = 0.5; return; }   // 이전 단계 보스를 잡아야 다음 단계가 나온다
   const type = b.plan[0], isBoss = type === "boss", D = isBoss ? b.bossDef : type === "spec" ? specDef(Math.min(10, b.act) - 1) : type === "warp" ? WARP : ENEMIES[type];
   const w = isBoss ? D.w : 1, h = isBoss ? Math.min(D.h, b.lanes) : 1;
   const cells = spawnCells(b, D, w, h);
@@ -210,6 +209,10 @@ function damagePlayer(b, raw, opt) {
   pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "-" + fmtN(d), "#ff8a8a", false);
   b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
 }
+function voidPhase(b, e, si) {   // 공허의 군주 단계 설정: 단계마다 체력·공격력이 크게 오른다
+  const hm = VOID_HP[si - 1], am = VOID_ATK[si - 1];
+  e.vstage = si; e.maxHp = e.vbaseHp * hm; e.hp = e.maxHp; e.atk = e.vbaseAtk * am; e.dmgBase = e.atk; e.label = `${e.def.name} · ${si}단계`;
+}
 function applyDamage(b, e, dmg, o) {
   if (e.dead) return 0;
   o = o || {};
@@ -221,6 +224,11 @@ function applyDamage(b, e, dmg, o) {
   if (e.reflect && o.src === "skill") damagePlayer(b, dmg * e.reflect.pct, { undodgeable: true });
   const ls = (o.lifesteal || 0) + b.stats.lifesteal;
   if (ls && o.src === "skill") b.hp = Math.min(b.maxHp, b.hp + dmg * ls);
+  if (e.hp <= 0 && e.vstage && e.vstage < 4) {   // 군주는 쓰러지지 않고 다음 단계로 진입한다
+    b.voidCleared = e.vstage; say(b, `공허의 군주 ${e.vstage}단계 격파! 군주가 더 강해진다`, "good"); b.shake = 0.8;
+    voidPhase(b, e, e.vstage + 1); e.shield = null; e.dots = []; e.chill = 0; b.inv = Math.max(b.inv || 0, 0); e.flash = 0.4;
+    return dmg;
+  }
   if (e.hp <= 0) killEnemy(b, e);
   return dmg;
 }
@@ -373,6 +381,7 @@ function stepBattle(b, dt) {
   b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * dt); if (b.inv > 0) b.inv -= dt;
   b.mana = Math.min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt);
   if (b.endless && b.plan.length < 10) extendPlan(b, 40);
+  if (b.kind === "void" && b.bossRef && !b.bossRef.dead && b.plan.length < 2 && b.enemies.length < 5) extendPlan(b, 6);   // 군주가 살아 있는 동안 잡몹이 계속 나온다
   b.pAtk = Math.max(0, (b.pAtk || 0) - dt); b.pHurt = Math.max(0, (b.pHurt || 0) - dt);
   b.shake = Math.max(0, b.shake - dt); b.flash = Math.max(0, b.flash - dt);
   if (b.banner) { b.banner.t -= dt; if (b.banner.t <= 0) b.banner = null; }

@@ -1718,7 +1718,7 @@ function planFor(node) {
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
   const w = wavePool(act, stage, mods), types = Object.keys(w);
-  if (node.kind === "void") return ["boss", "boss", "boss", "boss"];   // 공허의 군주: 단계마다 군주 한 마리만 (잡몹 없음)
+  if (node.kind === "void") { const pl = smoothSeq(w, 5); pl.push("boss"); pl.push(...smoothSeq(w, 8)); return pl; }   // 공허의 군주: 군주는 한 마리, 체력이 4단계로 나뉜다 (잡몹은 계속 등장)
   let nNormal = CFG.WAVE_BASE + CFG.WAVE_STAGE * stage, elites = eliteCount(stage), boss = false;
   if (node.kind === "boss") { nNormal = Math.round(nNormal * 0.55); boss = true; }
   else if (node.kind === "elite") { nNormal = 45; elites = 10 + act; }
@@ -1783,7 +1783,7 @@ function makeEnemy(b, type, lane, col) {
   { const dd = (isBoss ? ENEMY_DEF.boss : ENEMY_DEF[type] || ENEMY_DEF.grunt).slice(); for (const t of e.traits) if (TRAIT_DEF[t]) { dd[0] += TRAIT_DEF[t][0]; dd[1] += TRAIT_DEF[t][1]; }
     const sc = (1 + CFG.DEF_ACT * (Math.min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier || 0)); e.dm = Math.max(0, dd[0] * sc); e.rm = Math.max(0, dd[1] * sc); e.shD = 0; e.shR = 0; e.eres = ACT_ELEM[Math.min(9, Math.max(0, va))]; }
   if (isBoss) {
-    if (b.kind === "void") { const si = b.voidIdx = (b.voidIdx || 0) + 1, hm = VOID_HP[Math.min(3, si - 1)], am = VOID_ATK[Math.min(3, si - 1)]; e.hp *= hm; e.maxHp *= hm; e.atk *= am; e.vstage = si; e.label = `${D.name} · ${si}단계`; }
+    if (b.kind === "void") { e.vbaseHp = e.maxHp; e.vbaseAtk = e.atk; e.vstage = 1; voidPhase(b, e, 1); }
     e.hp *= 1; e.abil = D.abilities.map((a) => ({ d: a, t: (a.every || 0) * rnd(0.55, 0.9), done: false })); e.dmgBase = e.atk;
     b.bossRef = e;
   }
@@ -1795,7 +1795,6 @@ function spawnNear(b, type, lane, col) {
 }
 function spawnAt(b, type, lane, col) { const e = makeEnemy(b, type, lane, col); b.enemies.push(e); if (e.tier !== "normal") displace(b, e); return e; }
 function trySpawn(b) {
-  if (b.plan[0] === "boss" && b.kind === "void" && b.bossRef && !b.bossRef.dead) { b.spawnCd = 0.5; return; }   // 이전 단계 보스를 잡아야 다음 단계가 나온다
   const type = b.plan[0], isBoss = type === "boss", D = isBoss ? b.bossDef : type === "spec" ? specDef(Math.min(10, b.act) - 1) : type === "warp" ? WARP : ENEMIES[type];
   const w = isBoss ? D.w : 1, h = isBoss ? Math.min(D.h, b.lanes) : 1;
   const cells = spawnCells(b, D, w, h);
@@ -1854,6 +1853,10 @@ function damagePlayer(b, raw, opt) {
   pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "-" + fmtN(d), "#ff8a8a", false);
   b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
 }
+function voidPhase(b, e, si) {   // 공허의 군주 단계 설정: 단계마다 체력·공격력이 크게 오른다
+  const hm = VOID_HP[si - 1], am = VOID_ATK[si - 1];
+  e.vstage = si; e.maxHp = e.vbaseHp * hm; e.hp = e.maxHp; e.atk = e.vbaseAtk * am; e.dmgBase = e.atk; e.label = `${e.def.name} · ${si}단계`;
+}
 function applyDamage(b, e, dmg, o) {
   if (e.dead) return 0;
   o = o || {};
@@ -1865,6 +1868,11 @@ function applyDamage(b, e, dmg, o) {
   if (e.reflect && o.src === "skill") damagePlayer(b, dmg * e.reflect.pct, { undodgeable: true });
   const ls = (o.lifesteal || 0) + b.stats.lifesteal;
   if (ls && o.src === "skill") b.hp = Math.min(b.maxHp, b.hp + dmg * ls);
+  if (e.hp <= 0 && e.vstage && e.vstage < 4) {   // 군주는 쓰러지지 않고 다음 단계로 진입한다
+    b.voidCleared = e.vstage; say(b, `공허의 군주 ${e.vstage}단계 격파! 군주가 더 강해진다`, "good"); b.shake = 0.8;
+    voidPhase(b, e, e.vstage + 1); e.shield = null; e.dots = []; e.chill = 0; b.inv = Math.max(b.inv || 0, 0); e.flash = 0.4;
+    return dmg;
+  }
   if (e.hp <= 0) killEnemy(b, e);
   return dmg;
 }
@@ -2017,6 +2025,7 @@ function stepBattle(b, dt) {
   b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * dt); if (b.inv > 0) b.inv -= dt;
   b.mana = Math.min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt);
   if (b.endless && b.plan.length < 10) extendPlan(b, 40);
+  if (b.kind === "void" && b.bossRef && !b.bossRef.dead && b.plan.length < 2 && b.enemies.length < 5) extendPlan(b, 6);   // 군주가 살아 있는 동안 잡몹이 계속 나온다
   b.pAtk = Math.max(0, (b.pAtk || 0) - dt); b.pHurt = Math.max(0, (b.pHurt || 0) - dt);
   b.shake = Math.max(0, b.shake - dt); b.flash = Math.max(0, b.flash - dt);
   if (b.banner) { b.banner.t -= dt; if (b.banner.t <= 0) b.banner = null; }
@@ -3233,7 +3242,7 @@ function mapPanel() {
     <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
     btnOk = un; btn = "도전";
   } else if (n.kind === "void") {
-    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">4단계로 나뉘며 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">공허의 군주 전용 스킬 4종 (단계별 2% / 3% / 5% / 12% 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline">군주는 한 마리이며 체력이 4단계로 나뉘고, 단계별 난이도는 균열 30 / 40 / 55 / 75단계 수준입니다. 중간에 쓰러져도 격파한 단계의 보상은 받습니다.</div><div class="pline dim">1단계 33% · 2단계 66% · 3단계 100% 확률로 고유 장비(상대적으로 낮은 등급)</div><div class="pline dim">4단계 격파: 좋은 고유 장비 1개 확정 (엔젤릭 2종은 낮은 확률)</div><div class="pline dim">공허의 군주 전용 스킬 4종 (단계별 2% / 3% / 5% / 12% 확률)</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -4029,7 +4038,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-045615";
+const BUILD_ID = "20261028-050253";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4124,7 +4133,7 @@ const PATCH_NOTES = [
   { ver: "2.5", date: "10/28", title: "엔드게임 일반 장비 약화 · 옵션 재굴림의 가치 상승", items: [
     "엔드게임(아이템 레벨 11 이상) 드랍의 전설·세트·희귀 장비 기본 수치가 낮아지고, 드랍 옵션은 낮은 수치가 더 자주 나옵니다. 액트 1~10 진행 난이도는 그대로입니다.",
     "옵션 재굴림·혼돈 구슬·신성한 구슬로 직접 뽑은 옵션은 높은 수치가 잘 나옵니다. 원하는 옵션을 맞춘 장비만 진짜 좋은 장비가 됩니다.",
-    "공허의 군주는 단계마다 군주 한 마리만 등장합니다 (잡몹·정예 없음). 한 단계를 격파하면 다음 단계 군주가 나옵니다.",
+    "공허의 군주는 한 마리만 등장합니다. 체력이 4단계로 나뉘어 한 단계를 격파할 때마다 더 강해진 상태로 이어지며, 그동안 잡몹도 계속 나옵니다.",
     "심연의 군주 세트 효과가 약해졌습니다 (6세트 모든 피해 +40% → +25% 등). 고유 장비의 가치가 상대적으로 올라갑니다.",
   ] },
 
