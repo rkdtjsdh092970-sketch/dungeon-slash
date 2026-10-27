@@ -161,6 +161,9 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .pbtns{flex-wrap:wrap}.pbtns .btn{min-width:96px}
 #mappanel{width:310px}#mappanel .pbtns,#mappanel .row{flex-wrap:wrap;gap:6px}#mappanel .btn{padding:6px 10px;white-space:nowrap}
 #updbar{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:60;display:flex;gap:10px;align-items:center;background:#2a1f4ef5;border:2px solid #ffd24a;border-radius:10px;padding:6px 12px;box-shadow:0 4px 0 #0008;font-weight:bold;font-size:14px;white-space:nowrap}
+#acct{position:absolute;top:46px;right:8px;z-index:40;display:flex;gap:6px;align-items:center;font-size:11px;color:#bfe6ff;background:#1a1430d0;border:1px solid #4a4272;border-radius:10px;padding:2px 4px 2px 8px}#acct button{font:inherit;font-size:10px;color:#fff;background:#3b3560;border:1px solid #8a7ab0;border-radius:8px;padding:1px 6px;cursor:pointer}#acct button:hover{background:#5a4a90}body[data-screen=battle] #acct{display:none}body[data-screen=title] #acct{top:8px}
+#verlab{position:absolute;right:6px;bottom:3px;z-index:5;font-size:10px;color:#fff;opacity:.45;pointer-events:none}
+.tbtns .btn[disabled]{opacity:.7}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -2576,7 +2579,7 @@ const TOWN_SPOTS = [
   { id: "shop",      name: "상점 · 창고",  x: 545, y: 454, w: 78, h: 104, need: 1, desc: "장비 판매 · 정리" },
   { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
   { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
-  { id: "guild",     name: "길드",       x: 318, y: 340, w: 80, h: 132, need: 2, desc: "반복 의뢰(현상금)", back: true },
+  { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "반복 의뢰(현상금)", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
 ];
 const TownView = {
@@ -2902,7 +2905,7 @@ function showScreen(name) {
 function openTitle() {
   showScreen("title"); const has = !!loadGame();
   $("#title").innerHTML = `<div class="logo"><div class="l1">DUNGEON</div><div class="l2">SLASH</div><div class="l3">자동 전투 핵 앤 슬래시</div></div>
-  <div class="tbtns"><button class="btn big" data-t="new">새로 시작</button><button class="btn big" data-t="cont" ${has ? "" : "disabled"}>이어하기</button><button class="btn" data-t="login">☁ 서버 로그인</button><button class="btn" data-t="opt">소리 설정</button></div><div class="tfoot">클릭하면 소리가 켜집니다 · 모든 그림과 음악은 코드로 만들어졌습니다</div>`;
+  <div class="tbtns"><button class="btn big" data-t="new">새로 시작</button><button class="btn big" data-t="cont" ${has ? "" : "disabled"}>이어하기</button><button class="btn" data-t="login" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-t="opt">소리 설정</button></div><div class="tfoot">클릭하면 소리가 켜집니다 · 모든 그림과 음악은 코드로 만들어졌습니다</div>`;
 }
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
@@ -3040,7 +3043,7 @@ function openSettings() {
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
    ${A ? `<h3>자동 반복</h3><label class="setrow2">승리 후 장비 자동 판매 <select data-i="asell"><option value="-1" ${A.sell < 0 ? "selected" : ""}>하지 않음</option><option value="0" ${A.sell === 0 ? "selected" : ""}>일반 이하</option><option value="1" ${A.sell === 1 ? "selected" : ""}>마법 이하</option><option value="2" ${A.sell === 2 ? "selected" : ""}>희귀 이하</option></select></label>
    <label class="setrow2">추천 장비 자동 착용 <input type="checkbox" data-i="aequip" ${A.equip ? "checked" : ""}></label>` : ""}
-   <div class="pbtns"><button class="btn" data-a="srvlg">☁ 서버 로그인</button><button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
+   <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
     vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked),
     asell: (el) => { save.auto.sell = +el.value; saveGame(); }, aequip: (el) => { save.auto.equip = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
@@ -3542,7 +3545,13 @@ async function api(path, body) {
     return await r.json();
   } catch (e) { return { err: "서버에 연결할 수 없습니다" }; }
 }
-function srvMark() { const el = $("#t-srv"); if (el) { el.classList.toggle("on", SRV.on); el.title = SRV.on ? `서버 연결됨: ${SRV.name}` : "서버 미연결 (설정 → 서버 로그인)"; } }
+function srvMark() {
+  const el = $("#t-srv"); if (el) { el.classList.toggle("on", SRV.on); el.title = SRV.on ? `서버 연결됨: ${SRV.name}` : "서버 미연결 (설정 → 서버 로그인)"; }
+  let a = $("#acct"); if (!a) { a = document.createElement("div"); a.id = "acct"; $("#app").appendChild(a); a.addEventListener("click", (ev) => { if (ev.target.closest("[data-lo]")) { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); } }); }
+  a.classList.toggle("hidden", !SRV.on); a.innerHTML = SRV.on ? `<span>☁ ${SRV.name}</span><button data-lo="1" title="서버 계정에서 로그아웃">로그아웃</button>` : "";
+  const t = document.querySelector('[data-t="login"]'); if (t) { t.disabled = SRV.on; t.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
+  const b = document.querySelector('[data-a="srvlg"]'); if (b) { b.disabled = SRV.on; b.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
+}
 function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) SRV.last = Date.now(); }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
@@ -3551,7 +3560,7 @@ async function srvLogin(name, pass) {
   return r;
 }
 async function srvAutoLogin() { try { const t = localStorage.getItem("ds_srv"); if (!t) return; const c = JSON.parse(t); const r = await srvLogin(c.name, c.pass); return r; } catch (e) {} }
-function srvLogout() { SRV.on = false; SRV.name = SRV.pass = ""; try { localStorage.removeItem("ds_srv"); } catch (e) {} srvMark(); }
+function srvLogout() { SRV.on = false; SRV.name = SRV.pass = ""; clearTimeout(SRV.timer); SRV.timer = 0; try { localStorage.removeItem("ds_srv"); } catch (e) {} srvMark(); }
 
 function loginDialog(after) {
   Modal.open(`<h2>서버 로그인</h2><div class="dim center">닉네임과 비밀번호로 접속하면 세이브가 서버에 저장되고, 경매장·길드·랭킹을 쓸 수 있습니다.<br>처음 입력하면 자동으로 계정이 만들어집니다.</div>
@@ -3681,7 +3690,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-023928";
+const BUILD_ID = "20261028-024514";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -3768,7 +3777,7 @@ function frame(ms) {
 window.addEventListener("load", () => {
   CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
-  loadAssets(() => { $("#iorb").src = iconURL("orb", 1); $("#ikey").src = iconURL("skull", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); checkUpdate(); setInterval(checkUpdate, 60000); });
+  loadAssets(() => { $("#iorb").src = iconURL("orb", 1); $("#ikey").src = iconURL("skull", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); });
 });
 
 </script></body></html>

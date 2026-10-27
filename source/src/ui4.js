@@ -8,7 +8,13 @@ async function api(path, body) {
     return await r.json();
   } catch (e) { return { err: "서버에 연결할 수 없습니다" }; }
 }
-function srvMark() { const el = $("#t-srv"); if (el) { el.classList.toggle("on", SRV.on); el.title = SRV.on ? `서버 연결됨: ${SRV.name}` : "서버 미연결 (설정 → 서버 로그인)"; } }
+function srvMark() {
+  const el = $("#t-srv"); if (el) { el.classList.toggle("on", SRV.on); el.title = SRV.on ? `서버 연결됨: ${SRV.name}` : "서버 미연결 (설정 → 서버 로그인)"; }
+  let a = $("#acct"); if (!a) { a = document.createElement("div"); a.id = "acct"; $("#app").appendChild(a); a.addEventListener("click", (ev) => { if (ev.target.closest("[data-lo]")) { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); } }); }
+  a.classList.toggle("hidden", !SRV.on); a.innerHTML = SRV.on ? `<span>☁ ${SRV.name}</span><button data-lo="1" title="서버 계정에서 로그아웃">로그아웃</button>` : "";
+  const t = document.querySelector('[data-t="login"]'); if (t) { t.disabled = SRV.on; t.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
+  const b = document.querySelector('[data-a="srvlg"]'); if (b) { b.disabled = SRV.on; b.textContent = SRV.on ? `☁ 로그인됨 (${SRV.name})` : "☁ 서버 로그인"; }
+}
 function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save }); if (r.ok) SRV.last = Date.now(); }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
@@ -17,7 +23,7 @@ async function srvLogin(name, pass) {
   return r;
 }
 async function srvAutoLogin() { try { const t = localStorage.getItem("ds_srv"); if (!t) return; const c = JSON.parse(t); const r = await srvLogin(c.name, c.pass); return r; } catch (e) {} }
-function srvLogout() { SRV.on = false; SRV.name = SRV.pass = ""; try { localStorage.removeItem("ds_srv"); } catch (e) {} srvMark(); }
+function srvLogout() { SRV.on = false; SRV.name = SRV.pass = ""; clearTimeout(SRV.timer); SRV.timer = 0; try { localStorage.removeItem("ds_srv"); } catch (e) {} srvMark(); }
 
 function loginDialog(after) {
   Modal.open(`<h2>서버 로그인</h2><div class="dim center">닉네임과 비밀번호로 접속하면 세이브가 서버에 저장되고, 경매장·길드·랭킹을 쓸 수 있습니다.<br>처음 입력하면 자동으로 계정이 만들어집니다.</div>

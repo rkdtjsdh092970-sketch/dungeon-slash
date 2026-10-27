@@ -64,7 +64,7 @@ function showScreen(name) {
 function openTitle() {
   showScreen("title"); const has = !!loadGame();
   $("#title").innerHTML = `<div class="logo"><div class="l1">DUNGEON</div><div class="l2">SLASH</div><div class="l3">자동 전투 핵 앤 슬래시</div></div>
-  <div class="tbtns"><button class="btn big" data-t="new">새로 시작</button><button class="btn big" data-t="cont" ${has ? "" : "disabled"}>이어하기</button><button class="btn" data-t="login">☁ 서버 로그인</button><button class="btn" data-t="opt">소리 설정</button></div><div class="tfoot">클릭하면 소리가 켜집니다 · 모든 그림과 음악은 코드로 만들어졌습니다</div>`;
+  <div class="tbtns"><button class="btn big" data-t="new">새로 시작</button><button class="btn big" data-t="cont" ${has ? "" : "disabled"}>이어하기</button><button class="btn" data-t="login" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-t="opt">소리 설정</button></div><div class="tfoot">클릭하면 소리가 켜집니다 · 모든 그림과 음악은 코드로 만들어졌습니다</div>`;
 }
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
@@ -202,7 +202,7 @@ function openSettings() {
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
    ${A ? `<h3>자동 반복</h3><label class="setrow2">승리 후 장비 자동 판매 <select data-i="asell"><option value="-1" ${A.sell < 0 ? "selected" : ""}>하지 않음</option><option value="0" ${A.sell === 0 ? "selected" : ""}>일반 이하</option><option value="1" ${A.sell === 1 ? "selected" : ""}>마법 이하</option><option value="2" ${A.sell === 2 ? "selected" : ""}>희귀 이하</option></select></label>
    <label class="setrow2">추천 장비 자동 착용 <input type="checkbox" data-i="aequip" ${A.equip ? "checked" : ""}></label>` : ""}
-   <div class="pbtns"><button class="btn" data-a="srvlg">☁ 서버 로그인</button><button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
+   <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
     vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked),
     asell: (el) => { save.auto.sell = +el.value; saveGame(); }, aequip: (el) => { save.auto.equip = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
