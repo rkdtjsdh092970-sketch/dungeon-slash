@@ -3,7 +3,7 @@
 // =========================================================
 // ---- 계산식 상수 (한곳에서 조정) ----
 Object.assign(CFG, {
-  MAG_BASE: 0.95, PHYS_BASE: 1.22,          // 마법 스킬 기본 배율 (마법은 치명타가 기본으로 터지지 않는 대신 높게 시작)
+  MAG_BASE: 1.10, PHYS_BASE: 1.22, DPM_K: 0.3,          // 마법 스킬 기본 배율 (마법은 치명타가 기본으로 터지지 않는 대신 높게 시작)
   DEF_C: 8,                // 방어 감소율 = X / (X + DEF_C),  X = 몬스터 방어 계수 × 액트/단계 보정
   DEF_ACT: 0.18,           // 액트마다 방어/저항 계수 +18%
   DEF_TIER: 0.03,          // 균열류 단계마다 +3%
@@ -92,6 +92,7 @@ AFFIXES.push(
   { k: "goldFind", name: "골드 획득", pct: true, range: [0.08, 0.20], w: 4, slots: ["boots", "ring", "neck"] },
   { k: "expFind", name: "경험치 획득", pct: true, range: [0.05, 0.12], w: 3, slots: ["boots", "ring", "neck"] },
   { k: "mf", name: "매직 파운드", pct: true, range: [0.03, 0.07], w: 2.5, slots: ["boots", "ring", "neck"], minIlvl: 2, minRarity: 2 },
+  { k: "manaToHp", name: "마나 1당 체력", count: true, range: [2, 4], w: 3, slots: ["armor", "helm", "boots", "neck"], minIlvl: 3 },   // 마나를 쌓는 빌드의 체력 보완
   { k: "chainJumps", name: "번개 도약 +", count: true, range: [1, 1], w: 2.2, slots: ["ring", "neck", "weapon"], minRarity: 2, minIlvl: 3 },
   { k: "density", name: "칸당 몹 수 +", count: true, range: [1, 1], w: 1.8, slots: ["ring", "neck"], minRarity: 2, minIlvl: 3 },
   { k: "lanes", name: "레인 확장 +", count: true, range: [1, 1], w: 0, slots: [] },   // 구버전 세이브 호환용 (새로 나오지 않음)

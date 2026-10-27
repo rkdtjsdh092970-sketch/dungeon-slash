@@ -21,9 +21,9 @@ const P_ARMS = [
     L: [["두꺼운 가죽", { defFlat: 4 }], ["방어 숙련", { defPct: 0.06 }], ["생명력", { hpFlat: 40 }], ["철벽", { defPct: 0.15, hpPct: 0.08 }, 2]],
     R: [["회피 훈련", { dodge: 0.02 }], ["그림자 걸음", { dodge: 0.02 }], ["흡혈 본능", { lifesteal: 0.006 }], ["유령 걸음", { dodge: 0.05, dodgeCap: 0.6, regen: 0.002 }, 2]] },
   { id: "mana", name: "마나", color: "#5ad0ff",
-    s: [["마나 샘", { manaPct: 0.06 }], ["마나 재생", { manaRegen: 0.004 }], ["효율", { manaCostRed: 0.04 }], ["마력의 흐름", { manaToSpell: 0.06, manaPct: 0.08 }, 2], ["마나 응축", { manaFlat: 20 }], ["마나의 화신", { manaToSpell: 0.15, manaShield: 0.2, hpMore: 0.85 }, 3]],
-    L: [["집중", { manaCostRed: 0.03 }], ["마력 순환", { manaRegen: 0.004 }], ["마나 강화", { manaPct: 0.06 }], ["마력의 방패", { manaShield: 0.12, manaPct: 0.10 }, 2]],
-    R: [["비전 전환", { manaToSpell: 0.03 }], ["정신력", { manaFlat: 15 }], ["원천", { manaRegen: 0.005 }], ["마나 폭풍", { manaToSpell: 0.06, cdr: 0.03 }, 2]] },
+    s: [["마나 샘", { manaPct: 0.06 }], ["마나 재생", { manaRegen: 0.004 }], ["효율", { manaCostRed: 0.04 }], ["마력의 흐름", { manaToSpell: 0.06, manaPct: 0.08 }, 2], ["마나 응축", { manaFlat: 20, manaToHp: 2 }], ["마나의 화신", { manaToSpell: 0.15, manaShield: 0.2, hpMore: 0.85 }, 3]],
+    L: [["집중", { manaCostRed: 0.03 }], ["마력 순환", { manaRegen: 0.004 }], ["마나 강화", { manaPct: 0.06, manaToHp: 2 }], ["마력의 방패", { manaShield: 0.12, manaPct: 0.10, manaToHp: 3 }, 2]],
+    R: [["비전 전환", { manaToSpell: 0.03 }], ["정신력", { manaFlat: 15, manaToHp: 2 }], ["원천", { manaRegen: 0.005 }], ["마나 폭풍", { manaToSpell: 0.06, cdr: 0.03 }, 2]] },
   { id: "util", name: "유틸", color: "#ffd24a",
     s: [["신속", { cdr: 0.015 }], ["수집가", { goldFind: 0.08 }], ["행운", { mf: 0.05 }], ["탐색자", { mf: 0.10, goldFind: 0.12, expFind: 0.10 }, 2], ["학자", { expFind: 0.08 }], ["군집의 지배자", { density: 1, aoeDmg: 0.12 }, 3]],
     L: [["속도", { cdr: 0.015 }], ["탐욕", { goldFind: 0.08 }], ["경험", { expFind: 0.08 }], ["연쇄 반응", { chainJumps: 1, chainDmg: 0.15 }, 2]],
@@ -104,7 +104,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
     manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", singleDmg: "단일 대상 스킬 피해", persistDmg: "지속·장판 스킬 피해", summonDmg: "소환 스킬 피해", bossSkill: "보스 전용기 피해", skillDur: "스킬 지속시간", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
   PASSIVES.forEach((p) => {
     p.text = Object.keys(p.per).map((k) => { const v = p.per[k];
-      if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
+      if (k === "manaToHp") return `최대 마나 1당 체력 +${v}`; if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
       if (k === "chainJumps") return `번개 도약 +${v}`; if (k === "density") return `칸당 몹 수 +${v}`; if (k === "revive") return "전투당 1회 부활";
       if (k === "atkMore" || k === "magMore" || k === "hpMore") return `${{ atkMore: "공격력", magMore: "주문력", hpMore: "체력" }[k]} ${v >= 1 ? "+" : ""}${Math.round((v - 1) * 100)}%`;
       if (k === "manaToSpell") return `최대 마나의 ${Math.round(v * 100)}%만큼 주문력`; if (k === "manaShield") return `받는 피해의 ${Math.round(v * 100)}%를 마나가 흡수`;

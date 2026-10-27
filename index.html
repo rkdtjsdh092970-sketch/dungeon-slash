@@ -706,7 +706,7 @@ CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파
 // =========================================================
 // ---- 계산식 상수 (한곳에서 조정) ----
 Object.assign(CFG, {
-  MAG_BASE: 0.95, PHYS_BASE: 1.22,          // 마법 스킬 기본 배율 (마법은 치명타가 기본으로 터지지 않는 대신 높게 시작)
+  MAG_BASE: 1.10, PHYS_BASE: 1.22, DPM_K: 0.3,          // 마법 스킬 기본 배율 (마법은 치명타가 기본으로 터지지 않는 대신 높게 시작)
   DEF_C: 8,                // 방어 감소율 = X / (X + DEF_C),  X = 몬스터 방어 계수 × 액트/단계 보정
   DEF_ACT: 0.18,           // 액트마다 방어/저항 계수 +18%
   DEF_TIER: 0.03,          // 균열류 단계마다 +3%
@@ -795,6 +795,7 @@ AFFIXES.push(
   { k: "goldFind", name: "골드 획득", pct: true, range: [0.08, 0.20], w: 4, slots: ["boots", "ring", "neck"] },
   { k: "expFind", name: "경험치 획득", pct: true, range: [0.05, 0.12], w: 3, slots: ["boots", "ring", "neck"] },
   { k: "mf", name: "매직 파운드", pct: true, range: [0.03, 0.07], w: 2.5, slots: ["boots", "ring", "neck"], minIlvl: 2, minRarity: 2 },
+  { k: "manaToHp", name: "마나 1당 체력", count: true, range: [2, 4], w: 3, slots: ["armor", "helm", "boots", "neck"], minIlvl: 3 },   // 마나를 쌓는 빌드의 체력 보완
   { k: "chainJumps", name: "번개 도약 +", count: true, range: [1, 1], w: 2.2, slots: ["ring", "neck", "weapon"], minRarity: 2, minIlvl: 3 },
   { k: "density", name: "칸당 몹 수 +", count: true, range: [1, 1], w: 1.8, slots: ["ring", "neck"], minRarity: 2, minIlvl: 3 },
   { k: "lanes", name: "레인 확장 +", count: true, range: [1, 1], w: 0, slots: [] },   // 구버전 세이브 호환용 (새로 나오지 않음)
@@ -972,9 +973,9 @@ const P_ARMS = [
     L: [["두꺼운 가죽", { defFlat: 4 }], ["방어 숙련", { defPct: 0.06 }], ["생명력", { hpFlat: 40 }], ["철벽", { defPct: 0.15, hpPct: 0.08 }, 2]],
     R: [["회피 훈련", { dodge: 0.02 }], ["그림자 걸음", { dodge: 0.02 }], ["흡혈 본능", { lifesteal: 0.006 }], ["유령 걸음", { dodge: 0.05, dodgeCap: 0.6, regen: 0.002 }, 2]] },
   { id: "mana", name: "마나", color: "#5ad0ff",
-    s: [["마나 샘", { manaPct: 0.06 }], ["마나 재생", { manaRegen: 0.004 }], ["효율", { manaCostRed: 0.04 }], ["마력의 흐름", { manaToSpell: 0.06, manaPct: 0.08 }, 2], ["마나 응축", { manaFlat: 20 }], ["마나의 화신", { manaToSpell: 0.15, manaShield: 0.2, hpMore: 0.85 }, 3]],
-    L: [["집중", { manaCostRed: 0.03 }], ["마력 순환", { manaRegen: 0.004 }], ["마나 강화", { manaPct: 0.06 }], ["마력의 방패", { manaShield: 0.12, manaPct: 0.10 }, 2]],
-    R: [["비전 전환", { manaToSpell: 0.03 }], ["정신력", { manaFlat: 15 }], ["원천", { manaRegen: 0.005 }], ["마나 폭풍", { manaToSpell: 0.06, cdr: 0.03 }, 2]] },
+    s: [["마나 샘", { manaPct: 0.06 }], ["마나 재생", { manaRegen: 0.004 }], ["효율", { manaCostRed: 0.04 }], ["마력의 흐름", { manaToSpell: 0.06, manaPct: 0.08 }, 2], ["마나 응축", { manaFlat: 20, manaToHp: 2 }], ["마나의 화신", { manaToSpell: 0.15, manaShield: 0.2, hpMore: 0.85 }, 3]],
+    L: [["집중", { manaCostRed: 0.03 }], ["마력 순환", { manaRegen: 0.004 }], ["마나 강화", { manaPct: 0.06, manaToHp: 2 }], ["마력의 방패", { manaShield: 0.12, manaPct: 0.10, manaToHp: 3 }, 2]],
+    R: [["비전 전환", { manaToSpell: 0.03 }], ["정신력", { manaFlat: 15, manaToHp: 2 }], ["원천", { manaRegen: 0.005 }], ["마나 폭풍", { manaToSpell: 0.06, cdr: 0.03 }, 2]] },
   { id: "util", name: "유틸", color: "#ffd24a",
     s: [["신속", { cdr: 0.015 }], ["수집가", { goldFind: 0.08 }], ["행운", { mf: 0.05 }], ["탐색자", { mf: 0.10, goldFind: 0.12, expFind: 0.10 }, 2], ["학자", { expFind: 0.08 }], ["군집의 지배자", { density: 1, aoeDmg: 0.12 }, 3]],
     L: [["속도", { cdr: 0.015 }], ["탐욕", { goldFind: 0.08 }], ["경험", { expFind: 0.08 }], ["연쇄 반응", { chainJumps: 1, chainDmg: 0.15 }, 2]],
@@ -1055,7 +1056,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
     manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", singleDmg: "단일 대상 스킬 피해", persistDmg: "지속·장판 스킬 피해", summonDmg: "소환 스킬 피해", bossSkill: "보스 전용기 피해", skillDur: "스킬 지속시간", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
   PASSIVES.forEach((p) => {
     p.text = Object.keys(p.per).map((k) => { const v = p.per[k];
-      if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
+      if (k === "manaToHp") return `최대 마나 1당 체력 +${v}`; if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
       if (k === "chainJumps") return `번개 도약 +${v}`; if (k === "density") return `칸당 몹 수 +${v}`; if (k === "revive") return "전투당 1회 부활";
       if (k === "atkMore" || k === "magMore" || k === "hpMore") return `${{ atkMore: "공격력", magMore: "주문력", hpMore: "체력" }[k]} ${v >= 1 ? "+" : ""}${Math.round((v - 1) * 100)}%`;
       if (k === "manaToSpell") return `최대 마나의 ${Math.round(v * 100)}%만큼 주문력`; if (k === "manaShield") return `받는 피해의 ${Math.round(v * 100)}%를 마나가 흡수`;
@@ -1365,7 +1366,7 @@ function computeStats(sv) {
     physDmg: 0, magDmg: 0, elemDmg: 0, fireDmg: 0, coldDmg: 0, lightDmg: 0, voidDmg: 0, ignoreDef: 0, ignoreRes: 0, shredDef: 0, shredRes: 0, penElem: 0,
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
-    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
@@ -1391,11 +1392,11 @@ function computeStats(sv) {
   const sc = setCounts(sv);
   for (const set of SETS) { const n = sc[set.id] || 0; for (const th of [2, 4, 6]) if (n >= th && set.bonus[th]) for (const k in set.bonus[th]) apply(k, set.bonus[th][k]); }
   s.maxMana = Math.max(10, (CFG.BASE_MANA + s.manaFlat) * (1 + s.manaPct) * ml);
-  s.allDmg += s.dmgPerMana * s.maxMana / 100 * 2.2; s.manaFlatRegen = s.manaRegenFlat * ml; s.manaKill = s.manaOnKill * ml;
+  s.allDmg += s.dmgPerMana * s.maxMana / 100 * CFG.DPM_K; s.manaFlatRegen = s.manaRegenFlat * ml; s.manaKill = s.manaOnKill * ml;
   s.manaRate = CFG.MANA_REGEN + s.manaRegen; s.manaCostMul = ml * (1 - Math.min(0.6, s.manaCostRed)); s.manaShield = Math.min(0.8, s.manaShield);
   s.atk = s.atkFlat * (1 + s.atkPct) * lm * s.atkMore;
   s.mag = (s.magFlat * lm + s.manaToSpell * s.maxMana) * (1 + s.magPct) * s.magMore;
-  s.maxHp = Math.max(10, s.hpFlat * (1 + Math.max(-0.9, s.hpPct)) * lm * s.hpMore); s.def = s.def * lm * (1 + s.defPct) * s.defMore;
+  s.maxHp = Math.max(10, (s.hpFlat + s.manaToHp * s.maxMana) * (1 + Math.max(-0.9, s.hpPct)) * lm * s.hpMore); s.def = s.def * lm * (1 + s.defPct) * s.defMore;
   s.dodge = s.noDodge ? 0 : Math.max(0, Math.min(s.dodgeCap, s.dodge)); s.cdr = Math.min(s.cdrCap, s.cdr); s.critChance = Math.min(0.8, s.critChance); s.spellCrit = Math.min(0.8, s.spellCrit);
   s.ignoreDef = Math.min(0.8, s.ignoreDef); s.ignoreRes = Math.min(0.8, s.ignoreRes); s.shredDef = Math.min(0.5, s.shredDef); s.shredRes = Math.min(0.5, s.shredRes);
   s.bossTaken = Math.min(0.6, s.bossTaken); s.rangedTaken = Math.min(0.6, s.rangedTaken); s.killHeal = Math.min(0.02, s.killHeal);
@@ -4446,7 +4447,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-071041";
+const BUILD_ID = "20261028-071550";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4538,6 +4539,12 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.12", date: "10/28", title: "물리·마법 밸런스 · 마나 1당 체력", items: [
+    "같은 장비 품질·같은 패시브 포인트로 물리와 마법 빌드를 맞춰 비교한 결과, '최대 마나 100당 피해' 능력이 마나를 쌓는 빌드의 모든 피해를 크게는 +690%까지 올리는 것이 가장 큰 격차였습니다 (마나 주문 빌드 피해가 물리의 약 2배, 체력은 절반). 이 능력의 효율을 약 1/7로 낮췄습니다.",
+    "반대로 일반 마법 빌드는 물리보다 약했습니다 (피해 약 60~65%). 마법 스킬 기본 배율을 0.95 → 1.10으로 올려 물리와 비슷한 수준으로 맞췄습니다.",
+    "체력이 작아지는 마나 빌드를 위해 새 능력 '마나 1당 체력'이 생겼습니다. 최대 마나 1당 체력이 늘어 마나를 쌓을수록 단단해집니다. 마나 계열 패시브 4곳(마나 응축·마나 강화·마력의 방패·정신력)에 붙었고, 방어구·투구·신발·목걸이에도 옵션으로 나옵니다.",
+    "측정 결과: 마나 주문 빌드의 체력이 약 190만 → 360만으로 올라 다른 빌드와 비슷해졌고, 마법 빌드의 피해는 물리의 약 1.1~1.5배, 방어력은 마나 빌드가 조금 낮은 정도가 됩니다.",
+  ] },
   { ver: "3.11", date: "10/28", title: "균열 난이도 · 흡혈 상한", items: [
     "심연의 균열과 지옥 스테이지 몹의 공격력이 25단계부터 더 가파르게 오릅니다 (체력은 그대로). 방어·체력을 크게 쌓은 빌드가 높은 단계를 너무 쉽게 밀던 문제를 줄이기 위한 조정이며, 25단계 이하는 그대로입니다.",
     "생명력 흡수 회복에 초당 상한이 생겼습니다 (최대 체력 비율: 약 0.6% + 흡수%의 45%, 최대 10%/초). 피해가 아무리 커져도 흡혈만으로 죽지 않는 일은 없어집니다. 흡수 수치를 높일수록 상한도 올라가 투자는 여전히 의미가 있습니다.",
