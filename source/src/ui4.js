@@ -110,6 +110,7 @@ function ahPostSkill(inst, rerender) {
   } });
 }
 function ahPostDialog(it) {
+  if (it && it.bound) return toast("교환 불가 장비는 경매에 올릴 수 없습니다", "bad");
   if (!it || isProtected(it)) return toast("등록할 수 없는 장비입니다 (착용/잠금/프리셋)", "bad");
   const sug = Math.max(100, Math.round(itemValue(it) * (it.uniq ? 40 : 3)));
   Modal.open(`<h2>경매 등록</h2><div class="center pad">${tileHtml(it, { up: false })}<div>${itemTitle(it)}</div></div><div class="center">가격(골드) <input class="txt" id="ah-price" type="number" min="1" value="${sug}"></div><div class="dim center" style="margin-top:6px">수수료 5%가 판매 대금에서 빠집니다 · 최대 5개까지 등록</div><div class="pbtns"><button class="btn pri" data-a="ahgo">등록</button><button class="btn" data-a="ahno">취소</button></div>`, { cls: "sm", on: {
@@ -162,7 +163,15 @@ const MAILN = { poll: 0 };
 async function mailPoll() {   // 안 받은 우편 개수 → 마을 우편함에 느낌표
   if (!SRV.on) { G.mailN = 0; return; } try { const r = await api("/api/mail/list"); G.mailN = r && r.rows ? r.rows.filter((m) => !m.claimed).length : 0; } catch (e) {}
 }
-function mailRewardText(m) { return [m.gold ? `${fmtC(m.gold)}G` : "", m.ore ? `강화석 ${fmtN(m.ore)}` : ""].filter(Boolean).join(" · ") || "첨부 없음"; }
+function mailRewardText(m) {
+  let rw = m.rewards || (m.reward ? [typeof m.reward === "string" ? JSON.parse(m.reward) : m.reward] : []);
+  return [m.gold ? `${fmtC(m.gold)}G` : "", m.ore ? `강화석 ${fmtN(m.ore)}` : "", ...rw.map((r) => `${RIFT_TN[r.t] || "고유"} 고유 장비 1개 (교환 불가)`)].filter(Boolean).join(" · ") || "첨부 없음";
+}
+function mailApply(c) {   // 수령한 우편의 골드·강화석·아이템을 저장 데이터에 반영한다
+  save.gold += c.gold || 0; save.ore += c.ore || 0; const got = [];
+  for (const r of c.rewards || []) { const it = genRiftReward(save, r.t, r.f); if (it) { save.inv.push(it); got.push(it); } }
+  return got;
+}
 async function openMail() {
   if (!SRV.on) { Modal.open(`<h2>우편함</h2><div class="center pad dim">서버에 로그인하면 우편함을 이용할 수 있습니다.<br>운영 보상과 알림이 이곳으로 도착합니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button><button class="btn" data-a="cl">닫기</button></div>`, { cls: "sm", on: { gl: () => loginDialog(openMail), cl: () => Modal.close() } }); return; }
   const r = await api("/api/mail/list"); if (r.err) { toast(r.err, "bad"); return; }
@@ -171,7 +180,7 @@ async function openMail() {
   Modal.open(`<h2>우편함 ${unc.length ? `<small style="color:#ffd24a">(${unc.length}통 미수령)</small>` : ""}</h2>
    ${unc.length > 1 ? `<div class="pbtns" style="margin:4px 0"><button class="btn pri" data-a="mall">모두 받기 (${unc.length}통)</button></div>` : ""}
    <div class="qlist" style="max-height:330px;overflow:auto">${rows.map((m) => `<div class="qrow" style="${m.claimed ? "opacity:.55" : ""}"><div class="qi"><b>${String(m.title).replace(/</g, "&lt;")}</b> <small class="dim">${fmtD(m.created)}</small><div class="dim" style="white-space:pre-wrap">${String(m.body || "").replace(/</g, "&lt;")}</div><div style="color:#ffe08a">🎁 ${mailRewardText(m)}</div></div>${m.claimed ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="mget" data-id="${m.id}">받기</button>`}</div>`).join("") || `<div class="dim center pad">받은 우편이 없습니다</div>`}</div>`, { cls: "wide", on: {
-    mget: async (el) => { const c = await api("/api/mail/claim", { id: +el.dataset.id }); if (c.err) { toast(c.err, "bad"); return openMail(); } save.gold += c.gold || 0; save.ore += c.ore || 0; saveGame(); refreshTop(); snd("coin"); toast(`우편 수령: ${mailRewardText(c)}`, "ok"); openMail(); },
-    mall: async () => { const c = await api("/api/mail/claimall", {}); if (c.err) { toast(c.err, "bad"); return openMail(); } save.gold += c.gold || 0; save.ore += c.ore || 0; saveGame(); refreshTop(); snd("coin"); toast(`우편 ${c.n}통 수령: ${mailRewardText(c)}`, "ok"); openMail(); },
+    mget: async (el) => { const c = await api("/api/mail/claim", { id: +el.dataset.id }); if (c.err) { toast(c.err, "bad"); return openMail(); } const got = mailApply(c); saveGame(); refreshTop(); snd("coin"); toast(`우편 수령: ${mailRewardText(c)}${got.length ? " → " + got.map((x) => UNIQUE_BY_ID[x.uniq].name).join(", ") : ""}`, "ok"); openMail(); },
+    mall: async () => { const c = await api("/api/mail/claimall", {}); if (c.err) { toast(c.err, "bad"); return openMail(); } const got = mailApply(c); saveGame(); refreshTop(); snd("coin"); toast(`우편 ${c.n}통 수령: ${mailRewardText(c)}${got.length ? " → " + got.map((x) => UNIQUE_BY_ID[x.uniq].name).join(", ") : ""}`, "ok"); openMail(); },
   } });
 }

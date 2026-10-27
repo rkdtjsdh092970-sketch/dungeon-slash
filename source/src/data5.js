@@ -145,4 +145,36 @@ UNIQUES.push(
   U("startear", "별의 눈물", "neck", 4, "common", 8, [["allDmg", 0.28], ["mf", 0.9], ["critDmg", 0.45], ["cdr", 0.1], ["manaPct", 0.3], ["expFind", 0.4]], "하늘이 떨군 단 한 방울."),
   U("soulpact", "영혼의 서약", "ring", 4, "common", 8, [["lifesteal", 0.06], ["allDmg", 0.22], ["critChance", 0.14], ["spellCrit", 0.14], ["cdr", 0.1], ["manaOnKill", 4]], "서약은 피로 쓰이고 빛으로 지켜진다."),
 );
+// ---- 소버린(고유 3등급) 신규: 히로익 느낌으로 전설 최적 장비보다 확실히 강한 빌드별 장비. 무기를 빌드마다 하나씩 ----
+Object.assign(MOD_LABEL, { summonDmg: ["소환 피해", "%"], persistDmg: ["지속형 스킬 피해", "%"], singleDmg: ["단일 대상 스킬 피해", "%"], bossSkill: ["보스 전용기 피해", "%"] });
+["summonDmg", "persistDmg", "singleDmg", "bossSkill"].forEach((k) => U_SCALE.add(k));
+UNIQUES.push(
+  U("heroblade", "영웅의 처형검", "weapon", 3, "common", 8, [["atkPct", [0.27, 0.324]], ["physDmg", [0.45, 0.54]], ["critChance", [0.126, 0.162]], ["critDmg", [0.495, 0.63]], ["ignoreDef", 0.135]], "이름을 새긴 자는 아직 한 번도 지지 않았다."),
+  U("serpentfang", "독사왕의 송곳니", "weapon", 3, "common", 8, [["poisonChance", [0.45, 0.55]], ["dotDmg", [0.75, 0.9]], ["physDmg", [0.35, 0.45]], ["dotDur", [0.28, 0.34]]], "상처는 작지만 끝나지 않는다."),
+  U("pyrescepter", "화염군주의 홀", "weapon", 3, "common", 8, [["fireDmg", [0.64, 0.76]], ["igniteChance", [0.24, 0.304]], ["magPct", [0.24, 0.288]], ["penElem", 0.12]], "손에 쥔 채로 식은 적이 없다."),
+  U("frostscepter", "서리군주의 홀", "weapon", 3, "common", 8, [["coldDmg", [0.8, 0.95]], ["magPct", [0.3, 0.36]], ["penElem", 0.15], ["spellCrit", [0.1, 0.13]]], "숨결이 닿은 곳은 시간이 멈춘다."),
+  U("stormscepter", "폭풍군주의 지팡이", "weapon", 3, "common", 8, [["lightDmg", [0.64, 0.76]], ["chainDmg", [0.44, 0.56]], ["magPct", [0.24, 0.288]], ["spellCrit", [0.08, 0.104]]], "천둥은 지팡이가 먼저 안다."),
+  U("arcanum", "비전 대마도서", "weapon", 3, "common", 8, [["manaToSpell", [0.224, 0.272]], ["manaPct", [0.32, 0.4]], ["magPct", [0.24, 0.288]], ["manaCostRed", [0.096, 0.128]]], "페이지마다 마나가 고여 있다."),
+  U("soulchain", "영혼 사슬 지팡이", "weapon", 3, "common", 8, [["summonDmg", [0.5, 0.65]], ["magPct", [0.22, 0.28]], ["atkPct", [0.22, 0.28]], ["persistDmg", [0.3, 0.4]]], "사슬에 묶인 것들이 주인을 위해 싸운다."),
+  U("doomhammer", "파괴자의 철퇴", "weapon", 3, "common", 8, [["aoeDmg", [0.45, 0.55]], ["atkPct", [0.3, 0.36]], ["physDmg", [0.4, 0.5]], ["critDmg", [0.3, 0.4]]], "내려치면 땅이 대답한다."),
+  U("ironheartplate", "철혈의 흉갑", "armor", 3, "common", 8, [["atkPct", [0.2, 0.25]], ["physDmg", [0.3, 0.38]], ["hpPct", [0.3, 0.38]], ["dmgTaken", -0.1]], "피를 흘릴수록 단단해진다."),
+  U("archmagerobe", "대마법사의 예복", "armor", 3, "common", 8, [["magPct", [0.28, 0.34]], ["spellCrit", [0.1, 0.13]], ["hpPct", [0.22, 0.28]], ["manaPct", [0.3, 0.4]]], "주문이 옷자락에서 샌다."),
+  U("warlordvisor", "전쟁군주의 면갑", "helm", 3, "common", 8, [["atkPct", [0.22, 0.28]], ["critDmg", [0.3, 0.4]], ["hpPct", [0.2, 0.26]], ["boss", [0.2, 0.26]]], "눈구멍 너머로 승리가 보인다."),
+  U("sagecirclet", "현자의 보관", "helm", 3, "common", 8, [["magPct", [0.28, 0.34]], ["cdr", [0.06, 0.08]], ["allDmg", [0.12, 0.16]], ["manaRegen", 0.01]], "생각이 빠를수록 쿨타임은 짧아진다."),
+);
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
+
+// ---- 이터널 이상 고유 보강 (v3.16): 전설 최적 장비보다 약하던 고유에 옵션을 더한다. 이미 가진 장비도 불러올 때 같은 옵션이 붙는다 (clampItem) ----
+const UX_PATCH = {
+  gorecleaver: [["allDmg", 0.12], ["atkPct", 0.08]], moltenblade: [["allDmg", 0.12], ["magPct", 0.08]], stormstaff: [["allDmg", 0.1], ["magPct", 0.08]], stormcaller: [["allDmg", 0.1], ["magPct", 0.08]],
+  stormeye: [["lightDmg", [0.14, 0.18]], ["magPct", 0.1], ["allDmg", 0.08]], bladestorm: [["physDmg", [0.1, 0.14]], ["critDmg", 0.2]], manaheart: [["magPct", [0.14, 0.18]], ["spellCrit", 0.07]],
+  brandhelm: [["allDmg", [0.14, 0.18]], ["hpPct", 0.1]], towerseal: [["allDmg", 0.1], ["critDmg", 0.2]], thirst: [["physDmg", [0.2, 0.26]], ["atkPct", 0.1]],
+  pyrerobe: [["magPct", [0.14, 0.18]], ["hpPct", 0.1]], soulreap: [["magPct", 0.14], ["spellCrit", 0.06]], stalkerboots: [["allDmg", 0.1], ["hpPct", [0.1, 0.14]]],
+  frostsigil: [["magPct", 0.14], ["spellCrit", 0.06]], stormarbiter: [["magPct", 0.14], ["critDmg", 0.2]], bulwarkplate: [["hpPct", 0.12], ["dmgTaken", -0.06]],
+  greedcharm: [["allDmg", 0.14], ["hpPct", 0.1]], executorring: [["allDmg", 0.1], ["critDmg", 0.2]], riftleap: [["atkPct", 0.1], ["magPct", 0.1]], ashgrip: [["allDmg", 0.1], ["atkPct", 0.1]],
+  dragonhelm: [["atkPct", 0.1], ["magPct", 0.1]], voidgrip: [["atkPct", 0.14], ["physDmg", 0.2], ["hpPct", 0.12]], voidcrest: [["magPct", 0.14], ["spellCrit", 0.06]],
+  voidwhisper: [["elemDmg", 0.1], ["magPct", 0.14], ["allDmg", 0.08]], manabarrier: [["magPct", 0.14], ["hpPct", 0.14], ["dmgTaken", -0.08], ["allDmg", 0.08]], slaughtergloves: [["atkPct", 0.1], ["physDmg", 0.14], ["allDmg", 0.08]],
+  manaleech: [["magPct", 0.14], ["spellCrit", 0.06], ["allDmg", 0.08]], shadowcloak: [["allDmg", 0.1], ["hpPct", 0.12]], reaperscythe: [["atkPct", 0.1], ["magPct", 0.1], ["allDmg", 0.08]], endlessboots: [["allDmg", 0.1], ["hpPct", 0.12]],
+  apex: [["atkPct", 0.07], ["magPct", 0.07]], dimshoes: [["atkPct", 0.07], ["magPct", 0.07], ["hpPct", 0.1]], startear: [["atkPct", 0.07], ["magPct", 0.07]], soulpact: [["atkPct", 0.07], ["magPct", 0.07]],
+};
+for (const id in UX_PATCH) { const u = UNIQUE_BY_ID[id]; if (u) for (const [k, v] of UX_PATCH[id]) if (!u.mods.some((m) => m[0] === k)) u.mods.push([k, uRoll(k, v)]); }

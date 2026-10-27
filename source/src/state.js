@@ -36,7 +36,8 @@ function genItem(sv, ilvl, rarity, slot, setId, bias) {
   for (const k in SLOT_BASE[slot]) it.base[k] = SLOT_BASE[slot][k] * g * rarMul(rarity, ilvl) * rnd(0.9, 1.1);
   const pool = AFFIXES.filter((a) => (!a.minRarity || rarity >= a.minRarity || (a.minRarity === 2 && rarity === 4)) && (!a.slots || a.slots.includes(slot)) && (!a.minIlvl || ilvl >= a.minIlvl) && !(rarity === 4 && a.k === "lanes"));
   const used = new Set();
-  for (let i = 0; i < R.affixes; i++) {
+  const nAff = ilvl > 10 && (rarity === 2 || rarity === 3) ? R.affixes - 1 : R.affixes;   // 엔드게임 희귀·전설은 옵션이 1개 적다 (POE처럼 좋은 조합을 맞추기 어렵게)
+  for (let i = 0; i < nAff; i++) {
     const cand = pool.filter((a) => !used.has(a.k)); if (!cand.length) break;
     const a = wpick(cand, (x) => x.w * (bias && bias[x.k] || 1)); used.add(a.k);
     it.affixes.push({ k: a.k, v: rollAffix(a, g, R, rarity) });
@@ -52,7 +53,7 @@ function affixScale(a, g, rarity) {
 }
 function rollAffix(a, g, R, rarity, crafted) {
   const end = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1) > 10;
-  const u = Math.random(), t = crafted ? Math.pow(u, end ? 0.55 : 0.8) : (end ? Math.pow(u, 1.2) : u);
+  const u = Math.random(), t = crafted ? u : (end ? Math.pow(u, 1.2) : u);   // 드랍은 낮은 수치가 잘 나오고, 대장간(재굴림·혼돈·신성)은 완전히 균등한 확률 — 좋은 수치를 고르는 지름길은 없다
   const v = a.range[0] + (a.range[1] - a.range[0]) * t;
   return a.count ? Math.round(v) : v * affixScale(a, g, rarity);
 }
@@ -67,11 +68,44 @@ function remapUniqueItem(it) {
   if (!def || it.umods.some((m) => m.k === nk)) { it.umods.splice(i, 1); return 1; }
   const v = Array.isArray(def[1]) ? (def[1][0] + def[1][1]) / 2 : def[1]; it.umods[i] = { k: nk, v: umodScale(D, nk, v) }; return 1;
 }
+// 이터널 이상 고유 장비: 고정 능력 외에 등급별로 추가 옵션이 붙는다 (이터널 2개 · 소버린 3개 · 엔젤릭 4개) — 전설보다 확실히 좋아야 한다. 이미 가진 장비는 불러올 때 한 번 붙는다.
+const UX_COUNT = { 2: 2, 3: 3, 4: 3 }, UX_BASE = { 2: 1.05, 3: 1.2, 4: 1.35 };
+const UX_PHYS = new Set(["atkPct", "atkMore", "physDmg", "critChance", "bleedChance", "poisonChance", "ignoreDef", "shredDef", "atkFlat"]), UX_MAG = new Set(["magPct", "magMore", "spellCrit", "fireDmg", "coldDmg", "lightDmg", "voidDmg", "elemDmg", "igniteChance", "chainDmg", "chainJumps", "ignoreRes", "penElem", "magDmg", "magFlat", "manaPct", "manaCostRed", "manaToSpell", "dmgPerMana"]), UX_DEF = new Set(["hpPct", "hpMore", "defPct", "defMore", "regen", "dmgTaken", "dodge", "bossTaken", "rangedTaken", "lifesteal", "killHeal"]);
+function uxBias(D) {   // 고유의 성격(물리/마법/방어)에 맞는 옵션이 잘 붙는다. 골드·경험치 옵션은 잘 붙지 않는다
+  const base = { goldFind: 0.15, expFind: 0.15, mf: 0.4 };
+  if (D.pool === "fire") return Object.assign(base, FIRE_BIAS); if (D.pool === "phys") return Object.assign(base, PHYS_BIAS); if (D.pool === "light") return Object.assign(base, LIGHT_BIAS);
+  let p = 0, m = 0, d = 0; for (const [k] of D.mods) { if (UX_PHYS.has(k)) p++; if (UX_MAG.has(k)) m++; if (UX_DEF.has(k)) d++; }
+  if (p > m && p >= d) return Object.assign(base, { atkPct: 5, physDmg: 5, critChance: 4, critDmg: 3, ignoreDef: 3, bleedChance: 2, boss: 2, allDmg: 2 });
+  if (m > p && m >= d) return Object.assign(base, { magPct: 5, magDmg: 4, spellCrit: 4, elemDmg: 3, ignoreRes: 3, critDmg: 2, manaPct: 2, allDmg: 2 });
+  if (d > p && d > m) return Object.assign(base, { hpPct: 4, defPct: 3, regen: 3, dmgTaken: 3, allDmg: 2 });
+  return Object.assign(base, { allDmg: 3, critDmg: 2, atkPct: 2, magPct: 2, hpPct: 2 });
+}
+function ensureUX(it) {
+  if (!it || !it.uniq || it.ux || !(it.utier >= 2)) return 0;
+  const D = UNIQUE_BY_ID[it.uniq]; if (!D) return 0; it.ux = 1; it.affixes = it.affixes || [];
+  const bm = UX_BASE[it.utier] || 1; if (bm !== 1) for (const k in it.base) it.base[k] *= bm;   // 소버린 이상은 기본 능력치도 높다 (히로익)
+  const g = gScale(it.ilvl), bias = uxBias(D);
+  const used = new Set([...it.affixes.map((a) => a.k), ...D.mods.map((m) => m[0])]); let n = 0;
+  for (let i = 0; i < (UX_COUNT[it.utier] || 0); i++) {
+    const cand = AFFIXES.filter((a) => !used.has(a.k) && a.k !== "lanes" && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl)); if (!cand.length) break;
+    const a = wpick(cand, (x) => x.w * (bias && bias[x.k] || 1)); used.add(a.k); it.affixes.push({ k: a.k, v: rollAffix(a, g, ITEM_RARITY[3], 3) }); n++;
+  }
+  return n;
+}
+// ---- 균열 탑 10층 단위 보상 (우편): 이터널(10층마다) · 소버린(30층마다) · 엔젤릭(100층마다) 고유, 교환 불가 ----
+const RIFT_REWARD_POOLS = ["common", "tower", "hell", "endless"], RIFT_TN = { 2: "이터널", 3: "소버린", 4: "엔젤릭" };
+const riftRewardTier = (f) => (f % 100 === 0 ? 4 : f % 30 === 0 ? 3 : 2);
+function genRiftReward(sv, t, f) {
+  const list = UNIQUES.filter((u) => u.tier === t && RIFT_REWARD_POOLS.includes(u.pool)); if (!list.length) return null;
+  const it = genUnique(sv, pick(list), 10 + Math.floor(f / CFG.ILVL_RIFT_STEP)); it.bound = 1; return it;
+}
 function clampItem(it) {
   if (!it) return 0; let n = 0;
+  if (it.uniq) n += ensureUX(it);
   if (it.uniq) n += remapUniqueItem(it);
   if (it.uniq) {
     const D = UNIQUE_BY_ID[it.uniq]; if (!D || !it.umods) return 0;
+    for (const [k, v] of D.mods) if (!it.umods.some((m) => m.k === k)) { it.umods.push({ k, v: umodScale(D, k, Array.isArray(v) ? (v[0] + v[1]) / 2 : v) }); n++; }   // 도감에서 고유 옵션이 늘어난 경우: 이미 가진 장비에도 평균값으로 붙는다
     for (const m of it.umods) { const def = D.mods.find((x) => x[0] === m.k); if (!def || !Array.isArray(def[1])) continue; const a = umodScale(D, m.k, def[1][0]), b = umodScale(D, m.k, def[1][1]), lo = Math.min(a, b), hi = Math.max(a, b); const v = Math.min(hi, Math.max(lo, m.v)); if (v !== m.v) { m.v = v; n++; } }
   } else if (it.affixes) {
     for (const a of it.affixes) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4)); const v = Math.min(hi, Math.max(lo, a.v)); if (v !== a.v) { a.v = v; n++; } }
@@ -139,7 +173,7 @@ function computeStats(sv) {
   for (const slot of EQ_SLOTS) {
     const it = sv.equipped[slot]; if (!it) continue;
     ilvlSum += it.ilvl; ilvlCnt++;
-    const ef = 1 + 0.08 * (it.enh || 0), pf = 1 + 0.04 * (it.enh || 0);
+    const em = enhMul(it), ef = 1 + 0.08 * em * (it.enh || 0), pf = 1 + 0.04 * em * (it.enh || 0);
     if (it.base.atk) s.atkFlat += it.base.atk * ef; if (it.base.mag) s.magFlat += it.base.mag * ef; if (it.base.hp) s.hpFlat += it.base.hp * ef; if (it.base.def) s.def += it.base.def * ef;
     for (const a of it.affixes) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; apply(a.k, d.flat ? a.v * ef : d.pct ? a.v * pf : a.v); }
     if (it.umods) for (const m of it.umods) apply(m.k, m.v);
@@ -277,6 +311,7 @@ function genUnique(sv, def, ilvl) {
   const R = ITEM_RARITY[5], g = gScale(ilvl), it = { uid: sv.nextUid++, slot: def.slot, ilvl, rarity: 5, uniq: def.id, utier: def.tier, base: {}, affixes: [], umods: [], enh: 0 };
   for (const k in SLOT_BASE[def.slot]) it.base[k] = SLOT_BASE[def.slot][k] * g * R.mult * rnd(0.95, 1.05);
   for (const [k, v] of def.mods) it.umods.push({ k, v: umodScale(def, k, Array.isArray(v) ? rnd(v[0], v[1]) : v) });
+  ensureUX(it);
   return it;
 }
 // 출처별 고유 롤: 해당 출처 전용 풀 + 공용 풀을 합쳐 등급 가중치로 뽑는다
@@ -288,6 +323,7 @@ function rollUnique(sv, act, ilvl, pools) {
 const U_POOLS_OF = { trial: ["tower", "common"], stage: ["common"], boss: ["common"], elite: ["common"], treasure: ["common"], hell: ["hell", "common"], rift: ["tower", "common"], endless: ["endless", "common"], hive: ["fire", "common"], titan: ["phys", "common"], storm: ["light", "common"] };
 // 화염 정령왕 고유 드랍: 한 번 클리어에 고유는 최대 1개. 단계가 높을수록 좋은 등급이 나오고, 엔젤릭(고유 4등급)은 4단계에서만 나온다
 const HIVE_U_CHANCE = [0.15, 0.30, 0.50, 0.80];
+const COMMON_BOSS_U = [0.15, 0.25, 0.40, 0.60];   // 균열 이후 보스(공허·화염·물리·번개): 전용 고유와 별개로 공용 풀에서 한 번 더 굴리는 확률 (단계별)
 const HIVE_TIER_W = [{ 1: 30, 2: 6 }, { 1: 20, 2: 20, 3: 6 }, { 1: 10, 2: 20, 3: 25 }, { 1: 5, 2: 15, 3: 30, 4: 6 }];
 function hiveUniqueList(stage, kind) {   // kind: hive(화염) / titan(물리) / storm(번개)
   const all = UNIQUES.filter((u) => u.pool === EB[kind || "hive"].pool), tw = HIVE_TIER_W[Math.max(0, Math.min(3, stage - 1))], cnt = {}; all.forEach((u) => (cnt[u.tier] = (cnt[u.tier] || 0) + 1));
@@ -332,7 +368,12 @@ function rollDrops(sv, node, boss, B) {
     if (Math.random() < HIVE_U_CHANCE[st - 1] * Math.min(2, Math.pow(mfw, 0.4))) { const list = hiveUniqueList(st, kind); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
     const ES = SKILLS.filter((d) => d.src === EB[kind].pool);   // 보스 전용 스킬: 매우 낮은 확률 (단계별 2% / 3% / 5% / 12%)
     if (ES.length && Math.random() < [0.02, 0.03, 0.05, 0.12][st - 1]) out.skills.push(genSkill(sv, pick(ES).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][st - 1]));
-  } else {
+  }
+  if (kind === "void" || isEB(kind)) {   // 균열 이후 보스: 공용 고유 추가 롤
+    const cst = Math.max(1, Math.min(4, node.vsel || 1));
+    if (Math.random() < COMMON_BOSS_U[cst - 1] * Math.min(2, Math.pow(mfw, 0.4)) * B.unique) { const u = rollUnique(sv, 10, ilvl, ["common"]); if (u) { out.items.push(u); out.uniques++; } }
+  }
+  if (!(kind === "void" || isEB(kind))) {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
@@ -412,6 +453,9 @@ function addExp(sv, amount) {
 }
 
 // ---- 대장간 ----
+// 강화 효율: 희귀·전설을 대충 주워 강화만으로 최상급이 되지 않도록 등급별로 다르다 (일반·마법·희귀 60% · 전설 75% · 세트 90% · 고유 100%)
+const ENH_EFF = [0.6, 0.6, 0.6, 0.75, 0.9, 1.0];
+const enhMul = (it) => (it.ilvl > 10 ? ENH_EFF[Math.min(5, it.rarity | 0)] : 1);   // 액트(아이템 레벨 10 이하) 장비는 그대로 — 엔드게임 장비에만 적용
 const ENH_RATE = [1, 1, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3];
 const enhCost = (it) => ({ gold: Math.round(40 * gScale(it.ilvl) * (1 + (it.enh || 0) * 0.6)), ore: 2 + (it.enh || 0) });
 function enhance(sv, it) {
@@ -431,13 +475,13 @@ function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), or
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
-const rerollCost = (it) => ({ gold: Math.round(itemValue(it) * 2.5), ore: 3 });
+const rerollCost = (it) => { const n = Math.min(14, it.rr || 0), m = Math.pow(1.45, n); return { gold: Math.round(itemValue(it) * 2.5 * m * (it.ilvl > 10 ? 1.6 : 1)), ore: Math.round((3 + n) * (it.ilvl > 10 ? 1.5 : 1)) }; };   // 같은 장비를 거듭 재굴림할수록 비싸진다
 function rerollAffix(sv, it, idx) {
   const c = rerollCost(it); if (sv.gold < c.gold || sv.ore < c.ore) return false;
   const old = it.affixes[idx]; if (!old) return false;
   const pool = AFFIXES.filter((a) => !it.affixes.some((x, i) => i !== idx && x.k === a.k) && (!a.minRarity || it.rarity >= a.minRarity || (a.minRarity === 2 && it.rarity === 4)) && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl) && a.k !== "lanes");
   if (!pool.length) return false;
-  const a = wpick(pool, (x) => x.w); it.affixes[idx] = { k: a.k, v: rollAffix(a, gScale(it.ilvl), ITEM_RARITY[it.rarity], it.rarity, true) };
+  const a = wpick(pool, (x) => x.w); it.affixes[idx] = { k: a.k, v: rollAffix(a, gScale(it.ilvl), ITEM_RARITY[it.uniq ? 3 : it.rarity], it.uniq ? 3 : it.rarity, false) }; it.rr = (it.rr || 0) + 1;   // 재굴림 수치는 드랍과 같은 확률 (높은 수치는 신성한 구슬로)
   sv.gold -= c.gold; sv.ore -= c.ore; return true;
 }
 
@@ -505,7 +549,7 @@ function loadPreset(sv, i) {
 // 구슬 / 패시브 / 심연 각인 / 스킬 상점 / 무한 균열 횟수
 // =========================================================
 function addAffix(sv, it) {   // 혼돈 구슬: 옵션 1개 추가 (최대 6)
-  if (it.uniq || it.affixes.length >= 6 || sv.orbC < 1) return false;
+  if (it.uniq || it.affixes.length >= (it.ilvl > 10 ? 5 : 6) || sv.orbC < 1) return false;
   const used = new Set(it.affixes.map((a) => a.k)), g = gScale(it.ilvl);
   const pool = AFFIXES.filter((a) => !used.has(a.k) && a.k !== "lanes" && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl));
   if (!pool.length) return false;   // 붙일 수 있는 옵션이 더 없다

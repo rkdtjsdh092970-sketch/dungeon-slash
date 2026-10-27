@@ -6,6 +6,15 @@ const GAME_RAW = "https://raw.githubusercontent.com/rkdtjsdh092970-sketch/dungeo
 const rawUrl = (f) => GAME_RAW + f + "?t=" + Math.floor(Date.now() / 30000);   // 30초마다 새 주소로 받아 GitHub 캐시를 피한다
 const FEE = 0.05, MAX_LISTINGS = 5, EXPIRE_MS = 3 * 86400000, GUILD_COST = 20000, NAME_RE = /^[0-9A-Za-z가-힣_]{2,12}$/;
 async function hash(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("ds1|" + s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
+// 균열 탑 10층마다 우편 보상: 이터널 고유(10층 단위) · 소버린 고유(30층 단위) · 엔젤릭 고유(100층 단위), 교환 불가. 같은 층은 한 번만 (ref 유일)
+const riftTierOf = (f) => (f % 100 === 0 ? 4 : f % 30 === 0 ? 3 : 2), RIFT_TN = { 2: "이터널", 3: "소버린", 4: "엔젤릭" };
+async function riftMails(DB, name, best) {
+  best = best | 0; if (best < 10) return 0; const need = Math.floor(best / 10);
+  const have = await DB.prepare("SELECT COUNT(*) c FROM mail WHERE name=? AND ref LIKE 'rift:%'").bind(name).first(); if (have && have.c >= need) return 0;
+  let n = 0; for (let f = 10; f <= need * 10; f += 10) { const t = riftTierOf(f);
+    const r = await DB.prepare("INSERT OR IGNORE INTO mail(name,title,body,gold,ore,created,claimed,ref,reward) VALUES(?,?,?,?,?,?,0,?,?)").bind(name, `균열 ${f}층 돌파 보상`, `심연의 균열 ${f}층 돌파 기념! ${RIFT_TN[t]} 고유 장비를 받으세요. (교환 불가)`, 0, 0, now(), "rift:" + f, JSON.stringify({ t, f })).run(); n += r.meta && r.meta.changes ? 1 : 0; }
+  return n;
+}
 const guildLevel = (exp) => Math.min(10, 1 + Math.floor(Math.sqrt(exp / 50000)));
 
 // 운영자 회수: revoked 표에 이름이 있으면 엔젤릭(고유 4등급) 장비를 저장·로그인 때마다 걸러 낸다
@@ -45,6 +54,7 @@ export default {
         const h = await hash(name + pass), row = await DB.prepare("SELECT * FROM players WHERE name=?").bind(name).first();
         if (!row) { await DB.prepare("INSERT INTO players(name,pass,created,updated) VALUES(?,?,?,?)").bind(name, h, now(), now()).run(); return J({ ok: true, created: true, save: null, pending: 0, guild: 0 }); }
         if (row.pass !== h) return J({ err: "비밀번호가 다릅니다" }, 403);
+        try { await riftMails(DB, name, row.rift); } catch (e) {}
         let sv = row.save ? JSON.parse(row.save) : null, revoked = 0;
         if (sv && await isRevoked(DB, name)) { revoked = stripAngelic(sv); if (revoked) await DB.prepare("UPDATE players SET save=? WHERE name=?").bind(JSON.stringify(sv), name).run(); }
         return J({ ok: true, created: false, save: sv, pending: row.gold_pending, guild: row.guild, revoked, revokeOn: await isRevoked(DB, name) });
@@ -55,6 +65,7 @@ export default {
         const s = body.save; if (!s || typeof s !== "object") return J({ err: "bad save" }, 400);
         let stripped = 0; if (await isRevoked(DB, me.name)) stripped = stripAngelic(s);
         const txt = JSON.stringify(s); if (txt.length > 900000) return J({ err: "세이브가 너무 큽니다" }, 400);
+        { const nb = (s.rift && s.rift.best) | 0; if (nb > (me.rift | 0)) { try { await riftMails(DB, me.name, nb); } catch (e) {} } }
         await DB.prepare("UPDATE players SET save=?, level=?, rift=?, endless=?, updated=? WHERE name=?").bind(txt, s.level | 0, ((s.rift && s.rift.best) | 0), ((s.endless && s.endless.best) | 0), now(), me.name).run();
         return J({ ok: true, stripped });
       }
@@ -72,17 +83,17 @@ export default {
 
       // ---- 우편함 (운영 보상 등) ----
       if (path === "/api/mail/list") {
-        const rows = await DB.prepare("SELECT id,title,body,gold,ore,created,claimed FROM mail WHERE name=? ORDER BY claimed ASC, id DESC LIMIT 40").bind(me.name).all();
+        const rows = await DB.prepare("SELECT id,title,body,gold,ore,created,claimed,ref,reward FROM mail WHERE name=? ORDER BY claimed ASC, id DESC LIMIT 60").bind(me.name).all();
         return J({ rows: rows.results });
       }
       if (path === "/api/mail/claim") {   // 한 번만 수령 (UPDATE ... WHERE claimed=0 이 원자적으로 중복 수령을 막는다)
-        const a = await DB.prepare("UPDATE mail SET claimed=1 WHERE id=? AND name=? AND claimed=0 RETURNING gold,ore").bind(+body.id, me.name).first();
-        if (!a) return J({ err: "이미 받았거나 없는 우편입니다" }, 400); return J({ ok: true, gold: a.gold, ore: a.ore });
+        const a = await DB.prepare("UPDATE mail SET claimed=1 WHERE id=? AND name=? AND claimed=0 RETURNING gold,ore,reward").bind(+body.id, me.name).first();
+        if (!a) return J({ err: "이미 받았거나 없는 우편입니다" }, 400); return J({ ok: true, gold: a.gold, ore: a.ore, rewards: a.reward ? [JSON.parse(a.reward)] : [] });
       }
       if (path === "/api/mail/claimall") {
-        const a = await DB.prepare("UPDATE mail SET claimed=1 WHERE name=? AND claimed=0 RETURNING gold,ore").bind(me.name).all();
+        const a = await DB.prepare("UPDATE mail SET claimed=1 WHERE name=? AND claimed=0 RETURNING gold,ore,reward").bind(me.name).all();
         const rs = a.results || []; if (!rs.length) return J({ err: "받을 우편이 없습니다" }, 400);
-        return J({ ok: true, n: rs.length, gold: rs.reduce((x, r) => x + (r.gold || 0), 0), ore: rs.reduce((x, r) => x + (r.ore || 0), 0) });
+        return J({ ok: true, n: rs.length, gold: rs.reduce((x, r) => x + (r.gold || 0), 0), ore: rs.reduce((x, r) => x + (r.ore || 0), 0), rewards: rs.filter((r) => r.reward).map((r) => JSON.parse(r.reward)) });
       }
 
       // ---- 경매장 ----
@@ -101,7 +112,7 @@ export default {
         return J({ rows: rows.results.map((r) => ({ ...r, item: JSON.parse(r.item) })), sold: sold.c, pending: me.gold_pending, max: MAX_LISTINGS });
       }
       if (path === "/api/ah/post") {
-        const it = body.item, price = Math.floor(+body.price); if (!it || !(price >= 1 && price <= 1e12)) return J({ err: "가격 오류" }, 400);
+        const it = body.item, price = Math.floor(+body.price); if (it && it.bound) return J({ err: "교환 불가 장비입니다" }, 400); if (!it || !(price >= 1 && price <= 1e12)) return J({ err: "가격 오류" }, 400);
         const c = await DB.prepare("SELECT COUNT(*) c FROM auctions WHERE seller=? AND status='open'").bind(me.name).first();
         if (c.c >= MAX_LISTINGS) return J({ err: "등록은 최대 " + MAX_LISTINGS + "개입니다" }, 400);
         const r = await DB.prepare("INSERT INTO auctions(seller,item,slot,rarity,uniq,ilvl,price,created,expires) VALUES(?,?,?,?,?,?,?,?,?)").bind(me.name, JSON.stringify(it), it.slot || "", it.rarity | 0, it.uniq || "", it.ilvl | 0, price, now(), now() + EXPIRE_MS).run();
