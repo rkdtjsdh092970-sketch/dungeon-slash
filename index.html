@@ -1079,6 +1079,9 @@ UNIQUES.push(
 );
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
 
+// 스킬별 1회 시전당 기본 피해 배율(대상 수 포함): test/calibrate_tm.js 가 엔진에서 직접 측정한 값. 새 스킬을 추가하면 다시 측정한다.
+const SKILL_TM = {"strike": 0.94, "rapid": 0.52, "crush": 2.34, "spark": 1.36, "smash": 3.94, "bomb": 17.02, "lance": 22, "chain": 7.22, "snipe": 3.95, "firewall": 10.58, "sweep": 12.31, "execute": 6.66, "frost": 32.86, "vamp": 2.82, "thunder": 24.74, "boomer": 31.58, "pierce2": 34.24, "meteor": 137.02, "rend": 9.46, "volley": 5.35, "venom": 6.01, "iceshard": 4.16, "orbs": 15.71, "whirl": 34.54, "trap": 59.27, "blizzard": 45.61, "inferno": 27.41, "plague": 15.46, "storm": 40.49, "spirit": 8.8, "voidhole": 23.98};
+
 // =========================================================
 // 세이브 / 장비 / 스탯 / 퀘스트 / 대장간
 // =========================================================
@@ -1186,12 +1189,12 @@ function computeStats(sv) {
   s.lanes = Math.min(CFG.MAX_LANES, sv.lanesBase + s.laneBonus);
   s.avgIlvl = ilvlCnt ? ilvlSum / ilvlCnt : 1; s.sets = sc;
   // 장착 스킬의 물리/마법 비중과 필요 마나 (전투력 추정용)
-  let wm = 0, wt = 0, mps = 0;
-  for (const l of sv.loadout || []) { if (!l) continue; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") { mps += k.mana * s.manaCostMul / k.cd; continue; } const w = k.mult / k.cd; wt += w; if (k.dtype === "mag") wm += w; mps += k.mana * s.manaCostMul / (k.cd * (1 - Math.min(0.5, s.cdr))); }
+  let wm = 0, wt = 0, mps = 0; s.skl = [];
+  for (const l of sv.loadout || []) { if (!l) continue; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); s.skl.push(k); if (k.dtype === "buff" || k.dtype === "heal") { mps += k.mana * s.manaCostMul / k.cd; continue; } const w = k.mult / k.cd; wt += w; if (k.dtype === "mag") wm += w; mps += k.mana * s.manaCostMul / (k.cd * (1 - Math.min(0.5, s.cdr))); }
   s.mix = wt ? wm / wt : 0.5; s.manaNeed = mps;
   return s;
 }
-function playerPower(s) {
+function playerPowerOld(s) {
   const refAtk = 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl));
   const mit = 1 + s.def / (s.def + 5 * refAtk);
   const ccP = s.critChance, ccM = s.magCrit ? s.critChance + s.spellCrit : s.spellCrit;
@@ -1202,6 +1205,79 @@ function playerPower(s) {
   const mf = s.maxMana * s.manaRate + s.maxMana / 15, mfac = s.manaNeed > 0 ? Math.min(1, Math.max(0.35, mf / s.manaNeed)) : 1;
   const surv = s.maxHp * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) * (1 + 0.25 * s.manaShield) / (1 - s.dodge);
   return dmg * Math.sqrt(mfac) * surv * (1 + s.allDmg) * (1 + 0.15 * (s.add.boss + s.add.elite + s.add.ranged + s.add.normal)) / (1 - s.cdr * 0.7) * (1 + 0.05 * s.chainJumps + s.aoeDmg * 0.3);
+}
+
+// ---- 전투력: 실제로 장착한 스킬(물리/마법/원소/상태이상/마나)을 하나씩 계산해서 합친다 ----
+// 스킬 1회 시전의 "기본 피해 배율 합" (대상 수를 평균 몇 마리로 보는지 포함). 지속형은 sk.mult가 한 번 더 곱해지는 엔진 동작을 그대로 반영.
+const POWER_TARGETS = 3.5;
+function castMult(k, s) {
+  if (typeof SKILL_TM !== "undefined" && SKILL_TM[k.id] != null) { const r = k.mult / (k.def ? k.def.mult : k.mult) || 1, sq = { orbit: 1, aura: 1, zone2: 1, hole: 1 }[k.kind] ? 2 : 1; return SKILL_TM[k.id] * Math.pow(r, sq) * (k.kind === "chain" ? 1 + 0.12 * s.chainJumps : 1) * ((k.kind === "multi" || k.kind === "nova" || k.kind === "meteor" || k.kind === "cone" || k.kind === "zone" || k.kind === "trap" || k.kind === "zone2" || k.kind === "rain" || k.kind === "aura" || k.kind === "hole") ? 1 + s.aoeDmg : 1); }
+  const m = k.mult, side = k.side || 1;
+  switch (k.kind) {
+    case "single": return m;
+    case "multi": return m * (1 + side * 2) * (1 + s.aoeDmg);
+    case "pierce": return m * 2.6;
+    case "chain": { let t = 1; for (let j = 1; j <= k.jumps + s.chainJumps; j++) t += Math.pow(k.decay, j); return m * t * (1 + s.chainDmg); }
+    case "nova": return m * 5.5 * (1 + s.aoeDmg);
+    case "zone": return m * 3 * (k.dur / 0.5) * 0.45 * 1.8 * (1 + s.aoeDmg);
+    case "boomer": return m * (1 + k.back) * 2;
+    case "meteor": return m * k.count * (1 + side * 3) * (1 + s.aoeDmg);
+    case "cone": return m * (1 + (k.sideM || 0.7) * 3) * (1 + s.aoeDmg);
+    case "spray": return m * k.count * (1 + s.aoeDmg * 0.3);
+    case "orbit": return m * m * (k.dur / k.every);
+    case "aura": return m * m * (k.dur / k.every) * 4 * (1 + s.aoeDmg);
+    case "trap": return m * (1 + 0.7 * 3) * (1 + s.aoeDmg);
+    case "zone2": return m * m * (k.dur / k.every) * 4.5 * (1 + s.aoeDmg);
+    case "rain": return m * k.count * 2.2 * (1 + s.aoeDmg);
+    case "summon": return m * (k.dur / k.every);
+    case "hole": return m * m * (k.dur / k.every) * 4 * (1 + s.aoeDmg);
+  }
+  return m;
+}
+function baseCastOf(k, s, act, sc) {   // 스킬 배율 1.0 기준 1타 피해: 공격력/주문력 × 피해증가 × 방어/저항 × 속성저항 × 치명 × 대상 보너스
+  act = act || Math.max(1, Math.min(10, Math.round(s.avgIlvl))); sc = sc || 1 + CFG.DEF_ACT * (act - 1);
+  const mag = k.dtype === "mag", base = mag ? s.mag * CFG.MAG_BASE : s.atk * CFG.PHYS_BASE;
+  let inc = 1 + s.allDmg + (mag ? s.magDmg : s.physDmg); if (k.elem) inc += s.elemDmg + s[k.elem + "Dmg"];
+  const ig = Math.min(0.9, (mag ? s.ignoreRes : s.ignoreDef) + (k.ignoreAdd || 0)), sh = (mag ? s.shredRes : s.shredDef) * 0.7, X = 1.1 * sc * (1 - ig) * (1 - sh), red = 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
+  const er = k.elem ? 1 - clamp(ACT_ELEM[act - 1][ELEMS.indexOf(k.elem)] - s.penElem, -0.5, CFG.RES_CAP) : 1;
+  const cc = Math.min(0.9, (mag ? (s.magCrit ? s.critChance + s.spellCrit : s.spellCrit) : s.critChance) + (k.critAdd || 0)), crit = 1 + cc * s.critDmg;
+  const bonus = 1 + 0.15 * (Object.values(k.bonus || {}).reduce((a, b) => a + b, 0) + s.add.boss + s.add.elite + s.add.ranged + s.add.normal);
+  return base * inc * red * er * crit * bonus;
+}
+function powerDetail(s) {
+  const act = Math.max(1, Math.min(10, Math.round(s.avgIlvl))), sc = 1 + CFG.DEF_ACT * (act - 1);
+  const refAtk = 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl)), mit = 1 + s.def / (s.def + 5 * refAtk);
+  const out = { skills: [], dps: 0, manaFactor: 1, buff: 1 };
+  let demand = 0, buffMul = 1, hasPaid = false;
+  const cdMul = 1 - s.cdr;
+  const rows = [];
+  for (const k of s.skl || []) {
+    const cd = Math.max(0.2, k.cd * cdMul), cost = (k.mana || 0) * s.manaCostMul / cd;
+    if (k.dtype === "buff") { buffMul *= 1 + (k.power || 0) * Math.min(1, k.dur / cd); demand += cost; continue; }
+    if (k.dtype === "heal") { demand += cost; continue; }
+    const mag = k.dtype === "mag", bc = baseCastOf(k, s, act, sc);
+    let cast = castMult(k, s) * bc;
+    // 상태이상: 적중마다 확률로 지속 피해가 붙는다 (계수 × 지속피해 보너스)
+    let dot = 0;
+    for (const st of ["bleed", "poison", "ignite"]) { const q = st === "bleed" ? !mag : st === "poison" ? !mag || k.elem === "void" : k.elem === "fire", ch = Math.min(1, (k[st] || 0) + (q ? s[st + "Chance"] : 0)); if (ch > 0) dot += ch * CFG[st.toUpperCase()].coef * (1 + s.dotDmg) * (1 + 0.3 * s.dotDur) * 0.85; }
+    cast *= 1 + dot;
+    const paid = cost > 0; if (paid) hasPaid = true; demand += cost;
+    rows.push({ k, dps: cast / cd, paid, cost, mag, dot });
+  }
+  // 마나 지속: 재생(초당) + 처치 회복 + 풀 마나를 오래 쓰는 몫. 부족하면 마나를 쓰는 스킬의 가동률이 떨어진다
+  const supply = s.maxMana * s.manaRate + (s.manaFlatRegen || 0) + (s.manaKill || 0) * 1.2 + s.maxMana / 25;
+  const mf = demand > 0 ? Math.min(1, supply / demand) : 1; out.manaFactor = mf; out.demand = demand; out.supply = supply;
+  for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
+  out.dps *= buffMul; out.buff = buffMul;
+  const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M, s.maxHp * f / (1 - f)) : 0;
+  out.ehp = (s.maxHp + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
+  out.mit = mit; out.revive = s.revive;
+  return out;
+}
+let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
+function playerPower(s) {
+  const d = powerDetail(s);
+  return POWER_K * d.dps * d.ehp * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
 }
 const enemyIndex = (act, stage) => CFG.H0 * CFG.A0 * actScale(act) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * (1 + CFG.STAGE_ATK * (stage - 1));
 const recPower = (act, stage) => CFG.REC_K * (stage === CFG.STAGES ? CFG.REC_BOSS : 1) * enemyIndex(act, stage);
@@ -1541,10 +1617,16 @@ function wavePool(act, stage, mods) {
   if (mods && mods.some((m) => m.ranged)) { w.archer = (w.archer + 10) * 2; w.mage = (w.mage + 6) * 2.5; }
   return w;
 }
+// 가중치대로 정확히 같은 비율이 되도록 고르게 섞는다 (smooth weighted round-robin): 매번 같은 구성, 랜덤 편차 없음
+function smoothSeq(w, n, st) {
+  const keys = Object.keys(w).filter((k) => w[k] > 0), W = keys.reduce((a, k) => a + w[k], 0), out = []; st = st || {};
+  for (let i = 0; i < n; i++) { let best = null; for (const k of keys) { st[k] = (st[k] || 0) + w[k] / W; if (best === null || st[k] > st[best]) best = k; } st[best] -= 1; out.push(best); }
+  return out;
+}
 function extendPlan(b, n) {
-  const w = wavePool(10, 5, b.mods), types = Object.keys(w);
-  for (let i = 0; i < n; i++) b.plan.push(Math.random() < 0.02 ? "warp" : wpick(types, (t) => w[t] + 1e-4));
-  for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(rint(2, b.plan.length), 0, "brute");
+  const w = wavePool(10, 5, b.mods); b.rr = b.rr || {};
+  for (const t of smoothSeq(w, n, b.rr)) b.plan.push(t);
+  for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
 function planFor(node) {
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
@@ -1557,9 +1639,8 @@ function planFor(node) {
   else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = 70 + 4 * t; elites = 3 + Math.floor(t / 2); boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
   else if (node.kind === "endless") { nNormal = 40; elites = 3; }
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
-  const plan = [];
-  for (let i = 0; i < nNormal; i++) plan.push(wpick(types, (t) => w[t] + 1e-4));
-  for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * Math.random())), 0, "brute");
+  const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
+  for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
   if (RIFTLIKE[node.kind] && node.kind !== "void") for (let i = 0; i < plan.length; i++) if (Math.random() < 0.012) plan[i] = "warp";
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
@@ -3368,7 +3449,7 @@ function itemDetail(it) {
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
   if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
-  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = powerWith(save, it.slot, it), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
+  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
   if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? `<button class="btn pri" data-a="equip" data-k="ring">반지 1 장착</button><button class="btn pri" data-a="equip" data-k="ring2">반지 2 장착</button>` : `<button class="btn pri" data-a="equip">장착</button>`;
@@ -3387,7 +3468,7 @@ function itemDetail(it) {
 function renderItems() {
   const m = IB.mode, title = { inv: "장비", forge: "대장간", shop: "상점 · 창고" }[m];
   let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
-  const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, powerWith(save, it.slot, it));
+  const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))));
   list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => b.rarity - a.rarity || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
   const eqCol = `<div class="doll">` + EQ_SLOTS.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
@@ -3443,7 +3524,9 @@ function openStats() {
   const s = computeStats(save), P = (v, d) => (v * 100).toFixed(d == null ? 1 : d) + "%", N = fmtN;
   const G = (title, rows) => `<div class="sg"><h4>${title}</h4>${rows.filter(Boolean).map((r) => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}</div>`;
   const elems = ELEMS.map((e) => [ELEM_NAME[e] + " 피해", P(s[e + "Dmg"], 0)]);
-  Modal.open(`<h2>스탯</h2><div class="statgrid">
+  const pd = powerDetail(s), tot = pd.skills.reduce((a, x) => a + x.dps, 0) || 1;
+  const pw = G("전투력", [["전투력", `<b style="color:#ffe08a">${N(playerPower(s))}</b>`], ["예상 초당 피해", N(pd.dps)], ...pd.skills.map((x) => [`${x.name} <small class="dim">${x.mag ? "마법" : "물리"}${x.dot > 0.05 ? " · 지속" : ""}${x.paid ? "" : " · 마나 0"}</small>`, `${N(x.dps)} (${Math.round(x.dps / tot * 100)}%)`]), pd.demand > 0 ? ["마나 가동률", `${Math.round(pd.manaFactor * 100)}% <small class="dim">재생 ${pd.supply.toFixed(1)}/s · 소모 ${pd.demand.toFixed(1)}/s</small>`] : null, pd.buff > 1.001 ? ["버프 효과", "×" + pd.buff.toFixed(2)] : null, ["유효 체력", N(pd.ehp)]]);
+  Modal.open(`<h2>스탯</h2><div class="statgrid">${pw}
    ${G("공격", [["물리 공격력", N(s.atk)], ["주문력", N(s.mag)], ["물리 피해", P(s.physDmg, 0)], ["마법 피해", P(s.magDmg, 0)], ["주는 피해", P(s.allDmg, 0)], ["물리 치명타", `${P(s.critChance)} / +${P(s.critDmg, 0)}`], ["주문 치명타", s.magCrit ? `${P(s.critChance + s.spellCrit)} (물리와 동일)` : P(s.spellCrit)], ["쿨타임 감소", P(s.cdr)], ["생명력 흡수", P(s.lifesteal)]])}
    ${G("방어", [["체력", N(s.maxHp)], ["방어력", N(s.def)], ["회피", P(s.dodge)], ["받는 피해", (s.dmgTaken > 0 ? "+" : "") + P(s.dmgTaken, 0)], s.regen ? ["초당 회복", P(s.regen)] : null, s.revive ? ["부활", s.revive + "회"] : null, s.manaShield ? ["마나 방패", P(s.manaShield, 0)] : null])}
    ${G("마나", [["최대 마나", N(s.maxMana)], ["초당 재생", `${(s.maxMana * s.manaRate).toFixed(1)} (${P(s.manaRate)})`], ["마나 소모 감소", P(Math.min(0.6, s.manaCostRed), 0)], s.manaToSpell ? ["마나 → 주문력", P(s.manaToSpell, 0)] : null, ["스킬 필요 마나/초", s.manaNeed.toFixed(1)]])}
@@ -3820,7 +3903,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-032742";
+const BUILD_ID = "20261028-033600";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -3912,6 +3995,12 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "1.9", date: "10/28", title: "전투력 계산 개편 · 몬스터 구성 고정", items: [
+    "전투력이 장착한 스킬을 하나씩 계산하는 방식으로 바뀌었습니다. 물리/마법, 원소 피해, 출혈·중독·점화, 마나(재생·소모·마나 방패) 빌드가 각자 다르게 반영됩니다. 같은 장비라도 어떤 스킬을 쓰는지에 따라 ▲/▼가 달라집니다.",
+    "스탯 창 맨 앞에 '전투력' 칸이 생겼습니다. 스킬별 초당 피해와 비중, 마나 가동률(재생 대비 소모), 유효 체력을 볼 수 있습니다.",
+    "액트에서 나오는 몬스터 구성 비율이 매번 똑같습니다. 정해진 비율대로 고르게 섞여 나오고, 정예도 일정한 간격으로 나옵니다 (공허의 열쇠 몹은 기존처럼 확률).",
+    "장비 비교(▲/전투력 %)에서 반지는 두 칸 중 더 좋아지는 쪽 기준으로 계산합니다.",
+  ] },
   { ver: "1.8", date: "10/28", title: "업데이트 게시판 · 반지 2칸 · 고유 확률 하향", items: [
     "마을에 '업데이트 게시판'이 생겼습니다. 앞으로 업데이트 내용은 여기에 올라옵니다.",
     "반지를 2칸 장착할 수 있습니다 (장비 창의 '반지 2').",

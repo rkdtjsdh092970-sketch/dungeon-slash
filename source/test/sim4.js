@@ -19,7 +19,7 @@ for (let tr = 0; tr < N; tr++) {
       }
       if (!ok) { g.stuck++; dead = true; break; }
     }
-    if (!dead) { g.n++; g.min += actT / 60; g.st += stT / 10; g.lv += sv.level; g.ratio += A.playerPower(A.computeStats(sv)) / A.recPower(act, 10); }
+    if (!dead) { g.n++; g.min += actT / 60; g.st += stT / 10; g.lv += sv.level; g.ratio += A.playerPower(A.computeStats(sv)) / A.recPower(act, 10); g.ro = (g.ro || 0) + A.playerPowerOld(A.computeStats(sv)) / A.recPower(act, 10); }
   }
 }
-agg.forEach((g, i) => { const n = Math.max(1, g.n); console.log(`act ${i + 1}: ok=${g.n}/${N} stuck=${g.stuck} fails=${(g.fails / N).toFixed(1)} farm=${(g.farm / N).toFixed(1)} min=${(g.min / n).toFixed(0)} avgStage=${(g.st / n).toFixed(0)}s bossT=${(g.bossT / n).toFixed(0)}s lv=${(g.lv / n).toFixed(0)}`); });
+agg.forEach((g, i) => { const n = Math.max(1, g.n); console.log(`act ${i + 1}: ok=${g.n}/${N} stuck=${g.stuck} fails=${(g.fails / N).toFixed(1)} farm=${(g.farm / N).toFixed(1)} min=${(g.min / n).toFixed(0)} avgStage=${(g.st / n).toFixed(0)}s bossT=${(g.bossT / n).toFixed(0)}s lv=${(g.lv / n).toFixed(0)} powerRatio=${(g.ratio / n).toFixed(2)} old=${((g.ro||0) / n).toFixed(2)}`); });

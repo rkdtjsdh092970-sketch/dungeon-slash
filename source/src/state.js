@@ -105,12 +105,12 @@ function computeStats(sv) {
   s.lanes = Math.min(CFG.MAX_LANES, sv.lanesBase + s.laneBonus);
   s.avgIlvl = ilvlCnt ? ilvlSum / ilvlCnt : 1; s.sets = sc;
   // 장착 스킬의 물리/마법 비중과 필요 마나 (전투력 추정용)
-  let wm = 0, wt = 0, mps = 0;
-  for (const l of sv.loadout || []) { if (!l) continue; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") { mps += k.mana * s.manaCostMul / k.cd; continue; } const w = k.mult / k.cd; wt += w; if (k.dtype === "mag") wm += w; mps += k.mana * s.manaCostMul / (k.cd * (1 - Math.min(0.5, s.cdr))); }
+  let wm = 0, wt = 0, mps = 0; s.skl = [];
+  for (const l of sv.loadout || []) { if (!l) continue; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); s.skl.push(k); if (k.dtype === "buff" || k.dtype === "heal") { mps += k.mana * s.manaCostMul / k.cd; continue; } const w = k.mult / k.cd; wt += w; if (k.dtype === "mag") wm += w; mps += k.mana * s.manaCostMul / (k.cd * (1 - Math.min(0.5, s.cdr))); }
   s.mix = wt ? wm / wt : 0.5; s.manaNeed = mps;
   return s;
 }
-function playerPower(s) {
+function playerPowerOld(s) {
   const refAtk = 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl));
   const mit = 1 + s.def / (s.def + 5 * refAtk);
   const ccP = s.critChance, ccM = s.magCrit ? s.critChance + s.spellCrit : s.spellCrit;
@@ -121,6 +121,79 @@ function playerPower(s) {
   const mf = s.maxMana * s.manaRate + s.maxMana / 15, mfac = s.manaNeed > 0 ? Math.min(1, Math.max(0.35, mf / s.manaNeed)) : 1;
   const surv = s.maxHp * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) * (1 + 0.25 * s.manaShield) / (1 - s.dodge);
   return dmg * Math.sqrt(mfac) * surv * (1 + s.allDmg) * (1 + 0.15 * (s.add.boss + s.add.elite + s.add.ranged + s.add.normal)) / (1 - s.cdr * 0.7) * (1 + 0.05 * s.chainJumps + s.aoeDmg * 0.3);
+}
+
+// ---- 전투력: 실제로 장착한 스킬(물리/마법/원소/상태이상/마나)을 하나씩 계산해서 합친다 ----
+// 스킬 1회 시전의 "기본 피해 배율 합" (대상 수를 평균 몇 마리로 보는지 포함). 지속형은 sk.mult가 한 번 더 곱해지는 엔진 동작을 그대로 반영.
+const POWER_TARGETS = 3.5;
+function castMult(k, s) {
+  if (typeof SKILL_TM !== "undefined" && SKILL_TM[k.id] != null) { const r = k.mult / (k.def ? k.def.mult : k.mult) || 1, sq = { orbit: 1, aura: 1, zone2: 1, hole: 1 }[k.kind] ? 2 : 1; return SKILL_TM[k.id] * Math.pow(r, sq) * (k.kind === "chain" ? 1 + 0.12 * s.chainJumps : 1) * ((k.kind === "multi" || k.kind === "nova" || k.kind === "meteor" || k.kind === "cone" || k.kind === "zone" || k.kind === "trap" || k.kind === "zone2" || k.kind === "rain" || k.kind === "aura" || k.kind === "hole") ? 1 + s.aoeDmg : 1); }
+  const m = k.mult, side = k.side || 1;
+  switch (k.kind) {
+    case "single": return m;
+    case "multi": return m * (1 + side * 2) * (1 + s.aoeDmg);
+    case "pierce": return m * 2.6;
+    case "chain": { let t = 1; for (let j = 1; j <= k.jumps + s.chainJumps; j++) t += Math.pow(k.decay, j); return m * t * (1 + s.chainDmg); }
+    case "nova": return m * 5.5 * (1 + s.aoeDmg);
+    case "zone": return m * 3 * (k.dur / 0.5) * 0.45 * 1.8 * (1 + s.aoeDmg);
+    case "boomer": return m * (1 + k.back) * 2;
+    case "meteor": return m * k.count * (1 + side * 3) * (1 + s.aoeDmg);
+    case "cone": return m * (1 + (k.sideM || 0.7) * 3) * (1 + s.aoeDmg);
+    case "spray": return m * k.count * (1 + s.aoeDmg * 0.3);
+    case "orbit": return m * m * (k.dur / k.every);
+    case "aura": return m * m * (k.dur / k.every) * 4 * (1 + s.aoeDmg);
+    case "trap": return m * (1 + 0.7 * 3) * (1 + s.aoeDmg);
+    case "zone2": return m * m * (k.dur / k.every) * 4.5 * (1 + s.aoeDmg);
+    case "rain": return m * k.count * 2.2 * (1 + s.aoeDmg);
+    case "summon": return m * (k.dur / k.every);
+    case "hole": return m * m * (k.dur / k.every) * 4 * (1 + s.aoeDmg);
+  }
+  return m;
+}
+function baseCastOf(k, s, act, sc) {   // 스킬 배율 1.0 기준 1타 피해: 공격력/주문력 × 피해증가 × 방어/저항 × 속성저항 × 치명 × 대상 보너스
+  act = act || Math.max(1, Math.min(10, Math.round(s.avgIlvl))); sc = sc || 1 + CFG.DEF_ACT * (act - 1);
+  const mag = k.dtype === "mag", base = mag ? s.mag * CFG.MAG_BASE : s.atk * CFG.PHYS_BASE;
+  let inc = 1 + s.allDmg + (mag ? s.magDmg : s.physDmg); if (k.elem) inc += s.elemDmg + s[k.elem + "Dmg"];
+  const ig = Math.min(0.9, (mag ? s.ignoreRes : s.ignoreDef) + (k.ignoreAdd || 0)), sh = (mag ? s.shredRes : s.shredDef) * 0.7, X = 1.1 * sc * (1 - ig) * (1 - sh), red = 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
+  const er = k.elem ? 1 - clamp(ACT_ELEM[act - 1][ELEMS.indexOf(k.elem)] - s.penElem, -0.5, CFG.RES_CAP) : 1;
+  const cc = Math.min(0.9, (mag ? (s.magCrit ? s.critChance + s.spellCrit : s.spellCrit) : s.critChance) + (k.critAdd || 0)), crit = 1 + cc * s.critDmg;
+  const bonus = 1 + 0.15 * (Object.values(k.bonus || {}).reduce((a, b) => a + b, 0) + s.add.boss + s.add.elite + s.add.ranged + s.add.normal);
+  return base * inc * red * er * crit * bonus;
+}
+function powerDetail(s) {
+  const act = Math.max(1, Math.min(10, Math.round(s.avgIlvl))), sc = 1 + CFG.DEF_ACT * (act - 1);
+  const refAtk = 6 * CFG.A0 * actScale(Math.max(1, s.avgIlvl)), mit = 1 + s.def / (s.def + 5 * refAtk);
+  const out = { skills: [], dps: 0, manaFactor: 1, buff: 1 };
+  let demand = 0, buffMul = 1, hasPaid = false;
+  const cdMul = 1 - s.cdr;
+  const rows = [];
+  for (const k of s.skl || []) {
+    const cd = Math.max(0.2, k.cd * cdMul), cost = (k.mana || 0) * s.manaCostMul / cd;
+    if (k.dtype === "buff") { buffMul *= 1 + (k.power || 0) * Math.min(1, k.dur / cd); demand += cost; continue; }
+    if (k.dtype === "heal") { demand += cost; continue; }
+    const mag = k.dtype === "mag", bc = baseCastOf(k, s, act, sc);
+    let cast = castMult(k, s) * bc;
+    // 상태이상: 적중마다 확률로 지속 피해가 붙는다 (계수 × 지속피해 보너스)
+    let dot = 0;
+    for (const st of ["bleed", "poison", "ignite"]) { const q = st === "bleed" ? !mag : st === "poison" ? !mag || k.elem === "void" : k.elem === "fire", ch = Math.min(1, (k[st] || 0) + (q ? s[st + "Chance"] : 0)); if (ch > 0) dot += ch * CFG[st.toUpperCase()].coef * (1 + s.dotDmg) * (1 + 0.3 * s.dotDur) * 0.85; }
+    cast *= 1 + dot;
+    const paid = cost > 0; if (paid) hasPaid = true; demand += cost;
+    rows.push({ k, dps: cast / cd, paid, cost, mag, dot });
+  }
+  // 마나 지속: 재생(초당) + 처치 회복 + 풀 마나를 오래 쓰는 몫. 부족하면 마나를 쓰는 스킬의 가동률이 떨어진다
+  const supply = s.maxMana * s.manaRate + (s.manaFlatRegen || 0) + (s.manaKill || 0) * 1.2 + s.maxMana / 25;
+  const mf = demand > 0 ? Math.min(1, supply / demand) : 1; out.manaFactor = mf; out.demand = demand; out.supply = supply;
+  for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
+  out.dps *= buffMul; out.buff = buffMul;
+  const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M, s.maxHp * f / (1 - f)) : 0;
+  out.ehp = (s.maxHp + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
+  out.mit = mit; out.revive = s.revive;
+  return out;
+}
+let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
+function playerPower(s) {
+  const d = powerDetail(s);
+  return POWER_K * d.dps * d.ehp * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
 }
 const enemyIndex = (act, stage) => CFG.H0 * CFG.A0 * actScale(act) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * (1 + CFG.STAGE_ATK * (stage - 1));
 const recPower = (act, stage) => CFG.REC_K * (stage === CFG.STAGES ? CFG.REC_BOSS : 1) * enemyIndex(act, stage);

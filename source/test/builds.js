@@ -21,7 +21,7 @@ function alloc(sv, arms, pts) {
 }
 function setup(name) {
   const B = BUILDS[name], sv = A.newSave(); sv.tut.done = true; sv.level = LV; sv.slots = 4; sv.endgame = true; sv.lanesBase = 3; sv.cleared = Array(10).fill(10);
-  for (const s of A.SLOTS) sv.equipped[s] = makeItem(sv, s, B.gear[s], 10);
+  for (const s of A.SLOTS) sv.equipped[s] = makeItem(sv, s, B.gear[s] || B.gear.gloves, 10);
   sv.skills = []; sv.loadout = [null, null, null, null]; B.skills.forEach((id, i) => { const k = A.genSkill(sv, id, 1); sv.skills.push(k); sv.loadout[i] = { uid: k.uid, rule: 'auto' }; });
   alloc(sv, B.pass, A.passivePoints(sv)); return sv;
 }
@@ -29,5 +29,6 @@ for (const name of Object.keys(BUILDS)) {
   let t = 0, w = 0, kills = 0, st, lastB;
   for (let i = 0; i < N; i++) { const sv = setup(name); st = A.computeStats(sv); const b = A.createBattle(sv, { kind: 'rift', act: 11, tier: T, mods: [], name: 'r', level: 100 }); b.noFx = true; lastB = b; b.inv = 1e9; while (!b.over && b.time < 60) A.stepBattle(b, 0.05); t += b.time; w += b.win ? 1 : 0; kills += b.kills; }
   console.log(name.padEnd(7), JSON.stringify(Object.fromEntries(Object.entries(lastB.dmgBy).map(([k,v])=>[k,Math.round(v/1e6)+'M']))));
-  console.log(name.padEnd(7), 'dps', (Object.values(lastB.dmgBy).reduce((a,b)=>a+b,0)/lastB.time/1e3).toFixed(0)+'k', 'kills60', (kills / N).toFixed(0), 'atk', Math.round(st.atk), 'mag', Math.round(st.mag), 'hp', Math.round(st.maxHp), 'mana', Math.round(st.maxMana), 'power', (A.playerPower(st) / 1e9).toFixed(2) + 'G');
+  { const dd = A.powerDetail(st); console.log(name.padEnd(7), 'PER-SKILL est/measured(k):', dd.skills.map(x => x.id + ' ' + (x.dps / 1e3).toFixed(0) + '/' + ((lastB.dmgBy[x.id] || 0) / lastB.time / 1e3).toFixed(0)).join(' | '), '| dot measured', ((lastB.dmgBy.dot || 0) / lastB.time / 1e3).toFixed(0)); }
+  console.log(name.padEnd(7), 'dps', (Object.values(lastB.dmgBy).reduce((a,b)=>a+b,0)/lastB.time/1e3).toFixed(0)+'k', 'kills60', (kills / N).toFixed(0), 'atk', Math.round(st.atk), 'mag', Math.round(st.mag), 'hp', Math.round(st.maxHp), 'mana', Math.round(st.maxMana), 'power', (A.playerPower(st) / 1e9).toFixed(2) + 'G', 'oldpower', (A.playerPowerOld(st) / 1e9).toFixed(2) + 'G', 'estDPS', (A.powerDetail(st).dps / 1e3).toFixed(0) + 'k', 'manaF', A.powerDetail(st).manaFactor.toFixed(2));
 }

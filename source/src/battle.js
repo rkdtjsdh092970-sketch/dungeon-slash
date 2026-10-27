@@ -59,10 +59,16 @@ function wavePool(act, stage, mods) {
   if (mods && mods.some((m) => m.ranged)) { w.archer = (w.archer + 10) * 2; w.mage = (w.mage + 6) * 2.5; }
   return w;
 }
+// 가중치대로 정확히 같은 비율이 되도록 고르게 섞는다 (smooth weighted round-robin): 매번 같은 구성, 랜덤 편차 없음
+function smoothSeq(w, n, st) {
+  const keys = Object.keys(w).filter((k) => w[k] > 0), W = keys.reduce((a, k) => a + w[k], 0), out = []; st = st || {};
+  for (let i = 0; i < n; i++) { let best = null; for (const k of keys) { st[k] = (st[k] || 0) + w[k] / W; if (best === null || st[k] > st[best]) best = k; } st[best] -= 1; out.push(best); }
+  return out;
+}
 function extendPlan(b, n) {
-  const w = wavePool(10, 5, b.mods), types = Object.keys(w);
-  for (let i = 0; i < n; i++) b.plan.push(Math.random() < 0.02 ? "warp" : wpick(types, (t) => w[t] + 1e-4));
-  for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(rint(2, b.plan.length), 0, "brute");
+  const w = wavePool(10, 5, b.mods); b.rr = b.rr || {};
+  for (const t of smoothSeq(w, n, b.rr)) b.plan.push(t);
+  for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
 function planFor(node) {
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
@@ -75,9 +81,8 @@ function planFor(node) {
   else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = 70 + 4 * t; elites = 3 + Math.floor(t / 2); boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
   else if (node.kind === "endless") { nNormal = 40; elites = 3; }
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
-  const plan = [];
-  for (let i = 0; i < nNormal; i++) plan.push(wpick(types, (t) => w[t] + 1e-4));
-  for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * Math.random())), 0, "brute");
+  const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
+  for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
   if (RIFTLIKE[node.kind] && node.kind !== "void") for (let i = 0; i < plan.length; i++) if (Math.random() < 0.012) plan[i] = "warp";
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
