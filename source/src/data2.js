@@ -4,6 +4,7 @@
 CFG.BASE_DODGE = 0;                // 기본 회피 없음 — 패시브·장비로만 얻는다
 CFG.UNIQUE_BASE = 0.0005;          // 고유 장비: 드랍 1개당 기준 확률 (0.05%)
 CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은 너무 후했음, 정식 출시 때 1로)
+CFG.VOID4_ANGELIC_W = 3; CFG.VOID4_DAILY = 5;   // 공허 4단계: 엔젤릭 가중치(나머지 21), 하루 입장 횟수
 CFG.VAULT_GOLD = 6; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
 CFG.WARP_CHANCE = 0.12;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
 CFG._unused = 0;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관

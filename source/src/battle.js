@@ -130,7 +130,7 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [30, 40, 55, 75], VOID_HP = VOID_TIER.map((t) => Math.pow(CFG.RIFT_SCALE, t - 30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [30, 42, 60, 82], VOID_HP = VOID_TIER.map((t) => Math.pow(CFG.RIFT_SCALE, t - 30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = b.kind === "hive" ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : type === "warp" ? WARP : type === "hwarp" ? HWARP : ENEMIES[type];

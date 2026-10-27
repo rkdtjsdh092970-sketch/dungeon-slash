@@ -580,6 +580,7 @@ const planSize = (stage) => CFG.WAVE_BASE + CFG.WAVE_STAGE * stage + eliteCount(
 CFG.BASE_DODGE = 0;                // 기본 회피 없음 — 패시브·장비로만 얻는다
 CFG.UNIQUE_BASE = 0.0005;          // 고유 장비: 드랍 1개당 기준 확률 (0.05%)
 CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은 너무 후했음, 정식 출시 때 1로)
+CFG.VOID4_ANGELIC_W = 3; CFG.VOID4_DAILY = 5;   // 공허 4단계: 엔젤릭 가중치(나머지 21), 하루 입장 횟수
 CFG.VAULT_GOLD = 6; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
 CFG.WARP_CHANCE = 0.12;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
 CFG._unused = 0;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
@@ -1526,7 +1527,7 @@ function rollDrops(sv, node, boss, B) {
     }
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
     if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
-    if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
+    if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
@@ -1743,6 +1744,11 @@ function buySkill(sv, idx) {
   sv.gold -= o.price; sv.shop.bought.push(idx); sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
 }
 const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+function void4Info(sv) {   // 공허의 군주 4단계: 하루 입장 횟수 제한 (열쇠를 많이 모아 둬도 보상 인플레가 한 번에 오지 않게)
+  if (!sv.void4) sv.void4 = { day: "", used: 0 };
+  if (sv.void4.day !== localDay()) { sv.void4.day = localDay(); sv.void4.used = 0; }
+  return { max: CFG.VOID4_DAILY, used: sv.void4.used, left: Math.max(0, CFG.VOID4_DAILY - sv.void4.used) };
+}
 function endlessInfo(sv) {
   if (!sv.endless) sv.endless = { day: "", used: 0, best: 0, bestKills: 0 };
   if (sv.endless.day !== localDay()) { sv.endless.day = localDay(); sv.endless.used = 0; }
@@ -1922,7 +1928,7 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [30, 40, 55, 75], VOID_HP = VOID_TIER.map((t) => Math.pow(CFG.RIFT_SCALE, t - 30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [30, 42, 60, 82], VOID_HP = VOID_TIER.map((t) => Math.pow(CFG.RIFT_SCALE, t - 30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = b.kind === "hive" ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : type === "warp" ? WARP : type === "hwarp" ? HWARP : ENEMIES[type];
@@ -3419,7 +3425,9 @@ function mapPanel() {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
     h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="vsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="vsp">+</button> <span class="dim">난이도 균열 ${VOID_TIER[S - 1]}단계 수준</span></div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_MIN_RIFT}</b>단계 이상 (현재 ${save.rift.best}단계) · 고른 단계의 군주 한 마리와 싸웁니다 (잡몹 포함)</div>
     <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${[33, 66, 100][S - 1]}% 확률` : "좋은 고유 장비 1개 확정 — 엔젤릭 2종(공허의 왕관·공허의 심장)은 4단계에서만 드랍 (낮은 확률)"}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
-    btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
+    const V4 = void4Info(save), need4 = S === 4 && V4.left < 1;
+    if (S === 4) h += `<div class="pline">4단계 오늘 남은 입장 <b>${V4.left}</b> / ${V4.max}회 <span class="dim">(하루마다 초기화)</span></div>`;
+    btnOk = un && save.keys > 0 && save.rift.best >= VOID_MIN_RIFT && !need4; btn = save.rift.best < VOID_MIN_RIFT ? `균열 ${VOID_MIN_RIFT}단계 필요` : need4 ? "오늘 횟수 소진" : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
     const my = playerPower(computeStats(save)), ratio = my / rec, tag = ratio >= 1.15 ? ["여유", "#8df08d"] : ratio >= 0.8 ? ["적정", "#ffe08a"] : ratio >= 0.5 ? ["위험", "#ffa060"] : ["매우 위험", "#ff6a6a"];
@@ -3439,7 +3447,7 @@ function mapGo() {
   if (n.kind === "town") return openTown(n.act);
   if (n.kind === "endless") { const E = endlessInfo(save); if (E.left < 1) return; save.endless.used++; saveGame(); }
   if (n.kind === "hive") { if ((save.keys2 || 0) < 1 || save.rift.best < HIVE_NEED[(G.hiveStage || 1) - 1]) return; save.keys2--; saveGame(); }
-  if (n.kind === "void") { if (save.keys < 1 || save.rift.best < VOID_MIN_RIFT) return; save.keys--; saveGame(); }
+  if (n.kind === "void") { if (save.keys < 1 || save.rift.best < VOID_MIN_RIFT) return; if ((G.voidStage || 1) === 4) { const V4 = void4Info(save); if (V4.left < 1) return; save.void4.used++; } save.keys--; saveGame(); }
   let tip = null, title = null;
   if (G.guide === "stage" && n.id === "S1-1") { G.guide = null; save.seen.guide = true; MapView.pulse = null; setGuide(null); title = "첫 모험 · 초원 1"; tip = "스킬은 쿨타임마다 자동 발동합니다. 적을 클릭하면 그 적을 우선 공격해요.<br>전투가 끝나면 장비가 떨어지고, 장비 창에 <b style='color:#5dff7a'>▲</b> 가 뜨면 더 강한 장비입니다. <b>[추천 장비 착용]</b>으로 한 번에 갈아입으세요!"; }
   startBattle(nodeToBattle(n), { tip, title, back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } });
@@ -3999,13 +4007,13 @@ function openTower() {
 const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
-const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? 5 : 21), 0);
+const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21), 0);
 const isVoid4Only = (def) => !!def && def.pool === "void" && def.tier === 4;
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
   for (const kind of Object.keys(KIND_LBL)) {
-    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? 5 : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
+    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
     if (me) out.push([KIND_LBL[kind], CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * (me.w / sum), `드랍 1개당${def.pool === "common" && def.act > 1 ? ` · 액트 ${def.act}~` : ""}`]);
@@ -4395,7 +4403,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-064040";
+const BUILD_ID = "20261028-064637";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4487,6 +4495,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.5", date: "10/28", title: "공허의 군주 3·4단계 상향 · 4단계 입장 제한", items: [
+    "공허의 군주 난이도를 조정했습니다. 3단계는 균열 55 → 60단계, 4단계는 균열 75 → 82단계 수준입니다. 4단계는 이제 엔젤릭급 장비까지 갖춘 막바지 세팅이어야 잡을 수 있습니다.",
+    "4단계의 확정 고유 보상에서 엔젤릭(공허의 왕관·공허의 심장) 비중을 낮췄습니다 (약 10.6% → 약 6.7%).",
+    "4단계는 하루 5회까지만 입장할 수 있습니다 (자정에 초기화). 열쇠를 많이 모아 둬도 한 번에 보상이 몰리지 않습니다.",
+  ] },
   { ver: "3.4", date: "10/28", title: "황금 보물고 상향", items: [
     "황금 보물고의 골드 효율을 크게 올렸습니다. 몹이 주는 골드가 ×3에서 ×6이 되었고, 난이도는 내 최고 균열 단계의 60%로 낮아져 더 빨리 잡을 수 있습니다. 같은 조건으로 측정한 분당 골드는 액트 10 스테이지·정예 사냥터·보물 지하실의 약 1.5~2.5배입니다.",
   ] },

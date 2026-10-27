@@ -274,13 +274,13 @@ function openTower() {
 const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", void: "공허의 군주" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
-const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? 5 : 21), 0);
+const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21), 0);
 const isVoid4Only = (def) => !!def && def.pool === "void" && def.tier === 4;
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
   for (const kind of Object.keys(KIND_LBL)) {
-    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? 5 : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
+    if (kind === "void") { if (def.pool !== "void") continue; const list = uniquePool("void", 10).map((x) => ({ u: x.u, w: x.u.tier === 4 ? 8 : 21 })), sum = list.reduce((a, x) => a + x.w, 0); out.push([KIND_LBL[kind] + (def.tier === 4 ? " 4단계 전용" : ""), (def.tier === 4 ? CFG.VOID4_ANGELIC_W : 21) / (pool4(def)), def.tier === 4 ? "4단계에서만 드랍 · 4단계 격파 시 확정 보상 중" : "1~4단계 보상에서 드랍"]); continue; }
     const pools = U_POOLS_OF[kind]; if (!pools.includes(def.pool)) continue;
     const list = []; for (const p of pools) for (const x of uniquePool(p, 10)) list.push(x); const sum = list.reduce((a, x) => a + x.w, 0), me = list.find((x) => x.u === def);
     if (me) out.push([KIND_LBL[kind], CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * (me.w / sum), `드랍 1개당${def.pool === "common" && def.act > 1 ? ` · 액트 ${def.act}~` : ""}`]);

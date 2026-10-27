@@ -306,7 +306,7 @@ function rollDrops(sv, node, boss, B) {
     }
     const VS = SKILLS.filter((d) => d.voidOnly), SC = [0.02, 0.03, 0.05, 0.12];   // 공허 전용 스킬: 매우 낮은 확률 (단계별)
     if (VS.length && Math.random() < SC[K - 1]) out.skills.push(genSkill(sv, pick(VS).id, wpick(SKILL_RARITY.map((x, i) => ({ i, w: x.w * ([0.3, 1, 1.6][i] || 0) })), (x) => x.w).i, [0.04, 0.06, 0.10, 0.20][K - 1]));
-    if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? 5 : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
+    if (K >= 4) { const list = pool.map((x) => ({ u: x.u, w: x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21 })); out.items.push(genUnique(sv, wpick(list, (x) => x.w).u, ilvl)); out.uniques++; }
   } else {
     const per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique, rolls = n + (boss ? 2 : 0);
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
@@ -523,6 +523,11 @@ function buySkill(sv, idx) {
   sv.gold -= o.price; sv.shop.bought.push(idx); sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
 }
 const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+function void4Info(sv) {   // 공허의 군주 4단계: 하루 입장 횟수 제한 (열쇠를 많이 모아 둬도 보상 인플레가 한 번에 오지 않게)
+  if (!sv.void4) sv.void4 = { day: "", used: 0 };
+  if (sv.void4.day !== localDay()) { sv.void4.day = localDay(); sv.void4.used = 0; }
+  return { max: CFG.VOID4_DAILY, used: sv.void4.used, left: Math.max(0, CFG.VOID4_DAILY - sv.void4.used) };
+}
 function endlessInfo(sv) {
   if (!sv.endless) sv.endless = { day: "", used: 0, best: 0, bestKills: 0 };
   if (sv.endless.day !== localDay()) { sv.endless.day = localDay(); sv.endless.used = 0; }
