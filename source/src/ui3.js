@@ -18,6 +18,11 @@ function itemTitle(it) {
 }
 const BASE_LBL = { atk: "공격력", mag: "주문력", hp: "체력", def: "방어력" };
 const baseText = (it) => Object.keys(it.base).map((k) => `${BASE_LBL[k]} ${fmtN(it.base[k] * (1 + 0.08 * (it.enh || 0)))}`).join(" · ");
+function affRangeText(it, a) {   // 옵션 수치 범위 (최소 ~ 최대)
+  const d = AFFIXES.find((x) => x.k === a.k); if (!d) return ""; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4));
+  const f = (v) => (d.count ? "+" + Math.round(v) : d.pct ? (v * 100).toFixed(Math.abs(v) < 0.02 ? 2 : 1) + "%" : fmtN(v));
+  return ` <small class="rng">(${f(lo)} ~ ${f(hi)})</small>`;
+}
 function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a.k; const s = d.count ? "+" + Math.round(a.v) : d.pct ? (a.v >= 0 ? "+" : "") + (a.v * 100).toFixed(Math.abs(a.v) < 0.02 ? 2 : 1) + "%" + (d.unit || "") : "+" + fmtN(a.v); return `${d.name} ${s}`; }
 
 // ---------- 장비 창 ----------
@@ -34,8 +39,8 @@ function itemDetail(it) {
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
   h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
-  h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
+  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods, true).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
+  h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
   if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
@@ -46,6 +51,7 @@ function itemDetail(it) {
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}</small></button>`;
     h += `<button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`;
     h += `<button class="btn orbb" data-a="chaos" ${it.uniq || it.affixes.length >= 6 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1개 추가 (${it.affixes.length}/6)</small></button>`;
+    { const D = it.uniq && UNIQUE_BY_ID[it.uniq], can = it.uniq ? !!(D && D.mods.some((m) => Array.isArray(m[1]))) : it.affixes.length > 0; h += `<button class="btn orbb dice" data-a="dice" ${!can || (save.dice || 0) < 1 ? "disabled" : ""}>🎲 공허의 주사위 ×${save.dice || 0}<br><small>${it.uniq ? "고유 능력 수치를 범위 내에서 재굴림" : "옵션 수치를 범위 내에서 재굴림"}</small></button>`; }
     h += `<button class="btn orbb" data-a="divine" ${it.uniq || !it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
@@ -63,7 +69,7 @@ function renderItems() {
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button></div>`;
-  const html = `<h2>${title}</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)} &nbsp; ${iconImg("ore", 1)} ${fmtN(save.ore)} &nbsp; ${iconImg("orb", 1)} ${save.orbC} / ${save.orbD}</div>
+  const html = `<h2>${title}</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)} &nbsp; ${iconImg("ore", 1)} ${fmtN(save.ore)} &nbsp; ${iconImg("orb", 1)} ${save.orbC} / ${save.orbD} &nbsp; 🎲 ${save.dice || 0}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${itemDetail(IB.sel)}</div></div>`;
@@ -83,6 +89,7 @@ function renderItems() {
     ahpost: () => ahPostDialog(IB.sel),
     reroll: (el) => { if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
+    dice: () => { if (diceItem(save, IB.sel)) { snd("orb"); toast("공허의 주사위! 수치가 범위 안에서 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
   }, presetHandlers(renderItems)) });
 }
@@ -261,7 +268,7 @@ function openCodex() {
     const D = UNIQUE_BY_ID[CX.sel];
     if (D) { const T = U_TIERS[D.tier], src = uniqueSources(D);
       right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span><div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
-       <div class="udet d${D.tier}">${uniqueLines(D).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
+       <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
   } else if (CX.tab === "set") {

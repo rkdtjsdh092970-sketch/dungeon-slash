@@ -477,7 +477,7 @@ function stepBattle(b, dt) {
 function finishBattle(sv, b) {
   const node = b.node, endless = node.kind === "endless", win = b.win || endless, waves = endless ? Math.floor((b.ddt || 0) / 30) : 0;
   const B = dropBonus(sv);
-  const res = { win, exp: b.exp * B.exp, gold: Math.round(b.gold * B.gold), kills: b.kills, levelUps: 0, items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, keys: 0, uniques: 0, notes: [], time: b.time, endgameStart: false, quests: [], tutorialStep: -1, waves, buffs: B.buffs };
+  const res = { win, exp: b.exp * B.exp, gold: Math.round(b.gold * B.gold), kills: b.kills, levelUps: 0, items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, keys: 0, uniques: 0, notes: [], time: b.time, endgameStart: false, quests: [], tutorialStep: -1, waves, buffs: B.buffs };
   if (!win) { res.exp *= 0.5; res.gold = Math.round(res.gold * 0.5); }
   res.levelUps = addExp(sv, res.exp);
   sv.gold += res.gold; sv.stats.kills += b.kills; dailyAdd(sv, "kills", b.kills); if (b.time > 12 && node.kind !== "tutorial" && win) { const k = Math.min(1, 0.3 * 1); sv.rate.gold = sv.rate.gold ? sv.rate.gold * 0.7 + (res.gold / (b.time / 60)) * 0.3 : res.gold / (b.time / 60); sv.rate.exp = sv.rate.exp ? sv.rate.exp * 0.7 + (res.exp / (b.time / 60)) * 0.3 : res.exp / (b.time / 60); }
@@ -498,7 +498,7 @@ function finishBattle(sv, b) {
     } else {
       const d = rollDrops(sv, Object.assign({}, node, { waves, voidCleared: b.voidCleared || 0, firstClear: node.kind === "boss" && sv.cleared[node.act - 1] < node.stage }), b.bossKills > 0 || node.kind === "boss", B);
       res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
-      sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); if (node.kind === "trial" && node.tier > (sv.trialBest || 0)) sv.trialBest = node.tier; sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD;
+      sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); if (node.kind === "trial" && node.tier > (sv.trialBest || 0)) sv.trialBest = node.tier; sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       for (const it of d.items) if (it.uniq) sv.uniq[it.uniq] = (sv.uniq[it.uniq] || 0) + 1;
       const sets = d.items.filter((i) => i.setId).length; if (sets) qd.push(...questEvent(sv, { type: "setDrop", n: sets }));
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
@@ -517,7 +517,7 @@ function finishBattle(sv, b) {
   }
   if (!win && node.kind === "void" && (b.voidCleared || 0) > 0) {   // 공허의 군주: 중간에 쓰러져도 격파한 단계의 보상은 받는다
     const d = rollDrops(sv, Object.assign({}, node, { voidCleared: b.voidCleared }), true, B);
-    res.items = d.items; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.ore = d.ore; res.uniques = d.uniques; sv.inv.push(...d.items); sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.ore += d.ore;
+    res.items = d.items; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.ore = d.ore; res.uniques = d.uniques; sv.inv.push(...d.items); sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0; sv.ore += d.ore;
     for (const it of d.items) if (it.uniq) sv.uniq[it.uniq] = (sv.uniq[it.uniq] || 0) + 1;
     res.notes.push(`공허의 군주 ${b.voidCleared}단계까지 격파했습니다.`);
   }

@@ -222,6 +222,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .nb{display:flex;gap:12px;height:380px}.nb-list{width:230px;flex:none;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:6px}.nb-it{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}.nb-it:hover{background:#1c1636}.nb-it.on{background:#2a2050;border-color:#ffd24a}.nb-it b{font-size:15px;color:#ffe08a}.nb-it em{font-style:normal;font-size:10px;background:#e83a3a;border-radius:7px;padding:0 6px;margin-left:6px}.nb-it small{float:right;color:#a898d8}.nb-it div{font-size:12px;color:#cfc8ee;margin-top:3px}\n.nb-body{flex:1;overflow:auto;background:#0e0a1b;border:1px solid #382f60;border-radius:10px;padding:12px 16px}.nb-h b{font-size:22px;color:#ffd24a}.nb-h span{color:#a898d8;margin-left:8px}.nb-t{font-size:16px;font-weight:bold;margin:6px 0 10px}.nb-body ul{padding-left:20px}.nb-body li{margin:7px 0;line-height:1.55;font-size:14px}
 .tile .mk.rq{left:1px;bottom:12px;top:auto;font-size:9px;font-style:normal;font-weight:bold;color:#fff;background:#b02a2a;border-radius:4px;padding:0 3px;line-height:11px;box-shadow:0 0 0 1px #000}
 #mbox.sm{max-height:508px;overflow:auto}
+.rng{color:#8a90b0;font-weight:400;font-size:11px;white-space:nowrap}.orbb.dice{background:linear-gradient(#3a1c5c,#22103a);border-color:#a070e0}
 </style></head><body>
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas>
@@ -890,24 +891,32 @@ const MOD_LABEL = {
   fireDmg: ["화염 피해", "%"], coldDmg: ["냉기 피해", "%"], lightDmg: ["번개 피해", "%"], voidDmg: ["공허 피해", "%"], elemDmg: ["원소 피해", "%"], physDmg: ["물리 피해", "%"], magDmg: ["마법 피해", "%"],
   ignoreDef: ["방어 무시", "%"], ignoreRes: ["마법저항 무시", "%"], shredDef: ["대상 방어력 감소", "%"], shredRes: ["대상 마법저항 감소", "%"], penElem: ["속성 저항 관통", "%"],
 };
-function uniqueLines(def, mods) {   // mods: 실제 굴려진 값(없으면 정의의 범위)
+function uniqueLines(def, mods, withRange) {   // mods: 실제 굴려진 값(없으면 정의의 범위). withRange: 줄마다 (최소~최대) 범위를 덧붙인다
   const out = [], P = (v) => Math.round(v * 100);
-  for (const m of (mods || def.mods.map((x) => ({ k: x[0], v: umodScale(def, x[0], Array.isArray(x[1]) ? (x[1][0] + x[1][1]) / 2 : x[1]) })))) {
-    const k = m.k, v = m.v, L = MOD_LABEL[k];
-    if (k === "revive") out.push("전투당 1회 부활 (체력 50%)");
-    else if (k === "noDodge") out.push("회피할 수 없다");
-    else if (k === "magCrit") out.push("마법 스킬도 물리 치명타 확률로 치명타가 터진다");
-    else if (k === "cdrCap") out.push(`쿨타임 감소 상한 ${P(v)}%`);
-    else if (k === "dodgeCap") out.push(`회피 상한 ${P(v)}%`);
-    else if (k === "hpMore" && v < 1) out.push(`최대 체력이 ${P(v)}%가 된다`);
-    else if (k === "defMore" && v === 0) out.push("방어력이 0이 된다");
-    else if (L && L[1] === "more") { const d = P(v - 1); out.push(`${L[0]} ${d >= 0 ? "+" : ""}${d}%`.replace("more", "")); }
-    else if (k === "hpMore") out.push(`체력 ${v >= 1 ? "+" + P(v - 1) : P(v - 1)}%`);
-    else if (k === "manaToSpell") out.push(`최대 마나의 ${P(v)}%만큼 주문력 증가`);
-    else if (k === "manaShield") out.push(`받는 피해의 ${P(v)}%를 마나가 대신 받는다`);
-    else if (k === "dodge") out.push(`회피 ${v >= 0 ? "+" : ""}${P(v)}%`);
-    else if (L && L[1] === "+") out.push(`${L[0]} ${v >= 0 ? "+" : ""}${Math.round(v)}`);
-    else if (L) out.push(`${L[0]} ${v >= 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0)}%`);
+  const line = (k, v) => {
+    const L = MOD_LABEL[k];
+    if (k === "revive") return "전투당 1회 부활 (체력 50%)";
+    if (k === "noDodge") return "회피할 수 없다";
+    if (k === "magCrit") return "마법 스킬도 물리 치명타 확률로 치명타가 터진다";
+    if (k === "cdrCap") return `쿨타임 감소 상한 ${P(v)}%`;
+    if (k === "dodgeCap") return `회피 상한 ${P(v)}%`;
+    if (k === "hpMore" && v < 1) return `최대 체력이 ${P(v)}%가 된다`;
+    if (k === "defMore" && v === 0) return "방어력이 0이 된다";
+    if (L && L[1] === "more") { const d = P(v - 1); return `${L[0]} ${d >= 0 ? "+" : ""}${d}%`.replace("more", ""); }
+    if (k === "hpMore") return `체력 ${v >= 1 ? "+" + P(v - 1) : P(v - 1)}%`;
+    if (k === "manaToSpell") return `최대 마나의 ${P(v)}%만큼 주문력 증가`;
+    if (k === "manaShield") return `받는 피해의 ${P(v)}%를 마나가 대신 받는다`;
+    if (k === "dodge") return `회피 ${v >= 0 ? "+" : ""}${P(v)}%`;
+    if (L && L[1] === "+") return `${L[0]} ${v >= 0 ? "+" : ""}${Math.round(v)}`;
+    if (L) return `${L[0]} ${v >= 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0)}%`;
+    return null;
+  };
+  const num = (k, v) => { const L = MOD_LABEL[k]; if (L && L[1] === "+") return String(Math.round(v)); if (L && L[1] === "more") return P(v - 1) + "%"; if (k === "hpMore") return P(v - 1) + "%"; if (["manaToSpell", "manaShield", "dodge"].includes(k)) return P(v) + "%"; return (v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0) + "%"; };
+  const list = mods || def.mods.map((x) => ({ k: x[0], v: umodScale(def, x[0], Array.isArray(x[1]) ? (x[1][0] + x[1][1]) / 2 : x[1]) }));
+  for (const m of list) {
+    const t = line(m.k, m.v); if (t == null) continue;
+    const dm = withRange && def.mods.find((x) => x[0] === m.k && Array.isArray(x[1]));
+    out.push(dm ? `${t} <small class="rng">(${num(m.k, umodScale(def, m.k, dm[1][0]))} ~ ${num(m.k, umodScale(def, m.k, dm[1][1]))})</small>` : t);
   }
   return out;
 }
@@ -1157,7 +1166,7 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -1185,16 +1194,35 @@ function genItem(sv, ilvl, rarity, slot, setId, bias) {
   }
   return it;
 }
-// 드랍 옵션은 낮은 수치가 잘 나오고(평균 범위의 ~35%), 재굴림/구슬로 직접 뽑을 때만 높은 수치가 잘 나온다
-function rollAffix(a, g, R, rarity, crafted) {
+// 옵션 수치 = (범위에서 뽑은 값) × 배율. 드랍은 낮은 수치가 잘 나오고, 재굴림/구슬로 직접 뽑을 때만 높은 수치가 잘 나온다
+function affixScale(a, g, rarity) {
   const ilvl = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1), end = ilvl > 10;
-  const u = Math.random(), t = crafted ? Math.pow(u, end ? 0.55 : 0.8) : (end ? Math.pow(u, 1.2) : u);
-  let v = a.range[0] + (a.range[1] - a.range[0]) * t;
-  if (a.flat) v *= Math.pow(g, a.gp || 1) * (end ? rarMul(rarity, ilvl) : R.mult);
-  else if (a.pct) v *= (0.72 + 0.05 * Math.min(ilvl, 12)) * (crafted ? (end ? 1.12 : 1.05) : 1);
-  else v = Math.round(v);
-  return v;
+  if (a.flat) return Math.pow(g, a.gp || 1) * (end ? rarMul(rarity, ilvl) : ITEM_RARITY[Math.min(rarity, 4)].mult);
+  if (a.pct) return 0.72 + 0.05 * Math.min(ilvl, 12);
+  return 1;
 }
+function rollAffix(a, g, R, rarity, crafted) {
+  const end = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1) > 10;
+  const u = Math.random(), t = crafted ? Math.pow(u, end ? 0.55 : 0.8) : (end ? Math.pow(u, 1.2) : u);
+  const v = a.range[0] + (a.range[1] - a.range[0]) * t;
+  return a.count ? Math.round(v) : v * affixScale(a, g, rarity);
+}
+function affixRange(a, ilvl, rarity) { const g = gScale(ilvl), sc = a.count ? 1 : affixScale(a, g, rarity); return [a.range[0] * sc, a.range[1] * sc]; }
+// 공허의 주사위: 옵션/고유 능력의 수치를 범위 안에서 균등하게 다시 굴린다 (고유 장비도 가능)
+function diceItem(sv, it) {
+  if ((sv.dice || 0) < 1) return false;
+  if (it.uniq) {
+    const D = UNIQUE_BY_ID[it.uniq]; if (!D || !it.umods) return false;
+    if (!D.mods.some((m) => Array.isArray(m[1]))) return false;
+    it.umods = D.mods.map(([k, v]) => ({ k, v: umodScale(D, k, Array.isArray(v) ? rnd(v[0], v[1]) : v) }));
+  } else {
+    if (!it.affixes.length) return false;
+    const g = gScale(it.ilvl);
+    it.affixes = it.affixes.map((a) => { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a; const [lo, hi] = affixRange(d, it.ilvl, it.rarity); return { k: a.k, v: d.count ? Math.round(rnd(lo, hi)) : rnd(lo, hi) }; });
+  }
+  sv.dice--; return true;
+}
+const diceChance = (kind, node) => ({ rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: 0.05, void: 0.06 * (node.voidCleared || 0) }[kind] || 0);
 function genSkill(sv, id, rarity) { return { uid: sv.nextUid++, id, rarity }; }
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
@@ -1382,7 +1410,7 @@ function rollDrops(sv, node, boss, B) {
   const act = Math.min(10, node.act), kind = node.kind, endlessWaves = node.waves || 0;
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || kind === "trial" || kind === "hive";
   const ilvl = late ? 10 + Math.floor((node.tier || 1) / CFG.ILVL_RIFT_STEP) : node.act;
-  const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, uniques: 0, hone: 0, runes: [] };
+  const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [] };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 6 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = 3 + Math.floor(node.tier / 5) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
@@ -1435,6 +1463,7 @@ function rollDrops(sv, node, boss, B) {
   const oc = { hive: 3, stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.voidCleared || 0) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
+  out.dice = Math.random() < diceChance(kind, node) * Math.min(2, B.orb) ? 1 : 0;   // 공허의 주사위: 아주 낮은 확률
   const odE = ocE * 0.25; out.orbD = Math.floor(odE) + (Math.random() < odE - Math.floor(odE) ? 1 : 0);
   return out;
 }
@@ -2143,7 +2172,7 @@ function stepBattle(b, dt) {
 function finishBattle(sv, b) {
   const node = b.node, endless = node.kind === "endless", win = b.win || endless, waves = endless ? Math.floor((b.ddt || 0) / 30) : 0;
   const B = dropBonus(sv);
-  const res = { win, exp: b.exp * B.exp, gold: Math.round(b.gold * B.gold), kills: b.kills, levelUps: 0, items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, keys: 0, uniques: 0, notes: [], time: b.time, endgameStart: false, quests: [], tutorialStep: -1, waves, buffs: B.buffs };
+  const res = { win, exp: b.exp * B.exp, gold: Math.round(b.gold * B.gold), kills: b.kills, levelUps: 0, items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, keys: 0, uniques: 0, notes: [], time: b.time, endgameStart: false, quests: [], tutorialStep: -1, waves, buffs: B.buffs };
   if (!win) { res.exp *= 0.5; res.gold = Math.round(res.gold * 0.5); }
   res.levelUps = addExp(sv, res.exp);
   sv.gold += res.gold; sv.stats.kills += b.kills; dailyAdd(sv, "kills", b.kills); if (b.time > 12 && node.kind !== "tutorial" && win) { const k = Math.min(1, 0.3 * 1); sv.rate.gold = sv.rate.gold ? sv.rate.gold * 0.7 + (res.gold / (b.time / 60)) * 0.3 : res.gold / (b.time / 60); sv.rate.exp = sv.rate.exp ? sv.rate.exp * 0.7 + (res.exp / (b.time / 60)) * 0.3 : res.exp / (b.time / 60); }
@@ -2164,7 +2193,7 @@ function finishBattle(sv, b) {
     } else {
       const d = rollDrops(sv, Object.assign({}, node, { waves, voidCleared: b.voidCleared || 0, firstClear: node.kind === "boss" && sv.cleared[node.act - 1] < node.stage }), b.bossKills > 0 || node.kind === "boss", B);
       res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
-      sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); if (node.kind === "trial" && node.tier > (sv.trialBest || 0)) sv.trialBest = node.tier; sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD;
+      sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); if (node.kind === "trial" && node.tier > (sv.trialBest || 0)) sv.trialBest = node.tier; sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       for (const it of d.items) if (it.uniq) sv.uniq[it.uniq] = (sv.uniq[it.uniq] || 0) + 1;
       const sets = d.items.filter((i) => i.setId).length; if (sets) qd.push(...questEvent(sv, { type: "setDrop", n: sets }));
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
@@ -2183,7 +2212,7 @@ function finishBattle(sv, b) {
   }
   if (!win && node.kind === "void" && (b.voidCleared || 0) > 0) {   // 공허의 군주: 중간에 쓰러져도 격파한 단계의 보상은 받는다
     const d = rollDrops(sv, Object.assign({}, node, { voidCleared: b.voidCleared }), true, B);
-    res.items = d.items; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.ore = d.ore; res.uniques = d.uniques; sv.inv.push(...d.items); sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.ore += d.ore;
+    res.items = d.items; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.ore = d.ore; res.uniques = d.uniques; sv.inv.push(...d.items); sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0; sv.ore += d.ore;
     for (const it of d.items) if (it.uniq) sv.uniq[it.uniq] = (sv.uniq[it.uniq] || 0) + 1;
     res.notes.push(`공허의 군주 ${b.voidCleared}단계까지 격파했습니다.`);
   }
@@ -3604,6 +3633,11 @@ function itemTitle(it) {
 }
 const BASE_LBL = { atk: "공격력", mag: "주문력", hp: "체력", def: "방어력" };
 const baseText = (it) => Object.keys(it.base).map((k) => `${BASE_LBL[k]} ${fmtN(it.base[k] * (1 + 0.08 * (it.enh || 0)))}`).join(" · ");
+function affRangeText(it, a) {   // 옵션 수치 범위 (최소 ~ 최대)
+  const d = AFFIXES.find((x) => x.k === a.k); if (!d) return ""; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4));
+  const f = (v) => (d.count ? "+" + Math.round(v) : d.pct ? (v * 100).toFixed(Math.abs(v) < 0.02 ? 2 : 1) + "%" : fmtN(v));
+  return ` <small class="rng">(${f(lo)} ~ ${f(hi)})</small>`;
+}
 function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a.k; const s = d.count ? "+" + Math.round(a.v) : d.pct ? (a.v >= 0 ? "+" : "") + (a.v * 100).toFixed(Math.abs(a.v) < 0.02 ? 2 : 1) + "%" + (d.unit || "") : "+" + fmtN(a.v); return `${d.name} ${s}`; }
 
 // ---------- 장비 창 ----------
@@ -3620,8 +3654,8 @@ function itemDetail(it) {
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
   if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>`; }
   h += `<div class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
-  h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
+  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods, true).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
+  h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? ` <button class="btn xs" data-a="reroll" data-i="${i}" title="옵션 재굴림">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>` : ""}</div>`).join("") + `</div>`;
   if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
@@ -3632,6 +3666,7 @@ function itemDetail(it) {
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}</small></button>`;
     h += `<button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`;
     h += `<button class="btn orbb" data-a="chaos" ${it.uniq || it.affixes.length >= 6 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1개 추가 (${it.affixes.length}/6)</small></button>`;
+    { const D = it.uniq && UNIQUE_BY_ID[it.uniq], can = it.uniq ? !!(D && D.mods.some((m) => Array.isArray(m[1]))) : it.affixes.length > 0; h += `<button class="btn orbb dice" data-a="dice" ${!can || (save.dice || 0) < 1 ? "disabled" : ""}>🎲 공허의 주사위 ×${save.dice || 0}<br><small>${it.uniq ? "고유 능력 수치를 범위 내에서 재굴림" : "옵션 수치를 범위 내에서 재굴림"}</small></button>`; }
     h += `<button class="btn orbb" data-a="divine" ${it.uniq || !it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
@@ -3649,7 +3684,7 @@ function renderItems() {
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button></div>`;
-  const html = `<h2>${title}</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)} &nbsp; ${iconImg("ore", 1)} ${fmtN(save.ore)} &nbsp; ${iconImg("orb", 1)} ${save.orbC} / ${save.orbD}</div>
+  const html = `<h2>${title}</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)} &nbsp; ${iconImg("ore", 1)} ${fmtN(save.ore)} &nbsp; ${iconImg("orb", 1)} ${save.orbC} / ${save.orbD} &nbsp; 🎲 ${save.dice || 0}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${itemDetail(IB.sel)}</div></div>`;
@@ -3669,6 +3704,7 @@ function renderItems() {
     ahpost: () => ahPostDialog(IB.sel),
     reroll: (el) => { if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
+    dice: () => { if (diceItem(save, IB.sel)) { snd("orb"); toast("공허의 주사위! 수치가 범위 안에서 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
   }, presetHandlers(renderItems)) });
 }
@@ -3847,7 +3883,7 @@ function openCodex() {
     const D = UNIQUE_BY_ID[CX.sel];
     if (D) { const T = U_TIERS[D.tier], src = uniqueSources(D);
       right = `<div class="dname">${uniqueIconImg(D.id, 2)} <span class="tn${D.tier}">${D.name}</span></div><span class="ribbon rb${D.tier}">${T.name} 고유</span><div class="dim">${SLOT_NAME[D.slot]} · ${U_POOLS[D.pool]} 풀</div>
-       <div class="udet d${D.tier}">${uniqueLines(D).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
+       <div class="udet d${D.tier}">${uniqueLines(D, null, true).map((x) => `<div>✦ ${x}</div>`).join("")}<div class="flav">“${D.flavor}”</div></div>
        <h3>드랍 출처 · 확률</h3>${src.map((s) => `<div class="aff">${s[0]}: <b>${fmtOdds(s[1])}</b> <small class="dim">${s[2]}</small></div>`).join("")}<div class="dim">프로토타입 보정 ×${CFG.PROTO_MULT} 적용, MF·버프 적용 전 수치입니다</div>`; }
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
   } else if (CX.tab === "set") {
@@ -4078,7 +4114,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-051823";
+const BUILD_ID = "20261028-052317";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4138,7 +4174,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
   const A = replay ? "" : "rs-anim";
   const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
   const stat = (label, val) => `<div class="rs-stat"><small>${label}</small><b>${val}</b></div>`;
-  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.hone ? chip(iconImg("ore", 2), "연마석", "+" + res.hone) : "",
+  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.dice ? chip(iconImg("orb", 2), "🎲 공허의 주사위", "+" + res.dice) : "", res.hone ? chip(iconImg("ore", 2), "연마석", "+" + res.hone) : "",
     ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
   const tiles = res.items.slice().sort((x, y) => (y.uniq ? 9 : 0) + y.rarity - ((x.uniq ? 9 : 0) + x.rarity)).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
   const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");
@@ -4170,6 +4206,11 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "2.7", date: "10/28", title: "옵션 수치 범위 표시 · 공허의 주사위", items: [
+    "고유 장비의 능력과 일반 장비의 옵션에 (최소 ~ 최대) 수치 범위가 표시됩니다. 도감의 고유 아이템도 범위로 보입니다.",
+    "새 재화 '공허의 주사위'가 아주 낮은 확률로 드랍됩니다 (균열·지옥·무한 균열·스킬 시련, 공허의 군주, 화염 정령왕).",
+    "대장간에서 주사위를 쓰면 장비의 수치를 범위 안에서 균등하게 다시 굴립니다. 고유 장비의 능력도 재굴림할 수 있습니다 (범위가 있는 능력만, 고정 효과는 그대로).",
+  ] },
   { ver: "2.6", date: "10/28", title: "화염 정령왕 · 치유 감소 기믹", items: [
     "새 엔드게임 보스 '화염 정령왕 아스카'가 심연의 균열 옆에 생겼습니다. 불꽃 정령이 끝없이 몰려오고, 정령을 모두 처치해야만 왕에게 피해를 줄 수 있습니다 (정령이 남아 있으면 무적).",
     "입장에는 '정령의 불씨' 열쇠가 필요합니다. 심연의 균열·지옥 스테이지에서 공허의 열쇠와 같은 확률(전투당 12%)로 불씨(눈알)가 나옵니다. 입장 조건: 균열 15단계 이상.",

@@ -209,24 +209,32 @@ const MOD_LABEL = {
   fireDmg: ["화염 피해", "%"], coldDmg: ["냉기 피해", "%"], lightDmg: ["번개 피해", "%"], voidDmg: ["공허 피해", "%"], elemDmg: ["원소 피해", "%"], physDmg: ["물리 피해", "%"], magDmg: ["마법 피해", "%"],
   ignoreDef: ["방어 무시", "%"], ignoreRes: ["마법저항 무시", "%"], shredDef: ["대상 방어력 감소", "%"], shredRes: ["대상 마법저항 감소", "%"], penElem: ["속성 저항 관통", "%"],
 };
-function uniqueLines(def, mods) {   // mods: 실제 굴려진 값(없으면 정의의 범위)
+function uniqueLines(def, mods, withRange) {   // mods: 실제 굴려진 값(없으면 정의의 범위). withRange: 줄마다 (최소~최대) 범위를 덧붙인다
   const out = [], P = (v) => Math.round(v * 100);
-  for (const m of (mods || def.mods.map((x) => ({ k: x[0], v: umodScale(def, x[0], Array.isArray(x[1]) ? (x[1][0] + x[1][1]) / 2 : x[1]) })))) {
-    const k = m.k, v = m.v, L = MOD_LABEL[k];
-    if (k === "revive") out.push("전투당 1회 부활 (체력 50%)");
-    else if (k === "noDodge") out.push("회피할 수 없다");
-    else if (k === "magCrit") out.push("마법 스킬도 물리 치명타 확률로 치명타가 터진다");
-    else if (k === "cdrCap") out.push(`쿨타임 감소 상한 ${P(v)}%`);
-    else if (k === "dodgeCap") out.push(`회피 상한 ${P(v)}%`);
-    else if (k === "hpMore" && v < 1) out.push(`최대 체력이 ${P(v)}%가 된다`);
-    else if (k === "defMore" && v === 0) out.push("방어력이 0이 된다");
-    else if (L && L[1] === "more") { const d = P(v - 1); out.push(`${L[0]} ${d >= 0 ? "+" : ""}${d}%`.replace("more", "")); }
-    else if (k === "hpMore") out.push(`체력 ${v >= 1 ? "+" + P(v - 1) : P(v - 1)}%`);
-    else if (k === "manaToSpell") out.push(`최대 마나의 ${P(v)}%만큼 주문력 증가`);
-    else if (k === "manaShield") out.push(`받는 피해의 ${P(v)}%를 마나가 대신 받는다`);
-    else if (k === "dodge") out.push(`회피 ${v >= 0 ? "+" : ""}${P(v)}%`);
-    else if (L && L[1] === "+") out.push(`${L[0]} ${v >= 0 ? "+" : ""}${Math.round(v)}`);
-    else if (L) out.push(`${L[0]} ${v >= 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0)}%`);
+  const line = (k, v) => {
+    const L = MOD_LABEL[k];
+    if (k === "revive") return "전투당 1회 부활 (체력 50%)";
+    if (k === "noDodge") return "회피할 수 없다";
+    if (k === "magCrit") return "마법 스킬도 물리 치명타 확률로 치명타가 터진다";
+    if (k === "cdrCap") return `쿨타임 감소 상한 ${P(v)}%`;
+    if (k === "dodgeCap") return `회피 상한 ${P(v)}%`;
+    if (k === "hpMore" && v < 1) return `최대 체력이 ${P(v)}%가 된다`;
+    if (k === "defMore" && v === 0) return "방어력이 0이 된다";
+    if (L && L[1] === "more") { const d = P(v - 1); return `${L[0]} ${d >= 0 ? "+" : ""}${d}%`.replace("more", ""); }
+    if (k === "hpMore") return `체력 ${v >= 1 ? "+" + P(v - 1) : P(v - 1)}%`;
+    if (k === "manaToSpell") return `최대 마나의 ${P(v)}%만큼 주문력 증가`;
+    if (k === "manaShield") return `받는 피해의 ${P(v)}%를 마나가 대신 받는다`;
+    if (k === "dodge") return `회피 ${v >= 0 ? "+" : ""}${P(v)}%`;
+    if (L && L[1] === "+") return `${L[0]} ${v >= 0 ? "+" : ""}${Math.round(v)}`;
+    if (L) return `${L[0]} ${v >= 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0)}%`;
+    return null;
+  };
+  const num = (k, v) => { const L = MOD_LABEL[k]; if (L && L[1] === "+") return String(Math.round(v)); if (L && L[1] === "more") return P(v - 1) + "%"; if (k === "hpMore") return P(v - 1) + "%"; if (["manaToSpell", "manaShield", "dodge"].includes(k)) return P(v) + "%"; return (v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0) + "%"; };
+  const list = mods || def.mods.map((x) => ({ k: x[0], v: umodScale(def, x[0], Array.isArray(x[1]) ? (x[1][0] + x[1][1]) / 2 : x[1]) }));
+  for (const m of list) {
+    const t = line(m.k, m.v); if (t == null) continue;
+    const dm = withRange && def.mods.find((x) => x[0] === m.k && Array.isArray(x[1]));
+    out.push(dm ? `${t} <small class="rng">(${num(m.k, umodScale(def, m.k, dm[1][0]))} ~ ${num(m.k, umodScale(def, m.k, dm[1][1]))})</small>` : t);
   }
   return out;
 }

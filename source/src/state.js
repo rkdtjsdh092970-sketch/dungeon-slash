@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 3, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, atlas: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -38,16 +38,35 @@ function genItem(sv, ilvl, rarity, slot, setId, bias) {
   }
   return it;
 }
-// 드랍 옵션은 낮은 수치가 잘 나오고(평균 범위의 ~35%), 재굴림/구슬로 직접 뽑을 때만 높은 수치가 잘 나온다
-function rollAffix(a, g, R, rarity, crafted) {
+// 옵션 수치 = (범위에서 뽑은 값) × 배율. 드랍은 낮은 수치가 잘 나오고, 재굴림/구슬로 직접 뽑을 때만 높은 수치가 잘 나온다
+function affixScale(a, g, rarity) {
   const ilvl = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1), end = ilvl > 10;
-  const u = Math.random(), t = crafted ? Math.pow(u, end ? 0.55 : 0.8) : (end ? Math.pow(u, 1.2) : u);
-  let v = a.range[0] + (a.range[1] - a.range[0]) * t;
-  if (a.flat) v *= Math.pow(g, a.gp || 1) * (end ? rarMul(rarity, ilvl) : R.mult);
-  else if (a.pct) v *= (0.72 + 0.05 * Math.min(ilvl, 12)) * (crafted ? (end ? 1.12 : 1.05) : 1);
-  else v = Math.round(v);
-  return v;
+  if (a.flat) return Math.pow(g, a.gp || 1) * (end ? rarMul(rarity, ilvl) : ITEM_RARITY[Math.min(rarity, 4)].mult);
+  if (a.pct) return 0.72 + 0.05 * Math.min(ilvl, 12);
+  return 1;
 }
+function rollAffix(a, g, R, rarity, crafted) {
+  const end = Math.max(1, Math.round(Math.log(g) / Math.log(CFG.G)) + 1) > 10;
+  const u = Math.random(), t = crafted ? Math.pow(u, end ? 0.55 : 0.8) : (end ? Math.pow(u, 1.2) : u);
+  const v = a.range[0] + (a.range[1] - a.range[0]) * t;
+  return a.count ? Math.round(v) : v * affixScale(a, g, rarity);
+}
+function affixRange(a, ilvl, rarity) { const g = gScale(ilvl), sc = a.count ? 1 : affixScale(a, g, rarity); return [a.range[0] * sc, a.range[1] * sc]; }
+// 공허의 주사위: 옵션/고유 능력의 수치를 범위 안에서 균등하게 다시 굴린다 (고유 장비도 가능)
+function diceItem(sv, it) {
+  if ((sv.dice || 0) < 1) return false;
+  if (it.uniq) {
+    const D = UNIQUE_BY_ID[it.uniq]; if (!D || !it.umods) return false;
+    if (!D.mods.some((m) => Array.isArray(m[1]))) return false;
+    it.umods = D.mods.map(([k, v]) => ({ k, v: umodScale(D, k, Array.isArray(v) ? rnd(v[0], v[1]) : v) }));
+  } else {
+    if (!it.affixes.length) return false;
+    const g = gScale(it.ilvl);
+    it.affixes = it.affixes.map((a) => { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a; const [lo, hi] = affixRange(d, it.ilvl, it.rarity); return { k: a.k, v: d.count ? Math.round(rnd(lo, hi)) : rnd(lo, hi) }; });
+  }
+  sv.dice--; return true;
+}
+const diceChance = (kind, node) => ({ rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: 0.05, void: 0.06 * (node.voidCleared || 0) }[kind] || 0);
 function genSkill(sv, id, rarity) { return { uid: sv.nextUid++, id, rarity }; }
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
@@ -235,7 +254,7 @@ function rollDrops(sv, node, boss, B) {
   const act = Math.min(10, node.act), kind = node.kind, endlessWaves = node.waves || 0;
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || kind === "trial" || kind === "hive";
   const ilvl = late ? 10 + Math.floor((node.tier || 1) / CFG.ILVL_RIFT_STEP) : node.act;
-  const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, uniques: 0, hone: 0, runes: [] };
+  const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [] };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 6 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = 3 + Math.floor(node.tier / 5) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
@@ -288,6 +307,7 @@ function rollDrops(sv, node, boss, B) {
   const oc = { hive: 3, stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 1 + (node.tier || 1) / 7, hell: 2 + (node.tier || 1) / 5, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.voidCleared || 0) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
+  out.dice = Math.random() < diceChance(kind, node) * Math.min(2, B.orb) ? 1 : 0;   // 공허의 주사위: 아주 낮은 확률
   const odE = ocE * 0.25; out.orbD = Math.floor(odE) + (Math.random() < odE - Math.floor(odE) ? 1 : 0);
   return out;
 }
