@@ -237,6 +237,7 @@ const TOWN_SPOTS = [
   { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
+  { id: "dummy",     name: "허수아비",   x: 462, y: 366, w: 28, h: 76, need: 1, desc: "1분 동안 피해를 재서 DPS 랭킹에 도전", back: true },
 ];
 const TownView = {
   cv: null, g: null, hover: null, act: 1,

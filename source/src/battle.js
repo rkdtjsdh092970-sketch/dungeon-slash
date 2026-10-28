@@ -116,16 +116,32 @@ function createBattle(sv, node) {
     atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
-  b.plan = planFor(node);
-  b.bossDef = node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
+  b.plan = node.kind === "dummy" ? [] : planFor(node);
+  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
     const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
   });
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
+  if (node.kind === "dummy") spawnDummies(b, node);
   b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
   return b;
+}
+
+// ---------------- 허수아비 (마을: 1분 DPS 측정) ----------------
+const DUMMY_SEC = 60;
+function spawnDummies(b, node) {
+  b.dummy = node.sub === "normal" ? "normal" : "boss"; b.spawnCd = 1e9;
+  const REF = (1 + CFG.DEF_ACT * 5) * (1 + CFG.DEF_TIER * 50);   // 표준 방어: 중반 지역 · 균열 50층 수준 (누구에게나 같은 조건)
+  const inert = (e, label) => { e.dummy = true; e.hp = e.maxHp = 1e18; e.atk = 0; e.atkCd = 1e9; e.range = 99; e.abil = []; e.traits = []; e.dots = []; e.eres = [0, 0, 0, 0]; e.label = label; return e; };
+  if (b.dummy === "boss") { const e = inert(spawnAt(b, "boss", 0, 4), "보스 허수아비"); e.dm = ENEMY_DEF.boss[0] * REF; e.rm = ENEMY_DEF.boss[1] * REF; }
+  else for (let lane = 0; lane < b.lanes; lane++) for (const col of [3, 4, 5]) { const e = inert(spawnAt(b, "grunt", lane, col), "일반 허수아비"); e.dm = ENEMY_DEF.grunt[0] * REF; e.rm = ENEMY_DEF.grunt[1] * REF; }
+}
+function finishDummy(sv, b) {
+  const total = b.dealt, dps = total / DUMMY_SEC, key = b.dummy, rec = (sv.dummy = sv.dummy || {}), old = rec[key] || { dps: 0 }, isBest = dps > old.dps;
+  if (isBest) rec[key] = { dps, total, ts: Date.now() };
+  return { win: true, dummy: { mode: key, total, dps, best: rec[key], isBest, prev: old.dps, by: Object.assign({}, b.dmgBy) } };
 }
 
 // ---------------- 출현 (빈자리 채우기) ----------------
@@ -509,7 +525,8 @@ function stepBattle(b, dt) {
     for (const c of b.corpses) c.t += dt; b.corpses = b.corpses.filter((c) => c.t < 1.6);
   } else b.corpses.length = 0;
   if (b.hp <= 0 && b.revive > 0) { b.revive--; b.hp = b.maxHp * 0.5; b.inv = 1.5; b.flash = 0.4; b.shake = 0.5; say(b, "부활!", "good"); sfx(b, "revive"); fx(b, { kind: "aura", t: 1, life: 1, color: "#ffe9a0" }); }
-  if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
+  if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
+  else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
   else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : 900)) { b.over = true; b.win = !!b.endless; }
 }

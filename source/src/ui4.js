@@ -120,10 +120,34 @@ function ahPostDialog(it) {
   } });
 }
 
+// ---------- 허수아비 (마을) ----------
+const DUMMY_INFO = { boss: ["보스 허수아비", "단일 대상 · 보스 추가 피해가 적용됩니다. 한 마리를 오래 때리는 빌드에 유리합니다."], normal: ["일반 허수아비", `일반 몬스터 ${"여러 마리"}가 모여 있습니다. 범위·연쇄 공격이 유리하고 모든 대상의 피해를 합산합니다.`] };
+function openDummy() {
+  const rec = save.dummy || {}, card = (k) => { const r = rec[k]; return `<div class="shopcard" style="min-height:0"><div class="sc-h"><div><b>${DUMMY_INFO[k][0]}</b><br><small class="dim">${DUMMY_INFO[k][1]}</small></div></div>
+    <div>내 최고 <b style="color:#ffe08a">${r ? fmtN(r.dps) + " DPS" : "기록 없음"}</b>${r ? ` <small class="dim">(총 ${fmtN(r.total)})</small>` : ""}</div><button class="btn pri" data-a="dstart" data-k="${k}">${DUMMY_INFO[k][0]} 시작 (60초)</button></div>`; };
+  Modal.open(`<h2>🎯 허수아비</h2><div class="dim center">현재 장비 · 스킬 · 패시브 그대로 <b>60초</b> 동안 허수아비를 때려 DPS를 잽니다.<br>방어력은 모두 같은 표준 값이라 다른 유저와 공정하게 비교할 수 있습니다. 기록은 랭킹에 올라갑니다.</div>
+  <div class="shopgrid" style="grid-template-columns:repeat(2,1fr)">${card("boss")}${card("normal")}</div>
+  <div class="pbtns"><button class="btn" data-a="drank" data-k="dummyb">보스 랭킹</button><button class="btn" data-a="drank" data-k="dummyn">일반 랭킹</button><button class="btn" data-a="dclose">닫기</button></div>`, { cls: "wide", on: {
+    dstart: (el) => { const k = el.dataset.k; startBattle({ kind: "dummy", sub: k, act: 1, name: `${DUMMY_INFO[k][0]} · 60초 측정`, id: "dummy" }, { dummy: k }); },
+    drank: (el) => { RK.k = el.dataset.k; openRanking(); }, dclose: () => Modal.close(),
+  } });
+}
+function showDummyResult(res, b) {
+  const d = res.dummy, name = DUMMY_INFO[d.mode][0], rows = Object.entries(d.by).sort((x, y) => y[1] - x[1]).slice(0, 6).map(([id, v]) => { const sd = SKILLS.find((s) => s.id === id); return `<div class="pline"><span style="width:110px;display:inline-block">${sd ? sd.name : id}</span><span class="dim">${fmtN(v)}</span> <b>${(v / Math.max(1, d.total) * 100).toFixed(1)}%</b></div>`; }).join("");
+  Modal.open(`<h2>🎯 ${name} 결과</h2><div class="center"><div class="dim">60초 총 피해 ${fmtN(d.total)}</div><div style="font-size:34px;font-weight:bold;color:#ffe08a;margin:6px 0">${fmtN(d.dps)} <small>DPS</small></div>
+    ${d.isBest ? `<div style="color:#8dff9a">🎉 신기록!${d.prev ? ` <small class="dim">(이전 ${fmtN(d.prev)})</small>` : ""}</div>` : `<div class="dim">내 최고 ${fmtN(d.best.dps)} DPS</div>`}</div>
+    <div style="margin:8px 0"><div class="dim">스킬별 피해 비중</div>${rows || '<div class="dim">기록 없음</div>'}</div><div id="dumrank" class="pline dim center">${SRV.on ? "내 순위 확인 중…" : "서버에 로그인하면 랭킹에 기록이 올라갑니다"}</div>
+    <div class="pbtns"><button class="btn pri" data-a="dagain">다시 도전</button><button class="btn" data-a="drank2">랭킹 보기</button><button class="btn" data-a="dback">마을로</button></div>`, { cls: "wide", persistent: true, noClose: true, on: {
+    dagain: () => { Modal.close(true); startBattle(G.node, G.retry); }, drank2: () => { RK.k = d.mode === "boss" ? "dummyb" : "dummyn"; G.battle = null; openRanking(); },
+    dback: () => { Modal.close(true); G.battle = null; AU.stopBgm(); openTown(G.townAct || 1); },
+  } });
+  if (SRV.on) setTimeout(async () => { try { const k = d.mode === "boss" ? "dummyb" : "dummyn"; const r = await api("/api/rank?k=" + k), el = document.getElementById("dumrank"); if (el && r && !r.err && r.mine && r.mine.rank) el.innerHTML = `내 순위 <b style="color:#ffe08a">${r.mine.rank}위</b> <span class="dim">/ ${r.total}명</span>`; else if (el) el.textContent = "순위 정보를 불러오지 못했습니다"; } catch (e) {} }, 1500);
+}
+
 // ---------- 랭킹 ----------
 const RK = { k: "power", rows: [], mine: null };
-const RK_TABS = [["power", "전투력"], ["rift", "균열 최고층"], ["trial", "스킬 시련"], ["endless", "무한 균열"], ["level", "레벨"], ["guild", "길드"]];
-const RK_VAL = { power: (x) => fmtPow(x.power), rift: (x) => `${x.rift}층`, trial: (x) => `${x.trial}단계`, endless: (x) => `${x.endless}초`, level: (x) => `Lv.${x.level}` };
+const RK_TABS = [["dummyb", "허수아비·보스"], ["dummyn", "허수아비·일반"], ["power", "전투력"], ["rift", "균열 최고층"], ["trial", "스킬 시련"], ["endless", "무한 균열"], ["level", "레벨"], ["guild", "길드"]];
+const RK_VAL = { dummyb: (x) => `${fmtN(x.dummyb)} DPS`, dummyn: (x) => `${fmtN(x.dummyn)} DPS`, power: (x) => fmtPow(x.power), rift: (x) => `${x.rift}층`, trial: (x) => `${x.trial}단계`, endless: (x) => `${x.endless}초`, level: (x) => `Lv.${x.level}` };
 const rkEsc = (t) => String(t == null ? "" : t).replace(/</g, "&lt;");
 async function rankBody(k) {
   if (!SRV.on) return `<div class="center pad dim">서버에 로그인하면 랭킹을 볼 수 있고, 내 기록이 올라갑니다.</div><div class="pbtns"><button class="btn pri" data-a="gl">로그인</button></div>`;

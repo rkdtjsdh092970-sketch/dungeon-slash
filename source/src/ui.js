@@ -170,7 +170,7 @@ function townClick(s) {
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
-  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes })[s.id]();
+  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes, dummy: openDummy })[s.id]();
 }
 function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다른 유저와 거래하는 장소입니다.<br>온라인 기능은 아직 준비 중입니다.</p>`, { cls: "sm" }); }
 
@@ -274,7 +274,8 @@ function battleHud(b) {
   G.hpGhost = hp >= G.hpGhost ? hp : Math.max(hp, G.hpGhost - dt * 0.45); $("#hp-fill").style.width = hp * 100 + "%"; $("#hp-ghost").style.width = G.hpGhost * 100 + "%"; $("#hp-txt").textContent = `${fmtN(Math.max(0, b.hp))} / ${fmtN(b.maxHp)}`;
   $("#mp-fill").style.width = Math.max(0, b.mana / b.maxMana) * 100 + "%"; $("#mp-txt").textContent = `${fmtN(Math.max(0, b.mana))} / ${fmtN(b.maxMana)}`;
   const left = b.plan.length + b.enemies.filter((e) => !e.dead).length;
-  if (b.endless) { $("#wave-fill").style.width = Math.min(100, (b.time / 1200) * 100) + "%"; { const dd = b.ddt || 0; $("#wave-txt").textContent = `생존 ${fmtTime(b.time * 1000)} · 위험도 ${Math.floor(dd / 30) + 1} (×${(dd / Math.max(1, b.time)).toFixed(2)}) · 처치 ${b.kills}`; } }
+  if (b.dummy) { $("#wave-fill").style.width = Math.min(100, (b.time / DUMMY_SEC) * 100) + "%"; $("#wave-txt").textContent = `${Math.max(0, Math.ceil(DUMMY_SEC - b.time))}초 · 누적 ${fmtN(b.dealt)} · DPS ${fmtN(b.dealt / Math.max(1, b.time))}`; }
+  else if (b.endless) { $("#wave-fill").style.width = Math.min(100, (b.time / 1200) * 100) + "%"; { const dd = b.ddt || 0; $("#wave-txt").textContent = `생존 ${fmtTime(b.time * 1000)} · 위험도 ${Math.floor(dd / 30) + 1} (×${(dd / Math.max(1, b.time)).toFixed(2)}) · 처치 ${b.kills}`; } }
   else { $("#wave-fill").style.width = Math.max(0, 100 - (left / Math.max(1, b.total)) * 100) + "%"; $("#wave-txt").textContent = `남은 적 ${left}${b.keys ? ` · 열쇠 ${b.keys}` : ""}${b.keys2 ? ` · 불씨 ${b.keys2}` : ""}${b.keys3 ? ` · 징표 ${b.keys3}` : ""}${b.keys4 ? ` · 뇌전 ${b.keys4}` : ""}`; }
   b.skills.forEach((sk, i) => { if (!sk) return; const el = $$("#skillbar .bslot")[i]; if (!el) return; el.querySelector(".cdm").style.height = Math.max(0, Math.min(1, sk.cdLeft / sk.cd)) * 100 + "%"; el.querySelector(".rl").textContent = RULE_SHORT[sk.rule]; { const cost = (sk.mana || 0) * b.stats.manaCostMul, mc = el.querySelector(".mc"); mc.textContent = cost >= 1 ? Math.round(cost) : ""; mc.style.display = cost >= 1 ? "" : "none"; mc.classList.toggle("lack", b.mana < cost); el.querySelector(".cds").textContent = sk.cdLeft > 0.05 ? (sk.cdLeft >= 10 ? Math.ceil(sk.cdLeft) : sk.cdLeft.toFixed(1)) : ""; } const lack = b.mana < (sk.mana || 0) * b.stats.manaCostMul; el.classList.toggle("rdy", sk.cdLeft <= 0 && !lack); el.classList.toggle("nomp", lack); });
   const bo = b.bossRef && !b.bossRef.dead ? b.bossRef : null; $("#bossbar").classList.toggle("hidden", !bo); if (bo) { const r = Math.max(0, bo.hp / bo.maxHp); G.bossGhost = r >= G.bossGhost ? r : Math.max(r, G.bossGhost - dt * 0.35); $("#boss-name").textContent = (bo.label || bo.def.name) + (bo.guard ? " · 무적 (정령을 처치하라)" : ""); $("#boss-pct").textContent = Math.ceil(r * 100) + "%"; $("#boss-fill").style.width = r * 100 + "%"; $("#boss-ghost").style.width = G.bossGhost * 100 + "%"; $("#boss-fill").className = bo.shield || bo.guard ? "sh" : ""; }
@@ -282,6 +283,7 @@ function battleHud(b) {
   const bf = []; if (b.buffs.cry) bf.push("함성"); if (b.inv > 0) bf.push("무적"); for (const k in b.debuffs) bf.push({ slow: "속박", freeze: "빙결", curse: "저주", poison: "중독", wound: "작열 낙인(회복 반감)" }[k] || k); $("#status").textContent = bf.join(" · ");
 }
 function finishFlow(b) {
+  if (b.dummy) { const res = finishDummy(save, b); AU.stopBgm(); snd("win"); saveGame(); b.resultAt = 1.2; b.next = () => showDummyResult(res, b); return; }
   const node = G.node, pre = { level: save.level, exp: save.exp, need: expNeed(save.level) }, res = finishBattle(save, b); res.pre = pre; AU.stopBgm(); snd(res.win ? "win" : "lose");
   if (node.kind === "tutorial" && b.win) save.tut.step = Math.min(TUTORIAL.length, node.step + 1);
   saveGame();
