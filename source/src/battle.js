@@ -200,7 +200,7 @@ const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftM
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
-  const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX * (isEB(b.kind) ? CFG.EB_BOSS_HP[Math.max(0, Math.min(3, (b.node.vsel || 1) - 1))] : b.kind === "void" ? CFG.VOID_BOSS_HP[Math.max(0, Math.min(3, (b.node.vsel || 1) - 1))] : 1) : 1;
+  const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX : 1;
   const e = { id: b.nextId++, type, def: D, tier: isBoss ? "boss" : D.tier, w: isBoss ? D.w : 1, h: isBoss ? D.h : 1, lane, col, va, traits: D.traits || [],
     hp: D.hp * b.hpM * bx * gh, maxHp: D.hp * b.hpM * bx * gh, atk: D.atk * b.atkM * ga, range: D.range, interval: D.interval / b.haste, windup: D.windup,
     moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, shock: 0, vx: null, vy: null, age: 0, dead: false };
@@ -580,7 +580,7 @@ function stepBattle(b, dt) {
   if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
   else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
-  else if (b.endless ? b.time > 1200 : b.time > (isEB(b.kind) || b.kind === "void" ? CFG.EB_LIMIT : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
+  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
 }
 
 // ---------------- 종료 처리 ----------------

@@ -252,7 +252,6 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .bh-drops{margin-top:10px;padding:8px 10px;border:1px solid #382f60;border-radius:10px;background:#0e0a1b}.bh-dttl{font-size:14px;font-weight:bold;color:#ffd24a}.bh-rars{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
 .bh-rar{font-size:12px;font-weight:bold;padding:1px 8px;border-radius:8px;border:1px solid #4a4270;background:#161028}.bh-rar.r2{color:#6ab0ff}.bh-rar.r3{color:#c58bff}.bh-rar.r4{color:#ff8ab0}.bh-rar.r5{color:#ffb060}.bh-rar.r1{color:#8dff9a}
 .bh-sks{display:flex;flex-wrap:wrap;gap:6px}.bh-sk{display:flex;align-items:center;gap:6px;padding:4px 8px;border:2px solid #4a4270;border-radius:8px;background:#1c1632;cursor:help;font-size:13px}.bh-sk:hover{border-color:var(--c);background:#2a2048}
-.bh-lim{font-size:12px;color:#ffb27a;margin:4px 0}
 </style></head><body>
 <div id="ttpop" class="hidden"></div>
 <div id="app">
@@ -635,9 +634,6 @@ CFG.PASSIVE_PER_LV = 2;            // 레벨당 패시브 포인트
 CFG.EB_AFFINITY = +(typeof process !== "undefined" && process.env && process.env.AFF || 1.5);   // 속성 보스 상성: 같은 속성(화염=화염 · 철갑=물리 · 뇌제=번개) 스킬이 그 보스에게 주는 피해 배율
 CFG.VENOM_REGEN = +(typeof process !== "undefined" && process.env && process.env.VREG || 0.006);   // 독니의 군주 재생 (초당 최대 체력 비율, 중독 중에는 멈춤)
 CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.AFFD || 0.85);   // 상성 빌드(같은 속성 공격 스킬 2개 이상)가 그 속성 보스에게 받는 피해 배율
-CFG.EB_BOSS_HP = (typeof process !== "undefined" && process.env && process.env.EBHP ? process.env.EBHP.split(",").map(Number) : [1, 1, 4, 24]);   // 단계별 보스 본체 체력 배율
-CFG.VOID_BOSS_HP = (typeof process !== "undefined" && process.env && process.env.VHP ? process.env.VHP.split(",").map(Number) : [1, 1, 2, 9]);   // 공허의 군주 단계별 본체 체력 배율
-CFG.EB_LIMIT = +(typeof process !== "undefined" && process.env && process.env.EBLIM || 150);   // 속성 보스 · 공허의 군주 제한 시간(초): 이 안에 못 잡으면 실패   // 속성 보스 · 공허의 군주 본체 체력 배율 (졸개 · 공격력은 그대로 — 피해량이 클리어 시간을 정하게 한다)
 CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
@@ -2449,7 +2445,7 @@ const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftM
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
-  const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX * (isEB(b.kind) ? CFG.EB_BOSS_HP[Math.max(0, Math.min(3, (b.node.vsel || 1) - 1))] : b.kind === "void" ? CFG.VOID_BOSS_HP[Math.max(0, Math.min(3, (b.node.vsel || 1) - 1))] : 1) : 1;
+  const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX : 1;
   const e = { id: b.nextId++, type, def: D, tier: isBoss ? "boss" : D.tier, w: isBoss ? D.w : 1, h: isBoss ? D.h : 1, lane, col, va, traits: D.traits || [],
     hp: D.hp * b.hpM * bx * gh, maxHp: D.hp * b.hpM * bx * gh, atk: D.atk * b.atkM * ga, range: D.range, interval: D.interval / b.haste, windup: D.windup,
     moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, shock: 0, vx: null, vy: null, age: 0, dead: false };
@@ -2829,7 +2825,7 @@ function stepBattle(b, dt) {
   if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
   else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
-  else if (b.endless ? b.time > 1200 : b.time > (isEB(b.kind) || b.kind === "void" ? CFG.EB_LIMIT : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
+  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
 }
 
 // ---------------- 종료 처리 ----------------
@@ -5718,7 +5714,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-040809";
+const BUILD_ID = "20261029-035943";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5809,7 +5805,7 @@ function animateResult(res) {
 // =========================================================
 // 보스 관문: 지도의 보스 노드 하나에서 여섯 보스를 페이지로 넘기며 정보 확인 · 입장
 // =========================================================
-const HUB_REC = [30e9, 80e9, 600e9, 6e12];   // 단계별 적정 전투력 (시뮬: 대충 장비 ≈ 1~2단계, 김정혁급 장비 ≈ 3단계, 상급 장비 ≈ 4단계)
+const HUB_BASE_POWER = 80e9;   // 1단계를 겨우 깨는 전투력 기준. 적정 전투력 = 기준 × (몬스터 강도 배율)²
 const fmtP = (v) => (v >= 1e12 ? (v / 1e12).toFixed(1) + "T" : v >= 1e9 ? Math.round(v / 1e9) + "B" : v >= 1e6 ? Math.round(v / 1e6) + "M" : Math.round(v).toString());
 function hubBosses() {
   const mk = (kind, D, o) => Object.assign({ kind, D, name: D.name }, o);
@@ -5822,7 +5818,7 @@ const hubDrops = (kind) => SKILLS.filter((d) => d.slot !== "passive" && bossOfSk
 function openBossHub(page) {
   const B = hubBosses(); if (page != null) G.hubPage = page; G.hubPage = ((G.hubPage || 0) + B.length) % B.length;
   const b = B[G.hubPage], S = G[b.stage] = Math.max(1, Math.min(4, G[b.stage] || 1)), my = playerPower(computeStats(save)), have = b.kind === "void" ? save.keys : (save[b.key] || 0);
-  const mult = (s) => bossRiftMult(b.tiers[s - 1]) / bossRiftMult(100), rec = (s) => HUB_REC[s - 1];
+  const mult = (s) => bossRiftMult(b.tiers[s - 1]) / bossRiftMult(100), rec = (s) => HUB_BASE_POWER * mult(s) * mult(s);
   const okNeed = save.rift.best >= b.need[S - 1], can = okNeed && have > 0;
   const stageRows = [1, 2, 3, 4].map((s) => { const r = rec(s), ok = my >= r; return `<button class="bh-st ${s === S ? "on" : ""}" data-a="hubst" data-s="${s}"><b>${s}단계</b><span>×${mult(s).toFixed(1)}</span><em class="${ok ? "up" : "dn"}">${fmtP(r)}</em></button>`; }).join("");
   const rr = BOSS_SKILL_RW[S - 1], rsum = rr.reduce((a, c) => a + c, 0), rn = ["일반", "희귀", "전설", "신화", "사탄", "종말"];
@@ -5838,7 +5834,7 @@ function openBossHub(page) {
         <div class="bh-sttl">단계 선택 · <span class="dim">적정 전투력</span></div><div class="bh-sts">${stageRows}</div>
         <div class="bh-me">내 전투력 <b class="${my >= rec(S) ? "up" : "dn"}">${fmtP(my)}</b> / 적정 <b>${fmtP(rec(S))}</b> <span class="dim">(${my >= rec(S) ? "충분합니다" : "부족할 수 있습니다"})</span></div>
         <div class="bh-key">${b.keyName} <b>${have}</b>개 보유 · 입장 시 1개 소모 · 입장 조건 균열 ${b.need[S - 1]}단계 이상${okNeed ? "" : ` <span class="warn">(현재 ${save.rift.best}단계)</span>`}</div>
-        <div class="bh-lim">제한 시간 ${Math.floor(CFG.EB_LIMIT / 60)}분 ${CFG.EB_LIMIT % 60}초 · 이 안에 쓰러뜨리지 못하면 실패합니다 (딜이 부족하면 클리어할 수 없습니다)</div><div class="dim">열쇠 얻는 곳: 균열 · 지옥에서 전투당 1% 확률의 ${b.eye}</div>
+        <div class="dim">열쇠 얻는 곳: 균열 · 지옥에서 전투당 1% 확률의 ${b.eye}</div>
         <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? `균열 ${b.need[S - 1]}단계 필요` : have > 0 ? `${b.short} ${S}단계 도전` : "열쇠 필요"}</button>
       </div>
     </div>
@@ -5868,9 +5864,6 @@ function openBossHub(page) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
-  { ver: "4.23", date: "10/29", title: "보스 딜 체크", items: [
-    "속성 보스와 공허의 군주에 제한 시간(2분 30초)이 생겼습니다. 3 · 4단계는 보스 체력이 크게 늘어서, 피해량이 모자라면 시간 안에 잡을 수 없습니다. 보스와 같은 속성의 스킬로 싸우면 훨씬 유리합니다.",
-  ] },
   { ver: "4.22", date: "10/29", title: "보스 관문 · 서리 여왕 · 독니의 군주", items: [
     "지도의 보스 노드가 [보스 관문] 하나로 합쳐졌습니다. 보스 이미지 · 적정 전투력 · 단계 선택 · 드랍 스킬(마우스를 올리면 효과 표시)을 보고 바로 입장할 수 있고, 페이지를 넘겨 여섯 보스를 볼 수 있습니다.",
     "새 속성 보스 서리 여왕(냉기)과 독니의 군주(독)가 추가되었습니다. 열쇠는 서리의 징표 · 맹독의 징표이고, 전용 드랍 스킬(빙하 낙하 · 서리 정령 · 독 가시 비 · 독니 새끼 등)과 독 스킬 독안개 · 맹독 폭발이 생겼습니다. 맹독 주입은 독니의 군주에서 드랍됩니다.",
