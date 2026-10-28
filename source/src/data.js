@@ -94,6 +94,7 @@ const SKILLS = [
   { id: "sweep",   name: "소탕",         slot: "active", kind: "multi",  cd: 6.0,  mult: 1.6,  side: 0.9, range: 4, bonus: { normal: 0.4 }, unlock: 3, color: "#c0ffc0", icon: "sweep", sfx: "slash", desc: "일반 몹에게 추가 피해를 주는 광역" },
   { id: "cry",     name: "전투 함성",     slot: "active", kind: "buff",   cd: 18.0, mult: 0, dur: 8, power: 0.3, range: 6, bonus: {}, unlock: 3, color: "#ffd24a", icon: "horn", sfx: "buff", desc: "8초 동안 주는 피해 +30%" },
   { id: "execute", name: "처형",         slot: "active", kind: "single", cd: 7.0,  mult: 8,  range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff6a6a", icon: "skull", sfx: "snipe", desc: "보스에게 큰 추가 피해" },
+  { id: "smite", name: "심판의 일격", slot: "active", kind: "single", cd: 7, mult: 8, range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#c58bff", icon: "orb2", sfx: "snipe", desc: "보스에게 큰 추가 마법 피해", dtype: "mag", mana: 26 },
   { id: "frost",   name: "빙결 파동",     slot: "active", kind: "nova",   cd: 9.0,  mult: 1.2,  range: 5, chill: 2.0, bonus: {}, unlock: 4, color: "#a8e8ff", icon: "snow", sfx: "frost", desc: "사거리 안의 모든 적에게 피해, 공격이 느려진다" },
   { id: "vamp",    name: "흡혈 참격",     slot: "active", kind: "single", cd: 4.5,  mult: 2.8,  range: 4, lifesteal: 0.25, bonus: {}, unlock: 4, color: "#ff6aa0", icon: "fang", sfx: "slash", desc: "피해의 25%를 체력으로 회복" },
   { id: "heal",    name: "치유의 빛",     slot: "active", kind: "heal",   cd: 16.0, mult: 0, power: 0.25, range: 6, bonus: {}, unlock: 4, color: "#9dffb0", icon: "heart", sfx: "heal", desc: "체력이 낮을 때 최대 체력의 25% 회복" },

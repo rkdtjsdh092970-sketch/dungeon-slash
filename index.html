@@ -419,6 +419,7 @@ const SKILLS = [
   { id: "sweep",   name: "소탕",         slot: "active", kind: "multi",  cd: 6.0,  mult: 1.6,  side: 0.9, range: 4, bonus: { normal: 0.4 }, unlock: 3, color: "#c0ffc0", icon: "sweep", sfx: "slash", desc: "일반 몹에게 추가 피해를 주는 광역" },
   { id: "cry",     name: "전투 함성",     slot: "active", kind: "buff",   cd: 18.0, mult: 0, dur: 8, power: 0.3, range: 6, bonus: {}, unlock: 3, color: "#ffd24a", icon: "horn", sfx: "buff", desc: "8초 동안 주는 피해 +30%" },
   { id: "execute", name: "처형",         slot: "active", kind: "single", cd: 7.0,  mult: 8,  range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff6a6a", icon: "skull", sfx: "snipe", desc: "보스에게 큰 추가 피해" },
+  { id: "smite", name: "심판의 일격", slot: "active", kind: "single", cd: 7, mult: 8, range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#c58bff", icon: "orb2", sfx: "snipe", desc: "보스에게 큰 추가 마법 피해", dtype: "mag", mana: 26 },
   { id: "frost",   name: "빙결 파동",     slot: "active", kind: "nova",   cd: 9.0,  mult: 1.2,  range: 5, chill: 2.0, bonus: {}, unlock: 4, color: "#a8e8ff", icon: "snow", sfx: "frost", desc: "사거리 안의 모든 적에게 피해, 공격이 느려진다" },
   { id: "vamp",    name: "흡혈 참격",     slot: "active", kind: "single", cd: 4.5,  mult: 2.8,  range: 4, lifesteal: 0.25, bonus: {}, unlock: 4, color: "#ff6aa0", icon: "fang", sfx: "slash", desc: "피해의 25%를 체력으로 회복" },
   { id: "heal",    name: "치유의 빛",     slot: "active", kind: "heal",   cd: 16.0, mult: 0, power: 0.25, range: 6, bonus: {}, unlock: 4, color: "#9dffb0", icon: "heart", sfx: "heal", desc: "체력이 낮을 때 최대 체력의 25% 회복" },
@@ -795,7 +796,7 @@ const SKILL_META = {
   strike: { dtype: "phys", mana: 0 }, rapid: { dtype: "phys", mana: 0 }, crush: { dtype: "phys", mana: 0 }, spark: { dtype: "mag", elem: "light", mana: 0 },
   smash: { dtype: "phys", mana: 10 }, bomb: { dtype: "mag", elem: "fire", mana: 14 }, lance: { dtype: "phys", mana: 12 }, chain: { dtype: "mag", elem: "light", mana: 15 },
   snipe: { dtype: "phys", mana: 12 }, firewall: { dtype: "mag", elem: "fire", mana: 20 }, sweep: { dtype: "phys", mana: 13 }, cry: { dtype: "buff", mana: 16 },
-  execute: { dtype: "phys", mana: 18 }, frost: { dtype: "mag", elem: "cold", mana: 18 }, vamp: { dtype: "phys", mana: 13 }, heal: { dtype: "heal", mana: 20 },
+  execute: { dtype: "phys", mana: 18 }, smite: { dtype: "mag", mana: 22 }, frost: { dtype: "mag", elem: "cold", mana: 18 }, vamp: { dtype: "phys", mana: 13 }, heal: { dtype: "heal", mana: 20 },
   thunder: { dtype: "mag", elem: "light", mana: 20 }, boomer: { dtype: "phys", mana: 14 }, pierce2: { dtype: "phys", mana: 17 }, meteor: { dtype: "mag", elem: "fire", mana: 28 },
 };
 SKILLS.forEach((s) => Object.assign(s, SKILL_META[s.id] || { dtype: "phys", mana: 10 }));
@@ -1043,7 +1044,7 @@ const P_ARMS = [
     L: [["균열 찾기", { shredDef: 0.05 }], ["관통", { ignoreDef: 0.05 }], ["백전노장", { normal: 0.10 }], ["방어 파괴자", { ignoreDef: 0.08, shredDef: 0.08 }, 2]],
     R: [["흡혈 본능", { lifesteal: 0.005 }], ["숙련된 손", { cdr: 0.015 }], ["무기술", { atkFlat: 4 }], ["칼날 춤", { cdr: 0.03, critChance: 0.03 }, 2]] },
   { id: "mag", name: "마법", color: "#c58bff",
-    s: [["비전 입문", { magPct: 0.04 }], ["주문 치명", { spellCrit: 0.02 }], ["마력 집중", { magDmg: 0.08 }], ["주문 증폭", { magPct: 0.08, spellCrit: 0.03 }, 2], ["마력 폭풍", { magPct: 0.06 }], ["마법 폭주", { magMore: 1.2, hpMore: 0.9 }, 3]],
+    s: [["비전 입문", { magPct: 0.04 }], ["주문 치명", { spellCrit: 0.02 }], ["마력 집중", { magDmg: 0.08 }], ["주문 증폭", { magPct: 0.08, spellCrit: 0.03, boss: 0.15, elite: 0.12 }, 2], ["마력 폭풍", { magPct: 0.06 }], ["마법 폭주", { magMore: 1.2, hpMore: 0.9 }, 3]],
     L: [["저항 약화", { shredRes: 0.05 }], ["저항 무시", { ignoreRes: 0.05 }], ["연쇄 번개", { chainJumps: 1 }], ["마법 관통", { ignoreRes: 0.08, shredRes: 0.08 }, 2]],
     R: [["비전 장력", { spellCrit: 0.02 }], ["치명 마술", { critDmg: 0.10 }], ["주문 가속", { cdr: 0.015 }], ["마력 폭발", { aoeDmg: 0.15, magDmg: 0.08 }, 2]] },
   { id: "elem", name: "원소", color: "#ff9a4a",
@@ -1075,7 +1076,7 @@ const P_BRIDGES = [   // 계열 사이를 잇는 혼합 노드 2개씩
 ];
 const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
   phys: { LL: [["출혈 숙련", { bleedChance: 0.08 }], ["피의 갈증", { dotDmg: 0.20, bleedChance: 0.10 }, 2]], RR: [["강타 숙련", { atkPct: 0.04 }], ["처형인", { critDmg: 0.15, boss: 0.10 }, 2]] },
-  mag: { LL: [["점화", { igniteChance: 0.08 }], ["불길", { dotDmg: 0.20, igniteChance: 0.10 }, 2]], RR: [["비전 순환", { manaRegen: 0.004 }], ["마도 공학", { spellCrit: 0.04, magPct: 0.06 }, 2]] },
+  mag: { LL: [["점화", { igniteChance: 0.08 }], ["불길", { dotDmg: 0.20, igniteChance: 0.10 }, 2]], RR: [["비전 순환", { manaRegen: 0.004 }], ["마도 공학", { spellCrit: 0.04, magPct: 0.06, boss: 0.10 }, 2]] },
   elem: { LL: [["독 지식", { poisonChance: 0.08 }], ["맹독", { poisonChance: 0.10, dotDmg: 0.20 }, 2]], RR: [["냉기 응결", { coldDmg: 0.06 }], ["원소 해방", { elemDmg: 0.10, penElem: 0.06 }, 2]] },
   def: { LL: [["강철 피부", { defPct: 0.06 }], ["철벽 의지", { dmgTaken: -0.04, hpPct: 0.08 }, 2]], RR: [["끈질긴 생명", { regen: 0.002 }], ["복수", { lifesteal: 0.01, atkPct: 0.06 }, 2]] },
   mana: { LL: [["마나젠", { manaRegenFlat: 3 }], ["샘의 축복", { manaRegenFlat: 5, manaRegen: 0.004 }, 2]], RR: [["마나통", { manaFlat: 25 }], ["마나 물결", { dmgPerMana: 0.01, manaPct: 0.08 }, 2]] },
@@ -1084,7 +1085,7 @@ const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
 };
 const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆)으로 모인다 [이름, 효과, 비용]
   phys: [["격투의 심장", { atkPct: 0.05, critChance: 0.02 }, 1], ["베어내기", { critDmg: 0.15 }, 1], ["급소 사냥", { boss: 0.12, elite: 0.12 }, 2], ["연속 타격", { physDmg: 0.10, cdr: 0.02 }, 2], ["방어 관통", { ignoreDef: 0.06, shredDef: 0.06 }, 2], ["학살의 화신", { atkMore: 1.12, critDmg: 0.25, boss: 0.20 }, 3]],
-  mag: [["비전 집중", { magPct: 0.05, spellCrit: 0.02 }, 1], ["마력 쇄도", { magDmg: 0.10 }, 1], ["주문 연쇄", { chainJumps: 1, chainDmg: 0.10 }, 2], ["공명", { cdr: 0.02, spellCrit: 0.03 }, 2], ["저항 붕괴", { ignoreRes: 0.06, shredRes: 0.06 }, 2], ["대마법사", { magMore: 1.12, spellCrit: 0.06, aoeDmg: 0.15 }, 3]],
+  mag: [["비전 집중", { magPct: 0.05, spellCrit: 0.02 }, 1], ["마력 쇄도", { magDmg: 0.10 }, 1], ["주문 연쇄", { chainJumps: 1, chainDmg: 0.10, boss: 0.12 }, 2], ["공명", { cdr: 0.02, spellCrit: 0.03 }, 2], ["저항 붕괴", { ignoreRes: 0.06, shredRes: 0.06 }, 2], ["대마법사", { magMore: 1.12, spellCrit: 0.06, aoeDmg: 0.15, boss: 0.20 }, 3]],
   elem: [["화염의 숨결", { fireDmg: 0.08 }, 1], ["서리의 숨결", { coldDmg: 0.08 }, 1], ["폭풍의 숨결", { lightDmg: 0.08 }, 1], ["공허의 숨결", { voidDmg: 0.08, penElem: 0.04 }, 2], ["원소 융합", { elemDmg: 0.12 }, 2], ["원소의 군주", { elemDmg: 0.25, penElem: 0.15, aoeDmg: 0.10 }, 3]],
   def: [["단단한 몸", { hpPct: 0.06 }, 1], ["방패술", { defPct: 0.08 }, 1], ["수호의 맹세", { dmgTaken: -0.04 }, 2], ["재생의 피", { regen: 0.002, lifesteal: 0.005 }, 2], ["회피의 흐름", { dodge: 0.03 }, 2], ["불멸자", { hpMore: 1.12, defMore: 1.10, dmgTaken: -0.06 }, 3]],
   mana: [["마나 흡수", { manaHit: 0.0015 }, 1], ["마력 순환", { manaRegenFlat: 3 }, 1], ["마나 흡수 II", { manaHit: 0.0015, manaPct: 0.05 }, 2], ["비전 갈증", { manaOnKill: 4, manaRegen: 0.004 }, 2], ["마나 방벽", { manaShield: 0.06, manaPct: 0.06 }, 2], ["마력의 대양", { manaHit: 0.003, manaToSpell: 0.05, manaRegen: 0.006 }, 3]],
@@ -2113,7 +2114,7 @@ function sellSkill(sv, inst) {
   sv.skills = sv.skills.filter((x) => x !== inst); return v;
 }
 // 특수 스킬(공허 전용 · 빌드별 보스 전용기)은 상점에서 팔지 않는다 — 드랍·시련·공허의 군주로만 얻는다 (기본 보스 스킬 '처형'은 상점 판매 유지)
-const isSpecialSkill = (d) => !!d.voidOnly || (d.slot === "passive" && d.pt > 0) || !!d.mythOnly || (d.bonus && d.bonus.boss >= 0.8 && d.id !== "execute");
+const isSpecialSkill = (d) => !!d.voidOnly || (d.slot === "passive" && d.pt > 0) || !!d.mythOnly || (d.bonus && d.bonus.boss >= 0.8 && d.id !== "execute" && d.id !== "smite");
 // v4: 스킬 해금 단계는 캐릭터 레벨(= 균열 최고 층 + 1)을 따른다
 const skillAct = (sv) => Math.max(1, Math.min(8, 1 + Math.floor(sv.level / 10)));
 function shopStock(sv, now) {
@@ -4548,7 +4549,7 @@ function updateWorld() {
 
 // ---------- 스킬 상점 ----------
 const SHOP_TABS = [["all", "전체"], ["basic", "기본 공격"], ["single", "단일"], ["aoe", "범위"], ["boss", "보스"], ["support", "지원·소환"], ["passive", "패시브"]];
-const shopTabOf = (d) => d.slot === "basic" ? "basic" : d.slot === "passive" ? "passive" : d.bonus && d.bonus.boss > 0 ? "boss" : ["buff", "heal", "summon"].includes(d.kind) ? "support" : d.kind === "single" ? "single" : "aoe";
+const shopTabOf = (d) => d.slot === "basic" ? "basic" : d.slot === "passive" ? "passive" : d.bonus && d.bonus.boss >= 0.8 ? "boss" : ["buff", "heal", "summon"].includes(d.kind) ? "support" : d.kind === "single" ? "single" : "aoe";
 let SHOP_TAB = "all";
 function openSkillShop() {
   const stock = shopStock(save), cnt = {}; stock.forEach((o) => { const t = shopTabOf(SKILLS.find((x) => x.id === o.id)); cnt[t] = (cnt[t] || 0) + 1; });
@@ -5642,7 +5643,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-023552";
+const BUILD_ID = "20261029-024623";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;

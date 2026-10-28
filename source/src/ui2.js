@@ -13,7 +13,7 @@ function updateWorld() {
 
 // ---------- 스킬 상점 ----------
 const SHOP_TABS = [["all", "전체"], ["basic", "기본 공격"], ["single", "단일"], ["aoe", "범위"], ["boss", "보스"], ["support", "지원·소환"], ["passive", "패시브"]];
-const shopTabOf = (d) => d.slot === "basic" ? "basic" : d.slot === "passive" ? "passive" : d.bonus && d.bonus.boss > 0 ? "boss" : ["buff", "heal", "summon"].includes(d.kind) ? "support" : d.kind === "single" ? "single" : "aoe";
+const shopTabOf = (d) => d.slot === "basic" ? "basic" : d.slot === "passive" ? "passive" : d.bonus && d.bonus.boss >= 0.8 ? "boss" : ["buff", "heal", "summon"].includes(d.kind) ? "support" : d.kind === "single" ? "single" : "aoe";
 let SHOP_TAB = "all";
 function openSkillShop() {
   const stock = shopStock(save), cnt = {}; stock.forEach((o) => { const t = shopTabOf(SKILLS.find((x) => x.id === o.id)); cnt[t] = (cnt[t] || 0) + 1; });

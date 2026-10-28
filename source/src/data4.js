@@ -9,7 +9,7 @@ const P_ARMS = [
     L: [["균열 찾기", { shredDef: 0.05 }], ["관통", { ignoreDef: 0.05 }], ["백전노장", { normal: 0.10 }], ["방어 파괴자", { ignoreDef: 0.08, shredDef: 0.08 }, 2]],
     R: [["흡혈 본능", { lifesteal: 0.005 }], ["숙련된 손", { cdr: 0.015 }], ["무기술", { atkFlat: 4 }], ["칼날 춤", { cdr: 0.03, critChance: 0.03 }, 2]] },
   { id: "mag", name: "마법", color: "#c58bff",
-    s: [["비전 입문", { magPct: 0.04 }], ["주문 치명", { spellCrit: 0.02 }], ["마력 집중", { magDmg: 0.08 }], ["주문 증폭", { magPct: 0.08, spellCrit: 0.03 }, 2], ["마력 폭풍", { magPct: 0.06 }], ["마법 폭주", { magMore: 1.2, hpMore: 0.9 }, 3]],
+    s: [["비전 입문", { magPct: 0.04 }], ["주문 치명", { spellCrit: 0.02 }], ["마력 집중", { magDmg: 0.08 }], ["주문 증폭", { magPct: 0.08, spellCrit: 0.03, boss: 0.15, elite: 0.12 }, 2], ["마력 폭풍", { magPct: 0.06 }], ["마법 폭주", { magMore: 1.2, hpMore: 0.9 }, 3]],
     L: [["저항 약화", { shredRes: 0.05 }], ["저항 무시", { ignoreRes: 0.05 }], ["연쇄 번개", { chainJumps: 1 }], ["마법 관통", { ignoreRes: 0.08, shredRes: 0.08 }, 2]],
     R: [["비전 장력", { spellCrit: 0.02 }], ["치명 마술", { critDmg: 0.10 }], ["주문 가속", { cdr: 0.015 }], ["마력 폭발", { aoeDmg: 0.15, magDmg: 0.08 }, 2]] },
   { id: "elem", name: "원소", color: "#ff9a4a",
@@ -41,7 +41,7 @@ const P_BRIDGES = [   // 계열 사이를 잇는 혼합 노드 2개씩
 ];
 const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
   phys: { LL: [["출혈 숙련", { bleedChance: 0.08 }], ["피의 갈증", { dotDmg: 0.20, bleedChance: 0.10 }, 2]], RR: [["강타 숙련", { atkPct: 0.04 }], ["처형인", { critDmg: 0.15, boss: 0.10 }, 2]] },
-  mag: { LL: [["점화", { igniteChance: 0.08 }], ["불길", { dotDmg: 0.20, igniteChance: 0.10 }, 2]], RR: [["비전 순환", { manaRegen: 0.004 }], ["마도 공학", { spellCrit: 0.04, magPct: 0.06 }, 2]] },
+  mag: { LL: [["점화", { igniteChance: 0.08 }], ["불길", { dotDmg: 0.20, igniteChance: 0.10 }, 2]], RR: [["비전 순환", { manaRegen: 0.004 }], ["마도 공학", { spellCrit: 0.04, magPct: 0.06, boss: 0.10 }, 2]] },
   elem: { LL: [["독 지식", { poisonChance: 0.08 }], ["맹독", { poisonChance: 0.10, dotDmg: 0.20 }, 2]], RR: [["냉기 응결", { coldDmg: 0.06 }], ["원소 해방", { elemDmg: 0.10, penElem: 0.06 }, 2]] },
   def: { LL: [["강철 피부", { defPct: 0.06 }], ["철벽 의지", { dmgTaken: -0.04, hpPct: 0.08 }, 2]], RR: [["끈질긴 생명", { regen: 0.002 }], ["복수", { lifesteal: 0.01, atkPct: 0.06 }, 2]] },
   mana: { LL: [["마나젠", { manaRegenFlat: 3 }], ["샘의 축복", { manaRegenFlat: 5, manaRegen: 0.004 }, 2]], RR: [["마나통", { manaFlat: 25 }], ["마나 물결", { dmgPerMana: 0.01, manaPct: 0.08 }, 2]] },
@@ -50,7 +50,7 @@ const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
 };
 const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆)으로 모인다 [이름, 효과, 비용]
   phys: [["격투의 심장", { atkPct: 0.05, critChance: 0.02 }, 1], ["베어내기", { critDmg: 0.15 }, 1], ["급소 사냥", { boss: 0.12, elite: 0.12 }, 2], ["연속 타격", { physDmg: 0.10, cdr: 0.02 }, 2], ["방어 관통", { ignoreDef: 0.06, shredDef: 0.06 }, 2], ["학살의 화신", { atkMore: 1.12, critDmg: 0.25, boss: 0.20 }, 3]],
-  mag: [["비전 집중", { magPct: 0.05, spellCrit: 0.02 }, 1], ["마력 쇄도", { magDmg: 0.10 }, 1], ["주문 연쇄", { chainJumps: 1, chainDmg: 0.10 }, 2], ["공명", { cdr: 0.02, spellCrit: 0.03 }, 2], ["저항 붕괴", { ignoreRes: 0.06, shredRes: 0.06 }, 2], ["대마법사", { magMore: 1.12, spellCrit: 0.06, aoeDmg: 0.15 }, 3]],
+  mag: [["비전 집중", { magPct: 0.05, spellCrit: 0.02 }, 1], ["마력 쇄도", { magDmg: 0.10 }, 1], ["주문 연쇄", { chainJumps: 1, chainDmg: 0.10, boss: 0.12 }, 2], ["공명", { cdr: 0.02, spellCrit: 0.03 }, 2], ["저항 붕괴", { ignoreRes: 0.06, shredRes: 0.06 }, 2], ["대마법사", { magMore: 1.12, spellCrit: 0.06, aoeDmg: 0.15, boss: 0.20 }, 3]],
   elem: [["화염의 숨결", { fireDmg: 0.08 }, 1], ["서리의 숨결", { coldDmg: 0.08 }, 1], ["폭풍의 숨결", { lightDmg: 0.08 }, 1], ["공허의 숨결", { voidDmg: 0.08, penElem: 0.04 }, 2], ["원소 융합", { elemDmg: 0.12 }, 2], ["원소의 군주", { elemDmg: 0.25, penElem: 0.15, aoeDmg: 0.10 }, 3]],
   def: [["단단한 몸", { hpPct: 0.06 }, 1], ["방패술", { defPct: 0.08 }, 1], ["수호의 맹세", { dmgTaken: -0.04 }, 2], ["재생의 피", { regen: 0.002, lifesteal: 0.005 }, 2], ["회피의 흐름", { dodge: 0.03 }, 2], ["불멸자", { hpMore: 1.12, defMore: 1.10, dmgTaken: -0.06 }, 3]],
   mana: [["마나 흡수", { manaHit: 0.0015 }, 1], ["마력 순환", { manaRegenFlat: 3 }, 1], ["마나 흡수 II", { manaHit: 0.0015, manaPct: 0.05 }, 2], ["비전 갈증", { manaOnKill: 4, manaRegen: 0.004 }, 2], ["마나 방벽", { manaShield: 0.06, manaPct: 0.06 }, 2], ["마력의 대양", { manaHit: 0.003, manaToSpell: 0.05, manaRegen: 0.006 }, 3]],

@@ -28,7 +28,7 @@ const SKILL_META = {
   strike: { dtype: "phys", mana: 0 }, rapid: { dtype: "phys", mana: 0 }, crush: { dtype: "phys", mana: 0 }, spark: { dtype: "mag", elem: "light", mana: 0 },
   smash: { dtype: "phys", mana: 10 }, bomb: { dtype: "mag", elem: "fire", mana: 14 }, lance: { dtype: "phys", mana: 12 }, chain: { dtype: "mag", elem: "light", mana: 15 },
   snipe: { dtype: "phys", mana: 12 }, firewall: { dtype: "mag", elem: "fire", mana: 20 }, sweep: { dtype: "phys", mana: 13 }, cry: { dtype: "buff", mana: 16 },
-  execute: { dtype: "phys", mana: 18 }, frost: { dtype: "mag", elem: "cold", mana: 18 }, vamp: { dtype: "phys", mana: 13 }, heal: { dtype: "heal", mana: 20 },
+  execute: { dtype: "phys", mana: 18 }, smite: { dtype: "mag", mana: 22 }, frost: { dtype: "mag", elem: "cold", mana: 18 }, vamp: { dtype: "phys", mana: 13 }, heal: { dtype: "heal", mana: 20 },
   thunder: { dtype: "mag", elem: "light", mana: 20 }, boomer: { dtype: "phys", mana: 14 }, pierce2: { dtype: "phys", mana: 17 }, meteor: { dtype: "mag", elem: "fire", mana: 28 },
 };
 SKILLS.forEach((s) => Object.assign(s, SKILL_META[s.id] || { dtype: "phys", mana: 10 }));
