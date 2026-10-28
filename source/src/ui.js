@@ -170,7 +170,7 @@ function townClick(s) {
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
-  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes, dummy: openDummy })[s.id]();
+  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes, dummy: openDummy, raid: openRaid })[s.id]();
 }
 function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다른 유저와 거래하는 장소입니다.<br>온라인 기능은 아직 준비 중입니다.</p>`, { cls: "sm" }); }
 
@@ -254,7 +254,7 @@ function openSettings() {
 }
 
 // ---------- 전투 ----------
-function bgmFor(node) { return { boss: "boss", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
+function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
@@ -274,7 +274,8 @@ function battleHud(b) {
   G.hpGhost = hp >= G.hpGhost ? hp : Math.max(hp, G.hpGhost - dt * 0.45); $("#hp-fill").style.width = hp * 100 + "%"; $("#hp-ghost").style.width = G.hpGhost * 100 + "%"; $("#hp-txt").textContent = `${fmtN(Math.max(0, b.hp))} / ${fmtN(b.maxHp)}`;
   $("#mp-fill").style.width = Math.max(0, b.mana / b.maxMana) * 100 + "%"; $("#mp-txt").textContent = `${fmtN(Math.max(0, b.mana))} / ${fmtN(b.maxMana)}`;
   const left = b.plan.length + b.enemies.filter((e) => !e.dead).length;
-  if (b.dummy) { $("#wave-fill").style.width = Math.min(100, (b.time / DUMMY_SEC) * 100) + "%"; $("#wave-txt").textContent = `${Math.max(0, Math.ceil(DUMMY_SEC - b.time))}초 · 누적 ${fmtN(b.dealt)} · DPS ${fmtN(b.dealt / Math.max(1, b.time))}`; }
+  if (b.raid) { const R = b.bossRef && b.bossRef.raid, ph = R ? Math.min(4, R.idx + 1) : 1, lim = CFG.RAID.LIMIT; $("#wave-fill").style.width = Math.min(100, (b.time / lim) * 100) + "%"; $("#wave-txt").textContent = `${R && R.sealed ? "결계 · 결계석을 부숴라!" : `${ph}단계`} · 남은 ${Math.max(0, Math.ceil(lim - b.time))}초`; }
+  else if (b.dummy) { $("#wave-fill").style.width = Math.min(100, (b.time / DUMMY_SEC) * 100) + "%"; $("#wave-txt").textContent = `${Math.max(0, Math.ceil(DUMMY_SEC - b.time))}초 · 누적 ${fmtN(b.dealt)} · DPS ${fmtN(b.dealt / Math.max(1, b.time))}`; }
   else if (b.endless) { $("#wave-fill").style.width = Math.min(100, (b.time / 1200) * 100) + "%"; { const dd = b.ddt || 0; $("#wave-txt").textContent = `생존 ${fmtTime(b.time * 1000)} · 위험도 ${Math.floor(dd / 30) + 1} (×${(dd / Math.max(1, b.time)).toFixed(2)}) · 처치 ${b.kills}`; } }
   else { $("#wave-fill").style.width = Math.max(0, 100 - (left / Math.max(1, b.total)) * 100) + "%"; $("#wave-txt").textContent = `남은 적 ${left}${b.keys ? ` · 열쇠 ${b.keys}` : ""}${b.keys2 ? ` · 불씨 ${b.keys2}` : ""}${b.keys3 ? ` · 징표 ${b.keys3}` : ""}${b.keys4 ? ` · 뇌전 ${b.keys4}` : ""}`; }
   b.skills.forEach((sk, i) => { if (!sk) return; const el = $$("#skillbar .bslot")[i]; if (!el) return; el.querySelector(".cdm").style.height = Math.max(0, Math.min(1, sk.cdLeft / sk.cd)) * 100 + "%"; el.querySelector(".rl").textContent = RULE_SHORT[sk.rule]; { const cost = (sk.mana || 0) * b.stats.manaCostMul, mc = el.querySelector(".mc"); mc.textContent = cost >= 1 ? Math.round(cost) : ""; mc.style.display = cost >= 1 ? "" : "none"; mc.classList.toggle("lack", b.mana < cost); el.querySelector(".cds").textContent = sk.cdLeft > 0.05 ? (sk.cdLeft >= 10 ? Math.ceil(sk.cdLeft) : sk.cdLeft.toFixed(1)) : ""; } const lack = b.mana < (sk.mana || 0) * b.stats.manaCostMul; el.classList.toggle("rdy", sk.cdLeft <= 0 && !lack); el.classList.toggle("nomp", lack); });

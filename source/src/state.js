@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -345,12 +345,13 @@ const stoneChanceAt = (tier) => Math.min(0.75, 0.30 + 0.004 * tier);
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
-  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault";
+  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 3 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = riftItemN(node.tier, boss) + (kind === "hell" ? 3 : 0);
+  if (kind === "raid") n = 8;
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = 2 + Math.max(1, node.vsel || 1);
   if (isEB(kind)) n = 3 + 2 * (node.vsel || 1);
@@ -364,11 +365,13 @@ function rollDrops(sv, node, boss, B) {
     out.items.push(genItem(sv, ilvl, r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   // 미확인의 돌: 균열에서 드랍 (보스 층은 확정). 제련소에서 옵션을 확인한 뒤 소켓에 끼운다
-  if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind)) {
-    const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : 1.2;
+  if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "raid") {
+    const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : kind === "raid" ? 2.0 : 1.2;
     let c = boss && (kind === "rift" || kind === "hell") ? 1 : 0; for (let k = 0; k < 1 + (chance > 1 ? 1 : 0); k++) if (Math.random() < Math.min(1, chance)) c++;
     for (let k = 0; k < c; k++) sv.stones.push(newStone(sv)); out.stones = c;
   }
+  // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
+  if (kind === "raid") { const ks = ["void", "hive", "titan", "storm"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
   if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1)) out.skills.push(s);
   else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1)) out.skills.push(s);
@@ -376,7 +379,7 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
-  const oc = { vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
+  const oc = { raid: 6, vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   // 신성한 구슬은 아주 귀하다 (혼돈 구슬의 약 5%)

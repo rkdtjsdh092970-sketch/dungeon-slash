@@ -6,6 +6,7 @@ const laneH = (b) => (b.lanes <= 3 ? 116 : 88);
 const laneTop = (b) => LAY.cy - (laneH(b) * b.lanes) / 2;
 function cellXY(b, lane, col, w, h) {  // 칸(또는 다칸 몸체) 중심 좌표
   w = w || 1; h = h || 1;
+  if (b.raid) { if (w > 1 || h > 1) return { x: 480, y: 265 }; return { x: 480 + (lane - (b.lanes - 1) / 2) * 250, y: 372 - (col - 1) * 60 }; }   // 레이드: 보스는 화면 중앙, 결계석은 그 앞에 일렬
   return { x: LAY.x0 + (col - 1 + w / 2) * LAY.cw, y: laneTop(b) + (lane + h / 2) * laneH(b) };
 }
 const PLAYER_POS = { x: 104, y: LAY.cy + 44 };
@@ -52,7 +53,7 @@ const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
 
 // ---------------- 생성 ----------------
-const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, vault: 1 };
+const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, vault: 1, raid: 1 };
 const specDef = (va) => Object.assign({ tier: "normal", ranged: ACT_SPECIAL[va].range >= 3, proj: va === 7 ? "orb" : null }, ACT_SPECIAL[va]);
 function wavePool(act, stage, mods) {
   const w = actWeights(act); w.spec = SPEC_W(act, stage);
@@ -107,17 +108,18 @@ function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
   const floorKind = !!node.tier || RIFTLIKE[node.kind], scAct = floorKind ? 1 : act;   // 균열류는 몬스터 외형만 지역(act)을 따르고, 강도는 층 배율이 정한다
-  let riftMul = node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
+  if (node.kind === "raid") { PLAYER_POS.x = 480; PLAYER_POS.y = 478; } else { PLAYER_POS.x = 104; PLAYER_POS.y = LAY.cy + 44; }
+  let riftMul = node.kind === "raid" ? floorMult(CFG.RIFT_END) : node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
   if (node.kind === "rift" && node.tier % 5 === 0 && node.tier % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;   // 5층마다 나오는 중간 보스 층은 몬스터 강도를 조금 낮춰 갑작스러운 벽이 되지 않게 한다 (20층 단위 보스는 그대로)
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
     hpM: CFG.H0 * Math.pow(CFG.HPX, scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
-    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
+    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
-  b.plan = node.kind === "dummy" ? [] : planFor(node);
-  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
+  b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
+  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
@@ -125,8 +127,39 @@ function createBattle(sv, node) {
   });
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
   if (node.kind === "dummy") spawnDummies(b, node);
+  if (node.kind === "raid") { b.hpM *= CFG.RAID.K; b.atkM *= CFG.RAID.ATK; spawnRaid(b); }
   b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
   return b;
+}
+
+// ---------------- 레이드: 심연의 문지기 ----------------
+function spawnRaid(b) {
+  b.raid = true; b.spawnCd = 1e9; const e = spawnAt(b, "boss", 0, 2); e.h = b.lanes; e.w = 3; e.range = 99; e.label = RAID_BOSS.name;
+  e.raid = { limit: CFG.RAID.THR[0] * e.maxHp, idx: 0, sealed: false, t: 0, vuln: 0, blast: 0, cap: e.maxHp, prev: e.maxHp, fails: 0 };
+  e.crystalHp = CFG.RAID.CRYSTAL * b.hpM * 1000;   // 결계석 총 체력(레인에 나눠 가진다)
+}
+function spawnCrystals(b, e) {
+  const n = b.lanes, hp = e.crystalHp / n;
+  for (let lane = 0; lane < n; lane++) {
+    const c = makeEnemy(b, "imp", lane, 1); c.crystal = true; c.hp = c.maxHp = hp; c.atk = 0; c.atkCd = 1e9; c.range = 99; c.traits = []; c.eres = [0, 0, 0, 0]; c.label = "결계석"; c.def = Object.assign({}, c.def, { name: "결계석", exp: 0, gold: 0 }); b.enemies.push(c);
+  }
+}
+function raidTick(b, e, dt) {
+  const R = e.raid, K = CFG.RAID; if (!R) return; if (R.vuln > 0) R.vuln -= dt;
+  if (!R.sealed) {
+    if (R.limit > 0 && e.hp <= R.limit + 1) {
+      R.sealed = true; R.t = 0; R.blast = K.BLAST; R.cap = R.prev; spawnCrystals(b, e); R.fails = 0;
+      say(b, "문지기가 결계를 펼친다! 결계석을 부숴라 — 부수지 못하면 체력이 되살아난다!", "boss"); sfx(b, "roar"); b.shake = 0.7;
+    }
+    return;
+  }
+  R.t += dt;
+  if (!b.enemies.some((x) => !x.dead && x.crystal)) {   // 결계 파괴: 다음 구간까지 피해를 줄 수 있다
+    R.sealed = false; R.prev = R.limit; R.idx++; R.limit = K.THR[R.idx] != null ? K.THR[R.idx] * e.maxHp : 0; R.vuln = K.VULN; e.stun = Math.max(e.stun || 0, 2.2);
+    say(b, "결계가 부서졌다! 문지기가 무방비 상태다!", "good"); sfx(b, "shatter"); b.shake = 0.9; return;
+  }
+  e.hp = Math.min(R.cap, e.hp + e.maxHp * K.REGEN * dt);   // 결계석이 살아 있는 동안 체력이 되살아난다
+  R.blast -= dt; if (R.blast <= 0) { R.blast = K.BLAST; say(b, "결계 폭발!", "boss"); sfx(b, "boom"); damagePlayer(b, e.atk * K.BLASTM * (1 + R.t / 60), { shake: 0.4, boss: true }); }
 }
 
 // ---------------- 허수아비 (마을: 1분 DPS 측정) ----------------
@@ -267,6 +300,7 @@ function applyDamage(b, e, dmg, o) {
     if (!b.noFx && (e.guardTxt || 0) < b.time) { e.guardTxt = b.time + 0.7; b.texts.push({ x: (e.vx != null ? e.vx : cellXY(b, e.lane, e.col, e.w, e.h).x), y: 120, text: "정령을 먼저 처치!", color: "#ffb060", big: false, t: 0.9, life: 0.9 }); }
     return 0;
   }
+  if (e.def && e.def.raid && e.raid) { const R = e.raid; if (R.sealed) dmg *= 0.03; else if (R.limit > 0) dmg = Math.min(dmg, Math.max(0, e.hp - R.limit)); if (R.vuln > 0) dmg *= CFG.RAID.VULNM; }   // 결계 중에는 거의 통하지 않고, 구간 끝에서는 더 깎이지 않는다
   e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time;
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   if (!b.noFx && !o.noText) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
@@ -307,6 +341,7 @@ function killEnemy(b, e) {
   if (e.type === "twarp") { b.keys3++; say(b, "철갑의 징표를 얻었다!", "good"); sfx(b, "key"); }
   if (e.type === "swarp") { b.keys4++; say(b, "뇌전의 징표를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
+  if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
@@ -416,6 +451,7 @@ function bossAbility(b, e, a) {
   }
 }
 function bossTick(b, e, dt) {
+  if (e.def.raid) raidTick(b, e, dt);
   if (e.plate) { e.plate.t -= dt; if (e.plate.t <= 0) { e.plate = null; say(b, "철갑이 풀렸다."); } }
   if (e.def.storm) { const np = b.enemies.filter((x) => x.pylon && !x.dead).length; if (np) { const m = 0.1 * np; b.debuffs.curse = { t: 1.0, mult: Math.max(m, b.debuffs.curse && b.debuffs.curse.t > 0.5 ? b.debuffs.curse.mult : 0) }; } }   // 피뢰침이 살아 있는 동안 감전: 받는 피해 +10%/개
   if (e.def.hive) e.guard = !!(b.plan.length || b.enemies.some((x) => !x.dead && x !== e));
@@ -528,7 +564,7 @@ function stepBattle(b, dt) {
   if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
   else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
-  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : 900)) { b.over = true; b.win = !!b.endless; }
+  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
 }
 
 // ---------------- 종료 처리 ----------------
@@ -566,6 +602,7 @@ function finishBattle(sv, b) {
           if (node.act === CFG.ACTS && !sv.endgame) { sv.endgame = true; sv.lanesBase = CFG.ENDGAME_LANES; res.endgameStart = true; res.notes.push("스테이지 클리어! 영구 3레인이 열리고 '심연의 균열'이 개방됩니다. 균열을 한 층 깰 때마다 레벨이 1 오릅니다 — 100층이 목표입니다."); }
         }
       }
+      if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
       if (node.kind === "rift") { if (node.tier > sv.rift.best) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }

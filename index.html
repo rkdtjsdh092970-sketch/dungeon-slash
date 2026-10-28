@@ -745,6 +745,13 @@ const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어�
 const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
 CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다
 
+// 심연의 문지기 (레이드): 거의 최종 스펙으로 파밍한 뒤에야 잡도록 설계한 딜 체크 보스. 체력 구간(75% · 50% · 25%)마다 결계가 펼쳐지고, 결계석을 부수지 못하면 체력이 되살아난다.
+BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, hp: 2600, atk: 30, range: 99, interval: 2.6, windup: 1.0, exp: 0, gold: 0, sc: 6, hue: 0, art: 0, raid: true,
+  abilities: [{ id: "rain", every: 11, hits: 6, mult: 0.5, text: "문지기가 심연의 불을 쏟아붓는다!" }, { id: "wound", every: 19, dur: 6, mult: 0.5, text: "저주받은 낙인! 생명력 흡수·회복이 반감된다!" },
+    { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
+const RAID_BOSS = BOSSES[BOSSES.length - 1];
+CFG.RAID = { ATK: 3.5, K: 7.5, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 600, THR: [0.75, 0.5, 0.25] };
+
 // =========================================================
 // 전투 계산 · 마나 · 옵션 풀 · 고유 장비(등급/출처) 데이터
 // =========================================================
@@ -1522,7 +1529,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -1857,12 +1864,13 @@ const stoneChanceAt = (tier) => Math.min(0.75, 0.30 + 0.004 * tier);
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
-  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault";
+  const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 3 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = riftItemN(node.tier, boss) + (kind === "hell" ? 3 : 0);
+  if (kind === "raid") n = 8;
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = 2 + Math.max(1, node.vsel || 1);
   if (isEB(kind)) n = 3 + 2 * (node.vsel || 1);
@@ -1876,11 +1884,13 @@ function rollDrops(sv, node, boss, B) {
     out.items.push(genItem(sv, ilvl, r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   // 미확인의 돌: 균열에서 드랍 (보스 층은 확정). 제련소에서 옵션을 확인한 뒤 소켓에 끼운다
-  if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind)) {
-    const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : 1.2;
+  if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "raid") {
+    const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : kind === "raid" ? 2.0 : 1.2;
     let c = boss && (kind === "rift" || kind === "hell") ? 1 : 0; for (let k = 0; k < 1 + (chance > 1 ? 1 : 0); k++) if (Math.random() < Math.min(1, chance)) c++;
     for (let k = 0; k < c; k++) sv.stones.push(newStone(sv)); out.stones = c;
   }
+  // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
+  if (kind === "raid") { const ks = ["void", "hive", "titan", "storm"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
   if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1)) out.skills.push(s);
   else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1)) out.skills.push(s);
@@ -1888,7 +1898,7 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
-  const oc = { vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
+  const oc = { raid: 6, vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   // 신성한 구슬은 아주 귀하다 (혼돈 구슬의 약 5%)
@@ -2172,6 +2182,7 @@ const laneH = (b) => (b.lanes <= 3 ? 116 : 88);
 const laneTop = (b) => LAY.cy - (laneH(b) * b.lanes) / 2;
 function cellXY(b, lane, col, w, h) {  // 칸(또는 다칸 몸체) 중심 좌표
   w = w || 1; h = h || 1;
+  if (b.raid) { if (w > 1 || h > 1) return { x: 480, y: 265 }; return { x: 480 + (lane - (b.lanes - 1) / 2) * 250, y: 372 - (col - 1) * 60 }; }   // 레이드: 보스는 화면 중앙, 결계석은 그 앞에 일렬
   return { x: LAY.x0 + (col - 1 + w / 2) * LAY.cw, y: laneTop(b) + (lane + h / 2) * laneH(b) };
 }
 const PLAYER_POS = { x: 104, y: LAY.cy + 44 };
@@ -2218,7 +2229,7 @@ const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
 
 // ---------------- 생성 ----------------
-const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, vault: 1 };
+const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, vault: 1, raid: 1 };
 const specDef = (va) => Object.assign({ tier: "normal", ranged: ACT_SPECIAL[va].range >= 3, proj: va === 7 ? "orb" : null }, ACT_SPECIAL[va]);
 function wavePool(act, stage, mods) {
   const w = actWeights(act); w.spec = SPEC_W(act, stage);
@@ -2273,17 +2284,18 @@ function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
   const floorKind = !!node.tier || RIFTLIKE[node.kind], scAct = floorKind ? 1 : act;   // 균열류는 몬스터 외형만 지역(act)을 따르고, 강도는 층 배율이 정한다
-  let riftMul = node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
+  if (node.kind === "raid") { PLAYER_POS.x = 480; PLAYER_POS.y = 478; } else { PLAYER_POS.x = 104; PLAYER_POS.y = LAY.cy + 44; }
+  let riftMul = node.kind === "raid" ? floorMult(CFG.RIFT_END) : node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
   if (node.kind === "rift" && node.tier % 5 === 0 && node.tier % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;   // 5층마다 나오는 중간 보스 층은 몬스터 강도를 조금 낮춰 갑작스러운 벽이 되지 않게 한다 (20층 단위 보스는 그대로)
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
     hpM: CFG.H0 * Math.pow(CFG.HPX, scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
-    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
+    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
-  b.plan = node.kind === "dummy" ? [] : planFor(node);
-  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
+  b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
+  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
@@ -2291,8 +2303,39 @@ function createBattle(sv, node) {
   });
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
   if (node.kind === "dummy") spawnDummies(b, node);
+  if (node.kind === "raid") { b.hpM *= CFG.RAID.K; b.atkM *= CFG.RAID.ATK; spawnRaid(b); }
   b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
   return b;
+}
+
+// ---------------- 레이드: 심연의 문지기 ----------------
+function spawnRaid(b) {
+  b.raid = true; b.spawnCd = 1e9; const e = spawnAt(b, "boss", 0, 2); e.h = b.lanes; e.w = 3; e.range = 99; e.label = RAID_BOSS.name;
+  e.raid = { limit: CFG.RAID.THR[0] * e.maxHp, idx: 0, sealed: false, t: 0, vuln: 0, blast: 0, cap: e.maxHp, prev: e.maxHp, fails: 0 };
+  e.crystalHp = CFG.RAID.CRYSTAL * b.hpM * 1000;   // 결계석 총 체력(레인에 나눠 가진다)
+}
+function spawnCrystals(b, e) {
+  const n = b.lanes, hp = e.crystalHp / n;
+  for (let lane = 0; lane < n; lane++) {
+    const c = makeEnemy(b, "imp", lane, 1); c.crystal = true; c.hp = c.maxHp = hp; c.atk = 0; c.atkCd = 1e9; c.range = 99; c.traits = []; c.eres = [0, 0, 0, 0]; c.label = "결계석"; c.def = Object.assign({}, c.def, { name: "결계석", exp: 0, gold: 0 }); b.enemies.push(c);
+  }
+}
+function raidTick(b, e, dt) {
+  const R = e.raid, K = CFG.RAID; if (!R) return; if (R.vuln > 0) R.vuln -= dt;
+  if (!R.sealed) {
+    if (R.limit > 0 && e.hp <= R.limit + 1) {
+      R.sealed = true; R.t = 0; R.blast = K.BLAST; R.cap = R.prev; spawnCrystals(b, e); R.fails = 0;
+      say(b, "문지기가 결계를 펼친다! 결계석을 부숴라 — 부수지 못하면 체력이 되살아난다!", "boss"); sfx(b, "roar"); b.shake = 0.7;
+    }
+    return;
+  }
+  R.t += dt;
+  if (!b.enemies.some((x) => !x.dead && x.crystal)) {   // 결계 파괴: 다음 구간까지 피해를 줄 수 있다
+    R.sealed = false; R.prev = R.limit; R.idx++; R.limit = K.THR[R.idx] != null ? K.THR[R.idx] * e.maxHp : 0; R.vuln = K.VULN; e.stun = Math.max(e.stun || 0, 2.2);
+    say(b, "결계가 부서졌다! 문지기가 무방비 상태다!", "good"); sfx(b, "shatter"); b.shake = 0.9; return;
+  }
+  e.hp = Math.min(R.cap, e.hp + e.maxHp * K.REGEN * dt);   // 결계석이 살아 있는 동안 체력이 되살아난다
+  R.blast -= dt; if (R.blast <= 0) { R.blast = K.BLAST; say(b, "결계 폭발!", "boss"); sfx(b, "boom"); damagePlayer(b, e.atk * K.BLASTM * (1 + R.t / 60), { shake: 0.4, boss: true }); }
 }
 
 // ---------------- 허수아비 (마을: 1분 DPS 측정) ----------------
@@ -2433,6 +2476,7 @@ function applyDamage(b, e, dmg, o) {
     if (!b.noFx && (e.guardTxt || 0) < b.time) { e.guardTxt = b.time + 0.7; b.texts.push({ x: (e.vx != null ? e.vx : cellXY(b, e.lane, e.col, e.w, e.h).x), y: 120, text: "정령을 먼저 처치!", color: "#ffb060", big: false, t: 0.9, life: 0.9 }); }
     return 0;
   }
+  if (e.def && e.def.raid && e.raid) { const R = e.raid; if (R.sealed) dmg *= 0.03; else if (R.limit > 0) dmg = Math.min(dmg, Math.max(0, e.hp - R.limit)); if (R.vuln > 0) dmg *= CFG.RAID.VULNM; }   // 결계 중에는 거의 통하지 않고, 구간 끝에서는 더 깎이지 않는다
   e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time;
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   if (!b.noFx && !o.noText) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
@@ -2473,6 +2517,7 @@ function killEnemy(b, e) {
   if (e.type === "twarp") { b.keys3++; say(b, "철갑의 징표를 얻었다!", "good"); sfx(b, "key"); }
   if (e.type === "swarp") { b.keys4++; say(b, "뇌전의 징표를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
+  if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
@@ -2582,6 +2627,7 @@ function bossAbility(b, e, a) {
   }
 }
 function bossTick(b, e, dt) {
+  if (e.def.raid) raidTick(b, e, dt);
   if (e.plate) { e.plate.t -= dt; if (e.plate.t <= 0) { e.plate = null; say(b, "철갑이 풀렸다."); } }
   if (e.def.storm) { const np = b.enemies.filter((x) => x.pylon && !x.dead).length; if (np) { const m = 0.1 * np; b.debuffs.curse = { t: 1.0, mult: Math.max(m, b.debuffs.curse && b.debuffs.curse.t > 0.5 ? b.debuffs.curse.mult : 0) }; } }   // 피뢰침이 살아 있는 동안 감전: 받는 피해 +10%/개
   if (e.def.hive) e.guard = !!(b.plan.length || b.enemies.some((x) => !x.dead && x !== e));
@@ -2694,7 +2740,7 @@ function stepBattle(b, dt) {
   if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
   else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
-  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : 900)) { b.over = true; b.win = !!b.endless; }
+  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
 }
 
 // ---------------- 종료 처리 ----------------
@@ -2732,6 +2778,7 @@ function finishBattle(sv, b) {
           if (node.act === CFG.ACTS && !sv.endgame) { sv.endgame = true; sv.lanesBase = CFG.ENDGAME_LANES; res.endgameStart = true; res.notes.push("스테이지 클리어! 영구 3레인이 열리고 '심연의 균열'이 개방됩니다. 균열을 한 층 깰 때마다 레벨이 1 오릅니다 — 100층이 목표입니다."); }
         }
       }
+      if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
       if (node.kind === "rift") { if (node.tier > sv.rift.best) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
@@ -3380,23 +3427,28 @@ function drawRoads(ctx, b, time) {
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
   const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
-  ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
+  if (b.raid) drawRaidBack(ctx, b, time); else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
-  drawRoads(ctx, b, time);
+  if (!b.raid) drawRoads(ctx, b, time);
   // 장판 (화염 벽)
   for (const z of b.zones) drawZone(ctx, b, z, time);
   drawPersist(ctx, b, time); drawGrand(ctx, b);
   // 플레이어
+  if (!b.raid) {
   const P = PLAYER_POS; let pa = "idle", pt = time; if (b.over && !b.win) { pa = "death"; pt = Math.min(0.5, b.time - (b.deadAt || (b.deadAt = b.time))); } else if (b.pHurt > 0) { pa = "hurt"; pt = 0; } else if (b.pAtk > 0) { pa = "attack"; pt = 0.42 - b.pAtk; }
   const paf = animFrame("warrior", pa, pt); ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 38, 8, 0, 0, 7); ctx.fill(); ctx.restore();
   if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.18 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 40, 58, 70, 0, 0, 7); ctx.fill(); }
   drawSprite(ctx, getSheet("warrior", 0), paf.row, paf.frame, P.x, P.y, 3, false, 1, b.debuffs.freeze ? "rgba(140,210,255,.5)" : b.debuffs.poison ? "rgba(120,255,120,.3)" : null);
+  }
   // 적
+  if (b.raid) drawRaidEnemies(ctx, b, dt, time); else {
   for (const e of b.enemies) unitPos(b, e, dt);
   const list = b.enemies.slice().sort((a, c) => a.vy - c.vy || a.vx - c.vx);
   for (const e of list) { drawEnemy(ctx, b, e, time); if (b.designated === e) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(e.vx, e.vy, 30 + e.def.sc * 6, 10 + e.def.sc * 2, 0, 0, 7); ctx.stroke(); drawPx(ctx, "!", e.vx - 3, e.vy - (e.tier === "boss" ? 200 : 100), "#ffd24a", 3); } }
+  }
   // 시체(사망 연출)
   for (const c of b.corpses) {
+    if (b.raid) { if (c.def && c.def.raid) drawMorgas(ctx, b, null, time, clamp(1 - (c.t - 0.2) / 1.2, 0, 1), true); continue; }
     if (c.boss) { const a = clamp(1 - (c.t - 0.2) / 1.2, 0, 1); drawBossSprite(ctx, bossArt(c.def), c.x, c.y, c.def.sc, { alpha: a, sy: 1 - c.t * 0.35, sx: 1 + c.t * 0.1, tint: c.t < 0.3 ? "rgba(255,255,255,.7)" : null, hue: c.def.hue }); continue; }
     const [ck, ch] = spriteOf(b, c), cm = SPR_META[ck], sheet = getSheet(ck, ch), af = animFrame(ck, "death", c.t), a = clamp(1.3 - c.t, 0, 1);
     drawSprite(ctx, sheet, af.row, af.frame, c.x, c.y, c.tier === "elite" && cm.cell === 48 ? 2.5 : c.def.sc, true, a);
@@ -3503,6 +3555,7 @@ const TOWN_SPOTS = [
   { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
+  { id: "raid",      name: "심연의 문",  x: 884, y: 188, w: 46, h: 136, need: 1, desc: "균열 100층 이후 도전하는 최종 보스", back: true },
   { id: "dummy",     name: "허수아비",   x: 462, y: 366, w: 28, h: 76, need: 1, desc: "1분 동안 피해를 재서 DPS 랭킹에 도전", back: true },
 ];
 const TownView = {
@@ -3606,6 +3659,159 @@ function drawGrand(ctx, b) {   // 신화 이상 전용 스킬: 장엄한 연출 
   ctx.globalAlpha = Math.min(1, a * 1.4); ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0, 170, CW, 76); ctx.textAlign = "center"; ctx.font = "bold 40px sans-serif"; ctx.fillStyle = g.color; ctx.shadowColor = g.color; ctx.shadowBlur = 24; ctx.fillText(g.name, CW / 2 + (k - 0.5) * 40, 220); ctx.restore();
 }
 const pickPrimaryLoose = (b) => b.enemies.find((e) => !e.dead && e.col === Math.min(...b.enemies.filter((x) => !x.dead).map((x) => x.col)));
+
+// =========================================================
+// 레이드 전용 전투 화면: 뒷모습의 플레이어, 중앙의 거대한 보스 '심연의 문지기', 결계석 — 모두 픽셀 느낌의 코드 그림
+// =========================================================
+const RV = { boss: null, bossR: null, back: null, floor: null, plr: null, sc: 2.05, W: 172, H: 176 };
+const RV_OX = () => 480 - (RV.W / 2) * RV.sc, RV_OY = () => 446 - RV.H * RV.sc;
+function rvCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; return [c, g]; }
+function rvPoly(g, pts, col, stroke) { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fill(); if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1; g.stroke(); } }
+function rvBoth(g, cx, pts, col, stroke) { rvPoly(g, pts, col, stroke); rvPoly(g, pts.map(([x, y]) => [2 * cx - x, y]), col, stroke); }
+
+// ---- 보스: 거대한 날개와 뿔, 갑주, 가슴의 불타는 핵, 땅에 꽂은 대검 ----
+function rvBuildBoss(enraged) {
+  const [c, g] = rvCanvas(RV.W, RV.H), cx = RV.W / 2; g.translate(0, 16);
+  // 날개: 찢어진 막과 뼈대
+  const wing = [[64, 58], [44, 24], [20, 4], [8, 10], [12, 34], [4, 50], [14, 66], [10, 84], [26, 92], [34, 80], [44, 96], [52, 82], [58, 74]];
+  rvBoth(g, cx, wing, "#2a0e34", "#14061c");
+  rvBoth(g, cx, [[64, 58], [20, 4], [26, 8], [66, 56]], "#7a6a8a");
+  rvBoth(g, cx, [[62, 62], [8, 12], [12, 16], [64, 66]], "#6a5a7a"); rvBoth(g, cx, [[62, 66], [4, 50], [8, 52], [64, 70]], "#5a4a6a"); rvBoth(g, cx, [[62, 70], [14, 66], [16, 70], [64, 74]], "#5a4a6a");
+  // 몸통
+  rvPoly(g, [[54, 52], [118, 52], [128, 74], [112, 120], [60, 120], [44, 74]], "#241a2c", "#0c0610");
+  rvPoly(g, [[60, 56], [112, 56], [120, 74], [106, 114], [66, 114], [52, 74]], "#382a44");
+  rvPoly(g, [[66, 60], [106, 60], [112, 74], [102, 108], [70, 108], [60, 74]], "#2c2036");
+  for (const y of [86, 96, 106]) rvPoly(g, [[64, y], [108, y], [106, y + 2], [66, y + 2]], "#4a3a58");
+  // 용암 균열
+  g.strokeStyle = enraged ? "#ff3a10" : "#ff6a18"; g.lineWidth = 1.4; for (const p of [[[70, 64], [76, 72], [72, 82], [78, 90]], [[102, 64], [96, 72], [100, 84], [94, 94]], [[78, 100], [84, 106], [90, 100]]]) { g.beginPath(); g.moveTo(...p[0]); for (const q of p.slice(1)) g.lineTo(...q); g.stroke(); }
+  // 어깨 갑옷과 가시
+  for (const [px, s] of [[44, 1], [128, -1]]) {
+    g.fillStyle = "#4a3a58"; g.beginPath(); g.arc(px, 60, 17, 0, 7); g.fill(); g.fillStyle = "#2c2036"; g.beginPath(); g.arc(px, 62, 13, 0, 7); g.fill(); g.strokeStyle = "#7a6a8a"; g.lineWidth = 1.5; g.beginPath(); g.arc(px, 60, 17, Math.PI * 0.9, Math.PI * 1.9); g.stroke();
+  }
+  rvBoth(g, cx, [[38, 50], [24, 22], [46, 44]], "#8a7a98"); rvBoth(g, cx, [[48, 44], [46, 12], [58, 42]], "#8a7a98"); rvBoth(g, cx, [[30, 62], [6, 52], [32, 52]], "#6a5a78"); rvBoth(g, cx, [[34, 70], [10, 72], [34, 62]], "#5a4a68");
+  // 팔
+  rvBoth(g, cx, [[34, 70], [54, 74], [50, 104], [30, 100]], "#34283e", "#0c0610"); rvBoth(g, cx, [[28, 100], [50, 104], [46, 136], [24, 132]], "#2a2034", "#0c0610");
+  rvBoth(g, cx, [[26, 108], [48, 110], [48, 118], [26, 116]], "#6a5a78"); rvBoth(g, cx, [[22, 132], [48, 138], [44, 152], [34, 156], [24, 150]], "#3a2c46", "#0c0610");
+  rvBoth(g, cx, [[24, 150], [28, 164], [32, 152]], "#e8e0d0"); rvBoth(g, cx, [[32, 154], [36, 168], [40, 154]], "#e8e0d0");
+  // 대검 (오른손에 쥔 채 바닥에 꽂음)
+  rvPoly(g, [[132, 150], [140, 150], [142, 44], [136, 22], [130, 44]], "#8a8aa4", "#2a2a3a"); rvPoly(g, [[136, 22], [142, 44], [140, 150], [137, 150]], "#c8c8e0");
+  rvPoly(g, [[116, 144], [158, 144], [158, 152], [116, 152]], "#7a6030", "#2a1c08"); rvPoly(g, [[133, 152], [139, 152], [139, 170], [133, 170]], "#4a2a1a");
+  for (const y of [60, 80, 100, 120]) { g.fillStyle = enraged ? "#ff3a10" : "#ff7a28"; g.fillRect(134, y, 2, 6); }
+  // 허리 갑주
+  rvPoly(g, [[60, 118], [112, 118], [118, 138], [86, 150], [54, 138]], "#241a2c", "#0c0610"); rvPoly(g, [[66, 120], [106, 120], [108, 132], [86, 142], [64, 132]], "#382a44");
+  // 목과 머리
+  rvPoly(g, [[74, 40], [98, 40], [102, 56], [70, 56]], "#241418");
+  g.fillStyle = "#5e1c18"; g.beginPath(); g.ellipse(cx, 32, 17, 20, 0, 0, 7); g.fill(); g.fillStyle = "#7a2a20"; g.beginPath(); g.ellipse(cx - 4, 28, 9, 12, 0, 0, 7); g.fill();
+  rvPoly(g, [[70, 40], [102, 40], [98, 54], [86, 60], [74, 54]], "#3a1410", "#14060a");
+  g.fillStyle = "#f0e8d0"; for (const x of [74, 80, 86, 92]) { rvPoly(g, [[x, 52], [x + 3, 52], [x + 1.5, 59]], "#f0e8d0"); }
+  rvPoly(g, [[72, 24], [84, 29], [72, 32]], "#14060a"); rvPoly(g, [[100, 24], [88, 29], [100, 32]], "#14060a");   // 눈 구멍
+  rvBoth(g, cx, [[72, 25], [82, 29], [72, 30]], enraged ? "#ff5a20" : "#ffd24a"); rvBoth(g, cx, [[74, 27], [80, 29], [74, 29]], "#fff8d0");
+  rvBoth(g, cx, [[78, 36], [82, 46], [76, 44]], "#2a0c08");   // 광대
+  // 뿔: 크게 휘어져 올라가는 한 쌍 + 이마의 가시
+  rvBoth(g, cx, [[72, 20], [58, 16], [44, 20], [32, 10], [24, -2], [20, -14], [32, -6], [44, -4], [58, 2], [72, 8]], "#d8c8a0", "#6a5a38");
+  rvBoth(g, cx, [[70, 14], [58, 10], [46, 12], [34, 4], [26, -6], [36, -2], [48, 2], [60, 4], [70, 10]], "#a89870");
+  rvBoth(g, cx, [[78, 14], [74, -2], [72, -16], [84, 2]], "#e8dcb8", "#6a5a38"); rvPoly(g, [[80, 12], [86, -10], [92, 12]], "#f0e8c8", "#6a5a38");
+  // 발치의 불꽃 받침
+  g.globalCompositeOperation = "source-atop"; const gr = g.createLinearGradient(0, -16, 0, 170); gr.addColorStop(0, "rgba(255,150,70,.20)"); gr.addColorStop(0.5, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,.55)"); g.fillStyle = gr; g.fillRect(0, -16, RV.W, RV.H + 16);
+  if (enraged) { g.fillStyle = "rgba(255,40,10,.22)"; g.fillRect(0, -16, RV.W, RV.H + 16); }
+  return c;
+}
+function rvBuildBack() {
+  const [c, g] = rvCanvas(960, 540);
+  const bg = g.createLinearGradient(0, 0, 0, 540); bg.addColorStop(0, "#07040c"); bg.addColorStop(0.5, "#240a14"); bg.addColorStop(1, "#08040a"); g.fillStyle = bg; g.fillRect(0, 0, 960, 540);
+  const glow = g.createRadialGradient(480, 250, 20, 480, 250, 430); glow.addColorStop(0, "rgba(255,120,40,.55)"); glow.addColorStop(0.4, "rgba(190,40,20,.28)"); glow.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = glow; g.fillRect(0, 0, 960, 540);
+  // 먼 기둥들과 사슬
+  g.fillStyle = "#12080e"; for (const x of [230, 300, 660, 730]) { g.fillRect(x, 60, 22, 330); g.fillStyle = "#1c0e16"; g.fillRect(x + 4, 60, 4, 330); g.fillStyle = "#12080e"; }
+  // 좌우 성벽 (스케치의 벽 모양)
+  const wall = (pts, base) => { rvPoly(g, pts, base, "#08040a"); g.strokeStyle = "rgba(0,0,0,.45)"; g.lineWidth = 2; const [x0, x1] = [Math.min(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[0]))]; for (let y = 180; y < 470; y += 34) { g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y + 10); g.stroke(); } };
+  wall([[0, 130], [196, 166], [180, 428], [0, 490]], "#2a2030"); wall([[960, 130], [764, 166], [780, 420], [960, 486]], "#2a2030");
+  g.fillStyle = "#4a3c58"; g.fillRect(180, 160, 22, 270); g.fillRect(758, 160, 22, 262); g.fillStyle = "#6a5a78"; g.fillRect(180, 160, 4, 270); g.fillRect(776, 160, 4, 262);
+  for (const x of [190, 770]) { g.fillStyle = "#3a2c46"; g.fillRect(x - 16, 138, 36, 26); g.fillStyle = "#1a0e18"; g.fillRect(x - 12, 128, 28, 12); }   // 화로
+  for (const [x, y] of [[70, 230], [118, 300], [74, 380], [890, 230], [842, 296], [886, 376]]) { g.fillStyle = "rgba(255,110,40,.16)"; g.beginPath(); g.arc(x, y, 22, 0, 7); g.fill(); g.strokeStyle = "#ff7a28"; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 9, 0, 7); g.moveTo(x - 6, y + 6); g.lineTo(x + 6, y - 6); g.stroke(); }   // 룬 문양
+  // 용암의 심연
+  const lava = g.createLinearGradient(0, 330, 0, 440); lava.addColorStop(0, "rgba(255,90,20,0)"); lava.addColorStop(0.7, "rgba(255,110,30,.55)"); lava.addColorStop(1, "rgba(255,170,60,.7)"); g.fillStyle = lava; g.fillRect(196, 330, 568, 110);
+  return c;
+}
+function rvBuildFloor() {   // 앞쪽 바닥: 호를 그리는 둥근 경기장 가장자리 (스케치의 곡선)
+  const [c, g] = rvCanvas(960, 540);
+  g.beginPath(); g.moveTo(0, 500); g.quadraticCurveTo(480, 288, 960, 500); g.lineTo(960, 540); g.lineTo(0, 540); g.closePath();
+  const f = g.createLinearGradient(0, 380, 0, 540); f.addColorStop(0, "#3c2c40"); f.addColorStop(1, "#150c1a"); g.fillStyle = f; g.fill(); g.save(); g.clip();
+  g.strokeStyle = "rgba(0,0,0,.5)"; g.lineWidth = 2; for (let i = -6; i <= 6; i++) { g.beginPath(); g.moveTo(480 + i * 26, 392); g.lineTo(480 + i * 150, 540); g.stroke(); }
+  for (let k = 0; k < 6; k++) { const y = 400 + k * k * 4.2 + k * 10; g.beginPath(); g.moveTo(0, y + 40); g.quadraticCurveTo(480, y - 70, 960, y + 40); g.stroke(); }
+  g.strokeStyle = "rgba(255,110,40,.35)"; g.lineWidth = 3; for (const p of [[[300, 520], [330, 480], [320, 450]], [[640, 530], [610, 490], [650, 455]], [[480, 470], [470, 440]]]) { g.beginPath(); g.moveTo(...p[0]); for (const q of p.slice(1)) g.lineTo(...q); g.stroke(); }
+  g.restore(); g.strokeStyle = "#8a6a88"; g.lineWidth = 3; g.beginPath(); g.moveTo(0, 500); g.quadraticCurveTo(480, 288, 960, 500); g.stroke();
+  g.strokeStyle = "rgba(255,120,50,.6)"; g.lineWidth = 6; g.globalAlpha = 0.5; g.beginPath(); g.moveTo(0, 498); g.quadraticCurveTo(480, 286, 960, 498); g.stroke();
+  return c;
+}
+// ---- 플레이어 뒷모습 ----
+function rvBuildPlayer() {
+  const [c, g] = rvCanvas(48, 64), cx = 24;
+  rvBoth(g, cx, [[12, 62], [20, 62], [20, 54], [12, 54]], "#3a2a22");   // 신발
+  rvPoly(g, [[14, 24], [34, 24], [38, 56], [10, 56]], "#8a1f2a", "#3a0a10"); rvPoly(g, [[18, 26], [30, 26], [33, 54], [15, 54]], "#a8303a");   // 망토
+  rvPoly(g, [[22, 30], [26, 30], [26, 50], [22, 50]], "#e8b83a"); rvPoly(g, [[18, 36], [30, 36], [30, 39], [18, 39]], "#e8b83a");   // 등의 문장
+  rvBoth(g, cx, [[8, 24], [18, 20], [20, 30], [8, 32]], "#c8d0e0", "#5a6078"); rvBoth(g, cx, [[8, 24], [12, 22], [12, 28], [8, 30]], "#f0f4fc");   // 견갑
+  g.fillStyle = "#aab4cc"; g.beginPath(); g.ellipse(cx, 14, 9, 10, 0, 0, 7); g.fill(); g.fillStyle = "#d8e0f0"; g.beginPath(); g.ellipse(cx - 2, 11, 5, 6, 0, 0, 7); g.fill();   // 투구
+  rvPoly(g, [[20, 20], [28, 20], [27, 25], [21, 25]], "#7a8298"); rvPoly(g, [[23, 3], [25, 3], [27, 16], [21, 16]], "#c8303a"); rvPoly(g, [[22, 2], [26, 2], [28, 8], [20, 8]], "#e84a50");   // 목받이·깃
+  return c;
+}
+function rvInit() { if (RV.boss) return; RV.boss = rvBuildBoss(false); RV.bossR = rvBuildBoss(true); RV.back = rvBuildBack(); RV.floor = rvBuildFloor(); RV.plr = rvBuildPlayer(); }
+
+function drawRaidBack(ctx, b, time) {
+  rvInit(); ctx.drawImage(RV.back, 0, 0);
+  // 떠다니는 불씨
+  for (let i = 0; i < 46; i++) { const k = (time * (14 + (i % 7) * 4) + i * 53) % 560, x = (i * 97) % 960 + Math.sin(time * 0.8 + i) * 14, y = 540 - k; ctx.fillStyle = `rgba(255,${130 + (i % 5) * 20},50,${0.55 * (1 - k / 560)})`; ctx.fillRect(x, y, 2 + (i % 3), 2 + (i % 3)); }
+}
+function drawMorgas(ctx, b, e, time, alpha, dying) {
+  const R = e && e.raid, enr = e && e.enraged, S = RV.sc, ox = RV_OX(), oy = RV_OY() + Math.sin(time * 1.3) * 2.5;
+  const gl = (x, y, r, col, a) => { const rg = ctx.createRadialGradient(x, y, 2, x, y, r); rg.addColorStop(0, hexA(col, a)); rg.addColorStop(1, hexA(col, 0)); ctx.fillStyle = rg; ctx.fillRect(x - r, y - r, r * 2, r * 2); };
+  ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.imageSmoothingEnabled = false;
+  gl(480, 262, 300, enr ? "#ff2a10" : "#ff6a20", 0.22 + 0.06 * Math.sin(time * 2));   // 후광
+  ctx.drawImage(enr ? RV.bossR : RV.boss, ox, oy, RV.W * S, RV.H * S);
+  if (e && e.flash > 0) { ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.28 * (alpha == null ? 1 : alpha); ctx.drawImage(RV.boss, ox, oy, RV.W * S, RV.H * S); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = alpha == null ? 1 : alpha; }
+  const px = (x, y) => [ox + x * S, oy + (y + 16) * S];
+  const [ex1, ey] = px(77, 27), [ex2] = px(95, 27); for (const x of [ex1, ex2]) gl(x, ey, 34 + 6 * Math.sin(time * 5), enr ? "#ff3a10" : "#ffd24a", 0.85);   // 눈의 빛
+  const [hx, hy] = px(86, 73); gl(hx, hy, 70 + 10 * Math.sin(time * 3.2), enr ? "#ff3010" : "#ff7a20", 0.9); gl(hx, hy, 26, "#fff0b0", 0.9);   // 가슴의 핵
+  if (R && R.sealed) {   // 결계: 푸른 막이 보스를 감싼다
+    const pulse = 0.5 + 0.5 * Math.sin(time * 4); ctx.strokeStyle = `rgba(120,200,255,${0.55 + 0.3 * pulse})`; ctx.lineWidth = 5; ctx.fillStyle = `rgba(90,170,255,${0.10 + 0.06 * pulse})`;
+    ctx.beginPath(); ctx.ellipse(480, 262, 190, 200, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.lineWidth = 2; ctx.globalAlpha *= 0.7; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.ellipse(480, 262, 190 - i * 26, 200, 0, 0, 7); ctx.stroke(); }
+  }
+  if (R && R.vuln > 0) { ctx.globalAlpha = 0.35 + 0.2 * Math.sin(time * 8); ctx.fillStyle = "#fff2a0"; ctx.fillRect(0, 0, 960, 540); }
+  ctx.restore();
+}
+function drawRaidCrystal(ctx, b, e, time) {
+  const x = e.vx, y = e.vy + Math.sin(time * 2 + e.id) * 4, h = 92, w = 38, pulse = 0.5 + 0.5 * Math.sin(time * 4 + e.id), hpR = Math.max(0, e.hp / e.maxHp);
+  const bg = b.bossRef; if (bg && !bg.dead) { ctx.save(); ctx.strokeStyle = `rgba(140,210,255,${0.25 + 0.2 * pulse})`; ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.lineDashOffset = -time * 40; ctx.beginPath(); ctx.moveTo(x, y - h * 0.5); ctx.lineTo(480, 270); ctx.stroke(); ctx.restore(); }
+  const rg = ctx.createRadialGradient(x, y, 4, x, y, 90); rg.addColorStop(0, `rgba(120,200,255,${0.45 + 0.2 * pulse})`); rg.addColorStop(1, "rgba(120,200,255,0)"); ctx.fillStyle = rg; ctx.fillRect(x - 90, y - 90, 180, 180);
+  const flash = e.flash > 0; ctx.save(); ctx.translate(x, y); ctx.lineJoin = "miter";
+  const facets = [[[0, -h / 2], [w / 2, -h * 0.12], [0, 0]], [[0, -h / 2], [-w / 2, -h * 0.12], [0, 0]], [[w / 2, -h * 0.12], [w * 0.36, h * 0.3], [0, h / 2], [0, 0]], [[-w / 2, -h * 0.12], [-w * 0.36, h * 0.3], [0, h / 2], [0, 0]]], cols = ["#b8ecff", "#6ab4f0", "#3a78d8", "#2a58b8"];
+  facets.forEach((f, i) => { ctx.fillStyle = flash ? "#ffffff" : cols[i]; ctx.beginPath(); ctx.moveTo(...f[0]); for (const p of f.slice(1)) ctx.lineTo(...p); ctx.closePath(); ctx.fill(); });
+  ctx.strokeStyle = "#0a1840"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -h / 2); ctx.lineTo(w / 2, -h * 0.12); ctx.lineTo(w * 0.36, h * 0.3); ctx.lineTo(0, h / 2); ctx.lineTo(-w * 0.36, h * 0.3); ctx.lineTo(-w / 2, -h * 0.12); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(x - 40, y + h / 2 + 8, 80, 8); ctx.fillStyle = hpR > 0.3 ? "#7ad0ff" : "#ff6a6a"; ctx.fillRect(x - 39, y + h / 2 + 9, 78 * hpR, 6);
+  ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#cfeaff"; ctx.fillText("결계석", x, y + h / 2 + 30);
+  if (b.designated === e) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x, y + h / 2 + 4, 36, 10, 0, 0, 7); ctx.stroke(); }
+}
+function drawRaidPlayer(ctx, b, time) {
+  rvInit(); const P = PLAYER_POS, S = 2.9, bob = Math.sin(time * 2) * 1.5, w = 48 * S, h = 64 * S, x = P.x - w / 2, y = P.y - h + bob;
+  ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 46, 11, 0, 0, 7); ctx.fill(); ctx.restore();
+  if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.16 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 70, 70, 96, 0, 0, 7); ctx.fill(); }
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  // 칼: 평소에는 위로 받쳐 들고, 공격할 때 크게 내려친다
+  const atk = b.pAtk > 0 ? b.pAtk / 0.42 : 0, ang = -0.35 + (atk > 0 ? Math.sin((1 - atk) * Math.PI) * 1.2 : 0), hx = P.x + 52, hy = y + 66 * S / 2.9 * 1.05;
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(ang); ctx.fillStyle = "#6a4a2a"; ctx.fillRect(-4, -6, 8, 24); ctx.fillStyle = "#e8b83a"; ctx.fillRect(-14, -10, 28, 6); ctx.fillStyle = "#e6eefc"; ctx.fillRect(-6, -92, 12, 84); ctx.fillStyle = "#ffffff"; ctx.fillRect(-1, -92, 3, 84); ctx.fillStyle = "#9aa8c8"; ctx.fillRect(3, -88, 3, 78);
+  if (atk > 0) { ctx.fillStyle = `rgba(255,255,255,${0.5 * atk})`; ctx.fillRect(-10, -96, 20, 90); } ctx.restore();
+  const hurt = b.pHurt > 0; if (hurt) ctx.filter = "brightness(1.8) saturate(.4)";
+  ctx.drawImage(RV.plr, x, y, w, h); ctx.filter = "none"; ctx.restore();
+}
+
+function drawRaidEnemies(ctx, b, dt, time) {
+  const boss = b.enemies.find((e) => e.def && e.def.raid && !e.dead);
+  if (boss) { boss.vx = 480; boss.vy = 265; drawMorgas(ctx, b, boss, time, 1, false); }
+  ctx.drawImage(RV.floor, 0, 0);
+  for (const e of b.enemies) if (e.crystal && !e.dead) { const p = cellXY(b, e.lane, e.col); e.vx = p.x; e.vy = p.y; drawRaidCrystal(ctx, b, e, time); }
+  if (boss && b.designated === boss) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(480, 392, 150, 20, 0, 0, 7); ctx.stroke(); }
+  drawRaidPlayer(ctx, b, time);
+}
 
 // =========================================================
 // 마을 건물: 2px 도트 단위로 벽돌/기와/판자/창문을 그리고 명암(왼쪽 빛, 오른쪽 그늘)을 넣는다.
@@ -3735,6 +3941,11 @@ function paintBuilding(type) {
     R(-24, -32, 32, 1, "#2a5a40"); R(14, -22, 24, 22, "#8a6a42"); planks(14, -22, 24, 22, "#a07a4c"); roofTrap(12, -30, 28, 8, "#6a4a30", 4); R(18, -14, 8, 10, "#4a3220"); R(19, -13, 6, 8, "#2a1c14");
     sack(30, 0); sack(24, 0); sack(27, -8); barrel(-34, 0); barrel(-27, 0); crate(-33, -9, 6, 5);
     sign(-28, -34, 10, 8, "#e8d8a0", (x, y) => { R(x + 2, y + 2, 5, 4, "#8a5a32"); R(x + 3, y + 1, 3, 1, "#8a5a32"); R(x + 4, y + 3, 1, 1, "#ffd84a"); }); bush(36, 0, 2);
+  } else if (type === "raid") {   // 심연의 문: 붉게 타오르는 거대한 아치형 문, 양옆의 뿔 달린 해골 기둥
+    R(-46, -8, 92, 8, "#1a1020"); R(-40, -96, 18, 90, "#2a2030"); R(22, -96, 18, 90, "#2a2030"); R(-40, -96, 4, 90, "#4a3a58"); R(36, -96, 4, 90, "#12080e");
+    R(-22, -92, 44, 84, "#10040a"); R(-18, -88, 36, 80, "#5a1008"); R(-12, -80, 24, 72, "#c8300c"); R(-6, -70, 12, 62, "#ff8a28"); R(-2, -60, 4, 52, "#ffe0a0");
+    R(-26, -104, 52, 12, "#3a2c46"); R(-18, -112, 36, 10, "#4a3a58"); R(-10, -120, 20, 10, "#6a5a78");
+    for (const s of [-1, 1]) { R(s * 36 - 6, -112, 12, 14, "#d8c8a0"); R(s * 40 - 4, -124, 8, 14, "#e8dcb8"); R(s * 44 - 2, -132, 4, 10, "#f0e8c8"); R(s * 36 - 5, -98, 10, 8, "#e8e0d0"); R(s * 36 - 3, -96, 2, 3, "#14060a"); R(s * 36 + 1, -96, 2, 3, "#14060a"); }
   } else if (type === "dummy") {   // 허수아비: 말뚝에 짚단 몸통과 과녁
     R(-9, -3, 18, 3, "#5a4028"); R(-1, -34, 3, 32, "#8a5a32"); R(-12, -26, 24, 3, "#8a5a32"); R(-12, -26, 24, 1, "#a8703c");
     R(-8, -38, 16, 14, "#c8a868"); R(-8, -38, 16, 2, "#e6c88a"); R(-6, -24, 12, 3, "#a8884a"); R(-5, -48, 10, 10, "#d8b878"); R(-5, -48, 10, 2, "#e6c88a");
@@ -3971,7 +4182,7 @@ function townClick(s) {
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
-  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes, dummy: openDummy })[s.id]();
+  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes, dummy: openDummy, raid: openRaid })[s.id]();
 }
 function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다른 유저와 거래하는 장소입니다.<br>온라인 기능은 아직 준비 중입니다.</p>`, { cls: "sm" }); }
 
@@ -4055,7 +4266,7 @@ function openSettings() {
 }
 
 // ---------- 전투 ----------
-function bgmFor(node) { return { boss: "boss", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
+function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
@@ -4075,7 +4286,8 @@ function battleHud(b) {
   G.hpGhost = hp >= G.hpGhost ? hp : Math.max(hp, G.hpGhost - dt * 0.45); $("#hp-fill").style.width = hp * 100 + "%"; $("#hp-ghost").style.width = G.hpGhost * 100 + "%"; $("#hp-txt").textContent = `${fmtN(Math.max(0, b.hp))} / ${fmtN(b.maxHp)}`;
   $("#mp-fill").style.width = Math.max(0, b.mana / b.maxMana) * 100 + "%"; $("#mp-txt").textContent = `${fmtN(Math.max(0, b.mana))} / ${fmtN(b.maxMana)}`;
   const left = b.plan.length + b.enemies.filter((e) => !e.dead).length;
-  if (b.dummy) { $("#wave-fill").style.width = Math.min(100, (b.time / DUMMY_SEC) * 100) + "%"; $("#wave-txt").textContent = `${Math.max(0, Math.ceil(DUMMY_SEC - b.time))}초 · 누적 ${fmtN(b.dealt)} · DPS ${fmtN(b.dealt / Math.max(1, b.time))}`; }
+  if (b.raid) { const R = b.bossRef && b.bossRef.raid, ph = R ? Math.min(4, R.idx + 1) : 1, lim = CFG.RAID.LIMIT; $("#wave-fill").style.width = Math.min(100, (b.time / lim) * 100) + "%"; $("#wave-txt").textContent = `${R && R.sealed ? "결계 · 결계석을 부숴라!" : `${ph}단계`} · 남은 ${Math.max(0, Math.ceil(lim - b.time))}초`; }
+  else if (b.dummy) { $("#wave-fill").style.width = Math.min(100, (b.time / DUMMY_SEC) * 100) + "%"; $("#wave-txt").textContent = `${Math.max(0, Math.ceil(DUMMY_SEC - b.time))}초 · 누적 ${fmtN(b.dealt)} · DPS ${fmtN(b.dealt / Math.max(1, b.time))}`; }
   else if (b.endless) { $("#wave-fill").style.width = Math.min(100, (b.time / 1200) * 100) + "%"; { const dd = b.ddt || 0; $("#wave-txt").textContent = `생존 ${fmtTime(b.time * 1000)} · 위험도 ${Math.floor(dd / 30) + 1} (×${(dd / Math.max(1, b.time)).toFixed(2)}) · 처치 ${b.kills}`; } }
   else { $("#wave-fill").style.width = Math.max(0, 100 - (left / Math.max(1, b.total)) * 100) + "%"; $("#wave-txt").textContent = `남은 적 ${left}${b.keys ? ` · 열쇠 ${b.keys}` : ""}${b.keys2 ? ` · 불씨 ${b.keys2}` : ""}${b.keys3 ? ` · 징표 ${b.keys3}` : ""}${b.keys4 ? ` · 뇌전 ${b.keys4}` : ""}`; }
   b.skills.forEach((sk, i) => { if (!sk) return; const el = $$("#skillbar .bslot")[i]; if (!el) return; el.querySelector(".cdm").style.height = Math.max(0, Math.min(1, sk.cdLeft / sk.cd)) * 100 + "%"; el.querySelector(".rl").textContent = RULE_SHORT[sk.rule]; { const cost = (sk.mana || 0) * b.stats.manaCostMul, mc = el.querySelector(".mc"); mc.textContent = cost >= 1 ? Math.round(cost) : ""; mc.style.display = cost >= 1 ? "" : "none"; mc.classList.toggle("lack", b.mana < cost); el.querySelector(".cds").textContent = sk.cdLeft > 0.05 ? (sk.cdLeft >= 10 ? Math.ceil(sk.cdLeft) : sk.cdLeft.toFixed(1)) : ""; } const lack = b.mana < (sk.mana || 0) * b.stats.manaCostMul; el.classList.toggle("rdy", sk.cdLeft <= 0 && !lack); el.classList.toggle("nomp", lack); });
@@ -5049,6 +5261,20 @@ function ahPostDialog(it) {
   } });
 }
 
+// ---------- 심연의 문 (레이드) ----------
+function openRaid() {
+  const R = save.raid || { cleared: 0, best: 0 }, ok = GRADUATED(save), pw = fmtPow(curPower());
+  Modal.open(`<h2>🔥 심연의 문 · 문지기 모르가스</h2>
+  <div class="dim center">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤에 도전하는 <b>최종 보스급</b> 상대입니다.</div>
+  <div class="pline" style="margin-top:8px">· 문지기의 체력이 <b>75% · 50% · 25%</b>에 이르면 <b>결계</b>가 펼쳐지고 <b>결계석</b>이 솟습니다.</div>
+  <div class="pline">· 결계 중에는 문지기에게 피해가 거의 들어가지 않고, <b>결계석이 남아 있는 동안 문지기의 체력이 되살아납니다.</b></div>
+  <div class="pline">· 결계석을 모두 부수면 문지기가 잠시 무방비가 됩니다. 제한 시간은 <b>${Math.round(CFG.RAID.LIMIT / 60)}분</b>.</div>
+  <div class="pline">내 전투력 <b style="color:#ffe08a">${pw}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>
+  <div class="pbtns">${ok ? `<button class="btn pri" data-a="rstart">도전하기</button>` : `<button class="btn" disabled>균열 100층 클리어 후 도전 가능</button>`}<button class="btn" data-a="rclose">닫기</button></div>`, { cls: "wide", on: {
+    rstart: () => { startBattle({ kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(R.cleared > 0) }, { raid: 1 }); }, rclose: () => Modal.close(),
+  } });
+}
+
 // ---------- 허수아비 (마을) ----------
 const DUMMY_INFO = { boss: ["보스 허수아비", "단일 대상 · 보스 추가 피해가 적용됩니다. 한 마리를 오래 때리는 빌드에 유리합니다."], normal: ["일반 허수아비", `일반 몬스터 ${"여러 마리"}가 모여 있습니다. 범위·연쇄 공격이 유리하고 모든 대상의 피해를 합산합니다.`] };
 function openDummy() {
@@ -5263,7 +5489,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-005349";
+const BUILD_ID = "20261029-011307";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5290,7 +5516,7 @@ function initEndFx(b) {
   b.endT = 0; b.zones = []; b.persist = []; b.events = []; b.conf = [];
   if (endWin(b)) for (let i = 0; i < 90; i++) b.conf.push({ x: Math.random() * CW, y: -Math.random() * 360, vx: rnd(-30, 30), vy: rnd(90, 230), r: rnd(0, 6.28), vr: rnd(-6, 6), c: pick(["#ffd24a", "#ff8a5a", "#8ad8ff", "#a8f08a", "#d8a0ff", "#ffffff"]), w: rnd(4, 8), h: rnd(6, 12) });
 }
-function endTitle(b) { const k = b.node.kind; return endWin(b) ? (k === "endless" ? ["무한 균열 종료", "ENDLESS RIFT"] : k === "boss" || k === "void" || isEB(k) ? ["보스 처치!", "BOSS DEFEATED"] : k === "tutorial" ? ["훈련 완료", "WELL DONE"] : ["스테이지 클리어", "STAGE CLEAR"]) : ["패배...", "DEFEAT"]; }
+function endTitle(b) { const k = b.node.kind; return endWin(b) ? (k === "endless" ? ["무한 균열 종료", "ENDLESS RIFT"] : k === "raid" ? ["문지기 처치!", "GATEKEEPER SLAIN"] : k === "boss" || k === "void" || isEB(k) ? ["보스 처치!", "BOSS DEFEATED"] : k === "tutorial" ? ["훈련 완료", "WELL DONE"] : ["스테이지 클리어", "STAGE CLEAR"]) : ["패배...", "DEFEAT"]; }
 function drawEndOverlay(g, b) {
   const t = b.endT || 0, W = CW, H = CH, win = endWin(b), dt = Math.min(0.1, G.dt || 0.016), [title, sub] = endTitle(b); g.save();
   if (win) {
@@ -5355,6 +5581,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.4", date: "10/29", title: "심연의 문지기 — 최종 보스급 레이드", items: [
+    "마을에 '심연의 문'이 열렸습니다. 균열 100층을 정복하고 장비·스킬·패시브를 끝까지 파밍한 뒤에 도전하는 최종 보스급 콘텐츠입니다.",
+    "한 번 쓰러뜨리면 다음 콘텐츠로 나아갈 수 있는 관문이 됩니다.",
+  ] },
   { ver: "4.3", date: "10/29", title: "허수아비 — 1분 DPS 측정과 랭킹", items: [
     "마을에 '허수아비'가 생겼습니다. 보스 허수아비(단일 대상)와 일반 허수아비(여러 마리) 중에서 골라 입장하면, 지금 장비·스킬·패시브 그대로 60초 동안 피해를 측정합니다.",
     "측정이 끝나면 DPS와 총 피해, 스킬별 피해 비중이 표시됩니다. 허수아비의 방어력은 모두 같은 표준 값이라 다른 유저와 공정하게 비교할 수 있습니다.",

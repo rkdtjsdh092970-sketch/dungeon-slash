@@ -120,6 +120,20 @@ function ahPostDialog(it) {
   } });
 }
 
+// ---------- 심연의 문 (레이드) ----------
+function openRaid() {
+  const R = save.raid || { cleared: 0, best: 0 }, ok = GRADUATED(save), pw = fmtPow(curPower());
+  Modal.open(`<h2>🔥 심연의 문 · 문지기 모르가스</h2>
+  <div class="dim center">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤에 도전하는 <b>최종 보스급</b> 상대입니다.</div>
+  <div class="pline" style="margin-top:8px">· 문지기의 체력이 <b>75% · 50% · 25%</b>에 이르면 <b>결계</b>가 펼쳐지고 <b>결계석</b>이 솟습니다.</div>
+  <div class="pline">· 결계 중에는 문지기에게 피해가 거의 들어가지 않고, <b>결계석이 남아 있는 동안 문지기의 체력이 되살아납니다.</b></div>
+  <div class="pline">· 결계석을 모두 부수면 문지기가 잠시 무방비가 됩니다. 제한 시간은 <b>${Math.round(CFG.RAID.LIMIT / 60)}분</b>.</div>
+  <div class="pline">내 전투력 <b style="color:#ffe08a">${pw}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>
+  <div class="pbtns">${ok ? `<button class="btn pri" data-a="rstart">도전하기</button>` : `<button class="btn" disabled>균열 100층 클리어 후 도전 가능</button>`}<button class="btn" data-a="rclose">닫기</button></div>`, { cls: "wide", on: {
+    rstart: () => { startBattle({ kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(R.cleared > 0) }, { raid: 1 }); }, rclose: () => Modal.close(),
+  } });
+}
+
 // ---------- 허수아비 (마을) ----------
 const DUMMY_INFO = { boss: ["보스 허수아비", "단일 대상 · 보스 추가 피해가 적용됩니다. 한 마리를 오래 때리는 빌드에 유리합니다."], normal: ["일반 허수아비", `일반 몬스터 ${"여러 마리"}가 모여 있습니다. 범위·연쇄 공격이 유리하고 모든 대상의 피해를 합산합니다.`] };
 function openDummy() {

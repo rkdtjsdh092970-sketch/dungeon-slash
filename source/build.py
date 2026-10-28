@@ -5,7 +5,7 @@ sheets={'warrior':'warrior_sheet.png','c_goblin':'goblin_sheet.png','c_archer':'
 for n in ['slime','slimeT','slimeL','mush','mushT','bat','batC','scorp','wolf','wolfH','eye','golem','golemI','golemM','frog']: sheets[n]=n+'_sheet48.png'
 import json
 sp={k:'data:image/png;base64,'+base64.b64encode(open(f'{A}/{v}','rb').read()).decode() for k,v in sheets.items()}
-code='\n'.join(open(f'{D}/src/{f}.js').read() for f in ['util','data','data2','data3','data4','data5','data6','state','battle','battle2','assets','audio','render','render2','town','ui','ui2','ui3','ui4','ui5','ui6','notes','main'])
+code='\n'.join(open(f'{D}/src/{f}.js').read() for f in ['util','data','data2','data3','data4','data5','data6','state','battle','battle2','assets','audio','render','render2','raidview','town','ui','ui2','ui3','ui4','ui5','ui6','notes','main'])
 t=open(f'{D}/template.html').read()
 t=t.replace('//__SPRITES__','const SPRITE_DATA='+json.dumps(sp)+';').replace('//__CODE__',code)
 import time

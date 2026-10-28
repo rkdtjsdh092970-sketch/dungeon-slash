@@ -114,23 +114,28 @@ function drawRoads(ctx, b, time) {
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
   const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
-  ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
+  if (b.raid) drawRaidBack(ctx, b, time); else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
-  drawRoads(ctx, b, time);
+  if (!b.raid) drawRoads(ctx, b, time);
   // 장판 (화염 벽)
   for (const z of b.zones) drawZone(ctx, b, z, time);
   drawPersist(ctx, b, time); drawGrand(ctx, b);
   // 플레이어
+  if (!b.raid) {
   const P = PLAYER_POS; let pa = "idle", pt = time; if (b.over && !b.win) { pa = "death"; pt = Math.min(0.5, b.time - (b.deadAt || (b.deadAt = b.time))); } else if (b.pHurt > 0) { pa = "hurt"; pt = 0; } else if (b.pAtk > 0) { pa = "attack"; pt = 0.42 - b.pAtk; }
   const paf = animFrame("warrior", pa, pt); ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 38, 8, 0, 0, 7); ctx.fill(); ctx.restore();
   if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.18 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 40, 58, 70, 0, 0, 7); ctx.fill(); }
   drawSprite(ctx, getSheet("warrior", 0), paf.row, paf.frame, P.x, P.y, 3, false, 1, b.debuffs.freeze ? "rgba(140,210,255,.5)" : b.debuffs.poison ? "rgba(120,255,120,.3)" : null);
+  }
   // 적
+  if (b.raid) drawRaidEnemies(ctx, b, dt, time); else {
   for (const e of b.enemies) unitPos(b, e, dt);
   const list = b.enemies.slice().sort((a, c) => a.vy - c.vy || a.vx - c.vx);
   for (const e of list) { drawEnemy(ctx, b, e, time); if (b.designated === e) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(e.vx, e.vy, 30 + e.def.sc * 6, 10 + e.def.sc * 2, 0, 0, 7); ctx.stroke(); drawPx(ctx, "!", e.vx - 3, e.vy - (e.tier === "boss" ? 200 : 100), "#ffd24a", 3); } }
+  }
   // 시체(사망 연출)
   for (const c of b.corpses) {
+    if (b.raid) { if (c.def && c.def.raid) drawMorgas(ctx, b, null, time, clamp(1 - (c.t - 0.2) / 1.2, 0, 1), true); continue; }
     if (c.boss) { const a = clamp(1 - (c.t - 0.2) / 1.2, 0, 1); drawBossSprite(ctx, bossArt(c.def), c.x, c.y, c.def.sc, { alpha: a, sy: 1 - c.t * 0.35, sx: 1 + c.t * 0.1, tint: c.t < 0.3 ? "rgba(255,255,255,.7)" : null, hue: c.def.hue }); continue; }
     const [ck, ch] = spriteOf(b, c), cm = SPR_META[ck], sheet = getSheet(ck, ch), af = animFrame(ck, "death", c.t), a = clamp(1.3 - c.t, 0, 1);
     drawSprite(ctx, sheet, af.row, af.frame, c.x, c.y, c.tier === "elite" && cm.cell === 48 ? 2.5 : c.def.sc, true, a);
@@ -237,6 +242,7 @@ const TOWN_SPOTS = [
   { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
+  { id: "raid",      name: "심연의 문",  x: 884, y: 188, w: 46, h: 136, need: 1, desc: "균열 100층 이후 도전하는 최종 보스", back: true },
   { id: "dummy",     name: "허수아비",   x: 462, y: 366, w: 28, h: 76, need: 1, desc: "1분 동안 피해를 재서 DPS 랭킹에 도전", back: true },
 ];
 const TownView = {

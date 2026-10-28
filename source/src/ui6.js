@@ -13,7 +13,7 @@ function initEndFx(b) {
   b.endT = 0; b.zones = []; b.persist = []; b.events = []; b.conf = [];
   if (endWin(b)) for (let i = 0; i < 90; i++) b.conf.push({ x: Math.random() * CW, y: -Math.random() * 360, vx: rnd(-30, 30), vy: rnd(90, 230), r: rnd(0, 6.28), vr: rnd(-6, 6), c: pick(["#ffd24a", "#ff8a5a", "#8ad8ff", "#a8f08a", "#d8a0ff", "#ffffff"]), w: rnd(4, 8), h: rnd(6, 12) });
 }
-function endTitle(b) { const k = b.node.kind; return endWin(b) ? (k === "endless" ? ["무한 균열 종료", "ENDLESS RIFT"] : k === "boss" || k === "void" || isEB(k) ? ["보스 처치!", "BOSS DEFEATED"] : k === "tutorial" ? ["훈련 완료", "WELL DONE"] : ["스테이지 클리어", "STAGE CLEAR"]) : ["패배...", "DEFEAT"]; }
+function endTitle(b) { const k = b.node.kind; return endWin(b) ? (k === "endless" ? ["무한 균열 종료", "ENDLESS RIFT"] : k === "raid" ? ["문지기 처치!", "GATEKEEPER SLAIN"] : k === "boss" || k === "void" || isEB(k) ? ["보스 처치!", "BOSS DEFEATED"] : k === "tutorial" ? ["훈련 완료", "WELL DONE"] : ["스테이지 클리어", "STAGE CLEAR"]) : ["패배...", "DEFEAT"]; }
 function drawEndOverlay(g, b) {
   const t = b.endT || 0, W = CW, H = CH, win = endWin(b), dt = Math.min(0.1, G.dt || 0.016), [title, sub] = endTitle(b); g.save();
   if (win) {

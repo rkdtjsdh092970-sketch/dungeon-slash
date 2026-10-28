@@ -151,3 +151,10 @@ const VOID_NEED = [100, 110, 125, 140];   // 공허의 군주 단계별 입장 �
 const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
 const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
 CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다
+
+// 심연의 문지기 (레이드): 거의 최종 스펙으로 파밍한 뒤에야 잡도록 설계한 딜 체크 보스. 체력 구간(75% · 50% · 25%)마다 결계가 펼쳐지고, 결계석을 부수지 못하면 체력이 되살아난다.
+BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, hp: 2600, atk: 30, range: 99, interval: 2.6, windup: 1.0, exp: 0, gold: 0, sc: 6, hue: 0, art: 0, raid: true,
+  abilities: [{ id: "rain", every: 11, hits: 6, mult: 0.5, text: "문지기가 심연의 불을 쏟아붓는다!" }, { id: "wound", every: 19, dur: 6, mult: 0.5, text: "저주받은 낙인! 생명력 흡수·회복이 반감된다!" },
+    { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
+const RAID_BOSS = BOSSES[BOSSES.length - 1];
+CFG.RAID = { ATK: 3.5, K: 7.5, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 600, THR: [0.75, 0.5, 0.25] };
