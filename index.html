@@ -22,7 +22,7 @@
 #top{position:absolute;left:0;right:0;top:0;height:44px;background:linear-gradient(#150f26f0,#150f26cc);border-bottom:3px solid #6a5a9a;display:flex;align-items:center;gap:8px;padding:0 8px}
 #top .lv{font-weight:900;color:#ffd24a;font-size:18px;min-width:56px}.xp{width:110px;height:10px;background:#000;border:2px solid #555;border-radius:3px;overflow:hidden}.xp i{display:block;height:100%;background:#6ad0ff}
 .cur{display:flex;align-items:center;gap:4px;font-weight:bold;font-size:14px}.sp{flex:1}
-#top .btn{padding:3px 7px;font-size:12px;position:relative;white-space:nowrap;flex:none}#top .pw{white-space:nowrap;flex:none;font-size:12px}#top{gap:5px;padding:0 6px}#top .btn{padding:3px 5px}#top .xp{width:44px}#top .lv{min-width:36px;font-size:14px}#top .cur{white-space:nowrap}#top .cur{font-size:12px}#top .xp{width:70px}#top .lv{font-size:15px;min-width:44px}.dot{position:absolute;right:-4px;top:-6px;width:12px;height:12px;border-radius:50%;background:#ff4a4a;border:2px solid #fff}
+#top .btn{padding:3px 7px;font-size:12px;position:relative;white-space:nowrap;flex:none}#top .pw{white-space:nowrap;flex:none;font-size:12px}.tile .ckm{position:absolute;left:2px;top:1px;font-size:14px;font-style:normal;font-weight:900;color:#6aff9a;text-shadow:0 0 3px #000,0 0 3px #000}.tile.chk{outline:3px solid #6aff9a;outline-offset:-1px;background:#1c3a2a}#top{gap:5px;padding:0 6px}#top .btn{padding:3px 5px}#top .xp{width:44px}#top .lv{min-width:36px;font-size:14px}#top .cur{white-space:nowrap}#top .cur{font-size:12px}#top .xp{width:70px}#top .lv{font-size:15px;min-width:44px}.dot{position:absolute;right:-4px;top:-6px;width:12px;height:12px;border-radius:50%;background:#ff4a4a;border:2px solid #fff}
 #townbar{position:absolute;left:0;top:44px;padding:8px 14px;pointer-events:none}.tname{font-size:0}
 #mappanel{position:absolute;right:10px;bottom:10px;width:250px;background:#1a1430f0;border:3px solid #8a7ab0;border-radius:6px;padding:10px 12px;box-shadow:0 4px 0 #0008}
 .ptitle{font-size:17px;font-weight:900;color:#ffd24a;margin-bottom:6px}.pline{font-size:13px;margin:3px 0}.dim{color:#a8a0c4;font-size:12px}.warn{color:#ff8a6a}.hint{font-size:12px;color:#b8b0d0;text-align:center}
@@ -236,10 +236,6 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
  <span class="cur" data-tipk="ore"><img class="ico" id="io" width="16" height="16"><span id="t-ore"></span></span>
  <span class="cur" id="t-shard-w" data-tipk="shard"><img class="ico" id="is" width="16" height="16"><span id="t-shard"></span></span>
  <span class="cur" id="t-orb-w" data-tipk="orbC"><img class="ico" id="iorb" width="16" height="16"><span id="t-orb"></span></span>
- <span class="cur" id="t-key-w" data-tipk="keys"><img class="ico" id="ikey" width="16" height="16"><span id="t-key"></span></span>
- <span class="cur" id="t-key2-w" data-tipk="keys2" style="color:#ffb070"><span style="font-size:13px">🔥</span><span id="t-key2"></span></span>
- <span class="cur" id="t-key3-w" data-tipk="keys3" style="color:#d8c8b0"><span style="font-size:13px">⚔</span><span id="t-key3"></span></span>
- <span class="cur" id="t-key4-w" data-tipk="keys4" style="color:#ffe45a"><span style="font-size:13px">⚡</span><span id="t-key4"></span></span>
  <span class="srvdot" id="t-srv" title="서버 연결 상태">☁</span><span class="sp"></span><span id="t-world"></span>
  <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">스킬</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-rank">랭킹</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
 <div id="townbar" class="hidden"><span class="tname"></span></div>
@@ -3659,7 +3655,6 @@ function refreshTop() {
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
-  $("#t-key").textContent = fmtN(s.keys); $("#t-key-w").style.display = s.keys || s.endgame ? "" : "none"; $("#t-key2").textContent = fmtN(s.keys2 || 0); $("#t-key2-w").style.display = s.keys2 || s.endgame ? "" : "none"; $("#t-key3").textContent = fmtN(s.keys3 || 0); $("#t-key3-w").style.display = s.keys3 || s.endgame ? "" : "none"; $("#t-key4").textContent = fmtN(s.keys4 || 0); $("#t-key4-w").style.display = s.keys4 || s.endgame ? "" : "none";
   const q = Object.keys(s.q).filter((id) => s.q[id].state === "done").length; $("#b-quest .dot").style.display = q ? "" : "none";
   $("#b-inv .upm").style.display = hasAnyUpgrade(s) ? "" : "none";
   { const D = dailyState(s); const claimable = DAILY_TASKS.some((t) => (!t.endgame || s.endgame) && !D.claimed[t.id] && (D[t.key] || 0) >= t.n); const dd = $("#b-daily .dot"); if (dd) dd.style.display = claimable ? "" : "none"; }
@@ -4081,7 +4076,7 @@ const eqKey = (it) => EQ_SLOTS.find((k) => save.equipped[k] === it);
 const isProtected = (it) => protectedItem(save, it);
 function tileHtml(it, o) {
   o = o || {}; const t = tierOfItem(it), col = itemColor(it);
-  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} data-tipu="${it.uid}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${o.up !== false && !isEquipped(it) && !canEquip(save, it) ? `<i class="mk rq" title="장착 레벨 부족">Lv.${reqLevel(it.ilvl)}</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
+  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""} ${o.chk ? "chk" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} data-tipu="${it.uid}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${o.chk ? `<i class="ckm">✔</i>` : ""}${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${o.up !== false && !isEquipped(it) && !canEquip(save, it) ? `<i class="mk rq" title="장착 레벨 부족">Lv.${reqLevel(it.ilvl)}</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
 }
 function itemTitle(it) {
   if (it.uniq) return `<span class="tn${tierOfItem(it)}">${it.enh ? "+" + it.enh + " " : ""}${itemName(it)}</span>`;
@@ -4097,14 +4092,14 @@ function affRangeText(it, a) {   // 옵션 수치 범위 (최소 ~ 최대)
 function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a.k; const s = d.count ? "+" + Math.round(a.v) : d.pct ? (a.v >= 0 ? "+" : "") + (a.v * 100).toFixed(Math.abs(a.v) < 0.02 ? 2 : 1) + "%" + (d.unit || "") : "+" + fmtN(a.v); return `${d.name} ${s}`; }
 
 // ---------- 장비 창 ----------
-const IB = { mode: "inv", tab: "all", sel: null, rar: -1, sort: "rar", lockOnly: false };
+const IB = { mode: "inv", tab: "all", sel: null, rar: -1, sort: "rar", lockOnly: false, multi: false, chk: new Set() };
 const DOLL_ORDER = ["weapon", "helm", "armor", "gloves", "boots", "neck", "ring", "ring2"];   // 장비 칸 표시 순서 (목걸이가 반지 1 자리, 반지 1이 그 다음)
 function equipItem(it, key) {   // 반지는 비어 있는 칸에 먼저, 둘 다 차 있으면 지정한 칸(없으면 반지 1)과 교체
   key = key || (it.slot === "ring" ? (!save.equipped.ring ? "ring" : !save.equipped.ring2 ? "ring2" : "ring") : it.slot);
   const old = save.equipped[key]; save.inv = save.inv.filter((x) => x !== it); if (old) save.inv.push(old); save.equipped[key] = it;
 }
 function unequipSlot(slot) { const it = save.equipped[slot]; if (it) { save.inv.push(it); delete save.equipped[slot]; } }
-function openItems(mode) { IB.mode = mode; if (!IB.sel || (!save.inv.includes(IB.sel) && !EQ_SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
+function openItems(mode) { IB.mode = mode; IB.multi = false; IB.chk.clear(); if (!IB.sel || (!save.inv.includes(IB.sel) && !EQ_SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
 function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
@@ -4131,6 +4126,27 @@ function itemDetail(it) {
   if (IB.mode === "inv" && SRV.on && !prot) h += `<button class="btn" data-a="ahpost">경매 등록</button>`;
   return h + `</div>`;
 }
+// 인벤토리 다중 선택: 선택한 장비를 한꺼번에 판매/분해
+const multiPicked = () => save.inv.filter((it) => IB.chk.has(it.uid) && !isProtected(it));
+function multiPanel(list) {
+  const P = multiPicked(), gv = P.reduce((a, it) => a + itemValue(it), 0), dy = P.reduce((a, it) => { const y = dismantleYield(it); a.g += y.gold; a.o += y.ore; return a; }, { g: 0, o: 0 });
+  const big = P.filter((it) => it.uniq || it.rarity >= 3).length;
+  return `<div class="dname">☑ 여러 개 선택</div><div class="dim">장비를 눌러 선택·해제합니다.<br>잠금·프리셋·착용 중 장비는 선택할 수 없습니다.</div>
+   <div class="pbtns" style="margin:6px 0"><button class="btn xs" data-a="mall">현재 목록 전체 선택</button><button class="btn xs" data-a="mnone">선택 해제</button></div>
+   <div class="center"><b style="font-size:20px;color:#6aff9a">${P.length}개</b> 선택</div>
+   <div class="pline dim">판매 +${fmtN(gv)}G<br>분해 +${fmtN(dy.g)}G · 강화석 +${dy.o}</div>
+   ${big ? `<div class="pline warn">전설 이상·고유 ${big}개 포함</div>` : ""}
+   <div class="pbtns"><button class="btn pri" data-a="msell" ${P.length ? "" : "disabled"}>선택 판매</button><button class="btn warn" data-a="mdis" ${P.length ? "" : "disabled"}>선택 분해</button></div>
+   <div class="dim" style="margin-top:6px">▲ 표시가 있는 장비(지금보다 강해지는 장비)도 선택하면 처리됩니다</div>`;
+}
+function multiDo(kind, done) {
+  const P = multiPicked(); if (!P.length) return; const big = P.filter((it) => it.uniq || it.rarity >= 3).length, up = P.filter((it) => isUpgrade(save, it)).length;
+  const gain = kind === "sell" ? `+${fmtN(P.reduce((a, it) => a + itemValue(it), 0))}G` : (() => { const t = P.reduce((a, it) => { const y = dismantleYield(it); a.g += y.gold; a.o += y.ore; return a; }, { g: 0, o: 0 }); return `+${fmtN(t.g)}G · 강화석 +${t.o}`; })();
+  askConfirm(`선택한 장비 <b>${P.length}개</b>를 ${kind === "sell" ? "판매" : "분해"}할까요? (${gain})${big ? `<br><span style="color:#ff9a9a">전설 이상·고유 ${big}개가 포함되어 있습니다</span>` : ""}${up ? `<br><span style="color:#ffd070">지금보다 강해지는 장비(▲) ${up}개 포함</span>` : ""}`, kind === "sell" ? "판매" : "분해", () => {
+    let g = 0, o = 0; for (const it of P) { if (kind === "sell") { g += itemValue(it); sellItem(save, it); } else { const y = dismantleItem(save, it); g += y.gold; o += y.ore; } }
+    IB.chk.clear(); IB.sel = null; snd("coin"); toast(`${kind === "sell" ? "판매" : "분해"} ${P.length}개: +${fmtN(g)}G${o ? " · 강화석 +" + o : ""}`, "ok"); done();
+  });
+}
 function renderItems() {
   const m = IB.mode, title = { inv: "장비", forge: "대장간", shop: "상점 · 창고" }[m];
   let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
@@ -4140,11 +4156,11 @@ function renderItems() {
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
-  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button></div>`;
-  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span> &nbsp; <span data-tipk="dice">🎲 주사위 ${save.dice || 0}</span></div>
+  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button></div>`;
+  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span> &nbsp; <span data-tipk="dice">🎲 주사위 ${save.dice || 0}</span>${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
-  <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
-  <div class="col c3">${itemDetail(IB.sel)}</div></div>`;
+  <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
+  <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
   const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
   Modal.open(html, { cls: "wide", on: Object.assign({
@@ -4158,6 +4174,10 @@ function renderItems() {
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
     bulk: () => openBulk(), autodis: () => openAutoDis(),
+    mtog: () => { IB.multi = !IB.multi; IB.chk.clear(); snd("click"); renderItems(); },
+    mpick: (el) => { const it = find(el); if (!it) return; if (isProtected(it)) { snd("error"); toast("잠금·프리셋·착용 중인 장비는 선택할 수 없습니다", "bad"); return; } if (IB.chk.has(it.uid)) IB.chk.delete(it.uid); else IB.chk.add(it.uid); renderItems(); },
+    mall: () => { for (const it of list) if (!isProtected(it)) IB.chk.add(it.uid); renderItems(); }, mnone: () => { IB.chk.clear(); renderItems(); },
+    msell: () => multiDo("sell", done), mdis: () => multiDo("dis", done),
     ahpost: () => ahPostDialog(IB.sel),
     reroll: (el) => { if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
@@ -4848,7 +4868,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-085127";
+const BUILD_ID = "20261028-092145";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4940,6 +4960,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.24", date: "10/28", title: "상단 바 정리 · 인벤토리 다중 선택", items: [
+    "상단 바에서 설정 버튼이 잘리던 문제를 고쳤습니다: 열쇠 4종(공허의 열쇠 · 정령의 불씨 · 철갑의 징표 · 뇌전의 징표) 표시를 상단 바에서 빼서 인벤토리(장비 창) 맨 위로 옮겼습니다. 마우스를 올리면 설명이 나옵니다.",
+    "인벤토리에 '☑ 선택' 모드가 생겼습니다. 켜고 장비를 눌러 여러 개를 고른 뒤 [선택 판매] / [선택 분해]로 한꺼번에 처리합니다. [현재 목록 전체 선택](등급·부위 필터가 적용된 목록) · [선택 해제], 선택 개수와 판매/분해 예상 보상이 표시되고, 전설 이상·고유나 ▲ 장비가 포함되면 확인 창에서 경고합니다. 잠금·프리셋·착용 중 장비는 선택할 수 없습니다.",
+  ] },
   { ver: "3.23", date: "10/28", title: "전투력 표시 · 랭킹", items: [
     "상단 바에 '전투력'이 항상 표시됩니다 (만 · 억 · 조 · 경 단위). 누르면 스탯 창이 열리고, 마우스를 올리면 설명이 나옵니다. 스탯 창의 전투력도 같은 단위로 바뀌었습니다.",
     "상단 메뉴에 '랭킹'이 추가됐습니다 (길드 건물의 랭킹 탭도 같은 창으로 연결). 탭: 전투력 / 균열 최고층 / 스킬 시련 / 무한 균열 / 레벨 / 길드. 상위 50명과 내 순위·기록, 1~3위 메달, 내 줄 강조, 줄을 누르면 레벨·전투력·균열·시련·무한 균열 프로필 카드가 열립니다. 서버 로그인이 필요합니다.",
@@ -5281,7 +5305,7 @@ function frame(ms) {
 window.addEventListener("load", () => {
   CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
-  loadAssets(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#iorb").src = iconURL("orb", 1); $("#ikey").src = iconURL("skull", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); });
+  loadAssets(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#iorb").src = iconURL("orb", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); });
 });
 
 </script></body></html>

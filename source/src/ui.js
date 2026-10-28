@@ -50,7 +50,6 @@ function refreshTop() {
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
-  $("#t-key").textContent = fmtN(s.keys); $("#t-key-w").style.display = s.keys || s.endgame ? "" : "none"; $("#t-key2").textContent = fmtN(s.keys2 || 0); $("#t-key2-w").style.display = s.keys2 || s.endgame ? "" : "none"; $("#t-key3").textContent = fmtN(s.keys3 || 0); $("#t-key3-w").style.display = s.keys3 || s.endgame ? "" : "none"; $("#t-key4").textContent = fmtN(s.keys4 || 0); $("#t-key4-w").style.display = s.keys4 || s.endgame ? "" : "none";
   const q = Object.keys(s.q).filter((id) => s.q[id].state === "done").length; $("#b-quest .dot").style.display = q ? "" : "none";
   $("#b-inv .upm").style.display = hasAnyUpgrade(s) ? "" : "none";
   { const D = dailyState(s); const claimable = DAILY_TASKS.some((t) => (!t.endgame || s.endgame) && !D.claimed[t.id] && (D[t.key] || 0) >= t.n); const dd = $("#b-daily .dot"); if (dd) dd.style.display = claimable ? "" : "none"; }
