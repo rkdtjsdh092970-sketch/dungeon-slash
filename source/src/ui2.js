@@ -12,14 +12,20 @@ function updateWorld() {
 }
 
 // ---------- 스킬 상점 ----------
+const SHOP_TABS = [["all", "전체"], ["basic", "기본 공격"], ["single", "단일"], ["aoe", "범위"], ["boss", "보스"], ["support", "지원·소환"], ["passive", "패시브"]];
+const shopTabOf = (d) => d.slot === "basic" ? "basic" : d.slot === "passive" ? "passive" : d.bonus && d.bonus.boss > 0 ? "boss" : ["buff", "heal", "summon"].includes(d.kind) ? "support" : d.kind === "single" ? "single" : "aoe";
+let SHOP_TAB = "all";
 function openSkillShop() {
-  const stock = shopStock(save), left = (Math.floor(Date.now() / (SHOP_MIN * 60000)) + 1) * SHOP_MIN * 60000 - Date.now();
+  const stock = shopStock(save), cnt = {}; stock.forEach((o) => { const t = shopTabOf(SKILLS.find((x) => x.id === o.id)); cnt[t] = (cnt[t] || 0) + 1; });
+  const tabs = SHOP_TABS.map(([k, n]) => `<button class="btn xs ${SHOP_TAB === k ? "pri" : ""}" data-a="stab" data-n="${k}">${n} ${k === "all" ? stock.length : cnt[k] || 0}</button>`).join(" ");
   const cards = stock.map((o, i) => {
+    if (SHOP_TAB !== "all" && shopTabOf(SKILLS.find((x) => x.id === o.id)) !== SHOP_TAB) return "";
     const d = SKILLS.find((x) => x.id === o.id), R = SKILL_RARITY[o.rarity], bought = false, can = save.gold >= o.price;
     return `<div class="shopcard ${bought ? "sold" : ""}"><div class="sc-h">${skIcon(d.id, 3)}<div><div class="${R.cls}"><b>${R.name} ${d.name}</b></div><small class="dim">${d.slot === "basic" ? "기본 공격" : "액티브"} · 쿨 ${(d.cd * R.cdMul).toFixed(1)}s · 피해 ${Math.round(d.mult * R.mult * 100)}%</small></div></div>
       <div class="dim sc-d">${d.desc}</div><div>${skillAreaHtml(skillOf({ id: d.id, rarity: o.rarity, uid: 0 }), 10)}</div><div class="dim" style="font-size:11px">${skillDescFull(skillOf({ id: d.id, rarity: o.rarity, uid: 0 }))}</div>${bought ? `<button class="btn" disabled>구매 완료</button>` : `<button class="btn pri" data-a="buy" data-n="${i}" ${can ? "" : "disabled"}>${iconImg("gold", 1)} ${fmtN(o.price)}</button>`}</div>`;
   }).join("");
-  Modal.open(`<h2>스킬 상점</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div><div class="dim center">일반 등급 스킬을 전부 판매합니다 · 원하는 스킬을 골라 구매하세요 (같은 스킬 여러 개 구매 가능) · 높은 등급은 100층 졸업 후 보스에게서</div><div class="shopgrid">${cards}</div>`, { cls: "wide", on: {
+  Modal.open(`<h2>스킬 상점</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div><div class="dim center">일반 등급 스킬을 전부 판매합니다 · 원하는 스킬을 골라 구매하세요 (같은 스킬 여러 개 구매 가능) · 높은 등급은 100층 졸업 후 보스에게서</div><div class="center" style="margin:6px 0">${tabs}</div><div class="shopgrid">${cards || '<div class="dim center pad" style="grid-column:1/-1">이 분류에는 판매 중인 스킬이 없습니다</div>'}</div>`, { cls: "wide", on: {
+    stab: (el) => { SHOP_TAB = el.dataset.n; openSkillShop(); },
     buy: (el) => { if (buySkill(save, +el.dataset.n)) { snd("buy"); toast("스킬을 구매했습니다", "ok"); saveGame(); refreshTop(); } else snd("error"); openSkillShop(); },
   } });
 }
