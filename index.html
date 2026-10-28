@@ -2807,7 +2807,7 @@ function finishBattle(sv, b) {
         }
       }
       if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
-      if (node.kind === "rift") { if (node.tier > sv.rift.best) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
+      if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
     while (sv.inv.length > CFG.INV_MAX) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }
@@ -4479,7 +4479,7 @@ function nextBattleOf(node, res) {
     if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
     if (!nxt || !nodeUnlocked(save, nxt)) return null; return { label: nxt.kind === "boss" ? "보스 도전 ▶" : nxt.stage === 1 ? "다음 지역 ▶" : "다음 스테이지 ▶", node: nxt, battle: nodeToBattle(nxt) };
   }
-  if (node.kind === "rift" && node.tier + 1 <= save.rift.best + 1) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
+  if (node.kind === "rift" && node.tier + 1 <= Math.min(CFG.RIFT_END, save.rift.best + 1)) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
   if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
   return null;
 }
@@ -5647,7 +5647,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-025657";
+const BUILD_ID = "20261029-031359";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5739,6 +5739,9 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.21", date: "10/29", title: "균열 100층 버그 수정", items: [
+    "균열 100층을 깬 뒤 '다음 스테이지 자동 이동'으로 101층 이상으로 넘어가던 문제를 고쳤습니다.",
+  ] },
   { ver: "4.20", date: "10/29", title: "보스 스킬 등급 확률 조정", items: [
     "3·4단계 보스 스킬 드랍에서 신화 이상이 전설보다 더 많이 나오던 것을 조정했습니다. 이제 전설이 가장 흔합니다 (3단계 전설 62% · 4단계 전설 50%).",
   ] },
@@ -6137,7 +6140,7 @@ function bindInput() {
   window.addEventListener("mouseup", () => { MapView.drag = null; });
   CV.addEventListener("click", (ev) => {
     AU.init(); AU.resume(); const [x, y] = canvasPos(ev);
-    if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, save.rift.best + 1)); if (n.kind === "trial" && !G.trialInit) { G.trialInit = true; G.trialTier = Math.max(1, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)); } snd("click"); } else MapView.sel = null; mapPanel(); }
+    if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, CFG.RIFT_END, save.rift.best + 1)); if (n.kind === "trial" && !G.trialInit) { G.trialInit = true; G.trialTier = Math.max(1, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)); } snd("click"); } else MapView.sel = null; mapPanel(); }
     else if (G.screen === "town") townClick(TownView.pick(x, y));
     else if (G.screen === "battle" && G.battle && !G.battle.over && !G.paused) { const e = pickEnemy(G.battle, x, y); if (e) { G.battle.designated = G.battle.designated === e ? null : e; snd("click"); } }
   });
