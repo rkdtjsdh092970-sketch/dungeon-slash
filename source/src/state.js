@@ -464,9 +464,9 @@ function rerollAffix(sv, it, idx) {
   if (rerollLocked(it, idx)) return false;
   const c = rerollCost(it); if (sv.gold < c.gold || sv.ore < c.ore) return false;
   const old = it.affixes[idx]; if (!old) return false;
-  const pool = AFFIXES.filter((a) => !it.affixes.some((x, i) => i !== idx && x.k === a.k) && (!a.minRarity || it.rarity >= a.minRarity || (a.minRarity === 2 && it.rarity === 4)) && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl) && a.k !== "lanes" && wtOk(a, it));
+  const pool = affixPool(it, idx);
   if (!pool.length) return false;
-  const a = wpick(pool, (x) => x.w); it.affixes[idx] = mkAff(a, gScale(it.ilvl), ITEM_RARITY[it.uniq ? 3 : it.rarity], it.uniq ? 3 : it.rarity, false); it.rr = (it.rr || 0) + 1; it.rrIdx = idx;   // 재굴림 수치는 드랍과 같은 확률 (높은 수치는 신성한 구슬로)
+  const a = wpick(pool, (x) => x.w); it.affixes[idx] = mkAff(a, it.ilvl, it.rarity, false); it.rr = (it.rr || 0) + 1; it.rrIdx = idx;   // 재굴림 수치는 드랍과 같은 확률 (높은 수치는 신성한 구슬로)
   sv.gold -= c.gold; sv.ore -= c.ore; return true;
 }
 
@@ -535,17 +535,15 @@ function loadPreset(sv, i) {
 // 구슬 / 패시브 / 심연 각인 / 스킬 상점 / 무한 균열 횟수
 // =========================================================
 function addAffix(sv, it) {   // 혼돈 구슬: 옵션 1개 추가 (최대 6)
-  if (it.uniq || it.affixes.length >= (it.ilvl > 10 ? 5 : 6) || sv.orbC < 1) return false;
-  const used = new Set(it.affixes.map((a) => a.k)), g = gScale(it.ilvl);
-  const pool = AFFIXES.filter((a) => !used.has(a.k) && a.k !== "lanes" && (!a.slots || a.slots.includes(it.slot)) && (!a.minIlvl || it.ilvl >= a.minIlvl) && wtOk(a, it));
+  if (it.uniq || it.affixes.length >= 5 || sv.orbC < 1) return false;   // v4: 장비 옵션은 최대 5줄
+  const pool = affixPool(it);
   if (!pool.length) return false;   // 붙일 수 있는 옵션이 더 없다
-  const a = wpick(pool, (x) => x.w); const R = ITEM_RARITY[Math.min(it.rarity, 4)];
-  it.affixes.push(mkAff(a, g, R, it.rarity, true)); sv.orbC--; return a;
+  const a = wpick(pool, (x) => x.w);
+  it.affixes.push(mkAff(a, it.ilvl, it.rarity, true)); sv.orbC--; return a;
 }
 function divineItem(sv, it) {  // 신성한 구슬: 옵션 수치 재굴림
   if (it.uniq || !it.affixes.length || sv.orbD < 1) return false;
-  const g = gScale(it.ilvl), R = ITEM_RARITY[Math.min(it.rarity, 4)];
-  it.affixes = it.affixes.map((a) => mkAff(AFFIXES.find((x) => x.k === a.k), g, R, it.rarity, true, a.t)); sv.orbD--; return true;   // 신성한 구슬: 티어는 그대로, 그 티어 범위 안에서 수치만 다시
+  it.affixes = it.affixes.map((a) => mkAff(AFFIXES.find((x) => x.k === a.k), it.ilvl, it.rarity, true, a.t)); sv.orbD--; return true;   // 신성한 구슬: 티어는 그대로, 그 티어 범위 안에서 수치만 다시
 }
 function buyAtlas(sv, id) {
   const n = ATLAS.find((x) => x.id === id), r = (sv.atlas[id] || 0); if (r >= n.max) return false;
