@@ -353,6 +353,7 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
+  if (kind === "vault") return out;   // 황금 보물고: 골드(몹이 주는 골드)만 나온다 — 장비·돌·구슬·재료·조각은 없다
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 3 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = riftItemN(node.tier, boss) + (kind === "hell" ? 3 : 0);

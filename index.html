@@ -1877,6 +1877,7 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
+  if (kind === "vault") return out;   // 황금 보물고: 골드(몹이 주는 골드)만 나온다 — 장비·돌·구슬·재료·조각은 없다
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 3 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
   if (kind === "rift" || kind === "hell") n = riftItemN(node.tier, boss) + (kind === "hell" ? 3 : 0);
@@ -4178,7 +4179,7 @@ function mapPanel() {
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
     btnOk = un && E.left > 0; btn = E.left > 0 ? "도전" : "횟수 소진";
   } else if (n.kind === "vault") {
-    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">장비·재료 드랍은 적고 골드가 중심입니다. 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
+    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">여기서는 <b>골드만</b> 나옵니다 (장비·돌·구슬·재료·조각 없음). 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
   } else if (isEB(n.kind)) {
     const E = EB[n.kind], S = G[E.stage] = Math.max(1, Math.min(4, G[E.stage] || 1)), need = E.need[S - 1], ok = save.rift.best >= need, have = save[E.key] || 0;
     const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색" }[n.kind];
@@ -5546,7 +5547,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-021712";
+const BUILD_ID = "20261029-021753";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5638,6 +5639,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.16", date: "10/29", title: "황금 보물고 · 재굴림 비용", items: [
+    "황금 보물고에서는 이제 골드만 나옵니다.",
+    "옵션 재굴림 비용을 T1~T3에서 더 낮췄습니다 (T1 150G · T2 500G · T3 1,200G).",
+  ] },
   { ver: "4.15", date: "10/29", title: "옵션 재굴림 비용 고정", items: [
     "옵션 재굴림 비용이 장비 T마다 고정 가격이 되었습니다. 같은 장비를 몇 번 굴려도, 강화 수치가 높아도 가격이 오르지 않습니다 (T1 150G · T2 500G · T3 1,200G · T4 14,000G · T5 35,000G). 재굴림은 여전히 장비마다 한 줄만 가능합니다.",
   ] },

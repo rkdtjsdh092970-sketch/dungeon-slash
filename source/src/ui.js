@@ -129,7 +129,7 @@ function mapPanel() {
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
     btnOk = un && E.left > 0; btn = E.left > 0 ? "도전" : "횟수 소진";
   } else if (n.kind === "vault") {
-    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">장비·재료 드랍은 적고 골드가 중심입니다. 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
+    h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">여기서는 <b>골드만</b> 나옵니다 (장비·돌·구슬·재료·조각 없음). 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
   } else if (isEB(n.kind)) {
     const E = EB[n.kind], S = G[E.stage] = Math.max(1, Math.min(4, G[E.stage] || 1)), need = E.need[S - 1], ok = save.rift.best >= need, have = save[E.key] || 0;
     const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색" }[n.kind];
