@@ -352,12 +352,43 @@ function openAutoDis() {
 }
 
 // ---------- 장비 도감 ----------
-const CX = { tab: "aff", pool: "all", sel: null, skf: "all" };
+const CX = { tab: "odds", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제", void: "공허의 군주" };
 const POOL_BOSS = { void: "공허의 군주", fire: "화염 정령왕", phys: "철갑의 투사", light: "뇌제" }, SRC_COLOR = { void: "#c070ff", fire: "#ff9a30", phys: "#d8c8b0", light: "#ffe45a" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
 const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21), 0);
 const isVoid4Only = (def) => !!def && !!POOL_BOSS[def.pool] && def.tier === 4;   // 엔젤릭: 공허의 군주·화염·물리·번개 보스 4단계에서만
+// 슬롯별 옵션 선택 확률 (전설 · T5 기준, 가중치 비율). 같은 종류가 여러 줄 정의된 옵션은 합산
+const _aoCache = {};
+function affixOdds(slot) {
+  if (_aoCache[slot]) return _aoCache[slot]; const it = { slot, rarity: 3, ilvl: 5, affixes: [], sock: [] }, pool = affixPool(it), tot = pool.reduce((a, x) => a + x.w, 0), o = {};
+  for (const a of pool) o[a.k] = (o[a.k] || 0) + (a.w / tot) * 100; return (_aoCache[slot] = o);
+}
+const pctS = (v, d) => (v * 100).toFixed(d == null ? 1 : d) + "%";
+function oddsHtml() {
+  const H = (t) => `<h3 style="margin:10px 0 4px">${t}</h3>`, row = (...c) => `<tr>${c.map((x, i) => `<td style="padding:2px 8px;${i ? "text-align:right" : ""}">${x}</td>`).join("")}</tr>`, tbl = (rows) => `<table style="width:100%;border-collapse:collapse;font-size:12px">${rows.join("")}</table>`;
+  const R = ITEM_RARITY, sumD = R.reduce((a, x) => a + x.drop, 0), sumB = R.reduce((a, x) => a + x.bossDrop, 0);
+  let h = `<div class="dim">모든 확률은 MF·월드 버프 적용 전 기본값입니다. 균열은 20층마다 아이템 T가 오르고 (T1 1~19층 · T2 20~39 · T3 40~59 · T4 60~79 · T5 80층~), 레벨은 균열 층 첫 클리어마다 오릅니다.</div>`;
+  h += H("① 장비 등급 · 전설 드랍 확률 (아이템 1개당)");
+  const lr = (t, boss) => { const w = riftRW(t, boss), s = w[0] + w[1] + w[2] + w[3]; return row(`균열 ${t}층${boss ? " (보스 층)" : ""}`, pctS(w[0] / s, 0), pctS(w[1] / s, 0), pctS(w[2] / s, 0), `<b style="color:#ffcf6a">${pctS(w[3] / s)}</b>`, `${riftItemN(t, boss)}개 (전설 평균 ${(riftItemN(t, boss) * riftLegendShare(t, boss)).toFixed(1)}개)`); };
+  h += tbl([row("<b>출처</b>", "일반", "매직", "레어", "<b>전설</b>", "드랍 개수"),
+    row("스테이지", ...R.map((r) => pctS(r.drop / sumD, 0)), "2~3개"), row("스테이지 보스", ...R.map((r) => pctS(r.bossDrop / sumB, 0)), "4개"),
+    ...[1, 10, 20, 40, 60, 80, 100].map((t) => lr(t, false)), ...[5, 20, 100].map((t) => lr(t, true))]);
+  h += `<div class="dim">MF가 높으면 매직 이상 비중이 조금씩 올라갑니다. 전설의 옵션은 5개, 소켓은 ③을 따릅니다.</div>`;
+  h += H("② 옵션 티어 확률 (전설 옵션 1줄당)");
+  const rows = [row("<b>아이템 T</b>", ...[1, 2, 3, 4, 5, 6].map((t) => `${t}티어`))];
+  for (let T = 1; T <= 5; T++) { const av = atAvail(T), tot = av.reduce((a, i) => a + AT.w[i], 0); rows.push(row(`T${T}`, ...[0, 1, 2, 3, 4, 5].map((i) => (av.includes(i) ? pctS(AT.w[i] / tot) : "—")))); }
+  rows.push(row("<small class='dim'>수치 배율 (고정값)</small>", ...AT.flat.map((v) => `<small class='dim'>×${v}</small>`))); rows.push(row("<small class='dim'>수치 배율 (%옵션)</small>", ...AT.pct.map((v) => `<small class='dim'>×${v}</small>`)));
+  h += tbl(rows) + `<div class="dim">1티어가 최고 옵션, 6티어가 가장 흔한 옵션입니다. 높은 티어는 높은 T 장비에서만 열립니다 (T1은 5·6티어만). 옵션 종류별 선택 확률은 [옵션 티어] 탭에서 부위별로 볼 수 있습니다.</div>`;
+  h += H("③ 소켓 · 미확인의 돌");
+  const sw = SOCKET_W.reduce((a, b) => a + b, 0);
+  h += tbl([row("전설 소켓 수", "1개", "2개", "3개"), row("확률", ...SOCKET_W.map((w) => pctS(w / sw, 0))), row("돌 드랍 (층당: 1층 / 50층 / 100층)", pctS(stoneChanceAt(1), 0), pctS(stoneChanceAt(50), 0), pctS(stoneChanceAt(100), 0)), row("보스 층 (5층마다)", "확정 +1개", "", "")]);
+  h += `<div class="dim">제련소에서 확인하면 아래 ${STONE_POOL.length}종 중 하나가 같은 확률로 나오고, 수치는 고정입니다: ${STONE_POOL.map((m) => stoneLabel(m)).join(" · ")}</div>`;
+  h += H("④ 스킬 드랍 (균열 100층 졸업 후, 4대 보스)");
+  h += tbl([row("<b>단계</b>", "스킬 확률", "희귀", "전설", "신화", "사탄", "종말"), ...[0, 1, 2, 3].map((k) => { const w = BOSS_SKILL_RW[k], s = w.reduce((a, b) => a + b, 0); return row(`${k + 1}단계`, pctS(BOSS_SKILL_CH[k], 0), ...[1, 2, 3, 4, 5].map((i) => pctS(w[i] / s, 0))); })]);
+  h += `<div class="dim">나온 스킬의 30%는 패시브 스킬입니다. 모든 스킬은 한 보스에 배정되어 있고 (스킬 도감 → 보스별 드랍), 신화 이상이면 40% 확률로 그 보스의 신화 전용 스킬이 나옵니다.</div>`;
+  return h;
+}
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
 function uniqueSources(def) {
   const out = [];
@@ -417,7 +448,7 @@ function formulaHtml() {
   </div>`;
 }
 // ---- 스킬 도감 ----
-const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["boss", "보스 전용기"], ["void", "공허 전용"], ["fire", "화염 정령왕 전용"], ["phys", "철갑의 투사 전용"], ["light", "뇌제 전용"]];
+const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["passive", "패시브 스킬"], ["myth", "신화 이상 전용"], ["boss", "보스 전용기"], ["b_void", "공허의 군주 드랍"], ["b_hive", "화염 정령왕 드랍"], ["b_titan", "철갑의 투사 드랍"], ["b_storm", "뇌제 드랍"]];
 function skBuildTags(d) {
   const t = [];
   if (d.bonus && d.bonus.boss >= 0.8) t.push(["보스 전용기", "#ff9a9a"]);
@@ -430,25 +461,26 @@ function skBuildTags(d) {
 }
 function skSources(d) {
   const o = [];
-  if (d.slot === "passive") { o.push(d.pt === 0 ? "스킬 상점에서 골드로 구매 (레벨 10 이후 등장)" : "균열 100층 졸업 후 공허의 군주 · 속성 보스에서 낮은 확률로 드랍"); return o; }
-  if (d.voidOnly) { o.push(`${POOL_BOSS[d.src] || "공허의 군주"} 처치 시 낮은 확률 (균열 100층 졸업 후)`); return o; }
-  if (d.mythOnly) { o.push("균열 100층 졸업 후 공허의 군주 · 속성 보스에서 신화 등급 이상으로만 드랍"); return o; }
-  if (!isSpecialSkill(d)) o.push(`스킬 상점에서 골드로 구매 (일반 등급, 레벨 ${Math.max(1, (d.unlock - 1) * 10)} 이후 등장)`); else o.push("특수 스킬 — 상점에서는 팔지 않습니다");
-  if (d.slot === "active") o.push("높은 등급은 균열 100층 졸업 후 공허의 군주 · 속성 보스에서 드랍");
+  if (d.slot === "passive") { o.push(d.pt === 0 ? "스킬 상점에서 골드로 구매 (레벨 10 이후 등장)" : "균열 100층 졸업 후 4대 보스(공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제)에서 낮은 확률로 드랍"); return o; }
+  const bk = bossOfSkill(d);
+  if (d.mythOnly) { o.push(`균열 100층 졸업 후 ${BOSS_NAMES[bk]}에서 신화 등급 이상으로만 드랍`); return o; }
+  if (d.voidOnly) { o.push(`균열 100층 졸업 후 ${BOSS_NAMES[bk]}에서 낮은 확률로 드랍 (상점·다른 곳에서는 나오지 않음)`); return o; }
+  if (!isSpecialSkill(d)) o.push(`스킬 상점에서 골드로 구매 (일반 등급 · 레벨 ${Math.max(1, (d.unlock - 1) * 10)} 이후 등장)`); else o.push("특수 스킬 — 상점에서는 팔지 않습니다");
+  o.push(`희귀 · 전설 · 신화 · 사탄 · 종말 등급: 균열 100층 졸업 후 <b>${BOSS_NAMES[bk]}</b>에서 드랍`);
   return o;
 }
 function skCodexRow(d) {
   const got = (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id);
-  return `<div class="dexrow ${CX.sel === d.id ? "found" : ""}" data-a="cxpick" data-id="${d.id}" style="cursor:pointer;${got ? "" : "opacity:.6"}">${iconImg(d.icon, 1)} <b>${d.name}</b> <small class="dim">${d.slot === "basic" ? "기본" : "액티브"} · ${got ? "보유 이력 ✓" : "미획득"}</small>${skBuildTags(d).slice(0, 2).map((t) => ` <small style="color:${t[1]}">${t[0]}</small>`).join("")}</div>`;
+  return `<div class="dexrow ${CX.sel === d.id ? "found" : ""}" data-a="cxpick" data-id="${d.id}" style="cursor:pointer;${got ? "" : "opacity:.6"}">${iconImg(d.icon, 1)} <b>${d.name}</b> <small class="dim">${d.slot === "basic" ? "기본" : d.slot === "passive" ? "패시브" : d.mythOnly ? "신화 전용" : "액티브"} · ${got ? "보유 이력 ✓" : "미획득"}</small>${skBuildTags(d).slice(0, 2).map((t) => ` <small style="color:${t[1]}">${t[0]}</small>`).join("")}</div>`;
 }
 function skCodexDetail(d) {
   const sk = skillOf({ uid: 0, id: d.id, rarity: 0, lvl: 1 }), st = computeStats(save);
   return `<div class="dname">${iconImg(d.icon, 3)} <b>${d.name}</b></div><div>${skTags(sk, st)} ${skBuildTags(d).map((t) => `<span class="chip" style="background:${t[1]}33;color:${t[1]}">${t[0]}</span>`).join("")}</div>
    <div class="dd" style="margin-top:6px">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc || ""}${Object.keys(d.bonus || {}).length ? " · " + Object.keys(d.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(d.bonus[k] * 100)}%`).join(", ") : ""}</div></div>
-   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀 → 전설 (모두 드랍으로만 얻음) → 신화 · 사탄 · 종말(전설 드랍에서 낮은 확률로 상위 등급 — 균열·스킬 시련·공허의 군주). 전설부터는 단일 스킬이 연타가 되고, 신화 이상에서만 나오는 전용 스킬도 있습니다. 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
+   <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반(상점) → 희귀 → 전설 → 신화 → 사탄 → 종말 (희귀 이상은 균열 100층 졸업 후 4대 보스에서만 — 보스마다 얻는 스킬이 정해져 있습니다). 전설부터는 단일 스킬이 연타가 되고, 신화 이상에서만 나오는 전용 스킬도 있습니다. 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
-  const tabs = [["aff", "옵션 티어"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
+  const tabs = [["odds", "드랍·확률"], ["aff", "옵션 티어"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
   let left = "", right = "";
   if (CX.tab === "uniq") {
     const pools = `<div class="itbar"><select data-i="cxpool"><option value="all">전체 출처</option>${Object.keys(U_POOLS).map((k) => `<option value="${k}" ${CX.pool === k ? "selected" : ""}>${U_POOLS[k]}</option>`).join("")}</select></div>`;
@@ -462,8 +494,10 @@ function openCodex() {
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
   } else if (CX.tab === "fml") {
     left = ""; right = formulaHtml();
+  } else if (CX.tab === "odds") {
+    left = ""; right = oddsHtml();
   } else if (CX.tab === "skill") {
-    const f = CX.skf, list = SKILLS.filter((d) => f === "all" || (f === "basic" && d.slot === "basic") || (f === "active" && d.slot === "active" && !d.voidOnly) || (f === "boss" && d.bonus && d.bonus.boss >= 0.8) || (f === "void" && d.src === "void") || (d.voidOnly && f === d.src)).sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock);
+    const f = CX.skf, list = SKILLS.filter((d) => f === "all" || (f === "basic" && d.slot === "basic") || (f === "active" && d.slot === "active" && !d.mythOnly) || (f === "passive" && d.slot === "passive") || (f === "myth" && d.mythOnly) || (f === "boss" && d.bonus && d.bonus.boss >= 0.8) || (f.startsWith("b_") && bossOfSkill(d) === f.slice(2))).sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock);
     const got = SKILLS.filter((d) => (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id)).length;
     left = `<div class="itbar"><select data-i="cxskf">${SK_FILTERS.map(([k, n]) => `<option value="${k}" ${f === k ? "selected" : ""}>${n}</option>`).join("")}</select> <small class="dim">${got} / ${SKILLS.length} 종 보유 이력</small></div>` + list.map(skCodexRow).join("");
     const D = SKILLS.find((x) => x.id === CX.sel); right = D ? skCodexDetail(D) : `<div class="dim center pad">스킬을 선택하면 설명·범위·획득처를 볼 수 있습니다</div>`;
@@ -474,9 +508,9 @@ function openCodex() {
   } else {
     left = SLOTS.map((s) => `<div class="dexrow ${CX.sel === s ? "found" : ""}" data-a="cxpick" data-id="${s}" style="cursor:pointer"><b>${SLOT_NAME[s]}</b> <small class="dim">나올 수 있는 옵션 ${AFFIXES.filter((a) => a.slots.includes(s)).length}종</small></div>`).join("");
     const s = SLOTS.includes(CX.sel) ? CX.sel : null;
-    right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">옵션은 1~6티어 (1티어가 최고·가장 드묾, 6티어가 가장 흔함). 높은 티어는 높은 T 장비에서만 나옵니다: T1 → 5·6티어 / T2 → 4티어~ / T3 → 3티어~ / T4 → 2티어~ / T5 → 1티어~</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `Lv.${a.minIlvl}+` : "전 구간"}${a.minRarity ? " · 희귀 이상" : ""}</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
+    right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">옵션은 1~6티어 (1티어가 최고·가장 드묾, 6티어가 가장 흔함). 높은 티어는 높은 T 장비에서만 나옵니다: T1 → 5·6티어 / T2 → 4티어~ / T3 → 3티어~ / T4 → 2티어~ / T5 → 1티어~</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).filter((a, i, arr) => arr.findIndex((x) => x.k === a.k) === i).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `T${a.minIlvl}+` : "T1~"}${a.minRarity ? " · 레어 이상" : ""} · 선택 확률 ${(affixOdds(s)[a.k] || 0).toFixed(1)}%</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
   }
-  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
+  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" || CX.tab === "odds" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
     cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); }, cxskf: (el) => { CX.skf = el.value; CX.sel = null; openCodex(); },
   } });
 }

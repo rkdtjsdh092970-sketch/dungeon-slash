@@ -105,7 +105,7 @@ function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
   const bonus = {}; for (const k in d.bonus) bonus[k] = d.bonus[k] * R.bonusMul;
   const o = Object.assign({}, d, { def: d, inst, mult: d.mult * R.mult * (1 + 0.05 * (lvl - 1)), cd: d.cd * R.cdMul, side: d.side || 1, bonus, rarity: inst.rarity, lvl, rune: rn, mana: (d.mana || 0) * (1 + 0.02 * (lvl - 1)), power: d.power ? d.power * (1 + (R.mult - 1) * 0.6) : 0 });
-  if (d.kind === "bounce") o.count = d.count + (inst.rarity | 0);   // 등급이 오를수록 튕기는 횟수 +1
+  if (d.kind === "bounce") o.count = d.count + Math.floor((inst.rarity | 0) / 2);   // 등급이 오를수록 튕기는 횟수가 조금씩 늘어난다 (희귀·전설 +0~1, 사탄·종말 +2)
   if (d.kind === "single" && d.dtype !== "buff" && d.dtype !== "heal") { const h = SINGLE_HITS[inst.rarity] || 1; o.hits = h; o.hitMul = (SINGLE_HIT_BONUS[inst.rarity] || 1) / h; if (h > 1) o.desc = d.desc + ` (${h}연타)`; }
   if (rn) {
     if (rn.cd) o.cd *= rn.cd; if (rn.mult) o.mult *= rn.mult; if (rn.mana) o.mana *= rn.mana; if (rn.ignore) o.ignoreAdd = rn.ignore; if (rn.crit) o.critAdd = rn.crit;
@@ -309,21 +309,39 @@ const stoneLabel = (m) => { const d = AFFIXES.find((x) => x.k === m.k); const nm
 function newStone(sv) { return { uid: sv.nextUid++, rev: null }; }
 function revealStone(sv, st) { const c = stoneRevealCost(sv); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL); st.rev = { k: p.k, v: p.v }; questEvent(sv, { type: "stone" }); return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
-// 보스 스킬 드랍 풀 (졸업 후): 기존 보스마다 강한 스킬을 나눠 갖는다
-const BOSS_SKILL_POOL = { void: ["angelfall", "verdict"], hive: ["dragonbreath", "starfall"], titan: ["skysword", "quake"], storm: ["starfall", "skysword"] };
+// 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
+//  공허의 군주: 냉기·공허·마나·버프·회복·소환 계열 / 화염 정령왕: 화염·점화 / 철갑의 투사: 물리·출혈·중독 / 뇌제: 번개·감전
+const BOSS_POOLKEY = { void: "void", hive: "fire", titan: "phys", storm: "light" }, BOSS_NAMES = { void: "공허의 군주", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제" };
+function bossOfSkill(d) {
+  if (d.slot === "passive") return null;
+  if (d.src) return { void: "void", fire: "hive", phys: "titan", light: "storm" }[d.src] || "void";
+  if (d.mythOnly) return { angelfall: "void", verdict: "void", dragonbreath: "hive", starfall: "storm", skysword: "titan", quake: "titan" }[d.id] || "void";
+  if (d.elem === "fire" || d.ignite >= 0.35) return "hive";
+  if (d.elem === "light" || d.shock) return "storm";
+  if (d.elem === "cold" || d.elem === "void") return "void";
+  if (d.dtype === "buff" || d.dtype === "heal" || d.kind === "summon") return "void";
+  if (d.dtype === "mag") return "void";
+  if (d.poison >= 0.3) return "void";   // 독 계열은 공허의 군주
+  if (d.kind === "pierce" || d.kind === "spray" || d.kind === "bounce" || d.kind === "shuri" || d.kind === "boomer") return "storm";   // 관통·난사·투척 계열은 뇌제
+  return "titan";
+}
 const BOSS_SKILL_RW = [[0, 40, 50, 10, 0, 0], [0, 20, 50, 26, 4, 0], [0, 0, 40, 45, 14, 1], [0, 0, 20, 45, 28, 7]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
+const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
+function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
 function rollBossSkills(sv, kind, K) {
   const out = []; if (!GRADUATED(sv)) return out; K = Math.max(1, Math.min(4, K | 1));
-  const ch = [0.12, 0.18, 0.28, 0.45][K - 1]; if (Math.random() >= ch) return out;
+  if (Math.random() >= BOSS_SKILL_CH[K - 1]) return out;
   const w = BOSS_SKILL_RW[K - 1], r = wpick(SKILL_RARITY.map((x, i) => ({ i, w: w[i] || 0 })).filter((x) => x.w > 0), (x) => x.w).i;
-  const own = (kind === "void" ? SKILLS.filter((d) => d.src === "void") : isEB(kind) ? SKILLS.filter((d) => d.src === EB[kind].pool) : []).map((d) => d.id);
-  let id;
-  if (Math.random() < 0.3) { const ps = PASSIVE_SKILLS.filter((p) => p.pt >= Math.max(1, r - 1) && p.pt <= r + 0); if (ps.length) { out.push(genSkill(sv, pick(ps).id, 0)); return out; } }
-  if (r >= 3 && Math.random() < 0.55) id = pick(BOSS_SKILL_POOL[kind] || BOSS_SKILL_POOL.void);
-  else if (own.length && Math.random() < 0.6) id = pick(own);
-  else id = pick(SKILLS.filter((d) => d.slot === "active" && !d.voidOnly && !d.mythOnly && !d.src && d.unlock >= 3)).id;
-  out.push({ uid: sv.nextUid++, id, rarity: r }); return out;
+  if (Math.random() < 0.3) { const ps = PASSIVE_SKILLS.filter((p) => p.pt >= Math.max(1, r - 1) && p.pt <= r); if (ps.length) { out.push(genSkill(sv, pick(ps).id, 0)); return out; } }
+  const all = bossSkillList(kind), myth = all.filter((d) => d.mythOnly), reg = all.filter((d) => !d.mythOnly && (r < 3 || !d.voidOnly || true));
+  const pool = r >= 3 && myth.length && Math.random() < 0.4 ? myth : reg; if (!pool.length) return out;
+  out.push({ uid: sv.nextUid++, id: pick(pool).id, rarity: r }); return out;
 }
+// 균열 층별 드랍 수치 (도감의 확률 표도 같은 함수를 쓴다)
+const riftItemN = (tier, boss) => 4 + Math.min(8, Math.floor((tier || 1) / 6)) + (boss ? 3 : 0);
+const riftRW = (tier, boss) => [8, 26, 40, 26 + Math.min(10, (tier || 0) * 0.1) + (boss ? 6 : 0)];   // 일반·매직·레어·전설 가중치
+const riftLegendShare = (tier, boss) => { const w = riftRW(tier, boss); return w[3] / (w[0] + w[1] + w[2] + w[3]); };
+const stoneChanceAt = (tier) => Math.min(0.75, 0.30 + 0.004 * tier);
 function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
@@ -332,7 +350,7 @@ function rollDrops(sv, node, boss, B) {
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 3 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
-  if (kind === "rift" || kind === "hell") n = 4 + Math.min(8, Math.floor((node.tier || 1) / 6)) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
+  if (kind === "rift" || kind === "hell") n = riftItemN(node.tier, boss) + (kind === "hell" ? 3 : 0);
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = 2 + Math.max(1, node.vsel || 1);
   if (isEB(kind)) n = 3 + 2 * (node.vsel || 1);
@@ -341,13 +359,13 @@ function rollDrops(sv, node, boss, B) {
   const mfv = mfEff(B.mf), mfw = 1 + mfv;
   for (let i = 0; i < n; i++) {
     // 균열·보스: 일반 장비는 거의 안 나온다. 전설은 층이 높을수록 조금씩 더 잘 나온다
-    const RW = late ? [8, 26, 40, 26 + Math.min(10, (node.tier || 0) * 0.1) + (boss ? 6 : 0)] : null;
+    const RW = late ? riftRW(node.tier, boss) : null;
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
     out.items.push(genItem(sv, ilvl, r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   // 미확인의 돌: 균열에서 드랍 (보스 층은 확정). 제련소에서 옵션을 확인한 뒤 소켓에 끼운다
   if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind)) {
-    const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? Math.min(0.75, 0.30 + 0.004 * T) * Math.pow(mfw, 0.3) * (B.stone || 1) : 1.2;
+    const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : 1.2;
     let c = boss && (kind === "rift" || kind === "hell") ? 1 : 0; for (let k = 0; k < 1 + (chance > 1 ? 1 : 0); k++) if (Math.random() < Math.min(1, chance)) c++;
     for (let k = 0; k < c; k++) sv.stones.push(newStone(sv)); out.stones = c;
   }

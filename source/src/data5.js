@@ -259,12 +259,12 @@ UNIQUES.forEach((u) => { if (u.slot === "weapon" && !u.wt) u.wt = "scythe"; });
   SKILLS.push(
     S({ id: "shuriken", name: "수리검", kind: "bounce", cd: 5, mult: 0.8, count: 4, range: 6, unlock: 3, color: "#cfd8e8", icon: "shuriken", sfx: "slash", dtype: "phys", mana: 16, bleed: 0.25, desc: "수리검을 던진다. 화면 안의 적 사이를 무작위로 튕기며 여러 번 벤다 (등급이 오를수록 튕기는 횟수가 늘어난다)" }),
     S({ id: "bigshuriken", name: "대형 수리검", kind: "shuri", cd: 11, mult: 0.4, dur: 7, every: 0.45, range: 6, unlock: 5, color: "#ffb0a0", icon: "bigshuri", sfx: "whirl", dtype: "phys", mana: 26, bleed: 0.2, desc: "거대한 수리검을 한 구간에 박아 7초 동안 그 구간(앞뒤 3열) 전체를 모든 줄에서 베어낸다" }),
-    M({ id: "skysword", name: "천공검", kind: "pierce", cd: 7, mult: 5.6, adj: 0.55, range: 6, bonus: { boss: 0.3 }, color: "#bfe8ff", icon: "skysword", sfx: "pierce", dtype: "phys", mana: 40, desc: "[신화 이상 전용] 하늘에서 거대한 검이 내려와 한 줄을 꿰뚫고, 충격파가 위아래 줄까지 번진다" }),
-    M({ id: "starfall", name: "별의 심판", kind: "rain", cd: 9, mult: 1.5, count: 14, over: 2.4, range: 6, color: "#fff0a0", icon: "starfall", sfx: "meteor", dtype: "mag", elem: "light", mana: 55, desc: "[신화 이상 전용] 화면 가득 별이 쏟아져 무작위 적에게 연속으로 떨어진다" }),
-    M({ id: "quake", name: "대지 붕괴", kind: "zone2", zk: "quake", shape: "wide", cd: 10, mult: 0.3, dur: 6, every: 0.5, range: 6, color: "#c8a070", icon: "quake", sfx: "boom", dtype: "phys", mana: 50, desc: "[신화 이상 전용] 땅이 갈라지며 뒤쪽 넓은 구역에 6초 동안 균열이 번져 지속 피해를 준다" }),
-    M({ id: "dragonbreath", name: "용의 숨결", kind: "pierce", all: true, cd: 8, mult: 4.0, range: 6, color: "#ff8a40", icon: "dragon", sfx: "fire", dtype: "mag", elem: "fire", mana: 48, ignite: 0.5, desc: "[신화 이상 전용] 용의 숨결이 모든 줄을 한꺼번에 휩쓸고 불태운다" }),
-    M({ id: "angelfall", name: "천사의 강림", kind: "nova", cd: 10, mult: 2.8, chill: 0, healPct: 0.08, range: 6, color: "#fff6c0", icon: "angel", sfx: "heal", dtype: "mag", elem: "light", mana: 45, desc: "[신화 이상 전용] 날개가 펼쳐지며 사거리 안의 모든 적을 빛으로 태우고 체력을 8% 회복한다" }),
-    M({ id: "verdict", name: "단죄", kind: "single", cd: 9, mult: 16, range: 6, bonus: { elite: 0.5, boss: 0.5 }, color: "#ffdada", icon: "verdict", sfx: "snipe", dtype: "phys", mana: 50, desc: "[신화 이상 전용] 정예와 보스를 단죄하는 일격 (등급이 오를수록 연타가 늘어난다)" }),
+    M({ id: "skysword", name: "천공검", kind: "pierce", cd: 7, mult: 4.8, adj: 0.5, range: 6, bonus: { boss: 0.3 }, color: "#bfe8ff", icon: "skysword", sfx: "pierce", dtype: "phys", mana: 40, desc: "[신화 이상 전용] 하늘에서 거대한 검이 내려와 한 줄을 꿰뚫고, 충격파가 위아래 줄까지 번진다" }),
+    M({ id: "starfall", name: "별의 심판", kind: "rain", cd: 9, mult: 1.3, count: 14, over: 2.4, range: 6, color: "#fff0a0", icon: "starfall", sfx: "meteor", dtype: "mag", elem: "light", mana: 55, desc: "[신화 이상 전용] 화면 가득 별이 쏟아져 무작위 적에게 연속으로 떨어진다" }),
+    M({ id: "quake", name: "대지 붕괴", kind: "zone2", zk: "quake", shape: "wide", cd: 10, mult: 0.26, dur: 6, every: 0.5, range: 6, color: "#c8a070", icon: "quake", sfx: "boom", dtype: "phys", mana: 50, desc: "[신화 이상 전용] 땅이 갈라지며 뒤쪽 넓은 구역에 6초 동안 균열이 번져 지속 피해를 준다" }),
+    M({ id: "dragonbreath", name: "용의 숨결", kind: "pierce", all: true, cd: 8, mult: 3.4, range: 6, color: "#ff8a40", icon: "dragon", sfx: "fire", dtype: "mag", elem: "fire", mana: 48, ignite: 0.5, desc: "[신화 이상 전용] 용의 숨결이 모든 줄을 한꺼번에 휩쓸고 불태운다" }),
+    M({ id: "angelfall", name: "천사의 강림", kind: "nova", cd: 10, mult: 2.4, chill: 0, healPct: 0.08, range: 6, color: "#fff6c0", icon: "angel", sfx: "heal", dtype: "mag", elem: "light", mana: 45, desc: "[신화 이상 전용] 날개가 펼쳐지며 사거리 안의 모든 적을 빛으로 태우고 체력을 8% 회복한다" }),
+    M({ id: "verdict", name: "단죄", kind: "single", cd: 9, mult: 13.5, range: 6, bonus: { elite: 0.4, boss: 0.4 }, color: "#ffdada", icon: "verdict", sfx: "snipe", dtype: "phys", mana: 50, desc: "[신화 이상 전용] 정예와 보스를 단죄하는 일격 (등급이 오를수록 연타가 늘어난다)" }),
   );
 })();
 const MYTH_IDS = SKILLS.filter((d) => d.mythOnly).map((d) => d.id);
@@ -275,8 +275,8 @@ const PASSIVE_SKILLS = [
   { id: "p_fort", pt: 1, name: "요새", per: { defPct: 0.16, hpPct: 0.12, dmgTaken: -0.04 }, desc: "[패시브] 흔들리지 않는 요새 — 방어력 +16%, 체력 +12%, 받는 피해 -4%" },
   { id: "p_will", pt: 2, name: "전장의 의지", per: { atkPct: 0.07, magPct: 0.07, cdr: 0.05, lifesteal: 0.004 }, desc: "[패시브] 싸울수록 강해진다 — 공격력·주문력 +7%, 쿨타임 -5%, 흡혈 +0.4%" },
   { id: "p_halo", pt: 3, name: "천상의 가호", per: { ignoreDef: 0.10, ignoreRes: 0.10, allDmg: 0.08, cdr: 0.04 }, desc: "[패시브] 방어·저항 10% 관통, 모든 피해 +8%, 쿨타임 -4%" },
-  { id: "p_pact", pt: 4, name: "심연의 계약", per: { chainJumps: 1, allDmg: 0.12, critChance: 0.08, shredDef: 0.08 }, desc: "[패시브] 연쇄 +1회(번개·연쇄 스킬), 모든 피해 +12%, 치명타 +8%, 방어 감소 +8%" },
-  { id: "p_end", pt: 5, name: "종말의 서약", per: { allDmg: 0.18, atkMore: 1.08, magMore: 1.08, cdr: 0.08, ignoreDef: 0.12, ignoreRes: 0.12, chainJumps: 1 }, desc: "[패시브] 모든 피해 +18%, 공격·주문 8% 추가 증가, 쿨타임 -8%, 방어·저항 12% 관통, 연쇄 +1" },
+  { id: "p_pact", pt: 4, name: "심연의 계약", per: { chainJumps: 1, allDmg: 0.10, critChance: 0.06, shredDef: 0.06 }, desc: "[패시브] 연쇄 +1회(번개·연쇄 스킬), 모든 피해 +10%, 치명타 +6%, 방어 감소 +6%" },
+  { id: "p_end", pt: 5, name: "종말의 서약", per: { allDmg: 0.14, atkMore: 1.05, magMore: 1.05, cdr: 0.06, ignoreDef: 0.10, ignoreRes: 0.10, chainJumps: 1 }, desc: "[패시브] 모든 피해 +14%, 공격·주문 5% 추가 증가, 쿨타임 -6%, 방어·저항 10% 관통, 연쇄 +1" },
 ];
 for (const p of PASSIVE_SKILLS) SKILLS.push({ id: p.id, name: p.name, slot: "passive", kind: "passive", pt: p.pt, cd: 99, mult: 0, unlock: p.pt === 0 ? 2 : 99, color: ["#b8c4d8", "#9ad0ff", "#ffd27a", "#bfe8ff", "#c06aff", "#ff5a5a"][p.pt], icon: "passive" + p.pt, dtype: "buff", mana: 0, bonus: {}, side: 1, per: p.per, desc: p.desc });
 
@@ -285,3 +285,12 @@ UNIQUES.length = 0; for (const k of Object.keys(UNIQUE_BY_ID)) delete UNIQUE_BY_
 
 // ---- v4: 옵션이 열리는 아이템 레벨(minIlvl)은 이전의 1~10 기준이라 T1~T5로 환산한다 (1~2 → T1, 3~4 → T2, 5~6 → T3, 7~8 → T4) ----
 AFFIXES.forEach((a) => { if (a.minIlvl) a.minIlvl = Math.max(1, Math.min(5, Math.ceil(a.minIlvl / 2))); });
+
+// ---- v4: 속성별 기본 공격 (기본 스킬 칸 전용, 마나 0): 화염 · 냉기 · 공허 · 출혈 · 중독 + 기존 물리(일격) · 번개(번개 찌르기) ----
+SKILLS.push(
+  { id: "ember", name: "불씨 탄", slot: "basic", kind: "single", cd: 0.85, mult: 1.0, range: 4, bonus: {}, unlock: 1, color: "#ff9a50", icon: "flame", sfx: "boom", dtype: "mag", elem: "fire", mana: 0, ignite: 0.2, side: 1, desc: "기본 화염 공격. 일정 확률로 점화시킨다" },
+  { id: "rip", name: "찢기", slot: "basic", kind: "single", cd: 0.8, mult: 0.95, range: 3, bonus: {}, unlock: 1, color: "#ff7a7a", icon: "claw", sfx: "slash", dtype: "phys", mana: 0, bleed: 0.25, side: 1, desc: "기본 물리 공격. 일정 확률로 출혈시킨다" },
+  { id: "frostbolt", name: "서리 화살", slot: "basic", kind: "single", cd: 0.9, mult: 1.05, range: 4, bonus: {}, unlock: 2, color: "#a8e8ff", icon: "snow", sfx: "frost", dtype: "mag", elem: "cold", mana: 0, side: 1, desc: "기본 냉기 공격. 냉기 피해 · 둔화 연계 빌드용" },
+  { id: "venom", name: "독침", slot: "basic", kind: "single", cd: 0.75, mult: 0.9, range: 4, bonus: {}, unlock: 2, color: "#8aff6a", icon: "dagger", sfx: "slash", dtype: "phys", mana: 0, poison: 0.25, side: 1, desc: "기본 물리 공격. 일정 확률로 중독시킨다" },
+  { id: "voidbolt", name: "공허 탄", slot: "basic", kind: "single", cd: 1.0, mult: 1.1, range: 4, bonus: {}, unlock: 3, color: "#c070ff", icon: "vortex", sfx: "zap", dtype: "mag", elem: "void", mana: 0, side: 1, desc: "기본 공허 공격. 공허 피해 빌드용" },
+);

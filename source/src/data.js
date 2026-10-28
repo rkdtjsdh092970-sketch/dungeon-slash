@@ -100,17 +100,16 @@ const SKILLS = [
   { id: "pierce2", name: "섬광 관통",     slot: "active", kind: "pierce", cd: 7.0,  mult: 2.8,  range: 6, bonus: { ranged: 0.3 }, unlock: 6, color: "#fff", icon: "spear", sfx: "pierce", desc: "원거리에 추가 피해를 주는 관통" },
   { id: "meteor",  name: "유성",         slot: "active", kind: "meteor", cd: 12.0, mult: 1.6,  side: 1.0, range: 6, count: 3, bonus: { elite: 0.3, boss: 0.3 }, unlock: 7, color: "#ff8a4a", icon: "meteor", sfx: "meteor", desc: "유성 3개가 무작위 적 위에 떨어진다" },
 ];
-const SKILL_RARITY = [
+const SKILL_RARITY = [   // v4: 등급이 높아도 격차가 너무 크지 않게 — 초당 피해(배율÷쿨타임) 기준 희귀 ×1.13 · 전설 ×1.28 · 신화 ×1.41 · 사탄 ×1.58 · 종말 ×1.76
   { name: "일반", mult: 1.0,  cdMul: 1.0,  bonusMul: 1.0, w: 70, cls: "r0" },
-  { name: "희귀", mult: 1.25, cdMul: 0.95, bonusMul: 1.3, w: 25, cls: "r2" },
-  { name: "전설", mult: 1.6,  cdMul: 0.9,  bonusMul: 1.7, w: 5,  cls: "r3" },
-  // 전설 위 등급: 일반 드랍 풀에는 없고, 엔드게임(스킬 시련·공허의 군주)에서 전설이 나왔을 때 아주 낮은 확률로 한 단계씩 더 올라간다. 승급으로는 얻을 수 없다
-  { name: "신화", mult: 1.9, cdMul: 0.87, bonusMul: 2.0, w: 0, cls: "sk3" },   // v3.23: 스킬의 상위 등급은 장비(이터널·소버린·엔젤릭)와 다른 이름·색·표시를 쓴다
-  { name: "사탄", mult: 2.3, cdMul: 0.84, bonusMul: 2.4, w: 0, cls: "sk4" },
-  { name: "종말", mult: 3.0, cdMul: 0.80, bonusMul: 3.0, w: 0, cls: "sk5" },
+  { name: "희귀", mult: 1.10, cdMul: 0.97, bonusMul: 1.2, w: 25, cls: "r2" },
+  { name: "전설", mult: 1.20, cdMul: 0.94, bonusMul: 1.4, w: 5,  cls: "r3" },
+  { name: "신화", mult: 1.30, cdMul: 0.92, bonusMul: 1.55, w: 0, cls: "sk3" },
+  { name: "사탄", mult: 1.42, cdMul: 0.90, bonusMul: 1.7, w: 0, cls: "sk4" },
+  { name: "종말", mult: 1.55, cdMul: 0.88, bonusMul: 1.9, w: 0, cls: "sk5" },
 ];
 // v3.23 단일 스킬은 전설부터 연타가 된다 (등급: 일반·희귀 1타 / 전설 2 / 이터널 3 / 소버린 4 / 엔젤릭 5). 총피해는 연타 수에 비례하지 않고 등급 배율 위에 작은 보너스만 붙는다 — 한 번의 피해를 연타 수만큼 나눈다
-const SINGLE_HITS = [1, 1, 2, 3, 4, 5], SINGLE_HIT_BONUS = [1, 1, 1.1, 1.14, 1.2, 1.25];
+const SINGLE_HITS = [1, 1, 2, 3, 4, 5], SINGLE_HIT_BONUS = [1, 1, 1.04, 1.06, 1.08, 1.10];
 const RULES = { front: "앞열(기본)", auto: "오토", boss: "보스 우선", ranged: "원거리 우선", elite: "정예 우선", normal: "일반 우선" };
 const RULE_ORDER = ["front", "auto", "boss", "ranged", "elite", "normal"];
 
