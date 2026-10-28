@@ -155,7 +155,7 @@ function drawBattle(ctx, b, dt, time) {
 // =========================================================
 let HELL_SET = null;
 const MapView = {
-  pulse: null, cv: null, g: null, cam: { x: 0, y: 0 }, world: null, sel: null, hover: null, drag: null, moved: false, t: 0,
+  cine: null, rise: 1, pulse: null, cv: null, g: null, cam: { x: 0, y: 0 }, world: null, sel: null, hover: null, drag: null, moved: false, t: 0,
   build() {
     if (this.world) return;
     const sc = 3, W = Math.ceil(MAP_W / sc), H = Math.ceil(MAP_H / sc), c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), r = seeded(777);
@@ -169,6 +169,8 @@ const MapView = {
   nodeIcon(g, n, st, time, hot) {
     const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1 + 0.12 * Math.sin(time * 3 + n.x);
     const orb = (col, hi, rad) => { g.fillStyle = "rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(x, y + rad * 0.7, rad, rad * 0.4, 0, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill(); g.fillStyle = hi; g.beginPath(); g.arc(x - rad * 0.3, y - rad * 0.3, rad * 0.4, 0, 7); g.fill(); };
+    if (n.kind === "raid" && st !== "locked") { orb("#5a1008", "#ff6a28", 14 * pulse); g.fillStyle = "#1a0a10"; g.fillRect(x - 8, y - 9, 16, 16); g.fillStyle = "#ff8a28"; g.fillRect(x - 5, y - 6, 10, 13); g.fillStyle = "#ffe0a0"; g.fillRect(x - 2, y - 3, 4, 10); g.fillStyle = "#d8c8a0"; g.fillRect(x - 10, y - 12, 4, 7); g.fillRect(x + 6, y - 12, 4, 7); return; }
+    if (n.kind === "tower") { this.drawTower(g, x, y, time); return; }
     if (st === "locked") { orb("#4a4458", "#6a647a", 11); g.fillStyle = "#2a2430"; g.fillRect(x - 5, y - 1, 10, 8); g.strokeStyle = "#2a2430"; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y - 3, 4, Math.PI, 0); g.stroke(); return; }
     if (n.kind === "town") { g.fillStyle = "rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(x, y + 10, 16, 5, 0, 0, 7); g.fill(); g.fillStyle = "#e8d8a0"; g.fillRect(x - 11, y - 6, 22, 14); g.fillStyle = "#c0503a"; g.beginPath(); g.moveTo(x - 14, y - 6); g.lineTo(x, y - 18); g.lineTo(x + 14, y - 6); g.fill(); g.fillStyle = "#4a3020"; g.fillRect(x - 3, y, 6, 8); return; }
     if (n.kind === "boss") { orb("#a02a3a", "#e86a7a", 14 * pulse); g.fillStyle = "#f4f0e0"; g.fillRect(x - 6, y - 7, 12, 10); g.fillRect(x - 4, y + 2, 8, 4); g.fillStyle = "#2a1020"; g.fillRect(x - 4, y - 4, 3, 3); g.fillRect(x + 1, y - 4, 3, 3); return; }
@@ -186,34 +188,57 @@ const MapView = {
     const cleared = st === "cleared"; orb(cleared ? "#3a6a98" : "#3a8aff", cleared ? "#8ac0e8" : "#b8dcff", 11 * (cleared ? 1 : pulse));
     if (cleared) { g.fillStyle = "#e8fff0"; g.fillRect(x - 5, y, 3, 3); g.fillRect(x - 2, y + 3, 3, 3); g.fillRect(x + 1, y, 3, 3); g.fillRect(x + 4, y - 4, 3, 3); }
   },
+  hidden(n) { return n.kind === "tower" && !(save && save.raid && save.raid.tower); },
+  drawTower(g, x, y, time) {   // 솟아오르는 탑: 아래에서부터 드러나고, 흔들리며 먼지가 인다
+    const p = this.rise, H = 96 * p; g.save(); g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(x, y + 8, 26, 8, 0, 0, 7); g.fill();
+    g.beginPath(); g.rect(x - 40, y + 8 - H, 80, H + 2); g.clip();
+    g.fillStyle = "#2a2036"; g.fillRect(x - 15, y - 88, 30, 96); g.fillStyle = "#3a2c48"; g.fillRect(x - 15, y - 88, 8, 96); g.fillStyle = "#1a1224"; g.fillRect(x + 8, y - 88, 7, 96);
+    g.fillStyle = "#4a3a58"; g.fillRect(x - 21, y - 96, 42, 10); g.fillRect(x - 18, y - 70, 36, 5); g.fillRect(x - 18, y - 40, 36, 5); g.fillStyle = "#6a5a78"; for (const bx of [-21, -9, 3, 15]) g.fillRect(x + bx, y - 104, 6, 8);
+    g.fillStyle = "#ff8a28"; for (const wy of [-80, -58, -30, -10]) g.fillRect(x - 2, y + wy, 4, 8); g.fillStyle = "#ffe0a0"; g.fillRect(x - 1, y - 90, 2, 4);
+    g.restore();
+    if (p < 1) { g.fillStyle = "rgba(200,180,160,.5)"; for (let i = 0; i < 14; i++) { const k = (time * 1.6 + i * 0.37) % 1, dx = (i % 2 ? 1 : -1) * (14 + k * 34 + (i % 5) * 4); g.globalAlpha = 0.55 * (1 - k); g.fillRect(x + dx - 3, y + 4 - k * 26 - (i % 3) * 4, 6 + (i % 3), 6 + (i % 3)); } g.globalAlpha = 1; }
+    else { g.fillStyle = `rgba(255,150,60,${0.25 + 0.15 * Math.sin(time * 3)})`; g.beginPath(); g.arc(x, y - 92, 10, 0, 7); g.fill(); }
+  },
   draw(sv, time, dt) {
     this.build(); const g = this.g; g.imageSmoothingEnabled = false; this.t = time;
+    // 연출: 문지기를 쓰러뜨린 뒤 먼 곳에서 탑이 솟아오른다 (카메라가 이동하고 화면이 흔들린다)
+    const C = this.cine; let shx = 0, shy = 0; this.rise = 1;
+    if (C) {
+      if (C.t0 == null) C.t0 = time; const k = time - C.t0; this.rise = clamp((k - 1.4) / 3.6, 0, 1);
+      const amp = k < 0.6 ? 0 : k < 1.4 ? (k - 0.6) / 0.8 * 3 : this.rise < 1 ? 8 : Math.max(0, 1 - (k - 5)) * 8; shx = rnd(-1, 1) * amp; shy = rnd(-1, 1) * amp;
+      const e = (t) => t * t * (3 - 2 * t), w = e(clamp((k - 0.4) / 2.4, 0, 1)); this.cam.x = C.fx + (C.tx - C.fx) * w; this.cam.y = C.fy + (C.ty - C.fy) * w;
+      if (!C.sfx1 && k > 0.6) { C.sfx1 = 1; snd("orb"); } if (!C.sfx2 && k > 1.4) { C.sfx2 = 1; snd("legend"); }
+      if (k > 6.2) { this.cine = null; toast("🗼 먼 곳에서 정체불명의 탑이 솟아올랐다!", "ok"); }
+    }
+    g.save(); g.translate(shx, shy);
     HELL_SET = sv.endgame ? hellNodes(Date.now()) : null;
     g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH);
     // 길
     g.lineWidth = 4; g.setLineDash([2, 10]); g.lineCap = "round";
-    for (const [a, b2] of MAP.edges) { const A = MAP.byId[a], B = MAP.byId[b2]; if (!A || !B) continue; const open = nodeUnlocked(sv, B) && nodeUnlocked(sv, A) || (A.kind === "town" && nodeUnlocked(sv, A)); g.strokeStyle = open ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.22)"; g.beginPath(); g.moveTo(A.x - this.cam.x, A.y - this.cam.y); g.lineTo(B.x - this.cam.x, B.y - this.cam.y); g.stroke(); }
+    for (const [a, b2] of MAP.edges) { const A = MAP.byId[a], B = MAP.byId[b2]; if (!A || !B || this.hidden(A) || this.hidden(B)) continue; const open = nodeUnlocked(sv, B) && nodeUnlocked(sv, A) || (A.kind === "town" && nodeUnlocked(sv, A)); g.strokeStyle = open ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.22)"; g.beginPath(); g.moveTo(A.x - this.cam.x, A.y - this.cam.y); g.lineTo(B.x - this.cam.x, B.y - this.cam.y); g.stroke(); }
     g.setLineDash([]);
     // 지역 이름
     g.textAlign = "center"; g.font = "bold 15px sans-serif";
     REGION.slice(0, CFG.ACTS).forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = Math.min(cy + 112, MAP_H - 16) - this.cam.y; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
     { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); }
     // 노드
-    const vis = MAP.nodes.filter((n) => n.x - this.cam.x > -40 && n.x - this.cam.x < CW + 40 && n.y - this.cam.y > -40 && n.y - this.cam.y < CH + 40);
+    const vis = MAP.nodes.filter((n) => !this.hidden(n) && n.x - this.cam.x > -40 && n.x - this.cam.x < CW + 40 && n.y - this.cam.y > -40 && n.y - this.cam.y < CH + 40);
     for (const n of vis) {
       const un = nodeUnlocked(sv, n), hell = un && sv.endgame && (n.kind === "stage") && HELL_SET && HELL_SET.has(n.id), st = !un ? "locked" : hell ? "hell" : nodeCleared(sv, n) ? "cleared" : "open";
       if (n.kind === "elite" || n.kind === "treasure") { if (!un && sv.cleared[n.act - 1] < n.need - 2) continue; }
       this.nodeIcon(g, n, st, time);
-      if (un && n.kind !== "town" && n.kind !== "rift" && n.kind !== "endless" && n.kind !== "void" && n.kind !== "trial") drawPx(g, n.level, n.x - this.cam.x + 14, n.y - this.cam.y - 4, "#ffffff", 2);
+      if (un && n.kind !== "town" && n.kind !== "rift" && n.kind !== "endless" && n.kind !== "void" && n.kind !== "trial" && n.kind !== "raid" && n.kind !== "tower") drawPx(g, n.level, n.x - this.cam.x + 14, n.y - this.cam.y - 4, "#ffffff", 2);
       if (this.hover === n || this.sel === n) { const x = n.x - this.cam.x, y = n.y - this.cam.y; g.strokeStyle = this.sel === n ? "#ff3a3a" : "#ffffff"; g.lineWidth = 3; g.strokeRect(x - 18, y - 18, 36 + (n.kind === "town" || n.kind === "rift" ? 0 : 26), 36); }
     }
     if (this.pulse) { const n = this.pulse, x = n.x - this.cam.x, y = n.y - this.cam.y, k = (time * 1.4) % 1; g.strokeStyle = `rgba(255,240,120,${1 - k})`; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 14 + k * 30, 0, 7); g.stroke(); g.strokeStyle = "rgba(255,240,120,.9)"; g.lineWidth = 3; g.strokeRect(x - 20, y - 20, 40, 40); }
     // 레이블
     const lab = this.sel || this.hover; if (lab) { const x = lab.x - this.cam.x, y = lab.y - this.cam.y - 28; g.font = "bold 13px sans-serif"; const w = g.measureText(lab.name).width + 12; g.fillStyle = "rgba(20,14,30,.9)"; g.fillRect(x - w / 2, y - 14, w, 20); g.strokeStyle = "#8a7ab0"; g.lineWidth = 2; g.strokeRect(x - w / 2, y - 14, w, 20); g.fillStyle = "#fff"; g.fillText(lab.name, x, y + 1); }
     // 미니 방향 표시: 현재 진행 지역
+    g.restore();
+    if (C && C.t0 != null) { const k = time - C.t0, a = clamp(1 - k / 1.0, 0, 1); if (a > 0) { g.fillStyle = `rgba(0,0,0,${a})`; g.fillRect(0, 0, CW, CH); } }   // 검은 화면에서 서서히 밝아진다
   },
   focusAct(a) { const [cx, cy] = REGION[Math.min(a, 10) - 1]; this.cam.x = clamp(cx - CW / 2, 0, MAP_W - CW); this.cam.y = clamp(cy - CH / 2 + 40, 0, MAP_H - CH); },
-  pick(mx, my) { let best = null, bd = 22; for (const n of MAP.nodes) { const d = Math.hypot(n.x - this.cam.x - mx, n.y - this.cam.y - my); if (d < bd) { bd = d; best = n; } } return best; },
+  pick(mx, my) { let best = null, bd = 22; for (const n of MAP.nodes) { if (this.hidden(n)) continue; const d = Math.hypot(n.x - this.cam.x - mx, n.y - this.cam.y - my); if (d < bd) { bd = d; best = n; } } return best; },
 };
 function deco(g, act, x, y, r) {
   const k = r();
@@ -242,7 +267,6 @@ const TOWN_SPOTS = [
   { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
-  { id: "raid",      name: "심연의 문",  x: 884, y: 188, w: 46, h: 136, need: 1, desc: "균열 100층 이후 도전하는 최종 보스", back: true },
   { id: "dummy",     name: "허수아비",   x: 462, y: 366, w: 28, h: 76, need: 1, desc: "1분 동안 피해를 재서 DPS 랭킹에 도전", back: true },
 ];
 const TownView = {

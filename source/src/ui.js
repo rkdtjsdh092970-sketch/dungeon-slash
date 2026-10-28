@@ -99,6 +99,7 @@ const isHell = (n) => GRADUATED(save) && n.kind === "stage" && hellNodes(Date.no
 function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
+  if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
@@ -115,6 +116,11 @@ function mapPanel() {
   else if (n.kind === "rift") {
     h += `<div class="pline">엔드게임 · 최고 ${save.rift.best}층</div><div class="pline dim">탑을 열어 도전할 층을 고릅니다. 층이 오를수록 MF가 오릅니다.</div>`;
     extra = `<button class="btn pri" data-p="tower">탑 열기</button><button class="btn" data-p="atlas">심연 각인</button>`; btnOk = false; btn = "도전";
+  } else if (n.kind === "raid") {
+    const R = save.raid || { cleared: 0, best: 0 };
+    h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
+  } else if (n.kind === "tower") {
+    h += `<div class="pline">문지기가 쓰러지자 먼 곳에서 솟아오른 정체불명의 탑입니다.</div><div class="pline dim">아직 문이 굳게 닫혀 있습니다 — 다음 업데이트에서 열립니다.</div>`; btnOk = false; btn = "준비 중";
   } else if (n.kind === "endless") {
     const E = endlessInfo(save);
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
@@ -145,6 +151,14 @@ function mapPanel() {
   if (!un) h += `<div class="pline warn">${!save.tut.done ? "튜토리얼을 먼저 완료하세요" : n.kind === "elite" || n.kind === "treasure" ? `스테이지 ${n.need} 클리어 후 개방` : n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || isEB(n.kind) || n.kind === "vault" ? "액트 10 보스를 처치하면 개방" : "이전 노드를 클리어하세요"}</div>`;
   h += `<div class="pbtns"><button class="btn pri" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button><button class="btn" data-p="back">뒤로</button>${extra}</div>`;
   p.innerHTML = h;
+}
+// 문지기를 쓰러뜨린 뒤: 어두운 화면에서 지도가 밝아지고, 심연의 균열이 보이다가 먼 곳에서 탑이 진동과 함께 솟아오른다
+function raidAftermath() {
+  const R = (save.raid = save.raid || { cleared: 0, best: 0 }), first = !R.tower;
+  openMap(11); const gate = MAP.byId.RX; MapView.sel = null; mapPanel();
+  MapView.cam.x = clamp(RIFT_POS[0] - CW / 2 - 40, 0, MAP_W - CW); MapView.cam.y = clamp(RIFT_POS[1] - CH / 2, 0, MAP_H - CH);
+  if (first) { R.tower = 1; saveGame(); MapView.cine = { t0: null, fx: MapView.cam.x, fy: MapView.cam.y, tx: clamp(TOWER_POS[0] - CW / 2 - 60, 0, MAP_W - CW), ty: clamp(TOWER_POS[1] - CH / 2 + 70, 0, MAP_H - CH) }; }
+  else MapView.sel = gate, mapPanel();
 }
 function mapGo() {
   const n = MapView.sel; if (!n || !nodeUnlocked(save, n)) return;
@@ -330,7 +344,7 @@ function showResult(res, b, replay) {
   const node = G.node, tut = node.kind === "tutorial", endless = node.kind === "endless", win = res.win;
   if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
   const nextTut = tut && win && node.step < TUTORIAL.length - 1;
-  const back = () => { if (win && node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act < CFG.ACTS) { G.battle = null; AU.stopBgm(); openTown(node.act + 1); return; } if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
+ const back = () => { if (win && node.kind === "raid") { G.battle = null; AU.stopBgm(); raidAftermath(); return; } if (win && node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act < CFG.ACTS) { G.battle = null; AU.stopBgm(); openTown(node.act + 1); return; } if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
   const canRetry = !tut && !endless && node.kind !== "void" && !isEB(node.kind), nb = tut ? null : nextBattleOf(node, res);
   Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay, nb), { cls: "result", persistent: true, noClose: true, on: {
     next: () => { if (!nb) return; G.pending = null; Modal.close(true); if (nb.town) { G.battle = null; AU.stopBgm(); openTown(nb.town); return; } const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },

@@ -282,7 +282,7 @@ function damagePlayer(b, raw, opt) {
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
   d *= Math.max(0.2, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
   d = Math.max(1, d);
-  if (b.stats.manaShield && b.mana > 0) { const ab = Math.min(b.mana, d * b.stats.manaShield); b.mana -= ab; d -= ab; }
+  if (b.stats.manaShield && b.mana > 0) { const keep = b.maxMana * CFG.MANA_SHIELD_KEEP, avail = Math.max(0, b.mana - keep), ab = Math.min(d * b.stats.manaShield, avail / CFG.MANA_SHIELD_COST); b.mana -= ab * CFG.MANA_SHIELD_COST; d -= ab; }   // 방벽은 마나가 일정 비율 이하면 멈춘다 (스킬을 쓸 마나를 남긴다)
   b.hp -= d; b.taken += d;
   pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "-" + fmtN(d), "#ff8a8a", false);
   b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);

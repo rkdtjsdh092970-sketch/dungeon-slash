@@ -9,7 +9,7 @@ Object.assign(CFG, {
   DEF_TIER: 0.03,          // 균열류 단계마다 +3%
   DEF_CAP: 0.80,           // 방어/저항 피해 감소 최대
   RES_CAP: 0.80,           // 속성 저항 상한(관통으로 낮출 수 있음), 하한 -0.5
-  BASE_MANA: 100, MANA_LV: 0.02, MANA_REGEN: 0.08,   // 마나 풀 (레벨 보정), 초당 재생(최대치 비율)
+  BASE_MANA: 100, MANA_LV: 0.02, MANA_REGEN: 0.08, MANA_SHIELD_KEEP: 0.30, MANA_SHIELD_COST: 0.6,   // 마나 풀 (레벨 보정), 초당 재생(최대치 비율)
   MF_HALF: 6,              // MF 체감: 유효 MF = mf / (1 + mf / MF_HALF)  → 최대 약 MF_HALF
   MF_TOWER_STEP: 0.012, MF_TOWER_20: 0.15,   // 균열 탑: 층당 MF, 20층마다 추가
   QTY_MF: 0.0,             // MF는 드랍 '수량'에 기여하지 않는다 (등급/고유 확률에만)
@@ -68,9 +68,9 @@ AFFIXES.push(
   { k: "penElem", name: "속성 저항 관통", pct: true, range: [0.04, 0.08], w: 2.5, slots: ["weapon", "ring", "neck"], minIlvl: 7, minRarity: 2 },
   // 마나
   { k: "manaCostRed", name: "마나 소모 감소", pct: true, range: [0.03, 0.06], w: 4, slots: ["weapon", "ring", "neck"], minIlvl: 2 },
-  { k: "manaFlat", name: "마나", flat: true, gp: 0.55, range: [8, 16], w: 8, slots: ["helm", "armor", "ring", "neck"] },
+  { k: "manaFlat", name: "마나(고정)", flat: true, gp: 0.55, range: [2, 4], w: 8, slots: ["helm", "armor", "ring", "neck"] },
   { k: "manaPct", name: "마나 %", pct: true, range: [0.06, 0.12], w: 7, slots: ["helm", "armor", "neck"] },
-  { k: "manaHit", name: "마나 흡수 (적중 시 최대 마나)", pct: true, range: [0.0008, 0.0016], w: 6, slots: ["weapon", "gloves", "ring", "neck"], minIlvl: 3 },
+  { k: "manaHit", name: "마나 흡수 (적중 시 최대 마나)", pct: true, range: [0.0016, 0.0032], w: 6, slots: ["weapon", "gloves", "ring", "neck"], minIlvl: 3 },
   { k: "manaRegen", name: "마나 재생", pct: true, range: [0.004, 0.008], w: 5, slots: ["helm", "armor", "ring"], minIlvl: 2, unit: "/s" },
   { k: "manaRegenFlat", name: "초당 마나 재생(고정)", flat: true, gp: 0.5, range: [1.2, 2.4], w: 5, slots: ["helm", "armor", "ring", "neck"], minIlvl: 2 },
   { k: "manaOnKill", name: "처치 시 마나 회복", flat: true, gp: 0.5, range: [0.6, 1.4], w: 3, slots: ["ring", "neck", "weapon"], minIlvl: 3 },

@@ -21,7 +21,7 @@ const P_ARMS = [
     L: [["두꺼운 가죽", { defFlat: 4 }], ["방어 숙련", { defPct: 0.06 }], ["생명력", { hpFlat: 40 }], ["철벽", { defPct: 0.15, hpPct: 0.08 }, 2]],
     R: [["회피 훈련", { dodge: 0.02 }], ["그림자 걸음", { dodge: 0.02 }], ["흡혈 본능", { lifesteal: 0.006 }], ["유령 걸음", { dodge: 0.05, dodgeCap: 0.6, regen: 0.002 }, 2]] },
   { id: "mana", name: "마나", color: "#5ad0ff",
-    s: [["마나 샘", { manaPct: 0.06 }], ["마나 재생", { manaRegen: 0.004 }], ["효율", { manaCostRed: 0.04 }], ["마력의 흐름", { manaToSpell: 0.06, manaPct: 0.08 }, 2], ["마나 응축", { manaFlat: 20, manaToHp: 2 }], ["마나의 화신", { manaToSpell: 0.15, manaShield: 0.2, hpMore: 0.85 }, 3]],
+    s: [["마나 샘", { manaPct: 0.06 }], ["마나 재생", { manaRegen: 0.004 }], ["효율", { manaCostRed: 0.04 }], ["마력의 흐름", { manaToSpell: 0.06, manaPct: 0.08 }, 2], ["마나 응축", { manaFlat: 20, manaToHp: 2 }], ["마나의 화신", { manaToSpell: 0.15, manaRegen: 0.012, manaHit: 0.002, hpMore: 0.85 }, 3]],
     L: [["집중", { manaCostRed: 0.03 }], ["마력 순환", { manaRegen: 0.004 }], ["마나 강화", { manaPct: 0.06, manaToHp: 2 }], ["마력의 방패", { manaShield: 0.12, manaPct: 0.10, manaToHp: 3 }, 2]],
     R: [["비전 전환", { manaToSpell: 0.03 }], ["정신력", { manaFlat: 15, manaToHp: 2 }], ["원천", { manaRegen: 0.005 }], ["마나 폭풍", { manaToSpell: 0.06, cdr: 0.03 }, 2]] },
   { id: "util", name: "유틸", color: "#ffd24a",
@@ -35,7 +35,7 @@ P_ARMS.push({ id: "skill", name: "스킬", color: "#6af0c0",
   R: [["소환 숙련", { summonDmg: 0.06 }], ["장판 숙련", { persistDmg: 0.06 }], ["상태이상 숙련", { dotDmg: 0.10 }], ["전용기 장인", { bossSkill: 0.30, cdr: 0.03 }, 2]] });
 const P_BRIDGES = [   // 계열 사이를 잇는 혼합 노드 2개씩
   [["전투 마술", { atkPct: 0.03 }], ["마검", { magPct: 0.03 }]], [["마법 원소", { magDmg: 0.05 }], ["원소 조율", { elemDmg: 0.05 }]],
-  [["원소 보호", { hpPct: 0.04 }], ["저항 단련", { dmgTaken: -0.02 }]], [["마나 방벽", { manaShield: 0.06 }], ["정신 단련", { manaPct: 0.05 }]],
+  [["원소 보호", { hpPct: 0.04 }], ["저항 단련", { dmgTaken: -0.02 }]], [["마나 정제", { manaCostRed: 0.02 }], ["정신 단련", { manaPct: 0.05 }]],
   [["마력 수집", { manaRegen: 0.004 }], ["마나 효율", { manaCostRed: 0.03 }]], [["사냥 본능", { normal: 0.08 }], ["민첩한 손", { cdr: 0.015 }]],
   [["스킬 연계", { cdr: 0.01, singleDmg: 0.03 }], ["전투 기술", { persistDmg: 0.03, summonDmg: 0.03 }]],
 ];

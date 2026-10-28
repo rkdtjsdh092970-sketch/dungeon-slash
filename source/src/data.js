@@ -169,6 +169,7 @@ const RIFT_MODS = [
 const MAP_W = 1800, MAP_H = 1100;
 const REGION = [[520, 700], [470, 990], [740, 930], [690, 720], [440, 690], [250, 520], [420, 360], [700, 330], [980, 240], [1280, 190]];   // v4: 지역은 초원 하나뿐
 const RIFT_POS = [1180, 470];
+const TOWER_POS = [1560, 250];   // 문지기를 처음 쓰러뜨리면 이곳에 탑이 솟아오른다
 function buildMap() {
   const nodes = [], edges = [];
   const add = (n) => { nodes.push(n); return n; };
@@ -194,9 +195,12 @@ function buildMap() {
   const titan = add({ id: "RT", kind: "titan", act: 11, x: RIFT_POS[0] + 10, y: RIFT_POS[1] - 175, name: "철갑의 투사", level: 100 });
   const stormn = add({ id: "RS", kind: "storm", act: 11, x: RIFT_POS[0] + 125, y: RIFT_POS[1] + 160, name: "뇌제", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
+  const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
+  const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
+  edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
   edges.push([rift.id, endless.id]); edges.push([rift.id, voidn.id]); edges.push([rift.id, flame.id]); edges.push([rift.id, titan.id]); edges.push([rift.id, stormn.id]); edges.push([rift.id, vault.id]);
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
-  const fixed = (n) => n.kind === "town" || n.kind === "rift";
+  const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {
     let moved = false;
     for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {

@@ -265,7 +265,7 @@ function powerDetail(s) {
   const mf = demand > 0 ? Math.min(1, supply / demand) : 1; out.manaFactor = mf; out.demand = demand; out.supply = supply;
   for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
   out.dps *= buffMul; out.buff = buffMul;
-  const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M, s.maxHp * f / (1 - f)) : 0;
+  const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M * (1 - CFG.MANA_SHIELD_KEEP) / CFG.MANA_SHIELD_COST, s.maxHp * f / (1 - f)) : 0;
   out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
   out.mit = mit; out.revive = s.revive;
   return out;
@@ -479,7 +479,8 @@ function nodeUnlocked(sv, n) {
   if (!sv.tut.done) return false;
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
-  if (n.kind === "endless" || n.kind === "void" || isEB(n.kind) || n.kind === "vault") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
+  if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
+  if (n.kind === "endless" || n.kind === "void" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
   if (!townUnlocked(sv, n.act)) return false;
   if (n.kind === "elite" || n.kind === "treasure") return sv.cleared[n.act - 1] >= n.need;
   return n.stage <= sv.cleared[n.act - 1] + 1;
