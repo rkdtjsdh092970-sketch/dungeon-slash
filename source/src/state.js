@@ -86,7 +86,7 @@ function clampItem(it) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); if (!Array.isArray(sv.stones)) sv.stones = []; for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k]); return n; }
+function clampAll(sv) { let n = 0; dedupeLoadout(sv); if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); if (!Array.isArray(sv.stones)) sv.stones = []; for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k]); return n; }
 function diceItem(sv, it) {
   if ((sv.dice || 0) < 1) return false;
   if (!it.affixes.length) return false;
@@ -379,7 +379,6 @@ function rollDrops(sv, node, boss, B) {
   const oc = { vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
-  out.dice = Math.random() < diceChance(kind, node) * Math.min(2, B.orb) ? 1 : 0;   // 공허의 주사위: 아주 낮은 확률
   // 신성한 구슬은 아주 귀하다 (혼돈 구슬의 약 5%)
   const odE = ocE * 0.05; out.orbD = Math.floor(odE) + (Math.random() < odE - Math.floor(odE) ? 1 : 0);
   return out;
@@ -524,12 +523,15 @@ function hasAnyUpgrade(sv) { for (const it of sv.inv) if (isUpgrade(sv, it)) ret
 function savePreset(sv, i) {
   sv.presets[i] = { equip: Object.fromEntries(EQ_SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])), loadout: JSON.parse(JSON.stringify(sv.loadout)) };
 }
+// 같은 스킬(등급이 달라도)은 두 칸에 동시에 장착할 수 없다
+const skillDupSlot = (sv, inst, slotIdx) => sv.loadout.findIndex((l, j) => l && j !== slotIdx && l.uid !== inst.uid && (sv.skills.find((x) => x.uid === l.uid) || {}).id === inst.id);
+function dedupeLoadout(sv) { const seen = new Set(); sv.loadout = (sv.loadout || []).map((l) => { if (!l) return l; const s = sv.skills.find((x) => x.uid === l.uid); if (!s) return l; if (seen.has(s.id)) return null; seen.add(s.id); return l; }); }
 function loadPreset(sv, i) {
   const p = sv.presets[i]; if (!p) return false;
   for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
   for (const s of EQ_SLOTS) { const u = p.equip[s]; if (u == null) continue; const it = sv.inv.find((x) => x.uid === u); if (it) { sv.inv = sv.inv.filter((x) => x !== it); sv.equipped[s] = it; } }
   sv.loadout = [0, 1, 2, 3].map((k) => { const l = p.loadout[k]; return l && sv.skills.some((x) => x.uid === l.uid) ? { uid: l.uid, rule: l.rule } : null; });
-  return true;
+  dedupeLoadout(sv); return true;
 }
 
 // =========================================================

@@ -3,7 +3,8 @@
 // =========================================================
 const G = { trialTier: 1, screen: "boot", battle: null, node: null, speed: 1, paused: false, retry: null, townAct: 1, after: null, riftTier: 1, tipOpen: false, guide: null, wslot: -1 };
 const snd = (n) => AU.sfx(n);
-const ITEM_ICON = (it) => (it.uniq && UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 2) : iconImg(it.slot, 2));
+const itemIconKey = (it) => (it.slot === "weapon" && it.wt ? "w_" + it.wt : it.slot);   // 무기는 종류(검·지팡이·낫·마도서)마다 모양이 다르다
+const ITEM_ICON = (it) => (it.uniq && UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 2) : iconImg(itemIconKey(it), 2));
 const RCLS = (it) => ITEM_RARITY[it.rarity].cls;
 const setOf = (it) => (it.setId ? SETS.find((s) => s.id === it.setId) : null);
 const itemColor = (it) => (it.setId ? setOf(it).color : null);
