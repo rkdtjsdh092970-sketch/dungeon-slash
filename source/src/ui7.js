@@ -1,7 +1,7 @@
 // =========================================================
 // 보스 관문: 지도의 보스 노드 하나에서 여섯 보스를 페이지로 넘기며 정보 확인 · 입장
 // =========================================================
-const HUB_BASE_POWER = 80e9;   // 1단계를 겨우 깨는 전투력 기준. 적정 전투력 = 기준 × (몬스터 강도 배율)²
+const HUB_REC = [30e9, 80e9, 600e9, 6e12];   // 단계별 적정 전투력 (시뮬: 대충 장비 ≈ 1~2단계, 김정혁급 장비 ≈ 3단계, 상급 장비 ≈ 4단계)
 const fmtP = (v) => (v >= 1e12 ? (v / 1e12).toFixed(1) + "T" : v >= 1e9 ? Math.round(v / 1e9) + "B" : v >= 1e6 ? Math.round(v / 1e6) + "M" : Math.round(v).toString());
 function hubBosses() {
   const mk = (kind, D, o) => Object.assign({ kind, D, name: D.name }, o);
@@ -14,7 +14,7 @@ const hubDrops = (kind) => SKILLS.filter((d) => d.slot !== "passive" && bossOfSk
 function openBossHub(page) {
   const B = hubBosses(); if (page != null) G.hubPage = page; G.hubPage = ((G.hubPage || 0) + B.length) % B.length;
   const b = B[G.hubPage], S = G[b.stage] = Math.max(1, Math.min(4, G[b.stage] || 1)), my = playerPower(computeStats(save)), have = b.kind === "void" ? save.keys : (save[b.key] || 0);
-  const mult = (s) => bossRiftMult(b.tiers[s - 1]) / bossRiftMult(100), rec = (s) => HUB_BASE_POWER * mult(s) * mult(s);
+  const mult = (s) => bossRiftMult(b.tiers[s - 1]) / bossRiftMult(100), rec = (s) => HUB_REC[s - 1];
   const okNeed = save.rift.best >= b.need[S - 1], can = okNeed && have > 0;
   const stageRows = [1, 2, 3, 4].map((s) => { const r = rec(s), ok = my >= r; return `<button class="bh-st ${s === S ? "on" : ""}" data-a="hubst" data-s="${s}"><b>${s}단계</b><span>×${mult(s).toFixed(1)}</span><em class="${ok ? "up" : "dn"}">${fmtP(r)}</em></button>`; }).join("");
   const rr = BOSS_SKILL_RW[S - 1], rsum = rr.reduce((a, c) => a + c, 0), rn = ["일반", "희귀", "전설", "신화", "사탄", "종말"];
@@ -30,7 +30,7 @@ function openBossHub(page) {
         <div class="bh-sttl">단계 선택 · <span class="dim">적정 전투력</span></div><div class="bh-sts">${stageRows}</div>
         <div class="bh-me">내 전투력 <b class="${my >= rec(S) ? "up" : "dn"}">${fmtP(my)}</b> / 적정 <b>${fmtP(rec(S))}</b> <span class="dim">(${my >= rec(S) ? "충분합니다" : "부족할 수 있습니다"})</span></div>
         <div class="bh-key">${b.keyName} <b>${have}</b>개 보유 · 입장 시 1개 소모 · 입장 조건 균열 ${b.need[S - 1]}단계 이상${okNeed ? "" : ` <span class="warn">(현재 ${save.rift.best}단계)</span>`}</div>
-        <div class="dim">열쇠 얻는 곳: 균열 · 지옥에서 전투당 1% 확률의 ${b.eye}</div>
+        <div class="bh-lim">제한 시간 ${Math.floor(CFG.EB_LIMIT / 60)}분 ${CFG.EB_LIMIT % 60}초 · 이 안에 쓰러뜨리지 못하면 실패합니다 (딜이 부족하면 클리어할 수 없습니다)</div><div class="dim">열쇠 얻는 곳: 균열 · 지옥에서 전투당 1% 확률의 ${b.eye}</div>
         <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? `균열 ${b.need[S - 1]}단계 필요` : have > 0 ? `${b.short} ${S}단계 도전` : "열쇠 필요"}</button>
       </div>
     </div>
