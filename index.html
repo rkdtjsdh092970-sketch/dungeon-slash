@@ -739,8 +739,8 @@ const EB = {
 };
 const isEB = (k) => !!EB[k];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIERS = [100, 112, 128, 150], HIVE_NEED = [100, 100, 100, 100], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
-EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 114, 130, 152]; EB.titan.need = [100, 100, 100, 100]; EB.storm.tiers = [102, 114, 130, 152]; EB.storm.need = [100, 100, 100, 100];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
+const HIVE_TIERS = [100, 110, 122, 142], HIVE_NEED = [100, 100, 100, 100], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
+EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 112, 124, 144]; EB.titan.need = [100, 100, 100, 100]; EB.storm.tiers = [102, 112, 124, 144]; EB.storm.need = [100, 100, 100, 100];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP };   // 열쇠 몹 종류 → 정의
 
@@ -2378,7 +2378,7 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [100, 112, 128, 150], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [100, 110, 122, 142], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
@@ -5539,7 +5539,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-014809";
+const BUILD_ID = "20261029-015049";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5631,6 +5631,9 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.10", date: "10/29", title: "속성 보스 단계 구조 정리", items: [
+    "공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제를 1단계부터 차례로 잡으며 강해져 4단계까지 도전하는 구조로 난이도를 다시 맞췄습니다. 4단계를 잡은 뒤에는 심연의 문지기가 기다립니다.",
+  ] },
   { ver: "4.9", date: "10/29", title: "심연의 문지기 강화", items: [
     "심연의 문지기 모르가스가 크게 강해졌습니다. 속성 보스 4단계보다 훨씬 어려운, 1티어 옵션을 갖춘 최종 세팅이 있어야 겨우 잡을 수 있는 상대입니다.",
   ] },
