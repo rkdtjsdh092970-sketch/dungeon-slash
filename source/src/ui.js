@@ -122,6 +122,8 @@ function mapPanel() {
   } else if (n.kind === "raid") {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
+  } else if (n.kind === "bosshub") {
+    h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "tower") {
     h += `<div class="pline">문지기가 쓰러지자 먼 곳에서 솟아오른 정체불명의 탑입니다.</div><div class="pline dim">아직 문이 굳게 닫혀 있습니다 — 다음 업데이트에서 열립니다.</div>`; btnOk = false; btn = "준비 중";
   } else if (n.kind === "endless") {
@@ -132,7 +134,7 @@ function mapPanel() {
     h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">여기서는 <b>골드만</b> 나옵니다 (장비·돌·구슬·재료·조각 없음). 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
   } else if (isEB(n.kind)) {
     const E = EB[n.kind], S = G[E.stage] = Math.max(1, Math.min(4, G[E.stage] || 1)), need = E.need[S - 1], ok = save.rift.best >= need, have = save[E.key] || 0;
-    const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색" }[n.kind];
+    const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용", frost: "냉기·빙결 빌드용", poison: "독·중독 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색", frost: "하늘색", poison: "연두색" }[n.kind];
     h += `<div class="pline">${E.keyName} <b>${have}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="${E.sm}">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="${E.sp}">+</button> <span class="dim">몬스터 강도 균열 100층 대비 ×${(bossRiftMult(E.tiers[S - 1]) / bossRiftMult(100)).toFixed(1)}</span></div>
     <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 전설 장비 · 미확인의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
     btnOk = un && have > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : have > 0 ? "도전" : "열쇠 필요";
@@ -165,6 +167,7 @@ function raidAftermath() {
 }
 function mapGo() {
   const n = MapView.sel; if (!n || !nodeUnlocked(save, n)) return;
+  if (n.kind === "bosshub") return openBossHub();
   if (n.kind === "town") return openTown(n.act);
   if (n.kind === "endless") { const E = endlessInfo(save); if (E.left < 1) return; save.endless.used++; saveGame(); }
   if (isEB(n.kind)) { const E = EB[n.kind]; if ((save[E.key] || 0) < 1 || save.rift.best < E.need[(G[E.stage] || 1) - 1]) return; save[E.key]--; saveGame(); }
@@ -271,9 +274,9 @@ function openSettings() {
 }
 
 // ---------- 전투 ----------
-function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
+function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", frost: "hell", poison: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 // 자동 반복이 가능한 전투. 열쇠를 쓰는 보스(공허의 군주 · 속성 보스)는 반복할 때마다 열쇠 1개를 쓰고, 열쇠가 모자라면 멈춘다
-const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "void", "hive", "titan", "storm", "raid"];
+const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
 function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0 } : null; }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
@@ -297,7 +300,7 @@ function battleHud(b) {
   if (b.raid) { const R = b.bossRef && b.bossRef.raid, ph = R ? Math.min(4, R.idx + 1) : 1, lim = CFG.RAID.LIMIT; $("#wave-fill").style.width = Math.min(100, (b.time / lim) * 100) + "%"; $("#wave-txt").textContent = `${R && R.sealed ? "결계 · 결계석을 부숴라!" : `${ph}단계`} · 남은 ${Math.max(0, Math.ceil(lim - b.time))}초`; }
   else if (b.dummy) { $("#wave-fill").style.width = Math.min(100, (b.time / DUMMY_SEC) * 100) + "%"; $("#wave-txt").textContent = `${Math.max(0, Math.ceil(DUMMY_SEC - b.time))}초 · 누적 ${fmtN(b.dealt)} · DPS ${fmtN(b.dealt / Math.max(1, b.time))}`; }
   else if (b.endless) { $("#wave-fill").style.width = Math.min(100, (b.time / 1200) * 100) + "%"; { const dd = b.ddt || 0; $("#wave-txt").textContent = `생존 ${fmtTime(b.time * 1000)} · 위험도 ${Math.floor(dd / 30) + 1} (×${(dd / Math.max(1, b.time)).toFixed(2)}) · 처치 ${b.kills}`; } }
-  else { $("#wave-fill").style.width = Math.max(0, 100 - (left / Math.max(1, b.total)) * 100) + "%"; $("#wave-txt").textContent = `남은 적 ${left}${b.keys ? ` · 열쇠 ${b.keys}` : ""}${b.keys2 ? ` · 불씨 ${b.keys2}` : ""}${b.keys3 ? ` · 징표 ${b.keys3}` : ""}${b.keys4 ? ` · 뇌전 ${b.keys4}` : ""}`; }
+  else { $("#wave-fill").style.width = Math.max(0, 100 - (left / Math.max(1, b.total)) * 100) + "%"; $("#wave-txt").textContent = `남은 적 ${left}${b.keys ? ` · 열쇠 ${b.keys}` : ""}${b.keys2 ? ` · 불씨 ${b.keys2}` : ""}${b.keys3 ? ` · 징표 ${b.keys3}` : ""}${b.keys4 ? ` · 뇌전 ${b.keys4}` : ""}${b.keys5 ? ` · 서리 ${b.keys5}` : ""}${b.keys6 ? ` · 맹독 ${b.keys6}` : ""}`; }
   b.skills.forEach((sk, i) => { if (!sk) return; const el = $$("#skillbar .bslot")[i]; if (!el) return; el.querySelector(".cdm").style.height = Math.max(0, Math.min(1, sk.cdLeft / sk.cd)) * 100 + "%"; el.querySelector(".rl").textContent = RULE_SHORT[sk.rule]; { const cost = (sk.mana || 0) * b.stats.manaCostMul, mc = el.querySelector(".mc"); mc.textContent = cost >= 1 ? Math.round(cost) : ""; mc.style.display = cost >= 1 ? "" : "none"; mc.classList.toggle("lack", b.mana < cost); el.querySelector(".cds").textContent = sk.cdLeft > 0.05 ? (sk.cdLeft >= 10 ? Math.ceil(sk.cdLeft) : sk.cdLeft.toFixed(1)) : ""; } const lack = b.mana < (sk.mana || 0) * b.stats.manaCostMul; el.classList.toggle("rdy", sk.cdLeft <= 0 && !lack); el.classList.toggle("nomp", lack); });
   const bo = b.bossRef && !b.bossRef.dead ? b.bossRef : null; $("#bossbar").classList.toggle("hidden", !bo); if (bo) { const r = Math.max(0, bo.hp / bo.maxHp); G.bossGhost = r >= G.bossGhost ? r : Math.max(r, G.bossGhost - dt * 0.35); $("#boss-name").textContent = (bo.label || bo.def.name) + (bo.guard ? " · 무적 (정령을 처치하라)" : ""); $("#boss-pct").textContent = Math.ceil(r * 100) + "%"; $("#boss-fill").style.width = r * 100 + "%"; $("#boss-ghost").style.width = G.bossGhost * 100 + "%"; $("#boss-fill").className = bo.shield || bo.guard ? "sh" : ""; }
   const bn = $("#banner"); if (b.banner) { bn.textContent = b.banner.text; bn.className = "show " + (b.banner.cls || ""); } else bn.className = "";
@@ -331,7 +334,7 @@ function afterBattle(res, b) {
     return;
   }
   if (A.on && !res.win) { A.on = false; saveGame(); }
-  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "endless", "void", "hive", "titan", "storm"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
+  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "endless", "void", "hive", "titan", "storm", "frost", "poison"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
     const pr = autoProcess(save); if (pr.sold || pr.dis || pr.sSold || pr.sDis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? "장비 " + pr.sold + "개 판매 " : ""}${pr.dis ? "장비 " + pr.dis + "개 분해 " : ""}${pr.sSold ? "스킬 " + pr.sSold + "개 판매 " : ""}${pr.sDis ? "스킬 " + pr.sDis + "개 분해" : ""}`, "ok"); }
   }
   showResult(res, b);
@@ -345,7 +348,7 @@ function nextBattleOf(node, res) {
     if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
     if (!nxt || !nodeUnlocked(save, nxt)) return null; return { label: nxt.kind === "boss" ? "보스 도전 ▶" : nxt.stage === 1 ? "다음 지역 ▶" : "다음 스테이지 ▶", node: nxt, battle: nodeToBattle(nxt) };
   }
-  if (node.kind === "rift" && node.tier + 1 <= save.rift.best + 1) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
+  if (node.kind === "rift" && node.tier + 1 <= Math.min(CFG.RIFT_END, save.rift.best + 1)) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
   if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
   return null;
 }

@@ -53,7 +53,7 @@ const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
 
 // ---------------- 생성 ----------------
-const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, vault: 1, raid: 1 };
+const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, frost: 1, poison: 1, vault: 1, raid: 1 };
 const specDef = (va) => Object.assign({ tier: "normal", ranged: ACT_SPECIAL[va].range >= 3, proj: va === 7 ? "orb" : null }, ACT_SPECIAL[va]);
 function wavePool(act, stage, mods) {
   const w = actWeights(act); w.spec = SPEC_W(act, stage);
@@ -91,7 +91,7 @@ function planFor(node) {
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
   if (RIFTLIKE[node.kind] && node.kind !== "void" && !isEB(node.kind) && node.kind !== "vault" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
   if ((node.kind === "rift" || node.kind === "hell") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
-  if (node.kind === "rift" || node.kind === "hell") for (const wt of ["twarp", "swarp"]) if (Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = wt;   // 철갑의 징표 · 뇌전의 징표 (같은 확률)
+  if (node.kind === "rift" || node.kind === "hell") for (const wt of ["twarp", "swarp", "fwarp", "vwarp"]) if (Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = wt;   // 철갑의 징표 · 뇌전의 징표 (같은 확률)
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
@@ -117,7 +117,7 @@ function createBattle(sv, node) {
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
     hpM: CFG.H0 * Math.pow(CFG.HPX, scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
     atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
-    haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
+    haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
   b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
@@ -126,6 +126,8 @@ function createBattle(sv, node) {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
     const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
   });
+  // 속성 보스 상성: 장착한 공격 스킬 중 2개 이상이 보스의 속성이면 그 보스에게 받는 피해가 줄어든다
+  if (isEB(node.kind)) { const pool = EB[node.kind].pool, nm = b.skills.filter((k) => k && k.slot === "active" && k.dtype !== "buff" && k.dtype !== "heal" && ebMatch(node.kind, k)).length; b.affMatch = nm >= 2; }
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
   if (node.kind === "dummy") spawnDummies(b, node);
   if (node.kind === "raid") { b.hpM *= CFG.RAID.K; b.atkM *= CFG.RAID.ATK; spawnRaid(b); }
@@ -194,7 +196,7 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [100, 108, 116, 124], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
@@ -281,6 +283,7 @@ function damagePlayer(b, raw, opt) {
   if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
   let d = raw * (1 - b.stats.def / (b.stats.def + 5 * raw));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
+  if (b.affMatch) d *= CFG.EB_AFF_DEF;
   d *= Math.max(0.2, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
   d = Math.max(1, d);
   if (b.stats.manaShield && b.mana > 0) { const keep = b.maxMana * CFG.MANA_SHIELD_KEEP, avail = Math.max(0, b.mana - keep), ab = Math.min(d * b.stats.manaShield, avail / CFG.MANA_SHIELD_COST); b.mana -= ab * CFG.MANA_SHIELD_COST; d -= ab; }   // 방벽은 마나가 일정 비율 이하면 멈춘다 (스킬을 쓸 마나를 남긴다)
@@ -314,10 +317,19 @@ function applyDamage(b, e, dmg, o) {
   if (e.hp <= 0) killEnemy(b, e);
   return dmg;
 }
+// 속성 보스 상성: 스킬이 그 보스의 계열인가 (독 = 중독 확정/강한 스킬, 물리 = 독이 아닌 무속성 물리, 나머지는 원소)
+function ebMatch(kind, sk) {
+  if (!isEB(kind)) return false; const pool = EB[kind].pool, pz = (sk.poison || 0) >= 0.3;
+  if (pool === "poison") return sk.dtype === "phys" && !sk.elem && pz;
+  if (pool === "phys") return sk.dtype === "phys" && !sk.elem && !pz;
+  return sk.elem === pool;
+}
 function hitEnemy(b, e, mult, sk, o) {
   o = o || {}; const st = b.stats, mag = sk.dtype === "mag";
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
   let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
+  if (e.tier === "boss" && ebMatch(b.kind, sk)) dmg *= CFG.EB_AFFINITY;   // 속성 상성
+  dmg *= CFG.BAL[sk.elem || (mag ? "mag" : (sk.poison >= 0.3 ? "poison" : sk.bleed >= 0.3 ? "bleed" : "phys"))] || 1;   // 빌드 계열 밸런스 보정
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
   { const kd = sk.kind; if (kd === "single") dmg *= 1 + st.singleDmg; if (PERSIST_KINDS.includes(kd)) dmg *= 1 + st.persistDmg; if (kd === "summon") dmg *= 1 + st.summonDmg; if (sk.bonus && sk.bonus.boss >= 0.8 && e.tier === "boss") dmg *= 1 + st.bossSkill; if (st.executeDmg && e.hp < e.maxHp * 0.3) dmg *= 1 + st.executeDmg; }   // 스킬 종류 패시브
   // 방어력(물리) / 마법저항(마법): 감소 후 무시 → 피해 감소율 = X / (X + C)
@@ -340,6 +352,8 @@ function killEnemy(b, e) {
   if (e.type === "warp") { b.keys++; say(b, "공허의 열쇠를 얻었다!", "good"); sfx(b, "key"); }
   if (e.type === "hwarp") { b.keys2++; say(b, "정령의 불씨를 얻었다!", "good"); sfx(b, "key"); }
   if (e.type === "twarp") { b.keys3++; say(b, "철갑의 징표를 얻었다!", "good"); sfx(b, "key"); }
+  if (e.type === "vwarp") { b.keys6++; say(b, "맹독의 징표를 얻었다!", "good"); sfx(b, "key"); }
+  if (e.type === "fwarp") { b.keys5++; say(b, "서리의 징표를 얻었다!", "good"); sfx(b, "key"); }
   if (e.type === "swarp") { b.keys4++; say(b, "뇌전의 징표를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
   if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
@@ -455,6 +469,7 @@ function bossTick(b, e, dt) {
   if (e.def.raid) raidTick(b, e, dt);
   if (e.plate) { e.plate.t -= dt; if (e.plate.t <= 0) { e.plate = null; say(b, "철갑이 풀렸다."); } }
   if (e.def.storm) { const np = b.enemies.filter((x) => x.pylon && !x.dead).length; if (np) { const m = 0.1 * np; b.debuffs.curse = { t: 1.0, mult: Math.max(m, b.debuffs.curse && b.debuffs.curse.t > 0.5 ? b.debuffs.curse.mult : 0) }; } }   // 피뢰침이 살아 있는 동안 감전: 받는 피해 +10%/개
+  if (e.def.venom && !e.dead) { const pz = e.dots && e.dots.some((d) => d.k === "poison"); if (!pz) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * CFG.VENOM_REGEN * dt); }   // 독니의 군주: 중독이 걸려 있지 않으면 계속 재생
   if (e.def.hive) e.guard = !!(b.plan.length || b.enemies.some((x) => !x.dead && x !== e));
   for (const a of e.abil) {
     if (a.d.id === "enrage") { if (!e.enraged && e.hp <= e.maxHp * a.d.at) { e.enraged = true; e.atk *= 1.4; e.interval *= 0.7; say(b, a.d.text, "boss"); sfx(b, "roar"); b.shake = 0.6; } continue; }
@@ -577,7 +592,7 @@ function finishBattle(sv, b) {
   // v4: 경험치는 없다. 균열 층을 처음 클리어할 때마다 레벨이 1 오른다 (100층 = 100레벨)
   sv.gold += res.gold; sv.stats.kills += b.kills; dailyAdd(sv, "kills", b.kills); if (b.time > 12 && node.kind !== "tutorial" && win) { const k = Math.min(1, 0.3 * 1); sv.rate.gold = sv.rate.gold ? sv.rate.gold * 0.7 + (res.gold / (b.time / 60)) * 0.3 : res.gold / (b.time / 60); sv.rate.exp = 0; }
   const kf = b.keys * B.key; res.keys = Math.floor(kf) + (Math.random() < kf - Math.floor(kf) ? 1 : 0); sv.keys += res.keys; { const k2 = b.keys2 * B.key; res.keys2 = Math.floor(k2) + (Math.random() < k2 - Math.floor(k2) ? 1 : 0); sv.keys2 = (sv.keys2 || 0) + res.keys2; }
-  for (const [f, bf] of [["keys3", b.keys3], ["keys4", b.keys4]]) { const kk = (bf || 0) * B.key; res[f] = Math.floor(kk) + (Math.random() < kk - Math.floor(kk) ? 1 : 0); sv[f] = (sv[f] || 0) + res[f]; }
+  for (const [f, bf] of [["keys3", b.keys3], ["keys4", b.keys4], ["keys5", b.keys5], ["keys6", b.keys6]]) { const kk = (bf || 0) * B.key; res[f] = Math.floor(kk) + (Math.random() < kk - Math.floor(kk) ? 1 : 0); sv[f] = (sv[f] || 0) + res[f]; }
   const qd = [];
   if (b.kills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.kills, tier: "normal" }));
   if (b.eliteKills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.eliteKills, tier: "elite" }));
@@ -604,7 +619,7 @@ function finishBattle(sv, b) {
         }
       }
       if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
-      if (node.kind === "rift") { if (node.tier > sv.rift.best) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
+      if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
     while (sv.inv.length > CFG.INV_MAX) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }

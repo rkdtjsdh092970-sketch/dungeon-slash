@@ -100,7 +100,7 @@ function renderItems() {
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 미확인의 돌 (${save.stones.length})</button>` : `<button class="btn pri wide1" data-a="stones">💎 미확인의 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
-  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span></small>` : ""}</div>
+  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
@@ -388,7 +388,7 @@ function openAutoDis() {
 
 // ---------- 장비 도감 ----------
 const CX = { tab: "odds", pool: "all", sel: null, skf: "all" };
-const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제", void: "공허의 군주" };
+const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제", frost: "서리 여왕", poison: "독니의 군주", bosshub: "보스 관문", void: "공허의 군주" };
 const POOL_BOSS = { void: "공허의 군주", fire: "화염 정령왕", phys: "철갑의 투사", light: "뇌제" }, SRC_COLOR = { void: "#c070ff", fire: "#ff9a30", phys: "#d8c8b0", light: "#ffe45a" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
 const pool4 = () => uniquePool("void", 10).reduce((a, x) => a + (x.u.tier === 4 ? CFG.VOID4_ANGELIC_W : 21), 0);
@@ -483,7 +483,7 @@ function formulaHtml() {
   </div>`;
 }
 // ---- 스킬 도감 ----
-const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["passive", "패시브 스킬"], ["myth", "신화 이상 전용"], ["boss", "보스 전용기"], ["b_void", "공허의 군주 드랍"], ["b_hive", "화염 정령왕 드랍"], ["b_titan", "철갑의 투사 드랍"], ["b_storm", "뇌제 드랍"]];
+const SK_FILTERS = [["all", "전체"], ["basic", "기본 공격"], ["active", "액티브"], ["passive", "패시브 스킬"], ["myth", "신화 이상 전용"], ["boss", "보스 전용기"], ["b_void", "공허의 군주 드랍"], ["b_hive", "화염 정령왕 드랍"], ["b_titan", "철갑의 투사 드랍"], ["b_storm", "뇌제 드랍"], ["b_frost", "서리 여왕 드랍"], ["b_poison", "독니의 군주 드랍"]];
 function skBuildTags(d) {
   const t = [];
   if (d.bonus && d.bonus.boss >= 0.8) t.push(["보스 전용기", "#ff9a9a"]);
@@ -614,6 +614,8 @@ const TIP_CUR = {
   pow: ["전투력", "장비 · 스킬 · 패시브 · 레벨을 모두 반영한 '예상 초당 피해 × 유효 체력' 기준의 추정값입니다. 몬스터 구성에 따라 실제 전투 결과는 달라집니다. 누르면 스탯 창이 열립니다. 서버에 로그인해 있으면 랭킹에 올라갑니다.", "장비 강화·옵션·패시브·스킬 레벨업으로 올립니다"],
   keys2: ["정령의 불씨", "화염 정령왕에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 정령의 불씨(주황색 눈알)를 처치"],
   keys3: ["철갑의 징표", "철갑의 투사에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 철갑의 징표(회백색 눈알)를 처치"],
+  keys6: ["맹독의 징표", "독니의 군주에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 맹독의 징표(연두색 눈알)를 처치"],
+  keys5: ["서리의 징표", "서리 여왕에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 서리의 징표(하늘색 눈알)를 처치"],
   keys4: ["뇌전의 징표", "뇌제에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 뇌전의 징표(노란색 눈알)를 처치"],
 };
 function itemSourceLines(it) {

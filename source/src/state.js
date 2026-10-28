@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -27,7 +27,9 @@ function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) re
 const FIRE_BIAS = { vsIgnite: 4, fireDmg: 6, igniteChance: 6, dotDmg: 5, elemDmg: 4, penElem: 4, magPct: 2, dotDur: 3 };
 const PHYS_BIAS = { vsBleed: 4, vsPoison: 3, physDmg: 6, atkPct: 4, critChance: 4, critDmg: 4, bleedChance: 6, poisonChance: 4, dotDmg: 4, ignoreDef: 5, shredDef: 4, dotDur: 3 };
 const LIGHT_BIAS = { vsShock: 4, shockChance: 4, lightDmg: 7, elemDmg: 4, penElem: 4, magPct: 4, spellCrit: 4, chainDmg: 5, critDmg: 2, ignoreRes: 4, shredRes: 3 };
-EB.hive.bias = FIRE_BIAS; EB.titan.bias = PHYS_BIAS; EB.storm.bias = LIGHT_BIAS;
+const COLD_BIAS = { coldDmg: 7, elemDmg: 4, penElem: 4, magPct: 4, spellCrit: 4, critDmg: 2, ignoreRes: 4, shredRes: 3, dotDmg: 2 };
+const POISON_BIAS = { vsPoison: 5, poisonChance: 7, dotDmg: 6, physDmg: 4, atkPct: 4, critDmg: 2, ignoreDef: 3, dotDur: 4 };
+EB.poison.bias = POISON_BIAS; EB.frost.bias = COLD_BIAS; EB.hive.bias = FIRE_BIAS; EB.titan.bias = PHYS_BIAS; EB.storm.bias = LIGHT_BIAS;
 // =====================================================================
 // v4 장비: 일반 · 매직 · 레어 · 전설. 전설은 옵션 5개(각 1~6티어) + 소켓 1~3개.
 // 아이템 레벨 = T1~T5 (균열 20층마다 한 단계). 옵션 티어는 1티어가 최고(드묾), 6티어가 최저(흔함).
@@ -97,7 +99,7 @@ function diceItem(sv, it) {
   it.affixes = it.affixes.map((a) => { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a; const [lo, hi] = affixRange(d, it.ilvl, it.rarity, a.t); const o = { k: a.k, v: d.count ? Math.round(rnd(lo, hi)) : rnd(lo, hi) }; if (a.t != null) o.t = a.t; return o; });
   sv.dice--; return true;
 }
-const diceChance = (kind, node) => ({ titan: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], storm: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], void: [0.02, 0.04, 0.07, 0.15][(node.vsel || 1) - 1] }[kind] || 0);
+const diceChance = (kind, node) => ({ titan: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], storm: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], frost: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], poison: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], void: [0.02, 0.04, 0.07, 0.15][(node.vsel || 1) - 1] }[kind] || 0);
 // 전설이 나왔을 때만 아주 낮은 확률로 이터널 → 소버린 → 엔젤릭 순으로 한 단계씩 더 올라간다 (chance는 첫 단계 확률, 이후 단계마다 ×0.4)
 function skillTierUp(r, chance) { let c = chance || 0; while (r >= 2 && r < SKILL_RARITY.length - 1 && Math.random() < c) { r++; c *= 0.4; } return r; }
 function genSkill(sv, id, rarity, tierUp) {
@@ -316,17 +318,18 @@ function revealStone(sv, st) { const c = stoneRevealCost(sv); if (sv.gold < c) r
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
 // 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
 //  공허의 군주: 냉기·공허·마나·버프·회복·소환 계열 / 화염 정령왕: 화염·점화 / 철갑의 투사: 물리·출혈·중독 / 뇌제: 번개·감전
-const BOSS_POOLKEY = { void: "void", hive: "fire", titan: "phys", storm: "light" }, BOSS_NAMES = { void: "공허의 군주", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제" };
+const BOSS_POOLKEY = { void: "void", hive: "fire", titan: "phys", storm: "light", frost: "cold", poison: "poison" }, BOSS_NAMES = { void: "공허의 군주", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제", frost: "서리 여왕", poison: "독니의 군주" };
 function bossOfSkill(d) {
   if (d.slot === "passive") return null;
-  if (d.src) return { void: "void", fire: "hive", phys: "titan", light: "storm" }[d.src] || "void";
+  if (d.src) return { void: "void", fire: "hive", phys: "titan", light: "storm", cold: "frost", poison: "poison" }[d.src] || "void";
   if (d.mythOnly) return { angelfall: "void", verdict: "void", dragonbreath: "hive", starfall: "storm", skysword: "titan", quake: "titan" }[d.id] || "void";
   if (d.elem === "fire" || d.ignite >= 0.35) return "hive";
   if (d.elem === "light" || d.shock) return "storm";
-  if (d.elem === "cold" || d.elem === "void") return "void";
+  if (d.elem === "cold") return "frost";
+  if (d.elem === "void") return "void";
   if (d.dtype === "buff" || d.dtype === "heal" || d.kind === "summon") return "void";
   if (d.dtype === "mag") return "void";
-  if (d.poison >= 0.3) return "void";   // 독 계열은 공허의 군주
+  if (d.poison >= 0.3) return "poison";   // 독 계열은 독니의 군주
   if (d.kind === "pierce" || d.kind === "spray" || d.kind === "bounce" || d.kind === "shuri" || d.kind === "boomer") return "storm";   // 관통·난사·투척 계열은 뇌제
   return "titan";
 }
@@ -377,7 +380,7 @@ function rollDrops(sv, node, boss, B) {
     for (let k = 0; k < c; k++) sv.stones.push(newStone(sv)); out.stones = c;
   }
   // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
-  if (kind === "raid") { const ks = ["void", "hive", "titan", "storm"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
+  if (kind === "raid") { const ks = ["void", "hive", "titan", "storm", "frost", "poison"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
   if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1)) out.skills.push(s);
   else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1)) out.skills.push(s);
@@ -385,7 +388,7 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
-  const oc = { raid: 6, vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
+  const oc = { raid: 6, vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), frost: 1.5 * (node.vsel || 1), poison: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   // 신성한 구슬은 아주 귀하다 (혼돈 구슬의 약 5%)
@@ -488,7 +491,7 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
-  if (n.kind === "endless" || n.kind === "void" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
+  if (n.kind === "endless" || n.kind === "void" || n.kind === "bosshub" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
   if (!townUnlocked(sv, n.act)) return false;
   if (n.kind === "elite" || n.kind === "treasure") return sv.cleared[n.act - 1] >= n.need;
   return n.stage <= sv.cleared[n.act - 1] + 1;

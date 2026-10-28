@@ -84,13 +84,13 @@ const SKILLS = [
   { id: "strike",  name: "일격",         slot: "basic",  kind: "single", cd: 0.8,  mult: 1.0,  range: 3, bonus: {}, unlock: 1, color: "#cfe4ff", icon: "sword", sfx: "slash", desc: "기본 단일 공격" },
   { id: "rapid",   name: "연사",         slot: "basic",  kind: "single", cd: 0.45, mult: 0.55, range: 4, bonus: {}, unlock: 1, color: "#cfe4ff", icon: "dagger", sfx: "slash", desc: "빠른 단일 공격" },
   { id: "crush",   name: "파쇄타",       slot: "basic",  kind: "multi",  cd: 1.1,  mult: 0.5,  side: 0.6, range: 3, bonus: {}, unlock: 2, color: "#ffd9a0", icon: "hammer", sfx: "thud", desc: "대상 주변 3x3 타격" },
-  { id: "spark",   name: "번개 찌르기",   slot: "basic",  kind: "chain",  cd: 0.9,  mult: 1.08,  jumps: 2, decay: 0.6, range: 4, bonus: {}, unlock: 2, color: "#aee8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤로 번개가 2번 튄다" },
+  { id: "spark",   name: "번개 찌르기",   slot: "basic",  kind: "chain",  cd: 0.9,  mult: 1.08,  jumps: 2, decay: 0.6, range: 4, bonus: {}, lifesteal: 0.02, unlock: 2, color: "#aee8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤로 번개가 2번 튄다" },
   { id: "smash",   name: "강타",         slot: "active", kind: "single", cd: 3.0,  mult: 3.2,  range: 5, bonus: { elite: 0.3 }, unlock: 1, color: "#ffe08a", icon: "fist", sfx: "thud", desc: "강한 단일 공격, 정예에게 추가 피해" },
   { id: "bomb",    name: "폭열탄",       slot: "active", kind: "multi",  cd: 5.0,  mult: 2.0,  side: 0.8, range: 5, bonus: {}, unlock: 1, color: "#ff9a50", icon: "bomb", sfx: "boom", desc: "대상 주변 3x3 폭발" },
   { id: "lance",   name: "관통창",       slot: "active", kind: "pierce", cd: 6.0,  mult: 1.7,  range: 6, bonus: {}, unlock: 1, color: "#9dffb0", icon: "spear", sfx: "pierce", desc: "같은 줄의 적을 모두 꿰뚫는다" },
-  { id: "chain",   name: "체인 라이트닝", slot: "active", kind: "chain",  cd: 5.5,  mult: 2.57,  jumps: 5, decay: 0.88, range: 5, bonus: {}, unlock: 2, color: "#9ad8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤의 대각선 위·대각선 아래·바로 뒤로 무작위로 번개가 뻗는다" },
+  { id: "chain",   name: "체인 라이트닝", slot: "active", kind: "chain",  cd: 5.5,  mult: 2.57,  jumps: 5, decay: 0.88, range: 5, bonus: {}, lifesteal: 0.03, unlock: 2, color: "#9ad8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤의 대각선 위·대각선 아래·바로 뒤로 무작위로 번개가 뻗는다" },
   { id: "snipe",   name: "저격",         slot: "active", kind: "single", cd: 4.0,  mult: 4.0,  range: 6, bonus: { ranged: 0.6 }, unlock: 2, color: "#d0b0ff", icon: "arrow", sfx: "snipe", desc: "원거리 유닛에게 추가 피해, 사거리 6" },
-  { id: "firewall", name: "화염 벽",     slot: "active", kind: "zone",   cd: 10.0, mult: 1.4,  dur: 5, range: 5, bonus: {}, unlock: 3, color: "#ff7a30", icon: "flame", sfx: "fire", desc: "대상 줄 3칸을 5초간 불태운다" },
+  { id: "firewall", name: "화염 벽",     slot: "active", kind: "zone",   cd: 10.0, mult: 1.8,  dur: 5, range: 5, bonus: {}, unlock: 3, color: "#ff7a30", icon: "flame", sfx: "fire", desc: "대상 줄 3칸을 5초간 불태운다" },
   { id: "sweep",   name: "소탕",         slot: "active", kind: "multi",  cd: 6.0,  mult: 1.6,  side: 0.9, range: 4, bonus: { normal: 0.4 }, unlock: 3, color: "#c0ffc0", icon: "sweep", sfx: "slash", desc: "일반 몹에게 추가 피해를 주는 광역" },
   { id: "cry",     name: "전투 함성",     slot: "active", kind: "buff",   cd: 18.0, mult: 0, dur: 8, power: 0.3, range: 6, bonus: {}, unlock: 3, color: "#ffd24a", icon: "horn", sfx: "buff", desc: "8초 동안 주는 피해 +30%" },
   { id: "execute", name: "처형",         slot: "active", kind: "single", cd: 7.0,  mult: 6,  range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff6a6a", icon: "skull", sfx: "snipe", desc: "보스에게 큰 추가 피해" },
@@ -98,10 +98,10 @@ const SKILLS = [
   { id: "firemark", name: "화염의 낙인", slot: "active", kind: "single", cd: 8, mult: 6.5, range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff8a3a", icon: "flame", sfx: "snipe", desc: "보스에게 큰 추가 화염 피해", dtype: "mag", elem: "fire", mana: 22 },
   { id: "frostmark", name: "서리의 낙인", slot: "active", kind: "single", cd: 8, mult: 6.5, range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#8ae0ff", icon: "snow", sfx: "snipe", desc: "보스에게 큰 추가 냉기 피해", dtype: "mag", elem: "cold", mana: 22 },
   { id: "stormmark", name: "뇌광의 낙인", slot: "active", kind: "single", cd: 8, mult: 6.5, range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ffe45a", icon: "bolt", sfx: "snipe", desc: "보스에게 큰 추가 번개 피해", dtype: "mag", elem: "light", mana: 22 },
-  { id: "frost",   name: "빙결 파동",     slot: "active", kind: "nova",   cd: 9.0,  mult: 1.2,  range: 5, chill: 2.0, bonus: {}, unlock: 4, color: "#a8e8ff", icon: "snow", sfx: "frost", desc: "사거리 안의 모든 적에게 피해, 공격이 느려진다" },
+  { id: "frost",   name: "빙결 파동",     slot: "active", kind: "nova",   cd: 9.0,  mult: 1.7,  range: 5, chill: 2.0, bonus: {}, unlock: 4, color: "#a8e8ff", icon: "snow", sfx: "frost", desc: "사거리 안의 모든 적에게 피해, 공격이 느려진다" },
   { id: "vamp",    name: "흡혈 참격",     slot: "active", kind: "single", cd: 4.5,  mult: 2.8,  range: 4, lifesteal: 0.25, bonus: {}, unlock: 4, color: "#ff6aa0", icon: "fang", sfx: "slash", desc: "피해의 25%를 체력으로 회복" },
   { id: "heal",    name: "치유의 빛",     slot: "active", kind: "heal",   cd: 16.0, mult: 0, power: 0.25, range: 6, bonus: {}, unlock: 4, color: "#9dffb0", icon: "heart", sfx: "heal", desc: "체력이 낮을 때 최대 체력의 25% 회복" },
-  { id: "thunder", name: "낙뢰",         slot: "active", kind: "multi",  cd: 8.0,  mult: 4.32,  side: 1.0, range: 6, bonus: {}, unlock: 5, color: "#fff0a0", icon: "cloud", sfx: "boom", desc: "강력한 3x3 낙뢰" },
+  { id: "thunder", name: "낙뢰",         slot: "active", kind: "multi",  cd: 8.0,  mult: 4.32,  side: 1.0, range: 6, bonus: {}, lifesteal: 0.05, unlock: 5, color: "#fff0a0", icon: "cloud", sfx: "boom", desc: "강력한 3x3 낙뢰" },
   { id: "boomer",  name: "회전 도끼",     slot: "active", kind: "boomer", cd: 6.0,  mult: 1.5,  range: 6, back: 0.8, bonus: {}, unlock: 5, color: "#e0e8ff", icon: "axe", sfx: "pierce", desc: "줄을 꿰뚫고 돌아오며 한 번 더 벤다" },
   { id: "pierce2", name: "섬광 관통",     slot: "active", kind: "pierce", cd: 7.0,  mult: 2.8,  range: 6, bonus: { ranged: 0.3 }, unlock: 6, color: "#fff", icon: "spear", sfx: "pierce", desc: "원거리에 추가 피해를 주는 관통" },
   { id: "meteor",  name: "유성",         slot: "active", kind: "meteor", cd: 12.0, mult: 1.6,  side: 1.0, range: 6, count: 3, bonus: { elite: 0.3, boss: 0.3 }, unlock: 7, color: "#ff8a4a", icon: "meteor", sfx: "meteor", desc: "유성 3개가 무작위 적 위에 떨어진다" },
@@ -196,15 +196,12 @@ function buildMap() {
   const rift = add({ id: "R", kind: "rift", act: 11, x: RIFT_POS[0], y: RIFT_POS[1], name: "심연의 균열", level: 100 });
   edges.push([`S${CFG.ACTS}-${CFG.STAGES}`, rift.id]);
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
-  const voidn = add({ id: "RV", kind: "void", act: 11, x: RIFT_POS[0] + 130, y: RIFT_POS[1] + 40, name: "공허의 군주", level: 100 });
-  const flame = add({ id: "RH", kind: "hive", act: 11, x: RIFT_POS[0] + 120, y: RIFT_POS[1] - 110, name: "화염 정령왕", level: 100 });
-  const titan = add({ id: "RT", kind: "titan", act: 11, x: RIFT_POS[0] + 10, y: RIFT_POS[1] - 175, name: "철갑의 투사", level: 100 });
-  const stormn = add({ id: "RS", kind: "storm", act: 11, x: RIFT_POS[0] + 125, y: RIFT_POS[1] + 160, name: "뇌제", level: 100 });
+  const hub = add({ id: "RB", kind: "bosshub", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 30, name: "보스 관문", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
   const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
   const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
   edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
-  edges.push([rift.id, endless.id]); edges.push([rift.id, voidn.id]); edges.push([rift.id, flame.id]); edges.push([rift.id, titan.id]); edges.push([rift.id, stormn.id]); edges.push([rift.id, vault.id]);
+  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]);
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {

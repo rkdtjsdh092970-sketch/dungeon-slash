@@ -15,6 +15,10 @@ CFG.ENDLESS_DAILY = 3;             // 무한 균열 하루 입장 횟수
 CFG.ILVL_RIFT_STEP = 20;           // 균열 N단계마다 드랍 아이템 레벨 +1
 CFG.PASSIVE_START = 0;             // v4: 레벨 1부터 레벨당 패시브 포인트 (균열 1층 클리어 = 1레벨)
 CFG.PASSIVE_PER_LV = 2;            // 레벨당 패시브 포인트
+CFG.EB_AFFINITY = +(typeof process !== "undefined" && process.env && process.env.AFF || 1.5);   // 속성 보스 상성: 같은 속성(화염=화염 · 철갑=물리 · 뇌제=번개) 스킬이 그 보스에게 주는 피해 배율
+CFG.VENOM_REGEN = +(typeof process !== "undefined" && process.env && process.env.VREG || 0.006);   // 독니의 군주 재생 (초당 최대 체력 비율, 중독 중에는 멈춤)
+CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.AFFD || 0.85);   // 상성 빌드(같은 속성 공격 스킬 2개 이상)가 그 속성 보스에게 받는 피해 배율
+CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
 // 구간이 바뀌는 층(20·40·60·80·100, 보스)에서 FLOOR_JUMP배로 한 번에 뛰고, 구간 안에서는 앵커까지 완만하게(지수 보간) 오른다. 100층 이후는 층당 FLOOR_TAIL배.
@@ -132,20 +136,37 @@ BOSSES.push({ id: "storm", name: "뇌제 라이곤", w: 3, h: 2, hp: 2000, atk: 
     { id: "freeze", every: 21, dur: 1.5, text: "감전! 몸이 굳는다!" }, { id: "charge", every: 17, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "라이곤이 번개를 모은다!" },
     { id: "summon", every: 15, count: 6, type: "imp", text: "스파크가 튄다!" }, { id: "enrage", at: 0.3, text: "라이곤이 폭풍을 해방한다!" }], desc: "피뢰침(감전 누적) · 연쇄 번개 · 감전 마비 · 과부하 방전" });
 const STORM_BOSS = BOSSES[BOSSES.length - 1];
+// 서리 여왕 글라시아 (냉기 전용): 얼음 장벽이 서리 정령을 모두 처치할 때까지 피해를 막고, 빙결로 몸을 얼린다. 냉기 빙결 빌드 장비를 준다.
+BOSSES.push({ id: "frost", name: "서리 여왕 글라시아", w: 3, h: 2, hp: 2000, atk: 26, range: 4, interval: 2.1, windup: 0.85, exp: 320, gold: 320, sc: 4, hue: 0, art: 14, frost: true,
+  abilities: [{ id: "shield", every: 23, dur: 9, adds: 5, text: "얼음 장벽! 서리 정령을 처치하라!" }, { id: "freeze", every: 20, dur: 1.6, text: "한기가 몸을 얼린다!" },
+    { id: "summon", every: 13, count: 6, type: "imp", text: "서리 정령이 깨어난다!" }, { id: "rain", every: 11, hits: 5, mult: 0.55, text: "고드름이 쏟아진다!" },
+    { id: "wound", every: 15, dur: 6, mult: 0.5, text: "서리 상처! 생명력 흡수·회복이 반감된다!" }, { id: "charge", every: 17, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "글라시아가 냉기를 모은다!" },
+    { id: "enrage", at: 0.3, text: "글라시아가 폭설을 불러온다!" }], desc: "얼음 장벽(정령 처치 필요) · 빙결 · 고드름 · 치유 감소" });
+const FROST_BOSS = BOSSES[BOSSES.length - 1];
+// 독니의 군주 베노크 (독 전용): 계속 재생하며, 중독이 걸려 있는 동안에는 재생이 멈춘다. 독무와 독 가시로 지속 피해를 주고 졸개를 부화시킨다. 독 빌드 장비를 준다.
+BOSSES.push({ id: "venomlord", name: "독니의 군주 베노크", w: 3, h: 2, hp: 2100, atk: 26, range: 4, interval: 2.1, windup: 0.85, exp: 320, gold: 320, sc: 4, hue: 0, art: 15, venom: true,
+  abilities: [{ id: "poison", every: 14, dur: 7, dps: 0.012, text: "독무가 퍼진다! 지속 피해를 받는다!" }, { id: "summon", every: 12, count: 7, type: "imp", text: "독니 새끼들이 부화한다!" },
+    { id: "rain", every: 11, hits: 5, mult: 0.55, text: "독 가시가 쏟아진다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "독이 번진 상처! 생명력 흡수·회복이 반감된다!" },
+    { id: "charge", every: 17, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "베노크가 독니를 드러낸다!" }, { id: "enrage", at: 0.3, text: "베노크가 광란한다!" }], desc: "끊임없는 재생(중독 중에는 멈춤) · 독무 · 독 가시 · 치유 감소" });
+const VENOM_BOSS = BOSSES[BOSSES.length - 1];
 const TWARP = { name: "철갑의 징표", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, twarp: true };
+const FWARP = { name: "서리의 징표", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, fwarp: true };
+const VWARP = { name: "맹독의 징표", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, vwarp: true };
 const SWARP = { name: "뇌전의 징표", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, swarp: true };
 // 속성 보스 공통 표: 열쇠 종류·저장 필드·입장 조건·난이도 (화염=hive, 물리=titan, 번개=storm)
 const EB = {
   hive: { boss: HIVE_BOSS, pool: "fire", name: "화염 정령왕", key: "keys2", wtype: "hwarp", keyName: "정령의 불씨", stage: "hiveStage", sm: "hsm", sp: "hsp", icon: "🔥", color: "#ffb070", angel: "화염 정령왕의 관" },
   titan: { boss: TITAN_BOSS, pool: "phys", name: "철갑의 투사", key: "keys3", wtype: "twarp", keyName: "철갑의 징표", stage: "titanStage", sm: "tsm", sp: "tsp", icon: "⚔", color: "#d8c8b0", angel: "거신의 대검" },
   storm: { boss: STORM_BOSS, pool: "light", name: "뇌제", key: "keys4", wtype: "swarp", keyName: "뇌전의 징표", stage: "stormStage", sm: "ssm", sp: "ssp", icon: "⚡", color: "#ffe45a", angel: "뇌제의 심장" },
+  frost: { boss: FROST_BOSS, pool: "cold", name: "서리 여왕", key: "keys5", wtype: "fwarp", keyName: "서리의 징표", stage: "frostStage", sm: "fsm", sp: "fsp", icon: "❄", color: "#9ae0ff", angel: "서리 여왕의 왕관" },
+  poison: { boss: VENOM_BOSS, pool: "poison", name: "독니의 군주", key: "keys6", wtype: "vwarp", keyName: "맹독의 징표", stage: "poisonStage", sm: "pnm", sp: "pnp", icon: "☠", color: "#8aff6a", angel: "독니의 군주의 송곳니" },
 };
 const isEB = (k) => !!EB[k];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIERS = [100, 108, 116, 124], HIVE_NEED = [100, 100, 100, 100], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
-EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 110, 118, 126]; EB.titan.need = [100, 100, 100, 100]; EB.storm.tiers = [102, 110, 118, 126]; EB.storm.need = [100, 100, 100, 100];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
+const HIVE_TIERS = [100, 108, 126, 138], HIVE_NEED = [100, 100, 100, 100], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
+EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = HIVE_TIERS; EB.titan.need = [100, 100, 100, 100]; EB.storm.tiers = HIVE_TIERS; EB.storm.need = [100, 100, 100, 100]; EB.frost.tiers = HIVE_TIERS; EB.frost.need = [100, 100, 100, 100]; EB.poison.tiers = HIVE_TIERS; EB.poison.need = [100, 100, 100, 100];   // 속성 보스 4종은 같은 난이도 기준 — 빌드마다 격차는 상성과 기믹으로 맞춘다   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
-const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP };   // 열쇠 몹 종류 → 정의
+const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP, fwarp: FWARP, vwarp: VWARP };   // 열쇠 몹 종류 → 정의
 
 const VOID_NEED = [100, 100, 100, 100];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
 const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
@@ -157,7 +178,7 @@ BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, 
   abilities: [{ id: "rain", every: 11, hits: 6, mult: 0.5, text: "문지기가 심연의 불을 쏟아붓는다!" }, { id: "wound", every: 19, dur: 6, mult: 0.5, text: "저주받은 낙인! 생명력 흡수·회복이 반감된다!" },
     { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
 const RAID_BOSS = BOSSES[BOSSES.length - 1];
-CFG.RAID = { ATK: 5, K: 15, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 720, THR: [0.75, 0.5, 0.25] };
+CFG.RAID = { ATK: 10, K: 150, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 720, THR: [0.75, 0.5, 0.25] };
 
 // 거대 보물상자: 황금 보물고에서 가끔 나오는 확률 보스. 금화를 토해내고, 부수면 골드를 많이 준다.
 BOSSES.push({ id: "chest", name: "거대 보물상자", w: 2, h: 2, hp: 30000, atk: 10, range: 2, interval: 3.2, windup: 1.0, exp: 0, gold: 300, sc: 5, hue: 0, art: 0, chest: true,
