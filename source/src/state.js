@@ -339,7 +339,7 @@ function rollBossSkills(sv, kind, K) {
 }
 // 균열 층별 드랍 수치 (도감의 확률 표도 같은 함수를 쓴다)
 const riftItemN = (tier, boss) => 4 + Math.min(8, Math.floor((tier || 1) / 6)) + (boss ? 3 : 0);
-const riftRW = (tier, boss) => [8, 26, 40, 26 + Math.min(10, (tier || 0) * 0.1) + (boss ? 6 : 0)];   // 일반·매직·레어·전설 가중치
+const riftRW = (tier, boss) => [30, 40, 25, 5];   // 일반·매직·레어·전설 가중치 — 모든 층 균일 (높은 층은 장비 T와 옵션 티어가 좋아질 뿐)
 const riftLegendShare = (tier, boss) => { const w = riftRW(tier, boss); return w[3] / (w[0] + w[1] + w[2] + w[3]); };
 const stoneChanceAt = (tier) => Math.min(0.75, 0.30 + 0.004 * tier);
 function rollDrops(sv, node, boss, B) {
@@ -572,18 +572,13 @@ const isSpecialSkill = (d) => !!d.voidOnly || (d.slot === "passive" && d.pt > 0)
 // v4: 스킬 해금 단계는 캐릭터 레벨(= 균열 최고 층 + 1)을 따른다
 const skillAct = (sv) => Math.max(1, Math.min(8, 1 + Math.floor(sv.level / 10)));
 function shopStock(sv, now) {
-  now = now || Date.now(); const slot = Math.floor(now / (SHOP_MIN * 60000)), act = skillAct(sv);
-  if (!sv.shop || sv.shop.slot !== slot) sv.shop = { slot, bought: [] };
-  const r = seeded(slot * 31 + act * 7), pool = SKILLS.filter((d) => d.unlock <= act && !isSpecialSkill(d) && d.id !== "p_none"), out = [];
-  for (let i = 0; i < 6 && pool.length; i++) {
-    const d = pool.splice(Math.floor(r() * pool.length), 1)[0], rr = r(), rarity = 0;   // v4: 상점에는 일반 등급 스킬만 나온다 (높은 등급은 졸업 후 보스 드랍)
-    out.push({ id: d.id, rarity, price: skillPrice(d, rarity) });
-  }
-  return out;
+  // v4.1: 상점은 일반 등급 스킬 전부를 상시 판매한다 (골라서 구매, 수량 제한 없음). 높은 등급은 졸업 후 보스 드랍
+  if (!sv.shop) sv.shop = { slot: 0, bought: [] };
+  return SKILLS.filter((d) => !isSpecialSkill(d) && d.id !== "p_none").sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock).map((d) => ({ id: d.id, rarity: 0, price: skillPrice(d, 0) }));
 }
 function buySkill(sv, idx) {
-  const stock = shopStock(sv), o = stock[idx]; if (!o || sv.shop.bought.includes(idx) || sv.gold < o.price) return false;
-  sv.gold -= o.price; sv.shop.bought.push(idx); sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
+  const stock = shopStock(sv), o = stock[idx]; if (!o || sv.gold < o.price) return false;
+  sv.gold -= o.price; sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
 }
 const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 function endlessInfo(sv) {

@@ -82,7 +82,7 @@
 #guide{position:absolute;left:50%;top:56px;transform:translateX(-50%);width:520px;background:#150f26f5;border:3px solid #ffd24a;border-radius:6px;padding:10px 16px;text-align:center;font-size:14px;line-height:1.5;z-index:8;box-shadow:0 0 20px #ffd24a66;animation:gd 1.4s ease-in-out infinite}
 @keyframes gd{0%,100%{box-shadow:0 0 10px #ffd24a44}50%{box-shadow:0 0 26px #ffd24acc}}
 #b-map.pulse{animation:pb .9s ease-in-out infinite;border-color:#ffd24a}@keyframes pb{0%,100%{box-shadow:0 0 0 0 #ffd24a}50%{box-shadow:0 0 0 8px #ffd24a00;background:#6a5a20}}
-.shopgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.shopcard{background:#0f0a1c;border:2px solid #3a3260;border-radius:5px;padding:10px;display:flex;flex-direction:column;gap:6px;min-height:150px}.shopcard.sold{opacity:.5}.sc-h{display:flex;gap:8px;align-items:center}.sc-d{flex:1;font-size:12px}
+.shopgrid{max-height:62vh;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.shopcard{background:#0f0a1c;border:2px solid #3a3260;border-radius:5px;padding:10px;display:flex;flex-direction:column;gap:6px;min-height:150px}.shopcard.sold{opacity:.5}.sc-h{display:flex;gap:8px;align-items:center}.sc-d{flex:1;font-size:12px}
 .pcols{display:flex;gap:10px;height:330px}.pcol{flex:1;overflow:auto;background:#0f0a1c;border:2px solid #3a3260;border-radius:5px;padding:6px}.ph{font-weight:900;font-size:15px;text-align:center;margin-bottom:4px}
 .pnode{border:2px solid #3a3260;border-radius:4px;padding:4px 6px;margin-bottom:5px;font-size:12px;position:relative}.pnode.lock{opacity:.45}.pnode.key{background:#2a1f10}.pnode .pn-t{display:flex;justify-content:space-between}.pn-b{position:absolute;right:4px;bottom:3px;display:flex;gap:3px}.ppts{text-align:center;margin:6px 0;font-size:14px}.ppts b{color:#ffd24a;font-size:18px}
 .arow{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid #2a2347}.ai{flex:1}
@@ -657,7 +657,6 @@ const SPEC_W = (act, stage) => (stage >= 2 ? 11 + act : 0);    // 특수 몹 출
 // 고유 장비 — 확률은 지독하게 낮지만 게임의 규칙을 바꾸는 옵션
 // mods: [키, 값 또는 [최소,최대]]
 // ---------------------------------------------------------------
-ITEM_RARITY.push({ name: "고유", mult: 1.7, affixes: 0, cls: "r5", drop: 0, bossDrop: 0 });
 // (고유 장비는 data3.js 에서 정의)
 
 
@@ -1072,18 +1071,18 @@ const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆
   util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { aoeDmg: 0.05 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, aoeDmg: 0.08, goldFind: 0.20 }, 3]],
 };
 P_OUT.skill = [["숙련된 손놀림", { cdr: 0.02, singleDmg: 0.06 }, 1], ["대지의 지배", { persistDmg: 0.08, skillDur: 0.06 }, 1], ["군주의 부름", { summonDmg: 0.10 }, 2], ["처형 의식", { bossSkill: 0.30, critDmg: 0.10 }, 2], ["마력 연동", { cdr: 0.03, manaCostRed: 0.04 }, 2], ["스킬 마스터", { singleDmg: 0.15, persistDmg: 0.15, summonDmg: 0.15, bossSkill: 0.30, cdr: 0.03 }, 3]];
-const P_OUT_GEO = [[0, 7.0, "s6"], [-0.10, 7.9, "e1"], [0.10, 7.9, "e1"], [-0.10, 8.8, "e2"], [0.10, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
+const P_OUT_GEO = [[0, 7.0, "s6"], [-0.24, 7.9, "e1"], [0.24, 7.9, "e1"], [-0.24, 8.8, "e2"], [0.24, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
 const PASSIVES = [], PASSIVE_BY_ID = {};
 (function buildPassives() {
   const R = (k) => 62 * k, add = (id, name, per, cost, ang, rad, links, arm, kind) => { const p = { id, name, per, cost: cost || 1, x: Math.cos(ang) * R(rad), y: Math.sin(ang) * R(rad), links: links.slice(), arm, kind: kind || (cost === 3 ? "key" : cost === 2 ? "notable" : "small"), text: "" }; PASSIVES.push(p); PASSIVE_BY_ID[id] = p; return p; };
   const n = P_ARMS.length;
   P_ARMS.forEach((A, i) => {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2, d = 0.26, id = (s) => `${A.id}_${s}`;
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2, d = 0.40, id = (s) => `${A.id}_${s}`;
     A.s.forEach((t, k) => add(id("s" + (k + 1)), t[0], t[1], t[2], a, k + 1.15, k === 0 ? ["C"] : [id("s" + k)], A.id));
     A.L.forEach((t, k) => add(id("l" + (k + 1)), t[0], t[1], t[2], a - d, 2.9 + k * 0.78, [k === 0 ? id("s2") : id("l" + k)], A.id));
     A.R.forEach((t, k) => add(id("r" + (k + 1)), t[0], t[1], t[2], a + d, 3.4 + k * 0.78, [k === 0 ? id("s3") : id("r" + k)], A.id));
-    P_EXT[A.id].LL.forEach((t, k) => add(id("ll" + (k + 1)), t[0], t[1], t[2], a - 0.38, 4.5 + k * 0.7, [k === 0 ? id("l2") : id("ll" + k)], A.id));
-    P_EXT[A.id].RR.forEach((t, k) => add(id("rr" + (k + 1)), t[0], t[1], t[2], a + 0.38, 4.7 + k * 0.7, [k === 0 ? id("r2") : id("rr" + k)], A.id));
+    P_EXT[A.id].LL.forEach((t, k) => add(id("ll" + (k + 1)), t[0], t[1], t[2], a - 0.56, 4.5 + k * 0.7, [k === 0 ? id("l2") : id("ll" + k)], A.id));
+    P_EXT[A.id].RR.forEach((t, k) => add(id("rr" + (k + 1)), t[0], t[1], t[2], a + 0.56, 4.7 + k * 0.7, [k === 0 ? id("r2") : id("rr" + k)], A.id));
     P_OUT[A.id].forEach((t, k) => { const g = P_OUT_GEO[k]; add(id("e" + (k + 1)), t[0], t[1], t[2], a + g[0], g[1], (Array.isArray(g[2]) ? g[2] : [g[2]]).map(id), A.id); });
   });
   P_BRIDGES.forEach((B, i) => {
@@ -1094,7 +1093,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   // 양방향 연결표
   PASSIVES.forEach((p) => p.links.forEach((q) => { if (q !== "C" && PASSIVE_BY_ID[q] && !PASSIVE_BY_ID[q].links.includes(p.id)) PASSIVE_BY_ID[q].links.push(p.id); }));
   // ---- 전체를 바깥으로 넓히고, 중요한 노드(주요/핵심) 사이에 흰색 연결 특성을 끼워 넣는다: 좋은 특성은 멀리 있고, 가는 길에 작은 보너스를 먹는다 ----
-  const RS = 1.7; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
+  const RS = 3.6; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
   const FIL = {
     phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
     def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], skill: [{ cdr: 0.004 }, { singleDmg: 0.02 }, { persistDmg: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
@@ -1125,11 +1124,35 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   };
   { let k = 0; const SN = { phys: "물리", mag: "마법", elem: "원소", def: "방어", mana: "마나", util: "유틸", skill: "스킬" };
     for (const P of PASSIVES.slice()) {
-      if (P.kind === "bridge" || P.kind === "filler" || P.kind === "key" || !SAT[P.arm]) continue;
-      const pool = SAT[P.arm], per = pool[(k * 3 + (P.id.length * 7)) % pool.length], ang = Math.atan2(P.y, P.x) + (k % 2 ? 1 : -1) * Math.PI / 2, d = 40 + (P.kind === "notable" ? 6 : 0);
+      if (P.kind === "bridge" || P.kind === "filler" || P.kind === "key" || !SAT[P.arm] || P.links.length >= 3 || /_s1$/.test(P.id)) continue;   // 연결이 3개인 노드(갈림길)에는 붙이지 않는다
+      const pool = SAT[P.arm], per = pool[(k * 3 + (P.id.length * 7)) % pool.length], ang = Math.atan2(P.y, P.x) + (k % 2 ? 1 : -1) * Math.PI / 2, d = 100 + (P.kind === "notable" ? 10 : 0);
       const id = P.id + "_x", Q = { id, name: `${SN[P.arm]} 세부 ${++k}`, per: Object.assign({}, per), cost: 1, x: P.x + Math.cos(ang) * d, y: P.y + Math.sin(ang) * d, links: [P.id], arm: P.arm, kind: "small" };
       PASSIVES.push(Q); PASSIVE_BY_ID[id] = Q; P.links.push(id);
     } }
+  // v4: 줄기마다 정해진 기하 구조로 배치한다 — 선이 서로 겹치지 않고, 한 노드에서 최대 3갈래까지만 뻗는다
+  {
+    const NA = P_ARMS.length, LAY = { s: [400, 800, 1200, 1600, 2000, 2400], l: [[1250, -340], [1650, -470], [2050, -500], [2450, -440]], r: [[1550, 340], [1950, 470], [2350, 500], [2750, 440]],
+      ll: [[2000, -780], [2400, -820]], rr: [[2300, 780], [2700, 820]], e: [[2800, 0], [3100, -260], [3100, 260], [3400, -300], [3400, 300], [3700, 0]] };
+    const place = (p, th, u, v) => { p.x = u * Math.cos(th) - v * Math.sin(th); p.y = u * Math.sin(th) + v * Math.cos(th); };
+    P_ARMS.forEach((A, i) => {
+      const th = (i / NA) * Math.PI * 2 - Math.PI / 2, g = (id) => PASSIVE_BY_ID[`${A.id}_${id}`];
+      LAY.s.forEach((u, k) => place(g("s" + (k + 1)), th, u, 0));
+      LAY.l.forEach(([u, v], k) => place(g("l" + (k + 1)), th, u, v)); LAY.r.forEach(([u, v], k) => place(g("r" + (k + 1)), th, u, v));
+      LAY.ll.forEach(([u, v], k) => place(g("ll" + (k + 1)), th, u, v)); LAY.rr.forEach(([u, v], k) => place(g("rr" + (k + 1)), th, u, v));
+      LAY.e.forEach(([u, v], k) => place(g("e" + (k + 1)), th, u, v));
+      A._th = th;
+    });
+    for (let i = 0; i < NA; i++) { const a1 = PASSIVE_BY_ID[`${P_ARMS[i].id}_r1`], a2 = PASSIVE_BY_ID[`${P_ARMS[(i + 1) % NA].id}_l1`], b1 = PASSIVE_BY_ID[`b${i}_1`], b2 = PASSIVE_BY_ID[`b${i}_2`];
+      b1.x = a1.x + (a2.x - a1.x) * 0.34; b1.y = a1.y + (a2.y - a1.y) * 0.34; b2.x = a1.x + (a2.x - a1.x) * 0.68; b2.y = a1.y + (a2.y - a1.y) * 0.68; }
+    // 연결 특성(필러): 양 끝 노드 사이를 균등 분할
+    const isF = (p) => p.kind === "filler";
+    for (const A of PASSIVES) { if (isF(A)) continue; for (const q of A.links) { let c = PASSIVE_BY_ID[q]; if (!c || !isF(c)) continue; const chain = []; let prev = A; while (c && isF(c)) { chain.push(c); const nx = c.links.map((x) => PASSIVE_BY_ID[x]).find((o) => o && o !== prev); prev = c; c = nx; } if (!c || c.id < A.id) continue;
+      chain.forEach((f, k) => { const t = (k + 1) / (chain.length + 1); f.x = A.x + (c.x - A.x) * t; f.y = A.y + (c.y - A.y) * t; }); } }
+    // 위성 노드: 부모에서 바깥쪽(줄기 반대편)으로 짧게 튀어나온다
+    PASSIVES.forEach((q) => { if (!q.id.endsWith("_x")) return; const par = PASSIVE_BY_ID[q.id.slice(0, -2)], A = P_ARMS.find((z) => z.id === par.arm), th = A ? A._th : Math.atan2(par.y, par.x), lat = -Math.sin(th) * par.x + Math.cos(th) * par.y, sg = lat > 40 ? 1 : lat < -40 ? -1 : (par.id.length % 2 ? 1 : -1);
+      q.x = par.x - Math.sin(th) * 190 * sg; q.y = par.y + Math.cos(th) * 190 * sg; });
+    PASSIVES.forEach((p) => { p.x = Math.round(p.x); p.y = Math.round(p.y); });
+  }
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
@@ -1828,7 +1851,7 @@ function rollBossSkills(sv, kind, K) {
 }
 // 균열 층별 드랍 수치 (도감의 확률 표도 같은 함수를 쓴다)
 const riftItemN = (tier, boss) => 4 + Math.min(8, Math.floor((tier || 1) / 6)) + (boss ? 3 : 0);
-const riftRW = (tier, boss) => [8, 26, 40, 26 + Math.min(10, (tier || 0) * 0.1) + (boss ? 6 : 0)];   // 일반·매직·레어·전설 가중치
+const riftRW = (tier, boss) => [30, 40, 25, 5];   // 일반·매직·레어·전설 가중치 — 모든 층 균일 (높은 층은 장비 T와 옵션 티어가 좋아질 뿐)
 const riftLegendShare = (tier, boss) => { const w = riftRW(tier, boss); return w[3] / (w[0] + w[1] + w[2] + w[3]); };
 const stoneChanceAt = (tier) => Math.min(0.75, 0.30 + 0.004 * tier);
 function rollDrops(sv, node, boss, B) {
@@ -2061,18 +2084,13 @@ const isSpecialSkill = (d) => !!d.voidOnly || (d.slot === "passive" && d.pt > 0)
 // v4: 스킬 해금 단계는 캐릭터 레벨(= 균열 최고 층 + 1)을 따른다
 const skillAct = (sv) => Math.max(1, Math.min(8, 1 + Math.floor(sv.level / 10)));
 function shopStock(sv, now) {
-  now = now || Date.now(); const slot = Math.floor(now / (SHOP_MIN * 60000)), act = skillAct(sv);
-  if (!sv.shop || sv.shop.slot !== slot) sv.shop = { slot, bought: [] };
-  const r = seeded(slot * 31 + act * 7), pool = SKILLS.filter((d) => d.unlock <= act && !isSpecialSkill(d) && d.id !== "p_none"), out = [];
-  for (let i = 0; i < 6 && pool.length; i++) {
-    const d = pool.splice(Math.floor(r() * pool.length), 1)[0], rr = r(), rarity = 0;   // v4: 상점에는 일반 등급 스킬만 나온다 (높은 등급은 졸업 후 보스 드랍)
-    out.push({ id: d.id, rarity, price: skillPrice(d, rarity) });
-  }
-  return out;
+  // v4.1: 상점은 일반 등급 스킬 전부를 상시 판매한다 (골라서 구매, 수량 제한 없음). 높은 등급은 졸업 후 보스 드랍
+  if (!sv.shop) sv.shop = { slot: 0, bought: [] };
+  return SKILLS.filter((d) => !isSpecialSkill(d) && d.id !== "p_none").sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock).map((d) => ({ id: d.id, rarity: 0, price: skillPrice(d, 0) }));
 }
 function buySkill(sv, idx) {
-  const stock = shopStock(sv), o = stock[idx]; if (!o || sv.shop.bought.includes(idx) || sv.gold < o.price) return false;
-  sv.gold -= o.price; sv.shop.bought.push(idx); sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
+  const stock = shopStock(sv), o = stock[idx]; if (!o || sv.gold < o.price) return false;
+  sv.gold -= o.price; sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
 }
 const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 function endlessInfo(sv) {
@@ -4113,7 +4131,7 @@ function retreat() {
 
 // v4: 스테이지 1~5는 경험치를 주지 않는다. 대신 한 스테이지마다 게임 시스템 하나를 설명한다
 const STAGE_TIPS = [
-  ["스테이지 1 · 자동 전투와 스킬", "캐릭터는 제자리에서 자동으로 싸웁니다. 스킬은 쿨타임마다 자동 발동하고, 적을 클릭하면 모든 스킬이 그 적을 먼저 공격합니다.<br>스킬은 <b>스킬 상점</b>에서 골드로 삽니다 (처음에는 <b>일반 등급</b>만 쓰게 됩니다). 이 스테이지에서는 경험치를 얻지 않아요."],
+  ["스테이지 1 · 자동 전투와 스킬", "캐릭터는 제자리에서 자동으로 싸웁니다. 스킬은 쿨타임마다 자동 발동하고, 적을 클릭하면 모든 스킬이 그 적을 먼저 공격합니다.<br><b>지금 마을의 스킬 상점</b>에 들러 보세요! 일반 등급 스킬은 <b>전부 골드로 골라서 살 수 있어요</b>. 사서 <b>스킬 창</b>에서 칸에 장착하면 됩니다 (처음에는 일반 등급만 쓰게 됩니다). 이 스테이지에서는 경험치를 얻지 않아요."],
   ["스테이지 2 · 장비와 옵션 티어", "장비 등급은 <b>일반 · 매직 · 레어 · 전설</b>입니다. 전설은 랜덤 옵션 <b>5개</b>를 가집니다.<br>각 옵션에는 <b>1~6티어</b>가 있어요. <b>6티어가 가장 흔하고 1티어가 가장 좋지만 가장 드뭅니다.</b> 장비의 <b>T1~T5</b>는 균열 20층마다 올라가며, 높은 T에서만 높은 티어 옵션이 나올 수 있습니다."],
   ["스테이지 3 · 소켓과 미확인의 돌", "전설 장비에는 <b>소켓이 1~3개</b> 있습니다. 소켓에는 균열에서 드랍되는 <b>미확인의 돌</b>의 옵션을 끼울 수 있어요.<br>돌은 <b>제련소(대장간)</b>에서 골드로 옵션을 확인한 뒤 장착합니다. 돌의 옵션은 티어 없이 고정 수치이고, 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다."],
   ["스테이지 4 · 레벨과 패시브", "이 게임에는 경험치가 없습니다. <b>균열 1층을 처음 클리어할 때마다 레벨이 1 오르고, 100층을 정복하면 100레벨</b>이 됩니다.<br>레벨마다 <b>패시브 포인트 2</b>를 얻어 패시브 트리에 찍습니다. 스킬 창의 <b>패시브 칸</b>에는 패시브 스킬(강철 피부, 요새 …)을 장착할 수 있어요."],
@@ -4137,11 +4155,11 @@ function updateWorld() {
 function openSkillShop() {
   const stock = shopStock(save), left = (Math.floor(Date.now() / (SHOP_MIN * 60000)) + 1) * SHOP_MIN * 60000 - Date.now();
   const cards = stock.map((o, i) => {
-    const d = SKILLS.find((x) => x.id === o.id), R = SKILL_RARITY[o.rarity], bought = save.shop.bought.includes(i), can = save.gold >= o.price;
+    const d = SKILLS.find((x) => x.id === o.id), R = SKILL_RARITY[o.rarity], bought = false, can = save.gold >= o.price;
     return `<div class="shopcard ${bought ? "sold" : ""}"><div class="sc-h">${skIcon(d.id, 3)}<div><div class="${R.cls}"><b>${R.name} ${d.name}</b></div><small class="dim">${d.slot === "basic" ? "기본 공격" : "액티브"} · 쿨 ${(d.cd * R.cdMul).toFixed(1)}s · 피해 ${Math.round(d.mult * R.mult * 100)}%</small></div></div>
       <div class="dim sc-d">${d.desc}</div><div>${skillAreaHtml(skillOf({ id: d.id, rarity: o.rarity, uid: 0 }), 10)}</div><div class="dim" style="font-size:11px">${skillDescFull(skillOf({ id: d.id, rarity: o.rarity, uid: 0 }))}</div>${bought ? `<button class="btn" disabled>구매 완료</button>` : `<button class="btn pri" data-a="buy" data-n="${i}" ${can ? "" : "disabled"}>${iconImg("gold", 1)} ${fmtN(o.price)}</button>`}</div>`;
   }).join("");
-  Modal.open(`<h2>스킬 상점</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div><div class="dim center">진열품은 ${SHOP_MIN}분마다 바뀝니다 (다음 갱신 ${fmtTime(left)}) · 진행할수록 더 좋은 스킬이 들어옵니다</div><div class="shopgrid">${cards}</div>`, { cls: "wide", on: {
+  Modal.open(`<h2>스킬 상점</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div><div class="dim center">일반 등급 스킬을 전부 판매합니다 · 원하는 스킬을 골라 구매하세요 (같은 스킬 여러 개 구매 가능) · 높은 등급은 100층 졸업 후 보스에게서</div><div class="shopgrid">${cards}</div>`, { cls: "wide", on: {
     buy: (el) => { if (buySkill(save, +el.dataset.n)) { snd("buy"); toast("스킬을 구매했습니다", "ok"); saveGame(); refreshTop(); } else snd("error"); openSkillShop(); },
   } });
 }
@@ -4443,17 +4461,17 @@ function openSkills() {
 }
 
 // ---------- 패시브 (방사형 트리) ----------
-const PT = { sel: null, sc: 0.17, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
+const PT = { sel: null, sc: 0.1, ox: 0, oy: 0, hover: null, drag: null, moved: false, cv: null, raf: 0 };
 function ptDraw() {
   const cv = PT.cv; if (!cv || !cv.isConnected) return; const g = cv.getContext("2d"), W = cv.width, H = cv.height, t = performance.now() / 1000;
   g.clearRect(0, 0, W, H); g.save(); g.translate(W / 2 + PT.ox, H / 2 + PT.oy); g.scale(PT.sc, PT.sc);
   const col = (p) => (p.kind === "filler" ? "#e8e8f6" : p.arm === "bridge" ? "#9a9ab8" : P_ARMS.find((a) => a.id === p.arm).color);
-  g.lineWidth = 3 / PT.sc * 0.9;
+  g.lineWidth = 4.5 / PT.sc * 0.9;
   for (const p of PASSIVES) for (const q of p.links) { if (q === "C") { g.strokeStyle = passiveHas(save, p.id) ? col(p) : "#2e2850"; g.beginPath(); g.moveTo(0, 0); g.lineTo(p.x, p.y); g.stroke(); continue; } const o = PASSIVE_BY_ID[q]; if (!o || o.id < p.id) continue; const a = passiveHas(save, p.id), b = passiveHas(save, o.id); g.strokeStyle = a && b ? col(p) : a || b ? "#5a5090" : "#2a2448"; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(o.x, o.y); g.stroke(); }
-  g.fillStyle = "#ffd24a"; g.beginPath(); g.arc(0, 0, 16, 0, 7); g.fill(); g.fillStyle = "#3a2a08"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("시작", 0, 5);
-  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 1200, Math.sin(ang) * 1200 + 8); g.globalAlpha = 1; }
+  g.fillStyle = "#ffd24a"; g.beginPath(); g.arc(0, 0, 34, 0, 7); g.fill(); g.fillStyle = "#3a2a08"; g.font = "bold 26px sans-serif"; g.textAlign = "center"; g.fillText("시작", 0, 9);
+  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 3000, Math.sin(ang) * 3000 + 8); g.globalAlpha = 1; }
   for (const p of PASSIVES) {
-    const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = p.kind === "key" ? 16 : p.kind === "notable" ? 12 : p.kind === "filler" ? 5.5 : 8, c = col(p);
+    const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 10 : 17, c = col(p);
     g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);
     g.fillStyle = on ? c : "#14102a"; g.fill(); g.lineWidth = (p.kind === "small" ? 2 : 3) / PT.sc * 0.9; g.strokeStyle = on ? "#fff" : can ? `rgba(255,255,255,${0.55 + 0.4 * Math.sin(t * 5)})` : c + "88"; g.stroke();
     if (p.kind === "notable") { g.beginPath(); g.arc(p.x, p.y, r - 4, 0, 7); g.strokeStyle = on ? "#0008" : c + "66"; g.stroke(); }
@@ -4463,7 +4481,7 @@ function ptDraw() {
   g.restore();
   PT.raf = requestAnimationFrame(ptDraw);
 }
-function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 16 : p.kind === "notable" ? 12 : p.kind === "filler" ? 6 : 8) + 6; if (d < r && d < bd) { bd = d; best = p; } } return best; }
+function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 11 : 17) + 10; if (d < r && d < bd) { bd = d; best = p; } } return best; }
 function ptInfo() {
   const el = $("#ptinfo"); if (!el) return; const p = PT.hover || PT.sel;
   { const a = $("#ptact"), q = PT.sel; if (a) a.innerHTML = q ? `<span>선택: <b style="color:${q.arm === "bridge" ? "#ccc" : P_ARMS.find((x) => x.id === q.arm).color}">${q.name}</b> <span class="dim">(${q.cost}점)</span></span>${(() => { const P = passivePath(save, q.id), free = passivePoints(save) - passiveSpent(save); if (!P) return `<button class="btn pri" data-a="ptadd" disabled>찍기</button>`; return `<button class="btn pri" data-a="ptadd" ${P.cost <= free ? "" : "disabled"}>${P.ids.length > 1 ? `경로 찍기 (${P.ids.length}개 · ${P.cost}점)` : "찍기"}</button>`; })()}<button class="btn" data-a="ptrm" ${canRemovePassive(save, q.id) ? "" : "disabled"}>회수</button>` : `<span class="dim">노드를 클릭하면 효과가 보이고, 아래 [찍기] 버튼으로 찍습니다</span>`; }
@@ -4508,7 +4526,7 @@ function openPassives() {
   cv.addEventListener("mousedown", (ev) => { const [x, y] = pos(ev); PT.drag = { x, y, ox: PT.ox, oy: PT.oy }; PT.moved = false; });
   cv.addEventListener("mousemove", (ev) => { const [x, y] = pos(ev); if (PT.drag && ev.buttons) { const dx = x - PT.drag.x, dy = y - PT.drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) PT.moved = true; if (PT.moved) { PT.ox = PT.drag.ox + dx; PT.oy = PT.drag.oy + dy; } } else { const h = ptPick(x, y); if (h !== PT.hover) { PT.hover = h; ptInfo(); } cv.style.cursor = h ? "pointer" : "grab"; } });
   window.addEventListener("mouseup", () => { PT.drag = null; }, { once: true });
-  cv.addEventListener("wheel", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), k = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = clamp(PT.sc * k, 0.1, 1.6), wx = (x - cv.width / 2 - PT.ox) / PT.sc, wy = (y - cv.height / 2 - PT.oy) / PT.sc; PT.sc = ns; PT.ox = x - cv.width / 2 - wx * ns; PT.oy = y - cv.height / 2 - wy * ns; }, { passive: false });
+  cv.addEventListener("wheel", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), k = ev.deltaY < 0 ? 1.12 : 1 / 1.12, ns = clamp(PT.sc * k, 0.04, 1.6), wx = (x - cv.width / 2 - PT.ox) / PT.sc, wy = (y - cv.height / 2 - PT.oy) / PT.sc; PT.sc = ns; PT.ox = x - cv.width / 2 - wx * ns; PT.oy = y - cv.height / 2 - wy * ns; }, { passive: false });
   const act = (ev) => { if (PT.moved) return; const [x, y] = pos(ev), p = ptPick(x, y); PT.sel = p || null; snd("click"); ptInfo(); };   // 클릭은 선택만: 효과를 보고 [찍기]로 확정
   cv.addEventListener("click", act);
   cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); });
@@ -5142,7 +5160,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-233206";
+const BUILD_ID = "20261028-235125";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5234,6 +5252,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.1", date: "10/28", title: "스킬 상점 전면 개방 · 패시브 트리 재배치", items: [
+    "스킬 상점이 일반 등급 스킬 전부를 상시 판매합니다. 갱신을 기다릴 필요 없이 원하는 스킬을 골라서 (여러 개도) 살 수 있어요. 스테이지 1 안내에 스킬 구매 설명을 넣었습니다.",
+    "패시브 트리를 PoE처럼 크게 7갈래로 다시 배치했습니다. 선이 겹치지 않고, 한 노드에서 최대 3갈래까지만 이어집니다. 계열마다 핵심(◆) 도달 비용은 같게 맞췄습니다 (13점 / 25점).",
+  ] },
   { ver: "4.0", date: "10/28", title: "대개편 — 균열 중심 구조 · 장비 6티어 옵션 · 소켓 · 레벨=균열층 (모든 진행 초기화)", items: [
     "⚠ 게임 구조가 완전히 바뀌어 모든 세이브가 초기화되었습니다 (보상 없음).",
     "스테이지가 1~5로 줄었습니다. 스테이지 5의 보스를 쓰러뜨리면 곧바로 심연의 균열에 입장합니다. 스테이지 1~5는 경험치를 주지 않고, 한 스테이지마다 게임 시스템 하나를 설명합니다.",

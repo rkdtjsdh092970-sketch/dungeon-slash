@@ -57,18 +57,18 @@ const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆
   util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { aoeDmg: 0.05 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, aoeDmg: 0.08, goldFind: 0.20 }, 3]],
 };
 P_OUT.skill = [["숙련된 손놀림", { cdr: 0.02, singleDmg: 0.06 }, 1], ["대지의 지배", { persistDmg: 0.08, skillDur: 0.06 }, 1], ["군주의 부름", { summonDmg: 0.10 }, 2], ["처형 의식", { bossSkill: 0.30, critDmg: 0.10 }, 2], ["마력 연동", { cdr: 0.03, manaCostRed: 0.04 }, 2], ["스킬 마스터", { singleDmg: 0.15, persistDmg: 0.15, summonDmg: 0.15, bossSkill: 0.30, cdr: 0.03 }, 3]];
-const P_OUT_GEO = [[0, 7.0, "s6"], [-0.10, 7.9, "e1"], [0.10, 7.9, "e1"], [-0.10, 8.8, "e2"], [0.10, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
+const P_OUT_GEO = [[0, 7.0, "s6"], [-0.24, 7.9, "e1"], [0.24, 7.9, "e1"], [-0.24, 8.8, "e2"], [0.24, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
 const PASSIVES = [], PASSIVE_BY_ID = {};
 (function buildPassives() {
   const R = (k) => 62 * k, add = (id, name, per, cost, ang, rad, links, arm, kind) => { const p = { id, name, per, cost: cost || 1, x: Math.cos(ang) * R(rad), y: Math.sin(ang) * R(rad), links: links.slice(), arm, kind: kind || (cost === 3 ? "key" : cost === 2 ? "notable" : "small"), text: "" }; PASSIVES.push(p); PASSIVE_BY_ID[id] = p; return p; };
   const n = P_ARMS.length;
   P_ARMS.forEach((A, i) => {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2, d = 0.26, id = (s) => `${A.id}_${s}`;
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2, d = 0.40, id = (s) => `${A.id}_${s}`;
     A.s.forEach((t, k) => add(id("s" + (k + 1)), t[0], t[1], t[2], a, k + 1.15, k === 0 ? ["C"] : [id("s" + k)], A.id));
     A.L.forEach((t, k) => add(id("l" + (k + 1)), t[0], t[1], t[2], a - d, 2.9 + k * 0.78, [k === 0 ? id("s2") : id("l" + k)], A.id));
     A.R.forEach((t, k) => add(id("r" + (k + 1)), t[0], t[1], t[2], a + d, 3.4 + k * 0.78, [k === 0 ? id("s3") : id("r" + k)], A.id));
-    P_EXT[A.id].LL.forEach((t, k) => add(id("ll" + (k + 1)), t[0], t[1], t[2], a - 0.38, 4.5 + k * 0.7, [k === 0 ? id("l2") : id("ll" + k)], A.id));
-    P_EXT[A.id].RR.forEach((t, k) => add(id("rr" + (k + 1)), t[0], t[1], t[2], a + 0.38, 4.7 + k * 0.7, [k === 0 ? id("r2") : id("rr" + k)], A.id));
+    P_EXT[A.id].LL.forEach((t, k) => add(id("ll" + (k + 1)), t[0], t[1], t[2], a - 0.56, 4.5 + k * 0.7, [k === 0 ? id("l2") : id("ll" + k)], A.id));
+    P_EXT[A.id].RR.forEach((t, k) => add(id("rr" + (k + 1)), t[0], t[1], t[2], a + 0.56, 4.7 + k * 0.7, [k === 0 ? id("r2") : id("rr" + k)], A.id));
     P_OUT[A.id].forEach((t, k) => { const g = P_OUT_GEO[k]; add(id("e" + (k + 1)), t[0], t[1], t[2], a + g[0], g[1], (Array.isArray(g[2]) ? g[2] : [g[2]]).map(id), A.id); });
   });
   P_BRIDGES.forEach((B, i) => {
@@ -79,7 +79,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   // 양방향 연결표
   PASSIVES.forEach((p) => p.links.forEach((q) => { if (q !== "C" && PASSIVE_BY_ID[q] && !PASSIVE_BY_ID[q].links.includes(p.id)) PASSIVE_BY_ID[q].links.push(p.id); }));
   // ---- 전체를 바깥으로 넓히고, 중요한 노드(주요/핵심) 사이에 흰색 연결 특성을 끼워 넣는다: 좋은 특성은 멀리 있고, 가는 길에 작은 보너스를 먹는다 ----
-  const RS = 1.7; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
+  const RS = 3.6; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
   const FIL = {
     phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
     def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], skill: [{ cdr: 0.004 }, { singleDmg: 0.02 }, { persistDmg: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
@@ -110,11 +110,35 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   };
   { let k = 0; const SN = { phys: "물리", mag: "마법", elem: "원소", def: "방어", mana: "마나", util: "유틸", skill: "스킬" };
     for (const P of PASSIVES.slice()) {
-      if (P.kind === "bridge" || P.kind === "filler" || P.kind === "key" || !SAT[P.arm]) continue;
-      const pool = SAT[P.arm], per = pool[(k * 3 + (P.id.length * 7)) % pool.length], ang = Math.atan2(P.y, P.x) + (k % 2 ? 1 : -1) * Math.PI / 2, d = 40 + (P.kind === "notable" ? 6 : 0);
+      if (P.kind === "bridge" || P.kind === "filler" || P.kind === "key" || !SAT[P.arm] || P.links.length >= 3 || /_s1$/.test(P.id)) continue;   // 연결이 3개인 노드(갈림길)에는 붙이지 않는다
+      const pool = SAT[P.arm], per = pool[(k * 3 + (P.id.length * 7)) % pool.length], ang = Math.atan2(P.y, P.x) + (k % 2 ? 1 : -1) * Math.PI / 2, d = 100 + (P.kind === "notable" ? 10 : 0);
       const id = P.id + "_x", Q = { id, name: `${SN[P.arm]} 세부 ${++k}`, per: Object.assign({}, per), cost: 1, x: P.x + Math.cos(ang) * d, y: P.y + Math.sin(ang) * d, links: [P.id], arm: P.arm, kind: "small" };
       PASSIVES.push(Q); PASSIVE_BY_ID[id] = Q; P.links.push(id);
     } }
+  // v4: 줄기마다 정해진 기하 구조로 배치한다 — 선이 서로 겹치지 않고, 한 노드에서 최대 3갈래까지만 뻗는다
+  {
+    const NA = P_ARMS.length, LAY = { s: [400, 800, 1200, 1600, 2000, 2400], l: [[1250, -340], [1650, -470], [2050, -500], [2450, -440]], r: [[1550, 340], [1950, 470], [2350, 500], [2750, 440]],
+      ll: [[2000, -780], [2400, -820]], rr: [[2300, 780], [2700, 820]], e: [[2800, 0], [3100, -260], [3100, 260], [3400, -300], [3400, 300], [3700, 0]] };
+    const place = (p, th, u, v) => { p.x = u * Math.cos(th) - v * Math.sin(th); p.y = u * Math.sin(th) + v * Math.cos(th); };
+    P_ARMS.forEach((A, i) => {
+      const th = (i / NA) * Math.PI * 2 - Math.PI / 2, g = (id) => PASSIVE_BY_ID[`${A.id}_${id}`];
+      LAY.s.forEach((u, k) => place(g("s" + (k + 1)), th, u, 0));
+      LAY.l.forEach(([u, v], k) => place(g("l" + (k + 1)), th, u, v)); LAY.r.forEach(([u, v], k) => place(g("r" + (k + 1)), th, u, v));
+      LAY.ll.forEach(([u, v], k) => place(g("ll" + (k + 1)), th, u, v)); LAY.rr.forEach(([u, v], k) => place(g("rr" + (k + 1)), th, u, v));
+      LAY.e.forEach(([u, v], k) => place(g("e" + (k + 1)), th, u, v));
+      A._th = th;
+    });
+    for (let i = 0; i < NA; i++) { const a1 = PASSIVE_BY_ID[`${P_ARMS[i].id}_r1`], a2 = PASSIVE_BY_ID[`${P_ARMS[(i + 1) % NA].id}_l1`], b1 = PASSIVE_BY_ID[`b${i}_1`], b2 = PASSIVE_BY_ID[`b${i}_2`];
+      b1.x = a1.x + (a2.x - a1.x) * 0.34; b1.y = a1.y + (a2.y - a1.y) * 0.34; b2.x = a1.x + (a2.x - a1.x) * 0.68; b2.y = a1.y + (a2.y - a1.y) * 0.68; }
+    // 연결 특성(필러): 양 끝 노드 사이를 균등 분할
+    const isF = (p) => p.kind === "filler";
+    for (const A of PASSIVES) { if (isF(A)) continue; for (const q of A.links) { let c = PASSIVE_BY_ID[q]; if (!c || !isF(c)) continue; const chain = []; let prev = A; while (c && isF(c)) { chain.push(c); const nx = c.links.map((x) => PASSIVE_BY_ID[x]).find((o) => o && o !== prev); prev = c; c = nx; } if (!c || c.id < A.id) continue;
+      chain.forEach((f, k) => { const t = (k + 1) / (chain.length + 1); f.x = A.x + (c.x - A.x) * t; f.y = A.y + (c.y - A.y) * t; }); } }
+    // 위성 노드: 부모에서 바깥쪽(줄기 반대편)으로 짧게 튀어나온다
+    PASSIVES.forEach((q) => { if (!q.id.endsWith("_x")) return; const par = PASSIVE_BY_ID[q.id.slice(0, -2)], A = P_ARMS.find((z) => z.id === par.arm), th = A ? A._th : Math.atan2(par.y, par.x), lat = -Math.sin(th) * par.x + Math.cos(th) * par.y, sg = lat > 40 ? 1 : lat < -40 ? -1 : (par.id.length % 2 ? 1 : -1);
+      q.x = par.x - Math.sin(th) * 190 * sg; q.y = par.y + Math.cos(th) * 190 * sg; });
+    PASSIVES.forEach((p) => { p.x = Math.round(p.x); p.y = Math.round(p.y); });
+  }
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
