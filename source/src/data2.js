@@ -142,12 +142,12 @@ const EB = {
 };
 const isEB = (k) => !!EB[k];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIERS = [100, 112, 128, 150], HIVE_NEED = [100, 108, 120, 135], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
-EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 114, 130, 152]; EB.titan.need = [100, 108, 120, 135]; EB.storm.tiers = [102, 114, 130, 152]; EB.storm.need = [100, 108, 120, 135];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
+const HIVE_TIERS = [100, 112, 128, 150], HIVE_NEED = [100, 100, 100, 100], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
+EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 114, 130, 152]; EB.titan.need = [100, 100, 100, 100]; EB.storm.tiers = [102, 114, 130, 152]; EB.storm.need = [100, 100, 100, 100];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP };   // 열쇠 몹 종류 → 정의
 
-const VOID_NEED = [100, 110, 125, 140];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
+const VOID_NEED = [100, 100, 100, 100];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
 const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
 const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
 CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다

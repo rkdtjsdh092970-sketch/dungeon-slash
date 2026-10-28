@@ -114,7 +114,7 @@ function mapPanel() {
   const un = nodeUnlocked(save, n); let btn = "선택", btnOk = un, extra = "", pre = "", post = "";
   if (n.kind === "town") h += `<div class="pline">마을 · 정비와 퀘스트</div>`;
   else if (n.kind === "rift") {
-    const mx = Math.max(1, save.rift.best + 1); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
+    const mx = Math.min(CFG.RIFT_END, Math.max(1, save.rift.best + 1)); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
     const tier = G.riftTier = clamp(G.riftTier || mx, 1, mx), mods = riftMods(tier);
     h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층만 레벨이 오릅니다.</div>`;
     pre = `<button class="btn" data-p="tm" ${tier <= 1 ? "disabled" : ""}>▼</button>`; post = `<button class="btn" data-p="tp" ${tier >= mx ? "disabled" : ""}>▲</button>`;

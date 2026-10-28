@@ -333,7 +333,7 @@ function openPassives() {
 // ---------- 균열 탑 ----------
 function mfText(tier) { const v = towerMf(tier); return `MF +${Math.round(v * 100)}%`; }
 function openTower() {
-  const best = save.rift.best, max = Math.max(best + 1, 1); if (!G.towerSeen) { G.riftTier = max; G.towerSeen = true; } const tier = G.riftTier = clamp(G.riftTier, 1, max), shown = Math.min(max + 4, 300), mods = riftMods(tier);
+  const best = save.rift.best, max = Math.min(CFG.RIFT_END, Math.max(best + 1, 1)); if (!G.towerSeen) { G.riftTier = max; G.towerSeen = true; } const tier = G.riftTier = clamp(G.riftTier, 1, max), shown = Math.min(max + 4, CFG.RIFT_END), mods = riftMods(tier);
   let fl = "";
   const RC = { 2: "#c58bff", 3: "#ffcc4a", 4: "#ffffff" };
   for (let n = 1; n <= shown; n++) { const done = n <= best, lock = n > max, m20 = n % 20 === 0, boss = n % 5 === 0;

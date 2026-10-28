@@ -739,12 +739,12 @@ const EB = {
 };
 const isEB = (k) => !!EB[k];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIERS = [100, 112, 128, 150], HIVE_NEED = [100, 108, 120, 135], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
-EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 114, 130, 152]; EB.titan.need = [100, 108, 120, 135]; EB.storm.tiers = [102, 114, 130, 152]; EB.storm.need = [100, 108, 120, 135];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
+const HIVE_TIERS = [100, 112, 128, 150], HIVE_NEED = [100, 100, 100, 100], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
+EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 114, 130, 152]; EB.titan.need = [100, 100, 100, 100]; EB.storm.tiers = [102, 114, 130, 152]; EB.storm.need = [100, 100, 100, 100];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP };   // 열쇠 몹 종류 → 정의
 
-const VOID_NEED = [100, 110, 125, 140];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
+const VOID_NEED = [100, 100, 100, 100];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
 const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
 const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
 CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다
@@ -4159,7 +4159,7 @@ function mapPanel() {
   const un = nodeUnlocked(save, n); let btn = "선택", btnOk = un, extra = "", pre = "", post = "";
   if (n.kind === "town") h += `<div class="pline">마을 · 정비와 퀘스트</div>`;
   else if (n.kind === "rift") {
-    const mx = Math.max(1, save.rift.best + 1); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
+    const mx = Math.min(CFG.RIFT_END, Math.max(1, save.rift.best + 1)); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
     const tier = G.riftTier = clamp(G.riftTier || mx, 1, mx), mods = riftMods(tier);
     h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층만 레벨이 오릅니다.</div>`;
     pre = `<button class="btn" data-p="tm" ${tier <= 1 ? "disabled" : ""}>▼</button>`; post = `<button class="btn" data-p="tp" ${tier >= mx ? "disabled" : ""}>▲</button>`;
@@ -4872,7 +4872,7 @@ function openPassives() {
 // ---------- 균열 탑 ----------
 function mfText(tier) { const v = towerMf(tier); return `MF +${Math.round(v * 100)}%`; }
 function openTower() {
-  const best = save.rift.best, max = Math.max(best + 1, 1); if (!G.towerSeen) { G.riftTier = max; G.towerSeen = true; } const tier = G.riftTier = clamp(G.riftTier, 1, max), shown = Math.min(max + 4, 300), mods = riftMods(tier);
+  const best = save.rift.best, max = Math.min(CFG.RIFT_END, Math.max(best + 1, 1)); if (!G.towerSeen) { G.riftTier = max; G.towerSeen = true; } const tier = G.riftTier = clamp(G.riftTier, 1, max), shown = Math.min(max + 4, CFG.RIFT_END), mods = riftMods(tier);
   let fl = "";
   const RC = { 2: "#c58bff", 3: "#ffcc4a", 4: "#ffffff" };
   for (let n = 1; n <= shown; n++) { const done = n <= best, lock = n > max, m20 = n % 20 === 0, boss = n % 5 === 0;
@@ -5539,7 +5539,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-013357";
+const BUILD_ID = "20261029-013916";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5631,6 +5631,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.8", date: "10/29", title: "균열 100층 상한 · 보스 입장 조건 정리", items: [
+    "심연의 균열은 100층이 마지막입니다. 도전 가능한 층의 상한을 100층으로 맞췄습니다.",
+    "공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제의 입장 조건을 모두 '균열 100층 클리어'로 통일했습니다 (4단계가 100층을 넘는 층수를 요구하던 문제). 단계가 높을수록 더 강한 적이 나옵니다.",
+  ] },
   { ver: "4.7", date: "10/29", title: "심연 각인 개편", items: [
     "균열 조각 획득량을 크게 줄이고 각인 단가를 올려, 각인을 훨씬 천천히 올리게 했습니다.",
     "쓸모없던 '지혜의 인장'(경험치)과 '지옥의 인장'을 '정복자의 인장'(보스 추가 피해 +2%)과 '수호의 인장'(받는 피해 −1%)으로 바꿨습니다. 이전 두 각인에 쓴 균열 조각은 그대로 돌려드립니다.",
@@ -5994,7 +5998,7 @@ function bindInput() {
     else if (a === "tipok") { $("#tip").classList.add("hidden"); G.paused = false; G.tipOpen = false; snd("click"); }
   });
   $("#mappanel").addEventListener("click", (ev) => { const p = ev.target.closest("[data-p]"); if (!p) return; const a = p.dataset.p; snd("click");
-    if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min(MAX_TRIAL, (save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "vsp") { G.voidStage = Math.min(4, (G.voidStage || 1) + 1); mapPanel(); } else if (a === "vsm") { G.voidStage = Math.max(1, (G.voidStage || 1) - 1); mapPanel(); } else if (a === "hsp") { G.hiveStage = Math.min(4, (G.hiveStage || 1) + 1); mapPanel(); } else if (a === "hsm") { G.hiveStage = Math.max(1, (G.hiveStage || 1) - 1); mapPanel(); } else if (a === "tsp") { G.titanStage = Math.min(4, (G.titanStage || 1) + 1); mapPanel(); } else if (a === "tsm") { G.titanStage = Math.max(1, (G.titanStage || 1) - 1); mapPanel(); } else if (a === "ssp") { G.stormStage = Math.min(4, (G.stormStage || 1) + 1); mapPanel(); } else if (a === "ssm") { G.stormStage = Math.max(1, (G.stormStage || 1) - 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
+    if (a === "atlas") openAtlas(); else if (a === "tower") openTower(); else if (a === "go") mapGo(); else if (a === "back") { MapView.sel = null; mapPanel(); } else if (a === "tp") { G.riftTier = Math.min(CFG.RIFT_END, save.rift.best + 1, G.riftTier + 1); mapPanel(); } else if (a === "tm") { G.riftTier = Math.max(1, G.riftTier - 1); mapPanel(); } else if (a === "ttp") { G.trialTier = Math.min(MAX_TRIAL, (save.trialBest || 0) + 1, G.trialTier + 1); mapPanel(); } else if (a === "vsp") { G.voidStage = Math.min(4, (G.voidStage || 1) + 1); mapPanel(); } else if (a === "vsm") { G.voidStage = Math.max(1, (G.voidStage || 1) - 1); mapPanel(); } else if (a === "hsp") { G.hiveStage = Math.min(4, (G.hiveStage || 1) + 1); mapPanel(); } else if (a === "hsm") { G.hiveStage = Math.max(1, (G.hiveStage || 1) - 1); mapPanel(); } else if (a === "tsp") { G.titanStage = Math.min(4, (G.titanStage || 1) + 1); mapPanel(); } else if (a === "tsm") { G.titanStage = Math.max(1, (G.titanStage || 1) - 1); mapPanel(); } else if (a === "ssp") { G.stormStage = Math.min(4, (G.stormStage || 1) + 1); mapPanel(); } else if (a === "ssm") { G.stormStage = Math.max(1, (G.stormStage || 1) - 1); mapPanel(); } else if (a === "ttm") { G.trialTier = Math.max(1, G.trialTier - 1); mapPanel(); } });
   $("#b-inv").onclick = () => { snd("click"); IB.mode = "inv"; IB.sel = null; renderItems(); };
   $("#b-skill").onclick = () => { snd("click"); SK.slot = 0; openSkills(); };
   $("#t-pow-w").onclick = () => { snd("click"); openStats(); }; $("#b-rank").onclick = () => { snd("click"); openRanking(); };
