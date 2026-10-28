@@ -150,3 +150,45 @@ function drawRaidEnemies(ctx, b, dt, time) {
   if (boss && b.designated === boss) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(480, 392, 150, 20, 0, 0, 7); ctx.stroke(); }
   drawRaidPlayer(ctx, b, time);
 }
+
+// ---- 황금 보물고의 몬스터: 코인 / 골드 보따리 (코드로 그린 픽셀 느낌의 유닛) ----
+function drawVaultUnit(ctx, b, e, time, x0, y0, appear) {
+  const bag = e.def.vaultUnit === "bag", fl = e.flash > 0, lean = e.winding > 0 ? -10 * (1 - e.winding / e.windup) : 0, walk = e.col > e.range;
+  const hop = walk ? Math.abs(Math.sin(e.age * 9 + e.id)) * 9 : Math.sin(time * 2 + e.id) * 1.5, x = x0 + lean, y = y0 - hop;
+  const circ = (cx, cy, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill(); };
+  const coin = (cx, cy, r) => {   // 동그란 금화: 테두리·안쪽 링·반짝임·$ 표식
+    circ(cx, cy, r, "#8a5a0c"); circ(cx, cy, r - 2, "#ffd24a"); ctx.strokeStyle = "#d89a1a"; ctx.lineWidth = Math.max(1.5, r * 0.14); ctx.beginPath(); ctx.arc(cx, cy, r * 0.68, 0, 7); ctx.stroke();
+    ctx.strokeStyle = "#fff4b8"; ctx.lineWidth = Math.max(1.5, r * 0.16); ctx.beginPath(); ctx.arc(cx, cy, r - 3, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+    ctx.fillStyle = "#a8700c"; ctx.font = `bold ${Math.round(r * 1.1)}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("$", cx, cy + r * 0.38);
+  };
+  ctx.save(); ctx.globalAlpha = appear; ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha *= 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x0, y0, bag ? 34 : 19, 6, 0, 0, 7); ctx.fill(); ctx.globalAlpha = appear;
+  if (e.chill > 0) ctx.filter = "hue-rotate(160deg) brightness(1.2)";
+  if (!bag) {   // 코인: 눈 달린 동그란 금화가 통통 뛰어온다
+    const r = 19, cy = y - r - 7; circ(x - 7, y - 3, 4.5, "#5a3a14"); circ(x + 7, y - 3, 4.5, "#5a3a14");
+    coin(x, cy, r); circ(x - 6, cy - 5, 3, "#2a1a08"); circ(x + 6, cy - 5, 3, "#2a1a08"); circ(x - 5, cy - 6, 1, "#fff"); circ(x + 7, cy - 6, 1, "#fff");
+    if (e.winding > 0) { ctx.strokeStyle = "#2a1a08"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, cy + 6, 4, 0, Math.PI); ctx.stroke(); }
+  } else {   // 골드 보따리: 갈색 자루에 금화가 가득 — 입구에서 동전이 넘쳐 나온다
+    circ(x - 14, y - 3, 6, "#4a2a0c"); circ(x + 14, y - 3, 6, "#4a2a0c");
+    // 입구 위로 솟은 금화들
+    coin(x - 14, y - 78, 11); coin(x + 13, y - 80, 11); coin(x, y - 86, 12);
+    // 자루 몸통
+    ctx.fillStyle = "#8a5a24"; ctx.beginPath(); ctx.moveTo(x - 13, y - 66); ctx.bezierCurveTo(x - 50, y - 50, x - 46, y - 4, x - 20, y - 3); ctx.lineTo(x + 20, y - 3); ctx.bezierCurveTo(x + 46, y - 4, x + 50, y - 50, x + 13, y - 66); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#6a4418"; ctx.beginPath(); ctx.moveTo(x + 13, y - 66); ctx.bezierCurveTo(x + 50, y - 50, x + 46, y - 4, x + 20, y - 3); ctx.lineTo(x + 6, y - 3); ctx.bezierCurveTo(x + 36, y - 10, x + 36, y - 48, x + 10, y - 62); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#b0803c"; ctx.beginPath(); ctx.ellipse(x - 26, y - 38, 6, 16, -0.3, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 13, y - 66); ctx.bezierCurveTo(x - 50, y - 50, x - 46, y - 4, x - 20, y - 3); ctx.lineTo(x + 20, y - 3); ctx.bezierCurveTo(x + 46, y - 4, x + 50, y - 50, x + 13, y - 66); ctx.stroke();
+    // 묶은 끈과 매듭
+    ctx.fillStyle = "#e8d8a8"; ctx.fillRect(x - 18, y - 70, 36, 6); ctx.fillStyle = "#c8b888"; ctx.fillRect(x - 18, y - 66, 36, 2); circ(x + 14, y - 63, 4, "#e8d8a8"); ctx.fillRect(x + 12, y - 62, 4, 12); ctx.fillRect(x + 16, y - 62, 3, 9);
+    // 앞면의 큰 금화 + 눈
+    coin(x, y - 30, 15); circ(x - 8, y - 48, 4, "#fff"); circ(x + 8, y - 48, 4, "#fff"); circ(x - 7, y - 47, 2, "#2a1a08"); circ(x + 9, y - 47, 2, "#2a1a08");
+  }
+  if (fl) { ctx.globalCompositeOperation = "source-atop"; }
+  ctx.filter = "none"; ctx.restore();
+  if (fl) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(x, y - (bag ? 38 : 26), bag ? 40 : 19, bag ? 42 : 21, 0, 0, 7); ctx.fill(); ctx.restore(); }
+  if (bag || e.hp < e.maxHp) drawEnemyBar(ctx, e, x0, y0 - (bag ? 108 : 58));
+  if (e.winding > 0) drawPx(ctx, "!", x0 - 4, y0 - (bag ? 124 : 74), "#ff5a5a", 3);
+}
+function drawVaultPuff(ctx, c, time) {   // 쓰러지면 금화가 사방으로 튄다
+  const k = clamp(c.t / 0.9, 0, 1), n = c.def.vaultUnit === "bag" ? 14 : 6;
+  ctx.save(); for (let i = 0; i < n; i++) { const a = (i / n) * 6.283 + c.x * 0.01, r = 18 + k * (c.def.vaultUnit === "bag" ? 70 : 38), px = c.x + Math.cos(a) * r, py = c.y - 24 - Math.sin(a) * r * 0.6 + k * k * 40; ctx.globalAlpha = 1 - k; ctx.fillStyle = i % 2 ? "#ffd24a" : "#fff0a0"; ctx.fillRect(Math.round(px), Math.round(py), 7, 7); } ctx.restore();
+}

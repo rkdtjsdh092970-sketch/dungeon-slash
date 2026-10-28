@@ -51,6 +51,7 @@ function drawEnemy(ctx, b, e, time) {
     if (e.charge) { const f = 1 - e.charge.t / (e.charge.t + 0.001); ctx.fillStyle = "#ff5a3a"; drawPx(ctx, "!", x - 6, y - D.sc * 66, "#ff5a3a", 4); }
     return;
   }
+  if (D.vaultUnit) { drawVaultUnit(ctx, b, e, time, x, y, appear); return; }
   const [skey, shue] = spriteOf(b, e), meta = SPR_META[skey], sheet = getSheet(skey, shue), sc = e.tier === "elite" && meta.cell === 48 ? 2.5 : D.sc, kind = skey, top = y - meta.h * sc - 6;
   if (e.type === "warp" || e.type === "hwarp" || e.type === "twarp" || e.type === "swarp") { const g = ctx.createRadialGradient(x, y - 40, 4, x, y - 40, 60 + Math.sin(time * 6) * 8); g.addColorStop(0, (e.type === "hwarp" ? "rgba(255,150,60,.55)" : e.type === "twarp" ? "rgba(210,200,170,.55)" : e.type === "swarp" ? "rgba(255,230,90,.55)" : "rgba(210,140,255,.55)")); g.addColorStop(1, (e.type === "hwarp" ? "rgba(255,150,60,0)" : "rgba(210,140,255,0)")); ctx.fillStyle = g; ctx.fillRect(x - 70, y - 110, 140, 140); for (let i = 0; i < 5; i++) { const a = time * 3 + i * 1.26; ctx.fillStyle = "#f0d8ff"; ctx.fillRect(x + Math.cos(a) * 36 - 2, y - 44 + Math.sin(a) * 26 - 2, 4, 4); } }
   let anim = "idle", t = e.age + e.id * 0.37;
@@ -135,6 +136,7 @@ function drawBattle(ctx, b, dt, time) {
   }
   // 시체(사망 연출)
   for (const c of b.corpses) {
+    if (c.def && c.def.vaultUnit) { drawVaultPuff(ctx, c, time); continue; }
     if (b.raid) { if (c.def && c.def.raid) drawMorgas(ctx, b, null, time, clamp(1 - (c.t - 0.2) / 1.2, 0, 1), true); continue; }
     if (c.boss) { const a = clamp(1 - (c.t - 0.2) / 1.2, 0, 1); drawBossSprite(ctx, bossArt(c.def), c.x, c.y, c.def.sc, { alpha: a, sy: 1 - c.t * 0.35, sx: 1 + c.t * 0.1, tint: c.t < 0.3 ? "rgba(255,255,255,.7)" : null, hue: c.def.hue }); continue; }
     const [ck, ch] = spriteOf(b, c), cm = SPR_META[ck], sheet = getSheet(ck, ch), af = animFrame(ck, "death", c.t), a = clamp(1.3 - c.t, 0, 1);

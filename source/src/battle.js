@@ -72,6 +72,7 @@ function extendPlan(b, n) {
   for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
 function planFor(node) {
+  if (node.kind === "vault") return smoothSeq({ coin: 12, goldbag: 1 }, 104);   // 황금 보물고: 코인과 골드 보따리
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
   if (isEB(node.kind)) { const hw = wavePool(7, 5, mods), pl = smoothSeq(hw, 70); for (let i = 0; i < 5; i++) pl.splice(8 + i * 14, 0, "brute"); pl.splice(4, 0, "boss"); return pl; }   // 화염 정령왕: 왕 + 불꽃 정령 대군
