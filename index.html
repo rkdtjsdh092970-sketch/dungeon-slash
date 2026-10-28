@@ -1866,7 +1866,7 @@ function bossOfSkill(d) {
   if (d.kind === "pierce" || d.kind === "spray" || d.kind === "bounce" || d.kind === "shuri" || d.kind === "boomer") return "storm";   // 관통·난사·투척 계열은 뇌제
   return "titan";
 }
-const BOSS_SKILL_RW = [[0, 40, 50, 10, 0, 0], [0, 20, 55, 21, 4, 0], [0, 0, 55, 33, 11, 1], [0, 0, 40, 38, 17, 5]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
+const BOSS_SKILL_RW = [[0, 40, 50, 10, 0, 0], [0, 20, 55, 21, 4, 0], [0, 0, 62, 28, 9, 1], [0, 0, 50, 32, 14, 4]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
 function rollBossSkills(sv, kind, K) {
@@ -5647,7 +5647,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-025444";
+const BUILD_ID = "20261029-025657";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5740,7 +5740,7 @@ function animateResult(res) {
 // =========================================================
 const PATCH_NOTES = [
   { ver: "4.20", date: "10/29", title: "보스 스킬 등급 확률 조정", items: [
-    "3·4단계 보스 스킬 드랍에서 신화 이상이 전설보다 더 많이 나오던 것을 조정했습니다. 이제 전설이 가장 흔합니다 (3단계 전설 55% · 4단계 전설 40%).",
+    "3·4단계 보스 스킬 드랍에서 신화 이상이 전설보다 더 많이 나오던 것을 조정했습니다. 이제 전설이 가장 흔합니다 (3단계 전설 62% · 4단계 전설 50%).",
   ] },
   { ver: "4.19", date: "10/29", title: "상점 보스 스킬 속성별", items: [
     "스킬 상점의 보스 전용 스킬에 속성별 스킬(화염의 낙인 · 서리의 낙인 · 뇌광의 낙인)이 추가되었습니다.",
