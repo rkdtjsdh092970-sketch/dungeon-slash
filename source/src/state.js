@@ -581,7 +581,8 @@ function sellSkill(sv, inst) {
   sv.skills = sv.skills.filter((x) => x !== inst); return v;
 }
 // 특수 스킬(공허 전용 · 빌드별 보스 전용기)은 상점에서 팔지 않는다 — 드랍·시련·공허의 군주로만 얻는다 (기본 보스 스킬 '처형'은 상점 판매 유지)
-const isSpecialSkill = (d) => !!d.voidOnly || (d.slot === "passive" && d.pt > 0) || !!d.mythOnly || (d.bonus && d.bonus.boss >= 0.8 && d.id !== "execute" && d.id !== "smite");
+const SHOP_BOSS = new Set(["execute", "smite", "firemark", "frostmark", "stormmark"]);   // 상점에서 파는 보스 전용 스킬 (보스 드랍 전용기보다 약하다)
+const isSpecialSkill = (d) => !!d.voidOnly || (d.slot === "passive" && d.pt > 0) || !!d.mythOnly || (d.bonus && d.bonus.boss >= 0.8 && !SHOP_BOSS.has(d.id));
 // v4: 스킬 해금 단계는 캐릭터 레벨(= 균열 최고 층 + 1)을 따른다
 const skillAct = (sv) => Math.max(1, Math.min(8, 1 + Math.floor(sv.level / 10)));
 function shopStock(sv, now) {
