@@ -157,4 +157,4 @@ BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, 
   abilities: [{ id: "rain", every: 11, hits: 6, mult: 0.5, text: "문지기가 심연의 불을 쏟아붓는다!" }, { id: "wound", every: 19, dur: 6, mult: 0.5, text: "저주받은 낙인! 생명력 흡수·회복이 반감된다!" },
     { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
 const RAID_BOSS = BOSSES[BOSSES.length - 1];
-CFG.RAID = { ATK: 3.5, K: 7.5, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 600, THR: [0.75, 0.5, 0.25] };
+CFG.RAID = { ATK: 15, K: 80, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 600, THR: [0.75, 0.5, 0.25] };
