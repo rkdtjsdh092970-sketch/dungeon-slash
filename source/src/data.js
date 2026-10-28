@@ -260,8 +260,9 @@ const gAff = (ilvl) => gScale(ilvl);
 // v3.23 옵션 티어 (PoE식, 엔드게임 아이템 레벨 11+): 옵션마다 T1(최고)~T5가 있고, 아이템 레벨이 오를수록 더 높은 티어가 "나올 수 있게" 열린다.
 // 높은 티어일수록 뽑힐 가중치가 훨씬 낮아서, 아이템 레벨이 높아도 최고 티어는 드물다. 티어 수치 범위는 서로 겹친다. (인덱스 0 = T1)
 // v4: 옵션 티어 1~6 (인덱스 0 = 1티어 = 최고, 5 = 6티어 = 최저). 6티어가 가장 잘 나오고 1티어가 가장 드물다. 높은 티어는 아이템 T가 높아야 나올 수 있다
-const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [1, 3, 8, 18, 30, 40], flat: [3.0, 2.3, 1.75, 1.35, 1.05, 0.8], pct: [1.7, 1.5, 1.3, 1.15, 1.0, 0.85] };
-const atAvail = (ilvl) => [0, 1, 2, 3, 4, 5].filter((i) => ilvl >= AT.unlock[i]);
+const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [0.5, 2.3, 8, 20, 30, 40], flat: [3.0, 2.3, 1.75, 1.35, 1.05, 0.8], pct: [1.7, 1.5, 1.3, 1.15, 1.0, 0.85] };
+// 장비 T마다 나올 수 있는 옵션 티어의 범위가 한 칸씩 올라간다: T1 5~6 · T2 4~6 · T3 3~6 · T4 2~5 · T5 1~4 (높은 T에서는 낮은 티어 옵션이 나오지 않는다)
+const atAvail = (ilvl) => { const lo = Math.max(0, 5 - ilvl), hi = Math.min(5, 8 - ilvl), o = []; for (let i = lo; i <= hi; i++) o.push(i); return o; };
 const atPick = (ilvl) => wpick(atAvail(ilvl), (i) => AT.w[i]);
 const atMul = (a, t) => (a.count ? 1 : a.flat ? AT.flat[t] : a.pct ? AT.pct[t] : 1);
 const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 5);

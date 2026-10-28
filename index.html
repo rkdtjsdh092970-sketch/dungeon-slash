@@ -585,8 +585,9 @@ const gAff = (ilvl) => gScale(ilvl);
 // v3.23 옵션 티어 (PoE식, 엔드게임 아이템 레벨 11+): 옵션마다 T1(최고)~T5가 있고, 아이템 레벨이 오를수록 더 높은 티어가 "나올 수 있게" 열린다.
 // 높은 티어일수록 뽑힐 가중치가 훨씬 낮아서, 아이템 레벨이 높아도 최고 티어는 드물다. 티어 수치 범위는 서로 겹친다. (인덱스 0 = T1)
 // v4: 옵션 티어 1~6 (인덱스 0 = 1티어 = 최고, 5 = 6티어 = 최저). 6티어가 가장 잘 나오고 1티어가 가장 드물다. 높은 티어는 아이템 T가 높아야 나올 수 있다
-const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [1, 3, 8, 18, 30, 40], flat: [3.0, 2.3, 1.75, 1.35, 1.05, 0.8], pct: [1.7, 1.5, 1.3, 1.15, 1.0, 0.85] };
-const atAvail = (ilvl) => [0, 1, 2, 3, 4, 5].filter((i) => ilvl >= AT.unlock[i]);
+const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [0.5, 2.3, 8, 20, 30, 40], flat: [3.0, 2.3, 1.75, 1.35, 1.05, 0.8], pct: [1.7, 1.5, 1.3, 1.15, 1.0, 0.85] };
+// 장비 T마다 나올 수 있는 옵션 티어의 범위가 한 칸씩 올라간다: T1 5~6 · T2 4~6 · T3 3~6 · T4 2~5 · T5 1~4 (높은 T에서는 낮은 티어 옵션이 나오지 않는다)
+const atAvail = (ilvl) => { const lo = Math.max(0, 5 - ilvl), hi = Math.min(5, 8 - ilvl), o = []; for (let i = lo; i <= hi; i++) o.push(i); return o; };
 const atPick = (ilvl) => wpick(atAvail(ilvl), (i) => AT.w[i]);
 const atMul = (a, t) => (a.count ? 1 : a.flat ? AT.flat[t] : a.pct ? AT.pct[t] : 1);
 const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 5);
@@ -1988,7 +1989,9 @@ function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), or
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
-const rerollCost = (it) => { const n = Math.min(14, it.rr || 0), m = Math.pow(1.45, n); return { gold: Math.round(7 * gGold(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5) * 2.5 * m), ore: Math.round((3 + n) * (it.ilvl > 10 ? 1.5 : 1)) }; };   // 같은 장비를 거듭 재굴림할수록 비싸진다
+// 옵션 재굴림 비용: 장비 T마다 고정 (몇 번을 굴려도, 강화 수치와 상관없이 같다) — 그 구간 균열 한 번 도는 골드 정도
+const REROLL_COST = [[250, 2], [900, 3], [2000, 4], [6500, 5], [14000, 6]];
+const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(4, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
 // v3.23: 한 장비에서 재굴림할 수 있는 줄은 하나뿐이다. 한 줄을 굴리면(rrIdx) 나머지 줄은 잠긴다 — 같은 줄은 계속 굴릴 수 있다.
 const rerollLocked = (it, idx) => it.rrIdx != null && it.rrIdx !== idx;
 function rerollAffix(sv, it, idx) {
@@ -5506,8 +5509,11 @@ function openStones() {
 function openSockPick(it, idx) {
   if (!it || !it.sock) return; const sv = save, rv = sv.stones.filter((s) => s.rev), cur = it.sock[idx];
   const ok = (s) => socketUsable(it, s.rev.k) || (cur && cur.k === s.rev.k);
+  // 각 돌을 끼웠을 때의 전투력 변화 (지금 끼워진 상태 기준)
+  const eqKeys = EQ_SLOTS.filter((k) => save.equipped[k] === it), pwNow = () => Math.max(...(eqKeys.length ? eqKeys : slotKeys(it.slot)).map((k) => powerWith(save, k, it))), base = pwNow();
+  const gain = (rev) => { const keep = it.sock[idx]; it.sock[idx] = { k: rev.k, v: rev.v }; let p = base; try { p = pwNow(); } catch (e) {} it.sock[idx] = keep; const d = p - base; return `<small style="color:${d >= 0 ? "#8dff9a" : "#ff8a8a"}"> 전투력 ${d >= 0 ? "▲" : "▼"} ${fmtN(Math.abs(Math.round(d)))} (${d >= 0 ? "+" : "-"}${Math.abs((p / Math.max(1, base) - 1) * 100).toFixed(1)}%)</small>`; };
   Modal.open(`<h2>소켓 끼우기</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓 ${cur ? `<br><small class="dim">이미 ${stoneLabel(cur)}가 끼워져 있습니다 — 다른 돌을 끼우면 교체되고 이전 옵션은 사라집니다</small>` : ""}</div>
-  <div style="max-height:300px;overflow:auto;margin:6px 0">${stoneGroups(rv).map((g) => { const s = { uid: g.uids[0], rev: g.rev }; return `<div class="pline">💎 <b>${stoneLabel(s.rev)}</b>${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} ${ok(s) ? `<button class="btn xs pri" data-a="sockgo" data-u="${s.uid}">끼우기</button>` : `<small style="color:#ff8a8a">같은 옵션이 있어 불가</small>`}</div>`; }).join("") || `<div class="dim center pad">확인된 돌이 없습니다. 💎 미확인의 돌에서 먼저 확인하세요.</div>`}</div>
+  <div style="max-height:300px;overflow:auto;margin:6px 0">${stoneGroups(rv).map((g) => { const s = { uid: g.uids[0], rev: g.rev }; return `<div class="pline">💎 <b>${stoneLabel(s.rev)}</b>${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} ${ok(s) ? gain(s.rev) + ` <button class="btn xs pri" data-a="sockgo" data-u="${s.uid}">끼우기</button>` : `<small style="color:#ff8a8a">같은 옵션이 있어 불가</small>`}</div>`; }).join("") || `<div class="dim center pad">확인된 돌이 없습니다. 💎 미확인의 돌에서 먼저 확인하세요.</div>`}</div>
   <div class="pbtns"><button class="btn" data-a="sockback">돌아가기</button></div>`, { cls: "wide", on: {
     sockgo: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (!s) return; const r = socketItem(sv, it, s, idx); toast(r.msg, r.ok ? "ok" : "bad"); snd(r.ok ? "enh_ok" : "error"); saveGame(); renderItems(); },
     sockback: () => renderItems(),
@@ -5540,7 +5546,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-020125";
+const BUILD_ID = "20261029-020927";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5632,6 +5638,15 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.15", date: "10/29", title: "옵션 재굴림 비용 고정", items: [
+    "옵션 재굴림 비용이 장비 T마다 고정 가격이 되었습니다. 같은 장비를 몇 번 굴려도, 강화 수치가 높아도 가격이 오르지 않습니다 (T1 250G · T2 900G · T3 2,000G · T4 6,500G · T5 14,000G).",
+  ] },
+  { ver: "4.14", date: "10/29", title: "소켓 전투력 표시", items: [
+    "소켓에 미확인의 돌을 끼울 때, 돌마다 끼웠을 때의 전투력 변화(수치와 %)가 표시됩니다.",
+  ] },
+  { ver: "4.13", date: "10/29", title: "장비 티어별 옵션 티어 범위 조정", items: [
+    "장비 T마다 나오는 옵션 티어 범위가 바뀌었습니다: T1 5~6티어 · T2 4~6티어 · T3 3~6티어 · T4 2~5티어 · T5 1~4티어. 높은 T 장비에서는 낮은 티어 옵션(5~6티어)이 나오지 않습니다.",
+  ] },
   { ver: "4.12", date: "10/29", title: "균열 기록 정리", items: [
     "균열 최고 기록이 100층을 넘던 유저는 100층으로 맞춰졌습니다 (속성 보스 입장 · 지옥 · 무한 균열 난이도도 이에 맞춰집니다). 속성 보스 단계 표시는 '균열 100층 대비 몇 배'로 바뀌었습니다.",
   ] },

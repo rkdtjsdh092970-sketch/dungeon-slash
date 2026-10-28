@@ -465,7 +465,9 @@ function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), or
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
-const rerollCost = (it) => { const n = Math.min(14, it.rr || 0), m = Math.pow(1.45, n); return { gold: Math.round(7 * gGold(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5) * 2.5 * m), ore: Math.round((3 + n) * (it.ilvl > 10 ? 1.5 : 1)) }; };   // 같은 장비를 거듭 재굴림할수록 비싸진다
+// 옵션 재굴림 비용: 장비 T마다 고정 (몇 번을 굴려도, 강화 수치와 상관없이 같다) — 그 구간 균열 한 번 도는 골드 정도
+const REROLL_COST = [[250, 2], [900, 3], [2000, 4], [6500, 5], [14000, 6]];
+const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(4, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
 // v3.23: 한 장비에서 재굴림할 수 있는 줄은 하나뿐이다. 한 줄을 굴리면(rrIdx) 나머지 줄은 잠긴다 — 같은 줄은 계속 굴릴 수 있다.
 const rerollLocked = (it, idx) => it.rrIdx != null && it.rrIdx !== idx;
 function rerollAffix(sv, it, idx) {

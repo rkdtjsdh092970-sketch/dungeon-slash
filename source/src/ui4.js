@@ -314,8 +314,11 @@ function openStones() {
 function openSockPick(it, idx) {
   if (!it || !it.sock) return; const sv = save, rv = sv.stones.filter((s) => s.rev), cur = it.sock[idx];
   const ok = (s) => socketUsable(it, s.rev.k) || (cur && cur.k === s.rev.k);
+  // 각 돌을 끼웠을 때의 전투력 변화 (지금 끼워진 상태 기준)
+  const eqKeys = EQ_SLOTS.filter((k) => save.equipped[k] === it), pwNow = () => Math.max(...(eqKeys.length ? eqKeys : slotKeys(it.slot)).map((k) => powerWith(save, k, it))), base = pwNow();
+  const gain = (rev) => { const keep = it.sock[idx]; it.sock[idx] = { k: rev.k, v: rev.v }; let p = base; try { p = pwNow(); } catch (e) {} it.sock[idx] = keep; const d = p - base; return `<small style="color:${d >= 0 ? "#8dff9a" : "#ff8a8a"}"> 전투력 ${d >= 0 ? "▲" : "▼"} ${fmtN(Math.abs(Math.round(d)))} (${d >= 0 ? "+" : "-"}${Math.abs((p / Math.max(1, base) - 1) * 100).toFixed(1)}%)</small>`; };
   Modal.open(`<h2>소켓 끼우기</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓 ${cur ? `<br><small class="dim">이미 ${stoneLabel(cur)}가 끼워져 있습니다 — 다른 돌을 끼우면 교체되고 이전 옵션은 사라집니다</small>` : ""}</div>
-  <div style="max-height:300px;overflow:auto;margin:6px 0">${stoneGroups(rv).map((g) => { const s = { uid: g.uids[0], rev: g.rev }; return `<div class="pline">💎 <b>${stoneLabel(s.rev)}</b>${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} ${ok(s) ? `<button class="btn xs pri" data-a="sockgo" data-u="${s.uid}">끼우기</button>` : `<small style="color:#ff8a8a">같은 옵션이 있어 불가</small>`}</div>`; }).join("") || `<div class="dim center pad">확인된 돌이 없습니다. 💎 미확인의 돌에서 먼저 확인하세요.</div>`}</div>
+  <div style="max-height:300px;overflow:auto;margin:6px 0">${stoneGroups(rv).map((g) => { const s = { uid: g.uids[0], rev: g.rev }; return `<div class="pline">💎 <b>${stoneLabel(s.rev)}</b>${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} ${ok(s) ? gain(s.rev) + ` <button class="btn xs pri" data-a="sockgo" data-u="${s.uid}">끼우기</button>` : `<small style="color:#ff8a8a">같은 옵션이 있어 불가</small>`}</div>`; }).join("") || `<div class="dim center pad">확인된 돌이 없습니다. 💎 미확인의 돌에서 먼저 확인하세요.</div>`}</div>
   <div class="pbtns"><button class="btn" data-a="sockback">돌아가기</button></div>`, { cls: "wide", on: {
     sockgo: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (!s) return; const r = socketItem(sv, it, s, idx); toast(r.msg, r.ok ? "ok" : "bad"); snd(r.ok ? "enh_ok" : "error"); saveGame(); renderItems(); },
     sockback: () => renderItems(),
