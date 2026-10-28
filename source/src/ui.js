@@ -272,6 +272,9 @@ function openSettings() {
 
 // ---------- 전투 ----------
 function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
+// 자동 반복이 가능한 전투. 열쇠를 쓰는 보스(공허의 군주 · 속성 보스)는 반복할 때마다 열쇠 1개를 쓰고, 열쇠가 모자라면 멈춘다
+const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "void", "hive", "titan", "storm", "raid"];
+function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0 } : null; }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
@@ -283,7 +286,7 @@ function battleHudBuild(b) {
   $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot" data-i="${i}" title="클릭: 타겟 규칙 변경">${skIcon(sk.id, 3)}<div class="cdm"></div><span class="rl"></span><span class="kn">${i + 1}</span><span class="mc"></span><span class="cds"></span></div>` : `<div class="bslot off"><span class="kn">${i + 1}</span>${i >= save.slots ? "🔒" : ""}</div>`).join("");
   $$("#skillbar .bslot[data-i]").forEach((el) => el.addEventListener("click", () => { const i = +el.dataset.i, sk = G.battle.skills[i]; if (!sk) return; const n = RULE_ORDER[(RULE_ORDER.indexOf(sk.rule) + 1) % RULE_ORDER.length]; sk.rule = n; if (save.loadout[i]) save.loadout[i].rule = n; snd("click"); toast(`${SKILLS.find((d) => d.id === sk.id).name}: ${RULES[n]}`); }));
   $("#b-speed").textContent = "×" + G.speed; updateAutoBtn();
-  const canAuto = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault"].includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
+  const canAuto = AUTO_KINDS.includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
 }
 function updateAutoBtn() { const on = save && save.auto.on; $("#b-auto").textContent = on ? "자동 ON" : "자동 OFF"; $("#b-auto").classList.toggle("pri", !!on); }
 function battleHud(b) {
@@ -312,14 +315,18 @@ function finishFlow(b) {
 }
 function afterBattle(res, b) {
   const node = G.node, A = save.auto;
-  if (A.on && res.win && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault"].includes(node.kind)) {   // 자동 반복
+  if (A.on && res.win && AUTO_KINDS.includes(node.kind)) {   // 자동 반복
     let note = ""; const pr = autoProcess(save);
     if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`; if (pr.sSold || pr.sDis) note += ` · 스킬 ${pr.sSold ? pr.sSold + "개 판매 " : ""}${pr.sDis ? pr.sDis + "개 분해" : ""}`;
     saveGame(); refreshTop();
     toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
     if (save.inv.length >= CFG.INV_MAX - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
-    const go = () => { if (G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden")) startBattle(node, G.retry); };
+    const go = () => {
+      if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
+      const ki = autoKeyInfo(node); if (ki) { if (ki.have < 1) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key]--; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
+      startBattle(node, G.retry);
+    };
     if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
     return;
   }
@@ -348,10 +355,17 @@ function showResult(res, b, replay) {
   if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
   const nextTut = tut && win && node.step < TUTORIAL.length - 1;
  const back = () => { if (win && node.kind === "raid") { G.battle = null; AU.stopBgm(); raidAftermath(); return; } if (win && node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act < CFG.ACTS) { G.battle = null; AU.stopBgm(); openTown(node.act + 1); return; } if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
-  const canRetry = !tut && !endless && node.kind !== "void" && !isEB(node.kind), nb = tut ? null : nextBattleOf(node, res);
+  const keyKind = node.kind === "void" || isEB(node.kind), keyHave = node.kind === "void" ? save.keys : isEB(node.kind) ? (save[EB[node.kind].key] || 0) : 0, bossLike = node.kind === "boss" || node.kind === "raid" || keyKind;
+  const canRetry = tut || endless ? false : keyKind ? { label: `다시 처치 · 열쇠 1개 소모 (보유 ${keyHave}개)`, disabled: keyHave < 1 } : bossLike ? { label: "다시 처치" } : true, nb = tut ? null : nextBattleOf(node, res);
   Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay, nb), { cls: "result", persistent: true, noClose: true, on: {
     next: () => { if (!nb) return; G.pending = null; Modal.close(true); if (nb.town) { G.battle = null; AU.stopBgm(); openTown(nb.town); return; } const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },
-    ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { G.pending = null; Modal.close(true); startBattle(node, G.retry); },
+    ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { if (keyKind) { if (node.kind === "void") { if (save.keys < 1) return; save.keys--; } else { const E = EB[node.kind]; if ((save[E.key] || 0) < 1) return; save[E.key]--; } saveGame(); refreshTop(); } G.pending = null; Modal.close(true); startBattle(node, G.retry); },
+    autoloop: (el) => {
+      if (save.auto.on) { save.auto.on = false; saveGame(); updateAutoBtn(); el.textContent = autoLoopLabel(node); return; }
+      const ki = autoKeyInfo(node); if (ki && ki.have < 1) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
+      save.auto.on = true; if (ki) save[ki.key]--; saveGame(); refreshTop(); G.pending = null; Modal.close(true); startBattle(node, G.retry);
+    },
+    autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
   } });
   if (!replay) animateResult(res);
@@ -359,10 +373,12 @@ function showResult(res, b, replay) {
   if (!replay && win && nb && save.opt && save.opt.autoNext > 0) autoNextCountdown(res, save.opt.autoNext);
 }
 // 설정 '다음 스테이지로 자동 이동': 승리 결과창에서 대기시간이 지나면 [다음] 버튼을 자동으로 누른다. 화면을 누르거나 키를 누르면 취소된다
+const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 1개 소모)` : ""}`; };
+const autoNextLabel = () => (save.opt && save.opt.autoNext > 0 ? `다음 스테이지 자동 이동: ON (${save.opt.autoNext}초)` : "다음 스테이지 자동 이동: OFF");
 function autoNextCountdown(res, sec) {
   const btn = document.querySelector('#modal [data-a="next"]'), modal = $("#modal"); if (!btn) return;
   const base = btn.innerHTML; let left = sec, dead = false;
-  const stop = () => { dead = true; btn.innerHTML = base; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); };
+  const stop = () => { dead = true; btn.innerHTML = base; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); }; G.autoCdStop = stop;
   modal.addEventListener("pointerdown", stop, true); document.addEventListener("keydown", stop, true);
   const tick = () => {
     if (dead || !G.pending || G.pending[0] !== res) { stop(); return; }
