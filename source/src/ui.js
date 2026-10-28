@@ -111,11 +111,14 @@ function nodeToBattle(n) {
 function mapPanel() {
   const n = MapView.sel, p = $("#mappanel"); if (!n) { p.innerHTML = `<div class="hint">노드를 선택하세요 · 드래그로 지도를 움직입니다</div>`; return; }
   let h = `<div class="ptitle">${n.name}</div>`;
-  const un = nodeUnlocked(save, n); let btn = "선택", btnOk = un, extra = "";
+  const un = nodeUnlocked(save, n); let btn = "선택", btnOk = un, extra = "", pre = "", post = "";
   if (n.kind === "town") h += `<div class="pline">마을 · 정비와 퀘스트</div>`;
   else if (n.kind === "rift") {
-    h += `<div class="pline">엔드게임 · 최고 ${save.rift.best}층</div><div class="pline dim">탑을 열어 도전할 층을 고릅니다. 층이 오를수록 MF가 오릅니다.</div>`;
-    extra = `<button class="btn pri" data-p="tower">탑 열기</button><button class="btn" data-p="atlas">심연 각인</button>`; btnOk = false; btn = "도전";
+    const mx = Math.max(1, save.rift.best + 1); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
+    const tier = G.riftTier = clamp(G.riftTier || mx, 1, mx), mods = riftMods(tier);
+    h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층만 레벨이 오릅니다.</div>`;
+    pre = `<button class="btn" data-p="tm" ${tier <= 1 ? "disabled" : ""}>▼</button>`; post = `<button class="btn" data-p="tp" ${tier >= mx ? "disabled" : ""}>▲</button>`;
+    extra = `<button class="btn" data-p="tower">탑 열기</button><button class="btn" data-p="atlas">심연 각인</button>`; btnOk = un; btn = `도전 ${tier}층`;
   } else if (n.kind === "raid") {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
@@ -149,7 +152,7 @@ function mapPanel() {
     if (n.kind === "stage" || n.kind === "boss") h += `<div class="pline dim">${ACT_SPECIAL[n.act - 1].name}: ${ACT_SPECIAL[n.act - 1].desc}</div>`;
   }
   if (!un) h += `<div class="pline warn">${!save.tut.done ? "튜토리얼을 먼저 완료하세요" : n.kind === "elite" || n.kind === "treasure" ? `스테이지 ${n.need} 클리어 후 개방` : n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || isEB(n.kind) || n.kind === "vault" ? "액트 10 보스를 처치하면 개방" : "이전 노드를 클리어하세요"}</div>`;
-  h += `<div class="pbtns"><button class="btn pri" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button><button class="btn" data-p="back">뒤로</button>${extra}</div>`;
+  h += `${pre ? `<div class="pbtns" style="flex-wrap:nowrap">${pre.replace('class="btn"', 'class="btn" style="flex:0 0 56px;padding:10px 0"')}<button class="btn pri" style="flex:1" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button>${post.replace('class="btn"', 'class="btn" style="flex:0 0 56px;padding:10px 0"')}</div><div class="pbtns"><button class="btn" data-p="back">뒤로</button>${extra}</div>` : `<div class="pbtns"><button class="btn pri" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button><button class="btn" data-p="back">뒤로</button>${extra}</div>`}`;
   p.innerHTML = h;
 }
 // 문지기를 쓰러뜨린 뒤: 어두운 화면에서 지도가 밝아지고, 심연의 균열이 보이다가 먼 곳에서 탑이 진동과 함께 솟아오른다

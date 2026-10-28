@@ -220,7 +220,7 @@ const MapView = {
     // 지역 이름
     g.textAlign = "center"; g.font = "bold 15px sans-serif";
     REGION.slice(0, CFG.ACTS).forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = Math.min(cy + 112, MAP_H - 16) - this.cam.y; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
-    { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); }
+    { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); g.font = "bold 12px sans-serif"; g.fillStyle = "#000"; g.fillText(`현재 ${sv.rift.best}층`, x + 1, y + 16); g.fillStyle = "#8dff9a"; g.fillText(`현재 ${sv.rift.best}층`, x, y + 15); }
     // 노드
     const vis = MAP.nodes.filter((n) => !this.hidden(n) && n.x - this.cam.x > -40 && n.x - this.cam.x < CW + 40 && n.y - this.cam.y > -40 && n.y - this.cam.y < CH + 40);
     for (const n of vis) {

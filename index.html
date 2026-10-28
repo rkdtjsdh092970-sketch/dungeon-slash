@@ -3538,7 +3538,7 @@ const MapView = {
     // 지역 이름
     g.textAlign = "center"; g.font = "bold 15px sans-serif";
     REGION.slice(0, CFG.ACTS).forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = Math.min(cy + 112, MAP_H - 16) - this.cam.y; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
-    { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); }
+    { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); g.font = "bold 12px sans-serif"; g.fillStyle = "#000"; g.fillText(`현재 ${sv.rift.best}층`, x + 1, y + 16); g.fillStyle = "#8dff9a"; g.fillText(`현재 ${sv.rift.best}층`, x, y + 15); }
     // 노드
     const vis = MAP.nodes.filter((n) => !this.hidden(n) && n.x - this.cam.x > -40 && n.x - this.cam.x < CW + 40 && n.y - this.cam.y > -40 && n.y - this.cam.y < CH + 40);
     for (const n of vis) {
@@ -4152,11 +4152,14 @@ function nodeToBattle(n) {
 function mapPanel() {
   const n = MapView.sel, p = $("#mappanel"); if (!n) { p.innerHTML = `<div class="hint">노드를 선택하세요 · 드래그로 지도를 움직입니다</div>`; return; }
   let h = `<div class="ptitle">${n.name}</div>`;
-  const un = nodeUnlocked(save, n); let btn = "선택", btnOk = un, extra = "";
+  const un = nodeUnlocked(save, n); let btn = "선택", btnOk = un, extra = "", pre = "", post = "";
   if (n.kind === "town") h += `<div class="pline">마을 · 정비와 퀘스트</div>`;
   else if (n.kind === "rift") {
-    h += `<div class="pline">엔드게임 · 최고 ${save.rift.best}층</div><div class="pline dim">탑을 열어 도전할 층을 고릅니다. 층이 오를수록 MF가 오릅니다.</div>`;
-    extra = `<button class="btn pri" data-p="tower">탑 열기</button><button class="btn" data-p="atlas">심연 각인</button>`; btnOk = false; btn = "도전";
+    const mx = Math.max(1, save.rift.best + 1); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
+    const tier = G.riftTier = clamp(G.riftTier || mx, 1, mx), mods = riftMods(tier);
+    h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층만 레벨이 오릅니다.</div>`;
+    pre = `<button class="btn" data-p="tm" ${tier <= 1 ? "disabled" : ""}>▼</button>`; post = `<button class="btn" data-p="tp" ${tier >= mx ? "disabled" : ""}>▲</button>`;
+    extra = `<button class="btn" data-p="tower">탑 열기</button><button class="btn" data-p="atlas">심연 각인</button>`; btnOk = un; btn = `도전 ${tier}층`;
   } else if (n.kind === "raid") {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
@@ -4190,7 +4193,7 @@ function mapPanel() {
     if (n.kind === "stage" || n.kind === "boss") h += `<div class="pline dim">${ACT_SPECIAL[n.act - 1].name}: ${ACT_SPECIAL[n.act - 1].desc}</div>`;
   }
   if (!un) h += `<div class="pline warn">${!save.tut.done ? "튜토리얼을 먼저 완료하세요" : n.kind === "elite" || n.kind === "treasure" ? `스테이지 ${n.need} 클리어 후 개방` : n.kind === "rift" || n.kind === "endless" || n.kind === "void" || n.kind === "trial" || isEB(n.kind) || n.kind === "vault" ? "액트 10 보스를 처치하면 개방" : "이전 노드를 클리어하세요"}</div>`;
-  h += `<div class="pbtns"><button class="btn pri" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button><button class="btn" data-p="back">뒤로</button>${extra}</div>`;
+  h += `${pre ? `<div class="pbtns" style="flex-wrap:nowrap">${pre.replace('class="btn"', 'class="btn" style="flex:0 0 56px;padding:10px 0"')}<button class="btn pri" style="flex:1" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button>${post.replace('class="btn"', 'class="btn" style="flex:0 0 56px;padding:10px 0"')}</div><div class="pbtns"><button class="btn" data-p="back">뒤로</button>${extra}</div>` : `<div class="pbtns"><button class="btn pri" data-p="go" ${btnOk ? "" : "disabled"}>${btn}</button><button class="btn" data-p="back">뒤로</button>${extra}</div>`}`;
   p.innerHTML = h;
 }
 // 문지기를 쓰러뜨린 뒤: 어두운 화면에서 지도가 밝아지고, 심연의 균열이 보이다가 먼 곳에서 탑이 진동과 함께 솟아오른다
@@ -5532,7 +5535,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-012504";
+const BUILD_ID = "20261029-013110";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5624,6 +5627,9 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.6", date: "10/29", title: "심연의 균열 층 선택", items: [
+    "지도의 심연의 균열을 선택하면 [도전] 버튼 양옆에 ▼ ▲ 버튼이 생겼습니다. 바로 층을 고르고 도전할 수 있습니다 (새 층을 깨면 자동으로 다음 층으로 맞춰집니다).",
+  ] },
   { ver: "4.5", date: "10/29", title: "마나 빌드 밸런스", items: [
     "마나 방벽이 마나를 계속 깎아 스킬을 쓸 마나가 바닥나던 문제를 고쳤습니다: 방벽은 마나가 30% 이하로 내려가면 더 이상 마나를 쓰지 않고, 막은 피해 1당 마나 0.6만 소모합니다.",
     "마나 노드를 지나갈 때 마나 방벽이 같이 붙던 길목(마나의 화신 핵심 노드, 계열 사이 연결 노드)에서 방벽 효과를 빼, 마나 빌드가 아닌 사람도 마나가 말라붙지 않게 했습니다.",
