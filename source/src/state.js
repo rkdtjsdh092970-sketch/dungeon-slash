@@ -86,7 +86,10 @@ function clampItem(it) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; dedupeLoadout(sv); if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); if (!Array.isArray(sv.stones)) sv.stones = []; for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k]); return n; }
+function clampAll(sv) { let n = 0; dedupeLoadout(sv);
+  // 사라진 각인(경험치·지옥)에 쓴 조각은 돌려준다
+  { const A = sv.atlas || (sv.atlas = {}), OLD = { exp: [6, 0.55], hell: [12, 0.55] }; for (const id in OLD) { const rk = A[id] | 0; if (rk > 0) { let sum = 0; for (let r = 0; r < rk; r++) sum += Math.round(OLD[id][0] * (1 + r * OLD[id][1])); sv.shards = (sv.shards || 0) + sum; } delete A[id]; } }
+  if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); if (!Array.isArray(sv.stones)) sv.stones = []; for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k]); return n; }
 function diceItem(sv, it) {
   if ((sv.dice || 0) < 1) return false;
   if (!it.affixes.length) return false;
@@ -162,6 +165,7 @@ function computeStats(sv) {
   }
   if (sv.passive) { const pi = (sv.skills || []).find((x) => x.uid === sv.passive), pd = pi && SKILLS.find((x) => x.id === pi.id); if (pd && pd.per) for (const k in pd.per) { const base = pd.per[k], lv = 1 + 0.05 * ((pi.lvl || 1) - 1); apply(k, k.endsWith("More") ? 1 + (base - 1) * lv : base * lv); } }   // 패시브 스킬 칸
   for (const id in (sv.pass || {})) { const p = PASSIVE_BY_ID[id]; if (p) for (const k in p.per) apply(k, p.per[k] * sv.pass[id]); }
+  s.add.boss += atlasVal(sv, "conq"); s.dmgTaken -= atlasVal(sv, "guard");   // 심연 각인: 보스 피해 · 받는 피해
   if (sv.guildLv) for (const gp of GUILD_PASSIVES) if (sv.guildLv >= gp.lv) for (const k in gp.per) apply(k, gp.per[k]);   // 길드 패시브
   const sc = {};
   s.maxMana = Math.max(10, (CFG.BASE_MANA + s.manaFlat) * (1 + s.manaPct) * ml);
@@ -377,7 +381,7 @@ function rollDrops(sv, node, boss, B) {
   else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1)) out.skills.push(s);
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 3) + endlessWaves * 2) * B.ore);
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
-  if (late) out.shards = Math.round((2 + Math.floor((node.tier || 1) / 2) + (boss ? 5 : 0) + endlessWaves * 3 + (kind === "void" ? 3 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
+  if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
   const oc = { raid: 6, vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;

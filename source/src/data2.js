@@ -72,16 +72,16 @@ const SPEC_W = (act, stage) => (stage >= 2 ? 11 + act : 0);    // 특수 몹 출
 // ---------------------------------------------------------------
 const ATLAS = [
   { id: "gold", name: "황금의 인장", max: 10, per: 0.03, unit: "%", text: "골드 획득 +3%", cost: 6 },
-  { id: "exp", name: "지혜의 인장", max: 10, per: 0.03, unit: "%", text: "경험치 +3%", cost: 6 },
+  { id: "conq", name: "정복자의 인장", max: 10, per: 0.02, unit: "%", text: "보스 추가 피해 +2%", cost: 14 },
   { id: "ore", name: "단조의 인장", max: 10, per: 0.04, unit: "%", text: "강화석 획득 +4%", cost: 6 },
   { id: "orb", name: "혼돈의 인장", max: 10, per: 0.04, unit: "%", text: "구슬 획득 +4%", cost: 8 },
   { id: "shard", name: "균열의 인장", max: 10, per: 0.04, unit: "%", text: "균열 조각 +4%", cost: 8 },
   { id: "key", name: "열쇠의 인장", max: 10, per: 0.05, unit: "%", text: "공허의 열쇠 획득 +5%", cost: 10 },
   { id: "mf", name: "행운의 인장", max: 10, per: 0.02, unit: "%", text: "MF +2%", cost: 10 },
-  { id: "hell", name: "지옥의 인장", max: 10, per: 0.05, unit: "%", text: "지옥 스테이지 보상 +5%", cost: 12 },
+  { id: "guard", name: "수호의 인장", max: 10, per: 0.01, unit: "%", text: "받는 피해 −1%", cost: 14 },
   { id: "endless", name: "무한의 인장", max: 2, per: 1, unit: "회", text: "무한 균열 하루 입장 +1", cost: 60, grow: 2.5 },
 ];
-const atlasCost = (n, rank) => Math.round(n.cost * (1 + rank * (n.grow || 0.55)) * (n.max > 5 ? 1 : 1));
+const atlasCost = (n, rank) => Math.round(n.cost * 1.6 * (1 + rank * (n.grow || 0.6)));   // 조각 수급을 줄이고 단가를 올려 천천히 올린다
 const atlasVal = (sv, id) => { const n = ATLAS.find((x) => x.id === id); return n ? ((sv.atlas && sv.atlas[id]) || 0) * n.per : 0; };
 
 // ---------------------------------------------------------------

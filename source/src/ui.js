@@ -118,7 +118,7 @@ function mapPanel() {
     const tier = G.riftTier = clamp(G.riftTier || mx, 1, mx), mods = riftMods(tier);
     h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층만 레벨이 오릅니다.</div>`;
     pre = `<button class="btn" data-p="tm" ${tier <= 1 ? "disabled" : ""}>▼</button>`; post = `<button class="btn" data-p="tp" ${tier >= mx ? "disabled" : ""}>▲</button>`;
-    extra = `<button class="btn" data-p="tower">탑 열기</button><button class="btn" data-p="atlas">심연 각인</button>`; btnOk = un; btn = `도전 ${tier}층`;
+    extra = `<button class="btn" data-p="tower">탑 열기</button><button class="btn" data-p="atlas" style="background:linear-gradient(#8a3ae0,#5a1fa8);border-color:#e0b8ff;color:#fff;box-shadow:0 0 10px rgba(190,120,255,.6)">✦ 심연 각인</button>`; btnOk = un; btn = `도전 ${tier}층`;
   } else if (n.kind === "raid") {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
