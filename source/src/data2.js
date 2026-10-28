@@ -7,7 +7,7 @@ CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은
 CFG.RIFT_ATK_EXP = 1.8; CFG.RIFT_ATK_PIVOT = 25;   // 균열·시련·지옥 몹 공격력: 25단계부터는 단계당 상승이 가팔라진다 (체력은 그대로). 장비 성장에 맞춰 높은 단계에서 더 아프게
 CFG.LS_BASE = 0.006; CFG.LS_PER = 0.45; CFG.LS_MAX = 0.10;   // 생명력 흡수 회복 상한(초당 최대 체력 비율) = 기본 + 흡수% × 계수, 최대치
 CFG.VOID4_ANGELIC_W = 3;   // 공허 4단계: 엔젤릭 가중치(나머지 21)
-CFG.VAULT_GOLD = 6; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
+CFG.VAULT_GOLD = 3.5; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
 CFG.WARP_CHANCE = 0.03;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
 CFG._unused = 0;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
 CFG.WORLD_MIN = 20;                // 월드 버프/지옥 스테이지 갱신 주기 (분)
@@ -158,3 +158,9 @@ BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, 
     { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
 const RAID_BOSS = BOSSES[BOSSES.length - 1];
 CFG.RAID = { ATK: 5, K: 15, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 720, THR: [0.75, 0.5, 0.25] };
+
+// 거대 보물상자: 황금 보물고에서 가끔 나오는 확률 보스. 금화를 토해내고, 부수면 골드를 많이 준다.
+BOSSES.push({ id: "chest", name: "거대 보물상자", w: 2, h: 2, hp: 30000, atk: 10, range: 2, interval: 3.2, windup: 1.0, exp: 0, gold: 300, sc: 5, hue: 0, art: 0, chest: true,
+  abilities: [{ id: "summon", every: 8, count: 6, type: "coin", text: "상자가 금화를 토해낸다!" }], desc: "황금 보물고의 확률 보스 · 부수면 골드를 아주 많이 준다" });
+const CHEST_BOSS = BOSSES[BOSSES.length - 1];
+CFG.VAULT_CHEST = 0.3;   // 황금 보물고에서 거대 보물상자가 나올 확률

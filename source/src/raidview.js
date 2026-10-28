@@ -162,33 +162,57 @@ function drawVaultUnit(ctx, b, e, time, x0, y0, appear) {
     ctx.fillStyle = "#a8700c"; ctx.font = `bold ${Math.round(r * 1.1)}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("$", cx, cy + r * 0.38);
   };
   ctx.save(); ctx.globalAlpha = appear; ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha *= 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x0, y0, bag ? 34 : 19, 6, 0, 0, 7); ctx.fill(); ctx.globalAlpha = appear;
+  ctx.globalAlpha *= 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x0, y0, bag ? 50 : 19, 7, 0, 0, 7); ctx.fill(); ctx.globalAlpha = appear;
   if (e.chill > 0) ctx.filter = "hue-rotate(160deg) brightness(1.2)";
   if (!bag) {   // 코인: 눈 달린 동그란 금화가 통통 뛰어온다
     const r = 19, cy = y - r - 7; circ(x - 7, y - 3, 4.5, "#5a3a14"); circ(x + 7, y - 3, 4.5, "#5a3a14");
     coin(x, cy, r); circ(x - 6, cy - 5, 3, "#2a1a08"); circ(x + 6, cy - 5, 3, "#2a1a08"); circ(x - 5, cy - 6, 1, "#fff"); circ(x + 7, cy - 6, 1, "#fff");
     if (e.winding > 0) { ctx.strokeStyle = "#2a1a08"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, cy + 6, 4, 0, Math.PI); ctx.stroke(); }
-  } else {   // 골드 보따리: 갈색 자루에 금화가 가득 — 입구에서 동전이 넘쳐 나온다
-    circ(x - 14, y - 3, 6, "#4a2a0c"); circ(x + 14, y - 3, 6, "#4a2a0c");
-    // 입구 위로 솟은 금화들
-    coin(x - 14, y - 78, 11); coin(x + 13, y - 80, 11); coin(x, y - 86, 12);
-    // 자루 몸통
-    ctx.fillStyle = "#8a5a24"; ctx.beginPath(); ctx.moveTo(x - 13, y - 66); ctx.bezierCurveTo(x - 50, y - 50, x - 46, y - 4, x - 20, y - 3); ctx.lineTo(x + 20, y - 3); ctx.bezierCurveTo(x + 46, y - 4, x + 50, y - 50, x + 13, y - 66); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#6a4418"; ctx.beginPath(); ctx.moveTo(x + 13, y - 66); ctx.bezierCurveTo(x + 50, y - 50, x + 46, y - 4, x + 20, y - 3); ctx.lineTo(x + 6, y - 3); ctx.bezierCurveTo(x + 36, y - 10, x + 36, y - 48, x + 10, y - 62); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#b0803c"; ctx.beginPath(); ctx.ellipse(x - 26, y - 38, 6, 16, -0.3, 0, 7); ctx.fill();
-    ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 13, y - 66); ctx.bezierCurveTo(x - 50, y - 50, x - 46, y - 4, x - 20, y - 3); ctx.lineTo(x + 20, y - 3); ctx.bezierCurveTo(x + 46, y - 4, x + 50, y - 50, x + 13, y - 66); ctx.stroke();
-    // 묶은 끈과 매듭
-    ctx.fillStyle = "#e8d8a8"; ctx.fillRect(x - 18, y - 70, 36, 6); ctx.fillStyle = "#c8b888"; ctx.fillRect(x - 18, y - 66, 36, 2); circ(x + 14, y - 63, 4, "#e8d8a8"); ctx.fillRect(x + 12, y - 62, 4, 12); ctx.fillRect(x + 16, y - 62, 3, 9);
-    // 앞면의 큰 금화 + 눈
-    coin(x, y - 30, 15); circ(x - 8, y - 48, 4, "#fff"); circ(x + 8, y - 48, 4, "#fff"); circ(x - 7, y - 47, 2, "#2a1a08"); circ(x + 9, y - 47, 2, "#2a1a08");
+  } else {   // 골드 보따리: 불룩한 갈색 자루, 벌어진 입구에 금화가 수북이 쌓여 있다
+    circ(x - 18, y - 3, 7, "#4a2a0c"); circ(x + 18, y - 3, 7, "#4a2a0c");
+    const body = () => { ctx.beginPath(); ctx.moveTo(x - 42, y - 52); ctx.bezierCurveTo(x - 68, y - 36, x - 60, y - 4, x - 26, y - 3); ctx.lineTo(x + 26, y - 3); ctx.bezierCurveTo(x + 60, y - 4, x + 68, y - 36, x + 42, y - 52); ctx.lineTo(x + 50, y - 66); ctx.quadraticCurveTo(x + 38, y - 56, x + 28, y - 58); ctx.quadraticCurveTo(x + 12, y - 66, x - 6, y - 58); ctx.quadraticCurveTo(x - 24, y - 54, x - 34, y - 60); ctx.lineTo(x - 50, y - 68); ctx.closePath(); };
+    body(); ctx.fillStyle = "#9a6a2c"; ctx.fill();
+    ctx.save(); body(); ctx.clip(); ctx.fillStyle = "#7a5020"; ctx.beginPath(); ctx.ellipse(x + 40, y - 28, 34, 40, 0.2, 0, 7); ctx.fill(); ctx.fillStyle = "#b88a44"; ctx.beginPath(); ctx.ellipse(x - 34, y - 36, 12, 20, -0.35, 0, 7); ctx.fill(); ctx.restore();
+    body(); ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.stroke();
+    ctx.fillStyle = "#3a2208"; ctx.beginPath(); ctx.ellipse(x, y - 56, 36, 11, 0, 0, 7); ctx.fill();
+    for (const [cx, cy, r] of [[-16, -66, 8], [0, -70, 8.5], [16, -66, 8], [-28, -60, 8], [-10, -63, 8.5], [10, -63, 8.5], [28, -60, 8], [-19, -57, 8.5], [0, -58, 9], [19, -57, 8.5], [-6, -52, 8]]) coin(x + cx, y + cy, r);
+    ctx.strokeStyle = "#7a5020"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.beginPath(); ctx.ellipse(x, y - 56, 36, 11, 0, 0.12 * Math.PI, 0.88 * Math.PI); ctx.stroke(); ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y - 56, 38.5, 13.5, 0, 0.12 * Math.PI, 0.88 * Math.PI); ctx.stroke();
+    circ(x - 14, y - 30, 6, "#fff"); circ(x + 14, y - 30, 6, "#fff"); circ(x - 13, y - 29, 3, "#2a1a08"); circ(x + 15, y - 29, 3, "#2a1a08");
+    ctx.strokeStyle = "#2a1a08"; ctx.lineWidth = 2; ctx.beginPath(); if (e.winding > 0) ctx.arc(x, y - 14, 6, Math.PI, 0); else ctx.arc(x, y - 18, 7, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+    ctx.fillStyle = "rgba(200,140,60,.55)"; ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center"; ctx.fillText("$", x, y - 6);
   }
   if (fl) { ctx.globalCompositeOperation = "source-atop"; }
   ctx.filter = "none"; ctx.restore();
-  if (fl) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(x, y - (bag ? 38 : 26), bag ? 40 : 19, bag ? 42 : 21, 0, 0, 7); ctx.fill(); ctx.restore(); }
-  if (bag || e.hp < e.maxHp) drawEnemyBar(ctx, e, x0, y0 - (bag ? 108 : 58));
-  if (e.winding > 0) drawPx(ctx, "!", x0 - 4, y0 - (bag ? 124 : 74), "#ff5a5a", 3);
+  if (fl) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(x, y - (bag ? 36 : 26), bag ? 52 : 19, bag ? 38 : 21, 0, 0, 7); ctx.fill(); ctx.restore(); }
+  if (bag || e.hp < e.maxHp) drawEnemyBar(ctx, e, x0, y0 - (bag ? 86 : 58));
+  if (e.winding > 0) drawPx(ctx, "!", x0 - 4, y0 - (bag ? 102 : 74), "#ff5a5a", 3);
 }
 function drawVaultPuff(ctx, c, time) {   // 쓰러지면 금화가 사방으로 튄다
   const k = clamp(c.t / 0.9, 0, 1), n = c.def.vaultUnit === "bag" ? 14 : 6;
   ctx.save(); for (let i = 0; i < n; i++) { const a = (i / n) * 6.283 + c.x * 0.01, r = 18 + k * (c.def.vaultUnit === "bag" ? 70 : 38), px = c.x + Math.cos(a) * r, py = c.y - 24 - Math.sin(a) * r * 0.6 + k * k * 40; ctx.globalAlpha = 1 - k; ctx.fillStyle = i % 2 ? "#ffd24a" : "#fff0a0"; ctx.fillRect(Math.round(px), Math.round(py), 7, 7); } ctx.restore();
+}
+
+// ---- 거대 보물상자 (황금 보물고의 확률 보스): 뚜껑 틈으로 금빛이 새어 나온다 ----
+function drawChestBoss(ctx, e, x, y, time, alpha) {
+  const fl = e && e.flash > 0, wind = e && e.winding > 0 ? 1 - e.winding / e.windup : 0, open = 14 + Math.sin(time * 2.4) * 3 + wind * 26, bob = Math.sin(time * 2 + (e ? e.id : 0)) * 2;
+  ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; y -= bob;
+  ctx.globalAlpha *= 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x, y + 2, 120, 16, 0, 0, 7); ctx.fill(); ctx.globalAlpha = alpha == null ? 1 : alpha;
+  const W = 190, H = 96, bx = x - W / 2, by = y - H;
+  const gl = ctx.createRadialGradient(x, by - 10, 6, x, by - 10, 140); gl.addColorStop(0, "rgba(255,230,120,.9)"); gl.addColorStop(1, "rgba(255,200,60,0)"); ctx.fillStyle = gl; ctx.fillRect(x - 150, by - 150, 300, 220);
+  // 안쪽 금화 더미
+  ctx.fillStyle = "#3a2208"; ctx.fillRect(bx + 8, by - 6, W - 16, 14);
+  for (let i = 0; i < 9; i++) { const cx = bx + 20 + i * 18.5, cy = by - 4 - Math.abs(Math.sin(i * 1.7)) * 14 - (i % 3) * 3; ctx.fillStyle = "#8a5a0c"; ctx.beginPath(); ctx.arc(cx, cy, 11, 0, 7); ctx.fill(); ctx.fillStyle = "#ffd24a"; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, 7); ctx.fill(); ctx.fillStyle = "#fff0a0"; ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 3, 0, 7); ctx.fill(); }
+  // 몸통
+  const wood = fl ? "#ffffff" : "#8a5424", dark = fl ? "#eee" : "#5a3414", gold = fl ? "#fff" : "#e8b83a";
+  ctx.fillStyle = wood; ctx.fillRect(bx, by + 6, W, H - 6); ctx.fillStyle = dark; for (let i = 1; i < 5; i++) ctx.fillRect(bx, by + 6 + i * 18, W, 3);
+  ctx.fillStyle = dark; ctx.fillRect(bx, by + 6, 6, H - 6); ctx.fillRect(bx + W - 6, by + 6, 6, H - 6);
+  ctx.fillStyle = gold; for (const px of [bx + 14, bx + W - 32]) { ctx.fillRect(px, by + 6, 18, H - 6); ctx.fillStyle = "#a87a1a"; ctx.fillRect(px + 14, by + 6, 4, H - 6); ctx.fillStyle = gold; }
+  ctx.fillRect(bx - 4, by + H - 10, 22, 14); ctx.fillRect(bx + W - 18, by + H - 10, 22, 14);
+  ctx.fillStyle = "#a87a1a"; ctx.fillRect(x - 16, by + 22, 32, 36); ctx.fillStyle = gold; ctx.fillRect(x - 13, by + 25, 26, 30); ctx.fillStyle = "#3a2208"; ctx.fillRect(x - 4, by + 34, 8, 12); ctx.fillRect(x - 2, by + 44, 4, 8);
+  // 눈
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - 50, by + 34, 9, 0, 7); ctx.arc(x + 50, by + 34, 9, 0, 7); ctx.fill(); ctx.fillStyle = "#c01818"; ctx.beginPath(); ctx.arc(x - 48, by + 35, 4, 0, 7); ctx.arc(x + 52, by + 35, 4, 0, 7); ctx.fill();
+  // 열린 뚜껑 (뒤로 젖혀진다)
+  ctx.save(); ctx.translate(x, by + 6); ctx.fillStyle = wood; ctx.beginPath(); ctx.moveTo(-W / 2, 0); ctx.lineTo(W / 2, 0); ctx.lineTo(W / 2 - 14, -open - 30); ctx.lineTo(-W / 2 + 14, -open - 30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = dark; ctx.fillRect(-W / 2 + 14, -open - 30, W - 28, 7); ctx.fillStyle = gold; ctx.fillRect(-W / 2 + 14 + 16, -open - 30, 14, open + 30); ctx.fillRect(W / 2 - 14 - 30, -open - 30, 14, open + 30); ctx.restore();
+  ctx.restore();
 }

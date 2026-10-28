@@ -607,7 +607,7 @@ CFG.PROTO_MULT = 2;                // 프로토타입 보정 ×2 (이전 ×20은
 CFG.RIFT_ATK_EXP = 1.8; CFG.RIFT_ATK_PIVOT = 25;   // 균열·시련·지옥 몹 공격력: 25단계부터는 단계당 상승이 가팔라진다 (체력은 그대로). 장비 성장에 맞춰 높은 단계에서 더 아프게
 CFG.LS_BASE = 0.006; CFG.LS_PER = 0.45; CFG.LS_MAX = 0.10;   // 생명력 흡수 회복 상한(초당 최대 체력 비율) = 기본 + 흡수% × 계수, 최대치
 CFG.VOID4_ANGELIC_W = 3;   // 공허 4단계: 엔젤릭 가중치(나머지 21)
-CFG.VAULT_GOLD = 6; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
+CFG.VAULT_GOLD = 3.5; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
 CFG.WARP_CHANCE = 0.03;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
 CFG._unused = 0;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
 CFG.WORLD_MIN = 20;                // 월드 버프/지옥 스테이지 갱신 주기 (분)
@@ -758,6 +758,12 @@ BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, 
     { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
 const RAID_BOSS = BOSSES[BOSSES.length - 1];
 CFG.RAID = { ATK: 5, K: 15, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 720, THR: [0.75, 0.5, 0.25] };
+
+// 거대 보물상자: 황금 보물고에서 가끔 나오는 확률 보스. 금화를 토해내고, 부수면 골드를 많이 준다.
+BOSSES.push({ id: "chest", name: "거대 보물상자", w: 2, h: 2, hp: 30000, atk: 10, range: 2, interval: 3.2, windup: 1.0, exp: 0, gold: 300, sc: 5, hue: 0, art: 0, chest: true,
+  abilities: [{ id: "summon", every: 8, count: 6, type: "coin", text: "상자가 금화를 토해낸다!" }], desc: "황금 보물고의 확률 보스 · 부수면 골드를 아주 많이 준다" });
+const CHEST_BOSS = BOSSES[BOSSES.length - 1];
+CFG.VAULT_CHEST = 0.3;   // 황금 보물고에서 거대 보물상자가 나올 확률
 
 // =========================================================
 // 전투 계산 · 마나 · 옵션 풀 · 고유 장비(등급/출처) 데이터
@@ -2264,7 +2270,7 @@ function extendPlan(b, n) {
   for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
 function planFor(node) {
-  if (node.kind === "vault") return smoothSeq({ coin: 12, goldbag: 1 }, 104);   // 황금 보물고: 코인과 골드 보따리
+  if (node.kind === "vault") { const pl = smoothSeq({ coin: 12, goldbag: 1 }, 104); if (Math.random() < CFG.VAULT_CHEST) pl.splice(Math.floor(pl.length * rnd(0.35, 0.7)), 0, "boss"); return pl; }   // 황금 보물고: 코인과 골드 보따리 (가끔 거대 보물상자)
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
   if (isEB(node.kind)) { const hw = wavePool(7, 5, mods), pl = smoothSeq(hw, 70); for (let i = 0; i < 5; i++) pl.splice(8 + i * 14, 0, "brute"); pl.splice(4, 0, "boss"); return pl; }   // 화염 정령왕: 왕 + 불꽃 정령 대군
@@ -2312,7 +2318,7 @@ function createBattle(sv, node) {
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
-  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
+  b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
@@ -2540,7 +2546,7 @@ function killEnemy(b, e) {
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
   if (e.vstage) b.voidCleared = e.vstage;
-  b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { b.bossKills++; b.shake = 0.8; say(b, `${e.def.name} 처치!`, "boss"); }
+  b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { if (!e.def.chest) b.bossKills++; b.shake = 0.8; say(b, e.def.chest ? "보물상자가 터지며 금화가 쏟아진다!" : `${e.def.name} 처치!`, e.def.chest ? "good" : "boss"); }
   const ex = e.def.exp * Math.pow(1.5, b.act - 1) * (1 + 0.05 * (b.stage - 1)) * (b.kind === "rift" ? 1 + b.tier * 0.08 : 1);
   b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" ? 3 : b.kind === "vault" ? CFG.VAULT_GOLD : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
   if (b.designated === e) b.designated = null;
@@ -3368,6 +3374,7 @@ function drawEnemyBar(ctx, e, x, top) {   // 맞으면 흰 잔상이 천천히 �
 }
 function drawEnemy(ctx, b, e, time) {
   const D = e.def, x = Math.round(e.vx), y = Math.round(e.vy), appear = Math.min(1, e.age / 0.25);
+  if (e.tier === "boss" && D.chest) { drawChestBoss(ctx, e, x, y, time, appear); if (e.hp < e.maxHp) drawEnemyBar(ctx, e, x, y - 190); return; }
   if (e.tier === "boss") {
     const bob = Math.sin(time * 2.2 + e.id) * 3, p = e.winding > 0 ? 1 - e.winding / e.windup : 0;
     const opt = { alpha: appear, sy: 1 + Math.sin(time * 2.2 + e.id) * 0.012 + p * 0.05, sx: 1 - p * 0.02 };
@@ -3467,6 +3474,7 @@ function drawBattle(ctx, b, dt, time) {
   // 시체(사망 연출)
   for (const c of b.corpses) {
     if (c.def && c.def.vaultUnit) { drawVaultPuff(ctx, c, time); continue; }
+    if (c.def && c.def.chest) { drawChestBoss(ctx, null, c.x, c.y, time, clamp(1 - (c.t - 0.2) / 1.0, 0, 1)); drawVaultPuff(ctx, { x: c.x, y: c.y, t: c.t, def: { vaultUnit: "bag" } }, time); continue; }
     if (b.raid) { if (c.def && c.def.raid) drawMorgas(ctx, b, null, time, clamp(1 - (c.t - 0.2) / 1.2, 0, 1), true); continue; }
     if (c.boss) { const a = clamp(1 - (c.t - 0.2) / 1.2, 0, 1); drawBossSprite(ctx, bossArt(c.def), c.x, c.y, c.def.sc, { alpha: a, sy: 1 - c.t * 0.35, sx: 1 + c.t * 0.1, tint: c.t < 0.3 ? "rgba(255,255,255,.7)" : null, hue: c.def.hue }); continue; }
     const [ck, ch] = spriteOf(b, c), cm = SPR_META[ck], sheet = getSheet(ck, ch), af = animFrame(ck, "death", c.t), a = clamp(1.3 - c.t, 0, 1);
@@ -3867,35 +3875,59 @@ function drawVaultUnit(ctx, b, e, time, x0, y0, appear) {
     ctx.fillStyle = "#a8700c"; ctx.font = `bold ${Math.round(r * 1.1)}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("$", cx, cy + r * 0.38);
   };
   ctx.save(); ctx.globalAlpha = appear; ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha *= 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x0, y0, bag ? 34 : 19, 6, 0, 0, 7); ctx.fill(); ctx.globalAlpha = appear;
+  ctx.globalAlpha *= 0.3; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x0, y0, bag ? 50 : 19, 7, 0, 0, 7); ctx.fill(); ctx.globalAlpha = appear;
   if (e.chill > 0) ctx.filter = "hue-rotate(160deg) brightness(1.2)";
   if (!bag) {   // 코인: 눈 달린 동그란 금화가 통통 뛰어온다
     const r = 19, cy = y - r - 7; circ(x - 7, y - 3, 4.5, "#5a3a14"); circ(x + 7, y - 3, 4.5, "#5a3a14");
     coin(x, cy, r); circ(x - 6, cy - 5, 3, "#2a1a08"); circ(x + 6, cy - 5, 3, "#2a1a08"); circ(x - 5, cy - 6, 1, "#fff"); circ(x + 7, cy - 6, 1, "#fff");
     if (e.winding > 0) { ctx.strokeStyle = "#2a1a08"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, cy + 6, 4, 0, Math.PI); ctx.stroke(); }
-  } else {   // 골드 보따리: 갈색 자루에 금화가 가득 — 입구에서 동전이 넘쳐 나온다
-    circ(x - 14, y - 3, 6, "#4a2a0c"); circ(x + 14, y - 3, 6, "#4a2a0c");
-    // 입구 위로 솟은 금화들
-    coin(x - 14, y - 78, 11); coin(x + 13, y - 80, 11); coin(x, y - 86, 12);
-    // 자루 몸통
-    ctx.fillStyle = "#8a5a24"; ctx.beginPath(); ctx.moveTo(x - 13, y - 66); ctx.bezierCurveTo(x - 50, y - 50, x - 46, y - 4, x - 20, y - 3); ctx.lineTo(x + 20, y - 3); ctx.bezierCurveTo(x + 46, y - 4, x + 50, y - 50, x + 13, y - 66); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#6a4418"; ctx.beginPath(); ctx.moveTo(x + 13, y - 66); ctx.bezierCurveTo(x + 50, y - 50, x + 46, y - 4, x + 20, y - 3); ctx.lineTo(x + 6, y - 3); ctx.bezierCurveTo(x + 36, y - 10, x + 36, y - 48, x + 10, y - 62); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#b0803c"; ctx.beginPath(); ctx.ellipse(x - 26, y - 38, 6, 16, -0.3, 0, 7); ctx.fill();
-    ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 13, y - 66); ctx.bezierCurveTo(x - 50, y - 50, x - 46, y - 4, x - 20, y - 3); ctx.lineTo(x + 20, y - 3); ctx.bezierCurveTo(x + 46, y - 4, x + 50, y - 50, x + 13, y - 66); ctx.stroke();
-    // 묶은 끈과 매듭
-    ctx.fillStyle = "#e8d8a8"; ctx.fillRect(x - 18, y - 70, 36, 6); ctx.fillStyle = "#c8b888"; ctx.fillRect(x - 18, y - 66, 36, 2); circ(x + 14, y - 63, 4, "#e8d8a8"); ctx.fillRect(x + 12, y - 62, 4, 12); ctx.fillRect(x + 16, y - 62, 3, 9);
-    // 앞면의 큰 금화 + 눈
-    coin(x, y - 30, 15); circ(x - 8, y - 48, 4, "#fff"); circ(x + 8, y - 48, 4, "#fff"); circ(x - 7, y - 47, 2, "#2a1a08"); circ(x + 9, y - 47, 2, "#2a1a08");
+  } else {   // 골드 보따리: 불룩한 갈색 자루, 벌어진 입구에 금화가 수북이 쌓여 있다
+    circ(x - 18, y - 3, 7, "#4a2a0c"); circ(x + 18, y - 3, 7, "#4a2a0c");
+    const body = () => { ctx.beginPath(); ctx.moveTo(x - 42, y - 52); ctx.bezierCurveTo(x - 68, y - 36, x - 60, y - 4, x - 26, y - 3); ctx.lineTo(x + 26, y - 3); ctx.bezierCurveTo(x + 60, y - 4, x + 68, y - 36, x + 42, y - 52); ctx.lineTo(x + 50, y - 66); ctx.quadraticCurveTo(x + 38, y - 56, x + 28, y - 58); ctx.quadraticCurveTo(x + 12, y - 66, x - 6, y - 58); ctx.quadraticCurveTo(x - 24, y - 54, x - 34, y - 60); ctx.lineTo(x - 50, y - 68); ctx.closePath(); };
+    body(); ctx.fillStyle = "#9a6a2c"; ctx.fill();
+    ctx.save(); body(); ctx.clip(); ctx.fillStyle = "#7a5020"; ctx.beginPath(); ctx.ellipse(x + 40, y - 28, 34, 40, 0.2, 0, 7); ctx.fill(); ctx.fillStyle = "#b88a44"; ctx.beginPath(); ctx.ellipse(x - 34, y - 36, 12, 20, -0.35, 0, 7); ctx.fill(); ctx.restore();
+    body(); ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.stroke();
+    ctx.fillStyle = "#3a2208"; ctx.beginPath(); ctx.ellipse(x, y - 56, 36, 11, 0, 0, 7); ctx.fill();
+    for (const [cx, cy, r] of [[-16, -66, 8], [0, -70, 8.5], [16, -66, 8], [-28, -60, 8], [-10, -63, 8.5], [10, -63, 8.5], [28, -60, 8], [-19, -57, 8.5], [0, -58, 9], [19, -57, 8.5], [-6, -52, 8]]) coin(x + cx, y + cy, r);
+    ctx.strokeStyle = "#7a5020"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.beginPath(); ctx.ellipse(x, y - 56, 36, 11, 0, 0.12 * Math.PI, 0.88 * Math.PI); ctx.stroke(); ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y - 56, 38.5, 13.5, 0, 0.12 * Math.PI, 0.88 * Math.PI); ctx.stroke();
+    circ(x - 14, y - 30, 6, "#fff"); circ(x + 14, y - 30, 6, "#fff"); circ(x - 13, y - 29, 3, "#2a1a08"); circ(x + 15, y - 29, 3, "#2a1a08");
+    ctx.strokeStyle = "#2a1a08"; ctx.lineWidth = 2; ctx.beginPath(); if (e.winding > 0) ctx.arc(x, y - 14, 6, Math.PI, 0); else ctx.arc(x, y - 18, 7, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+    ctx.fillStyle = "rgba(200,140,60,.55)"; ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center"; ctx.fillText("$", x, y - 6);
   }
   if (fl) { ctx.globalCompositeOperation = "source-atop"; }
   ctx.filter = "none"; ctx.restore();
-  if (fl) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(x, y - (bag ? 38 : 26), bag ? 40 : 19, bag ? 42 : 21, 0, 0, 7); ctx.fill(); ctx.restore(); }
-  if (bag || e.hp < e.maxHp) drawEnemyBar(ctx, e, x0, y0 - (bag ? 108 : 58));
-  if (e.winding > 0) drawPx(ctx, "!", x0 - 4, y0 - (bag ? 124 : 74), "#ff5a5a", 3);
+  if (fl) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(x, y - (bag ? 36 : 26), bag ? 52 : 19, bag ? 38 : 21, 0, 0, 7); ctx.fill(); ctx.restore(); }
+  if (bag || e.hp < e.maxHp) drawEnemyBar(ctx, e, x0, y0 - (bag ? 86 : 58));
+  if (e.winding > 0) drawPx(ctx, "!", x0 - 4, y0 - (bag ? 102 : 74), "#ff5a5a", 3);
 }
 function drawVaultPuff(ctx, c, time) {   // 쓰러지면 금화가 사방으로 튄다
   const k = clamp(c.t / 0.9, 0, 1), n = c.def.vaultUnit === "bag" ? 14 : 6;
   ctx.save(); for (let i = 0; i < n; i++) { const a = (i / n) * 6.283 + c.x * 0.01, r = 18 + k * (c.def.vaultUnit === "bag" ? 70 : 38), px = c.x + Math.cos(a) * r, py = c.y - 24 - Math.sin(a) * r * 0.6 + k * k * 40; ctx.globalAlpha = 1 - k; ctx.fillStyle = i % 2 ? "#ffd24a" : "#fff0a0"; ctx.fillRect(Math.round(px), Math.round(py), 7, 7); } ctx.restore();
+}
+
+// ---- 거대 보물상자 (황금 보물고의 확률 보스): 뚜껑 틈으로 금빛이 새어 나온다 ----
+function drawChestBoss(ctx, e, x, y, time, alpha) {
+  const fl = e && e.flash > 0, wind = e && e.winding > 0 ? 1 - e.winding / e.windup : 0, open = 14 + Math.sin(time * 2.4) * 3 + wind * 26, bob = Math.sin(time * 2 + (e ? e.id : 0)) * 2;
+  ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; y -= bob;
+  ctx.globalAlpha *= 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(x, y + 2, 120, 16, 0, 0, 7); ctx.fill(); ctx.globalAlpha = alpha == null ? 1 : alpha;
+  const W = 190, H = 96, bx = x - W / 2, by = y - H;
+  const gl = ctx.createRadialGradient(x, by - 10, 6, x, by - 10, 140); gl.addColorStop(0, "rgba(255,230,120,.9)"); gl.addColorStop(1, "rgba(255,200,60,0)"); ctx.fillStyle = gl; ctx.fillRect(x - 150, by - 150, 300, 220);
+  // 안쪽 금화 더미
+  ctx.fillStyle = "#3a2208"; ctx.fillRect(bx + 8, by - 6, W - 16, 14);
+  for (let i = 0; i < 9; i++) { const cx = bx + 20 + i * 18.5, cy = by - 4 - Math.abs(Math.sin(i * 1.7)) * 14 - (i % 3) * 3; ctx.fillStyle = "#8a5a0c"; ctx.beginPath(); ctx.arc(cx, cy, 11, 0, 7); ctx.fill(); ctx.fillStyle = "#ffd24a"; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, 7); ctx.fill(); ctx.fillStyle = "#fff0a0"; ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 3, 0, 7); ctx.fill(); }
+  // 몸통
+  const wood = fl ? "#ffffff" : "#8a5424", dark = fl ? "#eee" : "#5a3414", gold = fl ? "#fff" : "#e8b83a";
+  ctx.fillStyle = wood; ctx.fillRect(bx, by + 6, W, H - 6); ctx.fillStyle = dark; for (let i = 1; i < 5; i++) ctx.fillRect(bx, by + 6 + i * 18, W, 3);
+  ctx.fillStyle = dark; ctx.fillRect(bx, by + 6, 6, H - 6); ctx.fillRect(bx + W - 6, by + 6, 6, H - 6);
+  ctx.fillStyle = gold; for (const px of [bx + 14, bx + W - 32]) { ctx.fillRect(px, by + 6, 18, H - 6); ctx.fillStyle = "#a87a1a"; ctx.fillRect(px + 14, by + 6, 4, H - 6); ctx.fillStyle = gold; }
+  ctx.fillRect(bx - 4, by + H - 10, 22, 14); ctx.fillRect(bx + W - 18, by + H - 10, 22, 14);
+  ctx.fillStyle = "#a87a1a"; ctx.fillRect(x - 16, by + 22, 32, 36); ctx.fillStyle = gold; ctx.fillRect(x - 13, by + 25, 26, 30); ctx.fillStyle = "#3a2208"; ctx.fillRect(x - 4, by + 34, 8, 12); ctx.fillRect(x - 2, by + 44, 4, 8);
+  // 눈
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x - 50, by + 34, 9, 0, 7); ctx.arc(x + 50, by + 34, 9, 0, 7); ctx.fill(); ctx.fillStyle = "#c01818"; ctx.beginPath(); ctx.arc(x - 48, by + 35, 4, 0, 7); ctx.arc(x + 52, by + 35, 4, 0, 7); ctx.fill();
+  // 열린 뚜껑 (뒤로 젖혀진다)
+  ctx.save(); ctx.translate(x, by + 6); ctx.fillStyle = wood; ctx.beginPath(); ctx.moveTo(-W / 2, 0); ctx.lineTo(W / 2, 0); ctx.lineTo(W / 2 - 14, -open - 30); ctx.lineTo(-W / 2 + 14, -open - 30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = dark; ctx.fillRect(-W / 2 + 14, -open - 30, W - 28, 7); ctx.fillStyle = gold; ctx.fillRect(-W / 2 + 14 + 16, -open - 30, 14, open + 30); ctx.fillRect(W / 2 - 14 - 30, -open - 30, 14, open + 30); ctx.restore();
+  ctx.restore();
 }
 
 // =========================================================
@@ -5594,7 +5626,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-022215";
+const BUILD_ID = "20261029-022559";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5687,7 +5719,7 @@ function animateResult(res) {
 // =========================================================
 const PATCH_NOTES = [
   { ver: "4.16", date: "10/29", title: "황금 보물고 · 재굴림 비용", items: [
-    "황금 보물고에서는 이제 골드만 나옵니다. 몬스터는 '코인'과 '골드 보따리'로 바뀌었고, 장비가 나오지 않는 대신 골드를 더 줍니다.",
+    "황금 보물고에서는 이제 골드만 나옵니다. 몬스터는 '코인'과 '골드 보따리'로 바뀌었고, 가끔 골드를 아주 많이 주는 '거대 보물상자' 보스가 나옵니다. 기본 골드 수급은 조금 줄었습니다.",
     "옵션 재굴림 비용을 T1~T3에서 더 낮췄습니다 (T1 150G · T2 500G · T3 1,200G).",
   ] },
   { ver: "4.15", date: "10/29", title: "옵션 재굴림 비용 고정", items: [

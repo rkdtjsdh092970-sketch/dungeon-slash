@@ -72,7 +72,7 @@ function extendPlan(b, n) {
   for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
 function planFor(node) {
-  if (node.kind === "vault") return smoothSeq({ coin: 12, goldbag: 1 }, 104);   // 황금 보물고: 코인과 골드 보따리
+  if (node.kind === "vault") { const pl = smoothSeq({ coin: 12, goldbag: 1 }, 104); if (Math.random() < CFG.VAULT_CHEST) pl.splice(Math.floor(pl.length * rnd(0.35, 0.7)), 0, "boss"); return pl; }   // 황금 보물고: 코인과 골드 보따리 (가끔 거대 보물상자)
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
   if (isEB(node.kind)) { const hw = wavePool(7, 5, mods), pl = smoothSeq(hw, 70); for (let i = 0; i < 5; i++) pl.splice(8 + i * 14, 0, "brute"); pl.splice(4, 0, "boss"); return pl; }   // 화염 정령왕: 왕 + 불꽃 정령 대군
@@ -120,7 +120,7 @@ function createBattle(sv, node) {
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
-  b.bossDef = node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
+  b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
@@ -348,7 +348,7 @@ function killEnemy(b, e) {
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
   if (e.vstage) b.voidCleared = e.vstage;
-  b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { b.bossKills++; b.shake = 0.8; say(b, `${e.def.name} 처치!`, "boss"); }
+  b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { if (!e.def.chest) b.bossKills++; b.shake = 0.8; say(b, e.def.chest ? "보물상자가 터지며 금화가 쏟아진다!" : `${e.def.name} 처치!`, e.def.chest ? "good" : "boss"); }
   const ex = e.def.exp * Math.pow(1.5, b.act - 1) * (1 + 0.05 * (b.stage - 1)) * (b.kind === "rift" ? 1 + b.tier * 0.08 : 1);
   b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" ? 3 : b.kind === "vault" ? CFG.VAULT_GOLD : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
   if (b.designated === e) b.designated = null;

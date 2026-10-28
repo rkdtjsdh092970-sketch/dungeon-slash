@@ -38,6 +38,7 @@ function drawEnemyBar(ctx, e, x, top) {   // 맞으면 흰 잔상이 천천히 �
 }
 function drawEnemy(ctx, b, e, time) {
   const D = e.def, x = Math.round(e.vx), y = Math.round(e.vy), appear = Math.min(1, e.age / 0.25);
+  if (e.tier === "boss" && D.chest) { drawChestBoss(ctx, e, x, y, time, appear); if (e.hp < e.maxHp) drawEnemyBar(ctx, e, x, y - 190); return; }
   if (e.tier === "boss") {
     const bob = Math.sin(time * 2.2 + e.id) * 3, p = e.winding > 0 ? 1 - e.winding / e.windup : 0;
     const opt = { alpha: appear, sy: 1 + Math.sin(time * 2.2 + e.id) * 0.012 + p * 0.05, sx: 1 - p * 0.02 };
@@ -137,6 +138,7 @@ function drawBattle(ctx, b, dt, time) {
   // 시체(사망 연출)
   for (const c of b.corpses) {
     if (c.def && c.def.vaultUnit) { drawVaultPuff(ctx, c, time); continue; }
+    if (c.def && c.def.chest) { drawChestBoss(ctx, null, c.x, c.y, time, clamp(1 - (c.t - 0.2) / 1.0, 0, 1)); drawVaultPuff(ctx, { x: c.x, y: c.y, t: c.t, def: { vaultUnit: "bag" } }, time); continue; }
     if (b.raid) { if (c.def && c.def.raid) drawMorgas(ctx, b, null, time, clamp(1 - (c.t - 0.2) / 1.2, 0, 1), true); continue; }
     if (c.boss) { const a = clamp(1 - (c.t - 0.2) / 1.2, 0, 1); drawBossSprite(ctx, bossArt(c.def), c.x, c.y, c.def.sc, { alpha: a, sy: 1 - c.t * 0.35, sx: 1 + c.t * 0.1, tint: c.t < 0.3 ? "rgba(255,255,255,.7)" : null, hue: c.def.hue }); continue; }
     const [ck, ch] = spriteOf(b, c), cm = SPR_META[ck], sheet = getSheet(ck, ch), af = animFrame(ck, "death", c.t), a = clamp(1.3 - c.t, 0, 1);
