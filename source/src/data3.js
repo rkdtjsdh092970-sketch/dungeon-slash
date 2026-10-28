@@ -90,7 +90,6 @@ AFFIXES.push(
   { k: "dmgTaken", name: "받는 피해", pct: true, neg: true, range: [-0.06, -0.03], w: 3, slots: DEFS, minIlvl: 5, minRarity: 2 },
   // 유틸 (장신구)
   { k: "goldFind", name: "골드 획득", pct: true, range: [0.08, 0.20], w: 4, slots: ["boots", "ring", "neck"] },
-  { k: "expFind", name: "경험치 획득", pct: true, range: [0.05, 0.12], w: 3, slots: ["boots", "ring", "neck"] },
   { k: "mf", name: "매직 파운드", pct: true, range: [0.03, 0.07], w: 2.5, slots: ["boots", "ring", "neck"], minIlvl: 2, minRarity: 2 },
   { k: "manaToHp", name: "마나 1당 체력", count: true, range: [2, 4], w: 3, slots: ["armor", "helm", "boots", "neck"], minIlvl: 3 },   // 마나를 쌓는 빌드의 체력 보완
   { k: "chainJumps", name: "번개 도약 +", count: true, range: [1, 1], w: 2.2, slots: ["ring", "neck", "weapon"], minRarity: 2, minIlvl: 3 },
@@ -105,8 +104,6 @@ const WT_IDS = Object.keys(WTYPES);
 const slotLabel = (it) => (it.slot === "weapon" && it.wt && WTYPES[it.wt] ? WTYPES[it.wt].name : SLOT_NAME[it.slot]);
 SLOT_BASE.boots = { hp: 22, def: 2 }; SLOT_BASE.weapon = {}; SLOT_BASE.gloves = { atk: 0.5, mag: 0.5, def: 1.5 }; SLOT_BASE.neck = { atk: 0.4, mag: 0.4 };
 // 세트: 레인 보너스 제거
-SETS.find((s) => s.id === "abyss").bonus[6] = { allDmg: 0.4, elemDmg: 0.3 };
-SETS.find((s) => s.id === "abyss").text[6] = "모든 피해 +40%, 원소 피해 +30%";
 
 // ---- 고유 장비 등급 ----
 const U_TIERS = [

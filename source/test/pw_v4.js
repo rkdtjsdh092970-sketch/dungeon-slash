@@ -1,0 +1,28 @@
+const { chromium } = require('playwright');
+(async () => {
+  const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 960, height: 540 } });
+  const errs = []; pg.on('pageerror', e => errs.push('PE ' + e.message + ' ' + (e.stack || '').split('\n')[1])); pg.on('console', m => { if (m.type() === 'error') errs.push('CE ' + m.text()); });
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(600);
+  await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.slots = 4; save.cleared = [5]; save.endgame = true; save.lanesBase = 3; save.level = 30; save.rift.best = 29; save.gold = 5e5; save.ore = 500; save.orbC = 5; save.orbD = 3; save.dice = 2; save.hone = 300;
+    for (const s of SLOTS) save.inv.push(genItem(save, 2, 3, s)); for (let i = 0; i < 12; i++) save.inv.push(genItem(save, 1 + (i % 3), i % 4, SLOTS[i % 7])); for (let i = 0; i < 6; i++) save.stones.push(newStone(save));
+    for (const id of ['strike', 'smash', 'lance', 'chain']) save.skills.push(genSkill(save, id, 0)); save.skills.push(genSkill(save, 'p_steel', 0));
+    G.townAct = 1; showScreen('town'); refreshTop(); });
+  const shot = async (n) => { await pg.waitForTimeout(250); await pg.screenshot({ path: `/tmp/v4_${n}.png` }); };
+  await pg.evaluate(() => openItems('inv')); await shot('inv');
+  await pg.evaluate(() => { IB.sel = save.inv.find(i => i.rarity === 3 && i.sock); renderItems(); }); await shot('inv_sel');
+  await pg.evaluate(() => { IB.mode = 'forge'; renderItems(); }); await shot('forge');
+  await pg.evaluate(() => openStones()); await shot('stones');
+  await pg.evaluate(() => { for (const el of document.querySelectorAll('[data-a=stall]')) el.click(); }); await shot('stones2');
+  await pg.evaluate(() => { IB.mode = 'forge'; IB.sel = save.inv.find(i => i.rarity === 3 && i.sock); renderItems(); }); await shot('forge_sel');
+  await pg.evaluate(() => { document.querySelector('[data-a=sockpick]').click(); }); await shot('sockpick');
+  await pg.evaluate(() => { document.querySelector('[data-a=sockgo]').click(); }); await shot('socketed');
+  await pg.evaluate(() => openSkills()); await shot('skills');
+  await pg.evaluate(() => openPassives()); await shot('passives');
+  await pg.evaluate(() => openTower()); await shot('tower');
+  await pg.evaluate(() => openCodex()); await shot('codex');
+  await pg.evaluate(() => openStats()); await shot('stats');
+  await pg.evaluate(() => { Modal.close(true); openMap(1); }); await shot('map');
+  await pg.evaluate(() => { MapView.sel = MAP.byId['S1-2']; mapPanel(); }); await shot('mappanel');
+  await pg.evaluate(() => { MapView.sel = MAP.byId['S1-2']; mapGo(); }); await shot('stage2_tip');
+  console.log(errs.join('\n') || 'no errors'); await br.close();
+})();

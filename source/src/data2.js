@@ -8,12 +8,18 @@ CFG.RIFT_ATK_EXP = 1.8; CFG.RIFT_ATK_PIVOT = 25;   // 균열·시련·지옥 몹
 CFG.LS_BASE = 0.006; CFG.LS_PER = 0.45; CFG.LS_MAX = 0.10;   // 생명력 흡수 회복 상한(초당 최대 체력 비율) = 기본 + 흡수% × 계수, 최대치
 CFG.VOID4_ANGELIC_W = 3;   // 공허 4단계: 엔젤릭 가중치(나머지 21)
 CFG.VAULT_GOLD = 6; CFG.VAULT_TIER_K = 0.6;   // 황금 보물고: 골드 배율, 난이도 = 내 최고 균열 단계 × 계수
-CFG.WARP_CHANCE = 0.01;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
+CFG.WARP_CHANCE = 0.03;            // (공허의 열쇠와 정령의 불씨 모두 같은 확률)
 CFG._unused = 0;            // 공허의 열쇠(왜곡체) 전투당 등장 확률 — 균열 단계와 무관
 CFG.WORLD_MIN = 20;                // 월드 버프/지옥 스테이지 갱신 주기 (분)
 CFG.ENDLESS_DAILY = 3;             // 무한 균열 하루 입장 횟수
 CFG.ILVL_RIFT_STEP = 20;           // 균열 N단계마다 드랍 아이템 레벨 +1
-CFG.PASSIVE_START = 4;             // 레벨 5부터 레벨당 패시브 포인트 1
+CFG.PASSIVE_START = 0;             // v4: 레벨 1부터 레벨당 패시브 포인트 (균열 1층 클리어 = 1레벨)
+CFG.PASSIVE_PER_LV = 2;            // 레벨당 패시브 포인트
+CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
+// v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
+// 구간이 바뀌는 층(20·40·60·80·100, 보스)에서 FLOOR_JUMP배로 한 번에 뛰고, 구간 안에서는 앵커까지 완만하게(지수 보간) 오른다. 100층 이후는 층당 FLOOR_TAIL배.
+CFG.FLOOR_ANCH = [15, 34, 230, 380, 700]; CFG.FLOOR_JUMP = 1.10; CFG.FLOOR_START = 0.55; CFG.FLOOR_TAIL = 1.06;
+CFG.FLOOR_TAB = (() => { const tab = [], E = [19, 39, 59, 79, 99], A = CFG.FLOOR_ANCH; for (let f = 1; f <= 100; f++) { const T = Math.min(4, Math.floor(f / 20)), s = T === 0 ? CFG.FLOOR_START : CFG.FLOOR_JUMP * A[T - 1], sf = T === 0 ? 1 : 20 * T, w = Math.max(0, Math.min(1, (f - sf) / Math.max(1, E[T] - sf))); tab.push(s * Math.pow(A[T] / s, w)); } return tab; })();
 
 // ---------------------------------------------------------------
 // 스프라이트 메타: file=시트 키, cell=칸 크기(px), h=머리 위 표시용 높이
@@ -84,11 +90,10 @@ const atlasVal = (sv, id) => { const n = ATLAS.find((x) => x.id === id); return 
 // ---------------------------------------------------------------
 const WORLD_BUFFS = [
   { id: "alch", name: "연금술사의 축복", text: "구슬 드랍 ×3", orb: 3, ico: "orb" },
-  { id: "wisdom", name: "현자의 축복", text: "경험치 ×2", exp: 2, ico: "shard" },
+  { id: "wisdom", name: "탐구자의 축복", text: "미확인의 돌 드랍 ×2", stone: 2, ico: "shard" },
   { id: "plunder", name: "약탈자의 축복", text: "장비 드랍 ×2", qty: 2, ico: "weapon" },
   { id: "gold", name: "황금의 축복", text: "골드 ×2", gold: 2, ico: "gold" },
   { id: "luck", name: "행운의 축복", text: "MF +100%", mf: 1.0, ico: "ring" },
-  { id: "call", name: "고유의 부름", text: "고유 장비 확률 ×2", unique: 2, ico: "neck" },
   { id: "keys", name: "공허의 속삭임", text: "열쇠 ×2", key: 2, ico: "skull" },
 ];
 const worldSlot = (now) => Math.floor((now || Date.now()) / (CFG.WORLD_MIN * 60000));
@@ -138,12 +143,12 @@ const EB = {
 };
 const isEB = (k) => !!EB[k];
 const HWARP = { name: "정령의 불씨", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true, hwarp: true };
-const HIVE_TIERS = [24, 40, 62, 96], HIVE_NEED = [15, 28, 44, 64], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
-EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [26, 42, 64, 98]; EB.titan.need = [17, 30, 46, 66]; EB.storm.tiers = [26, 42, 64, 98]; EB.storm.need = [17, 30, 46, 66];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
+const HIVE_TIERS = [100, 112, 128, 150], HIVE_NEED = [100, 108, 120, 135], HIVE_TIER = HIVE_TIERS[0], HIVE_MIN_RIFT = HIVE_NEED[0];
+EB.hive.tiers = HIVE_TIERS; EB.hive.need = HIVE_NEED; EB.titan.tiers = [102, 114, 130, 152]; EB.titan.need = [100, 108, 120, 135]; EB.storm.tiers = [102, 114, 130, 152]; EB.storm.need = [100, 108, 120, 135];   // 물리·번개는 화염보다 살짝 어렵게   // 단계별 난이도(균열 단계 수준)와 입장 조건(균열 최고 단계)
 const WARP = { name: "왜곡체", tier: "elite", ranged: false, range: 1, hp: 50, atk: 6, interval: 3, windup: 0.8, exp: 30, gold: 20, sprite: "eye", sc: 2, warp: true };
 const WARPS = { warp: WARP, hwarp: HWARP, twarp: TWARP, swarp: SWARP };   // 열쇠 몹 종류 → 정의
 
-const VOID_NEED = [25, 36, 48, 64];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
+const VOID_NEED = [100, 110, 125, 140];   // 공허의 군주 단계별 입장 조건: 심연의 균열 최고 단계 (4단계는 아이템 레벨 18 장비를 균열에서 충분히 파밍한 뒤)
 const VOID_MIN_RIFT = VOID_NEED[0];   // 공허의 군주 입장: 균열을 어느 정도 돌아 장비를 맞춘 뒤에
 const MAX_TRIAL = 100;   // 스킬 시련 최대 단계
 CFG.TRIAL_SCALE = 1.085;    // 시련은 균열(1.07)보다 단계당 더 가파르게 강해진다

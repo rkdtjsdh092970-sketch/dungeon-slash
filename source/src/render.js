@@ -156,7 +156,7 @@ const MapView = {
     const sc = 3, W = Math.ceil(MAP_W / sc), H = Math.ceil(MAP_H / sc), c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), r = seeded(777);
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#241a3a"); gr.addColorStop(1, "#33264a"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${r() > 0.5 ? "255,255,255" : "0,0,0"},${0.03 + r() * 0.05})`; g.fillRect(r() * W, r() * H, 2 + r() * 5, 1 + r() * 2); }
-    REGION.forEach(([cx, cy], i) => { const A = ACTS[i], X = cx / sc, Y = cy / sc; const rg = g.createRadialGradient(X, Y, 8, X, Y, 78); rg.addColorStop(0, hexA(A.color, 0.34)); rg.addColorStop(1, hexA(A.color, 0)); g.fillStyle = rg; g.fillRect(X - 80, Y - 80, 160, 160);
+    REGION.slice(0, CFG.ACTS).forEach(([cx, cy], i) => { const A = ACTS[i], X = cx / sc, Y = cy / sc; const rg = g.createRadialGradient(X, Y, 8, X, Y, 78); rg.addColorStop(0, hexA(A.color, 0.34)); rg.addColorStop(1, hexA(A.color, 0)); g.fillStyle = rg; g.fillRect(X - 80, Y - 80, 160, 160);
       for (let k = 0; k < 26; k++) { const an = r() * 6.28, d = 20 + r() * 58, x = X + Math.cos(an) * d * 1.3, y = Y + Math.sin(an) * d; deco(g, i + 1, x, y, r); } });
     deco(g, 11, RIFT_POS[0] / sc, RIFT_POS[1] / sc, r);
     const w = document.createElement("canvas"); w.width = MAP_W; w.height = MAP_H; const wg = w.getContext("2d"); wg.imageSmoothingEnabled = false; wg.drawImage(c, 0, 0, W, H, 0, 0, W * sc, H * sc); this.world = w;
@@ -191,7 +191,7 @@ const MapView = {
     g.setLineDash([]);
     // 지역 이름
     g.textAlign = "center"; g.font = "bold 15px sans-serif";
-    REGION.forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = Math.min(cy + 112, MAP_H - 16) - this.cam.y; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
+    REGION.slice(0, CFG.ACTS).forEach(([cx, cy], i) => { const x = cx - this.cam.x, y = Math.min(cy + 112, MAP_H - 16) - this.cam.y; if (x < -80 || x > CW + 80 || y < -20 || y > CH + 20) return; g.fillStyle = "#000"; g.fillText(`${i + 1} · ${ACTS[i].name}`, x + 1, y + 1); g.fillStyle = ACTS[i].color; g.fillText(`${i + 1} · ${ACTS[i].name}`, x, y); });
     { const x = RIFT_POS[0] - this.cam.x, y = RIFT_POS[1] - this.cam.y - 30; g.fillStyle = "#000"; g.fillText("심연의 균열", x + 1, y + 1); g.fillStyle = "#c8a0ff"; g.fillText("심연의 균열", x, y); }
     // 노드
     const vis = MAP.nodes.filter((n) => n.x - this.cam.x > -40 && n.x - this.cam.x < CW + 40 && n.y - this.cam.y > -40 && n.y - this.cam.y < CH + 40);
@@ -228,12 +228,12 @@ function deco(g, act, x, y, r) {
 // =========================================================
 const TOWN_SPOTS = [
   { id: "skill",     name: "스킬 정비소", x: 100, y: 452, w: 74, h: 154, need: 1, desc: "스킬 장착 · 타겟 규칙 설정" },
-  { id: "forge",     name: "대장간",     x: 245, y: 458, w: 78, h: 136, need: 1, desc: "강화 · 분해 · 옵션 재굴림 · 구슬" },
+  { id: "forge",     name: "제련소",     x: 245, y: 458, w: 78, h: 136, need: 1, desc: "강화 · 분해 · 옵션 재굴림 · 구슬 · 미확인의 돌" },
   { id: "board",     name: "퀘스트 게시판", x: 392, y: 466, w: 62, h: 108, need: 1, desc: "퀘스트 수락과 보상" },
-  { id: "shop",      name: "상점 · 창고",  x: 545, y: 454, w: 78, h: 104, need: 1, desc: "장비 판매 · 정리" },
+  { id: "shop",      name: "상점",  x: 545, y: 454, w: 78, h: 104, need: 1, desc: "장비 판매 · 정리" },
   { id: "auction",   name: "경매소",     x: 710, y: 458, w: 74, h: 108, need: 1, desc: "다른 유저와 골드로 장비 거래" },
   { id: "skillshop", name: "스킬 상점",   x: 872, y: 462, w: 84, h: 264, need: 1, desc: "골드로 스킬 구매 (주기적으로 갱신)" },
-  { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 2, desc: "길드 · 길드 패시브 · 랭킹", back: true },
+  { id: "guild",     name: "길드",       x: 352, y: 340, w: 80, h: 132, need: 1, desc: "길드 · 길드 패시브 · 랭킹", back: true },
   { id: "mail",      name: "우편함",     x: 186, y: 352, w: 34, h: 82, need: 1, desc: "운영 보상·보낸 우편 받기", back: true },
   { id: "notice",    name: "업데이트 게시판", x: 765, y: 334, w: 56, h: 116, need: 1, desc: "버전과 패치 내용", back: true },
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },

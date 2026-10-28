@@ -1,8 +1,8 @@
 // =========================================================
 // UI v3: 장비 창 / 스탯 창 / 일괄 정리 / 도감 / 스킬 정비 / 패시브 트리 / 균열 탑
 // =========================================================
-const tierOfItem = (it) => (it.uniq ? it.utier || (UNIQUE_BY_ID[it.uniq] ? UNIQUE_BY_ID[it.uniq].tier : 1) : 0);
-const tcls = (it) => (it.uniq ? "ut" + tierOfItem(it) : RCLS(it));
+const tierOfItem = (it) => 0;   // v4: 고유·세트 없음
+const tcls = (it) => RCLS(it);
 const presetUids = () => { const s = new Set(); for (const p of save.presets || []) if (p) for (const k in p.equip) s.add(p.equip[k]); return s; };
 const inPreset = (it) => presetUids().has(it.uid);
 const isEquipped = (it) => EQ_SLOTS.some((k) => save.equipped[k] === it);
@@ -10,20 +10,20 @@ const eqKey = (it) => EQ_SLOTS.find((k) => save.equipped[k] === it);
 const isProtected = (it) => protectedItem(save, it);
 function tileHtml(it, o) {
   o = o || {}; const t = tierOfItem(it), col = itemColor(it);
-  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""} ${o.chk ? "chk" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} data-tipu="${it.uid}">${ITEM_ICON(it)}<small>${it.ilvl}</small>${o.chk ? `<i class="ckm">✔</i>` : ""}${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${o.up !== false && !isEquipped(it) && !canEquip(save, it) ? `<i class="mk rq" title="장착 레벨 부족">Lv.${reqLevel(it.ilvl)}</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
+  return `<div class="tile ${tcls(it)} ${o.sel ? "sel" : ""} ${o.chk ? "chk" : ""}" ${col ? `style="border-color:${col}"` : ""} ${o.attr || ""} data-tipu="${it.uid}">${ITEM_ICON(it)}<small>T${it.ilvl}</small>${it.sock ? `<i class="sockm">${sockText(it)}</i>` : ""}${o.chk ? `<i class="ckm">✔</i>` : ""}${it.enh ? `<em>+${it.enh}</em>` : ""}${o.up !== false && isUpgrade(save, it) ? `<i class="mk up">▲</i>` : ""}${it.lock ? `<i class="mk lk">🔒</i>` : ""}${o.up !== false && !isEquipped(it) && !canEquip(save, it) ? `<i class="mk rq" title="장착 레벨 부족">Lv.${reqLevel(it.ilvl)}</i>` : ""}${inPreset(it) ? `<i class="mk pr">P</i>` : ""}${t === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}${t === 3 ? `<i class="crown">♛</i>` : ""}</div>`;
 }
 function itemTitle(it) {
-  if (it.uniq) return `<span class="tn${tierOfItem(it)}">${it.enh ? "+" + it.enh + " " : ""}${itemName(it)}</span>`;
+
   return `<span class="${RCLS(it)}" ${itemColor(it) ? `style="color:${itemColor(it)}"` : ""}>${it.enh ? "+" + it.enh + " " : ""}${itemName(it)}</span>`;
 }
 const BASE_LBL = { atk: "공격력", mag: "주문력", hp: "체력", def: "방어력" };
 const baseText = (it) => Object.keys(it.base).map((k) => `${BASE_LBL[k]} ${fmtN(it.base[k] * (1 + 0.08 * enhMul(it) * (it.enh || 0)))}`).join(" · ");
 function affRangeText(it, a) {   // 옵션 수치 범위 (최소 ~ 최대)
-  const d = AFFIXES.find((x) => x.k === a.k); if (!d) return ""; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4), a.t);
+  const d = AFFIXES.find((x) => x.k === a.k); if (!d) return ""; const [lo, hi] = affixRange(d, it.ilvl, it.rarity, a.t);
   const f = (v) => (d.count ? "+" + Math.round(v) : d.pct ? (v * 100).toFixed(Math.abs(v) < 0.02 ? 2 : 1) + "%" : fmtN(v));
   return ` <small class="rng">(${f(lo)} ~ ${f(hi)})</small>`;
 }
-function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a.k; const s = d.count ? "+" + Math.round(a.v) : d.pct ? (a.v >= 0 ? "+" : "") + (a.v * 100).toFixed(Math.abs(a.v) < 0.02 ? 2 : 1) + "%" + (d.unit || "") : "+" + fmtN(a.v); return `${d.name} ${s}${a.t != null ? " ⟨T" + (a.t + 1) + "⟩" : ""}`; }
+function affText(a) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) return a.k; const s = d.count ? "+" + Math.round(a.v) : d.pct ? (a.v >= 0 ? "+" : "") + (a.v * 100).toFixed(Math.abs(a.v) < 0.02 ? 2 : 1) + "%" + (d.unit || "") : "+" + fmtN(a.v); return `${d.name} ${s}${a.t != null ? ` <b class="at at${a.t + 1}">${a.t + 1}티어</b>` : ""}`; }
 
 // ---------- 장비 창 ----------
 const IB = { mode: "inv", tab: "all", sel: null, rar: -1, sort: "rar", lockOnly: false, multi: false, chk: new Set() };
@@ -34,15 +34,22 @@ function equipItem(it, key) {   // 반지는 비어 있는 칸에 먼저, 둘 �
 }
 function unequipSlot(slot) { const it = save.equipped[slot]; if (it) { save.inv.push(it); delete save.equipped[slot]; } }
 function openItems(mode) { IB.mode = mode; IB.multi = false; IB.chk.clear(); if (!IB.sel || (!save.inv.includes(IB.sel) && !EQ_SLOTS.some((s) => save.equipped[s] === IB.sel))) IB.sel = null; renderItems(); }
+const sockText = (it) => (it.sock || []).map((x) => (x ? "◆" : "◇")).join("");
+// v4 소켓 표시: 끼운 옵션(고정 수치)과 빈 소켓. 제련소에서는 빈 소켓에 미확인의 돌 옵션을 끼울 수 있다
+function socketBlock(it) {
+  if (!it.sock) return "";
+  return `<div class="socks">` + it.sock.map((m, i) => m ? `<div class="sock on">◆ ${stoneLabel(m)} <small class="dim">(고정)</small></div>` : `<div class="sock">◇ 빈 소켓${IB.mode === "forge" ? ` <button class="btn xs" data-a="sockpick" data-i="${i}">끼우기</button>` : ""}</div>`).join("") + `</div>`;
+}
 function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
-  const eq = isEquipped(it), prot = isProtected(it), st = setOf(it), t = tierOfItem(it);
+  const eq = isEquipped(it), prot = isProtected(it), st = null, t = 0;
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq], T = U_TIERS[t]; h += `<span class="ribbon rb${t}">${T.name} 고유${D ? " · " + U_POOLS[D.pool] : ""}</span>${it.bound ? ` <span class="ribbon" style="background:#3a2a10;color:#ffd890;border:1px solid #c89a40">교환 불가</span>` : ""}${isVoid4Only(D) ? ` <span class="ribbon" style="background:#4a1d70;color:#ffd6ff;border:1px solid #c070ff">4단계에서만 드랍</span>` : ""}`; }
-  h += `<div class="dim">Lv.${it.ilvl} ${slotLabel(it)}${it.leg ? ` · <small title="이전 버전 장비를 새 방식으로 옮기며 받은 보정">이전 버전 보정 ×${it.leg.toFixed(2)}</small>` : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; h += `<div class="udet d${t}">${uniqueLines(D, it.umods, true).map((x) => `<div>✦ ${x}</div>`).join("")}${D ? `<div class="flav">“${D.flavor}”</div>` : ""}</div>`; }
+
+  h += `<div class="dim">T${it.ilvl} ${slotLabel(it)}${it.sock ? " · 소켓 " + it.sock.length : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
+
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? (rerollLocked(it, i) ? ` <button class="btn xs" disabled title="다른 줄을 이미 재굴림해서 잠겼습니다">🔒</button>` : ` <button class="btn xs" data-a="reroll" data-i="${i}" title="${it.rrIdx == null ? "옵션 재굴림 (한 줄만 굴릴 수 있습니다 — 굴리면 다른 줄은 잠깁니다)" : "옵션 재굴림"}">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>`) : ""}</div>`).join("") + `</div>`;
-  if (st) { const sc = setCounts(save)[st.id] || 0; h += `<div class="sets" style="color:${st.color}">${st.name} (${sc}/${st.pieces.length})` + [2, 4, 6].filter((x) => st.bonus[x]).map((x) => `<div class="${sc >= x ? "on" : "off"}">${x}세트: ${st.text[x]}</div>`).join("") + `</div>`; }
+  h += socketBlock(it);
+
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
@@ -51,9 +58,9 @@ function itemDetail(it) {
     const c = enhCost(it), rate = ENH_RATE[it.enh || 0], y = dismantleYield(it);
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}${ENH_DROP[it.enh || 0] ? ` · <b style="color:#ff8a8a">실패 시 ${Math.round(ENH_DROP[it.enh || 0] * 100)}% 하락</b>` : ""}</small></button>`;
     h += `<button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`;
-    h += `<button class="btn orbb" data-a="chaos" ${it.uniq || it.affixes.length >= (it.ilvl > 10 ? 5 : 6) || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1개 추가 (${it.affixes.length}/${it.ilvl > 10 ? 5 : 6})</small></button>`;
-    { const D = it.uniq && UNIQUE_BY_ID[it.uniq], can = it.uniq ? !!(D && D.mods.some((m) => Array.isArray(m[1]))) : it.affixes.length > 0; h += `<button class="btn orbb dice" data-a="dice" ${!can || (save.dice || 0) < 1 ? "disabled" : ""}>🎲 공허의 주사위 ×${save.dice || 0}<br><small>${it.uniq ? "고유 능력 수치를 범위 내에서 재굴림" : "옵션 수치를 범위 내에서 재굴림"}</small></button>`; }
-    h += `<button class="btn orbb" data-a="divine" ${it.uniq || !it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
+    h += `<button class="btn orbb" data-a="chaos" ${it.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1개 추가 (${it.affixes.length}/5)</small></button>`;
+    { const can = it.affixes.length > 0; h += `<button class="btn orbb dice" data-a="dice" ${!can || (save.dice || 0) < 1 ? "disabled" : ""}>🎲 공허의 주사위 ×${save.dice || 0}<br><small>옵션 수치를 범위 내에서 재굴림</small></button>`; }
+    h += `<button class="btn orbb" data-a="divine" ${!it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
   if (IB.mode === "inv") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매<br><small>${fmtN(itemValue(it))}G</small></button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
@@ -64,7 +71,7 @@ function itemDetail(it) {
 const multiPicked = () => save.inv.filter((it) => IB.chk.has(it.uid) && !isProtected(it));
 function multiPanel(list) {
   const P = multiPicked(), gv = P.reduce((a, it) => a + itemValue(it), 0), dy = P.reduce((a, it) => { const y = dismantleYield(it); a.g += y.gold; a.o += y.ore; return a; }, { g: 0, o: 0 });
-  const big = P.filter((it) => it.uniq || it.rarity >= 3).length;
+  const big = P.filter((it) => it.rarity >= 3).length;
   return `<div class="dname">☑ 여러 개 선택</div><div class="dim">장비를 눌러 선택·해제합니다.<br>잠금·프리셋·착용 중 장비는 선택할 수 없습니다.</div>
    <div class="pbtns" style="margin:6px 0"><button class="btn xs" data-a="mall">현재 목록 전체 선택</button><button class="btn xs" data-a="mnone">선택 해제</button></div>
    <div class="center"><b style="font-size:20px;color:#6aff9a">${P.length}개</b> 선택</div>
@@ -74,7 +81,7 @@ function multiPanel(list) {
    <div class="dim" style="margin-top:6px">▲ 표시가 있는 장비(지금보다 강해지는 장비)도 선택하면 처리됩니다</div>`;
 }
 function multiDo(kind, done) {
-  const P = multiPicked(); if (!P.length) return; const big = P.filter((it) => it.uniq || it.rarity >= 3).length, up = P.filter((it) => isUpgrade(save, it)).length;
+  const P = multiPicked(); if (!P.length) return; const big = P.filter((it) => it.rarity >= 3).length, up = P.filter((it) => isUpgrade(save, it)).length;
   const gain = kind === "sell" ? `+${fmtN(P.reduce((a, it) => a + itemValue(it), 0))}G` : (() => { const t = P.reduce((a, it) => { const y = dismantleYield(it); a.g += y.gold; a.o += y.ore; return a; }, { g: 0, o: 0 }); return `+${fmtN(t.g)}G · 강화석 +${t.o}`; })();
   askConfirm(`선택한 장비 <b>${P.length}개</b>를 ${kind === "sell" ? "판매" : "분해"}할까요? (${gain})${big ? `<br><span style="color:#ff9a9a">전설 이상·고유 ${big}개가 포함되어 있습니다</span>` : ""}${up ? `<br><span style="color:#ffd070">지금보다 강해지는 장비(▲) ${up}개 포함</span>` : ""}`, kind === "sell" ? "판매" : "분해", () => {
     let g = 0, o = 0; for (const it of P) { if (kind === "sell") { g += itemValue(it); sellItem(save, it); } else { const y = dismantleItem(save, it); g += y.gold; o += y.ore; } }
@@ -82,13 +89,13 @@ function multiDo(kind, done) {
   });
 }
 function renderItems() {
-  const m = IB.mode, title = { inv: "장비", forge: "대장간", shop: "상점 · 창고" }[m];
+  const m = IB.mode, title = { inv: "장비", forge: "제련소", shop: "상점" }[m];
   let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
   const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))));
   list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => b.rarity - a.rarity || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
   const eqCol = `<div class="doll">` + DOLL_ORDER.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}" data-tipu="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
-  const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
+  const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 미확인의 돌 (${save.stones.length})</button>` : `<button class="btn pri wide1" data-a="stones">💎 미확인의 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span> &nbsp; <span data-tipk="dice">🎲 주사위 ${save.dice || 0}</span>${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span></small>` : ""}</div>
@@ -107,7 +114,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(),
+    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(), stones: () => openStones(), sockpick: (el) => openSockPick(IB.sel, +el.dataset.i),
     mtog: () => { IB.multi = !IB.multi; IB.chk.clear(); snd("click"); renderItems(); },
     mpick: (el) => { const it = find(el); if (!it) return; if (isProtected(it)) { snd("error"); toast("잠금·프리셋·착용 중인 장비는 선택할 수 없습니다", "bad"); return; } if (IB.chk.has(it.uid)) IB.chk.delete(it.uid); else IB.chk.add(it.uid); renderItems(); },
     mall: () => { for (const it of list) if (!isProtected(it)) IB.chk.add(it.uid); renderItems(); }, mnone: () => { IB.chk.clear(); renderItems(); },
@@ -153,7 +160,7 @@ function openStats() {
    ${G("마나", [["최대 마나", N(s.maxMana)], s.manaHit ? ["마나 흡수", P(s.manaHit, 2) + " / 적중 (최대 10회/초)"] : null, ["초당 재생", `${(s.maxMana * s.manaRate).toFixed(1)} (${P(s.manaRate)})`], ["마나 소모 감소", P(Math.min(0.6, s.manaCostRed), 0)], s.manaToSpell ? ["마나 → 주문력", P(s.manaToSpell, 0)] : null, ["스킬 필요 마나/초", s.manaNeed.toFixed(1)]])}
    ${G("속성 · 관통", [...elems, ["원소 피해", P(s.elemDmg, 0)], ["속성 저항 관통", P(s.penElem, 0)], ["방어 무시", P(s.ignoreDef, 0)], ["마법저항 무시", P(s.ignoreRes, 0)], ["대상 방어력 감소", P(s.shredDef, 0)], ["대상 마법저항 감소", P(s.shredRes, 0)]])}
    ${G("추가 피해 · 범위", [["보스", P(s.add.boss, 0)], ["정예", P(s.add.elite, 0)], ["원거리", P(s.add.ranged, 0)], ["일반", P(s.add.normal, 0)], ["광역 피해", P(s.aoeDmg, 0)], ["번개 도약", "+" + s.chainJumps], ["레인", s.lanes], ["칸당 몹 수", s.stackCap]])}
-   ${G("획득", [["MF (표시/실효)", `${P(s.mf, 0)} / ${P(mfEff(s.mf + atlasVal(save, "mf")), 0)}`], ["골드 획득", P(s.goldFind, 0)], ["경험치 획득", P(s.expFind, 0)], ["스킬 구성", `물리 ${Math.round((1 - s.mix) * 100)}% · 마법 ${Math.round(s.mix * 100)}%`], ["전투력", N(playerPower(s))]])}
+   ${G("획득", [["MF (표시/실효)", `${P(s.mf, 0)} / ${P(mfEff(s.mf + atlasVal(save, "mf")), 0)}`], ["골드 획득", P(s.goldFind, 0)], ["스킬 구성", `물리 ${Math.round((1 - s.mix) * 100)}% · 마법 ${Math.round(s.mix * 100)}%`], ["전투력", N(playerPower(s))]])}
   </div>`, { cls: "wide" });
 }
 
@@ -294,13 +301,13 @@ function openTower() {
   const best = save.rift.best, max = Math.max(best + 1, 1); if (!G.towerSeen) { G.riftTier = max; G.towerSeen = true; } const tier = G.riftTier = clamp(G.riftTier, 1, max), shown = Math.min(max + 4, 300), mods = riftMods(tier);
   let fl = "";
   const RC = { 2: "#c58bff", 3: "#ffcc4a", 4: "#ffffff" };
-  for (let n = 1; n <= shown; n++) { const done = n <= best, lock = n > max, m20 = n % 20 === 0, boss = n % 5 === 0, rt = n % 10 === 0 ? riftRewardTier(n) : 0;
-    fl += `<div class="fl ${done ? "done" : ""} ${lock ? "lock" : ""} ${tier === n ? "sel" : ""} ${boss ? "boss" : ""} ${m20 ? "m20" : ""}" data-a="floor" data-n="${n}"><span>${done ? "✔ " : ""}${n}층 ${boss ? "👑" : ""}${m20 ? " ✦" : ""}${rt ? ` <b style="color:${RC[rt]}">🎁 ${RIFT_TN[rt]}</b>` : ""}</span><span class="mfb">${mfText(n)}</span></div>`; }
+  for (let n = 1; n <= shown; n++) { const done = n <= best, lock = n > max, m20 = n % 20 === 0, boss = n % 5 === 0;
+    fl += `<div class="fl ${done ? "done" : ""} ${lock ? "lock" : ""} ${tier === n ? "sel" : ""} ${boss ? "boss" : ""} ${m20 ? "m20" : ""}" data-a="floor" data-n="${n}"><span>${done ? "✔ " : ""}${n}층 ${boss ? "👑" : ""}${m20 ? " ✦" : ""}${n % 20 === 0 ? ` <b style="color:#9ad8ff">T${floorTier(n)} 장비 ▲ 난이도 ▲</b>` : ""}</span><span class="mfb">${mfText(n)}</span></div>`; }
   Modal.open(`<h2>심연의 균열 · 탑</h2><div class="res">최고 ${best}층</div>
    <div style="display:flex;gap:14px"><div style="flex:1"><div class="towtop"></div><div class="tower" id="towerlist">${fl}</div></div>
    <div style="width:270px" class="col"><div class="dname">${tier}층</div><div class="pline">${mfText(tier)} <span class="dim">(층이 오를수록 증가, 20층마다 대폭 증가)</span></div>
     <div class="mods">${mods.map((m) => `<span class="mod" title="${m.text}">${m.name}</span>`).join("")}</div>${mods.map((m) => `<div class="dim">${m.name}: ${m.text}</div>`).join("")}
-    <div class="pline dim">5층마다 보스 · 균열 조각 · 구슬 · 왜곡체(열쇠) · 낮은 확률로 강한 스킬</div><div class="pline" style="color:#ffe08a">🎁 돌파 보상 (우편 · 교환 불가 고유 장비)<br><small><b style="color:#c58bff">10층마다 이터널</b> · <b style="color:#ffcc4a">30층마다 소버린</b> · <b style="color:#fff">100층마다 엔젤릭</b></small></div><div class="pline dim">드랍 아이템 레벨 ${10 + Math.floor((Math.max(1, tier) - 1) / CFG.ILVL_RIFT_STEP)}</div><div class="pline dim">🗼 유물의 탑 — 균열 60층 이후 해금 · 추후 패치 예정</div>
+    <div class="pline dim">5층마다 보스 · 구슬 · 미확인의 돌 · 왜곡체(열쇠)</div><div class="pline" style="color:#9ad8ff">드랍 장비 T${floorTier(tier)} · 미확인의 돌 · 이 층에서는 스킬이 나오지 않습니다</div><div class="pline dim">20층마다 난이도가 한 단계 뛰고 장비 T가 오릅니다. 15~19층에서 장비를 갖춰야 다음 보스를 넘길 수 있어요.</div><div class="pline dim">드랍 아이템 레벨 ${10 + Math.floor((Math.max(1, tier) - 1) / CFG.ILVL_RIFT_STEP)}</div><div class="pline dim">🗼 유물의 탑 — 균열 60층 이후 해금 · 추후 패치 예정</div>
     <div class="pbtns"><button class="btn" data-a="tdn">▼</button><button class="btn pri" data-a="tgo">도전</button><button class="btn" data-a="tup">▲</button></div><div class="pbtns"><button class="btn" data-a="tatlas">심연 각인</button></div></div></div>`, { cls: "wide", on: {
     floor: (el) => { const n = +el.dataset.n; if (n > max) return; G.riftTier = n; openTower(); },
     tup: () => { G.riftTier = Math.min(max, tier + 1); openTower(); }, tdn: () => { G.riftTier = Math.max(1, tier - 1); openTower(); },
@@ -345,7 +352,7 @@ function openAutoDis() {
 }
 
 // ---------- 장비 도감 ----------
-const CX = { tab: "uniq", pool: "all", sel: null, skf: "all" };
+const CX = { tab: "aff", pool: "all", sel: null, skf: "all" };
 const KIND_LBL = { stage: "일반 스테이지", boss: "액트 보스", elite: "정예 사냥터", treasure: "보물 지하실", hell: "지옥 스테이지", rift: "균열 탑", endless: "무한 균열", hive: "화염 정령왕", titan: "철갑의 투사", storm: "뇌제", void: "공허의 군주" };
 const POOL_BOSS = { void: "공허의 군주", fire: "화염 정령왕", phys: "철갑의 투사", light: "뇌제" }, SRC_COLOR = { void: "#c070ff", fire: "#ff9a30", phys: "#d8c8b0", light: "#ffe45a" };
 // 공허의 군주 4단계 보상 풀(확정 1개): 고유 4등급 가중치 5, 나머지 21
@@ -423,9 +430,11 @@ function skBuildTags(d) {
 }
 function skSources(d) {
   const o = [];
-  if (d.voidOnly) { o.push(`${POOL_BOSS[d.src] || "공허의 군주"} 처치 시 매우 낮은 확률 (1~4단계 2% / 3% / 5% / 12%) — 상점·다른 곳에서는 나오지 않음`); return o; }
-  if (!isSpecialSkill(d)) o.push(`스킬 상점에서 골드로 구매 (액트 ${d.unlock} 이후 등장)`); else o.push("특수 스킬 — 상점에서는 팔지 않습니다");
-  if (d.slot === "active") { o.push(`액트 ${d.unlock <= 10 ? d.unlock : 10}~ 보스 첫 클리어·일반 드랍`); if (d.unlock >= 3) o.push("심연의 균열(낮은 확률) · 스킬 시련(단계가 오를수록 확률 증가)"); }
+  if (d.slot === "passive") { o.push(d.pt === 0 ? "스킬 상점에서 골드로 구매 (레벨 10 이후 등장)" : "균열 100층 졸업 후 공허의 군주 · 속성 보스에서 낮은 확률로 드랍"); return o; }
+  if (d.voidOnly) { o.push(`${POOL_BOSS[d.src] || "공허의 군주"} 처치 시 낮은 확률 (균열 100층 졸업 후)`); return o; }
+  if (d.mythOnly) { o.push("균열 100층 졸업 후 공허의 군주 · 속성 보스에서 신화 등급 이상으로만 드랍"); return o; }
+  if (!isSpecialSkill(d)) o.push(`스킬 상점에서 골드로 구매 (일반 등급, 레벨 ${Math.max(1, (d.unlock - 1) * 10)} 이후 등장)`); else o.push("특수 스킬 — 상점에서는 팔지 않습니다");
+  if (d.slot === "active") o.push("높은 등급은 균열 100층 졸업 후 공허의 군주 · 속성 보스에서 드랍");
   return o;
 }
 function skCodexRow(d) {
@@ -439,7 +448,7 @@ function skCodexDetail(d) {
    <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반 → 희귀 → 전설 (모두 드랍으로만 얻음) → 신화 · 사탄 · 종말(전설 드랍에서 낮은 확률로 상위 등급 — 균열·스킬 시련·공허의 군주). 전설부터는 단일 스킬이 연타가 되고, 신화 이상에서만 나오는 전용 스킬도 있습니다. 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
-  const tabs = [["uniq", "고유"], ["set", "세트"], ["aff", "옵션"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
+  const tabs = [["aff", "옵션 티어"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
   let left = "", right = "";
   if (CX.tab === "uniq") {
     const pools = `<div class="itbar"><select data-i="cxpool"><option value="all">전체 출처</option>${Object.keys(U_POOLS).map((k) => `<option value="${k}" ${CX.pool === k ? "selected" : ""}>${U_POOLS[k]}</option>`).join("")}</select></div>`;
@@ -465,7 +474,7 @@ function openCodex() {
   } else {
     left = SLOTS.map((s) => `<div class="dexrow ${CX.sel === s ? "found" : ""}" data-a="cxpick" data-id="${s}" style="cursor:pointer"><b>${SLOT_NAME[s]}</b> <small class="dim">나올 수 있는 옵션 ${AFFIXES.filter((a) => a.slots.includes(s)).length}종</small></div>`).join("");
     const s = SLOTS.includes(CX.sel) ? CX.sel : null;
-    right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">장비 레벨이 낮으면 일부 옵션은 나오지 않습니다</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `Lv.${a.minIlvl}+` : "전 구간"}${a.minRarity ? " · 희귀 이상" : ""}</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
+    right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">옵션은 1~6티어 (1티어가 최고·가장 드묾, 6티어가 가장 흔함). 높은 티어는 높은 T 장비에서만 나옵니다: T1 → 5·6티어 / T2 → 4티어~ / T3 → 3티어~ / T4 → 2티어~ / T5 → 1티어~</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `Lv.${a.minIlvl}+` : "전 구간"}${a.minRarity ? " · 희귀 이상" : ""}</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
   }
   Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
     cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); }, cxskf: (el) => { CX.skf = el.value; CX.sel = null; openCodex(); },
@@ -539,18 +548,12 @@ const TIP_CUR = {
   keys4: ["뇌전의 징표", "뇌제에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 뇌전의 징표(노란색 눈알)를 처치"],
 };
 function itemSourceLines(it) {
-  const L = [];
-  if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; if (D) { for (const s of uniqueSources(D).slice(0, 4)) L.push(`${s[0]}: <b>${fmtOdds(s[1])}</b>`); if (isVoid4Only(D)) L.push(`${POOL_BOSS[D.pool]} 4단계에서만 드랍`); L.push("<span class=\"dim\">자세한 확률은 도감 → 고유</span>"); } }
-  else if (it.setId) { const S = setOf(it); L.push(`${S.name}: 액트 ${S.acts[0]}~${S.acts[1] > 50 ? "" : S.acts[1]}의 스테이지·보스(높은 확률)·엔드게임 균열에서 드랍`); }
-  else L.push(`${ITEM_RARITY[it.rarity].name} 장비: 모든 스테이지·보스·균열에서 드랍 (등급이 높을수록 확률 낮음). 대장간에서 옵션을 다듬어 완성합니다.`);
-  return L;
+  return [`${ITEM_RARITY[it.rarity].name} 장비: 스테이지 · 보스 · 균열에서 드랍 (T${it.ilvl}는 균열 ${(it.ilvl - 1) * 20 || 1}층~). 제련소에서 옵션을 다듬어 완성합니다.`];
 }
 function itemTipHtml(it) {
-  const t = tierOfItem(it), D = it.uniq && UNIQUE_BY_ID[it.uniq], st = setOf(it);
-  let h = `<div class="tt">${ITEM_ICON(it)} <b>${itemTitle(it)}</b></div><div class="dim">Lv.${it.ilvl} ${slotLabel(it)}${it.uniq ? " · " + U_TIERS[t].name + " 고유" : st ? " · 세트" : " · " + ITEM_RARITY[it.rarity].name}${it.enh ? " · +" + it.enh : ""}</div><div>${baseText(it)}</div>`;
-  if (it.uniq && D) h += `<div class="tl">${uniqueLines(D, it.umods, true).map((x) => `✦ ${x}`).join("<br>")}</div>`;
+  let h = `<div class="tt">${ITEM_ICON(it)} <b>${itemTitle(it)}</b></div><div class="dim">T${it.ilvl} ${slotLabel(it)} · ${ITEM_RARITY[it.rarity].name}${it.enh ? " · +" + it.enh : ""}${it.sock ? " · 소켓 " + sockText(it) : ""}</div><div>${baseText(it)}</div>`;
   if (it.affixes && it.affixes.length) h += `<div class="tl">${it.affixes.map((a) => affText(a) + affRangeText(it, a)).join("<br>")}</div>`;
-  if (st) h += `<div style="color:${st.color}">${st.name} (${setCounts(save)[st.id] || 0}/${st.pieces.length}) — ${[2, 4, 6].filter((x) => st.bonus[x]).map((x) => `${x}세트 ${st.text[x]}`).join(" / ")}</div>`;
+  if (it.sock && it.sock.some((x) => x)) h += `<div class="tl" style="color:#9ad8ff">${it.sock.filter((x) => x).map((m) => "◆ " + stoneLabel(m)).join("<br>")}</div>`;
   return h + `<div class="tsrc"><b>획득처</b><br>${itemSourceLines(it).join("<br>")}</div>`;
 }
 function skillTipHtml(d) {

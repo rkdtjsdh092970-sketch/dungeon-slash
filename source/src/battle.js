@@ -81,7 +81,7 @@ function planFor(node) {
   else if (node.kind === "elite") { nNormal = 45; elites = 10 + act; }
   else if (node.kind === "treasure") { nNormal = 95; elites = 0; }
   else if (node.kind === "vault") { nNormal = 110; elites = 0; }
-  else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = Math.min(140, Math.round(52 + 1.3 * t)); elites = 3 + Math.min(17, Math.floor(t / 4));   /* v3.23 한 층 플레이 시간 단축 */ boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
+  else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = Math.min(110, Math.round(34 + 0.8 * t)); elites = 2 + Math.min(12, Math.floor(t / 7)); boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
   else if (node.kind === "endless") { nNormal = 40; elites = 3; }
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
@@ -93,28 +93,27 @@ function planFor(node) {
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
-// 균열·시련 단계 배율: 28단계까지는 base^(단계-1), 그 위로는 단계당 성장의 로그가 RIFT_K배 (엔드게임 장비 성장이 완만해진 만큼)
-const riftMult = (base, tier) => {
-  const n = Math.max(0, tier - 1), n0 = CFG.RIFT_T0 - 1, ramp = 1 + CFG.RIFT_RAMP * Math.min(1, Math.max(0, (tier - 10) / 20));
-  if (n <= n0) return ramp * Math.pow(base, n);
-  if (base !== CFG.RIFT_SCALE) return ramp * Math.pow(base, n0) * Math.pow(base, CFG.RIFT_K * (n - n0));   // 스킬 시련: 완만한 곡선
-  // v3.23 균열 난이도는 계단형: 20층 구간 안에서는 완만하게 오르다가, 구간을 깬 다음 층(21 · 41 · 61 …)에서 한 번에 어려워진다 (아이템 레벨이 20층마다 오르는 것과 맞춤)
-  return ramp * Math.pow(base, n0) * Math.pow(CFG.RIFT_J, Math.floor((tier - 1) / 20) - Math.floor((CFG.RIFT_T0 - 1) / 20)) * Math.pow(CFG.RIFT_S, tier - CFG.RIFT_T0);
-};   // ramp: 아이템 레벨 11 장비(균열 20층~)가 처음 나오는 구간에서 적을 서서히 단단하게
-// 속성 보스·공허의 군주는 아이템 레벨이 20층마다 오르는 새 곡선에서도 "엔젤릭 없이는 4단계 불가"인 옛 격차를 유지하도록 단계별 보정을 따로 둔다 ([균열 단계, 배율] 로그 보간)
-const BOSS_EXTRA = [[24, 0.5], [40, 0.7], [62, 1.5], [96, 5], [114, 30]];
-const bossExtra = (t) => { const A = BOSS_EXTRA; if (t <= A[0][0]) return A[0][1]; for (let i = 1; i < A.length; i++) if (t <= A[i][0]) { const f = (t - A[i - 1][0]) / (A[i][0] - A[i - 1][0]); return A[i - 1][1] * Math.pow(A[i][1] / A[i - 1][1], f); } return A[A.length - 1][1] * Math.pow(A[A.length - 1][1] / A[A.length - 2][1], (t - A[A.length - 1][0]) / (A[A.length - 1][0] - A[A.length - 2][0])); };
-const bossRiftMult = (t) => riftMult(CFG.RIFT_SCALE, t) * bossExtra(t);
-const riftAtkExtra = (node) => (node.tier > CFG.RIFT_ATK_PIVOT ? Math.pow(riftMult(CFG.RIFT_SCALE, node.tier) / riftMult(CFG.RIFT_SCALE, CFG.RIFT_ATK_PIVOT), CFG.RIFT_ATK_EXP - 1) : 1);
+// v4 균열 층 난이도: 한 구간(20층) 안에서는 완만하게 오르다가, 구간이 바뀌는 층(20 · 40 · 60 · 80 · 100)에서 계단식으로 점프한다.
+// 각 구간의 끝(15~19층)에서 그 구간 장비를 제대로 파밍해야 다음 구간 첫 층(보스)을 넘길 수 있게 맞춘다.
+const floorMult = (f) => {
+  f = Math.max(1, f); const T = CFG.FLOOR_TAB;
+  if (T && T.length) { if (f <= T.length) return T[f - 1]; return T[T.length - 1] * Math.pow(CFG.FLOOR_TAIL || 1.04, f - T.length); }   // 층별 난이도 표 (시뮬레이션으로 맞춘 값)
+  return Math.pow(CFG.FLOOR_G, f - 1) * Math.pow(CFG.FLOOR_J, Math.floor(f / 20));
+};
+const riftMult = (base, tier) => floorMult(tier);   // 호환용
+const bossRiftMult = (t) => floorMult(t) * CFG.BOSS_RIFT_K;
+const riftAtkExtra = (node) => Math.pow(floorMult(node.tier || 1), CFG.FLOOR_ATKP - 1);   // 공격력은 체력보다 천천히 오른다
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
-  const act = Math.min(10, node.act), stage = RIFTLIKE[node.kind] ? 4 : node.stage || 10;
-  const riftMul = node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : riftMult(node.kind === "trial" ? CFG.TRIAL_SCALE : CFG.RIFT_SCALE, node.tier)) : 1;
+  const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
+  const floorKind = !!node.tier || RIFTLIKE[node.kind], scAct = floorKind ? 1 : act;   // 균열류는 몬스터 외형만 지역(act)을 따르고, 강도는 층 배율이 정한다
+  let riftMul = node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
+  if (node.kind === "rift" && node.tier % 5 === 0 && node.tier % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;   // 5층마다 나오는 중간 보스 층은 몬스터 강도를 조금 낮춰 갑작스러운 벽이 되지 않게 한다 (20층 단위 보스는 그대로)
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
-    hpM: CFG.H0 * Math.pow(CFG.HPX, act - 1) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
-    atkM: CFG.A0 * actScale(act) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
+    hpM: CFG.H0 * Math.pow(CFG.HPX, scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
+    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = planFor(node);
@@ -145,7 +144,7 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [30, 42, 62, 114], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [100, 112, 128, 150], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
@@ -519,10 +518,10 @@ function stepBattle(b, dt) {
 function finishBattle(sv, b) {
   const node = b.node, endless = node.kind === "endless", win = b.win || endless, waves = endless ? Math.floor((b.ddt || 0) / 30) : 0;
   const B = dropBonus(sv);
-  const res = { win, exp: b.exp * B.exp, gold: Math.round(b.gold * B.gold), kills: b.kills, levelUps: 0, items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, keys: 0, uniques: 0, notes: [], time: b.time, endgameStart: false, quests: [], tutorialStep: -1, waves, buffs: B.buffs };
-  if (!win) { res.exp *= 0.5; res.gold = Math.round(res.gold * 0.5); }
-  res.levelUps = addExp(sv, res.exp);
-  sv.gold += res.gold; sv.stats.kills += b.kills; dailyAdd(sv, "kills", b.kills); if (b.time > 12 && node.kind !== "tutorial" && win) { const k = Math.min(1, 0.3 * 1); sv.rate.gold = sv.rate.gold ? sv.rate.gold * 0.7 + (res.gold / (b.time / 60)) * 0.3 : res.gold / (b.time / 60); sv.rate.exp = sv.rate.exp ? sv.rate.exp * 0.7 + (res.exp / (b.time / 60)) * 0.3 : res.exp / (b.time / 60); }
+  const res = { win, exp: 0, gold: Math.round(b.gold * B.gold), kills: b.kills, levelUps: 0, items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, keys: 0, uniques: 0, notes: [], time: b.time, endgameStart: false, quests: [], tutorialStep: -1, waves, buffs: B.buffs };
+  if (!win) { res.gold = Math.round(res.gold * 0.5); }
+  // v4: 경험치는 없다. 균열 층을 처음 클리어할 때마다 레벨이 1 오른다 (100층 = 100레벨)
+  sv.gold += res.gold; sv.stats.kills += b.kills; dailyAdd(sv, "kills", b.kills); if (b.time > 12 && node.kind !== "tutorial" && win) { const k = Math.min(1, 0.3 * 1); sv.rate.gold = sv.rate.gold ? sv.rate.gold * 0.7 + (res.gold / (b.time / 60)) * 0.3 : res.gold / (b.time / 60); sv.rate.exp = 0; }
   const kf = b.keys * B.key; res.keys = Math.floor(kf) + (Math.random() < kf - Math.floor(kf) ? 1 : 0); sv.keys += res.keys; { const k2 = b.keys2 * B.key; res.keys2 = Math.floor(k2) + (Math.random() < k2 - Math.floor(k2) ? 1 : 0); sv.keys2 = (sv.keys2 || 0) + res.keys2; }
   for (const [f, bf] of [["keys3", b.keys3], ["keys4", b.keys4]]) { const kk = (bf || 0) * B.key; res[f] = Math.floor(kk) + (Math.random() < kk - Math.floor(kk) ? 1 : 0); sv[f] = (sv[f] || 0) + res[f]; }
   const qd = [];
@@ -540,23 +539,20 @@ function finishBattle(sv, b) {
       }
     } else {
       const d = rollDrops(sv, Object.assign({}, node, { waves, voidCleared: b.voidCleared || 0, firstClear: node.kind === "boss" && sv.cleared[node.act - 1] < node.stage }), b.bossKills > 0 || node.kind === "boss", B);
-      res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
-      sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); if (node.kind === "trial" && node.tier > (sv.trialBest || 0)) sv.trialBest = node.tier; sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
-      for (const it of d.items) if (it.uniq) sv.uniq[it.uniq] = (sv.uniq[it.uniq] || 0) + 1;
-      const sets = d.items.filter((i) => i.setId).length; if (sets) qd.push(...questEvent(sv, { type: "setDrop", n: sets }));
+      res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
+      sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
         sv.cleared[node.act - 1] = node.stage;
+        if (node.stage >= 3 && sv.slots < 3) { sv.slots = 3; res.notes.push("3번 스킬 칸이 열렸습니다!"); }
         if (node.kind === "boss") {
-          res.notes.push(`${ACTS[node.act - 1].name} 지역 보스 처치! 다음 지역이 열렸습니다.`);
-          if (node.act === 3 && sv.slots < 3) { sv.slots = 3; res.notes.push("3번 스킬 칸이 열렸습니다!"); }
-          if (node.act === 6 && sv.slots < 4) { sv.slots = 4; res.notes.push("4번 스킬 칸이 열렸습니다!"); }
-          if (node.act === CFG.ACTS && !sv.endgame) { sv.endgame = true; sv.lanesBase = CFG.ENDGAME_LANES; res.endgameStart = true; res.notes.push("모든 액트 클리어! 영구 3레인이 열리고 '심연의 균열', 무한 균열, 지옥 스테이지, 월드 버프가 개방됩니다."); }
+          if (sv.slots < 4) { sv.slots = 4; res.notes.push("4번 스킬 칸이 열렸습니다!"); }
+          if (node.act === CFG.ACTS && !sv.endgame) { sv.endgame = true; sv.lanesBase = CFG.ENDGAME_LANES; res.endgameStart = true; res.notes.push("스테이지 클리어! 영구 3레인이 열리고 '심연의 균열'이 개방됩니다. 균열을 한 층 깰 때마다 레벨이 1 오릅니다 — 100층이 목표입니다."); }
         }
       }
-      if (node.kind === "rift") { if (node.tier > sv.rift.best) { sv.rift.best = node.tier; } qd.push(...questEvent(sv, { type: "rift" })); }
+      if (node.kind === "rift") { if (node.tier > sv.rift.best) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
-    while (sv.inv.length > CFG.INV_MAX) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) || it.uniq ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }
+    while (sv.inv.length > CFG.INV_MAX) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }
   }
   purgeClearedQuests(sv);   // 방금 액트를 클리어했다면 그 액트의 남은 퀘스트를 정리
   res.voidCleared = b.voidCleared || 0;

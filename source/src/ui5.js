@@ -12,9 +12,9 @@ function openDaily() {
   } });
 }
 function openRecords() {
-  const s = save.stats, found = Object.keys(save.uniq || {}).filter((k) => UNIQUE_BY_ID[k]), byT = [0, 0, 0, 0, 0]; found.forEach((k) => byT[UNIQUE_BY_ID[k].tier]++);
+  const s = save.stats;
   const sec = s.sec || 0, rows = [["플레이 시간", `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분`], ["처치한 몬스터", fmtN(s.kills)], ["클리어한 전투", fmtN(s.clears)], ["균열 최고층", save.rift.best + "층"], ["무한 균열 최고", save.endless.best + "초"], ["스킬 시련 최고", (save.trialBest || 0) + "단계"],
-    ["발견한 고유", `${found.length} / ${UNIQUES.length}`], ["고유 등급별", U_TIERS.slice(1).map((t, i) => `${t.name} ${byT[i + 1]}`).join(" · ")], ["보유 스킬", save.skills.length], ["레벨", save.level]];
+    ["보유 스킬", save.skills.length], ["레벨", save.level]];
   Modal.open(`<h2>기록</h2><div class="statgrid" style="grid-template-columns:1fr"><div class="sg">${rows.map((r) => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}</div></div>`, { cls: "sm" });
 }
 function checkOffline(after) {

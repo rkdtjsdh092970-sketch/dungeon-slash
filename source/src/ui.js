@@ -46,7 +46,7 @@ function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산�
 }
 function refreshTop() {
   const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
-  const need = expNeed(s.level); $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp / need) * 100)) + "%";
+  $("#t-exp").style.width = Math.min(100, ((s.rift ? s.rift.best : 0) / CFG.RIFT_END) * 100) + "%";   // v4: 막대 = 균열 100층 진행도
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
@@ -73,7 +73,6 @@ function openTitle() {
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
   const s = loadGame(); if (!s) return; save = s; AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
-  if (save.migNote) { delete save.migNote; setTimeout(() => toast("v3.26 업데이트: 장비가 새 방식으로 옮겨졌습니다. 진행 단계가 유지되도록 보정했고, 우편함에 업데이트 보상이 있습니다", "ok"), 1400); }
   if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
   if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
@@ -92,15 +91,15 @@ function openMap(focusAct) {
   mapPanel();
 }
 function riftMods(tier) {
-  const r = seeded(tier * 131 + 7), n = Math.min(3, 1 + Math.floor(tier / 4)), pool = RIFT_MODS.slice(), out = [];
+  const r = seeded(tier * 131 + 7), n = tier < 10 ? 0 : tier < 30 ? 1 : tier < 60 ? 2 : 3, pool = RIFT_MODS.slice(), out = [];   // v4: 변이는 10층부터 · 층이 높을수록 개수가 늘어난다
   for (let i = 0; i < n; i++) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]); return out;
 }
-const isHell = (n) => save.endgame && n.kind === "stage" && hellNodes(Date.now()).has(n.id);
+const isHell = (n) => GRADUATED(save) && n.kind === "stage" && hellNodes(Date.now()).has(n.id);
 function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
-  if (n.kind === "rift") return { kind: "rift", act: 11, tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
+  if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
-  if (n.kind === "void") return { kind: "void", act: 10, tier: 30, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
+  if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
   if (isEB(n.kind)) { const E = EB[n.kind], S = G[E.stage] || 1; return { kind: n.kind, act: 10, tier: E.tiers[S - 1], vsel: S, name: `${E.name} ${S}단계`, level: 100 }; }
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
@@ -119,24 +118,18 @@ function mapPanel() {
     const E = endlessInfo(save);
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
     btnOk = un && E.left > 0; btn = E.left > 0 ? "도전" : "횟수 소진";
-  } else if (n.kind === "trial") {
-    G.trialTier = Math.max(1, Math.min(G.trialTier, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)));
-    const T = G.trialTier;
-    h += `<div class="pline">엔드게임 · 최고 <b>${save.trialBest || 0}</b> / ${MAX_TRIAL}단계</div><div class="pline tier"><button class="btn xs" data-p="ttm">−</button> <b style="font-size:18px">${T}단계</b> <button class="btn xs" data-p="ttp">+</button></div>
-    <div class="pline">스킬 드랍 확률 <b style="color:#ffe08a">${Math.round(trialSkillChance(T) * 100)}%</b>${T >= 50 ? " (2개째 " + Math.round(trialSkillChance(T) * 50) + "%)" : ""} · 룬 ${Math.round(Math.min(0.9, 0.25 + 0.02 * T) * 100)}%</div><div class="pline dim">단계가 오를수록 몹이 균열보다 가파르게 강해지고, 스킬·룬 확률과 등급이 오릅니다. 100단계가 끝입니다.</div>`;
-    btnOk = un; btn = "도전";
   } else if (n.kind === "vault") {
     h += `<div class="pline">엔드게임 골드 수급처 · 몹이 주는 골드 ×${CFG.VAULT_GOLD} (난이도: 내 최고 균열 ${save.rift.best} 단계의 ${Math.round(CFG.VAULT_TIER_K * 100)}% = ${Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K))}단계)</div><div class="pline dim">장비·재료 드랍은 적고 골드가 중심입니다. 열쇠나 입장 제한 없이 반복할 수 있습니다.</div>`;
   } else if (isEB(n.kind)) {
     const E = EB[n.kind], S = G[E.stage] = Math.max(1, Math.min(4, G[E.stage] || 1)), need = E.need[S - 1], ok = save.rift.best >= need, have = save[E.key] || 0;
     const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색" }[n.kind];
     h += `<div class="pline">${E.keyName} <b>${have}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="${E.sm}">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="${E.sp}">+</button> <span class="dim">난이도 균열 ${E.tiers[S - 1]}단계 수준</span></div>
-    <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 장비 ${3 + 2 * S}개 · 전용 고유 ${Math.round(HIVE_U_CHANCE[S - 1] * 100)}% · 전용 스킬 ${[2, 3, 5, 12][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다 (고유는 클리어당 최대 1개, 엔젤릭 '${E.angel}'은 4단계에서만 드랍)</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 전설 장비 · 미확인의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
     btnOk = un && have > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : have > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
     h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="vsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="vsp">+</button> <span class="dim">난이도 균열 ${VOID_TIER[S - 1]}단계 수준</span></div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_NEED[S - 1]}</b>단계 이상 (현재 ${save.rift.best}단계) · 고른 단계의 군주 한 마리와 싸웁니다 (잡몹 포함)</div>
-    <div class="pline dim">${S < 4 ? `고유 장비(상대적으로 낮은 등급) ${Math.round(VOID_U_CHANCE[S - 1] * 100)}% 확률` : `좋은 고유 장비 ${Math.round(VOID_U_CHANCE[3] * 100)}% 확률 — 엔젤릭 2종(공허의 왕관·공허의 심장)은 4단계에서만 드랍 (낮은 확률)`}</div><div class="pline dim">공허의 군주 전용 스킬 ${[2, 3, 5, 12][S - 1]}% 확률 · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    <div class="pline dim">전설 장비 · 미확인의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% (졸업 후) · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_NEED[S - 1]; btn = save.rift.best < VOID_NEED[S - 1] ? `균열 ${VOID_NEED[S - 1]}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -160,6 +153,8 @@ function mapGo() {
   if (n.kind === "void") { if (save.keys < 1 || save.rift.best < VOID_NEED[(G.voidStage || 1) - 1]) return; save.keys--; saveGame(); }
   let tip = null, title = null;
   if (G.guide === "stage" && n.id === "S1-1") { G.guide = null; save.seen.guide = true; MapView.pulse = null; setGuide(null); title = "첫 모험 · 초원 1"; tip = "스킬은 쿨타임마다 자동 발동합니다. 적을 클릭하면 그 적을 우선 공격해요.<br>전투가 끝나면 장비가 떨어지고, 장비 창에 <b style='color:#5dff7a'>▲</b> 가 뜨면 더 강한 장비입니다. <b>[추천 장비 착용]</b>으로 한 번에 갈아입으세요!"; }
+  if (tip && n.id === "S1-1") { tip += "<br><br>" + STAGE_TIPS[0][1]; save.seen.tip1 = 1; }
+  if (!tip && (n.kind === "stage" || n.kind === "boss") && n.act === 1 && STAGE_TIPS[n.stage - 1] && !(save.seen["tip" + n.stage])) { save.seen["tip" + n.stage] = 1; title = STAGE_TIPS[n.stage - 1][0]; tip = STAGE_TIPS[n.stage - 1][1]; }
   startBattle(nodeToBattle(n), { tip, title, back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } });
 }
 
@@ -167,7 +162,7 @@ function mapGo() {
 function openTown(act) {
   if (typeof mailPoll === "function") mailPoll();
   G.townAct = act; TownView.act = act; showScreen("town"); if (typeof notesUnread === "function" && notesUnread() && save.tut.done) setTimeout(() => toast("📜 새 패치 노트가 있습니다 — 마을의 '업데이트 게시판'"), 600); $("#townbar .tname").textContent = `${ACTS[act - 1].name} 마을`;
-  if (G.guide === "map") { setGuide("마을에서는 스킬·대장간·퀘스트·상점을 이용할 수 있어요.<br>이제 위쪽의 <b>🗺 지도</b> 버튼을 눌러 첫 스테이지로 가봅시다!"); $("#b-map").classList.add("pulse"); }
+  if (G.guide === "map") { setGuide("마을에서는 스킬·제련소·퀘스트·상점을 이용할 수 있어요.<br>이제 위쪽의 <b>🗺 지도</b> 버튼을 눌러 첫 스테이지로 가봅시다!"); $("#b-map").classList.add("pulse"); }
   else { setGuide(null); $("#b-map").classList.remove("pulse"); }
 }
 function townClick(s) {
@@ -211,7 +206,7 @@ const itemIconBySlot = (slot, cls) => iconImg(slot, 1, cls);
 // ---------- 스킬 정비 ----------
 const SK = { slot: 0, sel: null };
 const RULE_SHORT = { front: "앞열", auto: "오토", boss: "보스", ranged: "원거리", elite: "정예", normal: "일반" };
-const SLOT_HINT = ["", "튜토리얼 완료 시 개방", "액트 3 보스 처치 시 개방", "액트 6 보스 처치 시 개방"];
+const SLOT_HINT = ["", "튜토리얼 완료 시 개방", "스테이지 3 클리어 시 개방", "스테이지 5 보스 처치 시 개방"];
 const promoteCost = (inst) => 25;   // 일반 → 희귀만 가능 (희귀 이상은 승급 불가, 드랍으로만)
 const PROMO_RATE = 0.6;
 
@@ -316,6 +311,7 @@ function afterBattle(res, b) {
 // 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
 function nextBattleOf(node, res) {
   if (!res.win) return null;
+  if (node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act >= CFG.ACTS && save.endgame) { G.riftTier = 1; return { label: "심연의 균열 1층 ▶", node: MAP.byId["R"], battle: nodeToBattle({ kind: "rift" }) }; }   // v4: 스테이지 5 다음은 곧바로 균열
   if (node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act < CFG.ACTS) return { label: `${ACTS[node.act].name} 마을로 ▶`, town: node.act + 1 };   // 액트 마지막 스테이지: 다음 마을로
   if (node.kind === "stage" || node.kind === "boss") {
     if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
@@ -361,3 +357,12 @@ function retreat() {
     no: () => { Modal.close(true); G.paused = wasPaused || G.tipOpen; },
   } });
 }
+
+// v4: 스테이지 1~5는 경험치를 주지 않는다. 대신 한 스테이지마다 게임 시스템 하나를 설명한다
+const STAGE_TIPS = [
+  ["스테이지 1 · 자동 전투와 스킬", "캐릭터는 제자리에서 자동으로 싸웁니다. 스킬은 쿨타임마다 자동 발동하고, 적을 클릭하면 모든 스킬이 그 적을 먼저 공격합니다.<br>스킬은 <b>스킬 상점</b>에서 골드로 삽니다 (처음에는 <b>일반 등급</b>만 쓰게 됩니다). 이 스테이지에서는 경험치를 얻지 않아요."],
+  ["스테이지 2 · 장비와 옵션 티어", "장비 등급은 <b>일반 · 매직 · 레어 · 전설</b>입니다. 전설은 랜덤 옵션 <b>5개</b>를 가집니다.<br>각 옵션에는 <b>1~6티어</b>가 있어요. <b>6티어가 가장 흔하고 1티어가 가장 좋지만 가장 드뭅니다.</b> 장비의 <b>T1~T5</b>는 균열 20층마다 올라가며, 높은 T에서만 높은 티어 옵션이 나올 수 있습니다."],
+  ["스테이지 3 · 소켓과 미확인의 돌", "전설 장비에는 <b>소켓이 1~3개</b> 있습니다. 소켓에는 균열에서 드랍되는 <b>미확인의 돌</b>의 옵션을 끼울 수 있어요.<br>돌은 <b>제련소(대장간)</b>에서 골드로 옵션을 확인한 뒤 장착합니다. 돌의 옵션은 티어 없이 고정 수치이고, 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다."],
+  ["스테이지 4 · 레벨과 패시브", "이 게임에는 경험치가 없습니다. <b>균열 1층을 처음 클리어할 때마다 레벨이 1 오르고, 100층을 정복하면 100레벨</b>이 됩니다.<br>레벨마다 <b>패시브 포인트 2</b>를 얻어 패시브 트리에 찍습니다. 스킬 창의 <b>패시브 칸</b>에는 패시브 스킬(강철 피부, 요새 …)을 장착할 수 있어요."],
+  ["스테이지 5 · 심연의 균열로", "이 보스를 쓰러뜨리면 <b>심연의 균열</b>이 열립니다. 균열은 100층까지 이어지고, <b>20층마다 난이도가 한 단계 뛰며 장비 T도 한 단계 오릅니다</b>. 15~19층에서 장비를 제대로 파밍해야 20층의 보스를 넘길 수 있어요.<br>균열에서는 장비와 미확인의 돌을 얻습니다. 스킬은 필드에서 나오지 않고, <b>100층을 졸업</b>한 뒤 기존 보스들에게서 높은 등급 스킬을 얻을 수 있습니다."],
+];

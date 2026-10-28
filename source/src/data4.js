@@ -25,8 +25,8 @@ const P_ARMS = [
     L: [["집중", { manaCostRed: 0.03 }], ["마력 순환", { manaRegen: 0.004 }], ["마나 강화", { manaPct: 0.06, manaToHp: 2 }], ["마력의 방패", { manaShield: 0.12, manaPct: 0.10, manaToHp: 3 }, 2]],
     R: [["비전 전환", { manaToSpell: 0.03 }], ["정신력", { manaFlat: 15, manaToHp: 2 }], ["원천", { manaRegen: 0.005 }], ["마나 폭풍", { manaToSpell: 0.06, cdr: 0.03 }, 2]] },
   { id: "util", name: "유틸", color: "#ffd24a",
-    s: [["신속", { cdr: 0.015 }], ["수집가", { goldFind: 0.08 }], ["행운", { mf: 0.05 }], ["탐색자", { mf: 0.10, goldFind: 0.12, expFind: 0.10 }, 2], ["학자", { expFind: 0.08 }], ["군집의 지배자", { density: 1, aoeDmg: 0.12 }, 3]],
-    L: [["속도", { cdr: 0.015 }], ["탐욕", { goldFind: 0.08 }], ["경험", { expFind: 0.08 }], ["연쇄 반응", { chainJumps: 1, chainDmg: 0.15 }, 2]],
+    s: [["신속", { cdr: 0.015 }], ["수집가", { goldFind: 0.08 }], ["행운", { mf: 0.05 }], ["탐색자", { mf: 0.10, goldFind: 0.12, aoeDmg: 0.05 }, 2], ["학자", { aoeDmg: 0.04 }], ["군집의 지배자", { density: 1, aoeDmg: 0.12 }, 3]],
+    L: [["속도", { cdr: 0.015 }], ["탐욕", { goldFind: 0.08 }], ["경험", { aoeDmg: 0.04 }], ["연쇄 반응", { chainJumps: 1, chainDmg: 0.15 }, 2]],
     R: [["광역 훈련", { aoeDmg: 0.06 }], ["행운 훈련", { mf: 0.04 }], ["보물 사냥", { goldFind: 0.08 }], ["대박", { mf: 0.12 }, 2]] },
 ];
 P_ARMS.push({ id: "skill", name: "스킬", color: "#6af0c0",
@@ -54,7 +54,7 @@ const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆
   elem: [["화염의 숨결", { fireDmg: 0.08 }, 1], ["서리의 숨결", { coldDmg: 0.08 }, 1], ["폭풍의 숨결", { lightDmg: 0.08 }, 1], ["공허의 숨결", { voidDmg: 0.08, penElem: 0.04 }, 2], ["원소 융합", { elemDmg: 0.12 }, 2], ["원소의 군주", { elemDmg: 0.25, penElem: 0.15, aoeDmg: 0.10 }, 3]],
   def: [["단단한 몸", { hpPct: 0.06 }, 1], ["방패술", { defPct: 0.08 }, 1], ["수호의 맹세", { dmgTaken: -0.04 }, 2], ["재생의 피", { regen: 0.002, lifesteal: 0.005 }, 2], ["회피의 흐름", { dodge: 0.03 }, 2], ["불멸자", { hpMore: 1.12, defMore: 1.10, dmgTaken: -0.06 }, 3]],
   mana: [["마나 흡수", { manaHit: 0.0015 }, 1], ["마력 순환", { manaRegenFlat: 3 }, 1], ["마나 흡수 II", { manaHit: 0.0015, manaPct: 0.05 }, 2], ["비전 갈증", { manaOnKill: 4, manaRegen: 0.004 }, 2], ["마나 방벽", { manaShield: 0.06, manaPct: 0.06 }, 2], ["마력의 대양", { manaHit: 0.003, manaToSpell: 0.05, manaRegen: 0.006 }, 3]],
-  util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { expFind: 0.10 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, expFind: 0.15, goldFind: 0.20 }, 3]],
+  util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { aoeDmg: 0.05 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, aoeDmg: 0.08, goldFind: 0.20 }, 3]],
 };
 P_OUT.skill = [["숙련된 손놀림", { cdr: 0.02, singleDmg: 0.06 }, 1], ["대지의 지배", { persistDmg: 0.08, skillDur: 0.06 }, 1], ["군주의 부름", { summonDmg: 0.10 }, 2], ["처형 의식", { bossSkill: 0.30, critDmg: 0.10 }, 2], ["마력 연동", { cdr: 0.03, manaCostRed: 0.04 }, 2], ["스킬 마스터", { singleDmg: 0.15, persistDmg: 0.15, summonDmg: 0.15, bossSkill: 0.30, cdr: 0.03 }, 3]];
 const P_OUT_GEO = [[0, 7.0, "s6"], [-0.10, 7.9, "e1"], [0.10, 7.9, "e1"], [-0.10, 8.8, "e2"], [0.10, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
@@ -98,6 +98,23 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
       prev.links.push(B.id); B.links.push(prev.id);
     }
   }
+  // v4: 노드 세분화 — 모든 주요/일반 노드 곁에 작은 위성 노드를 하나씩 더 둔다 (각 계열의 다양한 효과를 조금씩 따로 고를 수 있게). 부모 노드를 먼저 찍어야 한다
+  const SAT = {
+    phys: [{ atkFlat: 3 }, { critChance: 0.01 }, { critDmg: 0.06 }, { physDmg: 0.04 }, { normal: 0.05 }, { boss: 0.06 }, { ignoreDef: 0.03 }, { bleedChance: 0.04 }],
+    mag: [{ magPct: 0.025 }, { spellCrit: 0.01 }, { magDmg: 0.04 }, { cdr: 0.008 }, { ignoreRes: 0.03 }, { aoeDmg: 0.05 }, { manaRegen: 0.002 }, { igniteChance: 0.04 }],
+    elem: [{ fireDmg: 0.04 }, { coldDmg: 0.04 }, { lightDmg: 0.04 }, { voidDmg: 0.04 }, { elemDmg: 0.05 }, { penElem: 0.03 }, { dotDmg: 0.06 }, { shockChance: 0.04 }],
+    def: [{ hpPct: 0.03 }, { defPct: 0.04 }, { dodge: 0.01 }, { regen: 0.001 }, { dmgTaken: -0.015 }, { hpFlat: 25 }, { defFlat: 3 }, { lifesteal: 0.003 }],
+    mana: [{ manaPct: 0.04 }, { manaRegen: 0.003 }, { manaCostRed: 0.02 }, { manaFlat: 12 }, { manaToHp: 1 }, { manaToSpell: 0.02 }, { manaRegenFlat: 2 }, { manaHit: 0.001 }],
+    util: [{ cdr: 0.008 }, { goldFind: 0.05 }, { mf: 0.03 }, { aoeDmg: 0.04 }, { chainDmg: 0.05 }, { goldFind: 0.04, mf: 0.02 }, { cdr: 0.006, aoeDmg: 0.02 }, { mf: 0.04 }],
+    skill: [{ singleDmg: 0.04 }, { persistDmg: 0.04 }, { summonDmg: 0.04 }, { bossSkill: 0.12 }, { cdr: 0.008 }, { dotDmg: 0.06 }, { dotDur: 0.08 }, { skillDur: 0.06 }],
+  };
+  { let k = 0; const SN = { phys: "물리", mag: "마법", elem: "원소", def: "방어", mana: "마나", util: "유틸", skill: "스킬" };
+    for (const P of PASSIVES.slice()) {
+      if (P.kind === "bridge" || P.kind === "filler" || P.kind === "key" || !SAT[P.arm]) continue;
+      const pool = SAT[P.arm], per = pool[(k * 3 + (P.id.length * 7)) % pool.length], ang = Math.atan2(P.y, P.x) + (k % 2 ? 1 : -1) * Math.PI / 2, d = 40 + (P.kind === "notable" ? 6 : 0);
+      const id = P.id + "_x", Q = { id, name: `${SN[P.arm]} 세부 ${++k}`, per: Object.assign({}, per), cost: 1, x: P.x + Math.cos(ang) * d, y: P.y + Math.sin(ang) * d, links: [P.id], arm: P.arm, kind: "small" };
+      PASSIVES.push(Q); PASSIVE_BY_ID[id] = Q; P.links.push(id);
+    } }
   const LBL = { atkPct: "공격력", magPct: "주문력", critChance: "물리 치명타 확률", critDmg: "치명타 피해", spellCrit: "주문 치명타 확률", physDmg: "물리 피해", magDmg: "마법 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", normal: "일반 추가 피해",
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
@@ -111,7 +128,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
       return `${LBL[k] || k} ${v > 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.005 ? 2 : Math.abs(v) < 0.01 ? 1 : 0).replace(/\.0$/, "")}%`; }).join(" · ");
   });
 })();
-const passivePoints = (sv) => Math.max(0, sv.level - CFG.PASSIVE_START);
+const passivePoints = (sv) => Math.max(0, sv.level - 1) * CFG.PASSIVE_PER_LV;   // v4: 레벨마다 포인트 (균열 1층 첫 클리어 = 1레벨)
 const passiveSpent = (sv) => { let n = 0; for (const id in (sv.pass || {})) if (PASSIVE_BY_ID[id]) n += PASSIVE_BY_ID[id].cost; return n; };
 const passiveHas = (sv, id) => !!(sv.pass && sv.pass[id] && PASSIVE_BY_ID[id]);
 function canAddPassive(sv, id) {

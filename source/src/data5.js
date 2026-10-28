@@ -278,4 +278,10 @@ const PASSIVE_SKILLS = [
   { id: "p_pact", pt: 4, name: "심연의 계약", per: { chainJumps: 1, allDmg: 0.12, critChance: 0.08, shredDef: 0.08 }, desc: "[패시브] 연쇄 +1회(번개·연쇄 스킬), 모든 피해 +12%, 치명타 +8%, 방어 감소 +8%" },
   { id: "p_end", pt: 5, name: "종말의 서약", per: { allDmg: 0.18, atkMore: 1.08, magMore: 1.08, cdr: 0.08, ignoreDef: 0.12, ignoreRes: 0.12, chainJumps: 1 }, desc: "[패시브] 모든 피해 +18%, 공격·주문 8% 추가 증가, 쿨타임 -8%, 방어·저항 12% 관통, 연쇄 +1" },
 ];
-for (const p of PASSIVE_SKILLS) SKILLS.push({ id: p.id, name: p.name, slot: "passive", kind: "passive", pt: p.pt, cd: 99, mult: 0, unlock: 99, color: ["#b8c4d8", "#9ad0ff", "#ffd27a", "#bfe8ff", "#c06aff", "#ff5a5a"][p.pt], icon: "passive" + p.pt, dtype: "buff", mana: 0, bonus: {}, side: 1, per: p.per, desc: p.desc });
+for (const p of PASSIVE_SKILLS) SKILLS.push({ id: p.id, name: p.name, slot: "passive", kind: "passive", pt: p.pt, cd: 99, mult: 0, unlock: p.pt === 0 ? 2 : 99, color: ["#b8c4d8", "#9ad0ff", "#ffd27a", "#bfe8ff", "#c06aff", "#ff5a5a"][p.pt], icon: "passive" + p.pt, dtype: "buff", mana: 0, bonus: {}, side: 1, per: p.per, desc: p.desc });
+
+// ---- v4: 고유 · 세트 장비 삭제. 장비 등급은 일반 · 매직 · 레어 · 전설 4단계뿐이다 (전설 = 옵션 5개 + 소켓 1~3개). 도감 데이터는 비워 둔다 ----
+UNIQUES.length = 0; for (const k of Object.keys(UNIQUE_BY_ID)) delete UNIQUE_BY_ID[k];
+
+// ---- v4: 옵션이 열리는 아이템 레벨(minIlvl)은 이전의 1~10 기준이라 T1~T5로 환산한다 (1~2 → T1, 3~4 → T2, 5~6 → T3, 7~8 → T4) ----
+AFFIXES.forEach((a) => { if (a.minIlvl) a.minIlvl = Math.max(1, Math.min(5, Math.ceil(a.minIlvl / 2))); });

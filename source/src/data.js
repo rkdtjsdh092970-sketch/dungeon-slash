@@ -6,7 +6,7 @@ const CFG = {
   STACK_BASE: 2, STACK_MAX: 6, STACK_EXP: 0.7,
   SPAWN_INTERVAL: 0.22, MOVE_TIME: 0.4, FIRST_ATTACK_DELAY: 0.8, JITTER: 0.25,
   WAVE_BASE: 10, WAVE_STAGE: 2.0,
-  ACTS: 10, STAGES: 10,
+  ACTS: 1, STAGES: 5, RIFT_END: 100,   // v4: 스테이지는 1~5뿐, 이후 곧바로 균열(100층 졸업)
   BASE_ATK: 6, BASE_HP: 100, BASE_DODGE: 0.05, BASE_CRIT: 0.05, BASE_CRITDMG: 0.5,
   LEVEL_STEP: 0.04, LEVEL_CAP: 100,
   G: 1.55, H0: 2.0, A0: 0.75,
@@ -121,16 +121,15 @@ const EQ_SLOTS = [...SLOTS, "ring2"];   // 장비 칸: 반지는 2칸 (아이템
 const slotType = (k) => (k === "ring2" ? "ring" : k);
 const slotKeys = (type) => (type === "ring" ? ["ring", "ring2"] : [type]);
 const SLOT_BASE = { weapon: { atk: 6 }, helm: { def: 3, hp: 20 }, armor: { hp: 55, def: 4 }, gloves: { atk: 2, def: 1.5 }, ring: { hp: 15 }, neck: { atk: 1.5 }, boots: { hp: 22, def: 2 } };
-const ITEM_RARITY = [
+const ITEM_RARITY = [   // v4: 일반 · 매직 · 레어 · 전설 4단계 (전설은 옵션 5개 + 소켓 1~3개)
   { name: "일반", mult: 1.0,  affixes: 0, cls: "r0", drop: 55, bossDrop: 0 },
-  { name: "마법", mult: 1.15, affixes: 2, cls: "r1", drop: 30, bossDrop: 35 },
-  { name: "희귀", mult: 1.3,  affixes: 4, cls: "r2", drop: 13, bossDrop: 50 },
+  { name: "매직", mult: 1.15, affixes: 2, cls: "r1", drop: 30, bossDrop: 35 },
+  { name: "레어", mult: 1.3,  affixes: 4, cls: "r2", drop: 13, bossDrop: 50 },
   { name: "전설", mult: 1.55, affixes: 5, cls: "r3", drop: 2,  bossDrop: 15 },
-  { name: "세트", mult: 1.4, affixes: 3, cls: "r4", drop: 0,  bossDrop: 0 },
 ];
 // 엔드게임(아이템 레벨 11+) 드랍은 일반 장비 가치가 낮다. 액트(1~10) 드랍은 그대로.
 const END_RMUL = [1.0, 1.15, 1.15, 1.45, 1.3];
-const rarMul = (rarity, ilvl) => (ilvl > 10 && END_RMUL[rarity] ? END_RMUL[rarity] : ITEM_RARITY[rarity].mult);
+const rarMul = (rarity, ilvl) => ITEM_RARITY[Math.min(3, rarity)].mult;
 const AFFIXES = [
   { k: "atkFlat", name: "공격력",          flat: true, range: [2, 4],    w: 10 },
   { k: "hpFlat",  name: "체력",            flat: true, range: [15, 30],  w: 10 },
@@ -151,19 +150,8 @@ const AFFIXES = [
   { k: "density", name: "칸당 몹 수",    count: true, range: [1, 1], w: 2.5, minRarity: 2, slots: ["ring", "neck"], minIlvl: 3 },
   { k: "lanes",   name: "레인 확장 +",     count: true, range: [1, 1], w: 1.2, minRarity: 3, slots: ["neck"], minIlvl: 6 },
 ];
-// 세트: acts = 드랍 액트 범위, bonus = 착용 수별 효과
-const SETS = [
-  { id: "guardian", name: "초원의 수호자", acts: [1, 4], pieces: ["helm", "armor", "gloves", "boots", "neck"], color: "#7fe08a",
-    bonus: { 2: { hpPct: 0.15 }, 4: { cdr: 0.10, dodge: 0.05 } }, text: { 2: "체력 +15%", 4: "쿨타임 감소 +10%, 회피 +5%" } },
-  { id: "storm", name: "폭풍술사의 정수", acts: [2, 7], pieces: ["weapon", "helm", "boots", "ring", "neck"], color: "#8ad8ff",
-    bonus: { 2: { chainJumps: 2 }, 4: { chainDmg: 0.5 } }, text: { 2: "번개 도약 +2", 4: "번개 피해 +50%" } },
-  { id: "legion", name: "군단 파괴자", acts: [4, 9], pieces: ["weapon", "armor", "gloves", "boots", "ring"], color: "#ffb060",
-    bonus: { 2: { density: 1 }, 4: { aoeDmg: 0.35, normal: 0.3 } }, text: { 2: "칸당 몹 수 +1", 4: "광역 피해 +35%, 일반 추가 피해 +30%" } },
-  { id: "slayer", name: "처형인의 맹세", acts: [5, 10], pieces: ["weapon", "helm", "armor", "boots", "neck"], color: "#ff7a8a",
-    bonus: { 2: { boss: 0.3, elite: 0.2 }, 4: { critDmg: 0.5, boss: 0.3 } }, text: { 2: "보스 +30%, 정예 +20%", 4: "치명타 피해 +50%, 보스 +30%" } },
-  { id: "abyss", name: "심연의 군주", acts: [8, 99], pieces: ["weapon", "helm", "armor", "gloves", "boots", "ring", "neck"], color: "#c8a0ff",
-    bonus: { 2: { atkPct: 0.08 }, 4: { lifesteal: 0.03, critChance: 0.06 }, 6: { allDmg: 0.25, lanes: 1 } }, text: { 2: "공격력 +8%", 4: "생명력 흡수 +3%, 치명타 확률 +6%", 6: "모든 피해 +25%, 레인 +1" } },
-];
+// v4: 세트 장비는 삭제됨 (장비 등급은 일반·매직·레어·전설)
+const SETS = [];
 
 // ---- 균열(엔드게임) 변이 ----
 const RIFT_MODS = [
@@ -180,41 +168,34 @@ const RIFT_MODS = [
 // ---- 월드맵 ----
 // 지역(액트) 중심 좌표 (월드 1800x1100)
 const MAP_W = 1800, MAP_H = 1100;
-const REGION = [[210, 960], [470, 990], [740, 930], [690, 720], [440, 690], [250, 520], [420, 360], [700, 330], [980, 240], [1280, 190]];
-const RIFT_POS = [1560, 330];
+const REGION = [[520, 700], [470, 990], [740, 930], [690, 720], [440, 690], [250, 520], [420, 360], [700, 330], [980, 240], [1280, 190]];   // v4: 지역은 초원 하나뿐
+const RIFT_POS = [1180, 470];
 function buildMap() {
   const nodes = [], edges = [];
   const add = (n) => { nodes.push(n); return n; };
-  for (let a = 1; a <= 10; a++) {
+  for (let a = 1; a <= CFG.ACTS; a++) {
     const [cx, cy] = REGION[a - 1];
     const rot = (a * 0.9) % 6.28;
     const town = add({ id: `T${a}`, kind: "town", act: a, x: cx, y: cy, name: `${ACTS[a - 1].name} 마을`, level: (a - 1) * 10 + 1 });
     const ring = [];
-    for (let s = 1; s <= 10; s++) {
-      const ang = rot + 0.55 + (s - 1) * 0.55, r = 74 + ((s % 2) ? 8 : -6) + (s > 5 ? 12 : 0);
-      const n = add({ id: `S${a}-${s}`, kind: s === 10 ? "boss" : "stage", act: a, stage: s, x: Math.round(cx + Math.cos(ang) * r * 1.35), y: Math.round(cy + Math.sin(ang) * r), name: s === 10 ? BOSSES[ACTS[a - 1].boss].name : `${ACTS[a - 1].name} ${s}`, level: (a - 1) * 10 + s });
+    for (let s = 1; s <= CFG.STAGES; s++) {
+      const ang = rot + 0.55 + (s - 1) * 0.9, r = 90 + ((s % 2) ? 8 : -6);
+      const n = add({ id: `S${a}-${s}`, kind: s === CFG.STAGES ? "boss" : "stage", act: a, stage: s, x: Math.round(cx + Math.cos(ang) * r * 1.35), y: Math.round(cy + Math.sin(ang) * r), name: s === CFG.STAGES ? BOSSES[ACTS[a - 1].boss].name : `${ACTS[a - 1].name} ${s}`, level: (a - 1) * 10 + s });
       ring.push(n);
     }
     edges.push([town.id, ring[0].id]);
-    for (let i = 0; i < 9; i++) edges.push([ring[i].id, ring[i + 1].id]);
-    // 추가 노드: 엘리트 사냥터(스테이지 5 이후), 보물 던전(스테이지 8 이후)
-    const e5 = ring[4], v8 = ring[7];
-    const out = (n, k) => { const dx = n.x - cx, dy = n.y - cy, L = Math.hypot(dx, dy) || 1; return [Math.round(n.x + (dx / L) * k), Math.round(n.y + (dy / L) * k)]; }; const eo = out(e5, 52), vo = out(v8, 52);
-    const el = add({ id: `E${a}`, kind: "elite", act: a, x: eo[0], y: eo[1], name: `${ACTS[a - 1].name} 정예 사냥터`, level: (a - 1) * 10 + 6, need: 5 });
-    const tr = add({ id: `V${a}`, kind: "treasure", act: a, x: vo[0], y: vo[1], name: `${ACTS[a - 1].name} 보물 지하실`, level: (a - 1) * 10 + 8, need: 8 });
-    edges.push([e5.id, el.id]); edges.push([v8.id, tr.id]);
-    if (a > 1) edges.push([`S${a - 1}-10`, town.id]);
+    for (let i = 0; i < CFG.STAGES - 1; i++) edges.push([ring[i].id, ring[i + 1].id]);
+    ring.last = ring[ring.length - 1];
   }
   const rift = add({ id: "R", kind: "rift", act: 11, x: RIFT_POS[0], y: RIFT_POS[1], name: "심연의 균열", level: 100 });
-  edges.push(["S10-10", rift.id]);
+  edges.push([`S${CFG.ACTS}-${CFG.STAGES}`, rift.id]);
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
   const voidn = add({ id: "RV", kind: "void", act: 11, x: RIFT_POS[0] + 130, y: RIFT_POS[1] + 40, name: "공허의 군주", level: 100 });
   const flame = add({ id: "RH", kind: "hive", act: 11, x: RIFT_POS[0] + 120, y: RIFT_POS[1] - 110, name: "화염 정령왕", level: 100 });
   const titan = add({ id: "RT", kind: "titan", act: 11, x: RIFT_POS[0] + 10, y: RIFT_POS[1] - 175, name: "철갑의 투사", level: 100 });
   const stormn = add({ id: "RS", kind: "storm", act: 11, x: RIFT_POS[0] + 125, y: RIFT_POS[1] + 160, name: "뇌제", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
-  const trial = add({ id: "TR", kind: "trial", act: 11, x: RIFT_POS[0] - 140, y: RIFT_POS[1] - 100, name: "스킬 시련", level: 100 });
-  edges.push([rift.id, endless.id]); edges.push([rift.id, voidn.id]); edges.push([rift.id, trial.id]); edges.push([rift.id, flame.id]); edges.push([rift.id, titan.id]); edges.push([rift.id, stormn.id]); edges.push([rift.id, vault.id]);
+  edges.push([rift.id, endless.id]); edges.push([rift.id, voidn.id]); edges.push([rift.id, flame.id]); edges.push([rift.id, titan.id]); edges.push([rift.id, stormn.id]); edges.push([rift.id, vault.id]);
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift";
   for (let it = 0; it < 80; it++) {
@@ -241,8 +222,8 @@ function questDefs() {
     q.push({ id: `e${a}`, act: a, title: `${A} 정예 사냥`, desc: `${A} 지역에서 정예를 8마리 처치한다.`, goal: { type: "elite", act: a, n: 8 }, reward: { exp: 25 * a, gold: 50 * a, ore: 3, item: true } });
   }
   q.push({ id: "f1", act: 1, title: "대장장이의 부탁", desc: "장비를 2번 강화한다.", goal: { type: "enhance", n: 2 }, reward: { exp: 40, gold: 80, ore: 4 } });
-  q.push({ id: "f2", act: 3, title: "세트를 모아라", desc: "세트 장비를 2개 획득한다.", goal: { type: "setDrop", n: 2 }, reward: { exp: 120, gold: 300, ore: 8 } });
-  q.push({ id: "r1", act: 10, title: "균열의 도전자", desc: "심연의 균열에서 3단계를 클리어한다.", goal: { type: "rift", n: 3 }, reward: { exp: 0, gold: 3000, ore: 30, shards: 10 } });
+  q.push({ id: "f2", act: 1, title: "소켓의 비밀", desc: "미확인의 돌을 제련소에서 확인한다.", goal: { type: "stone", n: 1 }, reward: { exp: 0, gold: 400, ore: 6 } });
+  q.push({ id: "r1", act: 1, title: "균열의 도전자", desc: "심연의 균열에서 3층을 클리어한다.", goal: { type: "rift", n: 3 }, reward: { exp: 0, gold: 300, ore: 10, shards: 3 } });
   return q;
 }
 // 길드 패시브: 길드 레벨이 오르면 누적으로 열린다 (길드 기본 혜택 골드·경험치·MF와 별도)
@@ -266,18 +247,21 @@ const TUTORIAL = [
 ];
 
 // 액트 · 노드 기본 헬퍼
-const gScale = (ilvl) => Math.pow(CFG.G, ilvl - 1);
+// v4: 아이템 레벨은 T1~T5 (균열 20층마다 한 단계). 단계별 성장 배율 표
+const TIER_SCALE = [1, 1.5, 2.2, 3.2, 4.6];
+const gScale = (ilvl) => TIER_SCALE[Math.max(0, Math.min(4, ilvl - 1))];
 // v3.23 엔드게임(아이템 레벨 11+) 성장 완만화: 기본 옵션은 레벨당 조금만 오르고, 아래쪽 추가 옵션(고정값·%)의 범위가 더 크게 오른다.
 // 아주 좋은 전설은 아이템 레벨이 한두 단계 올라도 계속 쓸 수 있어야 한다. 액트(1~10) 장비는 그대로.
-const gBase = (ilvl) => (ilvl <= 10 ? gScale(ilvl) : gScale(10) * Math.pow(CFG.BASE_END, ilvl - 10));
-const gAff = (ilvl) => (ilvl <= 10 ? gScale(ilvl) : gScale(10) * Math.pow(CFG.AFF_END, ilvl - 10));
+const gBase = (ilvl) => gScale(ilvl);
+const gAff = (ilvl) => gScale(ilvl);
 // v3.23 옵션 티어 (PoE식, 엔드게임 아이템 레벨 11+): 옵션마다 T1(최고)~T5가 있고, 아이템 레벨이 오를수록 더 높은 티어가 "나올 수 있게" 열린다.
 // 높은 티어일수록 뽑힐 가중치가 훨씬 낮아서, 아이템 레벨이 높아도 최고 티어는 드물다. 티어 수치 범위는 서로 겹친다. (인덱스 0 = T1)
-const AT = { unlock: [15, 14, 13, 12, 11], w: [1, 3, 8, 18, 30], flat: [2.7, 2.1, 1.65, 1.3, 1], pct: [1.55, 1.4, 1.25, 1.12, 1] };
-const atAvail = (ilvl) => [0, 1, 2, 3, 4].filter((i) => ilvl >= AT.unlock[i]);
+// v4: 옵션 티어 1~6 (인덱스 0 = 1티어 = 최고, 5 = 6티어 = 최저). 6티어가 가장 잘 나오고 1티어가 가장 드물다. 높은 티어는 아이템 T가 높아야 나올 수 있다
+const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [1, 3, 8, 18, 30, 40], flat: [3.0, 2.3, 1.75, 1.35, 1.05, 0.8], pct: [1.7, 1.5, 1.3, 1.15, 1.0, 0.85] };
+const atAvail = (ilvl) => [0, 1, 2, 3, 4, 5].filter((i) => ilvl >= AT.unlock[i]);
 const atPick = (ilvl) => wpick(atAvail(ilvl), (i) => AT.w[i]);
 const atMul = (a, t) => (a.count ? 1 : a.flat ? AT.flat[t] : a.pct ? AT.pct[t] : 1);
-const pctScale = (ilvl) => 0.72 + 0.05 * Math.min(ilvl, 12) + CFG.PCT_END * Math.max(0, Math.min(ilvl, 40) - 12);
+const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 5);
 const actScale = (a) => (CFG.EASE[a - 1] || 1) * Math.pow(CFG.G, Math.min(a, 10) - 1) * (1 + CFG.LEVEL_STEP * (10 * Math.min(a, 10) - 5)) / (1 + CFG.LEVEL_STEP * 5);
 const nodeLevel = (n) => n.level;
 const eliteCount = (stage) => (stage >= 2 ? 1 + Math.floor(stage / 2) : 0);
