@@ -4012,7 +4012,7 @@ function showUniqueFx(items, done, idx) {
   if (idx >= items.length) { el.classList.add("hidden"); el.innerHTML = ""; return done(); }
   const it = items[idx], U = UNIQUE_BY_ID[it.uniq] || { name: "고유 장비", mods: [], flavor: "", pool: "common", tier: 1 }, TI = tierOfItem(it), TC = U_TIERS[TI].color;
   el.classList.remove("hidden");
-  el.innerHTML = `<canvas id="ufx" width="960" height="540"></canvas><div class="utxt"><div class="u1"><span class="tn${TI}">✦ ${U_TIERS[TI].name} 고유 획득 ✦</span></div><div class="u2">${UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 8) : iconImg(it.slot, 8)}</div><div class="u3"><span class="tn${TI}">${U.name}</span></div><div class="u4">${SLOT_NAME[it.slot]} · Lv.${it.ilvl}${items.length > 1 ? ` · ${idx + 1}/${items.length}` : ""}</div><div class="u5">${uniqueLines(U, it.umods).map((t) => `<div>${t}</div>`).join("")}</div><div class="u6">“${U.flavor}”</div><div class="u7">클릭하여 계속</div></div>`;
+  el.innerHTML = `<canvas id="ufx" width="960" height="540"></canvas><div class="utxt"><div class="u1"><span class="tn${TI}">✦ ${U_TIERS[TI].name} 고유 획득 ✦</span></div><div class="u2">${UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 8) : iconImg(it.slot, 8)}</div><div class="u3"><span class="tn${TI}">${U.name}</span></div><div class="u4">${SLOT_NAME[it.slot]} · Lv.${it.ilvl}${items.length > 1 ? ` · ${idx + 1}/${items.length}` : ""}</div><div class="u5">${uniqueLines(U, it.umods).map((t) => `<div>${t}</div>`).join("")}</div><div class="u6">“${U.flavor}”</div><div class="u7">클릭하여 계속 · 잠시 후 자동으로 닫힙니다</div></div>`;
   snd(TI >= 3 ? "unique2" : "unique");
   const app = $("#app"); app.classList.remove("shake"); if (TI >= 2) { void app.offsetWidth; app.classList.add("shake"); setTimeout(() => app.classList.remove("shake"), TI === 4 ? 1400 : 700); }
   const cv = $("#ufx"), g = cv.getContext("2d"), r = seeded(it.uid * 7 + 3), W = 960, H = 540, cx = W / 2, cy = 215, P = [];
@@ -4022,7 +4022,7 @@ function showUniqueFx(items, done, idx) {
   if (TI === 2) for (let i = 0; i < 130; i++) { const a = r() * 6.283, d = 420 + r() * 200; P.push({ a, d, sp: 0.8 + r() * 0.6, s: 3 + (r() * 3 | 0), c: r() < 0.4 ? "#fff" : r() < 0.7 ? "#c58bff" : "#8a4aff", burst: false, vx: 0, vy: 0, x: 0, y: 0, life: 0 }); }
   if (TI === 3) for (let i = 0; i < 90; i++) P.push({ x: cx + (r() - 0.5) * 500, y: -r() * 400, vy: 140 + r() * 260, vx: (r() - 0.5) * 60, s: 4 + (r() * 3 | 0), c: r() < 0.5 ? "#ffe27a" : "#ffb020", bounce: 0, rot: r() * 6 });
   if (TI === 4) { for (let i = 0; i < 70; i++) P.push({ x: r() * W, y: -r() * 500, vy: 50 + r() * 90, vx: (r() - 0.5) * 40, l: 10 + r() * 14, w: 3 + r() * 3, ph: r() * 6, c: "#ffffff", f: true }); for (let i = 0; i < 160; i++) { const a = r() * 6.283, sp = 100 + r() * 700; P.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 3 + (r() * 5 | 0), life: 1.5 + r() * 2.5, t: 0, c: ["#fff", "#ff8a8a", "#8aff9a", "#8ad8ff", "#c58bff", "#ffe27a"][(r() * 6) | 0] }); } }
-  let t = 0, last = performance.now(), ready = false, closed = false, raf = 0;
+  let t = 0, last = performance.now(), ready = false, closed = false, raf = 0, autoT = 0;
   const rays = (n, speed, alpha, len, tint) => { for (let i = 0; i < n; i++) { const a = (i / n) * 6.283 + t * speed, w = 0.05 + 0.03 * Math.sin(t * 2 + i); g.fillStyle = tint ? tint(i) : col(alpha); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a - w) * len, cy + Math.sin(a - w) * len); g.lineTo(cx + Math.cos(a + w) * len, cy + Math.sin(a + w) * len); g.fill(); } };
   const glow = (a, rad) => { const rg = g.createRadialGradient(cx, cy, 10, cx, cy, rad); rg.addColorStop(0, col(a)); rg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = rg; g.fillRect(0, 0, W, H); };
   const ring = (t0, speed, w, c) => { const k = t - t0; if (k > 0 && k < 1.6) { g.strokeStyle = c(1 - k / 1.6); g.lineWidth = w * (1 - k / 1.6) + 1; g.beginPath(); g.arc(cx, cy, k * speed, 0, 7); g.stroke(); } };
@@ -4055,11 +4055,11 @@ function showUniqueFx(items, done, idx) {
       for (const p of P) { if (p.f) { p.y += p.vy * dt; p.x += Math.sin(t * 2 + p.ph) * 40 * dt; if (p.y > H + 20) { p.y = -20; p.x = r() * W; } g.save(); g.translate(p.x, p.y); g.rotate(Math.sin(t * 2 + p.ph) * 0.6); g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(-p.w / 2, 0, p.w, p.l); g.fillStyle = "rgba(255,230,200,.9)"; g.fillRect(-1, 0, 2, p.l); g.restore(); } else { p.t += dt; if (p.t > p.life) { if (t < 7) { p.t = 0; p.x = r() * W; p.y = H + 10; p.vx = (r() - 0.5) * 40; p.vy = -60 - r() * 120; p.life = 2 + r() * 2; } continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.985; p.vy = p.vy * 0.985 - 18 * dt; g.globalAlpha = Math.max(0, 1 - p.t / p.life); g.fillStyle = p.c; g.fillRect(p.x | 0, p.y | 0, p.s, p.s); g.globalAlpha = 1; } }
       for (let i = 0; i < 24; i++) { const sx = (i * 97) % W, sy = (i * 53) % 260; g.fillStyle = `rgba(255,255,255,${0.3 + 0.7 * Math.abs(Math.sin(t * 3 + i))})`; g.fillRect(sx, sy, 3, 3); }
     }
-    if (!ready && t > (TI === 4 ? 2.2 : TI === 1 ? 1.2 : 1.6)) { ready = true; el.classList.add("ready"); }
+    if (!ready && t > (TI === 4 ? 2.2 : TI === 1 ? 1.2 : 1.6)) { ready = true; el.classList.add("ready"); autoT = setTimeout(close, (save && save.auto && save.auto.on ? 2 : 3.5) * 1000); }   // 몇 초 뒤 저절로 닫힌다 (자동 반복이 멈추지 않게)
     raf = requestAnimationFrame(frame);
   };
   raf = requestAnimationFrame(frame); el.classList.remove("ready");
-  const close = () => { if (!ready || closed) return; closed = true; cancelAnimationFrame(raf); el.removeEventListener("click", close); document.removeEventListener("keydown", kd); snd("click"); showUniqueFx(items, done, idx + 1); };
+  const close = () => { if (!ready || closed) return; closed = true; clearTimeout(autoT); cancelAnimationFrame(raf); el.removeEventListener("click", close); document.removeEventListener("keydown", kd); snd("click"); showUniqueFx(items, done, idx + 1); };
   const kd = (e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") close(); };
   el.addEventListener("click", close); document.addEventListener("keydown", kd);
 }
@@ -4868,7 +4868,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-092145";
+const BUILD_ID = "20261028-093402";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -4960,6 +4960,9 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.25", date: "10/28", title: "고유 획득 화면 자동 닫힘", items: [
+    "고유 장비 획득 연출 화면이 몇 초 뒤 저절로 닫힙니다 (연출이 끝난 뒤 수동 3.5초, 자동 반복 중 2초). 이전에는 클릭해야 닫혀서 자동 반복이 고유가 뜰 때마다 멈췄습니다. 클릭·Enter·Esc로 바로 닫을 수도 있습니다.",
+  ] },
   { ver: "3.24", date: "10/28", title: "상단 바 정리 · 인벤토리 다중 선택", items: [
     "상단 바에서 설정 버튼이 잘리던 문제를 고쳤습니다: 열쇠 4종(공허의 열쇠 · 정령의 불씨 · 철갑의 징표 · 뇌전의 징표) 표시를 상단 바에서 빼서 인벤토리(장비 창) 맨 위로 옮겼습니다. 마우스를 올리면 설명이 나옵니다.",
     "인벤토리에 '☑ 선택' 모드가 생겼습니다. 켜고 장비를 눌러 여러 개를 고른 뒤 [선택 판매] / [선택 분해]로 한꺼번에 처리합니다. [현재 목록 전체 선택](등급·부위 필터가 적용된 목록) · [선택 해제], 선택 개수와 판매/분해 예상 보상이 표시되고, 전설 이상·고유나 ▲ 장비가 포함되면 확인 창에서 경고합니다. 잠금·프리셋·착용 중 장비는 선택할 수 없습니다.",

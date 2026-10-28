@@ -44,7 +44,7 @@ function showUniqueFx(items, done, idx) {
   if (idx >= items.length) { el.classList.add("hidden"); el.innerHTML = ""; return done(); }
   const it = items[idx], U = UNIQUE_BY_ID[it.uniq] || { name: "고유 장비", mods: [], flavor: "", pool: "common", tier: 1 }, TI = tierOfItem(it), TC = U_TIERS[TI].color;
   el.classList.remove("hidden");
-  el.innerHTML = `<canvas id="ufx" width="960" height="540"></canvas><div class="utxt"><div class="u1"><span class="tn${TI}">✦ ${U_TIERS[TI].name} 고유 획득 ✦</span></div><div class="u2">${UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 8) : iconImg(it.slot, 8)}</div><div class="u3"><span class="tn${TI}">${U.name}</span></div><div class="u4">${SLOT_NAME[it.slot]} · Lv.${it.ilvl}${items.length > 1 ? ` · ${idx + 1}/${items.length}` : ""}</div><div class="u5">${uniqueLines(U, it.umods).map((t) => `<div>${t}</div>`).join("")}</div><div class="u6">“${U.flavor}”</div><div class="u7">클릭하여 계속</div></div>`;
+  el.innerHTML = `<canvas id="ufx" width="960" height="540"></canvas><div class="utxt"><div class="u1"><span class="tn${TI}">✦ ${U_TIERS[TI].name} 고유 획득 ✦</span></div><div class="u2">${UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 8) : iconImg(it.slot, 8)}</div><div class="u3"><span class="tn${TI}">${U.name}</span></div><div class="u4">${SLOT_NAME[it.slot]} · Lv.${it.ilvl}${items.length > 1 ? ` · ${idx + 1}/${items.length}` : ""}</div><div class="u5">${uniqueLines(U, it.umods).map((t) => `<div>${t}</div>`).join("")}</div><div class="u6">“${U.flavor}”</div><div class="u7">클릭하여 계속 · 잠시 후 자동으로 닫힙니다</div></div>`;
   snd(TI >= 3 ? "unique2" : "unique");
   const app = $("#app"); app.classList.remove("shake"); if (TI >= 2) { void app.offsetWidth; app.classList.add("shake"); setTimeout(() => app.classList.remove("shake"), TI === 4 ? 1400 : 700); }
   const cv = $("#ufx"), g = cv.getContext("2d"), r = seeded(it.uid * 7 + 3), W = 960, H = 540, cx = W / 2, cy = 215, P = [];
@@ -54,7 +54,7 @@ function showUniqueFx(items, done, idx) {
   if (TI === 2) for (let i = 0; i < 130; i++) { const a = r() * 6.283, d = 420 + r() * 200; P.push({ a, d, sp: 0.8 + r() * 0.6, s: 3 + (r() * 3 | 0), c: r() < 0.4 ? "#fff" : r() < 0.7 ? "#c58bff" : "#8a4aff", burst: false, vx: 0, vy: 0, x: 0, y: 0, life: 0 }); }
   if (TI === 3) for (let i = 0; i < 90; i++) P.push({ x: cx + (r() - 0.5) * 500, y: -r() * 400, vy: 140 + r() * 260, vx: (r() - 0.5) * 60, s: 4 + (r() * 3 | 0), c: r() < 0.5 ? "#ffe27a" : "#ffb020", bounce: 0, rot: r() * 6 });
   if (TI === 4) { for (let i = 0; i < 70; i++) P.push({ x: r() * W, y: -r() * 500, vy: 50 + r() * 90, vx: (r() - 0.5) * 40, l: 10 + r() * 14, w: 3 + r() * 3, ph: r() * 6, c: "#ffffff", f: true }); for (let i = 0; i < 160; i++) { const a = r() * 6.283, sp = 100 + r() * 700; P.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 3 + (r() * 5 | 0), life: 1.5 + r() * 2.5, t: 0, c: ["#fff", "#ff8a8a", "#8aff9a", "#8ad8ff", "#c58bff", "#ffe27a"][(r() * 6) | 0] }); } }
-  let t = 0, last = performance.now(), ready = false, closed = false, raf = 0;
+  let t = 0, last = performance.now(), ready = false, closed = false, raf = 0, autoT = 0;
   const rays = (n, speed, alpha, len, tint) => { for (let i = 0; i < n; i++) { const a = (i / n) * 6.283 + t * speed, w = 0.05 + 0.03 * Math.sin(t * 2 + i); g.fillStyle = tint ? tint(i) : col(alpha); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a - w) * len, cy + Math.sin(a - w) * len); g.lineTo(cx + Math.cos(a + w) * len, cy + Math.sin(a + w) * len); g.fill(); } };
   const glow = (a, rad) => { const rg = g.createRadialGradient(cx, cy, 10, cx, cy, rad); rg.addColorStop(0, col(a)); rg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = rg; g.fillRect(0, 0, W, H); };
   const ring = (t0, speed, w, c) => { const k = t - t0; if (k > 0 && k < 1.6) { g.strokeStyle = c(1 - k / 1.6); g.lineWidth = w * (1 - k / 1.6) + 1; g.beginPath(); g.arc(cx, cy, k * speed, 0, 7); g.stroke(); } };
@@ -87,11 +87,11 @@ function showUniqueFx(items, done, idx) {
       for (const p of P) { if (p.f) { p.y += p.vy * dt; p.x += Math.sin(t * 2 + p.ph) * 40 * dt; if (p.y > H + 20) { p.y = -20; p.x = r() * W; } g.save(); g.translate(p.x, p.y); g.rotate(Math.sin(t * 2 + p.ph) * 0.6); g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(-p.w / 2, 0, p.w, p.l); g.fillStyle = "rgba(255,230,200,.9)"; g.fillRect(-1, 0, 2, p.l); g.restore(); } else { p.t += dt; if (p.t > p.life) { if (t < 7) { p.t = 0; p.x = r() * W; p.y = H + 10; p.vx = (r() - 0.5) * 40; p.vy = -60 - r() * 120; p.life = 2 + r() * 2; } continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.985; p.vy = p.vy * 0.985 - 18 * dt; g.globalAlpha = Math.max(0, 1 - p.t / p.life); g.fillStyle = p.c; g.fillRect(p.x | 0, p.y | 0, p.s, p.s); g.globalAlpha = 1; } }
       for (let i = 0; i < 24; i++) { const sx = (i * 97) % W, sy = (i * 53) % 260; g.fillStyle = `rgba(255,255,255,${0.3 + 0.7 * Math.abs(Math.sin(t * 3 + i))})`; g.fillRect(sx, sy, 3, 3); }
     }
-    if (!ready && t > (TI === 4 ? 2.2 : TI === 1 ? 1.2 : 1.6)) { ready = true; el.classList.add("ready"); }
+    if (!ready && t > (TI === 4 ? 2.2 : TI === 1 ? 1.2 : 1.6)) { ready = true; el.classList.add("ready"); autoT = setTimeout(close, (save && save.auto && save.auto.on ? 2 : 3.5) * 1000); }   // 몇 초 뒤 저절로 닫힌다 (자동 반복이 멈추지 않게)
     raf = requestAnimationFrame(frame);
   };
   raf = requestAnimationFrame(frame); el.classList.remove("ready");
-  const close = () => { if (!ready || closed) return; closed = true; cancelAnimationFrame(raf); el.removeEventListener("click", close); document.removeEventListener("keydown", kd); snd("click"); showUniqueFx(items, done, idx + 1); };
+  const close = () => { if (!ready || closed) return; closed = true; clearTimeout(autoT); cancelAnimationFrame(raf); el.removeEventListener("click", close); document.removeEventListener("keydown", kd); snd("click"); showUniqueFx(items, done, idx + 1); };
   const kd = (e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") close(); };
   el.addEventListener("click", close); document.addEventListener("keydown", kd);
 }
