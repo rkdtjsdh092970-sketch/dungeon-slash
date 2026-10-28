@@ -7,7 +7,7 @@ const ITEM_ICON = (it) => (it.uniq && UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.u
 const RCLS = (it) => ITEM_RARITY[it.rarity].cls;
 const setOf = (it) => (it.setId ? SETS.find((s) => s.id === it.setId) : null);
 const itemColor = (it) => (it.setId ? setOf(it).color : null);
-const skillTitle = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return `<span class="${SKILL_RARITY[inst.rarity].cls}">${SKILL_RARITY[inst.rarity].name} ${d.name}</span>`; };
+const skillTitle = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return `<span class="${SKILL_RARITY[inst.rarity].cls}">${d.slot === "passive" ? "" : SKILL_RARITY[inst.rarity].name + " "}${d.name}</span>`; };
 const skIcon = (id, sc) => iconImg(SKILLS.find((x) => x.id === id).icon, sc || 2);
 const fmtTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
@@ -73,6 +73,7 @@ function openTitle() {
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
   const s = loadGame(); if (!s) return; save = s; AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
+  if (save.migNote) { delete save.migNote; setTimeout(() => toast("v3.26 업데이트: 장비가 새 방식으로 옮겨졌습니다. 진행 단계가 유지되도록 보정했고, 우편함에 업데이트 보상이 있습니다", "ok"), 1400); }
   if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
   if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
@@ -244,12 +245,12 @@ function openSettings() {
   const inGame = G.screen !== "title"; const A = save ? save.auto : null;
   Modal.open(`<h2>설정</h2>${sl("master", "전체 볼륨")}${sl("bgm", "배경음악")}${sl("sfx", "효과음")}
    <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
-   ${save ? `<label class="setrow2">피격 시 화면 반짝임 <select data-i="hflash">${[[0, "끄기"], [0.5, "약하게"], [1, "보통"]].map(([v, t]) => `<option value="${v}" ${(save.opt && save.opt.hitflash != null ? save.opt.hitflash : 1) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><label class="setrow2">화면 흔들림 <input type="checkbox" data-i="shk" ${save.opt && save.opt.shake === 0 ? "" : "checked"}></label><label class="setrow2">다음 스테이지로 자동 이동 <select data-i="anext">${[[0, "끄기"], [3, "3초 후"], [5, "5초 후"], [10, "10초 후"]].map(([v, t]) => `<option value="${v}" ${((save.opt && save.opt.autoNext) || 0) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">승리 후 결과창에서 대기시간이 지나면 다음 스테이지(균열·시련은 한 단계 위)로 자동 이동합니다. 화면을 누르거나 키를 누르면 취소됩니다.</div>` : ""}
+   ${save ? `<label class="setrow2">피격 시 화면 반짝임 <select data-i="hflash">${[[0, "끄기"], [0.5, "약하게"], [1, "보통"]].map(([v, t]) => `<option value="${v}" ${(save.opt && save.opt.hitflash != null ? save.opt.hitflash : 1) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><label class="setrow2">신화 이상 스킬 장엄 연출 <input type="checkbox" data-i="grand" ${save.opt && save.opt.grand === 0 ? "" : "checked"}></label><label class="setrow2">화면 흔들림 <input type="checkbox" data-i="shk" ${save.opt && save.opt.shake === 0 ? "" : "checked"}></label><label class="setrow2">다음 스테이지로 자동 이동 <select data-i="anext">${[[0, "끄기"], [3, "3초 후"], [5, "5초 후"], [10, "10초 후"]].map(([v, t]) => `<option value="${v}" ${((save.opt && save.opt.autoNext) || 0) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">승리 후 결과창에서 대기시간이 지나면 다음 스테이지(균열·시련은 한 단계 위)로 자동 이동합니다. 화면을 누르거나 키를 누르면 취소됩니다.</div>` : ""}
    ${A ? (() => { autoRules(save); const opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`; return `<h3>자동 반복 · 전투 후 장비 처리</h3><div class="dim">자동 반복이 끝난 전투마다 아래 규칙으로 가방을 정리합니다 (장비는 자동으로 착용하지 않습니다)</div>
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2">${x.name} 장비 <select data-i="arule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="akeepup" ${A.keepUp ? "checked" : ""}></label><div class="dim">고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다</div>`; })() : ""}
    <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
-    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked), hflash: (el) => { (save.opt = save.opt || {}).hitflash = +el.value; saveGame(); }, shk: (el) => { (save.opt = save.opt || {}).shake = el.checked ? 1 : 0; saveGame(); }, anext: (el) => { (save.opt = save.opt || {}).autoNext = +el.value; saveGame(); },
+    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked), grand: (el) => { (save.opt = save.opt || {}).grand = el.checked ? 1 : 0; saveGame(); }, hflash: (el) => { (save.opt = save.opt || {}).hitflash = +el.value; saveGame(); }, shk: (el) => { (save.opt = save.opt || {}).shake = el.checked ? 1 : 0; saveGame(); }, anext: (el) => { (save.opt = save.opt || {}).autoNext = +el.value; saveGame(); },
     arule: (el) => { autoRules(save).rules[+el.dataset.r] = el.value; saveGame(); }, akeepup: (el) => { save.auto.keepUp = el.checked; saveGame(); },
     srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
     wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),

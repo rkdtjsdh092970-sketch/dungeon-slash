@@ -56,6 +56,20 @@ const SKILL_KINDS2 = {
     if (!aliveIn(b, sk.range).length) return false; b.pAtk = 0.42; b.persist.push({ kind: "rain", t: sk.over + 0.5, tick: 0.2, every: sk.over / sk.count, left: sk.count, sk }); sfx(b, sk.sfx); return true;
   },
   summon(b, sk) { if (!aliveIn(b, sk.range).length) return false; b.pAtk = 0.42; b.persist = b.persist.filter((p) => p.kind !== "spirit"); b.persist.push({ kind: "spirit", t: sk.dur, tick: 0.3, every: sk.every, sk, bob: 0 }); sfx(b, sk.sfx); pushFx(b, { kind: "ring", x: PLAYER_POS.x + 90, y: PLAYER_POS.y - 20, t: 0.5, life: 0.5, color: sk.color, r: 60 }); return true; },
+  bounce(b, sk) {   // 수리검: 화면 안 적 사이를 무작위로 튕긴다
+    const first = aliveIn(b, sk.range); if (!first.length) return false; b.pAtk = 0.5; sfx(b, sk.sfx);
+    let from = { x: PLAYER_POS.x + 40, y: PLAYER_POS.y - 70 };
+    for (let i = 0; i < sk.count; i++) { const fr = from;
+      b.events.push({ t: 0.05 + i * 0.12, fn: () => { const c = aliveIn(b, sk.range); if (!c.length) return; const e = pick(c), x1 = e.vx != null ? e.vx : cellXY(b, e.lane, e.col).x, y1 = (e.vy != null ? e.vy : cellXY(b, e.lane, e.col).y) - 30;
+        pushFx(b, { kind: "proj2", x0: fr.x, y0: fr.y, x1, y1, t: 0.12, life: 0.12, sprite: "shuriken", color: sk.color, fan: 0 }); hitEnemy(b, e, 1, sk); } });
+      const o = first[(i * 7 + 3) % first.length]; from = { x: o.vx != null ? o.vx : 500, y: (o.vy != null ? o.vy : 300) - 30 }; }
+    return true;
+  },
+  shuri(b, sk) {   // 대형 수리검: 한 구간(앞뒤 3열)에 박혀 모든 줄을 벤다
+    const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.5; const col = Math.max(2, p.col);
+    b.persist = b.persist.filter((q) => q.kind !== "shuri"); b.persist.push({ kind: "shuri", col, t: sk.dur, tick: 0.1, every: sk.every, sk, rot: 0 }); sfx(b, sk.sfx);
+    const P = cellXY(b, p.lane, p.col); pushFx(b, { kind: "ring", x: P.x, y: P.y, t: 0.4, life: 0.4, color: sk.color, r: 100 }); return true;
+  },
   hole(b, sk) { const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.42; b.persist.push({ kind: "hole", lane: centerLane(p), col: Math.max(2, p.col), t: sk.dur, tick: 0.1, every: sk.every, sk }); sfx(b, sk.sfx); return true; },
 };
 function runPersist(b, p) {
@@ -67,6 +81,10 @@ function runPersist(b, p) {
   else if (p.kind === "hole") {
     for (const e of boxHits(b, p.lane, p.col, 1)) { hitEnemy(b, e, sk.mult, sk, { aoe: true });
       if (e.tier === "normal" && !e.dead) { if (e.col > p.col && canPlace(b, e, e.lane, e.col - 1, false)) e.col--; else if (e.lane !== p.lane) { const nl = e.lane + Math.sign(p.lane - e.lane); if (canPlace(b, e, nl, e.col, false)) e.lane = nl; } } }
+  } else if (p.kind === "shuri") {
+    const hs = b.enemies.filter((e) => !e.dead && e.lane < b.lanes && cellsOf(e).some(([l, c]) => Math.abs(c - p.col) <= 1));
+    for (const e of hs) hitEnemy(b, e, sk.mult, sk, { aoe: true });
+    if (hs.length) sfx(b, "slash");
   } else if (p.kind === "mine") {
     if (p.arm > 0) { p.arm -= p.every; return; }
     const hit = b.enemies.some((e) => !e.dead && cellsOf(e).some(([l, c]) => l === p.lane && c === p.col));
@@ -74,6 +92,7 @@ function runPersist(b, p) {
   }
 }
 function tickExtra(b, dt) {
+  if (b.grand) { b.grand.t -= dt; if (b.grand.t <= 0) b.grand = null; }
   for (const p of b.persist) { p.t -= dt; p.tick -= dt; if (p.rot != null) p.rot += dt; if (p.tick <= 0 && p.t > -0.2) { p.tick += p.every; runPersist(b, p); } }
   if (b.persist.some((p) => p.t <= 0)) b.persist = b.persist.filter((p) => p.t > 0);
   for (const e of b.enemies) if (e.dots.length && !e.dead) tickDots(b, e, dt);

@@ -16,9 +16,13 @@ const CFG = {
   EASE: [0.65, 0.78, 0.88],
   REC_K: 3000, REC_BOSS: 2.5,
   INV_MAX: 150,
-  SKILL_DROP: 0.2, SKILL_DROP_BOSS: 0.6,
+  SKILL_DROP: 0.28, SKILL_DROP_BOSS: 0.7,
   SET_DROP: 0.10, SET_DROP_BOSS: 0.45,
   RIFT_SCALE: 1.07, HPX: 1.1, BOSSX: 0.7,
+  ACT_UNIQ: { stage: 0.016, boss: 0.04, elite: 0.03, treasure: 0.02 }, WFLAT: 1.6, RIFT_J: 1.06, RIFT_S: 1.0008, RIFT_RAMP: 0.25,   // WFLAT: 무기에 붙은 공격력/주문력 고정 옵션은 이 배율로 더 크게 들어간다
+   RIFT_T0: 30, RIFT_K: 0.05,   // 균열 28단계부터는 단계당 적 성장의 로그를 RIFT_K배로 줄인다 (장비 성장 완만화에 맞춤: 1.07 → 약 1.031)
+  ROLL_SKEW: 1.2,   // 엔드게임 드랍 옵션 수치의 쏠림(클수록 낮은 수치가 잘 나온다). 대장간 재굴림은 항상 균등
+  BASE_END: 1.08, AFF_END: 1.30, PCT_END: 0.03,   // 엔드게임 레벨당 성장: 기본 옵션 ×1.08 · 고정값 추가옵션 ×1.30 · %옵션 범위 +0.03/레벨(ilvl 12~40)
 };
 
 const ACTS = [
@@ -84,7 +88,7 @@ const SKILLS = [
   { id: "lance",   name: "관통창",       slot: "active", kind: "pierce", cd: 6.0,  mult: 1.7,  range: 6, bonus: {}, unlock: 1, color: "#9dffb0", icon: "spear", sfx: "pierce", desc: "같은 줄의 적을 모두 꿰뚫는다" },
   { id: "chain",   name: "체인 라이트닝", slot: "active", kind: "chain",  cd: 5.5,  mult: 2.57,  jumps: 5, decay: 0.88, range: 5, bonus: {}, unlock: 2, color: "#9ad8ff", icon: "bolt", sfx: "zap", desc: "맞힌 적 뒤의 대각선 위·대각선 아래·바로 뒤로 무작위로 번개가 뻗는다" },
   { id: "snipe",   name: "저격",         slot: "active", kind: "single", cd: 4.0,  mult: 4.0,  range: 6, bonus: { ranged: 0.6 }, unlock: 2, color: "#d0b0ff", icon: "arrow", sfx: "snipe", desc: "원거리 유닛에게 추가 피해, 사거리 6" },
-  { id: "firewall", name: "화염 벽",     slot: "active", kind: "zone",   cd: 10.0, mult: 0.7,  dur: 5, range: 5, bonus: {}, unlock: 3, color: "#ff7a30", icon: "flame", sfx: "fire", desc: "대상 줄 3칸을 5초간 불태운다" },
+  { id: "firewall", name: "화염 벽",     slot: "active", kind: "zone",   cd: 10.0, mult: 1.4,  dur: 5, range: 5, bonus: {}, unlock: 3, color: "#ff7a30", icon: "flame", sfx: "fire", desc: "대상 줄 3칸을 5초간 불태운다" },
   { id: "sweep",   name: "소탕",         slot: "active", kind: "multi",  cd: 6.0,  mult: 1.6,  side: 0.9, range: 4, bonus: { normal: 0.4 }, unlock: 3, color: "#c0ffc0", icon: "sweep", sfx: "slash", desc: "일반 몹에게 추가 피해를 주는 광역" },
   { id: "cry",     name: "전투 함성",     slot: "active", kind: "buff",   cd: 18.0, mult: 0, dur: 8, power: 0.3, range: 6, bonus: {}, unlock: 3, color: "#ffd24a", icon: "horn", sfx: "buff", desc: "8초 동안 주는 피해 +30%" },
   { id: "execute", name: "처형",         slot: "active", kind: "single", cd: 7.0,  mult: 8,  range: 5, bonus: { boss: 0.8 }, unlock: 4, color: "#ff6a6a", icon: "skull", sfx: "snipe", desc: "보스에게 큰 추가 피해" },
@@ -101,10 +105,12 @@ const SKILL_RARITY = [
   { name: "희귀", mult: 1.25, cdMul: 0.95, bonusMul: 1.3, w: 25, cls: "r2" },
   { name: "전설", mult: 1.6,  cdMul: 0.9,  bonusMul: 1.7, w: 5,  cls: "r3" },
   // 전설 위 등급: 일반 드랍 풀에는 없고, 엔드게임(스킬 시련·공허의 군주)에서 전설이 나왔을 때 아주 낮은 확률로 한 단계씩 더 올라간다. 승급으로는 얻을 수 없다
-  { name: "이터널", mult: 1.9, cdMul: 0.87, bonusMul: 2.0, w: 0, cls: "tn2" },
-  { name: "소버린", mult: 2.3, cdMul: 0.84, bonusMul: 2.4, w: 0, cls: "tn3" },
-  { name: "엔젤릭", mult: 3.0, cdMul: 0.80, bonusMul: 3.0, w: 0, cls: "tn4" },
+  { name: "신화", mult: 1.9, cdMul: 0.87, bonusMul: 2.0, w: 0, cls: "sk3" },   // v3.23: 스킬의 상위 등급은 장비(이터널·소버린·엔젤릭)와 다른 이름·색·표시를 쓴다
+  { name: "사탄", mult: 2.3, cdMul: 0.84, bonusMul: 2.4, w: 0, cls: "sk4" },
+  { name: "종말", mult: 3.0, cdMul: 0.80, bonusMul: 3.0, w: 0, cls: "sk5" },
 ];
+// v3.23 단일 스킬은 전설부터 연타가 된다 (등급: 일반·희귀 1타 / 전설 2 / 이터널 3 / 소버린 4 / 엔젤릭 5). 총피해는 연타 수에 비례하지 않고 등급 배율 위에 작은 보너스만 붙는다 — 한 번의 피해를 연타 수만큼 나눈다
+const SINGLE_HITS = [1, 1, 2, 3, 4, 5], SINGLE_HIT_BONUS = [1, 1, 1.1, 1.14, 1.2, 1.25];
 const RULES = { front: "앞열(기본)", auto: "오토", boss: "보스 우선", ranged: "원거리 우선", elite: "정예 우선", normal: "일반 우선" };
 const RULE_ORDER = ["front", "auto", "boss", "ranged", "elite", "normal"];
 
@@ -261,6 +267,17 @@ const TUTORIAL = [
 
 // 액트 · 노드 기본 헬퍼
 const gScale = (ilvl) => Math.pow(CFG.G, ilvl - 1);
+// v3.23 엔드게임(아이템 레벨 11+) 성장 완만화: 기본 옵션은 레벨당 조금만 오르고, 아래쪽 추가 옵션(고정값·%)의 범위가 더 크게 오른다.
+// 아주 좋은 전설은 아이템 레벨이 한두 단계 올라도 계속 쓸 수 있어야 한다. 액트(1~10) 장비는 그대로.
+const gBase = (ilvl) => (ilvl <= 10 ? gScale(ilvl) : gScale(10) * Math.pow(CFG.BASE_END, ilvl - 10));
+const gAff = (ilvl) => (ilvl <= 10 ? gScale(ilvl) : gScale(10) * Math.pow(CFG.AFF_END, ilvl - 10));
+// v3.23 옵션 티어 (PoE식, 엔드게임 아이템 레벨 11+): 옵션마다 T1(최고)~T5가 있고, 아이템 레벨이 오를수록 더 높은 티어가 "나올 수 있게" 열린다.
+// 높은 티어일수록 뽑힐 가중치가 훨씬 낮아서, 아이템 레벨이 높아도 최고 티어는 드물다. 티어 수치 범위는 서로 겹친다. (인덱스 0 = T1)
+const AT = { unlock: [15, 14, 13, 12, 11], w: [1, 3, 8, 18, 30], flat: [2.7, 2.1, 1.65, 1.3, 1], pct: [1.55, 1.4, 1.25, 1.12, 1] };
+const atAvail = (ilvl) => [0, 1, 2, 3, 4].filter((i) => ilvl >= AT.unlock[i]);
+const atPick = (ilvl) => wpick(atAvail(ilvl), (i) => AT.w[i]);
+const atMul = (a, t) => (a.count ? 1 : a.flat ? AT.flat[t] : a.pct ? AT.pct[t] : 1);
+const pctScale = (ilvl) => 0.72 + 0.05 * Math.min(ilvl, 12) + CFG.PCT_END * Math.max(0, Math.min(ilvl, 40) - 12);
 const actScale = (a) => (CFG.EASE[a - 1] || 1) * Math.pow(CFG.G, Math.min(a, 10) - 1) * (1 + CFG.LEVEL_STEP * (10 * Math.min(a, 10) - 5)) / (1 + CFG.LEVEL_STEP * 5);
 const nodeLevel = (n) => n.level;
 const eliteCount = (stage) => (stage >= 2 ? 1 + Math.floor(stage / 2) : 0);

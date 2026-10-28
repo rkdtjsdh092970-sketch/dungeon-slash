@@ -98,7 +98,12 @@ AFFIXES.push(
   { k: "lanes", name: "레인 확장 +", count: true, range: [1, 1], w: 0, slots: [] },   // 구버전 세이브 호환용 (새로 나오지 않음)
 );
 // 장비 기본 능력치: 무기·장갑·목걸이는 공격력(물리)과 주문력(마법)을 함께 가진다
-SLOT_BASE.boots = { hp: 22, def: 2 }; SLOT_BASE.weapon = { atk: 6, mag: 6 }; SLOT_BASE.gloves = { atk: 2, mag: 2, def: 1.5 }; SLOT_BASE.neck = { atk: 1.5, mag: 1.5 };
+// v3.23 무기 종류 (PoE식): 기본 공격력·주문력은 대부분 무기에서 나온다. 장갑·목걸이 같은 다른 부위는 소량의 플랫만 더한다.
+// 무기 기본값 + 무기 고정 옵션(공격력/주문력)에 공격력%·주문력%가 곱해지고, 나머지 부위의 플랫은 그대로 더해진다.
+const WTYPES = { sword: { name: "검", atk: 9, mag: 0, w: 30 }, staff: { name: "지팡이", atk: 0, mag: 9, w: 30 }, scythe: { name: "낫", atk: 7, mag: 3.5, w: 20 }, grimoire: { name: "마도서", atk: 3.5, mag: 7, w: 20 } };
+const WT_IDS = Object.keys(WTYPES);
+const slotLabel = (it) => (it.slot === "weapon" && it.wt && WTYPES[it.wt] ? WTYPES[it.wt].name : SLOT_NAME[it.slot]);
+SLOT_BASE.boots = { hp: 22, def: 2 }; SLOT_BASE.weapon = {}; SLOT_BASE.gloves = { atk: 0.5, mag: 0.5, def: 1.5 }; SLOT_BASE.neck = { atk: 0.4, mag: 0.4 };
 // 세트: 레인 보너스 제거
 SETS.find((s) => s.id === "abyss").bonus[6] = { allDmg: 0.4, elemDmg: 0.3 };
 SETS.find((s) => s.id === "abyss").text[6] = "모든 피해 +40%, 원소 피해 +30%";
@@ -126,83 +131,83 @@ const UNIQUES = [
   // ===== 공용 · 미스틱 =====
   U("ironwall", "철벽의 갑주", "armor", 1, "common", 3, [["defPct", [1.4, 1.8]], ["hpPct", [0.15, 0.2]], ["noDodge", 1]], "맞아도 아프지 않다면 피할 필요가 없다."),
   U("glasscannon", "유리 대포", "weapon", 1, "common", 2, [["atkMore", [1.8, 2.1]], ["magMore", [1.8, 2.1]], ["hpMore", 0.5]], "한 방이면 끝난다. 둘 다."),
-  U("fang", "흡혈귀의 송곳니", "weapon", 1, "common", 3, [["lifesteal", [0.11, 0.14]], ["dmgTaken", 0.25]], "피로 피를 씻는다."),
+  U("fang", "흡혈귀의 송곳니", "weapon", 1, "common", 3, [["lifesteal", [0.176, 0.224]], ["dmgTaken", [0.22, 0.28]]], "피로 피를 씻는다."),
   U("greedring", "탐욕의 반지", "ring", 1, "common", 1, [["mf", [0.7, 0.9]], ["goldFind", [0.5, 0.7]], ["atkPct", -0.15], ["magPct", -0.15]], "더, 더, 더."),
   U("luckycharm", "행운아의 부적", "neck", 1, "common", 2, [["mf", [1.3, 1.7]], ["hpPct", -0.2]], "운이 좋은 자는 죽지 않는다. 대개는."),
   U("goldhand", "황금손 장갑", "gloves", 1, "common", 2, [["goldFind", [0.9, 1.1]], ["mf", [0.35, 0.45]], ["atkMore", 0.8], ["magMore", 0.8]], "손대는 곳마다 금이 된다. 칼도 포함해서."),
   U("harvest", "수확자의 부적", "neck", 1, "common", 3, [["expFind", [0.7, 0.9]], ["goldFind", [0.4, 0.6]], ["mf", [0.3, 0.5]]], "거두는 자가 부유하다."),
   U("warlord", "군주의 투구", "helm", 1, "common", 4, [["density", 2], ["normal", [0.2, 0.3]], ["defMore", 0.7]], "더 많이 모일수록 더 많이 벤다."),
-  U("manaspring", "마나 샘의 목걸이", "neck", 1, "common", 2, [["manaPct", [0.5, 0.7]], ["manaRegen", [0.025, 0.035]], ["hpPct", -0.1]], "마르지 않는 샘은 없다. 아직은."),
-  U("apprentice", "견습 마법사의 반지", "ring", 1, "common", 1, [["manaToSpell", [0.08, 0.12]], ["manaPct", 0.2], ["hpPct", -0.1]], "마나가 곧 힘이라고 배웠다."),
+  U("manaspring", "마나 샘의 목걸이", "neck", 1, "common", 2, [["manaPct", [0.714, 0.999]], ["manaRegen", [0.036, 0.05]], ["hpPct", [-0.112, -0.088]]], "마르지 않는 샘은 없다. 아직은."),
+  U("apprentice", "견습 마법사의 반지", "ring", 1, "common", 1, [["manaToSpell", [0.128, 0.192]], ["manaPct", [0.282, 0.358]], ["hpPct", [-0.112, -0.088]]], "마나가 곧 힘이라고 배웠다."),
   // ===== 공용 · 이터널 =====
-  U("immortal", "불멸의 심장", "armor", 2, "common", 3, [["hpPct", [0.5, 0.7]], ["regen", [0.01, 0.014]], ["revive", 1]], "두 번째 심장이 뛰기 시작한다."),
-  U("phoenix", "불사조의 깃털", "helm", 2, "common", 5, [["revive", 1], ["hpPct", [0.25, 0.35]], ["lifesteal", 0.03]], "재에서 일어서라."),
-  U("stormeye", "폭풍의 눈", "neck", 2, "common", 4, [["chainJumps", 4], ["chainDmg", [0.7, 0.9]], ["hpPct", -0.1]], "번개는 두 번 떨어지지 않는다. 네 번은 떨어진다."),
+  U("immortal", "불멸의 심장", "armor", 2, "common", 3, [["hpPct", [0.344, 0.482]], ["regen", [0.007, 0.01]], ["revive", 1], ["goldFind", [0.352, 0.448]]], "두 번째 심장이 뛰기 시작한다."),
+  U("phoenix", "불사조의 깃털", "helm", 2, "common", 5, [["revive", 1], ["hpPct", [0.25, 0.35]], ["lifesteal", [0.026, 0.034]], ["expFind", [0.264, 0.336]]], "재에서 일어서라."),
+  U("stormeye", "폭풍의 눈", "neck", 2, "common", 4, [["chainJumps", 4], ["chainDmg", [2.239, 2.736]], ["hpPct", [-0.112, -0.088]], ["lightDmg", [0.348, 0.448]], ["magPct", [0.219, 0.279]], ["allDmg", [0.175, 0.223]]], "번개는 두 번 떨어지지 않는다. 네 번은 떨어진다."),
   U("timering", "시간의 반지", "ring", 2, "common", 5, [["cdr", [0.28, 0.32]], ["cdrCap", 0.7], ["dmgTaken", 0.1]], "초침이 달아난다."),
-  U("bladestorm", "칼날 폭풍 장갑", "gloves", 2, "common", 4, [["cdr", [0.18, 0.22]], ["atkPct", [0.22, 0.28]], ["magPct", [0.22, 0.28]], ["hpMore", 0.7]], "손이 보이지 않는다."),
-  U("reaper", "수확자의 낫", "weapon", 2, "common", 5, [["boss", [1.4, 1.8]], ["elite", [0.5, 0.7]], ["normal", -0.3]], "큰 것만 벤다."),
+  U("bladestorm", "칼날 폭풍 장갑", "gloves", 2, "common", 4, [["cdr", [0.22, 0.269]], ["atkPct", [0.269, 0.342]], ["magPct", [0.269, 0.342]], ["hpMore", 0.7], ["physDmg", [0.122, 0.171]], ["critDmg", [0.215, 0.274]]], "손이 보이지 않는다."),
+  U("reaper", "수확자의 낫", "weapon", 2, "common", 5, [["boss", [1.12, 1.44]], ["elite", [0.8, 1.12]], ["normal", [-0.336, -0.264]]], "큰 것만 벤다."),
   U("manaheart", "마력의 중심", "helm", 2, "common", 4, [["manaToSpell", [0.22, 0.28]], ["manaPct", [0.28, 0.34]], ["manaRegen", [0.015, 0.02]]], "머리 위에서 마나가 소용돌이친다."),
-  U("sharpmind", "예리한 정신", "ring", 2, "common", 5, [["spellCrit", [0.2, 0.25]], ["critDmg", [0.3, 0.4]], ["manaCostRed", 0.1]], "생각의 속도로 급소를 찌른다."),
+  U("sharpmind", "예리한 정신", "ring", 2, "common", 5, [["spellCrit", [0.24, 0.3]], ["critDmg", [0.35, 0.45]], ["manaCostRed", 0.1], ["magPct", [0.1, 0.14]]], "생각의 속도로 급소를 찌른다."),
   // ===== 공용 · 소버린 =====
   U("ghostdance", "유령의 춤", "armor", 3, "common", 4, [["hpMore", 0.2], ["dodge", 0.95], ["dodgeCap", 0.95]], "죽은 자는 맞지 않는다."),
-  U("dragonhelm", "용기사의 투구", "helm", 3, "common", 6, [["allDmg", [0.28, 0.34]], ["aoeDmg", [0.45, 0.55]], ["hpMore", 0.8]], "용은 홀로 싸우지 않는다. 모든 것을 불태운다."),
+  U("dragonhelm", "용기사의 투구", "helm", 3, "common", 6, [["allDmg", [0.417, 0.505]], ["aoeDmg", [0.669, 0.818]], ["hpMore", 0.8], ["atkPct", [0.131, 0.166]], ["magPct", [0.131, 0.166]]], "용은 홀로 싸우지 않는다. 모든 것을 불태운다."),
   U("voidgrip", "공허를 쥔 손", "gloves", 3, "common", 7, [["critChance", [0.22, 0.28]], ["critDmg", [1.1, 1.3]], ["defMore", 0]], "쥐는 순간 모든 방패가 사라진다."),
-  U("tome", "점멸하는 마도서", "weapon", 3, "common", 6, [["magCrit", 1], ["spellCrit", 0.1], ["magPct", [0.25, 0.3]], ["manaCostRed", 0.12]], "마법도 급소를 노린다. 계속해서."),
+  U("tome", "점멸하는 마도서", "weapon", 3, "common", 6, [["magCrit", 1], ["spellCrit", 0.1], ["magPct", [0.32, 0.38]], ["manaCostRed", 0.12], ["critDmg", [0.35, 0.45]], ["allDmg", 0.08], ["magMore", 1.16]], "마법도 급소를 노린다. 계속해서."),
   // ===== 공용 · 엔젤릭 =====
   U("halo", "대천사의 후광", "helm", 4, "common", 8, [["allDmg", [0.35, 0.4]], ["cdr", 0.1], ["revive", 1], ["hpPct", 0.5], ["manaRegen", 0.03], ["lifesteal", 0.03]], "빛이 내려앉는다."),
-  U("judgment", "신의 심판", "weapon", 4, "common", 8, [["atkMore", [1.45, 1.55]], ["magMore", [1.45, 1.55]], ["ignoreDef", 0.3], ["ignoreRes", 0.3], ["critDmg", 0.6], ["magCrit", 1]], "판결은 한 번이면 충분하다."),
+  U("judgment", "신의 심판", "weapon", 4, "common", 8, [["atkMore", [1.65, 1.75]], ["magMore", [1.65, 1.75]], ["ignoreDef", 0.3], ["ignoreRes", 0.3], ["critDmg", 0.6], ["magCrit", 1]], "판결은 한 번이면 충분하다."),
   // ===== 지옥 스테이지 전용 =====
-  U("hellplate", "불지옥의 갑주", "armor", 1, "hell", 1, [["hpPct", [0.25, 0.3]], ["fireDmg", [0.2, 0.28]]], "아직 식지 않았다."),
+  U("hellplate", "불지옥의 갑주", "armor", 1, "hell", 1, [["hpPct", [0.4, 0.48]], ["fireDmg", [0.32, 0.448]]], "아직 식지 않았다."),
   U("cinder", "재의 손길", "gloves", 1, "hell", 1, [["fireDmg", [0.4, 0.5]], ["penElem", 0.15], ["hpPct", -0.1]], "닿은 것은 모두 재가 된다."),
   U("emberband", "불씨의 반지", "ring", 2, "hell", 1, [["fireDmg", [0.45, 0.55]], ["magPct", [0.15, 0.2]], ["manaRegen", 0.015]], "꺼지지 않는 불씨."),
-  U("hellhound", "지옥견의 송곳니", "weapon", 2, "hell", 1, [["atkPct", [0.3, 0.4]], ["critChance", [0.1, 0.14]], ["lifesteal", 0.05]], "사냥감의 냄새를 놓치지 않는다."),
-  U("brandhelm", "낙인의 투구", "helm", 2, "hell", 1, [["shredDef", [0.2, 0.25]], ["shredRes", [0.2, 0.25]], ["boss", 0.25]], "낙인이 찍힌 자는 약해진다."),
+  U("hellhoundfang", "지옥견의 송곳니", "weapon", 2, "hell", 1, [["atkPct", [0.3, 0.4]], ["critChance", [0.1, 0.14]], ["lifesteal", 0.05]], "사냥감의 냄새를 놓치지 않는다."),
+  U("brandhelm", "낙인의 투구", "helm", 2, "hell", 1, [["shredDef", [0.427, 0.534]], ["shredRes", [0.427, 0.534]], ["boss", [0.47, 0.598]], ["allDmg", [0.299, 0.384]], ["hpPct", [0.188, 0.239]]], "낙인이 찍힌 자는 약해진다."),
   U("infernoheart", "연옥의 심장", "neck", 3, "hell", 1, [["fireDmg", [0.8, 1.0]], ["penElem", 0.3], ["magCrit", 1], ["spellCrit", 0.1]], "심장이 타오를수록 마법도 날카로워진다."),
   U("hellcrown", "지옥 군주의 왕관", "helm", 4, "hell", 1, [["allDmg", [0.4, 0.45]], ["ignoreDef", 0.25], ["ignoreRes", 0.25], ["fireDmg", 0.6], ["hpMore", 1.6]], "지옥도 그 앞에선 무릎을 꿇는다."),
   // ===== 균열 탑 전용 =====
-  U("riftshard", "균열 파편의 목걸이", "neck", 1, "tower", 1, [["mf", [0.6, 0.8]], ["voidDmg", [0.3, 0.4]], ["hpPct", -0.1]], "조각마다 다른 세계가 비친다."),
+  U("riftshard", "균열 파편의 목걸이", "neck", 1, "tower", 1, [["mf", [0.6, 0.8]], ["voidDmg", [0.48, 0.64]], ["hpPct", [-0.112, -0.088]]], "조각마다 다른 세계가 비친다."),
   U("riftwalker", "균열 도보자의 장화", "gloves", 1, "tower", 1, [["cdr", [0.12, 0.16]], ["dodge", [0.1, 0.14]], ["allDmg", 0.1]], "한 발은 이곳, 한 발은 저곳."),
-  U("towerseal", "탑의 인장", "ring", 2, "tower", 1, [["mf", [0.9, 1.1]], ["boss", [0.3, 0.4]], ["elite", [0.3, 0.4]]], "오를수록 눈이 밝아진다."),
+  U("towerseal", "탑의 인장", "ring", 2, "tower", 1, [["mf", [0.9, 1.1]], ["boss", [0.597, 0.797]], ["elite", [0.597, 0.797]], ["allDmg", [0.175, 0.223]], ["critDmg", [0.351, 0.446]]], "오를수록 눈이 밝아진다."),
   U("voidlens", "공허의 렌즈", "helm", 2, "tower", 1, [["voidDmg", [0.5, 0.6]], ["penElem", 0.2], ["manaToSpell", 0.18], ["manaPct", 0.25]], "공허를 들여다보는 눈."),
-  U("stormcaller", "폭풍을 부르는 자", "weapon", 2, "tower", 1, [["lightDmg", [0.5, 0.6]], ["chainJumps", 3], ["chainDmg", 0.5], ["magPct", 0.2]], "구름이 먼저 알아챈다."),
-  U("riftmantle", "균열의 외투", "armor", 3, "tower", 1, [["hpMore", [1.7, 1.9]], ["dmgTaken", -0.2], ["regen", 0.008], ["rangedTaken", 0.15]], "먼 곳의 화살은 이 외투에 닿지 않는다."),
-  U("apex", "정점의 인장", "ring", 4, "tower", 1, [["mf", [2.2, 2.6]], ["allDmg", 0.3], ["critDmg", 0.5], ["cdr", 0.1], ["penElem", 0.15]], "끝없는 탑의 끝에서 빛나는 것."),
+  U("stormcaller", "폭풍을 부르는 자", "weapon", 2, "tower", 1, [["lightDmg", [0.65, 0.8]], ["chainJumps", 3], ["chainDmg", 0.5], ["magPct", 0.3]], "구름이 먼저 알아챈다."),
+  U("riftmantle", "균열의 외투", "armor", 3, "tower", 1, [["hpMore", [1.466, 1.606]], ["dmgTaken", [-0.179, -0.141]], ["regen", [0.007, 0.008]], ["rangedTaken", [0.123, 0.157]], ["mf", [0.37, 0.47]]], "먼 곳의 화살은 이 외투에 닿지 않는다."),
+  U("apex", "정점의 인장", "ring", 4, "tower", 1, [["mf", [2.2, 2.6]], ["allDmg", [0.289, 0.367]], ["critDmg", [0.481, 0.612]], ["cdr", [0.096, 0.122]], ["penElem", [0.144, 0.184]], ["atkPct", [0.067, 0.086]], ["magPct", [0.067, 0.086]]], "끝없는 탑의 끝에서 빛나는 것."),
   // ===== 무한 균열 전용 =====
-  U("endlessloop", "끝없는 고리", "ring", 2, "endless", 1, [["regen", [0.006, 0.008]], ["manaRegen", [0.02, 0.025]], ["cdr", 0.1]], "끝이 없으니 멈출 이유도 없다."),
-  U("marathon", "마라토너의 갑옷", "armor", 2, "endless", 1, [["hpPct", [0.5, 0.6]], ["regen", [0.012, 0.016]], ["dmgTaken", -0.1]], "오래 서 있는 자가 이긴다."),
-  U("hourglass", "모래시계 목걸이", "neck", 3, "endless", 1, [["cdr", [0.2, 0.25]], ["cdrCap", 0.65], ["allDmg", [0.2, 0.25]], ["manaCostRed", 0.15]], "시간은 우리 편이다."),
-  U("legion", "군단 학살자", "gloves", 3, "endless", 1, [["aoeDmg", [0.6, 0.8]], ["normal", [0.4, 0.5]], ["chainJumps", 2], ["density", 1]], "밀려오는 것은 쓸려 나간다."),
-  U("eternity", "영원의 왕관", "helm", 4, "endless", 1, [["revive", 1], ["regen", 0.015], ["lifesteal", 0.05], ["allDmg", 0.35], ["manaRegen", 0.04], ["hpMore", 1.5]], "영원히 쓰러지지 않는 자의 머리 위에."),
+  U("endlessloop", "끝없는 고리", "ring", 2, "endless", 1, [["regen", [0.009, 0.011]], ["manaRegen", [0.028, 0.035]], ["cdr", [0.125, 0.159]]], "끝이 없으니 멈출 이유도 없다."),
+  U("marathon", "마라토너의 갑옷", "armor", 2, "endless", 1, [["hpPct", [0.443, 0.532]], ["regen", [0.011, 0.014]], ["dmgTaken", [-0.112, -0.088]], ["bleedChance", [0.158, 0.202]]], "오래 서 있는 자가 이긴다."),
+  U("hourglass", "모래시계 목걸이", "neck", 3, "endless", 1, [["cdr", [0.32, 0.4]], ["cdrCap", 0.65], ["allDmg", [0.32, 0.4]], ["manaCostRed", [0.211, 0.269]]], "시간은 우리 편이다."),
+  U("legion", "군단 학살자", "gloves", 3, "endless", 1, [["aoeDmg", [0.808, 1.077]], ["normal", [0.539, 0.673]], ["chainJumps", 2], ["density", 1]], "밀려오는 것은 쓸려 나간다."),
+  U("eternity", "영원의 왕관", "helm", 4, "endless", 1, [["revive", 1], ["regen", [0.013, 0.017]], ["lifesteal", [0.044, 0.056]], ["allDmg", [0.308, 0.392]], ["manaRegen", [0.035, 0.045]], ["hpMore", [1.44, 1.56]], ["goldFind", [0.493, 0.627]]], "영원히 쓰러지지 않는 자의 머리 위에."),
   // ===== 공허의 군주 (6개 중 1개, 2개는 엔젤릭) =====
   U("voidblade", "공허의 검", "weapon", 2, "void", 1, [["atkPct", [0.35, 0.42]], ["magPct", [0.35, 0.42]], ["critDmg", [0.5, 0.6]], ["ignoreDef", 0.10]], "베인 자리가 다시 닫히지 않는다."),
-  U("voidplate", "공허의 흉갑", "armor", 2, "void", 1, [["hpPct", [0.35, 0.42]], ["defPct", [0.7, 0.85]], ["dmgTaken", -0.12], ["bossTaken", 0.10]], "공허는 무엇도 되돌려 주지 않는다."),
-  U("voidcrest", "공허의 문장", "helm", 3, "void", 1, [["cdr", [0.10, 0.13]], ["allDmg", [0.14, 0.17]], ["mf", [0.2, 0.28]], ["voidDmg", 0.3]], "눈을 감아도 보인다."),
-  U("voidwhisper", "공허의 속삭임", "neck", 3, "void", 1, [["manaToSpell", [0.22, 0.26]], ["magCrit", 1], ["spellCrit", 0.09], ["voidDmg", 0.22]], "마나가 속삭이면 마법이 대답한다."),
-  U("abyssalcrown", "심연의 왕관", "helm", 4, "void", 1, [["atkMore", [1.28, 1.36]], ["magMore", [1.28, 1.36]], ["hpMore", [1.28, 1.36]], ["allDmg", [0.35, 0.42]], ["cdr", 0.15], ["lanes", 1], ["revive", 1]], "왕관을 쓴 자는 무릎 꿇지 않는다."),
-  U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [1.6, 1.8]], ["lifesteal", 0.04], ["regen", 0.007], ["dmgTaken", -0.22], ["boss", 0.45], ["killHeal", 0.0015]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
+  U("voidplate", "공허의 흉갑", "armor", 2, "void", 1, [["hpPct", [0.187, 0.224]], ["defPct", [0.374, 0.454]], ["dmgTaken", [-0.134, -0.106]], ["bossTaken", [0.047, 0.06]], ["expFind", [0.264, 0.336]]], "공허는 무엇도 되돌려 주지 않는다."),
+  U("voidcrest", "공허의 문장", "helm", 3, "void", 1, [["cdr", [0.16, 0.208]], ["allDmg", [0.224, 0.272]], ["mf", [0.2, 0.28]], ["voidDmg", [0.422, 0.538]], ["magPct", [0.197, 0.251]], ["spellCrit", [0.084, 0.108]]], "눈을 감아도 보인다."),
+  U("voidwhisper", "공허의 속삭임", "neck", 3, "void", 1, [["manaToSpell", [0.472, 0.558]], ["magCrit", 1], ["spellCrit", [0.17, 0.216]], ["voidDmg", [0.416, 0.529]], ["elemDmg", [0.189, 0.24]], ["magPct", [0.264, 0.337]], ["allDmg", [0.151, 0.192]]], "마나가 속삭이면 마법이 대답한다."),
+  U("abyssalcrown", "심연의 왕관", "helm", 4, "void", 1, [["atkMore", [1.258, 1.331]], ["magMore", [1.258, 1.331]], ["hpMore", [1.258, 1.331]], ["allDmg", [0.322, 0.387]], ["cdr", [0.122, 0.155]], ["lanes", 1], ["revive", 1], ["mf", [0.431, 0.549]]], "왕관을 쓴 자는 무릎 꿇지 않는다."),
+  U("voidheart", "공허의 심장", "armor", 4, "void", 1, [["hpMore", [1.415, 1.552]], ["lifesteal", [0.032, 0.041]], ["regen", [0.005, 0.006]], ["dmgTaken", [-0.202, -0.158]], ["boss", [0.365, 0.464]], ["killHeal", [0.001, 0.002]]], "심장이 두 개라면 어느 쪽이 먼저 멈출까."),
   // 화염 정령왕: 화염·점화·지속 피해 빌드용
-  U("sparkcoil", "불꽃 정령의 고리", "ring", 1, "fire", 1, [["fireDmg", [0.3, 0.4]], ["igniteChance", [0.08, 0.12]], ["hpPct", -0.08]], "작은 불꽃이 쉬지 않고 맴돈다."),
+  U("sparkcoil", "불꽃 정령의 고리", "ring", 1, "fire", 1, [["fireDmg", [0.471, 0.628]], ["igniteChance", [0.126, 0.189]], ["hpPct", [-0.09, -0.07]]], "작은 불꽃이 쉬지 않고 맴돈다."),
   U("emberglove", "잿불 장갑", "gloves", 1, "fire", 1, [["fireDmg", [0.28, 0.36]], ["dotDmg", [0.3, 0.4]], ["atkPct", [0.08, 0.1]]], "불씨가 손가락마다 깃든다."),
-  U("moltenblade", "녹아내린 정령검", "weapon", 2, "fire", 1, [["fireDmg", [0.55, 0.7]], ["igniteChance", [0.2, 0.25]], ["dotDmg", [0.4, 0.5]], ["magPct", [0.2, 0.25]]], "베는 순간 칼날이 흘러내린다."),
-  U("salamandermail", "불도마뱀 갑피", "armor", 2, "fire", 1, [["hpPct", [0.3, 0.38]], ["fireDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "불길 속에서만 따뜻하다."),
-  U("spiritflame", "정령의 불꽃 목걸이", "neck", 3, "fire", 1, [["fireDmg", [0.8, 1.0]], ["elemDmg", [0.2, 0.25]], ["igniteChance", 0.3], ["dotDur", 0.3], ["penElem", 0.2]], "목에 걸면 심장이 불꽃처럼 뛴다."),
-  U("pyrelordcrown", "화염 정령왕의 관", "helm", 4, "fire", 1, [["fireDmg", [1.0, 1.2]], ["dotDmg", [0.8, 1.0]], ["igniteChance", 0.35], ["penElem", 0.3], ["magMore", [1.25, 1.32]], ["cdr", 0.1]], "불은 꺼지지 않는다. 왕이 쓰러져도."),
+  U("moltenblade", "녹아내린 정령검", "weapon", 2, "fire", 1, [["fireDmg", [0.7, 0.85]], ["igniteChance", [0.2, 0.25]], ["dotDmg", [0.4, 0.5]], ["magPct", [0.28, 0.34]], ["allDmg", [0.106, 0.134]], ["bleedChance", [0.158, 0.202]]], "베는 순간 칼날이 흘러내린다."),
+  U("salamandermail", "불도마뱀 갑피", "armor", 2, "fire", 1, [["hpPct", [0.3, 0.38]], ["fireDmg", [0.35, 0.45]], ["dmgTaken", [-0.112, -0.088]], ["regen", [0.004, 0.004]], ["goldFind", [0.352, 0.448]]], "불길 속에서만 따뜻하다."),
+  U("spiritflame", "정령의 불꽃 목걸이", "neck", 3, "fire", 1, [["fireDmg", [0.8, 1]], ["elemDmg", [0.2, 0.25]], ["igniteChance", [0.264, 0.336]], ["dotDur", [0.264, 0.336]], ["penElem", [0.176, 0.224]], ["expFind", [0.317, 0.403]]], "목에 걸면 심장이 불꽃처럼 뛴다."),
+  U("pyrelordcrown", "화염 정령왕의 관", "helm", 4, "fire", 1, [["fireDmg", [0.928, 1.113]], ["dotDmg", [0.743, 0.928]], ["igniteChance", [0.286, 0.364]], ["penElem", [0.245, 0.312]], ["magMore", [1.232, 1.297]], ["cdr", [0.082, 0.104]], ["mf", [0.431, 0.549]]], "불은 꺼지지 않는다. 왕이 쓰러져도."),
   // ---- 철갑의 투사 그라크 (물리 전용 풀) ----
-  U("ironfist", "투사의 철장갑", "gloves", 1, "phys", 1, [["physDmg", [0.28, 0.36]], ["dotDmg", [0.3, 0.4]], ["atkPct", [0.08, 0.1]]], "주먹이 곧 갑옷이다."),
+  U("ironfist", "투사의 철장갑", "gloves", 1, "phys", 1, [["physDmg", [0.343, 0.442]], ["dotDmg", [0.368, 0.491]], ["atkPct", [0.098, 0.123]]], "주먹이 곧 갑옷이다."),
   U("gladsigil", "검투사의 인장", "ring", 1, "phys", 1, [["physDmg", [0.25, 0.32]], ["critChance", [0.08, 0.1]], ["bleedChance", [0.1, 0.14]]], "관중의 함성이 반지에 새겨져 있다."),
-  U("gorecleaver", "핏빛 전투도끼", "weapon", 2, "phys", 1, [["physDmg", [0.55, 0.7]], ["bleedChance", [0.2, 0.25]], ["dotDmg", [0.4, 0.5]], ["atkPct", [0.2, 0.25]]], "한 번 휘두르면 바닥이 붉게 젖는다."),
-  U("ironhide", "철갑 흉갑", "armor", 2, "phys", 1, [["hpPct", [0.3, 0.38]], ["physDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "맞을수록 단단해진다."),
-  U("gorakneck", "그라크의 전리품 목걸이", "neck", 3, "phys", 1, [["physDmg", [0.8, 1.0]], ["bleedChance", 0.3], ["dotDur", 0.3], ["ignoreDef", 0.2], ["dotDmg", [0.4, 0.5]]], "꿰어 단 이빨은 모두 이긴 상대의 것."),
+  U("gorecleaver", "핏빛 전투도끼", "weapon", 2, "phys", 1, [["physDmg", [0.45, 0.58]], ["bleedChance", [0.2, 0.25]], ["dotDmg", [0.34, 0.42]], ["atkPct", [0.16, 0.2]], ["allDmg", [0.106, 0.134]], ["magPct", [0.176, 0.224]]], "한 번 휘두르면 바닥이 붉게 젖는다."),
+  U("ironhide", "철갑 흉갑", "armor", 2, "phys", 1, [["hpPct", [0.3, 0.38]], ["physDmg", [0.35, 0.45]], ["dmgTaken", [-0.112, -0.088]], ["regen", [0.004, 0.004]], ["goldFind", [0.352, 0.448]]], "맞을수록 단단해진다."),
+  U("gorakneck", "그라크의 전리품 목걸이", "neck", 3, "phys", 1, [["physDmg", [0.8, 1]], ["bleedChance", [0.264, 0.336]], ["dotDur", [0.264, 0.336]], ["ignoreDef", [0.176, 0.224]], ["dotDmg", [0.4, 0.5]], ["expFind", [0.317, 0.403]]], "꿰어 단 이빨은 모두 이긴 상대의 것."),
   U("slayerseal", "학살자의 문장", "ring", 3, "phys", 1, [["critChance", [0.18, 0.22]], ["critDmg", [0.8, 1.0]], ["physDmg", [0.4, 0.5]]], "급소는 언제나 같은 곳에 있다."),
-  U("titanblade", "거신의 대검", "weapon", 4, "phys", 1, [["physDmg", [1.0, 1.2]], ["dotDmg", [0.8, 1.0]], ["bleedChance", 0.35], ["ignoreDef", 0.3], ["atkMore", [1.25, 1.32]], ["cdr", 0.1]], "강철은 부러져도 의지는 부러지지 않는다."),
+  U("titanblade", "거신의 대검", "weapon", 4, "phys", 1, [["physDmg", [0.974, 1.169]], ["dotDmg", [0.779, 0.974]], ["bleedChance", [0.3, 0.382]], ["ignoreDef", [0.257, 0.327]], ["atkMore", [1.244, 1.312]], ["cdr", [0.086, 0.109]], ["mf", [0.431, 0.549]]], "강철은 부러져도 의지는 부러지지 않는다."),
   // ---- 뇌제 라이곤 (번개 전용 풀) ----
-  U("stormglove", "뇌운의 장갑", "gloves", 1, "light", 1, [["lightDmg", [0.28, 0.36]], ["chainDmg", [0.3, 0.4]], ["magPct", [0.08, 0.1]]], "손끝에서 자꾸 불꽃이 튄다."),
-  U("staticring", "정전기 반지", "ring", 1, "light", 1, [["lightDmg", [0.25, 0.32]], ["spellCrit", [0.1, 0.14]], ["magPct", [0.06, 0.08]]], "만지면 따끔하다. 만지지 않아도."),
-  U("stormstaff", "뇌광의 지팡이", "weapon", 2, "light", 1, [["lightDmg", [0.55, 0.7]], ["chainDmg", [0.4, 0.5]], ["spellCrit", [0.12, 0.16]], ["magPct", [0.2, 0.25]]], "번개는 가장 먼저 이 끝으로 떨어진다."),
-  U("dischargerobe", "방전의 로브", "armor", 2, "light", 1, [["hpPct", [0.3, 0.38]], ["lightDmg", [0.35, 0.45]], ["dmgTaken", -0.1], ["regen", 0.004]], "맞은 번개는 돌려주면 그만이다."),
-  U("tempestheart", "폭풍의 심장", "neck", 3, "light", 1, [["lightDmg", [0.8, 1.0]], ["chainJumps", 2], ["chainDmg", [0.5, 0.6]], ["penElem", 0.2], ["elemDmg", [0.2, 0.25]]], "고동칠 때마다 먹구름이 모여든다."),
+  U("stormglove", "뇌운의 장갑", "gloves", 1, "light", 1, [["lightDmg", [0.4, 0.514]], ["chainDmg", [0.428, 0.571]], ["magPct", [0.114, 0.143]]], "손끝에서 자꾸 불꽃이 튄다."),
+  U("staticring", "정전기 반지", "ring", 1, "light", 1, [["lightDmg", [0.397, 0.509]], ["spellCrit", [0.159, 0.223]], ["magPct", [0.095, 0.127]]], "만지면 따끔하다. 만지지 않아도."),
+  U("stormstaff", "뇌광의 지팡이", "weapon", 2, "light", 1, [["lightDmg", [0.7, 0.85]], ["chainDmg", [0.4, 0.5]], ["spellCrit", [0.12, 0.16]], ["magPct", [0.2, 0.25]]], "번개는 가장 먼저 이 끝으로 떨어진다."),
+  U("dischargerobe", "방전의 로브", "armor", 2, "light", 1, [["hpPct", [0.3, 0.38]], ["lightDmg", [0.35, 0.45]], ["dmgTaken", [-0.112, -0.088]], ["regen", [0.004, 0.004]], ["bleedChance", [0.158, 0.202]]], "맞은 번개는 돌려주면 그만이다."),
+  U("tempestheart", "폭풍의 심장", "neck", 3, "light", 1, [["lightDmg", [1.101, 1.376]], ["chainJumps", 2], ["chainDmg", [0.688, 0.826]], ["penElem", [0.242, 0.308]], ["elemDmg", [0.275, 0.344]]], "고동칠 때마다 먹구름이 모여든다."),
   U("thundercrown", "뇌운의 관", "helm", 3, "light", 1, [["lightDmg", [0.6, 0.8]], ["spellCrit", [0.2, 0.25]], ["magPct", [0.3, 0.35]], ["cdr", 0.06]], "쓰고 있으면 머리카락이 곤두선다."),
-  U("stormsovereign", "뇌제의 심장", "neck", 4, "light", 1, [["lightDmg", [1.0, 1.2]], ["chainJumps", 5], ["chainDmg", [0.9, 1.1]], ["penElem", 0.3], ["magMore", [1.25, 1.32]], ["spellCrit", 0.2], ["cdr", 0.1]], "번개의 왕이 쓰러져도 폭풍은 멈추지 않는다."),
+  U("stormsovereign", "뇌제의 심장", "neck", 4, "light", 1, [["lightDmg", [0.975, 1.171]], ["chainJumps", 5], ["chainDmg", [0.878, 1.073]], ["penElem", [0.258, 0.328]], ["magMore", [1.244, 1.312]], ["spellCrit", [0.172, 0.219]], ["cdr", [0.086, 0.109]], ["goldFind", [0.493, 0.627]]], "번개의 왕이 쓰러져도 폭풍은 멈추지 않는다."),
 ];
 const UNIQUE_BY_ID = Object.fromEntries(UNIQUES.map((u) => [u.id, u]));
 UNIQUES.forEach((u) => { u.ico = u.slot; });

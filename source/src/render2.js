@@ -10,6 +10,7 @@ function drawFx2(ctx, b, f, prog, a, col, time) {
       const k = Math.min(1, prog * 1.2), x = f.x0 + (f.x1 - f.x0) * k, y = f.y0 + (f.y1 - f.y0) * k + Math.sin(k * 3.14) * (f.fan || 0), ang = Math.atan2(f.y1 - f.y0, f.x1 - f.x0);
       ctx.translate(x, y); ctx.rotate(ang);
       if (f.sprite === "arrow") { ctx.fillStyle = "#d8d0b8"; ctx.fillRect(-18, -1, 22, 3); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -4); ctx.lineTo(0, 4); ctx.fill(); ctx.fillStyle = "#c04a3a"; ctx.fillRect(-20, -3, 5, 6); }
+      else if (f.sprite === "shuriken") { ctx.rotate(prog * 40); ctx.fillStyle = "#e6eefc"; for (let i = 0; i < 4; i++) { ctx.rotate(1.5708); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(3, -4); ctx.lineTo(11, 0); ctx.lineTo(3, 3); ctx.fill(); } }
       else if (f.sprite === "dart") { ctx.fillStyle = "#6ae04a"; ctx.fillRect(-10, -1.5, 14, 3); ctx.fillStyle = "#d8ffc0"; ctx.fillRect(2, -1, 5, 2); ctx.fillStyle = "rgba(106,224,74,.35)"; ctx.fillRect(-22, -2, 12, 4); }
       else { ctx.fillStyle = "#8ae0ff"; ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-4, -6); ctx.lineTo(-10, 0); ctx.lineTo(-4, 6); ctx.fill(); ctx.fillStyle = "#e8fbff"; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-2, -2); ctx.lineTo(-2, 2); ctx.fill(); }
       break; }
@@ -50,10 +51,17 @@ function drawPersist(ctx, b, time) {
       const c = cellXY(b, p.lane, p.col), x = c.x, y = c.y + lh * 0.32; ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.beginPath(); ctx.ellipse(x, y, 20, 7, 0, 0, 7); ctx.fill(); ctx.fillStyle = "#6a5a3a"; ctx.beginPath(); ctx.ellipse(x, y - 4, 18, 8, 0, 0, 7); ctx.fill(); ctx.fillStyle = p.arm > 0 ? "#8a8a8a" : (Math.sin(time * 16) > 0 ? "#ff3a2a" : "#7a1a14"); ctx.fillRect(x - 4, y - 14, 8, 8);
     } else if (p.kind === "hole") {
       const c = cellXY(b, p.lane, p.col), x = c.x, y = c.y + lh * 0.22; for (let i = 0; i < 5; i++) { const r0 = 18 + i * 14; ctx.strokeStyle = `rgba(${150 + i * 18},80,255,${0.8 - i * 0.14})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(x, y, r0 * 1.5, r0 * 0.6, 0, p.rot * (5 - i) + i, p.rot * (5 - i) + i + 4); ctx.stroke(); } ctx.fillStyle = "#0a0414"; ctx.beginPath(); ctx.ellipse(x, y, 16, 8, 0, 0, 7); ctx.fill();
+    } else if (p.kind === "shuri") {
+      const cx = cellXY(b, 0, p.col).x, cy = (cellXY(b, 0, p.col).y + cellXY(b, b.lanes - 1, p.col).y) / 2; ctx.globalAlpha = 0.9; ctx.translate(cx, cy); ctx.rotate(p.rot * 8); ctx.fillStyle = "#c8d4e8"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+      ctx.beginPath(); for (let i = 0; i < 4; i++) { const a = i * 1.5708; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a - .35) * 40, Math.sin(a - .35) * 40); ctx.lineTo(Math.cos(a + .1) * 78, Math.sin(a + .1) * 78); ctx.lineTo(Math.cos(a + .45) * 40, Math.sin(a + .45) * 40); ctx.closePath(); } ctx.fill(); ctx.stroke();
     } else if (p.kind === "rain") {
       ctx.fillStyle = "rgba(40,44,70,.8)"; for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(80 + i * 130 + Math.sin(time + i) * 8, 40 + (i % 2) * 12, 38, 0, 7); ctx.fill(); }
     }
     ctx.restore();
   }
+}
+function drawGrand(ctx, b) {   // 신화 이상 전용 스킬: 장엄한 연출 (1.5초)
+  const g = b.grand; if (!g) return; const k = g.t / g.life, a = Math.min(1, k * 3, (1 - k) * 6 + 0.2); ctx.save(); ctx.globalAlpha = 0.28 * a; ctx.fillStyle = g.color; ctx.fillRect(-20, -20, CW + 40, CH + 40);
+  ctx.globalAlpha = Math.min(1, a * 1.4); ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0, 170, CW, 76); ctx.textAlign = "center"; ctx.font = "bold 40px sans-serif"; ctx.fillStyle = g.color; ctx.shadowColor = g.color; ctx.shadowBlur = 24; ctx.fillText(g.name, CW / 2 + (k - 0.5) * 40, 220); ctx.restore();
 }
 const pickPrimaryLoose = (b) => b.enemies.find((e) => !e.dead && e.col === Math.min(...b.enemies.filter((x) => !x.dead).map((x) => x.col)));

@@ -81,7 +81,7 @@ function planFor(node) {
   else if (node.kind === "elite") { nNormal = 45; elites = 10 + act; }
   else if (node.kind === "treasure") { nNormal = 95; elites = 0; }
   else if (node.kind === "vault") { nNormal = 110; elites = 0; }
-  else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = 70 + 4 * t; elites = 3 + Math.floor(t / 2); boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
+  else if (node.kind === "rift" || node.kind === "hell" || node.kind === "trial") { const t = node.tier; nNormal = Math.min(140, Math.round(52 + 1.3 * t)); elites = 3 + Math.min(17, Math.floor(t / 4));   /* v3.23 한 층 플레이 시간 단축 */ boss = (node.kind === "rift" || node.kind === "trial") && t % 5 === 0; if (mods.some((m) => m.elites)) elites *= 3; }
   else if (node.kind === "endless") { nNormal = 40; elites = 3; }
   else if (node.kind === "void") { nNormal = 22; elites = 3; boss = true; }
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
@@ -93,11 +93,23 @@ function planFor(node) {
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
-const riftAtkExtra = (node) => (node.tier > CFG.RIFT_ATK_PIVOT ? Math.pow(Math.pow(CFG.RIFT_SCALE, node.tier - CFG.RIFT_ATK_PIVOT), CFG.RIFT_ATK_EXP - 1) : 1);
+// 균열·시련 단계 배율: 28단계까지는 base^(단계-1), 그 위로는 단계당 성장의 로그가 RIFT_K배 (엔드게임 장비 성장이 완만해진 만큼)
+const riftMult = (base, tier) => {
+  const n = Math.max(0, tier - 1), n0 = CFG.RIFT_T0 - 1, ramp = 1 + CFG.RIFT_RAMP * Math.min(1, Math.max(0, (tier - 10) / 20));
+  if (n <= n0) return ramp * Math.pow(base, n);
+  if (base !== CFG.RIFT_SCALE) return ramp * Math.pow(base, n0) * Math.pow(base, CFG.RIFT_K * (n - n0));   // 스킬 시련: 완만한 곡선
+  // v3.23 균열 난이도는 계단형: 20층 구간 안에서는 완만하게 오르다가, 구간을 깬 다음 층(21 · 41 · 61 …)에서 한 번에 어려워진다 (아이템 레벨이 20층마다 오르는 것과 맞춤)
+  return ramp * Math.pow(base, n0) * Math.pow(CFG.RIFT_J, Math.floor((tier - 1) / 20) - Math.floor((CFG.RIFT_T0 - 1) / 20)) * Math.pow(CFG.RIFT_S, tier - CFG.RIFT_T0);
+};   // ramp: 아이템 레벨 11 장비(균열 20층~)가 처음 나오는 구간에서 적을 서서히 단단하게
+// 속성 보스·공허의 군주는 아이템 레벨이 20층마다 오르는 새 곡선에서도 "엔젤릭 없이는 4단계 불가"인 옛 격차를 유지하도록 단계별 보정을 따로 둔다 ([균열 단계, 배율] 로그 보간)
+const BOSS_EXTRA = [[24, 0.5], [40, 0.7], [62, 1.5], [96, 5], [114, 30]];
+const bossExtra = (t) => { const A = BOSS_EXTRA; if (t <= A[0][0]) return A[0][1]; for (let i = 1; i < A.length; i++) if (t <= A[i][0]) { const f = (t - A[i - 1][0]) / (A[i][0] - A[i - 1][0]); return A[i - 1][1] * Math.pow(A[i][1] / A[i - 1][1], f); } return A[A.length - 1][1] * Math.pow(A[A.length - 1][1] / A[A.length - 2][1], (t - A[A.length - 1][0]) / (A[A.length - 1][0] - A[A.length - 2][0])); };
+const bossRiftMult = (t) => riftMult(CFG.RIFT_SCALE, t) * bossExtra(t);
+const riftAtkExtra = (node) => (node.tier > CFG.RIFT_ATK_PIVOT ? Math.pow(riftMult(CFG.RIFT_SCALE, node.tier) / riftMult(CFG.RIFT_SCALE, CFG.RIFT_ATK_PIVOT), CFG.RIFT_ATK_EXP - 1) : 1);
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.min(10, node.act), stage = RIFTLIKE[node.kind] ? 4 : node.stage || 10;
-  const riftMul = node.tier ? Math.pow(node.kind === "trial" ? CFG.TRIAL_SCALE : CFG.RIFT_SCALE, node.tier - 1) : 1;
+  const riftMul = node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : riftMult(node.kind === "trial" ? CFG.TRIAL_SCALE : CFG.RIFT_SCALE, node.tier)) : 1;
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
@@ -133,7 +145,7 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [30, 42, 62, 114], VOID_HP = VOID_TIER.map((t) => Math.pow(CFG.RIFT_SCALE, t - 30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [30, 42, 62, 114], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(30)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
@@ -298,7 +310,7 @@ function healPlayer(b, amt) { if (b.debuffs.wound) amt *= b.debuffs.wound.mult; 
 // ---------------- 스킬 ----------------
 function castSkill(b, sk) {
   const cost = (sk.mana || 0) * b.stats.manaCostMul; if (b.mana < cost) return false;
-  const ok = castSkillRaw(b, sk); if (ok) b.mana -= cost; return ok;
+  const ok = castSkillRaw(b, sk); if (ok) { b.mana -= cost; if (sk.mythOnly && !b.noFx && !(typeof save !== "undefined" && save && save.opt && save.opt.grand === 0)) { b.grand = { name: sk.name, t: 1.5, life: 1.5, color: sk.color }; b.shake = Math.max(b.shake, 0.45); } } return ok;
 }
 function castSkillRaw(b, sk) {
   const K = sk.kind; if (SKILL_KINDS2[K]) return SKILL_KINDS2[K](b, sk);
@@ -309,7 +321,9 @@ function castSkillRaw(b, sk) {
   const ctr = (e) => ({ lane: e.lane + (e.h > 1 ? rint(0, e.h - 1) : 0), col: e.col });
   const col = sk.color;
   if (K === "single") {
-    hitEnemy(b, p, 1, sk); if (sk.chill) p.chill = Math.max(p.chill, sk.chill); const P = cellXY(b, p.lane, p.col, p.w, p.h);
+    hitEnemy(b, p, sk.hitMul || 1, sk); if (sk.chill) p.chill = Math.max(p.chill, sk.chill);
+    for (let hi = 1; hi < (sk.hits || 1); hi++) b.events.push({ t: 0.11 * hi, fn: () => { if (!p.dead && p.hp > 0) { hitEnemy(b, p, sk.hitMul, sk); const P2 = cellXY(b, p.lane, p.col, p.w, p.h); fx(b, { kind: "slash", x: p.vx != null ? p.vx : P2.x, y: (p.vy != null ? p.vy : P2.y) - 30 + rnd(-8, 8), t: 0.16, life: 0.16, color: sk.color }); } } });
+    const P = cellXY(b, p.lane, p.col, p.w, p.h);   // (위: 연타)
     fx(b, { kind: "slash", x: p.vx != null ? p.vx : P.x, y: (p.vy != null ? p.vy : P.y) - 30, t: 0.2, life: 0.2, color: col }); fx(b, { kind: "shot", t: 0.14, life: 0.14, e: p, color: col });
   } else if (K === "multi") {
     const c = ctr(p), cx = cellXY(b, c.lane, c.col); const box = [c.lane - 1, c.lane + 1, c.col - 1, c.col + 1];
@@ -317,8 +331,9 @@ function castSkillRaw(b, sk) {
     for (const e of hits) hitEnemy(b, e, cellsOf(e).some(([l, cc]) => l === c.lane && cc === c.col) ? 1 : sk.side, sk, { aoe: true });
     fx(b, { kind: "boom", x: cx.x, y: cx.y, t: 0.45, life: 0.45, color: col, r: 100 }); fx(b, { kind: "shot", t: 0.16, life: 0.16, e: p, color: col });
   } else if (K === "pierce") {
-    const lane = ctr(p).lane; const hits = b.enemies.filter((e) => !e.dead && lane >= e.lane && lane < e.lane + e.h && e.col <= sk.range);
+    const lane = ctr(p).lane; const hits = b.enemies.filter((e) => !e.dead && (sk.all ? e.lane < b.lanes : lane >= e.lane && lane < e.lane + e.h) && e.col <= sk.range);
     for (const e of hits) hitEnemy(b, e, 1, sk);
+    if (sk.adj) for (const e of b.enemies.filter((e) => !e.dead && !hits.includes(e) && e.col <= sk.range && cellsOf(e).some(([l]) => Math.abs(l - lane) === 1))) hitEnemy(b, e, sk.adj, sk, { aoe: true });
     const far = Math.max(...hits.map((e) => e.col + e.w - 1)); fx(b, { kind: "beam", lane, col: far, t: 0.28, life: 0.28, color: col });
   } else if (K === "chain") {
     const jumps = sk.jumps + b.stats.chainJumps; const seen = new Set([p.id]);
@@ -338,7 +353,8 @@ function castSkillRaw(b, sk) {
     }
   } else if (K === "nova") {
     const hits = b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= sk.range);
-    for (const e of hits) { hitEnemy(b, e, 1, sk, { aoe: true }); e.chill = Math.max(e.chill, sk.chill); }
+    for (const e of hits) { hitEnemy(b, e, 1, sk, { aoe: true }); e.chill = Math.max(e.chill, sk.chill || 0); }
+    if (sk.healPct) healPlayer(b, b.maxHp * sk.healPct);
     fx(b, { kind: "nova", t: 0.6, life: 0.6, color: col });
   } else if (K === "zone") {
     const c = ctr(p);

@@ -1,5 +1,5 @@
 import base64,sys,os
-D=os.path.dirname(os.path.abspath(__file__)); A='/home/claude/art'
+D=os.path.dirname(os.path.abspath(__file__)); A=os.environ.get('ART_DIR', D+'/art')
 sheets={'warrior':'warrior_sheet.png','c_goblin':'goblin_sheet.png','c_archer':'archer_sheet.png','c_shaman':'shaman_sheet.png','c_brute':'brute_sheet.png','c_imp':'imp_sheet.png','bosses':'bosses_sheet96.png',
  'ghoul':'goblin_sheet48.png','skel':'archer_sheet48.png','necro':'shaman_sheet48.png','brute':'brute_sheet48.png','fiend':'imp_sheet48.png'}
 for n in ['slime','slimeT','slimeL','mush','mushT','bat','batC','scorp','wolf','wolfH','eye','golem','golemI','golemM','frog']: sheets[n]=n+'_sheet48.png'

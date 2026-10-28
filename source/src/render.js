@@ -119,7 +119,7 @@ function drawBattle(ctx, b, dt, time) {
   drawRoads(ctx, b, time);
   // 장판 (화염 벽)
   for (const z of b.zones) drawZone(ctx, b, z, time);
-  drawPersist(ctx, b, time);
+  drawPersist(ctx, b, time); drawGrand(ctx, b);
   // 플레이어
   const P = PLAYER_POS; let pa = "idle", pt = time; if (b.over && !b.win) { pa = "death"; pt = Math.min(0.5, b.time - (b.deadAt || (b.deadAt = b.time))); } else if (b.pHurt > 0) { pa = "hurt"; pt = 0; } else if (b.pAtk > 0) { pa = "attack"; pt = 0.42 - b.pAtk; }
   const paf = animFrame("warrior", pa, pt); ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 38, 8, 0, 0, 7); ctx.fill(); ctx.restore();

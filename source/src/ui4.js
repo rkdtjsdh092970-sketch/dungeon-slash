@@ -63,7 +63,7 @@ const isSkillItem = (it) => it && it.slot === "skill";
 function ahRowHtml(r, act) {
   const it = r.item;
   if (isSkillItem(it)) { const d = SKILLS.find((x) => x.id === it.id); if (!d) return ""; const sk = skillOf(it); return `<div class="ahrow"><div class="tile sktile">${skIcon(it.id, 2)}</div><div style="flex:1;min-width:0"><div>${skillTitle(it)} <small class="dim">스킬 · Lv.${it.lvl || 1}${sk.rune ? " · " + sk.rune.name : ""}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${d.desc} · 피해 ${Math.round(sk.mult * 100)}% · 쿨 ${sk.cd.toFixed(1)}s</small></div><div style="text-align:right"><div style="color:#ffe08a;font-weight:bold">${fmtN(r.price)}G</div>${act}</div></div>`; }
-  return `<div class="ahrow">${tileHtml(it, { up: true })}<div style="flex:1;min-width:0"><div>${itemTitle(it)} <small class="dim">Lv.${it.ilvl} ${SLOT_NAME[it.slot]}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${baseText(it)} · ${itemBrief(it)}</small></div>
+  return `<div class="ahrow">${tileHtml(it, { up: true })}<div style="flex:1;min-width:0"><div>${itemTitle(it)} <small class="dim">Lv.${it.ilvl} ${slotLabel(it)}${r.seller ? " · " + r.seller : ""}</small></div><small class="dim" style="display:block;max-height:34px;overflow:hidden">${baseText(it)} · ${itemBrief(it)}</small></div>
   <div style="text-align:right"><div style="color:#ffe08a;font-weight:bold">${fmtN(r.price)}G</div>${act}</div></div>`;
 }
 async function openAuction() {
@@ -101,7 +101,7 @@ async function openAuction() {
 }
 function ahPostSkill(inst, rerender) {
   if (!inst) return;
-  if (save.loadout.some((l) => l && l.uid === inst.uid)) return toast("장착 중인 스킬은 등록할 수 없습니다 (먼저 해제하세요)", "bad");
+  if (save.passive === inst.uid || save.loadout.some((l) => l && l.uid === inst.uid)) return toast("장착 중인 스킬은 등록할 수 없습니다 (먼저 해제하세요)", "bad");
   if ((save.presets || []).some((p) => p && p.loadout.some((l) => l && l.uid === inst.uid))) return toast("프리셋에 포함된 스킬은 등록할 수 없습니다", "bad");
   const d = SKILLS.find((x) => x.id === inst.id), sug = Math.max(100, Math.round(skillPrice(d, inst.rarity) * 1.5 * (1 + 0.15 * ((inst.lvl || 1) - 1))));
   Modal.open(`<h2>스킬 경매 등록</h2><div class="center pad">${skIcon(inst.id, 3)}<div>${skillTitle(inst)} · Lv.${inst.lvl || 1}${inst.rune ? " · " + RUNES[inst.rune].name : ""}</div></div><div class="center">가격(골드) <input class="txt" id="ah-price" type="number" min="1" value="${sug}"></div><div class="dim center" style="margin-top:6px">수수료 5%가 판매 대금에서 빠집니다 · 최대 5개까지 등록 · 룬과 레벨이 함께 넘어갑니다</div><div class="pbtns"><button class="btn pri" data-a="ahgo">등록</button><button class="btn" data-a="ahno">취소</button></div>`, { cls: "sm", on: {
