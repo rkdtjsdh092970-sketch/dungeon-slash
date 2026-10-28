@@ -87,6 +87,7 @@ function clampItem(it) {
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
 function clampAll(sv) { let n = 0; dedupeLoadout(sv);
+  if (sv.rift && sv.rift.best > CFG.RIFT_END) sv.rift.best = CFG.RIFT_END;   // 균열은 100층까지 (이전 상한을 넘은 기록은 100층으로 맞춘다)
   // 사라진 각인(경험치·지옥)에 쓴 조각은 돌려준다
   { const A = sv.atlas || (sv.atlas = {}), OLD = { exp: [6, 0.55], hell: [12, 0.55] }; for (const id in OLD) { const rk = A[id] | 0; if (rk > 0) { let sum = 0; for (let r = 0; r < rk; r++) sum += Math.round(OLD[id][0] * (1 + r * OLD[id][1])); sv.shards = (sv.shards || 0) + sum; } delete A[id]; } }
   if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); if (!Array.isArray(sv.stones)) sv.stones = []; for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k]); return n; }
