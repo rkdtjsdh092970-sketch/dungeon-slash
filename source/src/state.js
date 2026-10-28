@@ -7,7 +7,7 @@ const QDEFS = questDefs();
 const MAP = buildMap();
 
 function newSave() {
-  const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, slots: 1,
+  const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
     passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
@@ -180,7 +180,7 @@ function clampItem(it, mix) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; const mix = physFrac(sv); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k], k === "weapon" ? mix : undefined); return n; }
+function clampAll(sv) { let n = 0; const mix = physFrac(sv); if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k], k === "weapon" ? mix : undefined); return n; }
 function diceItem(sv, it) {
   if ((sv.dice || 0) < 1) return false;
   if (it.uniq) {
@@ -431,7 +431,7 @@ function rollDrops(sv, node, boss, B) {
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [] };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 6 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
-  if (kind === "rift" || kind === "hell") n = 3 + Math.floor(node.tier / 5) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
+  if (kind === "rift" || kind === "hell") n = 3 + Math.min(10, Math.floor(node.tier / 5)) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);   // v3.27: 높은 단계에서 드랍 개수가 끝없이 늘던 것을 상한 처리
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = Math.max(1, node.vsel || 1);
   if (isEB(kind)) n = 3 + 2 * (node.vsel || 1);
@@ -470,7 +470,7 @@ function rollDrops(sv, node, boss, B) {
     if (Math.random() < COMMON_BOSS_U[cst - 1] * Math.min(2, Math.pow(mfw, 0.4)) * B.unique) { const u = rollUnique(sv, 10, ilvl, ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
   if (!(kind === "void" || isEB(kind))) {
-    let per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique * ((kind === "rift" || kind === "hell" || kind === "endless") ? 1 + Math.min(2, (node.tier || 0) / 40) : 1), rolls = n + (boss ? 2 : 0);   // 균열은 단계가 높을수록 고유가 잘 나온다
+    let per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique * ((kind === "rift" || kind === "hell" || kind === "endless") ? 0.65 * (1 + Math.min(1, (node.tier || 0) / 60)) : 1), rolls = n + (boss ? 2 : 0);   // 균열은 단계가 높을수록 고유가 잘 나온다
     if (!late) per = Math.max(per, (CFG.ACT_UNIQ[kind] || 0) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique);   // v3.23: 액트를 돌 때도 고유가 가끔 나온다 (스테이지 약 4% · 정예 약 10% · 보스 약 20%)
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }

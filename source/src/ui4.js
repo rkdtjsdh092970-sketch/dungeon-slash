@@ -129,7 +129,7 @@ async function rankBody(k) {
   if (k === "guild") {
     const l = await api("/api/guild/list"); if (l.err) return `<div class="warn center pad">${l.err}</div>`;
     RK.rows = l.rows || [];
-    return `<div class="qlist" style="max-height:340px;overflow:auto">${RK.rows.map((g, i) => `<div class="qrow"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(g.name)} <small class="dim">길드장 ${rkEsc(g.leader)} · ${g.members}명</small></div><div style="text-align:right"><b style="color:#ffe08a">Lv.${g.level}</b><br><small class="dim">경험치 ${fmtC(g.exp)}</small></div></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`;
+    return `<div class="qlist" style="max-height:300px;overflow:auto">${RK.rows.map((g, i) => `<div class="qrow"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(g.name)} <small class="dim">길드장 ${rkEsc(g.leader)} · ${g.members}명</small></div><div style="text-align:right"><b style="color:#ffe08a">Lv.${g.level}</b><br><small class="dim">경험치 ${fmtC(g.exp)}</small></div></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`;
   }
   const r = await api("/api/rank?k=" + k); if (r.err) return `<div class="warn center pad">${r.err}</div>`;
   RK.rows = r.rows || []; RK.mine = r.mine || null; const me = SRV.name, mv = k === "power" ? fmtPow(r.mine ? r.mine.value : 0) : (RK_VAL[k] ? RK_VAL[k]({ [k]: r.mine ? r.mine.value : 0, level: r.mine ? r.mine.value : 0 }) : "");
@@ -210,5 +210,43 @@ async function openMail() {
    <div class="qlist" style="max-height:330px;overflow:auto">${rows.map((m) => `<div class="qrow" style="${m.claimed ? "opacity:.55" : ""}"><div class="qi"><b>${String(m.title).replace(/</g, "&lt;")}</b> <small class="dim">${fmtD(m.created)}</small><div class="dim" style="white-space:pre-wrap">${String(m.body || "").replace(/</g, "&lt;")}</div><div style="color:#ffe08a">🎁 ${mailRewardText(m)}</div></div>${m.claimed ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="mget" data-id="${m.id}">받기</button>`}</div>`).join("") || `<div class="dim center pad">받은 우편이 없습니다</div>`}</div>`, { cls: "wide", on: {
     mget: async (el) => { const c = await api("/api/mail/claim", { id: +el.dataset.id }); if (c.err) { toast(c.err, "bad"); return openMail(); } const got = mailApply(c); saveGame(); refreshTop(); snd("coin"); toast(`우편 수령: ${mailRewardText(c)}${got.length ? " → " + got.map((x) => UNIQUE_BY_ID[x.uniq].name).join(", ") : ""}`, "ok"); openMail(); },
     mall: async () => { const c = await api("/api/mail/claimall", {}); if (c.err) { toast(c.err, "bad"); return openMail(); } const got = mailApply(c); saveGame(); refreshTop(); snd("coin"); toast(`우편 ${c.n}통 수령: ${mailRewardText(c)}${got.length ? " → " + got.map((x) => UNIQUE_BY_ID[x.uniq].name).join(", ") : ""}`, "ok"); openMail(); },
+  } });
+}
+
+// =========================================================
+// v3.27 창고: 장비·스킬을 보관 (100칸 시작, 골드로 10칸씩 500칸까지 확장). 장비와 스킬이 같은 칸을 나눠 쓴다
+// =========================================================
+const STASH_MAX = 500, STASH_STEP = 10;
+const stashUsed = (sv) => sv.stash.items.length + sv.stash.skills.length;
+const stashExpandCost = (sv) => (sv.stash.cap >= STASH_MAX ? null : Math.round(300000 * Math.pow(1.12, (sv.stash.cap - 100) / STASH_STEP)));
+const ST = { tab: "item" };
+function stashSkillBusy(sv, inst) { return sv.passive === inst.uid || sv.loadout.some((l) => l && l.uid === inst.uid) || skillInPreset(sv, inst); }
+function stashSort(sv) {
+  const sl = (s) => EQ_SLOTS.indexOf(s);
+  sv.stash.items.sort((a, b) => sl(a.slot) - sl(b.slot) || b.rarity - a.rarity || (b.uniq ? 1 : 0) - (a.uniq ? 1 : 0) || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0) || a.uid - b.uid);
+  sv.stash.skills.sort((a, b) => b.rarity - a.rarity || (b.lvl || 1) - (a.lvl || 1) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0) || a.uid - b.uid);
+}
+function openStash() {
+  const sv = save, S = sv.stash, free = S.cap - stashUsed(sv), cost = stashExpandCost(sv), isI = ST.tab === "item";
+  const invItems = sv.inv.slice().sort((a, b) => b.rarity - a.rarity || b.ilvl - a.ilvl), invSk = sv.skills.filter((k) => !stashSkillBusy(sv, k)).sort((a, b) => b.rarity - a.rarity || (b.lvl || 1) - (a.lvl || 1));
+  const skTile = (k, act) => { const d = SKILLS.find((x) => x.id === k.id); return `<div class="tile rk${k.rarity}" data-a="${act}" data-u="${k.uid}" data-tips="${d.id}" title="${d.name}">${skIcon(d.id, 2)}<small>${k.lvl || 1}</small></div>`; };
+  const invHtml = isI ? invItems.map((it) => tileHtml(it, { attr: `data-a="dep" data-u="${it.uid}"`, up: false })).join("") : invSk.map((k) => skTile(k, "dep")).join("");
+  const stHtml = isI ? S.items.map((it) => tileHtml(it, { attr: `data-a="wd" data-u="${it.uid}"`, up: false })).join("") : S.skills.map((k) => skTile(k, "wd")).join("");
+  const html = `<h2>📦 창고</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} &nbsp; 보관 <b>${stashUsed(sv)} / ${S.cap}</b> <small class="dim">(장비 ${S.items.length} · 스킬 ${S.skills.length}, 최대 ${STASH_MAX}칸)</small></div>
+  <div class="itbar"><button class="tab ${isI ? "on" : ""}" data-a="sttab" data-t="item">장비</button><button class="tab ${!isI ? "on" : ""}" data-a="sttab" data-t="skill">스킬</button><button class="btn xs" data-a="stsort">자동 정렬</button><button class="btn xs" data-a="stexp" ${cost == null || sv.gold < cost ? "disabled" : ""}>${cost == null ? "최대 확장" : `+${STASH_STEP}칸 확장 (${fmtN(cost)} 골드)`}</button></div>
+  <div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div class="dim">가방 ${isI ? sv.inv.length + " / " + CFG.INV_MAX : "스킬 " + sv.skills.length} · 눌러서 창고로</div><div class="grid" style="max-height:300px;overflow:auto">${invHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div>
+  <div style="flex:1;min-width:0"><div class="dim">창고 · 눌러서 가방으로</div><div class="grid" style="max-height:300px;overflow:auto">${stHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div></div>
+  <div class="dim">착용·장착 중인 장비/스킬은 넣을 수 없고, 창고 물품은 판매·분해 대상에서 제외됩니다.</div>`;
+  const done = () => { saveGame(); openStash(); };
+  Modal.open(html, { cls: "wide", on: {
+    sttab: (el) => { ST.tab = el.dataset.t; snd("click"); openStash(); },
+    stsort: () => { stashSort(sv); snd("click"); done(); },
+    stexp: () => { const c = stashExpandCost(sv); if (c == null || sv.gold < c) return toast("골드가 부족합니다", "bad"); sv.gold -= c; S.cap += STASH_STEP; snd("coin"); toast(`창고 ${S.cap}칸`, "ok"); refreshTop(); done(); },
+    dep: (el) => { const u = +el.dataset.u; if (stashUsed(sv) >= S.cap) return toast("창고가 가득 찼습니다 (확장하세요)", "bad");
+      if (isI) { const it = sv.inv.find((x) => x.uid === u); if (!it) return; if (EQ_SLOTS.some((k) => sv.equipped[k] === it) || (sv.presets || []).some((p) => p && Object.values(p.equip).includes(u))) return toast("착용 중이거나 프리셋에 포함된 장비는 넣을 수 없습니다", "bad"); sv.inv = sv.inv.filter((x) => x !== it); S.items.push(it); } else { const k = sv.skills.find((x) => x.uid === u); if (!k || stashSkillBusy(sv, k)) return; sv.skills = sv.skills.filter((x) => x !== k); S.skills.push(k); }
+      snd("click"); done(); },
+    wd: (el) => { const u = +el.dataset.u;
+      if (isI) { if (sv.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad"); const it = S.items.find((x) => x.uid === u); if (!it) return; S.items = S.items.filter((x) => x !== it); sv.inv.push(it); } else { const k = S.skills.find((x) => x.uid === u); if (!k) return; S.skills = S.skills.filter((x) => x !== k); sv.skills.push(k); }
+      snd("click"); done(); },
   } });
 }

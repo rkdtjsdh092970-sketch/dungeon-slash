@@ -1476,7 +1476,7 @@ const QDEFS = questDefs();
 const MAP = buildMap();
 
 function newSave() {
-  const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, slots: 1,
+  const s = { v: 2, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
     passRev: 4, rangeRev: 1, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
@@ -1649,7 +1649,7 @@ function clampItem(it, mix) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; const mix = physFrac(sv); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k], k === "weapon" ? mix : undefined); return n; }
+function clampAll(sv) { let n = 0; const mix = physFrac(sv); if (!sv.stash || !Array.isArray(sv.stash.items)) sv.stash = { items: [], skills: [], cap: 100 }; if (!Array.isArray(sv.stash.skills)) sv.stash.skills = []; sv.stash.cap = Math.max(100, Math.min(500, Math.round((+sv.stash.cap || 100) / 10) * 10)); for (const it of sv.stash.items) n += clampItem(it); for (const it of sv.inv || []) n += clampItem(it); for (const k in sv.equipped || {}) n += clampItem(sv.equipped[k], k === "weapon" ? mix : undefined); return n; }
 function diceItem(sv, it) {
   if ((sv.dice || 0) < 1) return false;
   if (it.uniq) {
@@ -1900,7 +1900,7 @@ function rollDrops(sv, node, boss, B) {
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [] };
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 6 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
-  if (kind === "rift" || kind === "hell") n = 3 + Math.floor(node.tier / 5) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);
+  if (kind === "rift" || kind === "hell") n = 3 + Math.min(10, Math.floor(node.tier / 5)) + (boss ? 3 : 0) + (kind === "hell" ? 3 : 0);   // v3.27: 높은 단계에서 드랍 개수가 끝없이 늘던 것을 상한 처리
   if (kind === "endless") n = 4 + Math.floor(endlessWaves * 1.2);
   if (kind === "void") n = Math.max(1, node.vsel || 1);
   if (isEB(kind)) n = 3 + 2 * (node.vsel || 1);
@@ -1939,7 +1939,7 @@ function rollDrops(sv, node, boss, B) {
     if (Math.random() < COMMON_BOSS_U[cst - 1] * Math.min(2, Math.pow(mfw, 0.4)) * B.unique) { const u = rollUnique(sv, 10, ilvl, ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
   if (!(kind === "void" || isEB(kind))) {
-    let per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique * ((kind === "rift" || kind === "hell" || kind === "endless") ? 1 + Math.min(2, (node.tier || 0) / 40) : 1), rolls = n + (boss ? 2 : 0);   // 균열은 단계가 높을수록 고유가 잘 나온다
+    let per = CFG.UNIQUE_BASE * CFG.PROTO_MULT * (UNIQUE_SRC[kind] || 1) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique * ((kind === "rift" || kind === "hell" || kind === "endless") ? 0.65 * (1 + Math.min(1, (node.tier || 0) / 60)) : 1), rolls = n + (boss ? 2 : 0);   // 균열은 단계가 높을수록 고유가 잘 나온다
     if (!late) per = Math.max(per, (CFG.ACT_UNIQ[kind] || 0) * Math.pow(mfw, CFG.UNIQ_MF_EXP) * B.unique);   // v3.23: 액트를 돌 때도 고유가 가끔 나온다 (스테이지 약 4% · 정예 약 10% · 보스 약 20%)
     for (let i = 0; i < rolls; i++) if (Math.random() < per) { const u = rollUnique(sv, late ? 10 : act, ilvl, U_POOLS_OF[kind] || ["common"]); if (u) { out.items.push(u); out.uniques++; } }
   }
@@ -4404,7 +4404,7 @@ function renderItems() {
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button>` : `<div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
-  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button></div>`;
+  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span> &nbsp; <span data-tipk="dice">🎲 주사위 ${save.dice || 0}</span>${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
@@ -4421,7 +4421,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(), autodis: () => openAutoDis(),
+    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(),
     mtog: () => { IB.multi = !IB.multi; IB.chk.clear(); snd("click"); renderItems(); },
     mpick: (el) => { const it = find(el); if (!it) return; if (isProtected(it)) { snd("error"); toast("잠금·프리셋·착용 중인 장비는 선택할 수 없습니다", "bad"); return; } if (IB.chk.has(it.uid)) IB.chk.delete(it.uid); else IB.chk.add(it.uid); renderItems(); },
     mall: () => { for (const it of list) if (!isProtected(it)) IB.chk.add(it.uid); renderItems(); }, mnone: () => { IB.chk.clear(); renderItems(); },
@@ -4875,7 +4875,7 @@ const TipUI = { el: null, key: "" };
 function tipFind(t) {
   const el = t && t.closest ? t.closest("[data-tipk],[data-tipu],[data-tips]") : null; if (!el) return null;
   if (el.dataset.tipk) { const c = TIP_CUR[el.dataset.tipk]; if (!c) return null; return { key: "k" + el.dataset.tipk, html: `<div class="tt"><b>${c[0]}</b></div><div>${c[1]}</div><div class="tsrc"><b>획득처</b><br>${c[2]}</div>` }; }
-  if (el.dataset.tipu) { const u = +el.dataset.tipu, it = save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u); if (!it) return null; return { key: "u" + u + ":" + (it.enh || 0) + ":" + it.affixes.length, html: itemTipHtml(it) }; }
+  if (el.dataset.tipu) { const u = +el.dataset.tipu, it = save.inv.find((x) => x.uid === u) || ((save.stash && save.stash.items) || []).find((x) => x.uid === u) || EQ_SLOTS.map((k) => save.equipped[k]).find((x) => x && x.uid === u); if (!it) return null; return { key: "u" + u + ":" + (it.enh || 0) + ":" + it.affixes.length, html: itemTipHtml(it) }; }
   if (el.dataset.tips) { const d = SKILLS.find((x) => x.id === el.dataset.tips); if (!d) return null; return { key: "s" + d.id, html: skillTipHtml(d) }; }
   return null;
 }
@@ -5023,7 +5023,7 @@ async function rankBody(k) {
   if (k === "guild") {
     const l = await api("/api/guild/list"); if (l.err) return `<div class="warn center pad">${l.err}</div>`;
     RK.rows = l.rows || [];
-    return `<div class="qlist" style="max-height:340px;overflow:auto">${RK.rows.map((g, i) => `<div class="qrow"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(g.name)} <small class="dim">길드장 ${rkEsc(g.leader)} · ${g.members}명</small></div><div style="text-align:right"><b style="color:#ffe08a">Lv.${g.level}</b><br><small class="dim">경험치 ${fmtC(g.exp)}</small></div></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`;
+    return `<div class="qlist" style="max-height:300px;overflow:auto">${RK.rows.map((g, i) => `<div class="qrow"><b style="width:34px;font-size:16px">${["🥇", "🥈", "🥉"][i] || i + 1}</b><div class="qi">${rkEsc(g.name)} <small class="dim">길드장 ${rkEsc(g.leader)} · ${g.members}명</small></div><div style="text-align:right"><b style="color:#ffe08a">Lv.${g.level}</b><br><small class="dim">경험치 ${fmtC(g.exp)}</small></div></div>`).join("") || `<div class="dim center pad">아직 길드가 없습니다</div>`}</div>`;
   }
   const r = await api("/api/rank?k=" + k); if (r.err) return `<div class="warn center pad">${r.err}</div>`;
   RK.rows = r.rows || []; RK.mine = r.mine || null; const me = SRV.name, mv = k === "power" ? fmtPow(r.mine ? r.mine.value : 0) : (RK_VAL[k] ? RK_VAL[k]({ [k]: r.mine ? r.mine.value : 0, level: r.mine ? r.mine.value : 0 }) : "");
@@ -5108,6 +5108,44 @@ async function openMail() {
 }
 
 // =========================================================
+// v3.27 창고: 장비·스킬을 보관 (100칸 시작, 골드로 10칸씩 500칸까지 확장). 장비와 스킬이 같은 칸을 나눠 쓴다
+// =========================================================
+const STASH_MAX = 500, STASH_STEP = 10;
+const stashUsed = (sv) => sv.stash.items.length + sv.stash.skills.length;
+const stashExpandCost = (sv) => (sv.stash.cap >= STASH_MAX ? null : Math.round(300000 * Math.pow(1.12, (sv.stash.cap - 100) / STASH_STEP)));
+const ST = { tab: "item" };
+function stashSkillBusy(sv, inst) { return sv.passive === inst.uid || sv.loadout.some((l) => l && l.uid === inst.uid) || skillInPreset(sv, inst); }
+function stashSort(sv) {
+  const sl = (s) => EQ_SLOTS.indexOf(s);
+  sv.stash.items.sort((a, b) => sl(a.slot) - sl(b.slot) || b.rarity - a.rarity || (b.uniq ? 1 : 0) - (a.uniq ? 1 : 0) || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0) || a.uid - b.uid);
+  sv.stash.skills.sort((a, b) => b.rarity - a.rarity || (b.lvl || 1) - (a.lvl || 1) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0) || a.uid - b.uid);
+}
+function openStash() {
+  const sv = save, S = sv.stash, free = S.cap - stashUsed(sv), cost = stashExpandCost(sv), isI = ST.tab === "item";
+  const invItems = sv.inv.slice().sort((a, b) => b.rarity - a.rarity || b.ilvl - a.ilvl), invSk = sv.skills.filter((k) => !stashSkillBusy(sv, k)).sort((a, b) => b.rarity - a.rarity || (b.lvl || 1) - (a.lvl || 1));
+  const skTile = (k, act) => { const d = SKILLS.find((x) => x.id === k.id); return `<div class="tile rk${k.rarity}" data-a="${act}" data-u="${k.uid}" data-tips="${d.id}" title="${d.name}">${skIcon(d.id, 2)}<small>${k.lvl || 1}</small></div>`; };
+  const invHtml = isI ? invItems.map((it) => tileHtml(it, { attr: `data-a="dep" data-u="${it.uid}"`, up: false })).join("") : invSk.map((k) => skTile(k, "dep")).join("");
+  const stHtml = isI ? S.items.map((it) => tileHtml(it, { attr: `data-a="wd" data-u="${it.uid}"`, up: false })).join("") : S.skills.map((k) => skTile(k, "wd")).join("");
+  const html = `<h2>📦 창고</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} &nbsp; 보관 <b>${stashUsed(sv)} / ${S.cap}</b> <small class="dim">(장비 ${S.items.length} · 스킬 ${S.skills.length}, 최대 ${STASH_MAX}칸)</small></div>
+  <div class="itbar"><button class="tab ${isI ? "on" : ""}" data-a="sttab" data-t="item">장비</button><button class="tab ${!isI ? "on" : ""}" data-a="sttab" data-t="skill">스킬</button><button class="btn xs" data-a="stsort">자동 정렬</button><button class="btn xs" data-a="stexp" ${cost == null || sv.gold < cost ? "disabled" : ""}>${cost == null ? "최대 확장" : `+${STASH_STEP}칸 확장 (${fmtN(cost)} 골드)`}</button></div>
+  <div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div class="dim">가방 ${isI ? sv.inv.length + " / " + CFG.INV_MAX : "스킬 " + sv.skills.length} · 눌러서 창고로</div><div class="grid" style="max-height:300px;overflow:auto">${invHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div>
+  <div style="flex:1;min-width:0"><div class="dim">창고 · 눌러서 가방으로</div><div class="grid" style="max-height:300px;overflow:auto">${stHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div></div>
+  <div class="dim">착용·장착 중인 장비/스킬은 넣을 수 없고, 창고 물품은 판매·분해 대상에서 제외됩니다.</div>`;
+  const done = () => { saveGame(); openStash(); };
+  Modal.open(html, { cls: "wide", on: {
+    sttab: (el) => { ST.tab = el.dataset.t; snd("click"); openStash(); },
+    stsort: () => { stashSort(sv); snd("click"); done(); },
+    stexp: () => { const c = stashExpandCost(sv); if (c == null || sv.gold < c) return toast("골드가 부족합니다", "bad"); sv.gold -= c; S.cap += STASH_STEP; snd("coin"); toast(`창고 ${S.cap}칸`, "ok"); refreshTop(); done(); },
+    dep: (el) => { const u = +el.dataset.u; if (stashUsed(sv) >= S.cap) return toast("창고가 가득 찼습니다 (확장하세요)", "bad");
+      if (isI) { const it = sv.inv.find((x) => x.uid === u); if (!it) return; if (EQ_SLOTS.some((k) => sv.equipped[k] === it) || (sv.presets || []).some((p) => p && Object.values(p.equip).includes(u))) return toast("착용 중이거나 프리셋에 포함된 장비는 넣을 수 없습니다", "bad"); sv.inv = sv.inv.filter((x) => x !== it); S.items.push(it); } else { const k = sv.skills.find((x) => x.uid === u); if (!k || stashSkillBusy(sv, k)) return; sv.skills = sv.skills.filter((x) => x !== k); S.skills.push(k); }
+      snd("click"); done(); },
+    wd: (el) => { const u = +el.dataset.u;
+      if (isI) { if (sv.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad"); const it = S.items.find((x) => x.uid === u); if (!it) return; S.items = S.items.filter((x) => x !== it); sv.inv.push(it); } else { const k = S.skills.find((x) => x.uid === u); if (!k) return; S.skills = S.skills.filter((x) => x !== k); sv.skills.push(k); }
+      snd("click"); done(); },
+  } });
+}
+
+// =========================================================
 // 일일 목표 / 오프라인 보상 / 기록 창
 // =========================================================
 function openDaily() {
@@ -5133,7 +5171,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261028-120859";
+const BUILD_ID = "20261028-193144";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5225,6 +5263,10 @@ function animateResult(res) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "3.27", date: "10/28", title: "창고 · 균열 고유 드랍 하향", items: [
+    "📦 창고가 생겼습니다 (인벤토리의 [창고] 버튼). 장비와 스킬을 보관할 수 있고, 100칸으로 시작해 골드로 10칸씩 최대 500칸까지 늘릴 수 있습니다. [자동 정렬]로 부위·등급·레벨 순으로 정리됩니다. 창고에 넣은 물품은 판매·분해·자동 정리 대상에서 빠집니다.",
+    "균열·지옥에서 단계가 높을수록 드랍 개수가 끝없이 늘어 고유가 너무 많이 나오던 문제를 고쳤습니다: 드랍 개수 증가에 상한(균열 단계 50 이상에서 고정)을 두고 고유 확률 상승폭도 줄였습니다. 고단계 균열의 고유 드랍이 한 층당 약 0.8~1.1개에서 0.2개 안팎(시간당 12~15개)으로 내려갑니다.",
+  ] },
   { ver: "3.26", date: "10/28", title: "엔드게임 장비 성장 완만화 · 균열 파밍 개편 · 신규 스킬 · 패시브 · 밸런스", items: [
     "엔드게임(아이템 레벨 11+) 장비 성장이 완만해졌습니다: 기본 옵션은 레벨당 약 8%만 오르고, 아래쪽 추가 옵션(고정값)은 약 30%, %옵션은 범위가 더 넓게 오릅니다. 아주 좋은 전설은 아이템 레벨이 한 단계 올라도 계속 쓸 수 있습니다. 액트(1~10) 장비는 그대로입니다. 이미 가진 엔드게임 장비는 새 곡선에 맞춰 한 번 환산됩니다.",
     "균열의 드랍 아이템 레벨이 8층마다에서 20층마다로 넓어졌습니다. 균열·지옥·무한 균열은 일반·마법 장비가 거의 나오지 않고 좋은 전설과 이터널 이상 고유가 파밍의 중심이 됩니다 (전설 비중은 단계에 따라 상승, 고유 확률도 단계가 높을수록 상승). 균열 28단계부터 적 성장도 이에 맞춰 완만해졌고, 공허의 군주·속성 보스는 옛 난이도(4단계는 엔젤릭 필요)를 유지합니다.",
