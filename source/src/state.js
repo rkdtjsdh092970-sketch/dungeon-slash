@@ -380,7 +380,8 @@ function rollDrops(sv, node, boss, B) {
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
   out.orbC = Math.floor(ocE) + (Math.random() < ocE - Math.floor(ocE) ? 1 : 0);
   out.dice = Math.random() < diceChance(kind, node) * Math.min(2, B.orb) ? 1 : 0;   // 공허의 주사위: 아주 낮은 확률
-  const odE = ocE * 0.25; out.orbD = Math.floor(odE) + (Math.random() < odE - Math.floor(odE) ? 1 : 0);
+  // 신성한 구슬은 아주 귀하다 (혼돈 구슬의 약 5%)
+  const odE = ocE * 0.05; out.orbD = Math.floor(odE) + (Math.random() < odE - Math.floor(odE) ? 1 : 0);
   return out;
 }
 
