@@ -124,7 +124,7 @@ function mapPanel() {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
   } else if (n.kind === "temple") {
-    h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 <b>원초의 돌</b>과 아주 드물게 <b>계시의 돌</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
+    h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b>계시의 돌</b>과 <b>세공의 인장</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
   } else if (n.kind === "bosshub") {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "tower") {

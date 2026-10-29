@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -316,6 +316,12 @@ const stoneLabel = (m) => { const d = AFFIXES.find((x) => x.k === m.k); const nm
 // 돌 종류: 0 = 원초의 돌(기본), 1 = 계시의 돌(돌의 신전 · 수치가 더 높고 아주 드묾)
 const STONE_T = [{ name: "원초의 돌", un: "미확인된 원초의 돌", color: "#7ec8ff", ico: "💎" }, { name: "계시의 돌", un: "미확인된 계시의 돌", color: "#ffc247", ico: "🔶" }];
 const stoneT = (m) => STONE_T[m && m.hi ? 1 : 0];
+// 세공의 인장: 장비의 소켓 수를 1~3개 중 무작위로 다시 정한다 (끼워 둔 돌은 사라지고 빈 소켓이 된다)
+const SOCK_TIX = { name: "세공의 인장", color: "#ff9ad8", ico: "🔏" };
+function rerollSockets(sv, it) {
+  if (!it || !it.sock || it.rarity < 3) return { ok: false, msg: "소켓이 있는 전설 장비에만 쓸 수 있습니다" }; if ((sv.sockTix || 0) < 1) return { ok: false, msg: "세공의 인장이 없습니다" };
+  const n = rint(1, 3), old = it.sock.length; sv.sockTix--; it.sock = Array(n).fill(null); return { ok: true, n, old, msg: `소켓 ${old}개 → ${n}개` };
+}
 function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
 function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" }); return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
@@ -359,10 +365,10 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
-  if (kind === "temple") {   // 돌의 신전: 돌과 골드(몹이 주는 골드)만 나온다
-    const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, n = Math.max(1, Math.round((T.BASE[S - 1] + rint(-1, 2)) * mf * (B.stone || 1)));
-    for (let k = 0; k < n; k++) sv.stones.push(newStone(sv, 0)); out.stones = n;
-    if (Math.random() < Math.min(0.5, T.HI[S - 1] * mf)) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+  if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
+    const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
+    if (Math.random() < ch) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+    if (Math.random() < ch) { sv.sockTix = (sv.sockTix || 0) + 1; out.sockTix = 1; }
     return out;
   }
   if (kind === "vault") return out;   // 황금 보물고: 골드(몹이 주는 골드)만 나온다 — 장비·돌·구슬·재료·조각은 없다

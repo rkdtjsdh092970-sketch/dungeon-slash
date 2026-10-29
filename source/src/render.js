@@ -198,7 +198,7 @@ const MapView = {
     const cleared = st === "cleared"; orb(cleared ? "#3a6a98" : "#3a8aff", cleared ? "#8ac0e8" : "#b8dcff", 11 * (cleared ? 1 : pulse));
     if (cleared) { g.fillStyle = "#e8fff0"; g.fillRect(x - 5, y, 3, 3); g.fillRect(x - 2, y + 3, 3, 3); g.fillRect(x + 1, y, 3, 3); g.fillRect(x + 4, y - 4, 3, 3); }
   },
-  hidden(n) { return n.kind === "tower" && !(save && save.raid && save.raid.tower); },
+  hidden(n) { return (n.kind === "tower" || n.kind === "temple") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
   drawTower(g, x, y, time) {   // 솟아오르는 탑: 아래에서부터 드러나고, 흔들리며 먼지가 인다
     const p = this.rise, H = 96 * p; g.save(); g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(x, y + 8, 26, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.rect(x - 40, y + 8 - H, 80, H + 2); g.clip();

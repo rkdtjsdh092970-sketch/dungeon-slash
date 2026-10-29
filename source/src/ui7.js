@@ -62,8 +62,8 @@ function openBossHub(page) {
 const TEMPLE_ORDER = ["imp", "grunt", "archer", "mage", "brute"], TEMPLE_KEYS = ["pri_imp", "pri_ghoul", "pri_skel", "pri_necro", "pri_brute"];
 function openTemple() {
   const T = CFG.TEMPLE, S = G.templeStage = Math.max(1, Math.min(T.OPEN, G.templeStage || 1)), unlocked = !!(save.raid && save.raid.cleared > 0);
-  const st = (s) => ({ open: s <= T.OPEN, base: T.BASE[s - 1], hi: T.HI[s - 1] });
-  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= T.OPEN ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > T.OPEN ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= T.OPEN ? "입장 가능" : "🔒 준비 중"}</span><em class="${s <= T.OPEN ? "up" : ""}">${s <= T.OPEN ? "원초 ×" + T.BASE[s - 1] : "?"}</em></button>`).join("");
+  const st = (s) => ({ open: s <= T.OPEN, hi: T.HI[s - 1] });
+  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= T.OPEN ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > T.OPEN ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= T.OPEN ? "입장 가능" : "🔒 준비 중"}</span><em class="${s <= T.OPEN ? "up" : ""}">${s <= T.OPEN ? (T.HI[s - 1] * 100).toFixed(1) + "%" : "?"}</em></button>`).join("");
   const mons = TEMPLE_ORDER.map((k) => `<div class="tp-mon"><div class="tp-mn">${TEMPLE_MON[k][0]}</div><div class="dim">${TEMPLE_MON[k][1]}</div></div>`).join("");
   const cur = st(S), can = unlocked;
   const html = `<h2>돌의 신전</h2><div class="bh" style="--c:#ffd86a">
@@ -71,16 +71,16 @@ function openTemple() {
       <div class="bh-art"><canvas id="tpc" width="250" height="250"></canvas><div class="bh-name">돌의 신전</div><div class="bh-page">4레인 전투</div></div>
       <div class="bh-info">
         <div class="bh-feat">돌 사냥터 · 열쇠 없이 입장</div>
-        <div class="bh-desc">돌을 지키는 신관들의 신전입니다. 신관들을 쓰러뜨리면 <b style="color:${STONE_T[0].color}">원초의 돌</b>이 나오고, 아주 드물게 <b style="color:${STONE_T[1].color}">계시의 돌</b>이 나옵니다. 신전 안에서는 4레인으로 전투합니다.</div>
+        <div class="bh-desc">돌을 지키는 신관들의 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b style="color:${STONE_T[1].color}">계시의 돌</b>과 <b style="color:${SOCK_TIX.color}">세공의 인장</b>이 나옵니다. 신전 안에서는 4레인으로 전투합니다.</div>
         <div class="bh-sttl">단계 선택</div><div class="bh-sts">${tabs}</div>
         <div class="bh-me">몬스터 강도 <b>균열 ${T.TIERS[S - 1]}층 수준</b> <span class="dim">· 심연의 문지기를 쓰러뜨릴 수 있는 딜이면 돌 수 있습니다</span></div>
         <div class="bh-key">${unlocked ? "입장 조건 충족" : `<span class="warn">입장 조건: 심연의 문지기 모르가스 클리어 (아직 클리어하지 못했습니다)</span>`}</div>
         <button class="btn pri big bh-go" data-a="templego" ${can ? "" : "disabled"}>${can ? `돌의 신전 ${S}단계 입장` : "모르가스 클리어 필요"}</button>
       </div>
     </div>
-    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">돌과 골드(소량)만 나옵니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
-      <div class="bh-rars"><span class="bh-rar" style="color:${STONE_T[0].color}">${STONE_T[0].ico} 원초의 돌 ${cur.base - 1}~${cur.base + 2}개 / 클리어</span><span class="bh-rar" style="color:${STONE_T[1].color}">${STONE_T[1].ico} 계시의 돌 약 ${(cur.hi * 100).toFixed(1)}% / 클리어 (아주 드묾)</span><span class="bh-rar" style="color:#ffd24a">골드 소량</span></div>
-      <div class="dim" style="margin-top:4px">계시의 돌은 원초의 돌보다 옵션 수치가 약 ${T.HI_MULT}배 높고, 제련소에서 확인 비용이 ${T.HI_COST}배입니다.</div></div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">계시의 돌 · 세공의 인장 · 골드(소량)만 나옵니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
+      <div class="bh-rars"><span class="bh-rar" style="color:${STONE_T[1].color}">${STONE_T[1].ico} 계시의 돌 약 ${(cur.hi * 100).toFixed(1)}% / 클리어</span><span class="bh-rar" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 세공의 인장 약 ${(cur.hi * 100).toFixed(1)}% / 클리어</span><span class="bh-rar" style="color:#ffd24a">골드 소량</span></div>
+      <div class="dim" style="margin-top:4px">계시의 돌은 원초의 돌보다 옵션 수치가 약 ${T.HI_MULT}배 높고 제련소 확인 비용이 ${T.HI_COST}배입니다. 세공의 인장은 장비의 소켓 수를 1~3개 중 무작위로 다시 정합니다.</div></div>
     <div class="bh-drops" style="margin-top:8px"><div class="bh-dttl">등장 몬스터</div><div class="tp-mons">${mons}</div></div>
   </div>`;
   Modal.open(html, { cls: "bosshub", on: {

@@ -305,13 +305,23 @@ function openStones() {
   const right = `<div style="flex:1;min-width:0;border-left:1px solid #3a3260;padding-left:10px"><div class="pline"><b>확인된 돌</b> <span style="color:#8dff9a">${rv.length}개 · ${gr.length}종</span></div>
     <div style="max-height:300px;overflow:auto">${section(1)}${section(0)}${rv.length ? "" : `<div class="dim pad">확인된 돌이 없습니다</div>`}</div></div>`;
   Modal.open(`<h2>💎 돌</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} · 미확인 ${un[0].length + un[1].length} · 확인됨 ${rv.length}</div>
-  <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열과 돌의 신전에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
+  <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
   <div style="display:flex;gap:12px;margin:8px 0;align-items:flex-start">${left}${right}</div>
   <div class="pbtns"><button class="btn" data-a="stback">돌아가기</button></div>`, { cls: "wide", on: {
     streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(`확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
     stall: (el) => { const hi = +el.dataset.h; let n = 0; for (const s of sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === hi)) { if (revealStone(sv, s)) n++; else break; } if (n) { snd("orb"); toast(`${n}개 확인`, "ok"); saveGame(); refreshTop(); } openStones(); },
     stdrop: (el) => { sv.stones = sv.stones.filter((x) => x.uid !== +el.dataset.u); saveGame(); openStones(); },
     stback: () => { if (typeof renderItems === "function") renderItems(); else Modal.close(); },
+  } });
+}
+function openSockRoll(it) {
+  if (!it || !it.sock) return; const have = save.sockTix || 0, held = it.sock.filter(Boolean);
+  Modal.open(`<h2>${SOCK_TIX.ico} 세공의 인장</h2><div class="center">${itemTitle(it)}<br>소켓 <b>${it.sock.length}개</b> → <b style="color:${SOCK_TIX.color}">1~3개 중 무작위</b></div>
+  <div class="center dim" style="margin:6px 0">보유 인장 ×${have} · 사용하면 1개 소모됩니다</div>
+  ${held.length ? `<div class="warn center" style="margin:8px 0">끼워 둔 돌 ${held.length}개(${held.map((m) => stoneName(m)).join(", ")})가 <b>사라집니다</b>.</div>` : `<div class="dim center" style="margin:8px 0">끼워 둔 돌이 없습니다.</div>`}
+  <div class="pbtns"><button class="btn pri" data-a="sockrollyes" ${have > 0 ? "" : "disabled"}>인장 사용</button><button class="btn" data-a="sockback">취소</button></div>`, { cls: "sm", on: {
+    sockrollyes: () => { const r = rerollSockets(save, it); toast(r.msg, r.ok ? "ok" : "bad"); snd(r.ok ? "enh_ok" : "error"); saveGame(); if (typeof refreshTop === "function") refreshTop(); renderItems(); },
+    sockback: () => renderItems(),
   } });
 }
 function openSockDel(it, idx) {

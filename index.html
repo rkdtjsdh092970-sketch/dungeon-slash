@@ -538,12 +538,12 @@ function buildMap() {
   edges.push([`S${CFG.ACTS}-${CFG.STAGES}`, rift.id]);
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
   const hub = add({ id: "RB", kind: "bosshub", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 30, name: "보스 관문", level: 100 });
-  const temple = add({ id: "RTP", kind: "temple", act: 11, x: RIFT_POS[0] + 60, y: RIFT_POS[1] - 170, name: "돌의 신전", level: 100 });
+  const temple = add({ id: "RTP", kind: "temple", act: 11, x: TOWER_POS[0] - 110, y: TOWER_POS[1] - 150, name: "돌의 신전", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
   const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
   const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
   edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
-  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([rift.id, temple.id]);
+  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {
@@ -637,7 +637,7 @@ CFG.EB_AFFINITY = +(typeof process !== "undefined" && process.env && process.env
 CFG.VENOM_REGEN = +(typeof process !== "undefined" && process.env && process.env.VREG || 0.006);   // 독니의 군주 재생 (초당 최대 체력 비율, 중독 중에는 멈춤)
 CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.AFFD || 0.85);   // 상성 빌드(같은 속성 공격 스킬 2개 이상)가 그 속성 보스에게 받는 피해 배율
 CFG.TAKEN_FLOOR = 0.4;   // 받는 피해 감소 상한 60% (받는 피해 배율의 하한)
-CFG.TEMPLE = { OPEN: 1, TIERS: [130, 140, 150, 160], HI: [0.015, 0.025, 0.04, 0.06], BASE: [4, 5, 6, 8], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
+CFG.TEMPLE = { OPEN: 1, TIERS: [130, 140, 150, 160], HI: [0.03, 0.04, 0.06, 0.08], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
 CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
@@ -1591,7 +1591,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    passRev: 6, rangeRev: 1, stones: [], hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -1897,6 +1897,12 @@ const stoneLabel = (m) => { const d = AFFIXES.find((x) => x.k === m.k); const nm
 // 돌 종류: 0 = 원초의 돌(기본), 1 = 계시의 돌(돌의 신전 · 수치가 더 높고 아주 드묾)
 const STONE_T = [{ name: "원초의 돌", un: "미확인된 원초의 돌", color: "#7ec8ff", ico: "💎" }, { name: "계시의 돌", un: "미확인된 계시의 돌", color: "#ffc247", ico: "🔶" }];
 const stoneT = (m) => STONE_T[m && m.hi ? 1 : 0];
+// 세공의 인장: 장비의 소켓 수를 1~3개 중 무작위로 다시 정한다 (끼워 둔 돌은 사라지고 빈 소켓이 된다)
+const SOCK_TIX = { name: "세공의 인장", color: "#ff9ad8", ico: "🔏" };
+function rerollSockets(sv, it) {
+  if (!it || !it.sock || it.rarity < 3) return { ok: false, msg: "소켓이 있는 전설 장비에만 쓸 수 있습니다" }; if ((sv.sockTix || 0) < 1) return { ok: false, msg: "세공의 인장이 없습니다" };
+  const n = rint(1, 3), old = it.sock.length; sv.sockTix--; it.sock = Array(n).fill(null); return { ok: true, n, old, msg: `소켓 ${old}개 → ${n}개` };
+}
 function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
 function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" }); return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
@@ -1940,10 +1946,10 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
-  if (kind === "temple") {   // 돌의 신전: 돌과 골드(몹이 주는 골드)만 나온다
-    const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, n = Math.max(1, Math.round((T.BASE[S - 1] + rint(-1, 2)) * mf * (B.stone || 1)));
-    for (let k = 0; k < n; k++) sv.stones.push(newStone(sv, 0)); out.stones = n;
-    if (Math.random() < Math.min(0.5, T.HI[S - 1] * mf)) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+  if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
+    const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
+    if (Math.random() < ch) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+    if (Math.random() < ch) { sv.sockTix = (sv.sockTix || 0) + 1; out.sockTix = 1; }
     return out;
   }
   if (kind === "vault") return out;   // 황금 보물고: 골드(몹이 주는 골드)만 나온다 — 장비·돌·구슬·재료·조각은 없다
@@ -2882,7 +2888,7 @@ function finishBattle(sv, b) {
       }
     } else {
       const d = rollDrops(sv, Object.assign({}, node, { waves, voidCleared: b.voidCleared || 0, firstClear: node.kind === "boss" && sv.cleared[node.act - 1] < node.stage }), b.bossKills > 0 || node.kind === "boss", B);
-      res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.stonesHi = d.stonesHi || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
+      res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.stonesHi = d.stonesHi || 0; res.sockTix = d.sockTix || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
       sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
         sv.cleared[node.act - 1] = node.stage;
@@ -3625,7 +3631,7 @@ const MapView = {
     const cleared = st === "cleared"; orb(cleared ? "#3a6a98" : "#3a8aff", cleared ? "#8ac0e8" : "#b8dcff", 11 * (cleared ? 1 : pulse));
     if (cleared) { g.fillStyle = "#e8fff0"; g.fillRect(x - 5, y, 3, 3); g.fillRect(x - 2, y + 3, 3, 3); g.fillRect(x + 1, y, 3, 3); g.fillRect(x + 4, y - 4, 3, 3); }
   },
-  hidden(n) { return n.kind === "tower" && !(save && save.raid && save.raid.tower); },
+  hidden(n) { return (n.kind === "tower" || n.kind === "temple") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
   drawTower(g, x, y, time) {   // 솟아오르는 탑: 아래에서부터 드러나고, 흔들리며 먼지가 인다
     const p = this.rise, H = 96 * p; g.save(); g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(x, y + 8, 26, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.rect(x - 40, y + 8 - H, 80, H + 2); g.clip();
@@ -4350,7 +4356,7 @@ function mapPanel() {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
   } else if (n.kind === "temple") {
-    h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 <b>원초의 돌</b>과 아주 드물게 <b>계시의 돌</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
+    h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b>계시의 돌</b>과 <b>세공의 인장</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
   } else if (n.kind === "bosshub") {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "tower") {
@@ -4805,6 +4811,7 @@ function itemDetail(it) {
     h += (it.enh || 0) >= 10 ? `<button class="btn" disabled>최대 강화</button>` : `<button class="btn pri" data-a="enh">강화 +${(it.enh || 0) + 1} (${Math.round(rate * 100)}%)<br><small>${fmtN(c.gold)}G · 강화석 ${c.ore}${ENH_DROP[it.enh || 0] ? ` · <b style="color:#ff8a8a">실패 시 ${Math.round(ENH_DROP[it.enh || 0] * 100)}% 하락</b>` : ""}</small></button>`;
     h += `<button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`;
     h += `<button class="btn orbb" data-a="chaos" ${it.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1개 추가 (${it.affixes.length}/5)</small></button>`;
+    if (it.sock) h += `<button class="btn orbb" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"} style="border-color:${SOCK_TIX.color}">${SOCK_TIX.ico} 세공의 인장 ×${save.sockTix || 0}<br><small>소켓 수 1~3개 재설정 (현재 ${it.sock.length}개)</small></button>`;
     h += `<button class="btn orbb" data-a="divine" ${!it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
@@ -4843,7 +4850,7 @@ function renderItems() {
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 돌 (${save.stones.length})</button>` : `<button class="btn pri wide1" data-a="stones">💎 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
-  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
+  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
   <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
@@ -4859,7 +4866,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(), stones: () => openStones(), sockpick: (el) => openSockPick(IB.sel, +el.dataset.i), sockdel: (el) => openSockDel(IB.sel, +el.dataset.i),
+    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(), stones: () => openStones(), sockpick: (el) => openSockPick(IB.sel, +el.dataset.i), sockdel: (el) => openSockDel(IB.sel, +el.dataset.i), sockroll: () => openSockRoll(IB.sel),
     mtog: () => { IB.multi = !IB.multi; IB.chk.clear(); snd("click"); renderItems(); },
     mpick: (el) => { const it = find(el); if (!it) return; if (isProtected(it)) { snd("error"); toast("잠금·프리셋·착용 중인 장비는 선택할 수 없습니다", "bad"); return; } if (IB.chk.has(it.uid)) IB.chk.delete(it.uid); else IB.chk.add(it.uid); renderItems(); },
     mall: () => { for (const it of list) if (!isProtected(it)) IB.chk.add(it.uid); renderItems(); }, mnone: () => { IB.chk.clear(); renderItems(); },
@@ -5353,6 +5360,7 @@ const TIP_CUR = {
   ore: ["강화석", "장비 강화(+10까지)와 옵션 재굴림에 쓰입니다.", "모든 전투의 드랍 · 장비 분해 · 보물 지하실 · 퀘스트"],
   shard: ["균열 조각", "엔드게임 재화입니다. 심연 각인(아틀라스) 강화에 씁니다.", "심연의 균열 · 지옥 스테이지 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕"],
   orbC: ["혼돈 구슬", "장비(고유 제외)에 옵션을 1개 추가합니다 (최대 6개, 엔드게임 장비는 5개). 대장간에서 사용합니다.", "심연의 균열 · 지옥 · 무한 균열 · 공허의 군주 · 화염 정령왕 · 일부 보스 (확률)"],
+  sockTix: ["세공의 인장", "장비의 소켓 수를 1~3개 중 무작위로 다시 정합니다. 끼워 둔 돌은 사라지고 빈 소켓이 됩니다. 제련소에서 소켓이 있는 전설 장비에 사용합니다.", "돌의 신전에서 클리어당 낮은 확률로 드랍 (계시의 돌과 같은 확률)"],
   orbD: ["신성한 구슬", "장비 옵션 수치를 높은 수치가 잘 나오게 다시 굴립니다 (고유 제외). 대장간에서 사용합니다.", "혼돈 구슬이 나올 때 약 5% 확률로 함께 드랍 (아주 귀함)"],
   dice: ["공허의 주사위", "옵션 / 고유 능력의 수치를 범위 안에서 균등하게 다시 굴립니다. 고유 장비에도 쓸 수 있습니다.", "균열 · 지옥 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제에서 아주 낮은 확률"],
   hone: ["연마석", "스킬 레벨업(최대 Lv.20)에 쓰입니다.", "스킬 시련 · 스킬 분해/보상 등 (스킬 시련의 주 보상)"],
@@ -5705,13 +5713,23 @@ function openStones() {
   const right = `<div style="flex:1;min-width:0;border-left:1px solid #3a3260;padding-left:10px"><div class="pline"><b>확인된 돌</b> <span style="color:#8dff9a">${rv.length}개 · ${gr.length}종</span></div>
     <div style="max-height:300px;overflow:auto">${section(1)}${section(0)}${rv.length ? "" : `<div class="dim pad">확인된 돌이 없습니다</div>`}</div></div>`;
   Modal.open(`<h2>💎 돌</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} · 미확인 ${un[0].length + un[1].length} · 확인됨 ${rv.length}</div>
-  <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열과 돌의 신전에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
+  <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
   <div style="display:flex;gap:12px;margin:8px 0;align-items:flex-start">${left}${right}</div>
   <div class="pbtns"><button class="btn" data-a="stback">돌아가기</button></div>`, { cls: "wide", on: {
     streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(`확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
     stall: (el) => { const hi = +el.dataset.h; let n = 0; for (const s of sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === hi)) { if (revealStone(sv, s)) n++; else break; } if (n) { snd("orb"); toast(`${n}개 확인`, "ok"); saveGame(); refreshTop(); } openStones(); },
     stdrop: (el) => { sv.stones = sv.stones.filter((x) => x.uid !== +el.dataset.u); saveGame(); openStones(); },
     stback: () => { if (typeof renderItems === "function") renderItems(); else Modal.close(); },
+  } });
+}
+function openSockRoll(it) {
+  if (!it || !it.sock) return; const have = save.sockTix || 0, held = it.sock.filter(Boolean);
+  Modal.open(`<h2>${SOCK_TIX.ico} 세공의 인장</h2><div class="center">${itemTitle(it)}<br>소켓 <b>${it.sock.length}개</b> → <b style="color:${SOCK_TIX.color}">1~3개 중 무작위</b></div>
+  <div class="center dim" style="margin:6px 0">보유 인장 ×${have} · 사용하면 1개 소모됩니다</div>
+  ${held.length ? `<div class="warn center" style="margin:8px 0">끼워 둔 돌 ${held.length}개(${held.map((m) => stoneName(m)).join(", ")})가 <b>사라집니다</b>.</div>` : `<div class="dim center" style="margin:8px 0">끼워 둔 돌이 없습니다.</div>`}
+  <div class="pbtns"><button class="btn pri" data-a="sockrollyes" ${have > 0 ? "" : "disabled"}>인장 사용</button><button class="btn" data-a="sockback">취소</button></div>`, { cls: "sm", on: {
+    sockrollyes: () => { const r = rerollSockets(save, it); toast(r.msg, r.ok ? "ok" : "bad"); snd(r.ok ? "enh_ok" : "error"); saveGame(); if (typeof refreshTop === "function") refreshTop(); renderItems(); },
+    sockback: () => renderItems(),
   } });
 }
 function openSockDel(it, idx) {
@@ -5768,7 +5786,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261030-015725";
+const BUILD_ID = "20261030-021015";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5828,7 +5846,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
   const A = replay ? "" : "rs-anim";
   const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
   const stat = (label, val) => `<div class="rs-stat"><small>${label}</small><b>${val}</b></div>`;
-  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.stones ? chip("💎", "미확인된 원초의 돌", "+" + res.stones, null, "gem") : "", res.stonesHi ? chip("🔶", "미확인된 계시의 돌", "+" + res.stonesHi, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.keys3 ? chip(iconImg("skull", 2), "철갑의 징표", "+" + res.keys3) : "", res.keys4 ? chip(iconImg("skull", 2), "뇌전의 징표", "+" + res.keys4) : "", res.keys5 ? chip(iconImg("skull", 2), "서리의 징표", "+" + res.keys5) : "", res.keys6 ? chip(iconImg("skull", 2), "맹독의 징표", "+" + res.keys6) : "", res.hone ? chip(iconImg("ore", 2), "연마석", "+" + res.hone) : "",
+  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.stones ? chip("💎", "미확인된 원초의 돌", "+" + res.stones, null, "gem") : "", res.stonesHi ? chip("🔶", "미확인된 계시의 돌", "+" + res.stonesHi, null, "gem") : "", res.sockTix ? chip("🔏", "세공의 인장", "+" + res.sockTix, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.keys3 ? chip(iconImg("skull", 2), "철갑의 징표", "+" + res.keys3) : "", res.keys4 ? chip(iconImg("skull", 2), "뇌전의 징표", "+" + res.keys4) : "", res.keys5 ? chip(iconImg("skull", 2), "서리의 징표", "+" + res.keys5) : "", res.keys6 ? chip(iconImg("skull", 2), "맹독의 징표", "+" + res.keys6) : "", res.hone ? chip(iconImg("ore", 2), "연마석", "+" + res.hone) : "",
     ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
   const tiles = res.items.slice().sort((x, y) => y.rarity - x.rarity).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
   const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");
@@ -5920,8 +5938,8 @@ function openBossHub(page) {
 const TEMPLE_ORDER = ["imp", "grunt", "archer", "mage", "brute"], TEMPLE_KEYS = ["pri_imp", "pri_ghoul", "pri_skel", "pri_necro", "pri_brute"];
 function openTemple() {
   const T = CFG.TEMPLE, S = G.templeStage = Math.max(1, Math.min(T.OPEN, G.templeStage || 1)), unlocked = !!(save.raid && save.raid.cleared > 0);
-  const st = (s) => ({ open: s <= T.OPEN, base: T.BASE[s - 1], hi: T.HI[s - 1] });
-  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= T.OPEN ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > T.OPEN ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= T.OPEN ? "입장 가능" : "🔒 준비 중"}</span><em class="${s <= T.OPEN ? "up" : ""}">${s <= T.OPEN ? "원초 ×" + T.BASE[s - 1] : "?"}</em></button>`).join("");
+  const st = (s) => ({ open: s <= T.OPEN, hi: T.HI[s - 1] });
+  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= T.OPEN ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > T.OPEN ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= T.OPEN ? "입장 가능" : "🔒 준비 중"}</span><em class="${s <= T.OPEN ? "up" : ""}">${s <= T.OPEN ? (T.HI[s - 1] * 100).toFixed(1) + "%" : "?"}</em></button>`).join("");
   const mons = TEMPLE_ORDER.map((k) => `<div class="tp-mon"><div class="tp-mn">${TEMPLE_MON[k][0]}</div><div class="dim">${TEMPLE_MON[k][1]}</div></div>`).join("");
   const cur = st(S), can = unlocked;
   const html = `<h2>돌의 신전</h2><div class="bh" style="--c:#ffd86a">
@@ -5929,16 +5947,16 @@ function openTemple() {
       <div class="bh-art"><canvas id="tpc" width="250" height="250"></canvas><div class="bh-name">돌의 신전</div><div class="bh-page">4레인 전투</div></div>
       <div class="bh-info">
         <div class="bh-feat">돌 사냥터 · 열쇠 없이 입장</div>
-        <div class="bh-desc">돌을 지키는 신관들의 신전입니다. 신관들을 쓰러뜨리면 <b style="color:${STONE_T[0].color}">원초의 돌</b>이 나오고, 아주 드물게 <b style="color:${STONE_T[1].color}">계시의 돌</b>이 나옵니다. 신전 안에서는 4레인으로 전투합니다.</div>
+        <div class="bh-desc">돌을 지키는 신관들의 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b style="color:${STONE_T[1].color}">계시의 돌</b>과 <b style="color:${SOCK_TIX.color}">세공의 인장</b>이 나옵니다. 신전 안에서는 4레인으로 전투합니다.</div>
         <div class="bh-sttl">단계 선택</div><div class="bh-sts">${tabs}</div>
         <div class="bh-me">몬스터 강도 <b>균열 ${T.TIERS[S - 1]}층 수준</b> <span class="dim">· 심연의 문지기를 쓰러뜨릴 수 있는 딜이면 돌 수 있습니다</span></div>
         <div class="bh-key">${unlocked ? "입장 조건 충족" : `<span class="warn">입장 조건: 심연의 문지기 모르가스 클리어 (아직 클리어하지 못했습니다)</span>`}</div>
         <button class="btn pri big bh-go" data-a="templego" ${can ? "" : "disabled"}>${can ? `돌의 신전 ${S}단계 입장` : "모르가스 클리어 필요"}</button>
       </div>
     </div>
-    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">돌과 골드(소량)만 나옵니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
-      <div class="bh-rars"><span class="bh-rar" style="color:${STONE_T[0].color}">${STONE_T[0].ico} 원초의 돌 ${cur.base - 1}~${cur.base + 2}개 / 클리어</span><span class="bh-rar" style="color:${STONE_T[1].color}">${STONE_T[1].ico} 계시의 돌 약 ${(cur.hi * 100).toFixed(1)}% / 클리어 (아주 드묾)</span><span class="bh-rar" style="color:#ffd24a">골드 소량</span></div>
-      <div class="dim" style="margin-top:4px">계시의 돌은 원초의 돌보다 옵션 수치가 약 ${T.HI_MULT}배 높고, 제련소에서 확인 비용이 ${T.HI_COST}배입니다.</div></div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">계시의 돌 · 세공의 인장 · 골드(소량)만 나옵니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
+      <div class="bh-rars"><span class="bh-rar" style="color:${STONE_T[1].color}">${STONE_T[1].ico} 계시의 돌 약 ${(cur.hi * 100).toFixed(1)}% / 클리어</span><span class="bh-rar" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 세공의 인장 약 ${(cur.hi * 100).toFixed(1)}% / 클리어</span><span class="bh-rar" style="color:#ffd24a">골드 소량</span></div>
+      <div class="dim" style="margin-top:4px">계시의 돌은 원초의 돌보다 옵션 수치가 약 ${T.HI_MULT}배 높고 제련소 확인 비용이 ${T.HI_COST}배입니다. 세공의 인장은 장비의 소켓 수를 1~3개 중 무작위로 다시 정합니다.</div></div>
     <div class="bh-drops" style="margin-top:8px"><div class="bh-dttl">등장 몬스터</div><div class="tp-mons">${mons}</div></div>
   </div>`;
   Modal.open(html, { cls: "bosshub", on: {
@@ -5965,6 +5983,11 @@ function openTemple() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.28", date: "10/30", title: "세공의 인장", items: [
+    "돌의 신전의 드랍이 바뀌었습니다: 원초의 돌은 더 이상 나오지 않고, 낮은 확률(클리어당 약 3%)로 [계시의 돌]과 새 아이템 [세공의 인장]이 나옵니다.",
+    "[세공의 인장]은 제련소에서 소켓이 있는 전설 장비에 쓰면 소켓 수를 1~3개 중 무작위로 다시 정합니다. 끼워 둔 돌은 사라지고 빈 소켓이 됩니다.",
+    "돌의 신전은 균열과의 연결이 끊기고 솟아난 탑에서만 이어집니다 (탑이 솟은 뒤에 나타납니다).",
+  ] },
   { ver: "4.27", date: "10/30", title: "돌의 신전 · 계시의 돌", items: [
     "새 사냥터 [돌의 신전]이 열렸습니다 (심연의 문지기 모르가스를 쓰러뜨린 뒤 입장). 4레인으로 싸우는 신관 몬스터들이 나오고, 돌과 골드(소량)만 드랍됩니다. 1~4단계 중 지금은 1단계만 열려 있고, 모르가스를 깰 수 있는 딜이면 돌 수 있습니다.",
     "미확인의 돌이 [미확인된 원초의 돌]로 바뀌었고, 돌의 신전에서 아주 드물게 상위 돌 [계시의 돌]이 나옵니다 (옵션 수치가 약 1.6배, 확인 비용 4배).",
