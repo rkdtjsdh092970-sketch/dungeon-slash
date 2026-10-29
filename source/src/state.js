@@ -643,10 +643,10 @@ function itemQuality(it) {
 // 지정한 티어(1티어가 최고) 이상의 옵션 개수. 티어가 없는 고정 옵션은 세지 않는다
 const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null && a.t + 1 <= X).length;
 // 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
-// 티어 기준을 켜면 등급 규칙과 관계없이 기준 미달 장비를 처리한다 (등급 규칙이 판매면 판매, 그 외에는 분해)
+// 티어 기준을 켜면 등급 규칙과 관계없이 처리한다: 전설이면서 기준을 채운 장비만 남고, 나머지(전설 미달 · 일반 · 매직 · 레어)는 분해 (등급 규칙이 판매면 판매)
 const tierOn = (A) => A.tierX > 0 && A.tierN > 0;
 const autoRuleOf = (A, it) => { const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
-const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && goodAffixCount(it, A.tierX) >= A.tierN;
+const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && it.rarity >= 3 && goodAffixCount(it, A.tierX) >= A.tierN;   // 전설만 남긴다: 전설이 아니면 기준을 채울 수 없다
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
   for (const it of sv.inv.slice()) {

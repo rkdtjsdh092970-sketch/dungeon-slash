@@ -2219,10 +2219,10 @@ function itemQuality(it) {
 // 지정한 티어(1티어가 최고) 이상의 옵션 개수. 티어가 없는 고정 옵션은 세지 않는다
 const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null && a.t + 1 <= X).length;
 // 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
-// 티어 기준을 켜면 등급 규칙과 관계없이 기준 미달 장비를 처리한다 (등급 규칙이 판매면 판매, 그 외에는 분해)
+// 티어 기준을 켜면 등급 규칙과 관계없이 처리한다: 전설이면서 기준을 채운 장비만 남고, 나머지(전설 미달 · 일반 · 매직 · 레어)는 분해 (등급 규칙이 판매면 판매)
 const tierOn = (A) => A.tierX > 0 && A.tierN > 0;
 const autoRuleOf = (A, it) => { const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
-const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && goodAffixCount(it, A.tierX) >= A.tierN;
+const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && it.rarity >= 3 && goodAffixCount(it, A.tierX) >= A.tierN;   // 전설만 남긴다: 전설이 아니면 기준을 채울 수 없다
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
   for (const it of sv.inv.slice()) {
@@ -5096,7 +5096,7 @@ function openAutoDis() {
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
    <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
-   <label class="setrow2">옵션 티어 기준 <select data-i="adtx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.tierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adtn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.tierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.tierX > 0 && A.tierN > 0 ? `<b style="color:#ffd070">${A.tierX === 1 ? "T1" : "T" + A.tierX + " 이상"} 옵션이 ${A.tierN}개 미만</b>인 장비는 <b>등급과 관계없이</b> 분해합니다 (등급 규칙이 판매면 판매). 기준을 채운 장비는 등급 규칙과 상관없이 유지합니다. (T1은 T2 이상에도 포함, 1티어가 최고)` : "티어 기준을 고르면 일반 · 매직 · 레어 · 전설 모두에서 기준 미달 장비를 분해하고, 기준을 채운 장비는 유지합니다."}</div>
+   <label class="setrow2">옵션 티어 기준 <select data-i="adtx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.tierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adtn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.tierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.tierX > 0 && A.tierN > 0 ? `<b>전설</b> 장비 중 <b style="color:#ffd070">${A.tierX === 1 ? "T1" : "T" + A.tierX + " 이상"} 옵션이 ${A.tierN}개 이상</b>인 것만 남기고, 나머지는 일반 · 매직 · 레어까지 모두 분해합니다 (등급 규칙이 판매면 판매). (T1은 T2 이상에도 포함, 1티어가 최고)` : "티어 기준을 고르면 기준을 채운 전설 장비만 남기고, 일반 · 매직 · 레어와 기준 미달 전설은 모두 분해합니다."}</div>
    <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
    <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
    <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adsk">스킬 정리 설정</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
@@ -5734,7 +5734,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261030-012917";
+const BUILD_ID = "20261030-013049";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5885,7 +5885,7 @@ function openBossHub(page) {
 // =========================================================
 const PATCH_NOTES = [
   { ver: "4.25", date: "10/30", title: "자동 분해 티어 기준 개선", items: [
-    "자동 분해의 옵션 티어 기준이 등급 규칙과 관계없이 일반 · 매직 · 레어 · 전설 모두에 적용됩니다. 기준 미달 장비는 분해(등급 규칙이 판매면 판매)되고, 기준을 채운 장비는 유지됩니다.",
+    "자동 분해의 옵션 티어 기준을 켜면 기준을 채운 전설 장비만 남고, 일반 · 매직 · 레어와 기준 미달 전설은 모두 분해됩니다 (등급 규칙이 판매면 판매).",
   ] },
   { ver: "4.24", date: "10/30", title: "자동 분해 티어 기준 · 가방 확대", items: [
     "자동 분해 설정에 옵션 티어 기준이 생겼습니다. 예: [T2 이상 × 3개 미만이면 처리]로 두면 T2 이상 옵션이 3개 미만인 장비만 자동으로 정리됩니다 (T1도 T2 이상에 포함).",
