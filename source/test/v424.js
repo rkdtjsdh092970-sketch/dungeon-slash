@@ -3,9 +3,9 @@ const { chromium } = require('playwright');
   pg.on('pageerror', (e) => errs.push('PE ' + e.message)); pg.on('console', (m) => { if (m.type() === 'error') errs.push('CE ' + m.text()); });
   await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(700);
   const r = await pg.evaluate(() => {
-    save = newSave(); save.tut.done = true; save.level = 100; const A = autoRules(save); A.rules = { 0: 'dis', 1: 'dis', 2: 'dis', 3: 'dis', 4: 'dis' }; A.keepUp = false; A.tierX = 2; A.tierN = 3;
-    const mk = (ts) => { const it = genItem(save, 5, 3, 'weapon'); it.affixes = ts.map((t, i) => ({ k: ['magFlat', 'magPct', 'critDmg', 'cdr', 'spellCrit'][i], v: 0.1, t: t - 1 })); return it; };
-    const items = { a_T1T1T2: mk([1, 1, 2, 5, 5]), b_T2x3: mk([2, 2, 2, 6, 6]), c_T2x2_T3: mk([2, 2, 3, 3, 3]), d_T1x2: mk([1, 1, 4, 4, 4]), e_none: mk([5, 5, 6, 6, 6]) };
+    save = newSave(); save.tut.done = true; save.level = 100; const A = autoRules(save); A.rules = { 0: 'keep', 1: 'keep', 2: 'keep', 3: 'keep', 4: 'keep' }; A.keepUp = false; A.tierX = 2; A.tierN = 3;
+    const mk = (ts, rar) => { const it = genItem(save, 5, rar == null ? 3 : rar, 'weapon'); it.affixes = ts.map((t, i) => ({ k: ['magFlat', 'magPct', 'critDmg', 'cdr', 'spellCrit'][i], v: 0.1, t: t - 1 })); return it; };
+    const items = { a_T1T1T2: mk([1, 1, 2, 5, 5]), b_T2x3: mk([2, 2, 2, 6, 6]), c_T2x2_T3: mk([2, 2, 3, 3, 3]), d_T1x2: mk([1, 1, 4, 4, 4]), e_none: mk([5, 5, 6, 6, 6]), f_rare_T2x2: mk([2, 2, 5], 2), g_magic_T2x3: mk([2, 2, 2], 1), h_common_none: mk([5], 0) };
     for (const k in items) { items[k].uid = save.nextUid++; save.inv.push(items[k]); }
     const before = Object.keys(items); const res = autoProcess(save); const left = save.inv.map((i) => before.find((k) => items[k] === i)).filter(Boolean);
     return { kept: left, removed: before.filter((k) => !left.includes(k)), res, invMax: CFG.INV_MAX, floor: CFG.TAKEN_FLOOR };

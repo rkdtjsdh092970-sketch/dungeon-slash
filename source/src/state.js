@@ -643,11 +643,14 @@ function itemQuality(it) {
 // 지정한 티어(1티어가 최고) 이상의 옵션 개수. 티어가 없는 고정 옵션은 세지 않는다
 const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null && a.t + 1 <= X).length;
 // 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
+// 티어 기준을 켜면 등급 규칙과 관계없이 기준 미달 장비를 처리한다 (등급 규칙이 판매면 판매, 그 외에는 분해)
+const tierOn = (A) => A.tierX > 0 && A.tierN > 0;
+const autoRuleOf = (A, it) => { const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
 const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && goodAffixCount(it, A.tierX) >= A.tierN;
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
   for (const it of sv.inv.slice()) {
-    const rule = A.rules[it.rarity]; if (!rule || rule === "keep" || it.uniq || protectedItem(sv, it)) continue;
+    const rule = autoRuleOf(A, it); if (!rule || rule === "keep" || it.uniq || protectedItem(sv, it)) continue;
     if (A.keepUp && isUpgrade(sv, it, true)) continue;
     if (A.maxIlvl && it.ilvl > A.maxIlvl) continue;   // 아이템 레벨 상한: 이보다 높은 장비는 처리하지 않는다
     if (A.minQ && itemQuality(it) >= A.minQ) continue;   // 옵션 품질이 기준 이상이면 유지
