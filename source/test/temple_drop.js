@@ -1,0 +1,11 @@
+const { chromium } = require('playwright'); const G0 = JSON.parse(require('fs').readFileSync('/tmp/begin_graft.json', 'utf8'));
+(async () => { const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 1000, height: 640 } }); const errs = [];
+  pg.on('pageerror', (e) => errs.push('PE ' + e.message));
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(800);
+  await pg.evaluate((G0) => { save = newSave(); save.equipped = G0.equipped; save.skills = G0.skills; save.loadout = G0.loadout; save.passive = G0.passive; save.pass = G0.pass; save.atlas = G0.atlas; save.nextUid = 200000; save.slots = 4; save.lanesBase = 3; save.sets = null; save.tut.done = true; save.cleared = Array(10).fill(5); save.endgame = true; save.graduated = 1; save.level = 100; save.rift.best = 100; save.raid = { cleared: 1, best: 100 }; save.gold = 0; openMap(10); openTemple(); }, G0);
+  await pg.waitForTimeout(300); await pg.click('.bh-go'); await pg.waitForTimeout(800);
+  const r = await pg.evaluate(() => { const b = G.battle; let t = 0; while (!b.over && t < 900) { stepBattle(b, 0.1); t += 0.1; } return { over: b.over, win: b.win, kills: b.kills, time: Math.round(b.time), gold: Math.round(b.gold), fin: !!b.fin }; });
+  console.log(JSON.stringify(r)); await pg.waitForTimeout(4000);
+  console.log(JSON.stringify(await pg.evaluate(() => { const p = G.pending && G.pending[0]; return { res: p && { win: p.win, gold: Math.round(p.gold), stones: p.stones, hi: p.stonesHi, exp: Math.round(p.exp || 0) }, saveStones: save.stones.length, saveGold: Math.round(save.gold) }; })));
+  console.log(JSON.stringify(await pg.evaluate(() => { const B = dropBonus(save); const mf = 1 + mfEff(B.mf) * 0.3; return { Bmf: B.mf, Bstone: B.stone, mf, hiChance: Math.min(0.5, CFG.TEMPLE.HI[0] * mf), base: Math.round(CFG.TEMPLE.BASE[0] * mf * (B.stone || 1)) }; })));
+  console.log(errs.join('\n') || 'no errors'); await br.close(); })();

@@ -102,6 +102,7 @@ function nodeToBattle(n) {
   if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
+  if (n.kind === "temple") { const st = Math.max(1, Math.min(CFG.TEMPLE.OPEN, G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
   if (isEB(n.kind)) { const E = EB[n.kind], S = G[E.stage] || 1; return { kind: n.kind, act: 10, tier: E.tiers[S - 1], vsel: S, name: `${E.name} ${S}단계`, level: 100 }; }
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
@@ -122,6 +123,8 @@ function mapPanel() {
   } else if (n.kind === "raid") {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
+  } else if (n.kind === "temple") {
+    h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 <b>원초의 돌</b>과 아주 드물게 <b>계시의 돌</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
   } else if (n.kind === "bosshub") {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "tower") {
@@ -136,12 +139,12 @@ function mapPanel() {
     const E = EB[n.kind], S = G[E.stage] = Math.max(1, Math.min(4, G[E.stage] || 1)), need = E.need[S - 1], ok = save.rift.best >= need, have = save[E.key] || 0;
     const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용", frost: "냉기·빙결 빌드용", poison: "독·중독 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색", frost: "하늘색", poison: "연두색" }[n.kind];
     h += `<div class="pline">${E.keyName} <b>${have}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="${E.sm}">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="${E.sp}">+</button> <span class="dim">몬스터 강도 균열 100층 대비 ×${(bossRiftMult(E.tiers[S - 1]) / bossRiftMult(100)).toFixed(1)}</span></div>
-    <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 전설 장비 · 미확인의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 전설 장비 · 원초의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
     btnOk = un && have > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : have > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
     h += `<div class="pline">공허의 열쇠 <b>${save.keys}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="vsm">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="vsp">+</button> <span class="dim">몬스터 강도 균열 100층 대비 ×${(bossRiftMult(VOID_TIER[S - 1]) / bossRiftMult(100)).toFixed(1)}</span></div><div class="pline">${VOID_BOSS.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${VOID_NEED[S - 1]}</b>단계 이상 (현재 ${save.rift.best}단계) · 고른 단계의 군주 한 마리와 싸웁니다 (잡몹 포함)</div>
-    <div class="pline dim">전설 장비 · 미확인의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% (졸업 후) · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
+    <div class="pline dim">전설 장비 · 원초의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% (졸업 후) · 공허의 주사위 ${[2, 4, 7, 15][S - 1]}%</div><div class="pline dim">열쇠: 균열의 왜곡체(보라색 눈알)를 잡으면 얻습니다</div>`;
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_NEED[S - 1]; btn = save.rift.best < VOID_NEED[S - 1] ? `균열 ${VOID_NEED[S - 1]}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
@@ -168,6 +171,7 @@ function raidAftermath() {
 function mapGo() {
   const n = MapView.sel; if (!n || !nodeUnlocked(save, n)) return;
   if (n.kind === "bosshub") return openBossHub();
+  if (n.kind === "temple") return openTemple();
   if (n.kind === "town") return openTown(n.act);
   if (n.kind === "endless") { const E = endlessInfo(save); if (E.left < 1) return; save.endless.used++; saveGame(); }
   if (isEB(n.kind)) { const E = EB[n.kind]; if ((save[E.key] || 0) < 1 || save.rift.best < E.need[(G[E.stage] || 1) - 1]) return; save[E.key]--; saveGame(); }
@@ -274,9 +278,9 @@ function openSettings() {
 }
 
 // ---------- 전투 ----------
-function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", frost: "hell", poison: "hell", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
+function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", frost: "hell", poison: "hell", temple: "void", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 // 자동 반복이 가능한 전투. 열쇠를 쓰는 보스(공허의 군주 · 속성 보스)는 반복할 때마다 열쇠 1개를 쓰고, 열쇠가 모자라면 멈춘다
-const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
+const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
 function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0 } : null; }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
@@ -334,7 +338,7 @@ function afterBattle(res, b) {
     return;
   }
   if (A.on && !res.win) { A.on = false; saveGame(); }
-  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "endless", "void", "hive", "titan", "storm", "frost", "poison"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
+  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "endless", "void", "hive", "titan", "storm", "frost", "poison"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
     const pr = autoProcess(save); if (pr.sold || pr.dis || pr.sSold || pr.sDis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? "장비 " + pr.sold + "개 판매 " : ""}${pr.dis ? "장비 " + pr.dis + "개 분해 " : ""}${pr.sSold ? "스킬 " + pr.sSold + "개 판매 " : ""}${pr.sDis ? "스킬 " + pr.sDis + "개 분해" : ""}`, "ok"); }
   }
   showResult(res, b);
@@ -402,7 +406,7 @@ function retreat() {
 const STAGE_TIPS = [
   ["스테이지 1 · 자동 전투와 스킬", "캐릭터는 제자리에서 자동으로 싸웁니다. 스킬은 쿨타임마다 자동 발동하고, 적을 클릭하면 모든 스킬이 그 적을 먼저 공격합니다.<br><b>지금 마을의 스킬 상점</b>에 들러 보세요! 일반 등급 스킬은 <b>전부 골드로 골라서 살 수 있어요</b>. 사서 <b>스킬 창</b>에서 칸에 장착하면 됩니다 (처음에는 일반 등급만 쓰게 됩니다). 이 스테이지에서는 경험치를 얻지 않아요."],
   ["스테이지 2 · 장비와 옵션 티어", "장비 등급은 <b>일반 · 매직 · 레어 · 전설</b>입니다. 전설은 랜덤 옵션 <b>5개</b>를 가집니다.<br>각 옵션에는 <b>1~6티어</b>가 있어요. <b>6티어가 가장 흔하고 1티어가 가장 좋지만 가장 드뭅니다.</b> 장비의 <b>T1~T5</b>는 균열 20층마다 올라가며, 높은 T에서만 높은 티어 옵션이 나올 수 있습니다."],
-  ["스테이지 3 · 소켓과 미확인의 돌", "전설 장비에는 <b>소켓이 1~3개</b> 있습니다. 소켓에는 균열에서 드랍되는 <b>미확인의 돌</b>의 옵션을 끼울 수 있어요.<br>돌은 <b>제련소(대장간)</b>에서 골드로 옵션을 확인한 뒤 장착합니다. 돌의 옵션은 티어 없이 고정 수치이고, 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다."],
+  ["스테이지 3 · 소켓과 돌", "전설 장비에는 <b>소켓이 1~3개</b> 있습니다. 소켓에는 균열에서 드랍되는 <b>원초의 돌</b>의 옵션을 끼울 수 있어요.<br>돌은 <b>제련소(대장간)</b>에서 골드로 옵션을 확인한 뒤 장착합니다. 돌의 옵션은 티어 없이 고정 수치이고, 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다."],
   ["스테이지 4 · 레벨과 패시브", "이 게임에는 경험치가 없습니다. <b>균열 1층을 처음 클리어할 때마다 레벨이 1 오르고, 100층을 정복하면 100레벨</b>이 됩니다.<br>레벨마다 <b>패시브 포인트 2</b>를 얻어 패시브 트리에 찍습니다. 스킬 창의 <b>패시브 칸</b>에는 패시브 스킬(강철 피부, 요새 …)을 장착할 수 있어요."],
-  ["스테이지 5 · 심연의 균열로", "이 보스를 쓰러뜨리면 <b>심연의 균열</b>이 열립니다. 균열은 100층까지 이어지고, <b>20층마다 난이도가 한 단계 뛰며 장비 T도 한 단계 오릅니다</b>. 15~19층에서 장비를 제대로 파밍해야 20층의 보스를 넘길 수 있어요.<br>균열에서는 장비와 미확인의 돌을 얻습니다. 스킬은 필드에서 나오지 않고, <b>100층을 졸업</b>한 뒤 기존 보스들에게서 높은 등급 스킬을 얻을 수 있습니다."],
+  ["스테이지 5 · 심연의 균열로", "이 보스를 쓰러뜨리면 <b>심연의 균열</b>이 열립니다. 균열은 100층까지 이어지고, <b>20층마다 난이도가 한 단계 뛰며 장비 T도 한 단계 오릅니다</b>. 15~19층에서 장비를 제대로 파밍해야 20층의 보스를 넘길 수 있어요.<br>균열에서는 장비와 원초의 돌을 얻습니다. 스킬은 필드에서 나오지 않고, <b>100층을 졸업</b>한 뒤 기존 보스들에게서 높은 등급 스킬을 얻을 수 있습니다."],
 ];

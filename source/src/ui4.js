@@ -293,27 +293,30 @@ function openStash() {
 // =========================================================
 // v4 제련소: 미확인의 돌 확인 + 소켓 장착
 // =========================================================
-// 같은 옵션·같은 수치의 확인된 돌은 하나로 묶어서 ×개수로 보여준다
-function stoneGroups(list) { const m = new Map(); for (const s of list) { const key = s.rev.k + "|" + s.rev.v; if (!m.has(key)) m.set(key, { rev: s.rev, uids: [] }); m.get(key).uids.push(s.uid); } return [...m.values()].sort((a, b) => stoneLabel(a.rev).localeCompare(stoneLabel(b.rev), "ko")); }
+// 같은 옵션·같은 수치·같은 종류의 확인된 돌은 하나로 묶어서 ×개수로 보여준다 (원초의 돌 → 계시의 돌 순)
+const stoneName = (m) => `<span style="color:${stoneT(m).color};font-weight:bold${m && m.hi ? ";text-shadow:0 0 6px #ffb34766" : ""}">${stoneT(m).ico} ${stoneLabel(m)}</span>`;
+const stoneHead = (hi, n, extra) => `<div class="pline" style="margin-top:6px;padding-bottom:2px;border-bottom:1px solid ${STONE_T[hi].color}55"><b style="color:${STONE_T[hi].color}">${STONE_T[hi].ico} ${STONE_T[hi].name}</b> <span class="dim">${n}개${extra || ""}</span></div>`;
+function stoneGroups(list) { const m = new Map(); for (const s of list) { const hi = s.rev.hi ? 1 : 0, key = hi + "|" + s.rev.k + "|" + s.rev.v; if (!m.has(key)) m.set(key, { rev: s.rev, hi, uids: [] }); m.get(key).uids.push(s.uid); } return [...m.values()].sort((a, b) => (a.hi - b.hi) || stoneLabel(a.rev).localeCompare(stoneLabel(b.rev), "ko")); }
 function openStones() {
-  const sv = save, cost = stoneRevealCost(sv), un = sv.stones.filter((s) => !s.rev), rv = sv.stones.filter((s) => s.rev), gr = stoneGroups(rv);
-  const left = `<div style="flex:1;min-width:0"><div class="pline"><b>❔ 미확인의 돌</b> <span style="color:#ffe08a">×${un.length}</span></div>
-    ${un.length ? `<div class="pline">미확인 <b>${un.length}</b>개 <button class="btn xs pri" data-a="streveal" data-u="${un[0].uid}" ${sv.gold >= cost ? "" : "disabled"}>1개 확인 (${fmtN(cost)}G)</button></div><div class="pline"><button class="btn pri" data-a="stall" ${sv.gold >= cost ? "" : "disabled"}>전부 확인 (${fmtN(cost * un.length)}G)</button></div>` : `<div class="dim pad">미확인의 돌이 없습니다 — 균열을 돌아 보세요</div>`}</div>`;
-  const right = `<div style="flex:1;min-width:0;border-left:1px solid #3a3260;padding-left:10px"><div class="pline"><b>💎 확인된 돌</b> <span style="color:#8dff9a">${rv.length}개 · ${gr.length}종</span></div>
-    <div style="max-height:300px;overflow:auto">${gr.map((g) => `<div class="pline">💎 <b>${stoneLabel(g.rev)}</b>${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} <button class="btn xs" data-a="stdrop" data-u="${g.uids[0]}" title="1개 버리기">버리기</button></div>`).join("") || `<div class="dim pad">확인된 돌이 없습니다</div>`}</div></div>`;
-  Modal.open(`<h2>💎 미확인의 돌</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} · 미확인 ${un.length} · 확인됨 ${rv.length}</div>
-  <div class="dim center">균열에서 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (장비 옵션의 1~6티어와 다릅니다).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
+  const sv = save, cost0 = stoneRevealCost(sv), costOf = (hi) => cost0 * (hi ? CFG.TEMPLE.HI_COST : 1), un = [0, 1].map((hi) => sv.stones.filter((s) => !s.rev && (s.hi ? 1 : 0) === hi)), rv = sv.stones.filter((s) => s.rev), gr = stoneGroups(rv);
+  const unRow = (hi) => un[hi].length ? `<div class="pline"><b style="color:${STONE_T[hi].color}">${STONE_T[hi].ico} ${STONE_T[hi].un}</b> <span style="color:#ffe08a">×${un[hi].length}</span></div><div class="pline"><button class="btn xs pri" data-a="streveal" data-u="${un[hi][0].uid}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>1개 확인 (${fmtN(costOf(hi))}G)</button> <button class="btn xs" data-a="stall" data-h="${hi}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>전부 확인 (${fmtN(costOf(hi) * un[hi].length)}G)</button></div>` : "";
+  const left = `<div style="flex:1;min-width:0"><div class="pline"><b>❔ 미확인된 돌</b> <span style="color:#ffe08a">×${un[0].length + un[1].length}</span></div>${unRow(0)}${unRow(1)}${un[0].length + un[1].length ? "" : `<div class="dim pad">미확인된 돌이 없습니다 — 균열과 돌의 신전을 돌아 보세요</div>`}</div>`;
+  const section = (hi) => { const g = gr.filter((x) => x.hi === hi); if (!g.length) return ""; return stoneHead(hi, g.reduce((a, x) => a + x.uids.length, 0)) + g.map((x) => `<div class="pline">${stoneName(x.rev)}${x.uids.length > 1 ? ` <b style="color:#ffe08a">×${x.uids.length}</b>` : ""} <button class="btn xs" data-a="stdrop" data-u="${x.uids[0]}" title="1개 버리기">버리기</button></div>`).join(""); };
+  const right = `<div style="flex:1;min-width:0;border-left:1px solid #3a3260;padding-left:10px"><div class="pline"><b>확인된 돌</b> <span style="color:#8dff9a">${rv.length}개 · ${gr.length}종</span></div>
+    <div style="max-height:300px;overflow:auto">${section(1)}${section(0)}${rv.length ? "" : `<div class="dim pad">확인된 돌이 없습니다</div>`}</div></div>`;
+  Modal.open(`<h2>💎 돌</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} · 미확인 ${un[0].length + un[1].length} · 확인됨 ${rv.length}</div>
+  <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열과 돌의 신전에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
   <div style="display:flex;gap:12px;margin:8px 0;align-items:flex-start">${left}${right}</div>
   <div class="pbtns"><button class="btn" data-a="stback">돌아가기</button></div>`, { cls: "wide", on: {
     streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(`확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
-    stall: () => { let n = 0; for (const s of sv.stones.filter((x) => !x.rev)) { if (revealStone(sv, s)) n++; else break; } if (n) { snd("orb"); toast(`${n}개 확인`, "ok"); saveGame(); refreshTop(); } openStones(); },
+    stall: (el) => { const hi = +el.dataset.h; let n = 0; for (const s of sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === hi)) { if (revealStone(sv, s)) n++; else break; } if (n) { snd("orb"); toast(`${n}개 확인`, "ok"); saveGame(); refreshTop(); } openStones(); },
     stdrop: (el) => { sv.stones = sv.stones.filter((x) => x.uid !== +el.dataset.u); saveGame(); openStones(); },
     stback: () => { if (typeof renderItems === "function") renderItems(); else Modal.close(); },
   } });
 }
 function openSockDel(it, idx) {
   if (!it || !it.sock || !it.sock[idx]) return; const cur = it.sock[idx];
-  Modal.open(`<h2>소켓 돌 삭제</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓<br><b>${stoneLabel(cur)}</b></div><div class="warn center" style="margin:8px 0">박힌 돌은 <b>회수할 수 없고</b> 삭제하면 사라집니다.<br>소켓은 빈 칸이 되어 다른 돌을 끼울 수 있습니다.</div>
+  Modal.open(`<h2>소켓 돌 삭제</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓<br><b>${stoneName(cur)}</b></div><div class="warn center" style="margin:8px 0">박힌 돌은 <b>회수할 수 없고</b> 삭제하면 사라집니다.<br>소켓은 빈 칸이 되어 다른 돌을 끼울 수 있습니다.</div>
   <div class="pbtns"><button class="btn warn" data-a="sockdelyes">삭제</button><button class="btn" data-a="sockback">취소</button></div>`, { cls: "sm", on: {
     sockdelyes: () => { const eq = EQ_SLOTS.some((k) => save.equipped[k] === it); it.sock[idx] = null; snd("click"); toast("소켓의 돌을 삭제했습니다", "ok"); saveGame(); if (eq && typeof refreshTop === "function") refreshTop(); renderItems(); },
     sockback: () => renderItems(),
@@ -324,13 +327,14 @@ function openSockPick(it, idx) {
   const ok = (s) => socketUsable(it, s.rev.k) || (cur && cur.k === s.rev.k);
   // 각 돌을 끼웠을 때의 전투력 변화 (지금 끼워진 상태 기준)
   const eqKeys = EQ_SLOTS.filter((k) => save.equipped[k] === it), pwNow = () => Math.max(...(eqKeys.length ? eqKeys : slotKeys(it.slot)).map((k) => powerWith(save, k, it))), base = pwNow();
-  const gainOf = (rev) => { const keep = it.sock[idx]; it.sock[idx] = { k: rev.k, v: rev.v }; let p = base; try { p = pwNow(); } catch (e) {} it.sock[idx] = keep; return { d: p - base, pct: (p / Math.max(1, base) - 1) * 100 }; };
+  const gainOf = (rev) => { const keep = it.sock[idx]; it.sock[idx] = rev.hi ? { k: rev.k, v: rev.v, hi: 1 } : { k: rev.k, v: rev.v }; let p = base; try { p = pwNow(); } catch (e) {} it.sock[idx] = keep; return { d: p - base, pct: (p / Math.max(1, base) - 1) * 100 }; };
   const gainHtml = (g) => `<small style="color:${g.d >= 0 ? "#8dff9a" : "#ff8a8a"}"> 전투력 ${g.d >= 0 ? "▲" : "▼"} ${fmtN(Math.abs(Math.round(g.d)))} (${g.d >= 0 ? "+" : "-"}${Math.abs(g.pct).toFixed(1)}%)</small>`;
   const mode = G.sockSort || "power", groups = stoneGroups(rv).map((g) => { const s = { uid: g.uids[0], rev: g.rev }, usable = ok(s); return { g, s, usable, gain: usable ? gainOf(s.rev) : null }; });
-  if (mode === "power") groups.sort((x, y) => (y.usable - x.usable) || ((y.gain ? y.gain.d : 0) - (x.gain ? x.gain.d : 0)));   // 전투력 상승이 큰 순 (끼울 수 없는 돌은 맨 아래)
-  Modal.open(`<h2>소켓 끼우기</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓 ${cur ? `<br><small class="dim">이미 ${stoneLabel(cur)}가 끼워져 있습니다 — 다른 돌을 끼우면 교체되고 이전 옵션은 사라집니다</small>` : ""}</div>
+  const section = (hi) => { let L = groups.filter((x) => x.g.hi === hi); if (!L.length) return ""; if (mode === "power") L = L.slice().sort((x, y) => (y.usable - x.usable) || ((y.gain ? y.gain.d : 0) - (x.gain ? x.gain.d : 0)));   // 종류별로 나누고, 각 종류 안에서 전투력 상승이 큰 순
+    return stoneHead(hi, L.reduce((a, x) => a + x.g.uids.length, 0)) + L.map(({ g, s, usable, gain }, i) => `<div class="pline">${mode === "power" && usable && i === 0 && gain && gain.d > 0 ? `<b style="color:#ffd24a">★ </b>` : ""}${stoneName(s.rev)}${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} ${usable ? gainHtml(gain) + ` <button class="btn xs pri" data-a="sockgo" data-u="${s.uid}">끼우기</button>` : `<small style="color:#ff8a8a">같은 옵션이 있어 불가</small>`}</div>`).join(""); };
+  Modal.open(`<h2>소켓 끼우기</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓 ${cur ? `<br><small class="dim">이미 ${stoneName(cur)}가 끼워져 있습니다 — 다른 돌을 끼우면 교체되고 이전 옵션은 사라집니다</small>` : ""}</div>
   <div class="center" style="margin:4px 0"><button class="btn xs ${mode === "power" ? "pri" : ""}" data-a="socksort" data-m="power">전투력 상승순</button> <button class="btn xs ${mode === "default" ? "pri" : ""}" data-a="socksort" data-m="default">기본 순서</button></div>
-  <div style="max-height:300px;overflow:auto;margin:6px 0">${groups.map(({ g, s, usable, gain }, i) => `<div class="pline">${mode === "power" && usable && i === 0 && gain && gain.d > 0 ? `<b style="color:#ffd24a">★ </b>` : ""}💎 <b>${stoneLabel(s.rev)}</b>${g.uids.length > 1 ? ` <b style="color:#ffe08a">×${g.uids.length}</b>` : ""} ${usable ? gainHtml(gain) + ` <button class="btn xs pri" data-a="sockgo" data-u="${s.uid}">끼우기</button>` : `<small style="color:#ff8a8a">같은 옵션이 있어 불가</small>`}</div>`).join("") || `<div class="dim center pad">끼울 수 있는 확인된 돌이 없습니다. 💎 미확인의 돌에서 먼저 확인하세요.</div>`}</div>
+  <div style="max-height:300px;overflow:auto;margin:6px 0">${section(1)}${section(0)}${groups.length ? "" : `<div class="dim center pad">끼울 수 있는 확인된 돌이 없습니다. 💎 미확인된 돌에서 먼저 확인하세요.</div>`}</div>
   <div class="pbtns"><button class="btn" data-a="sockback">돌아가기</button></div>`, { cls: "wide", on: {
     sockgo: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (!s) return; const r = socketItem(sv, it, s, idx); toast(r.msg, r.ok ? "ok" : "bad"); snd(r.ok ? "enh_ok" : "error"); saveGame(); renderItems(); },
     socksort: (el) => { G.sockSort = el.dataset.m; openSockPick(it, idx); },

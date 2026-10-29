@@ -53,7 +53,7 @@ const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
 
 // ---------------- 생성 ----------------
-const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, frost: 1, poison: 1, vault: 1, raid: 1 };
+const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, frost: 1, poison: 1, vault: 1, temple: 1, raid: 1 };
 const specDef = (va) => Object.assign({ tier: "normal", ranged: ACT_SPECIAL[va].range >= 3, proj: va === 7 ? "orb" : null }, ACT_SPECIAL[va]);
 function wavePool(act, stage, mods) {
   const w = actWeights(act); w.spec = SPEC_W(act, stage);
@@ -71,7 +71,10 @@ function extendPlan(b, n) {
   for (const t of smoothSeq(w, n, b.rr)) b.plan.push(t);
   for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
+// 돌의 신전: 신관 무리 (복사 · 수도사 · 성가 사수 · 신관) + 일정 간격의 성기사
+const TEMPLE_MON = { imp: ["복사", "신전의 어린 복사"], grunt: ["수도사", "돌을 지키는 수도사"], archer: ["성가 사수", "성가와 함께 화살을 쏜다"], mage: ["신관", "축복과 저주를 읊는 신관"], brute: ["성기사", "신전을 지키는 중무장 기사"] };
 function planFor(node) {
+  if (node.kind === "temple") { const pl = smoothSeq({ imp: 9, grunt: 6, archer: 4, mage: 3 }, 90); for (let i = 0; i < 6; i++) pl.splice(Math.floor(pl.length * (i + 0.5) / 6), 0, "brute"); return pl; }
   if (node.kind === "vault") { const pl = smoothSeq({ coin: 12, goldbag: 1 }, 104); if (Math.random() < CFG.VAULT_CHEST) pl.splice(Math.floor(pl.length * rnd(0.35, 0.7)), 0, "boss"); return pl; }   // 황금 보물고: 코인과 골드 보따리 (가끔 거대 보물상자)
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
@@ -122,6 +125,7 @@ function createBattle(sv, node) {
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
   b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
+  if (node.kind === "temple") b.lanes = 4;   // 돌의 신전부터는 4레인
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
     const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
@@ -198,12 +202,13 @@ function spawnCells(b, D, w, h) {
 }
 const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
-  const isBoss = type === "boss", va = isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
+  const isBoss = type === "boss", va = b.kind === "temple" ? 10 : isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
   const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX : 1;
   const e = { id: b.nextId++, type, def: D, tier: isBoss ? "boss" : D.tier, w: isBoss ? D.w : 1, h: isBoss ? D.h : 1, lane, col, va, traits: D.traits || [],
     hp: D.hp * b.hpM * bx * gh, maxHp: D.hp * b.hpM * bx * gh, atk: D.atk * b.atkM * ga, range: D.range, interval: D.interval / b.haste, windup: D.windup,
     moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, shock: 0, vx: null, vy: null, age: 0, dead: false };
+  if (b.kind === "temple" && TEMPLE_MON[type]) { e.def = Object.assign({}, e.def, { name: TEMPLE_MON[type][0], desc: TEMPLE_MON[type][1] }); e.label = TEMPLE_MON[type][0]; }
   e.moveT = CFG.MOVE_TIME * (e.traits.includes("fast") ? 0.55 : 1); e.moveCd = e.moveT;
   e.dots = []; e.dotMul = isBoss ? CFG.DOT_BOSS : e.tier === "elite" ? CFG.DOT_ELITE : 1;
   { const dd = (isBoss ? ENEMY_DEF.boss : ENEMY_DEF[type] || ENEMY_DEF.grunt).slice(); for (const t of e.traits) if (TRAIT_DEF[t]) { dd[0] += TRAIT_DEF[t][0]; dd[1] += TRAIT_DEF[t][1]; }
@@ -364,7 +369,7 @@ function killEnemy(b, e) {
   if (e.vstage) b.voidCleared = e.vstage;
   b.kills++; if (e.tier === "elite") b.eliteKills++; if (e.tier === "boss") { if (!e.def.chest) b.bossKills++; b.shake = 0.8; say(b, e.def.chest ? "보물상자가 터지며 금화가 쏟아진다!" : `${e.def.name} 처치!`, e.def.chest ? "good" : "boss"); }
   const ex = e.def.exp * Math.pow(1.5, b.act - 1) * (1 + 0.05 * (b.stage - 1)) * (b.kind === "rift" ? 1 + b.tier * 0.08 : 1);
-  b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" ? 3 : b.kind === "vault" ? CFG.VAULT_GOLD : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
+  b.exp += ex; b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * (b.kind === "treasure" ? 3 : b.kind === "vault" ? CFG.VAULT_GOLD : b.kind === "temple" ? CFG.TEMPLE.GOLD : 1) * (1 + b.stats.goldFind) * rnd(0.8, 1.3);
   if (b.designated === e) b.designated = null;
   sfx(b, e.tier === "boss" ? "bossdie" : e.tier === "elite" ? "kill2" : "kill");
   if (e.summoned && e.owner) { const o = b.enemies.find((x) => x.id === e.owner); if (o && o.shield) { o.shield.need--; if (o.shield.need <= 0) { o.shield = null; say(b, "방어막이 깨졌다!"); sfx(b, "shatter"); } } }
@@ -608,7 +613,7 @@ function finishBattle(sv, b) {
       }
     } else {
       const d = rollDrops(sv, Object.assign({}, node, { waves, voidCleared: b.voidCleared || 0, firstClear: node.kind === "boss" && sv.cleared[node.act - 1] < node.stage }), b.bossKills > 0 || node.kind === "boss", B);
-      res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
+      res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.stonesHi = d.stonesHi || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
       sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
         sv.cleared[node.act - 1] = node.stage;

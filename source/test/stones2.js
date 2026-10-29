@@ -1,0 +1,15 @@
+const { chromium } = require('playwright');
+(async () => { const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 1000, height: 640 } }); const errs = [];
+  pg.on('pageerror', (e) => errs.push('PE ' + e.message)); pg.on('console', (m) => { if (m.type() === 'error') errs.push('CE ' + m.text()); });
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(700);
+  await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.level = 100; save.gold = 1e7; save.rift.best = 100; for (let i = 0; i < 3; i++) save.stones.push(newStone(save, 0)); for (let i = 0; i < 2; i++) save.stones.push(newStone(save, 1)); openStones(); });
+  await pg.waitForTimeout(300); await pg.screenshot({ path: '/tmp/stones_un.png' });
+  for (let i = 0; i < 3; i++) { await pg.evaluate(() => { const b = document.querySelector('[data-a="stall"]'); if (b) b.click(); }); await pg.waitForTimeout(150); } await pg.waitForTimeout(300);
+  console.log(JSON.stringify(await pg.evaluate(() => save.stones.map((s) => (s.hi ? 'H' : 'N') + ':' + s.rev.k + '=' + s.rev.v))));
+  await pg.screenshot({ path: '/tmp/stones_rev.png' });
+  await pg.evaluate(() => { Modal.close(true); save.equipped = {}; const w = genItem(save, 5, 3, 'weapon'); w.uid = save.nextUid++; w.sock = [null, null]; w.affixes = []; save.equipped.weapon = w; IB.sel = w; openSockPick(w, 0); });
+  await pg.waitForTimeout(300); await pg.screenshot({ path: '/tmp/sockpick2.png' });
+  console.log('sections:', await pg.evaluate(() => [...document.querySelectorAll('#mbox .pline b')].map((b) => b.innerText).filter((t) => /원초의 돌|계시의 돌/.test(t)).join(' | ')));
+  await pg.click('[data-a="sockgo"]'); await pg.waitForTimeout(200);
+  console.log('socketed:', JSON.stringify(await pg.evaluate(() => save.equipped.weapon.sock)));
+  console.log(errs.join('\n') || 'no errors'); await br.close(); })();

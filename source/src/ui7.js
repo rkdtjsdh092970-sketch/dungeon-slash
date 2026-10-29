@@ -34,7 +34,7 @@ function openBossHub(page) {
         <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? `균열 ${b.need[S - 1]}단계 필요` : have > 0 ? `${b.short} ${S}단계 도전` : "열쇠 필요"}</button>
       </div>
     </div>
-    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">장비 · 미확인의 돌 · 스킬 ${Math.round(BOSS_SKILL_CH[S - 1] * 100)}% (등급 확률 ↓) · 스킬에 마우스를 올리면 효과가 보입니다</span></div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">장비 · 원초의 돌 · 스킬 ${Math.round(BOSS_SKILL_CH[S - 1] * 100)}% (등급 확률 ↓) · 스킬에 마우스를 올리면 효과가 보입니다</span></div>
       <div class="bh-rars">${rar}</div><div class="bh-sks">${tiles}</div></div>
   </div>`;
   const go = (d) => openBossHub(((G.hubPage || 0) + d + B.length) % B.length);
@@ -52,6 +52,53 @@ function openBossHub(page) {
     ctx.clearRect(0, 0, 250, 250); const g = ctx.createRadialGradient(125, 150, 10, 125, 150, 150); g.addColorStop(0, b.color + "66"); g.addColorStop(1, "#0a0614"); ctx.fillStyle = g; ctx.fillRect(0, 0, 250, 250);
     ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.beginPath(); ctx.ellipse(125, 228, 70, 10, 0, 0, 7); ctx.fill();
     drawBossSprite(ctx, art, 125, 232 + Math.sin(t * 2) * 3, 3.4, { hue: b.D.hue });
+    setTimeout(draw, 60); };
+  draw();
+}
+
+// =========================================================
+// 돌의 신전: 신관들이 지키는 돌 사냥터 (심연의 문지기를 쓰러뜨린 뒤 입장 · 4레인 · 돌과 골드만 나온다)
+// =========================================================
+const TEMPLE_ORDER = ["imp", "grunt", "archer", "mage", "brute"], TEMPLE_KEYS = ["pri_imp", "pri_ghoul", "pri_skel", "pri_necro", "pri_brute"];
+function openTemple() {
+  const T = CFG.TEMPLE, S = G.templeStage = Math.max(1, Math.min(T.OPEN, G.templeStage || 1)), unlocked = !!(save.raid && save.raid.cleared > 0);
+  const st = (s) => ({ open: s <= T.OPEN, base: T.BASE[s - 1], hi: T.HI[s - 1] });
+  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= T.OPEN ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > T.OPEN ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= T.OPEN ? "입장 가능" : "🔒 준비 중"}</span><em class="${s <= T.OPEN ? "up" : ""}">${s <= T.OPEN ? "원초 ×" + T.BASE[s - 1] : "?"}</em></button>`).join("");
+  const mons = TEMPLE_ORDER.map((k) => `<div class="tp-mon"><div class="tp-mn">${TEMPLE_MON[k][0]}</div><div class="dim">${TEMPLE_MON[k][1]}</div></div>`).join("");
+  const cur = st(S), can = unlocked;
+  const html = `<h2>돌의 신전</h2><div class="bh" style="--c:#ffd86a">
+    <div class="bh-main">
+      <div class="bh-art"><canvas id="tpc" width="250" height="250"></canvas><div class="bh-name">돌의 신전</div><div class="bh-page">4레인 전투</div></div>
+      <div class="bh-info">
+        <div class="bh-feat">돌 사냥터 · 열쇠 없이 입장</div>
+        <div class="bh-desc">돌을 지키는 신관들의 신전입니다. 신관들을 쓰러뜨리면 <b style="color:${STONE_T[0].color}">원초의 돌</b>이 나오고, 아주 드물게 <b style="color:${STONE_T[1].color}">계시의 돌</b>이 나옵니다. 신전 안에서는 4레인으로 전투합니다.</div>
+        <div class="bh-sttl">단계 선택</div><div class="bh-sts">${tabs}</div>
+        <div class="bh-me">몬스터 강도 <b>균열 ${T.TIERS[S - 1]}층 수준</b> <span class="dim">· 심연의 문지기를 쓰러뜨릴 수 있는 딜이면 돌 수 있습니다</span></div>
+        <div class="bh-key">${unlocked ? "입장 조건 충족" : `<span class="warn">입장 조건: 심연의 문지기 모르가스 클리어 (아직 클리어하지 못했습니다)</span>`}</div>
+        <button class="btn pri big bh-go" data-a="templego" ${can ? "" : "disabled"}>${can ? `돌의 신전 ${S}단계 입장` : "모르가스 클리어 필요"}</button>
+      </div>
+    </div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">돌과 골드(소량)만 나옵니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
+      <div class="bh-rars"><span class="bh-rar" style="color:${STONE_T[0].color}">${STONE_T[0].ico} 원초의 돌 ${cur.base - 1}~${cur.base + 2}개 / 클리어</span><span class="bh-rar" style="color:${STONE_T[1].color}">${STONE_T[1].ico} 계시의 돌 약 ${(cur.hi * 100).toFixed(1)}% / 클리어 (아주 드묾)</span><span class="bh-rar" style="color:#ffd24a">골드 소량</span></div>
+      <div class="dim" style="margin-top:4px">계시의 돌은 원초의 돌보다 옵션 수치가 약 ${T.HI_MULT}배 높고, 제련소에서 확인 비용이 ${T.HI_COST}배입니다.</div></div>
+    <div class="bh-drops" style="margin-top:8px"><div class="bh-dttl">등장 몬스터</div><div class="tp-mons">${mons}</div></div>
+  </div>`;
+  Modal.open(html, { cls: "bosshub", on: {
+    templest: (el) => { G.templeStage = +el.dataset.s; openTemple(); },
+    templego: () => {
+      if (!can) return; Modal.close(true); const hub = MAP.nodes.find((n) => n.kind === "temple");
+      startBattle(nodeToBattle({ kind: "temple" }), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openTemple(); } });
+    },
+  } });
+  const cv = document.getElementById("tpc"); if (!cv) return; const ctx = cv.getContext("2d"), t0 = performance.now();
+  const draw = () => { if (document.getElementById("tpc") !== cv) return; const t = (performance.now() - t0) / 1000; ctx.imageSmoothingEnabled = false;
+    const g = ctx.createLinearGradient(0, 0, 0, 250); g.addColorStop(0, "#2a2140"); g.addColorStop(1, "#0d0a18"); ctx.fillStyle = g; ctx.fillRect(0, 0, 250, 250);
+    const gl = ctx.createRadialGradient(125, 70, 5, 125, 70, 130); gl.addColorStop(0, "rgba(255,216,106,.45)"); gl.addColorStop(1, "rgba(255,216,106,0)"); ctx.fillStyle = gl; ctx.fillRect(0, 0, 250, 250);
+    ctx.fillStyle = "#3a3050"; for (const x of [16, 70, 164, 218]) { ctx.fillRect(x, 40, 16, 170); ctx.fillStyle = "#4e4268"; ctx.fillRect(x - 4, 36, 24, 8); ctx.fillRect(x - 4, 206, 24, 8); ctx.fillStyle = "#3a3050"; }
+    ctx.fillStyle = "#4e4268"; ctx.fillRect(0, 214, 250, 36); ctx.fillStyle = "#6a5a8a"; ctx.fillRect(0, 214, 250, 3);
+    const pos = [[46, 234, 1.25], [204, 234, 1.25], [92, 238, 1.35], [160, 238, 1.35], [125, 212, 2.0]];
+    for (const i of [4, 0, 1, 2, 3]) { const key = TEMPLE_KEYS[i], [x, y, sc] = pos[i], af = animFrame(key, "walk", t + i * 0.3); drawSprite(ctx, getSheet(key, 0), af.row, af.frame, x, y, sc, i % 2 === 1 && i < 4, 1, null); }
+    ctx.shadowColor = "#ffd86a"; ctx.shadowBlur = 12; ctx.fillStyle = STONE_T[0].color; ctx.fillRect(122, 128 + Math.sin(t * 2) * 3, 6, 6); ctx.fillStyle = STONE_T[1].color; ctx.fillRect(134, 120 + Math.sin(t * 2 + 1) * 3, 5, 5); ctx.shadowBlur = 0;
     setTimeout(draw, 60); };
   draw();
 }

@@ -78,7 +78,7 @@ function socketItem(sv, it, stone, idx) {
   if (!it || !it.sock || !stone || !stone.rev) return { ok: false, msg: "끼울 수 없습니다" };
   if (!socketUsable(it, stone.rev.k) && !(it.sock[idx] && it.sock[idx].k === stone.rev.k)) return { ok: false, msg: "이미 같은 옵션이 있어 끼울 수 없습니다" };
   if (idx < 0 || idx >= it.sock.length) return { ok: false, msg: "소켓이 없습니다" };
-  it.sock[idx] = { k: stone.rev.k, v: stone.rev.v }; sv.stones = sv.stones.filter((x) => x !== stone); return { ok: true, msg: "소켓에 끼웠습니다" };
+  it.sock[idx] = stone.rev.hi ? { k: stone.rev.k, v: stone.rev.v, hi: 1 } : { k: stone.rev.k, v: stone.rev.v }; sv.stones = sv.stones.filter((x) => x !== stone); return { ok: true, msg: "소켓에 끼웠습니다" };
 }
 // 이전 세이브/경매 등에서 온 장비의 범위 밖 수치를 현재 범위 안으로 맞춘다
 function clampItem(it) {
@@ -313,8 +313,11 @@ const STONE_POOL = [
   { k: "goldFind", v: 0.15 }, { k: "mf", v: 0.12 }, { k: "manaPct", v: 0.10 }, { k: "manaRegen", v: 0.4 }, { k: "allDmg", v: 0.06 },
 ];
 const stoneLabel = (m) => { const d = AFFIXES.find((x) => x.k === m.k); const nm = d ? d.name : (typeof MOD_LABEL !== "undefined" && MOD_LABEL[m.k] ? MOD_LABEL[m.k][0] : m.k); return `${nm} +${d && d.pct || /Pct|Chance|Dmg|crit|cdr|dodge|lifesteal|boss|elite|normal|ranged|ignore|goldFind|mf|Regen/.test(m.k) && m.v < 5 ? (m.v * 100).toFixed(m.v < 0.1 ? 1 : 0).replace(/\.0$/, "") + "%" : Math.round(m.v)}`; };
-function newStone(sv) { return { uid: sv.nextUid++, rev: null }; }
-function revealStone(sv, st) { const c = stoneRevealCost(sv); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL); st.rev = { k: p.k, v: p.v }; questEvent(sv, { type: "stone" }); return true; }
+// 돌 종류: 0 = 원초의 돌(기본), 1 = 계시의 돌(돌의 신전 · 수치가 더 높고 아주 드묾)
+const STONE_T = [{ name: "원초의 돌", un: "미확인된 원초의 돌", color: "#7ec8ff", ico: "💎" }, { name: "계시의 돌", un: "미확인된 계시의 돌", color: "#ffc247", ico: "🔶" }];
+const stoneT = (m) => STONE_T[m && m.hi ? 1 : 0];
+function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
+function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" }); return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
 // 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
 //  공허의 군주: 냉기·공허·마나·버프·회복·소환 계열 / 화염 정령왕: 화염·점화 / 철갑의 투사: 물리·출혈·중독 / 뇌제: 번개·감전
@@ -356,6 +359,12 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
+  if (kind === "temple") {   // 돌의 신전: 돌과 골드(몹이 주는 골드)만 나온다
+    const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, n = Math.max(1, Math.round((T.BASE[S - 1] + rint(-1, 2)) * mf * (B.stone || 1)));
+    for (let k = 0; k < n; k++) sv.stones.push(newStone(sv, 0)); out.stones = n;
+    if (Math.random() < Math.min(0.5, T.HI[S - 1] * mf)) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+    return out;
+  }
   if (kind === "vault") return out;   // 황금 보물고: 골드(몹이 주는 골드)만 나온다 — 장비·돌·구슬·재료·조각은 없다
   let n = boss ? 4 : 2 + ((node.stage || 0) >= 3 ? 1 : 0);
   if (kind === "elite") n = 4; if (kind === "treasure") n = 5;
@@ -491,6 +500,7 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
+  if (n.kind === "temple") return !!(sv.raid && sv.raid.cleared > 0);   // 돌의 신전: 심연의 문지기 모르가스를 클리어한 뒤
   if (n.kind === "endless" || n.kind === "void" || n.kind === "bosshub" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
   if (!townUnlocked(sv, n.act)) return false;
   if (n.kind === "elite" || n.kind === "treasure") return sv.cleared[n.act - 1] >= n.need;

@@ -19,6 +19,7 @@ CFG.EB_AFFINITY = +(typeof process !== "undefined" && process.env && process.env
 CFG.VENOM_REGEN = +(typeof process !== "undefined" && process.env && process.env.VREG || 0.006);   // 독니의 군주 재생 (초당 최대 체력 비율, 중독 중에는 멈춤)
 CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.AFFD || 0.85);   // 상성 빌드(같은 속성 공격 스킬 2개 이상)가 그 속성 보스에게 받는 피해 배율
 CFG.TAKEN_FLOOR = 0.4;   // 받는 피해 감소 상한 60% (받는 피해 배율의 하한)
+CFG.TEMPLE = { OPEN: 1, TIERS: [130, 140, 150, 160], HI: [0.015, 0.025, 0.04, 0.06], BASE: [4, 5, 6, 8], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
 CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
@@ -31,6 +32,7 @@ CFG.FLOOR_TAB = (() => { const tab = [], E = [19, 39, 59, 79, 99], A = CFG.FLOOR
 // ---------------------------------------------------------------
 const SPR_META = {
   c_imp: { cell: 32, h: 26 }, c_goblin: { cell: 32, h: 28 }, c_archer: { cell: 32, h: 28 }, c_shaman: { cell: 32, h: 30 }, c_brute: { cell: 32, h: 28 },
+  pri_imp: { cell: 48, h: 40 }, pri_ghoul: { cell: 48, h: 40 }, pri_skel: { cell: 48, h: 42 }, pri_necro: { cell: 48, h: 44 }, pri_brute: { cell: 48, h: 42 },
   ghoul: { cell: 48, h: 40 }, skel: { cell: 48, h: 42 }, necro: { cell: 48, h: 44 }, brute: { cell: 48, h: 42 }, fiend: { cell: 48, h: 40 },
   slime: { cell: 48, h: 24 }, slimeT: { cell: 48, h: 24 }, slimeL: { cell: 48, h: 24 }, mush: { cell: 48, h: 40 }, mushT: { cell: 48, h: 40 },
   bat: { cell: 48, h: 36 }, batC: { cell: 48, h: 36 }, scorp: { cell: 48, h: 34 }, wolf: { cell: 48, h: 36 }, wolfH: { cell: 48, h: 36 },
@@ -48,6 +50,7 @@ const ROSTER = [
   [["bat", -80], ["ghoul", 250], ["skel", 270], ["necro", 280], ["brute", -90], ["eye"]],           // 8 심연
   [["batC", 55], ["ghoul", 50], ["skel", 55], ["necro", 55], ["brute", 55], ["golem"]],             // 9 천공성
   [["fiend"], ["ghoul", -60], ["skel", -20], ["necro", -30], ["brute", -20], ["wolfH"]],            // 10 마계
+  [["pri_imp"], ["pri_ghoul"], ["pri_skel"], ["pri_necro"], ["pri_brute"], ["pri_imp"]],            // 11 돌의 신전: 신관들
 ];
 // 지역 특수 몬스터 (무리/근접과 달리 고유한 성질)
 // traits: split(죽으면 분열) poison chill curse explode(자폭) fast tank regen
@@ -94,7 +97,7 @@ const atlasVal = (sv, id) => { const n = ATLAS.find((x) => x.id === id); return 
 // ---------------------------------------------------------------
 const WORLD_BUFFS = [
   { id: "alch", name: "연금술사의 축복", text: "구슬 드랍 ×3", orb: 3, ico: "orb" },
-  { id: "wisdom", name: "탐구자의 축복", text: "미확인의 돌 드랍 ×2", stone: 2, ico: "shard" },
+  { id: "wisdom", name: "탐구자의 축복", text: "원초의 돌 드랍 ×2", stone: 2, ico: "shard" },
   { id: "plunder", name: "약탈자의 축복", text: "장비 드랍 ×2", qty: 2, ico: "weapon" },
   { id: "gold", name: "황금의 축복", text: "골드 ×2", gold: 2, ico: "gold" },
   { id: "luck", name: "행운의 축복", text: "MF +100%", mf: 1.0, ico: "ring" },
