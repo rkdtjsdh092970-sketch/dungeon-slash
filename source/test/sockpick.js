@@ -1,0 +1,13 @@
+const { chromium } = require('playwright');
+(async () => { const br = await chromium.launch(); const pg = await br.newPage({ viewport: { width: 1000, height: 640 } }); const errs = [];
+  pg.on('pageerror', (e) => errs.push('PE ' + e.message)); pg.on('console', (m) => { if (m.type() === 'error') errs.push('CE ' + m.text()); });
+  await pg.goto('file:///home/claude/game/dist/game.html'); await pg.waitForTimeout(700);
+  const r = await pg.evaluate(() => { save = newSave(); save.tut.done = true; save.level = 100; save.equipped = {}; const w = genItem(save, 5, 3, 'weapon'); w.uid = save.nextUid++; w.sock = [null, null]; w.affixes = []; save.equipped.weapon = w; save.inv = [];
+    for (const [k, v] of [['hpFlat', 80], ['magPct', 0.1], ['atkFlat', 5], ['critDmg', 0.22], ['magFlat', 22], ['cdr', 0.05]]) save.stones.push({ uid: save.nextUid++, rev: { k, v } });
+    IB.sel = w; openSockPick(w, 0); return [...document.querySelectorAll('#mbox .pline')].map((d) => d.innerText.replace(/\n/g, ' ')); });
+  console.log(r.join('\n')); await pg.screenshot({ path: '/tmp/sockpick.png' });
+  await pg.click('[data-a="socksort"][data-m="default"]'); await pg.waitForTimeout(200);
+  console.log('default first:', await pg.evaluate(() => document.querySelector('#mbox .pline').innerText.replace(/\n/g, ' ')));
+  await pg.click('[data-a="socksort"][data-m="power"]'); await pg.waitForTimeout(200); await pg.click('[data-a="sockgo"]'); await pg.waitForTimeout(300);
+  console.log('equipped sock:', JSON.stringify(await pg.evaluate(() => ({ s: save.equipped.weapon.sock, left: save.stones.length }))));
+  console.log(errs.join('\n') || 'no errors'); await br.close(); })();
