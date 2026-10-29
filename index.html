@@ -4860,14 +4860,16 @@ function openBulk() {
 // ---------- 스탯 창 ----------
 function openStats() {
   const s = computeStats(save), P = (v, d) => (v * 100).toFixed(d == null ? 1 : d) + "%", N = fmtN;
+  const CAP = (v, cap) => `${P(v)} <small class="dim">/ 최대 ${P(cap, 0)}${v >= cap - 1e-9 ? " · 상한 도달" : ""}</small>`;
+  const TAKEN = (v) => { const r = -v, c = 0.8; return r > c + 1e-9 ? `<span style="color:#ffd24a">-${P(c, 0)}</span> <small class="dim">/ 최대 -${P(c, 0)} · 상한 도달 (초과 ${P(r - c, 0)} 무효)</small>` : `${v > 0 ? "+" : ""}${P(v, 0)} <small class="dim">/ 최대 -${P(c, 0)}${Math.abs(r - c) < 1e-9 ? " · 상한 도달" : ""}</small>`; };
   const G = (title, rows) => `<div class="sg"><h4>${title}</h4>${rows.filter(Boolean).map((r) => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}</div>`;
   const elems = ELEMS.map((e) => [ELEM_NAME[e] + " 피해", P(s[e + "Dmg"], 0)]);
   const pd = powerDetail(s), tot = pd.skills.reduce((a, x) => a + x.dps, 0) || 1;
   const pw = G("전투력", [["전투력", `<b style="color:#ffe08a">${fmtPow(playerPower(s))}</b>`], ["예상 초당 피해", N(pd.dps)], ...pd.skills.map((x) => [`${x.name} <small class="dim">${x.mag ? "마법" : "물리"}${x.dot > 0.05 ? " · 지속" : ""}${x.paid ? "" : " · 마나 0"}</small>`, `${N(x.dps)} (${Math.round(x.dps / tot * 100)}%)`]), pd.demand > 0 ? ["마나 가동률", `${Math.round(pd.manaFactor * 100)}% <small class="dim">재생 ${pd.supply.toFixed(1)}/s · 소모 ${pd.demand.toFixed(1)}/s</small>`] : null, pd.buff > 1.001 ? ["버프 효과", "×" + pd.buff.toFixed(2)] : null, ["유효 체력", N(pd.ehp)]]);
   Modal.open(`<h2>스탯</h2><div class="statgrid">${pw}
-   ${G("공격", [["물리 공격력", N(s.atk)], ["주문력", N(s.mag)], ["물리 피해", P(s.physDmg, 0)], ["마법 피해", P(s.magDmg, 0)], ["주는 피해", P(s.allDmg, 0)], ["물리 치명타", `${P(s.critChance)} / +${P(s.critDmg, 0)}`], ["주문 치명타", s.magCrit ? `${P(s.critChance + s.spellCrit)} (물리와 동일)` : P(s.spellCrit)], ["쿨타임 감소", P(s.cdr)], ["생명력 흡수", P(s.lifesteal)]])}
-   ${G("방어", [["체력", N(s.maxHp)], ["방어력", N(s.def)], ["회피", P(s.dodge)], ["받는 피해", (s.dmgTaken > 0 ? "+" : "") + P(s.dmgTaken, 0)], s.regen ? ["초당 회복", P(s.regen)] : null, s.revive ? ["부활", s.revive + "회"] : null, s.manaShield ? ["마나 방패", P(s.manaShield, 0)] : null])}
-   ${G("마나", [["최대 마나", N(s.maxMana)], s.manaHit ? ["마나 흡수", P(s.manaHit, 2) + " / 적중 (최대 10회/초)"] : null, ["초당 재생", `${(s.maxMana * s.manaRate).toFixed(1)} (${P(s.manaRate)})`], ["마나 소모 감소", P(Math.min(0.6, s.manaCostRed), 0)], s.manaToSpell ? ["마나 → 주문력", P(s.manaToSpell, 0)] : null, ["스킬 필요 마나/초", s.manaNeed.toFixed(1)]])}
+   ${G("공격", [["물리 공격력", N(s.atk)], ["주문력", N(s.mag)], ["물리 피해", P(s.physDmg, 0)], ["마법 피해", P(s.magDmg, 0)], ["주는 피해", P(s.allDmg, 0)], ["물리 치명타", `${P(s.critChance)} / +${P(s.critDmg, 0)}`], ["주문 치명타", s.magCrit ? `${P(s.critChance + s.spellCrit)} (물리와 동일)` : P(s.spellCrit)], ["쿨타임 감소", CAP(s.cdr, s.cdrCap)], ["생명력 흡수", P(s.lifesteal)]])}
+   ${G("방어", [["체력", N(s.maxHp)], ["방어력", N(s.def)], ["회피", s.noDodge ? P(s.dodge) : CAP(s.dodge, s.dodgeCap)], ["받는 피해", TAKEN(s.dmgTaken)], s.regen ? ["초당 회복", P(s.regen)] : null, s.revive ? ["부활", s.revive + "회"] : null, s.manaShield ? ["마나 방패", P(s.manaShield, 0)] : null])}
+   ${G("마나", [["최대 마나", N(s.maxMana)], s.manaHit ? ["마나 흡수", P(s.manaHit, 2) + " / 적중 (최대 10회/초)"] : null, ["초당 재생", `${(s.maxMana * s.manaRate).toFixed(1)} (${P(s.manaRate)})`], ["마나 소모 감소", CAP(Math.min(0.6, s.manaCostRed), 0.6)], s.manaToSpell ? ["마나 → 주문력", P(s.manaToSpell, 0)] : null, ["스킬 필요 마나/초", s.manaNeed.toFixed(1)]])}
    ${G("속성 · 관통", [...elems, ["원소 피해", P(s.elemDmg, 0)], ["속성 저항 관통", P(s.penElem, 0)], ["방어 무시", P(s.ignoreDef, 0)], ["마법저항 무시", P(s.ignoreRes, 0)], ["대상 방어력 감소", P(s.shredDef, 0)], ["대상 마법저항 감소", P(s.shredRes, 0)]])}
    ${G("추가 피해 · 범위", [["보스", P(s.add.boss, 0)], ["정예", P(s.add.elite, 0)], ["원거리", P(s.add.ranged, 0)], ["일반", P(s.add.normal, 0)], ["광역 피해", P(s.aoeDmg, 0)], ["번개 도약", "+" + s.chainJumps], ["레인", s.lanes], ["칸당 몹 수", s.stackCap]])}
    ${G("획득", [["MF (표시/실효)", `${P(s.mf, 0)} / ${P(mfEff(s.mf + atlasVal(save, "mf")), 0)}`], ["골드 획득", P(s.goldFind, 0)], ["스킬 구성", `물리 ${Math.round((1 - s.mix) * 100)}% · 마법 ${Math.round(s.mix * 100)}%`], ["전투력", N(playerPower(s))]])}
@@ -5714,7 +5716,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261029-035943";
+const BUILD_ID = "20261030-011327";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -5864,6 +5866,9 @@ function openBossHub(page) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.23", date: "10/30", title: "스탯 창 상한 표시", items: [
+    "스탯 창에 쿨타임 감소 · 회피 · 받는 피해 · 마나 소모 감소의 최대치가 함께 표시됩니다. 상한에 닿으면 표시가 바뀌고, 받는 피해는 -80%를 넘으면 초과분이 무효라고 알려줍니다.",
+  ] },
   { ver: "4.22", date: "10/29", title: "보스 관문 · 서리 여왕 · 독니의 군주", items: [
     "지도의 보스 노드가 [보스 관문] 하나로 합쳐졌습니다. 보스 이미지 · 적정 전투력 · 단계 선택 · 드랍 스킬(마우스를 올리면 효과 표시)을 보고 바로 입장할 수 있고, 페이지를 넘겨 여섯 보스를 볼 수 있습니다.",
     "새 속성 보스 서리 여왕(냉기)과 독니의 군주(독)가 추가되었습니다. 열쇠는 서리의 징표 · 맹독의 징표이고, 전용 드랍 스킬(빙하 낙하 · 서리 정령 · 독 가시 비 · 독니 새끼 등)과 독 스킬 독안개 · 맹독 폭발이 생겼습니다. 맹독 주입은 독니의 군주에서 드랍됩니다.",
