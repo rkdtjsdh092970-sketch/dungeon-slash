@@ -198,7 +198,7 @@ function playerPowerOld(s) {
   const mag = s.mag * CFG.MAG_BASE * (1 + s.magDmg + eAvg) * (1 + Math.min(1, ccM) * s.critDmg) * (1 + 0.5 * s.ignoreRes + 0.4 * s.shredRes + 0.4 * s.penElem);
   const dmg = (1 - s.mix) * phys + s.mix * mag;
   const mf = s.maxMana * s.manaRate + s.maxMana / 15, mfac = s.manaNeed > 0 ? Math.min(1, Math.max(0.35, mf / s.manaNeed)) : 1;
-  const surv = s.maxHp * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) * (1 + 0.25 * s.manaShield) / (1 - s.dodge);
+  const surv = s.maxHp * mit * (1 / Math.max(CFG.TAKEN_FLOOR, 1 + s.dmgTaken)) * (1 + 0.25 * s.manaShield) / (1 - s.dodge);
   return dmg * Math.sqrt(mfac) * surv * (1 + s.allDmg) * (1 + 0.15 * (s.add.boss + s.add.elite + s.add.ranged + s.add.normal)) / (1 - s.cdr * 0.7) * (1 + 0.05 * s.chainJumps + s.aoeDmg * 0.3);
 }
 
@@ -273,7 +273,7 @@ function powerDetail(s) {
   for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
   out.dps *= buffMul; out.buff = buffMul;
   const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M * (1 - CFG.MANA_SHIELD_KEEP) / CFG.MANA_SHIELD_COST, s.maxHp * f / (1 - f)) : 0;
-  out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + mshield) * mit * (1 / Math.max(0.2, 1 + s.dmgTaken)) / (1 - s.dodge);
+  out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + mshield) * mit * (1 / Math.max(CFG.TAKEN_FLOOR, 1 + s.dmgTaken)) / (1 - s.dodge);
   out.mit = mit; out.revive = s.revive;
   return out;
 }
@@ -633,13 +633,17 @@ function offlineReward(sv) {
 // ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
 function autoRules(sv) {
   const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
-  if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; return A;
+  if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; if (A.tierX == null) A.tierX = 0; if (A.tierN == null) A.tierN = 0; return A;
 }
 // 옵션 품질: 옵션 수치가 범위의 어디쯤인지 평균 (0~1). 옵션이 없는 장비는 0
 function itemQuality(it) {
   let n = 0, s = 0; for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d || d.count) continue; const [lo, hi] = affixRange(d, it.ilvl, Math.min(it.rarity, 4)); if (hi > lo) { s += clamp((a.v - lo) / (hi - lo), 0, 1); n++; } }   // 품질은 지금 아이템 레벨의 전체 범위 기준 (높은 티어일수록 높다)
   return n ? s / n : 0;
 }
+// 지정한 티어(1티어가 최고) 이상의 옵션 개수. 티어가 없는 고정 옵션은 세지 않는다
+const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null && a.t + 1 <= X).length;
+// 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
+const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && goodAffixCount(it, A.tierX) >= A.tierN;
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
   for (const it of sv.inv.slice()) {
@@ -647,6 +651,7 @@ function autoProcess(sv) {
     if (A.keepUp && isUpgrade(sv, it, true)) continue;
     if (A.maxIlvl && it.ilvl > A.maxIlvl) continue;   // 아이템 레벨 상한: 이보다 높은 장비는 처리하지 않는다
     if (A.minQ && itemQuality(it) >= A.minQ) continue;   // 옵션 품질이 기준 이상이면 유지
+    if (tierKeep(A, it)) continue;   // 티어 기준을 채운 장비는 유지
     if (rule === "sell") { const v = itemValue(it); sv.gold += v; res.gold += v; removeItem(sv, it); res.sold++; } else { const y = dismantleItem(sv, it); res.gold += y.gold; res.ore += y.ore; res.dis++; }
   }
   { const sr = autoProcessSkills(sv); res.sSold = sr.sold; res.sDis = sr.dis; res.gold += sr.gold; res.hone = sr.hone; }

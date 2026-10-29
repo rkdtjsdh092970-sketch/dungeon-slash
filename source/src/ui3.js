@@ -38,7 +38,7 @@ const sockText = (it) => (it.sock || []).map((x) => (x ? "◆" : "◇")).join(""
 // v4 소켓 표시: 끼운 옵션(고정 수치)과 빈 소켓. 제련소에서는 빈 소켓에 미확인의 돌 옵션을 끼울 수 있다
 function socketBlock(it) {
   if (!it.sock) return "";
-  return `<div class="socks">` + it.sock.map((m, i) => m ? `<div class="sock on">◆ ${stoneLabel(m)} <small class="dim">(고정)</small></div>` : `<div class="sock">◇ 빈 소켓${IB.mode === "forge" ? ` <button class="btn xs" data-a="sockpick" data-i="${i}">끼우기</button>` : ""}</div>`).join("") + `</div>`;
+  return `<div class="socks">` + it.sock.map((m, i) => m ? `<div class="sock on">◆ ${stoneLabel(m)} <small class="dim">(고정 · 회수 불가)</small>${IB.mode === "forge" ? ` <button class="btn xs warn" data-a="sockdel" data-i="${i}">삭제</button>` : ""}</div>` : `<div class="sock">◇ 빈 소켓${IB.mode === "forge" ? ` <button class="btn xs" data-a="sockpick" data-i="${i}">끼우기</button>` : ""}</div>`).join("") + `</div>`;
 }
 function itemDetail(it) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
@@ -116,7 +116,7 @@ function renderItems() {
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
     sell: () => { if (isProtected(IB.sel)) return; const v = itemValue(IB.sel); sellItem(save, IB.sel); toast(`+${fmtN(v)}G`); snd("coin"); IB.sel = null; done(); },
-    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(), stones: () => openStones(), sockpick: (el) => openSockPick(IB.sel, +el.dataset.i),
+    bulk: () => openBulk(), autodis: () => openAutoDis(), openstash: () => openStash(), stones: () => openStones(), sockpick: (el) => openSockPick(IB.sel, +el.dataset.i), sockdel: (el) => openSockDel(IB.sel, +el.dataset.i),
     mtog: () => { IB.multi = !IB.multi; IB.chk.clear(); snd("click"); renderItems(); },
     mpick: (el) => { const it = find(el); if (!it) return; if (isProtected(it)) { snd("error"); toast("잠금·프리셋·착용 중인 장비는 선택할 수 없습니다", "bad"); return; } if (IB.chk.has(it.uid)) IB.chk.delete(it.uid); else IB.chk.add(it.uid); renderItems(); },
     mall: () => { for (const it of list) if (!isProtected(it)) IB.chk.add(it.uid); renderItems(); }, mnone: () => { IB.chk.clear(); renderItems(); },
@@ -152,7 +152,7 @@ function openBulk() {
 function openStats() {
   const s = computeStats(save), P = (v, d) => (v * 100).toFixed(d == null ? 1 : d) + "%", N = fmtN;
   const CAP = (v, cap) => `${P(v)} <small class="dim">/ 최대 ${P(cap, 0)}${v >= cap - 1e-9 ? " · 상한 도달" : ""}</small>`;
-  const TAKEN = (v) => { const r = -v, c = 0.8; return r > c + 1e-9 ? `<span style="color:#ffd24a">-${P(c, 0)}</span> <small class="dim">/ 최대 -${P(c, 0)} · 상한 도달 (초과 ${P(r - c, 0)} 무효)</small>` : `${v > 0 ? "+" : ""}${P(v, 0)} <small class="dim">/ 최대 -${P(c, 0)}${Math.abs(r - c) < 1e-9 ? " · 상한 도달" : ""}</small>`; };
+  const TAKEN = (v) => { const r = -v, c = 1 - CFG.TAKEN_FLOOR; return r > c + 1e-9 ? `<span style="color:#ffd24a">-${P(c, 0)}</span> <small class="dim">/ 최대 -${P(c, 0)} · 상한 도달 (초과 ${P(r - c, 0)} 무효)</small>` : `${v > 0 ? "+" : ""}${P(v, 0)} <small class="dim">/ 최대 -${P(c, 0)}${Math.abs(r - c) < 1e-9 ? " · 상한 도달" : ""}</small>`; };
   const G = (title, rows) => `<div class="sg"><h4>${title}</h4>${rows.filter(Boolean).map((r) => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}</div>`;
   const elems = ELEMS.map((e) => [ELEM_NAME[e] + " 피해", P(s[e + "Dmg"], 0)]);
   const pd = powerDetail(s), tot = pd.skills.reduce((a, x) => a + x.dps, 0) || 1;
@@ -372,17 +372,18 @@ function openAutoSkill() {
 // ---------- 자동 분해 설정 (인벤토리) ----------
 function openAutoDis() {
   const A = autoRules(save), opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`;
-  const nowN = save.inv.filter((it) => { const r = A.rules[it.rarity]; return r && r !== "keep" && !it.uniq && !protectedItem(save, it) && !(A.keepUp && isUpgrade(save, it, true)) && !(A.maxIlvl && it.ilvl > A.maxIlvl) && !(A.minQ && itemQuality(it) >= A.minQ); }).length;
+  const nowN = save.inv.filter((it) => { const r = A.rules[it.rarity]; return r && r !== "keep" && !it.uniq && !protectedItem(save, it) && !(A.keepUp && isUpgrade(save, it, true)) && !(A.maxIlvl && it.ilvl > A.maxIlvl) && !(A.minQ && itemQuality(it) >= A.minQ) && !tierKeep(A, it); }).length;
   Modal.open(`<h2>자동 분해 설정</h2><div class="dim">전투가 끝날 때마다 아래 규칙으로 가방의 장비를 자동 정리합니다.<br>고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.</div>
    <label class="setrow2" style="margin-top:6px"><b>모든 전투 후 자동 정리</b> <input type="checkbox" data-i="adall" ${A.always ? "checked" : ""}></label><div class="dim">끄면 자동 반복 중에만 정리합니다</div>
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
    <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
+   <label class="setrow2">옵션 티어 기준 <select data-i="adtx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.tierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adtn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.tierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.tierX > 0 && A.tierN > 0 ? `<b style="color:#ffd070">${A.tierX === 1 ? "T1" : "T" + A.tierX + " 이상"} 옵션이 ${A.tierN}개 미만</b>인 장비만 처리합니다. (T1은 T2 이상에도 포함, 1티어가 최고)` : "티어 기준을 고르면, 기준 이상의 옵션을 충분히 가진 장비는 처리하지 않고 유지합니다."}</div>
    <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
    <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
    <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adsk">스킬 정리 설정</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
     adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
-    adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
+    adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adtx: (el) => { A.tierX = +el.value; if (A.tierX > 0 && !(A.tierN > 0)) A.tierN = 3; saveGame(); openAutoDis(); }, adtn: (el) => { A.tierN = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
     adnow: () => { const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 (+${fmtN(r.gold)}G${r.ore ? " · 강화석 " + r.ore : ""})`, "ok"); openAutoDis(); renderItems(); },
     adsk: () => openAutoSkill(), adx: () => { Modal.close(); renderItems(); },
   } });
@@ -469,7 +470,7 @@ function formulaHtml() {
   <tr><td>점화</td><td>×${C.IGNITE.coef}</td><td>${C.IGNITE.dur}초</td><td>${C.IGNITE.cap} (가장 강한 것)</td><td>화염 스킬</td></tr></table>
   <div class="dim">발동 확률 = 스킬 자체 확률 + (조건을 만족하면) 장비·패시브 확률. 대상 보정: 보스 ×${C.DOT_BOSS}, 정예 ×${C.DOT_ELITE}, 일반 ×1. 지속 피해는 방어력·저항의 영향을 다시 받지 않습니다.</div>
   ${H("받는 피해 · 회복")}
-  ${step("A", "플레이어가 받는 피해", `회피 확률(상한 기본 50%)로 완전 회피<br>피해 = 원피해 × (1 − 방어력 ÷ (방어력 + 5 × 원피해))<br>× (1 + 저주 효과) × max(0.2, 1 + 받는 피해%) → 마나 방패가 일부를 마나로 대신 받음`, `방어력은 ‘원피해가 방어력의 몇 배인가’에 따라 효율이 달라지는 방식이라 고레벨 몬스터일수록 더 많이 필요합니다 · 내 방어력 ${fmtN(s.def)} · 회피 ${P(s.dodge)}`)}
+  ${step("A", "플레이어가 받는 피해", `회피 확률(상한 기본 50%)로 완전 회피<br>피해 = 원피해 × (1 − 방어력 ÷ (방어력 + 5 × 원피해))<br>× (1 + 저주 효과) × max(0.4, 1 + 받는 피해%) → 마나 방패가 일부를 마나로 대신 받음`, `방어력은 ‘원피해가 방어력의 몇 배인가’에 따라 효율이 달라지는 방식이라 고레벨 몬스터일수록 더 많이 필요합니다 · 내 방어력 ${fmtN(s.def)} · 회피 ${P(s.dodge)}`)}
   ${step("B", "무리 칸 보정", `같은 칸의 일반 몬스터 n마리의 각 공격 피해 × n^(${C.STACK_EXP} − 1) → 칸 전체 합계는 n^${C.STACK_EXP}배`)}
   ${step("C", "회복", `생명력 흡수 = 스킬 타격 피해 × 생명력 흡수%<br>초당 재생 = 최대 체력 × (${C.REGEN * 100}% + 재생)<br>‘작열 낙인’ 상태에서는 흡수·재생이 모두 ×0.5`)}
   ${H("능력치 계산")}

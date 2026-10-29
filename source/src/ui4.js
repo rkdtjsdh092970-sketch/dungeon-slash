@@ -311,6 +311,14 @@ function openStones() {
     stback: () => { if (typeof renderItems === "function") renderItems(); else Modal.close(); },
   } });
 }
+function openSockDel(it, idx) {
+  if (!it || !it.sock || !it.sock[idx]) return; const cur = it.sock[idx];
+  Modal.open(`<h2>소켓 돌 삭제</h2><div class="center">${itemTitle(it)} · ${idx + 1}번 소켓<br><b>${stoneLabel(cur)}</b></div><div class="warn center" style="margin:8px 0">박힌 돌은 <b>회수할 수 없고</b> 삭제하면 사라집니다.<br>소켓은 빈 칸이 되어 다른 돌을 끼울 수 있습니다.</div>
+  <div class="pbtns"><button class="btn warn" data-a="sockdelyes">삭제</button><button class="btn" data-a="sockback">취소</button></div>`, { cls: "sm", on: {
+    sockdelyes: () => { const eq = EQ_SLOTS.some((k) => save.equipped[k] === it); it.sock[idx] = null; snd("click"); toast("소켓의 돌을 삭제했습니다", "ok"); saveGame(); if (eq && typeof refreshTop === "function") refreshTop(); renderItems(); },
+    sockback: () => renderItems(),
+  } });
+}
 function openSockPick(it, idx) {
   if (!it || !it.sock) return; const sv = save, rv = sv.stones.filter((s) => s.rev), cur = it.sock[idx];
   const ok = (s) => socketUsable(it, s.rev.k) || (cur && cur.k === s.rev.k);
