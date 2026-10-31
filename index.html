@@ -637,9 +637,10 @@ CFG.EB_AFFINITY = +(typeof process !== "undefined" && process.env && process.env
 CFG.VENOM_REGEN = +(typeof process !== "undefined" && process.env && process.env.VREG || 0.006);   // 독니의 군주 재생 (초당 최대 체력 비율, 중독 중에는 멈춤)
 CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.AFFD || 0.85);   // 상성 빌드(같은 속성 공격 스킬 2개 이상)가 그 속성 보스에게 받는 피해 배율
 CFG.TAKEN_FLOOR = 0.4;   // 받는 피해 감소 상한 60% (받는 피해 배율의 하한)
-CFG.SPIRE = { END: 100, WALL: 20, SAT: 0.05, T0: 118, T1: 175, TAB: null };   // 솟아난 탑: 100층 · 20층마다 벽 · 층 난이도는 균열 층 수준(tier)으로 환산 (TAB 이 있으면 그 표를 쓴다) · SAT = 장비 한 개가 사탄 장비일 확률
+CFG.SPIRE = { END: 100, WALL: 20, SAT: 0.05, SAT_STEP: 0.015, T0: 118, T1: 175, TAB: null };   // 솟아난 탑: 100층 · 20층마다 벽 · 층 난이도는 균열 층 수준(tier)으로 환산 (TAB 이 있으면 그 표를 쓴다) · SAT = 장비 한 개가 사탄 장비일 확률
 CFG.SPIRE.TAB = (() => { const W = [160, 190, 225, 265, 310], S = [135, 162, 194, 230, 270], tab = []; for (let f = 1; f <= 100; f++) { const g = Math.floor((f - 1) / 20), pos = (f - 1) % 20; tab.push(pos === 19 ? W[g] : S[g] + (W[g] - 8 - S[g]) * pos / 18); } return tab; })();   // 벽(20·40·60·80·100층) 난이도: 균열 환산 160 / 190 / 225 / 265 / 310 — 시뮬 보정 전 초안
 const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
+const satRate = (f) => CFG.SPIRE.SAT + CFG.SPIRE.SAT_STEP * Math.floor(Math.max(1, f | 0) / CFG.SPIRE.WALL);   // 사탄 장비 확률: 20층마다 조금씩 오른다
 const spireTier = (f) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
 CFG.TEMPLE = { OPEN: 1, NEED: [0, 25, 50, 75], TIERS: [130, Math.round(spireTier(30)), Math.round(spireTier(55)), Math.round(spireTier(80))], HI: [0.03, 0.06, 0.10, 0.15], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
 CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
@@ -2134,7 +2135,7 @@ function rollDrops(sv, node, boss, B) {
     // 균열·보스: 일반 장비는 거의 안 나온다. 전설은 층이 높을수록 조금씩 더 잘 나온다
     const RW = late ? riftRW(node.tier, boss) : null;
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
-    if (kind === "spire" && Math.random() < CFG.SPIRE.SAT * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }   // 사탄 장비
+    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }   // 사탄 장비
     out.items.push(genItem(sv, ilvl, kind === "spire" ? wpick([0, 1, 2, 3], (x) => [10, 25, 35, 30][x]) : r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, 5));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
@@ -5974,7 +5975,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-214117";
+const BUILD_ID = "20261031-214240";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6172,7 +6173,7 @@ function openTemple() {
 // =========================================================
 function openSpire() {
   const S = CFG.SPIRE, P = save.spire || { best: 0 }, max = Math.min(S.END, P.best + 1), f = G.spireFloor = Math.max(1, Math.min(max, G.spireFloor || max));
-  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = (S.SAT * 100).toFixed(0);
+  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = (satRate(f) * 100).toFixed(1).replace(/\.0$/, "");
   const marks = [20, 40, 60, 80, 100].map((w) => `<button class="btn xs" data-a="spfl" data-f="${w}" ${w > max ? "disabled" : ""}>${w}층${P.best >= w ? " ✔" : ""}</button>`).join(" ");
   const html = `<h2>솟아난 탑</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
     <div class="bh-feat">${wall ? "🧱 벽 층" : "탑"} · 4레인</div>
@@ -6181,7 +6182,7 @@ function openSpire() {
     <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0"><button class="btn" data-a="spd" ${f <= 1 ? "disabled" : ""}>−</button><b style="font-size:26px;min-width:90px;text-align:center">${f}층</b><button class="btn" data-a="spu" ${f >= max ? "disabled" : ""}>＋</button></div>
     <div style="text-align:center">${marks}</div>
     <div class="bh-me">최고 기록 <b>${P.best}층</b> <span class="dim">· 다음 벽 ${nextWall}층</span></div>
-    <div class="bh-key dim">드랍: 장비(전설 비중 높음) · 장비 하나가 사탄 장비일 확률 약 ${sat}% · 벽 층을 처음 넘으면 사탄 장비 1개 확정 · 구슬 · 조각 · 골드</div>
+    <div class="bh-key dim">드랍: 장비(전설 비중 높음) · 장비 하나가 사탄 장비일 확률 약 ${sat}% (20층마다 +${(S.SAT_STEP * 100).toFixed(1)}%p) · 벽 층을 처음 넘으면 사탄 장비 1개 확정 · 구슬 · 조각 · 골드</div>
     <button class="btn pri big bh-go" data-a="spgo">탑 ${f}층 입장</button>
   </div></div></div>`;
   Modal.open(html, { cls: "bosshub", on: {
@@ -6194,6 +6195,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.34", date: "10/31", title: "사탄 장비 드랍률", items: [
+    "솟아난 탑에서 사탄 장비가 나올 확률이 20층마다 조금씩 오릅니다 (1~19층 5% → 100층 12.5%).",
+  ] },
   { ver: "4.33", date: "10/31", title: "사탄 자동 분해 · 도감", items: [
     "자동 분해에 [사탄 장비] 설정이 생겼습니다: 사탄 장비를 전부 분해 또는 판매할지 고를 수 있습니다. 사탄 장비는 이 설정으로만 처리되고 옵션 티어 기준은 적용되지 않습니다 (기본값: 처리 안 함).",
     "도감에 [사탄 옵션] 탭이 생겼습니다. 부위별로 붙을 수 있는 고유 줄 목록을 볼 수 있습니다.",

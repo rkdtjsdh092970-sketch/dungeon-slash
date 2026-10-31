@@ -108,7 +108,7 @@ function openTemple() {
 // =========================================================
 function openSpire() {
   const S = CFG.SPIRE, P = save.spire || { best: 0 }, max = Math.min(S.END, P.best + 1), f = G.spireFloor = Math.max(1, Math.min(max, G.spireFloor || max));
-  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = (S.SAT * 100).toFixed(0);
+  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = (satRate(f) * 100).toFixed(1).replace(/\.0$/, "");
   const marks = [20, 40, 60, 80, 100].map((w) => `<button class="btn xs" data-a="spfl" data-f="${w}" ${w > max ? "disabled" : ""}>${w}층${P.best >= w ? " ✔" : ""}</button>`).join(" ");
   const html = `<h2>솟아난 탑</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
     <div class="bh-feat">${wall ? "🧱 벽 층" : "탑"} · 4레인</div>
@@ -117,7 +117,7 @@ function openSpire() {
     <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0"><button class="btn" data-a="spd" ${f <= 1 ? "disabled" : ""}>−</button><b style="font-size:26px;min-width:90px;text-align:center">${f}층</b><button class="btn" data-a="spu" ${f >= max ? "disabled" : ""}>＋</button></div>
     <div style="text-align:center">${marks}</div>
     <div class="bh-me">최고 기록 <b>${P.best}층</b> <span class="dim">· 다음 벽 ${nextWall}층</span></div>
-    <div class="bh-key dim">드랍: 장비(전설 비중 높음) · 장비 하나가 사탄 장비일 확률 약 ${sat}% · 벽 층을 처음 넘으면 사탄 장비 1개 확정 · 구슬 · 조각 · 골드</div>
+    <div class="bh-key dim">드랍: 장비(전설 비중 높음) · 장비 하나가 사탄 장비일 확률 약 ${sat}% (20층마다 +${(S.SAT_STEP * 100).toFixed(1)}%p) · 벽 층을 처음 넘으면 사탄 장비 1개 확정 · 구슬 · 조각 · 골드</div>
     <button class="btn pri big bh-go" data-a="spgo">탑 ${f}층 입장</button>
   </div></div></div>`;
   Modal.open(html, { cls: "bosshub", on: {

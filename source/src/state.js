@@ -390,7 +390,7 @@ function rollDrops(sv, node, boss, B) {
     // 균열·보스: 일반 장비는 거의 안 나온다. 전설은 층이 높을수록 조금씩 더 잘 나온다
     const RW = late ? riftRW(node.tier, boss) : null;
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
-    if (kind === "spire" && Math.random() < CFG.SPIRE.SAT * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }   // 사탄 장비
+    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }   // 사탄 장비
     out.items.push(genItem(sv, ilvl, kind === "spire" ? wpick([0, 1, 2, 3], (x) => [10, 25, 35, 30][x]) : r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, 5));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
