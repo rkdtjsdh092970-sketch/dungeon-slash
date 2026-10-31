@@ -53,7 +53,7 @@
 .eqslots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}.eqs,.tile{position:relative;background:#1c1632;border:3px solid #4a4270;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center}.eqs{height:46px}
 .eqs.empty{opacity:.35;cursor:default}.ghost{opacity:.5}.tile small,.eqs small{position:absolute;right:2px;bottom:0;font-size:10px;font-weight:bold;text-shadow:0 1px 1px #000}.tile em{position:absolute;left:2px;top:0;font-size:10px;color:#ffd24a;font-style:normal;font-weight:bold}
 .sel{outline:3px solid #fff;outline-offset:1px}.grid{display:grid;grid-template-columns:repeat(auto-fill,46px);gap:4px;overflow:auto;flex:1;align-content:start;margin:6px 0}.grid.small{display:flex;flex-wrap:wrap;justify-content:center;margin:10px 0}.grid .tile{width:46px;height:46px}
-.r0{border-color:#777}.r1{border-color:#4a8aff;color:#8ab4ff}.r2{border-color:#ffd24a;color:#ffd24a}.r3{border-color:#ff8a2a;color:#ff9a4a}.r4{border-color:#7fe08a;color:#7fe08a}span.r0{color:#ccc}
+.r0{border-color:#777}.r1{border-color:#4a8aff;color:#8ab4ff}.r2{border-color:#ffd24a;color:#ffd24a}.r3{border-color:#ff8a2a;color:#ff9a4a}.r4{border-color:#7fe08a;color:#7fe08a}.rsat{border-color:#ff4a3a;color:#ff6a5a;box-shadow:0 0 7px #ff4a3a99,inset 0 0 6px #ff4a3a55}.tile.rsat{background:linear-gradient(#3a1612,#1c0c0a)}span.r0{color:#ccc}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}.tab{font:inherit;font-size:12px;color:#ccc;background:#2a2347;border:2px solid #4a4270;border-radius:3px;padding:2px 8px;cursor:pointer}.tab.on{background:#5a4a9a;color:#fff;border-color:#b8a8e8}
 .stats{font-size:12px}.stats div,.dname+.dim{display:flex;justify-content:space-between;border-bottom:1px solid #2a2347;padding:1px 0}.stats b{color:#ffe08a}
 .sets{margin-top:6px;font-size:12px;font-weight:bold}.sets .on{color:#8dff9a;font-weight:normal}.sets .off{color:#777;font-weight:normal}.setrow{margin-bottom:5px}
@@ -1740,6 +1740,7 @@ function satTick(b, dt) {
   if (S.shadow) { b.shT = (b.shT || 0) + dt; if (b.shT >= 6) { const f = satFront(b); if (f) { b.shT = 0; applyDamage(b, f, b.stats.atk * CFG.PHYS_BASE * 8, { src: "shadow", color: "#b0a0ff" }); } else b.shT = 5.9; } }
 }
 const satDefMul = (b) => { const S = b.stats.sat; if (!S) return 1; let m = 1; if (S.lowdef && b.hp <= b.maxHp * 0.3) m *= 4; if (S.mana0 && b.mana <= 0) m *= 3; return m; };
+const rarName = (it) => (it.sat ? "사탄" : ITEM_RARITY[Math.min(3, it.rarity)].name);
 
 // =========================================================
 // 세이브 / 장비 / 스탯 / 퀘스트 / 대장간
@@ -4409,7 +4410,7 @@ const G = { trialTier: 1, screen: "boot", battle: null, node: null, speed: 1, pa
 const snd = (n) => AU.sfx(n);
 const itemIconKey = (it) => (it.slot === "weapon" && it.wt ? "w_" + it.wt : it.slot);   // 무기는 종류(검·지팡이·낫·마도서)마다 모양이 다르다
 const ITEM_ICON = (it) => (it.uniq && UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 2) : iconImg(itemIconKey(it), 2));
-const RCLS = (it) => ITEM_RARITY[it.rarity].cls;
+const RCLS = (it) => (it.sat ? "rsat" : ITEM_RARITY[it.rarity].cls);
 const setOf = (it) => (it.setId ? SETS.find((s) => s.id === it.setId) : null);
 const itemColor = (it) => (it.setId ? setOf(it).color : null);
 const skillTitle = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return `<span class="${SKILL_RARITY[inst.rarity].cls}">${d.slot === "passive" ? "" : SKILL_RARITY[inst.rarity].name + " "}${d.name}</span>`; };
@@ -4969,7 +4970,7 @@ function itemDetail(it) {
   const eq = isEquipped(it), prot = isProtected(it), st = null, t = 0;
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
 
-  h += `<div class="dim">T${it.ilvl} ${slotLabel(it)}${it.sock ? " · 소켓 " + it.sock.length : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
+  h += `<div class="dim">T${it.ilvl} ${slotLabel(it)}${it.sat ? ` · <b style="color:${SAT_COLOR}">사탄 등급</b>` : ""}${it.sock ? " · 소켓 " + it.sock.length : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
 
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? (rerollLocked(it, i) ? ` <button class="btn xs" disabled title="다른 줄을 이미 재굴림해서 잠겼습니다">🔒</button>` : ` <button class="btn xs" data-a="reroll" data-i="${i}" title="${it.rrIdx == null ? "옵션 재굴림 (한 줄만 굴릴 수 있습니다 — 굴리면 다른 줄은 잠깁니다)" : "옵션 재굴림"}">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>`) : ""}</div>`).join("") + `</div>`;
   h += satHtml(it) + socketBlock(it);
@@ -5017,14 +5018,14 @@ function multiDo(kind, done) {
 }
 function renderItems() {
   const m = IB.mode, title = { inv: "장비", forge: "제련소", shop: "상점" }[m];
-  let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || it.rarity === IB.rar) && (!IB.lockOnly || it.lock));
+  let list = save.inv.filter((it) => (IB.tab === "all" || it.slot === IB.tab) && (IB.rar < 0 || (IB.rar === 9 ? !!it.sat : it.rarity === IB.rar)) && (!IB.lockOnly || it.lock));
   const ups = new Map(); if (IB.sort === "up") for (const it of list) ups.set(it, Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))));
-  list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => b.rarity - a.rarity || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
+  list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => (b.sat ? 4 : b.rarity) - (a.sat ? 4 : a.rarity) || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
   const eqCol = `<div class="doll">` + DOLL_ORDER.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}" data-tipu="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 돌 (${save.stones.length})</button>` : `<button class="btn pri wide1" data-a="stones">💎 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
-  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}</select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
+  const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}<option value="9" ${IB.rar === 9 ? "selected" : ""}>사탄</option></select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
@@ -5559,10 +5560,10 @@ const TIP_CUR = {
   keys4: ["뇌전의 징표", "뇌제에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 뇌전의 징표(노란색 눈알)를 처치"],
 };
 function itemSourceLines(it) {
-  return [`${ITEM_RARITY[it.rarity].name} 장비: 스테이지 · 보스 · 균열에서 드랍 (T${it.ilvl}는 균열 ${(it.ilvl - 1) * 20 || 1}층~). 제련소에서 옵션을 다듬어 완성합니다.`];
+  return [it.sat ? "사탄 장비: 솟아난 탑에서 드랍. 전설 장비에 고유 줄이 하나 붙어 있습니다." : `${ITEM_RARITY[it.rarity].name} 장비: 스테이지 · 보스 · 균열에서 드랍 (T${it.ilvl}는 균열 ${(it.ilvl - 1) * 20 || 1}층~). 제련소에서 옵션을 다듬어 완성합니다.`];
 }
 function itemTipHtml(it) {
-  let h = `<div class="tt">${ITEM_ICON(it)} <b>${itemTitle(it)}</b></div><div class="dim">T${it.ilvl} ${slotLabel(it)} · ${ITEM_RARITY[it.rarity].name}${it.enh ? " · +" + it.enh : ""}${it.sock ? " · 소켓 " + sockText(it) : ""}</div><div>${baseText(it)}</div>`;
+  let h = `<div class="tt">${ITEM_ICON(it)} <b>${itemTitle(it)}</b></div><div class="dim">T${it.ilvl} ${slotLabel(it)} · ${it.sat ? `<b style="color:${SAT_COLOR}">사탄</b>` : ITEM_RARITY[it.rarity].name}${it.enh ? " · +" + it.enh : ""}${it.sock ? " · 소켓 " + sockText(it) : ""}</div><div>${baseText(it)}</div>`;
   if (it.affixes && it.affixes.length) h += `<div class="tl">${it.affixes.map((a) => affText(a) + affRangeText(it, a)).join("<br>")}</div>`;
   if (it.sat) h += satHtml(it);
   if (it.sock && it.sock.some((x) => x)) h += `<div class="tl" style="color:#9ad8ff">${it.sock.filter((x) => x).map((m) => "◆ " + stoneLabel(m)).join("<br>")}</div>`;
@@ -5973,7 +5974,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-213931";
+const BUILD_ID = "20261031-214117";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;

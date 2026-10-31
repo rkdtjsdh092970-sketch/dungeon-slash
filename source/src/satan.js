@@ -155,3 +155,4 @@ function satTick(b, dt) {
   if (S.shadow) { b.shT = (b.shT || 0) + dt; if (b.shT >= 6) { const f = satFront(b); if (f) { b.shT = 0; applyDamage(b, f, b.stats.atk * CFG.PHYS_BASE * 8, { src: "shadow", color: "#b0a0ff" }); } else b.shT = 5.9; } }
 }
 const satDefMul = (b) => { const S = b.stats.sat; if (!S) return 1; let m = 1; if (S.lowdef && b.hp <= b.maxHp * 0.3) m *= 4; if (S.mana0 && b.mana <= 0) m *= 3; return m; };
+const rarName = (it) => (it.sat ? "사탄" : ITEM_RARITY[Math.min(3, it.rarity)].name);

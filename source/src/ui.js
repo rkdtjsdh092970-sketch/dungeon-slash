@@ -5,7 +5,7 @@ const G = { trialTier: 1, screen: "boot", battle: null, node: null, speed: 1, pa
 const snd = (n) => AU.sfx(n);
 const itemIconKey = (it) => (it.slot === "weapon" && it.wt ? "w_" + it.wt : it.slot);   // 무기는 종류(검·지팡이·낫·마도서)마다 모양이 다르다
 const ITEM_ICON = (it) => (it.uniq && UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 2) : iconImg(itemIconKey(it), 2));
-const RCLS = (it) => ITEM_RARITY[it.rarity].cls;
+const RCLS = (it) => (it.sat ? "rsat" : ITEM_RARITY[it.rarity].cls);
 const setOf = (it) => (it.setId ? SETS.find((s) => s.id === it.setId) : null);
 const itemColor = (it) => (it.setId ? setOf(it).color : null);
 const skillTitle = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return `<span class="${SKILL_RARITY[inst.rarity].cls}">${d.slot === "passive" ? "" : SKILL_RARITY[inst.rarity].name + " "}${d.name}</span>`; };
