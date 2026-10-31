@@ -342,7 +342,7 @@ function bossOfSkill(d) {
   if (d.kind === "pierce" || d.kind === "spray" || d.kind === "bounce" || d.kind === "shuri" || d.kind === "boomer") return "storm";   // 관통·난사·투척 계열은 뇌제
   return "titan";
 }
-const BOSS_SKILL_RW = [[0, 40, 50, 10, 0, 0], [0, 20, 55, 21, 4, 0], [0, 0, 62, 28, 9, 1], [0, 0, 50, 32, 14, 4]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
+const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 9, 0, 0], [5, 12, 70, 13, 0, 0]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
 function rollBossSkills(sv, kind, K) {

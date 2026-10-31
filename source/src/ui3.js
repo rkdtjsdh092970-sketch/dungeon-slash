@@ -424,7 +424,7 @@ function oddsHtml() {
   h += tbl([row("전설 소켓 수", "1개", "2개", "3개"), row("확률", ...SOCKET_W.map((w) => pctS(w / sw, 0))), row("돌 드랍 (층당: 1층 / 50층 / 100층)", pctS(stoneChanceAt(1), 0), pctS(stoneChanceAt(50), 0), pctS(stoneChanceAt(100), 0)), row("보스 층 (5층마다)", "확정 +1개", "", "")]);
   h += `<div class="dim">제련소에서 확인하면 아래 ${STONE_POOL.length}종 중 하나가 같은 확률로 나오고, 수치는 고정입니다: ${STONE_POOL.map((m) => stoneLabel(m)).join(" · ")}</div>`;
   h += H("④ 스킬 드랍 (균열 100층 졸업 후, 4대 보스)");
-  h += tbl([row("<b>단계</b>", "스킬 확률", "희귀", "전설", "신화", "사탄", "종말"), ...[0, 1, 2, 3].map((k) => { const w = BOSS_SKILL_RW[k], s = w.reduce((a, b) => a + b, 0); return row(`${k + 1}단계`, pctS(BOSS_SKILL_CH[k], 0), ...[1, 2, 3, 4, 5].map((i) => pctS(w[i] / s, 0))); })]);
+  h += tbl([row("<b>단계</b>", "스킬 확률", "일반", "희귀", "전설", "신화"), ...[0, 1, 2, 3].map((k) => { const w = BOSS_SKILL_RW[k], s = w.reduce((a, b) => a + b, 0); return row(`${k + 1}단계`, pctS(BOSS_SKILL_CH[k], 0), ...[0, 1, 2, 3].map((i) => pctS(w[i] / s, 0))); })]);
   h += `<div class="dim">나온 스킬의 30%는 패시브 스킬입니다. 모든 스킬은 한 보스에 배정되어 있고 (스킬 도감 → 보스별 드랍), 신화 이상이면 40% 확률로 그 보스의 신화 전용 스킬이 나옵니다.</div>`;
   return h;
 }
