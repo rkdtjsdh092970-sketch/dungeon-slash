@@ -4442,9 +4442,9 @@ function askConfirm(msg, yes, cb, danger, no) {
 }
 function initModal() {
   const box = $("#mbox");
-  const h = (ev) => { if (ev.target.closest("select,input")) return; const el = ev.target.closest("[data-a]"); if (!el || el.disabled) return; const a = el.dataset.a; if (a === "__close") return Modal.close(); const f = Modal.on[a]; if (f) { snd("click"); Modal.lastAct = performance.now(); f(el, ev); } };
+  const h = (ev) => { if (ev.target.closest("select,input")) return; const el = ev.target.closest("[data-a]"); if (!el || el.disabled) return; const a = el.dataset.a; if (a === "__close") return Modal.close(); const f = Modal.on[a]; if (f) { snd("click"); f(el, ev); } };
   box.addEventListener("click", h); box.addEventListener("input", (ev) => { const el = ev.target.closest("[data-i]"); if (el && Modal.on[el.dataset.i]) Modal.on[el.dataset.i](el, ev); });
-  $("#modal").addEventListener("mousedown", (ev) => { if (ev.target.id === "modal" && !Modal.persistent && !(Modal.lastAct && performance.now() - Modal.lastAct < 1500)) Modal.close(); });   // 버튼을 연타하다 창 바깥을 잘못 눌러도 바로 닫히지 않는다 (마지막 버튼 조작 후 1.5초)
+  // 창 바깥(어두운 배경)을 눌러도 닫히지 않는다 — ✕ 버튼이나 취소 · 닫기 버튼으로만 닫는다
 }
 
 // ---------- 상단 바 (맵 / 마을) ----------
@@ -5979,7 +5979,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-220016";
+const BUILD_ID = "20261031-220154";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6200,7 +6200,7 @@ function openSpire() {
 // =========================================================
 const PATCH_NOTES = [
   { ver: "4.36", date: "10/31", title: "제련소 재굴림 버튼 고정", items: [
-    "재굴림 등을 연타하다 창 바깥을 잘못 눌러 창이 닫히던 문제를 고쳤습니다 (버튼을 누른 직후 1.5초 동안은 바깥을 눌러도 닫히지 않습니다).",
+    "창 바깥(어두운 배경)을 눌러도 창이 닫히지 않습니다. ✕ 또는 닫기 · 취소 버튼으로만 닫힙니다 (재굴림 연타 중 잘못 눌러 나가지던 문제 해결).",
     "1티어(최고 티어) 옵션을 재굴림하려고 하면 '정말 재굴림하시겠습니까?' 확인창이 나옵니다.",
     "제련소에서 옵션 글자 수나 줄바꿈에 따라 재굴림 버튼 위치가 달라지던 문제를 고쳤습니다. 모든 옵션 줄의 높이와 버튼 위치가 고정됩니다.",
   ] },

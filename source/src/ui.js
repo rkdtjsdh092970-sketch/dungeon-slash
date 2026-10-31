@@ -34,9 +34,9 @@ function askConfirm(msg, yes, cb, danger, no) {
 }
 function initModal() {
   const box = $("#mbox");
-  const h = (ev) => { if (ev.target.closest("select,input")) return; const el = ev.target.closest("[data-a]"); if (!el || el.disabled) return; const a = el.dataset.a; if (a === "__close") return Modal.close(); const f = Modal.on[a]; if (f) { snd("click"); Modal.lastAct = performance.now(); f(el, ev); } };
+  const h = (ev) => { if (ev.target.closest("select,input")) return; const el = ev.target.closest("[data-a]"); if (!el || el.disabled) return; const a = el.dataset.a; if (a === "__close") return Modal.close(); const f = Modal.on[a]; if (f) { snd("click"); f(el, ev); } };
   box.addEventListener("click", h); box.addEventListener("input", (ev) => { const el = ev.target.closest("[data-i]"); if (el && Modal.on[el.dataset.i]) Modal.on[el.dataset.i](el, ev); });
-  $("#modal").addEventListener("mousedown", (ev) => { if (ev.target.id === "modal" && !Modal.persistent && !(Modal.lastAct && performance.now() - Modal.lastAct < 1500)) Modal.close(); });   // 버튼을 연타하다 창 바깥을 잘못 눌러도 바로 닫히지 않는다 (마지막 버튼 조작 후 1.5초)
+  // 창 바깥(어두운 배경)을 눌러도 닫히지 않는다 — ✕ 버튼이나 취소 · 닫기 버튼으로만 닫는다
 }
 
 // ---------- 상단 바 (맵 / 마을) ----------
