@@ -29,8 +29,8 @@ const Modal = {
   scrollRestore(box, list) { for (const it of list) { const sel = it.tag + (it.cls && typeof it.cls === "string" ? "." + it.cls.trim().split(/\s+/).join(".") : ""); const el = box.querySelectorAll(sel)[it.i]; if (el) el.scrollTop = it.top; } },
   close(silent) { if ($("#modal").classList.contains("hidden")) return; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
 };
-function askConfirm(msg, yes, cb, danger) {
-  Modal.open(`<h2>확인</h2><p class="center">${msg}</p><div class="pbtns"><button class="btn ${danger === false ? "pri" : "warn"}" data-a="cyes">${yes || "확인"}</button><button class="btn" data-a="cno">취소</button></div>`, { cls: "sm", on: { cyes: () => { Modal.close(true); cb(); }, cno: () => Modal.close() } });
+function askConfirm(msg, yes, cb, danger, no) {
+  Modal.open(`<h2>확인</h2><p class="center">${msg}</p><div class="pbtns"><button class="btn ${danger === false ? "pri" : "warn"}" data-a="cyes">${yes || "확인"}</button><button class="btn" data-a="cno">취소</button></div>`, { cls: "sm", on: { cyes: () => { Modal.close(true); cb(); }, cno: () => { if (no) { Modal.close(true); no(); } else Modal.close(); } } });
 }
 function initModal() {
   const box = $("#mbox");

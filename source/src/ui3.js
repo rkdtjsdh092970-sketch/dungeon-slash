@@ -123,7 +123,8 @@ function renderItems() {
     mall: () => { for (const it of list) if (!isProtected(it)) IB.chk.add(it.uid); renderItems(); }, mnone: () => { IB.chk.clear(); renderItems(); },
     msell: () => multiDo("sell", done), mdis: () => multiDo("dis", done),
     ahpost: () => ahPostDialog(IB.sel),
-    reroll: (el) => { if (rerollLocked(IB.sel, +el.dataset.i)) { snd("error"); toast("이미 다른 줄을 재굴림해서 이 줄은 잠겼습니다", "bad"); } else if (rerollAffix(save, IB.sel, +el.dataset.i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); },
+    reroll: (el) => { const i = +el.dataset.i, doIt = () => { if (rerollLocked(IB.sel, i)) { snd("error"); toast("이미 다른 줄을 재굴림해서 이 줄은 잠겼습니다", "bad"); } else if (rerollAffix(save, IB.sel, i)) { snd("enh_ok"); toast("옵션이 바뀌었습니다"); } else { snd("error"); toast("재료가 부족합니다", "bad"); } saveGame(); renderItems(); };
+      const a = IB.sel.affixes[i]; if (a && a.t === 0 && !rerollLocked(IB.sel, i)) askConfirm(`이 옵션은 <b style="color:#ffd070">1티어(최고 티어)</b>입니다.<br>정말 재굴림하시겠습니까?<br><small class="dim">${affText(a)}</small>`, "재굴림", doIt, true, () => renderItems()); else doIt(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
   }, presetHandlers(renderItems)) });
