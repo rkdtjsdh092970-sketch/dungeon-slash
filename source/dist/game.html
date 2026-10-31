@@ -2075,7 +2075,21 @@ function rerollSockets(sv, it) {
   const n = rint(1, 3), old = it.sock.length; sv.sockTix--; it.sock = Array(n).fill(null); return { ok: true, n, old, msg: `소켓 ${old}개 → ${n}개` };
 }
 function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
-function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" }); return true; }
+// 돌 보관 한도: 미확인 돌은 종류(원초 · 계시)마다, 확인된 돌은 옵션(종류)마다 100개까지. 넘치는 돌은 자동으로 골드로 팔린다
+const STONE_CAP = 100, STONE_CONV = 20;
+const stoneSellValue = (sv, st) => Math.round(stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1) * (st.rev ? 0.4 : 0.2));
+function addStone(sv, hi) {   // 드랍으로 돌을 얻는다: 한도가 차 있으면 바로 골드로 판다 (얻은 골드를 돌려준다)
+  const st = newStone(sv, hi); if (sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === (hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; return g; }
+  sv.stones.push(st); return 0;
+}
+function sellStones(sv, list) { const set = new Set(list); let g = 0; for (const st of list) g += stoneSellValue(sv, st); sv.stones = sv.stones.filter((x) => !set.has(x)); sv.gold += g; return g; }
+function convertStones(sv, times) {   // 원초의 돌 20개 → 계시의 돌 1개
+  let n = 0; while (n < times) { const base = sv.stones.filter((x) => !x.rev && !x.hi); if (base.length < STONE_CONV) break; if (sv.stones.filter((x) => !x.rev && x.hi).length >= STONE_CAP) break; const rm = new Set(base.slice(0, STONE_CONV)); sv.stones = sv.stones.filter((x) => !rm.has(x)); sv.stones.push(newStone(sv, 1)); n++; }
+  return n;
+}
+function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" });
+  if (sv.stones.filter((x) => x !== st && x.rev && x.rev.k === st.rev.k && (x.hi ? 1 : 0) === (st.hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; sv.stones = sv.stones.filter((x) => x !== st); st.soldFor = g; }   // 같은 옵션이 이미 100개면 바로 판매
+  return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
 // 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
 //  공허의 군주: 냉기·공허·마나·버프·회복·소환 계열 / 화염 정령왕: 화염·점화 / 철갑의 투사: 물리·출혈·중독 / 뇌제: 번개·감전
@@ -2119,7 +2133,7 @@ function rollDrops(sv, node, boss, B) {
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
-    if (Math.random() < ch) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+    if (Math.random() < ch) { if (addStone(sv, 1)) out.stoneSold = (out.stoneSold || 0) + 1; out.stonesHi = 1; }
     if (Math.random() < ch) { sv.sockTix = (sv.sockTix || 0) + 1; out.sockTix = 1; }
     return out;
   }
@@ -2147,7 +2161,7 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "raid") {
     const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : kind === "raid" ? 2.0 : 1.2;
     let c = boss && (kind === "rift" || kind === "hell") ? 1 : 0; for (let k = 0; k < 1 + (chance > 1 ? 1 : 0); k++) if (Math.random() < Math.min(1, chance)) c++;
-    for (let k = 0; k < c; k++) sv.stones.push(newStone(sv)); out.stones = c;
+    for (let k = 0; k < c; k++) if (addStone(sv, 0)) out.stoneSold = (out.stoneSold || 0) + 1; out.stones = c;
   }
   // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
   if (kind === "raid") { const ks = ["void", "hive", "titan", "storm", "frost", "poison"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
@@ -5910,17 +5924,20 @@ const stoneHead = (hi, n, extra) => `<div class="pline" style="margin-top:6px;pa
 function stoneGroups(list) { const m = new Map(); for (const s of list) { const hi = s.rev.hi ? 1 : 0, key = hi + "|" + s.rev.k + "|" + s.rev.v; if (!m.has(key)) m.set(key, { rev: s.rev, hi, uids: [] }); m.get(key).uids.push(s.uid); } return [...m.values()].sort((a, b) => (a.hi - b.hi) || stoneLabel(a.rev).localeCompare(stoneLabel(b.rev), "ko")); }
 function openStones() {
   const sv = save, cost0 = stoneRevealCost(sv), costOf = (hi) => cost0 * (hi ? CFG.TEMPLE.HI_COST : 1), un = [0, 1].map((hi) => sv.stones.filter((s) => !s.rev && (s.hi ? 1 : 0) === hi)), rv = sv.stones.filter((s) => s.rev), gr = stoneGroups(rv);
-  const unRow = (hi) => un[hi].length ? `<div class="pline"><b style="color:${STONE_T[hi].color}">${STONE_T[hi].ico} ${STONE_T[hi].un}</b> <span style="color:#ffe08a">×${un[hi].length}</span></div><div class="pline"><button class="btn xs pri" data-a="streveal" data-u="${un[hi][0].uid}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>1개 확인 (${fmtN(costOf(hi))}G)</button> <button class="btn xs" data-a="stall" data-h="${hi}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>전부 확인 (${fmtN(costOf(hi) * un[hi].length)}G)</button></div>` : "";
-  const left = `<div style="flex:1;min-width:0"><div class="pline"><b>❔ 미확인된 돌</b> <span style="color:#ffe08a">×${un[0].length + un[1].length}</span></div>${unRow(0)}${unRow(1)}${un[0].length + un[1].length ? "" : `<div class="dim pad">미확인된 돌이 없습니다 — 균열과 돌의 신전을 돌아 보세요</div>`}</div>`;
-  const section = (hi) => { const g = gr.filter((x) => x.hi === hi); if (!g.length) return ""; return stoneHead(hi, g.reduce((a, x) => a + x.uids.length, 0)) + g.map((x) => `<div class="pline">${stoneName(x.rev)}${x.uids.length > 1 ? ` <b style="color:#ffe08a">×${x.uids.length}</b>` : ""} <button class="btn xs" data-a="stdrop" data-u="${x.uids[0]}" title="1개 버리기">버리기</button></div>`).join(""); };
+  const unRow = (hi) => un[hi].length ? `<div class="pline"><b style="color:${STONE_T[hi].color}">${STONE_T[hi].ico} ${STONE_T[hi].un}</b> <span style="color:#ffe08a">×${un[hi].length}</span></div><div class="pline"><button class="btn xs pri" data-a="streveal" data-u="${un[hi][0].uid}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>1개 확인 (${fmtN(costOf(hi))}G)</button> <button class="btn xs" data-a="stsellu" data-h="${hi}" title="미확인 돌 전부 판매">전부 팔기 (${fmtN(un[hi].length * stoneSellValue(sv, { hi }))}G)</button> <button class="btn xs" data-a="stall" data-h="${hi}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>전부 확인 (${fmtN(costOf(hi) * un[hi].length)}G)</button></div>` : "";
+  const left = `<div style="flex:1;min-width:0"><div class="pline"><b>❔ 미확인된 돌</b> <span style="color:#ffe08a">×${un[0].length + un[1].length}</span></div>${unRow(0)}${un[0].length >= STONE_CONV ? `<div class="pline"><button class="btn xs" data-a="stconv" data-n="1" ${un[1].length >= STONE_CAP ? "disabled" : ""}>원초 ${STONE_CONV}개 → 계시 1개</button> <button class="btn xs" data-a="stconv" data-n="99" ${un[1].length >= STONE_CAP ? "disabled" : ""}>가능한 만큼 변환 (${Math.min(Math.floor(un[0].length / STONE_CONV), STONE_CAP - un[1].length)}회)</button></div>` : `<div class="dim pad">원초의 돌 ${STONE_CONV}개를 모으면 계시의 돌 1개로 바꿀 수 있습니다</div>`}${unRow(1)}${un[0].length + un[1].length ? "" : `<div class="dim pad">미확인된 돌이 없습니다 — 균열과 돌의 신전을 돌아 보세요</div>`}</div>`;
+  const section = (hi) => { const g = gr.filter((x) => x.hi === hi); if (!g.length) return ""; return stoneHead(hi, g.reduce((a, x) => a + x.uids.length, 0)) + g.map((x) => `<div class="pline">${stoneName(x.rev)}${x.uids.length > 1 ? ` <b style="color:#ffe08a">×${x.uids.length}</b>` : ""} <button class="btn xs" data-a="stdrop" data-u="${x.uids[0]}" title="1개 버리기">버리기</button> <button class="btn xs" data-a="stsell" data-k="${x.rev.k}" data-h="${x.hi}" title="이 옵션의 돌을 전부 판매">전부 팔기 (${fmtN(x.uids.length * stoneSellValue(sv, { hi: x.hi, rev: 1 }))}G)</button></div>`).join(""); };
   const right = `<div style="flex:1;min-width:0;border-left:1px solid #3a3260;padding-left:10px"><div class="pline"><b>확인된 돌</b> <span style="color:#8dff9a">${rv.length}개 · ${gr.length}종</span></div>
     <div style="max-height:300px;overflow:auto">${section(1)}${section(0)}${rv.length ? "" : `<div class="dim pad">확인된 돌이 없습니다</div>`}</div></div>`;
   Modal.open(`<h2>💎 돌</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} · 미확인 ${un[0].length + un[1].length} · 확인됨 ${rv.length}</div>
   <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
   <div style="display:flex;gap:12px;margin:8px 0;align-items:flex-start">${left}${right}</div>
   <div class="pbtns"><button class="btn" data-a="stback">돌아가기</button></div>`, { cls: "wide", on: {
-    streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(`확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
+    streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(s.soldFor ? `확인: ${stoneLabel(s.rev)} — 같은 옵션이 ${STONE_CAP}개라 판매 +${fmtN(s.soldFor)}G` : `확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
     stall: (el) => { const hi = +el.dataset.h; let n = 0; for (const s of sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === hi)) { if (revealStone(sv, s)) n++; else break; } if (n) { snd("orb"); toast(`${n}개 확인`, "ok"); saveGame(); refreshTop(); } openStones(); },
+    stsell: (el) => { const k = el.dataset.k, h = +el.dataset.h, L = sv.stones.filter((x) => x.rev && x.rev.k === k && (x.hi ? 1 : 0) === h); if (!L.length) return; askConfirm(`${stoneName(L[0].rev)} 돌 <b>${L.length}개</b>를 전부 판매할까요?<br>+${fmtN(L.reduce((a, x) => a + stoneSellValue(sv, x), 0))}G`, "판매", () => { const g = sellStones(sv, L); snd("coin"); toast(`돌 ${L.length}개 판매 +${fmtN(g)}G`, "ok"); saveGame(); refreshTop(); openStones(); }, false, () => openStones()); },
+    stsellu: (el) => { const h = +el.dataset.h, L = sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === h); if (!L.length) return; askConfirm(`${STONE_T[h].un} <b>${L.length}개</b>를 전부 판매할까요?<br>+${fmtN(L.reduce((a, x) => a + stoneSellValue(sv, x), 0))}G`, "판매", () => { const g = sellStones(sv, L); snd("coin"); toast(`돌 ${L.length}개 판매 +${fmtN(g)}G`, "ok"); saveGame(); refreshTop(); openStones(); }, false, () => openStones()); },
+    stconv: (el) => { const n = convertStones(sv, +el.dataset.n); if (n) { snd("orb"); toast(`계시의 돌 ${n}개로 변환`, "ok"); saveGame(); } else snd("error"); openStones(); },
     stdrop: (el) => { sv.stones = sv.stones.filter((x) => x.uid !== +el.dataset.u); saveGame(); openStones(); },
     stback: () => { if (typeof renderItems === "function") renderItems(); else Modal.close(); },
   } });
@@ -5989,7 +6006,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-222000";
+const BUILD_ID = "20261031-222536";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6209,6 +6226,11 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.39", date: "10/31", title: "돌 정리", items: [
+    "돌 보관 한도: 미확인 돌은 원초 · 계시 각각 100개, 확인된 돌은 옵션마다 100개까지입니다. 넘치는 돌은 자동으로 골드로 팔립니다.",
+    "돌 창에 [전부 팔기] 버튼이 생겼습니다 (미확인 돌 종류별 · 확인된 돌 옵션별).",
+    "원초의 돌 20개를 계시의 돌 1개로 바꿀 수 있습니다.",
+  ] },
   { ver: "4.38", date: "10/31", title: "서버 로그인 안정화", items: [
     "확인하지 않은 돌이 많이 쌓인 계정에서 서버 로그인 · 저장이 실패하던 문제를 고쳤습니다 (확인하지 않은 돌을 개수로 줄여 저장합니다. 돌은 그대로 유지됩니다).",
   ] },

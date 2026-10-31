@@ -332,7 +332,21 @@ function rerollSockets(sv, it) {
   const n = rint(1, 3), old = it.sock.length; sv.sockTix--; it.sock = Array(n).fill(null); return { ok: true, n, old, msg: `소켓 ${old}개 → ${n}개` };
 }
 function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
-function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" }); return true; }
+// 돌 보관 한도: 미확인 돌은 종류(원초 · 계시)마다, 확인된 돌은 옵션(종류)마다 100개까지. 넘치는 돌은 자동으로 골드로 팔린다
+const STONE_CAP = 100, STONE_CONV = 20;
+const stoneSellValue = (sv, st) => Math.round(stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1) * (st.rev ? 0.4 : 0.2));
+function addStone(sv, hi) {   // 드랍으로 돌을 얻는다: 한도가 차 있으면 바로 골드로 판다 (얻은 골드를 돌려준다)
+  const st = newStone(sv, hi); if (sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === (hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; return g; }
+  sv.stones.push(st); return 0;
+}
+function sellStones(sv, list) { const set = new Set(list); let g = 0; for (const st of list) g += stoneSellValue(sv, st); sv.stones = sv.stones.filter((x) => !set.has(x)); sv.gold += g; return g; }
+function convertStones(sv, times) {   // 원초의 돌 20개 → 계시의 돌 1개
+  let n = 0; while (n < times) { const base = sv.stones.filter((x) => !x.rev && !x.hi); if (base.length < STONE_CONV) break; if (sv.stones.filter((x) => !x.rev && x.hi).length >= STONE_CAP) break; const rm = new Set(base.slice(0, STONE_CONV)); sv.stones = sv.stones.filter((x) => !rm.has(x)); sv.stones.push(newStone(sv, 1)); n++; }
+  return n;
+}
+function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" });
+  if (sv.stones.filter((x) => x !== st && x.rev && x.rev.k === st.rev.k && (x.hi ? 1 : 0) === (st.hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; sv.stones = sv.stones.filter((x) => x !== st); st.soldFor = g; }   // 같은 옵션이 이미 100개면 바로 판매
+  return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
 // 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
 //  공허의 군주: 냉기·공허·마나·버프·회복·소환 계열 / 화염 정령왕: 화염·점화 / 철갑의 투사: 물리·출혈·중독 / 뇌제: 번개·감전
@@ -376,7 +390,7 @@ function rollDrops(sv, node, boss, B) {
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
-    if (Math.random() < ch) { sv.stones.push(newStone(sv, 1)); out.stonesHi = 1; }
+    if (Math.random() < ch) { if (addStone(sv, 1)) out.stoneSold = (out.stoneSold || 0) + 1; out.stonesHi = 1; }
     if (Math.random() < ch) { sv.sockTix = (sv.sockTix || 0) + 1; out.sockTix = 1; }
     return out;
   }
@@ -404,7 +418,7 @@ function rollDrops(sv, node, boss, B) {
   if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "raid") {
     const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : kind === "raid" ? 2.0 : 1.2;
     let c = boss && (kind === "rift" || kind === "hell") ? 1 : 0; for (let k = 0; k < 1 + (chance > 1 ? 1 : 0); k++) if (Math.random() < Math.min(1, chance)) c++;
-    for (let k = 0; k < c; k++) sv.stones.push(newStone(sv)); out.stones = c;
+    for (let k = 0; k < c; k++) if (addStone(sv, 0)) out.stoneSold = (out.stoneSold || 0) + 1; out.stones = c;
   }
   // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
   if (kind === "raid") { const ks = ["void", "hive", "titan", "storm", "frost", "poison"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
