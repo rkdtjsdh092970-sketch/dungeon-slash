@@ -59,7 +59,7 @@ const needLogin = (title) => { Modal.open(`<h2>${title}</h2><div class="center p
 
 // ---------- 경매장 ----------
 const AH = { tab: "buy", slot: "", minr: 0, uniq: false, sort: "price" };
-const itemBrief = (it) => { if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; return D ? uniqueLines(D, it.umods).join(" · ") : ""; } return it.affixes.map((a) => affText(a)).join(" · "); };
+const itemBrief = (it) => { if (it.uniq) { const D = UNIQUE_BY_ID[it.uniq]; return D ? uniqueLines(D, it.umods).join(" · ") : ""; } return (it.sat ? "✦ " + satLine(it).txt + " · " : "") + it.affixes.map((a) => affText(a)).join(" · "); };
 const isSkillItem = (it) => it && it.slot === "skill";
 function ahRowHtml(r, act) {
   const it = r.item;
