@@ -2398,7 +2398,7 @@ function offlineReward(sv) {
 // ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
 function autoRules(sv) {
   const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
-  if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; if (A.tierX == null) A.tierX = 0; if (A.tierN == null) A.tierN = 0; return A;
+  if (A.satG == null) A.satG = 0; if (!A.satAct) A.satAct = "dis"; if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; if (A.tierX == null) A.tierX = 0; if (A.tierN == null) A.tierN = 0; return A;
 }
 // 옵션 품질: 옵션 수치가 범위의 어디쯤인지 평균 (0~1). 옵션이 없는 장비는 0
 function itemQuality(it) {
@@ -2410,7 +2410,8 @@ const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null &
 // 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
 // 티어 기준을 켜면 등급 규칙과 관계없이 처리한다: 전설이면서 기준을 채운 장비만 남고, 나머지(전설 미달 · 일반 · 매직 · 레어)는 분해 (등급 규칙이 판매면 판매)
 const tierOn = (A) => A.tierX > 0 && A.tierN > 0;
-const autoRuleOf = (A, it) => { const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
+const autoRuleOf = (A, it) => { if (it.sat) { const d = SAT_BY_ID[it.sat]; return A.satG && d && d.g >= A.satG ? (A.satAct === "sell" ? "sell" : "dis") : "keep"; }   // 사탄 장비는 줄 등급 기준으로만 처리한다 (옵션 티어 기준은 적용하지 않음)
+  const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
 const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && it.rarity >= 3 && goodAffixCount(it, A.tierX) >= A.tierN;   // 전설만 남긴다: 전설이 아니면 기준을 채울 수 없다
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };
@@ -5300,13 +5301,14 @@ function openAutoDis() {
   Modal.open(`<h2>자동 분해 설정</h2><div class="dim">전투가 끝날 때마다 아래 규칙으로 가방의 장비를 자동 정리합니다.<br>고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.</div>
    <label class="setrow2" style="margin-top:6px"><b>모든 전투 후 자동 정리</b> <input type="checkbox" data-i="adall" ${A.always ? "checked" : ""}></label><div class="dim">끄면 자동 반복 중에만 정리합니다</div>
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
+   <label class="setrow2"><span style="color:${SAT_COLOR}">사탄</span> 장비 <select data-i="adsg">${[[0, "처리 안 함"], [4, "쓸모없음 줄만"], [3, "쓰레기 이하 줄"], [2, "애매 이하 줄"], [1, "좋음 이하 줄 (매우 좋음만 유지)"]].map(([v, t]) => `<option value="${v}" ${A.satG === v ? "selected" : ""}>${t}</option>`).join("")}</select> <select data-i="adsa"><option value="dis" ${A.satAct !== "sell" ? "selected" : ""}>분해</option><option value="sell" ${A.satAct === "sell" ? "selected" : ""}>판매</option></select></label><div class="dim">사탄 장비는 고유 줄의 체감 등급으로만 처리하며, 옵션 티어 · 품질 기준은 적용하지 않습니다</div>
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
    <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
    <label class="setrow2">옵션 티어 기준 <select data-i="adtx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.tierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adtn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.tierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.tierX > 0 && A.tierN > 0 ? `<b>전설</b> 장비 중 <b style="color:#ffd070">${A.tierX === 1 ? "T1" : "T" + A.tierX + " 이상"} 옵션이 ${A.tierN}개 이상</b>인 것만 남기고, 나머지는 일반 · 매직 · 레어까지 모두 분해합니다 (등급 규칙이 판매면 판매). (T1은 T2 이상에도 포함, 1티어가 최고)` : "티어 기준을 고르면 기준을 채운 전설 장비만 남기고, 일반 · 매직 · 레어와 기준 미달 전설은 모두 분해합니다."}</div>
    <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
    <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
    <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adsk">스킬 정리 설정</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
-    adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
+    adsg: (el) => { A.satG = +el.value; saveGame(); openAutoDis(); }, adsa: (el) => { A.satAct = el.value; saveGame(); openAutoDis(); }, adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
     adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adtx: (el) => { A.tierX = +el.value; if (A.tierX > 0 && !(A.tierN > 0)) A.tierN = 3; saveGame(); openAutoDis(); }, adtn: (el) => { A.tierN = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
     adnow: () => { const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 (+${fmtN(r.gold)}G${r.ore ? " · 강화석 " + r.ore : ""})`, "ok"); openAutoDis(); renderItems(); },
     adsk: () => openAutoSkill(), adx: () => { Modal.close(); renderItems(); },
@@ -5349,6 +5351,15 @@ function oddsHtml() {
   h += H("④ 스킬 드랍 (균열 100층 졸업 후, 4대 보스)");
   h += tbl([row("<b>단계</b>", "스킬 확률", "일반", "희귀", "전설", "신화"), ...[0, 1, 2, 3].map((k) => { const w = BOSS_SKILL_RW[k], s = w.reduce((a, b) => a + b, 0); return row(`${k + 1}단계`, pctS(BOSS_SKILL_CH[k], 0), ...[0, 1, 2, 3].map((i) => pctS(w[i] / s, 0))); })]);
   h += `<div class="dim">나온 스킬의 30%는 패시브 스킬입니다. 모든 스킬은 한 보스에 배정되어 있고 (스킬 도감 → 보스별 드랍), 신화 이상이면 40% 확률로 그 보스의 신화 전용 스킬이 나옵니다.</div>`;
+  return h;
+}
+function satCodexHtml() {
+  const g = SAT_GRADE, W = SAT_W; let h = `<div class="dim">사탄 장비 = 전설 장비(기본 능력치 · 옵션 5개 · 소켓은 전설과 같음) + 부위별 고유 줄 1개. 솟아난 탑에서 나오며, 줄은 부위 풀에서 <b>체감 등급</b>을 먼저 뽑고 그 안에서 균등하게 뽑습니다. 해당 부위에 없는 등급은 빼고 다시 나눕니다.</div>
+  <div style="margin:6px 0">체감 등급 확률: ${g.map((x, i) => `<span style="color:${x[1]}">${x[0]} ${W[i]}%</span>`).join(" · ")}</div>`;
+  for (const sl of SLOTS) {
+    const pool = Object.values(SAT_BY_ID).filter((d) => d.slot === sl), gs = [0, 1, 2, 3, 4].filter((x) => pool.some((p) => p.g === x)), tot = gs.reduce((a, x) => a + W[x], 0);
+    h += `<h3 style="margin:10px 0 4px">${SLOT_NAME[sl]} <small class="dim">(${pool.length}종)</small></h3><table style="width:100%;border-collapse:collapse">` + pool.sort((a, b) => a.g - b.g).map((d) => { const n = pool.filter((p) => p.g === d.g).length; return `<tr><td style="padding:2px 6px;white-space:nowrap;color:${g[d.g][1]}">${g[d.g][0]}</td><td style="padding:2px 6px">${d.txt}</td><td style="padding:2px 6px;text-align:right;white-space:nowrap">${(W[d.g] / tot * 100 / n).toFixed(1)}%</td></tr>`; }).join("") + `</table>`;
+  }
   return h;
 }
 const fmtOdds = (p) => `${(p * 100).toFixed(p < 0.0001 ? 4 : 3)}% (1/${Math.round(1 / p).toLocaleString()})`;
@@ -5442,7 +5453,7 @@ function skCodexDetail(d) {
    <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반(상점) → 희귀 → 전설 → 신화 → 사탄 → 종말 (희귀 이상은 균열 100층 졸업 후 4대 보스에서만 — 보스마다 얻는 스킬이 정해져 있습니다). 전설부터는 단일 스킬이 연타가 되고, 신화 이상에서만 나오는 전용 스킬도 있습니다. 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
 function openCodex() {
-  const tabs = [["odds", "드랍·확률"], ["aff", "옵션 티어"], ["skill", "스킬"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
+  const tabs = [["odds", "드랍·확률"], ["aff", "옵션 티어"], ["skill", "스킬"], ["sat", "사탄 옵션"], ["fml", "데미지 공식"]].map(([k, n]) => `<button class="tab ${CX.tab === k ? "on" : ""}" data-a="cxtab" data-t="${k}">${n}</button>`).join("");
   let left = "", right = "";
   if (CX.tab === "uniq") {
     const pools = `<div class="itbar"><select data-i="cxpool"><option value="all">전체 출처</option>${Object.keys(U_POOLS).map((k) => `<option value="${k}" ${CX.pool === k ? "selected" : ""}>${U_POOLS[k]}</option>`).join("")}</select></div>`;
@@ -5456,6 +5467,8 @@ function openCodex() {
     else right = `<div class="dim center pad">항목을 선택하세요</div>`;
   } else if (CX.tab === "fml") {
     left = ""; right = formulaHtml();
+  } else if (CX.tab === "sat") {
+    left = ""; right = satCodexHtml();
   } else if (CX.tab === "odds") {
     left = ""; right = oddsHtml();
   } else if (CX.tab === "skill") {
@@ -5472,7 +5485,7 @@ function openCodex() {
     const s = SLOTS.includes(CX.sel) ? CX.sel : null;
     right = s ? `<div class="dname">${SLOT_NAME[s]} 옵션</div><div class="dim">옵션은 1~6티어 (1티어가 최고·가장 드묾, 6티어가 가장 흔함). 높은 티어는 높은 T 장비에서만 나옵니다: T1 → 5·6티어 / T2 → 4티어~ / T3 → 3티어~ / T4 → 2티어~ / T5 → 1티어~</div>` + AFFIXES.filter((a) => a.slots.includes(s)).sort((a, b) => (a.minIlvl || 0) - (b.minIlvl || 0)).filter((a, i, arr) => arr.findIndex((x) => x.k === a.k) === i).map((a) => { const r = a.count ? `+${a.range[0]}` : a.flat ? "장비 레벨에 비례" : `${(Math.abs(a.range[0]) * 100).toFixed(a.range[0] < 0.02 ? 1 : 0)}~${(Math.abs(a.range[1]) * 100).toFixed(a.range[1] < 0.02 ? 1 : 0)}%`; return `<div class="aff">${a.name} <small class="dim">${r} · ${a.minIlvl ? `T${a.minIlvl}+` : "T1~"}${a.minRarity ? " · 레어 이상" : ""} · 선택 확률 ${(affixOdds(s)[a.k] || 0).toFixed(1)}%</small></div>`; }).join("") : `<div class="dim center pad">부위를 선택하세요</div>`;
   }
-  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" || CX.tab === "odds" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
+  Modal.open(`<h2>장비 · 스킬 도감</h2><div class="tabs">${tabs}</div>${CX.tab === "fml" || CX.tab === "odds" || CX.tab === "sat" ? `<div style="margin-top:8px;max-height:400px;overflow:auto;padding-right:6px">${right}</div>` : `<div class="cols" style="margin-top:8px"><div class="col" style="flex:1;overflow:auto">${left}</div><div class="col" style="width:400px;overflow:auto">${right}</div></div>`}`, { cls: "wide", on: {
     cxtab: (el) => { CX.tab = el.dataset.t; CX.sel = null; openCodex(); }, cxpick: (el) => { CX.sel = el.dataset.id; openCodex(); }, cxpool: (el) => { CX.pool = el.value; openCodex(); }, cxskf: (el) => { CX.skf = el.value; CX.sel = null; openCodex(); },
   } });
 }
@@ -5961,7 +5974,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-213605";
+const BUILD_ID = "20261031-213832";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6181,6 +6194,10 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.33", date: "10/31", title: "사탄 자동 분해 · 도감", items: [
+    "자동 분해에 [사탄 장비] 설정이 생겼습니다: 고유 줄의 체감 등급(쓸모없음 / 쓰레기 / 애매 / 좋음 이하)을 골라 분해 또는 판매할 수 있습니다. 사탄 장비는 이 설정으로만 처리되고 옵션 티어 기준은 적용되지 않습니다 (기본값: 처리 안 함).",
+    "도감에 [사탄 옵션] 탭이 생겼습니다. 부위별 고유 줄 목록과 체감 등급, 줄이 붙을 확률을 볼 수 있습니다.",
+  ] },
   { ver: "4.32", date: "10/31", title: "돌의 신전 2~4단계", items: [
     "돌의 신전 2 · 3 · 4단계가 솟아난 탑 25 · 50 · 75층을 클리어하면 차례로 열립니다. 몬스터는 해당 탑 층보다 조금 강하고, 돌 · 세공의 인장이 나올 확률이 더 높습니다 (2단계 6% · 3단계 10% · 4단계 15%).",
   ] },

@@ -655,7 +655,7 @@ function offlineReward(sv) {
 // ---- 자동 전투 후 장비 처리: 등급별로 유지/판매/분해, 전투력이 오르는 장비는 건드리지 않는 옵션 ----
 function autoRules(sv) {
   const A = sv.auto; if (!A.rules) { A.rules = {}; for (let r = 0; r < 5; r++) A.rules[r] = A.sell >= 0 && r <= A.sell && r <= 2 ? "sell" : "keep"; }
-  if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; if (A.tierX == null) A.tierX = 0; if (A.tierN == null) A.tierN = 0; return A;
+  if (A.satG == null) A.satG = 0; if (!A.satAct) A.satAct = "dis"; if (A.keepUp == null) A.keepUp = true; if (!A.srules) A.srules = { 0: "keep", 1: "keep", 2: "keep" }; if (A.sBest == null) A.sBest = true; if (A.minQ == null) A.minQ = 0; if (A.maxIlvl == null) A.maxIlvl = 0; if (A.always == null) A.always = false; if (A.tierX == null) A.tierX = 0; if (A.tierN == null) A.tierN = 0; return A;
 }
 // 옵션 품질: 옵션 수치가 범위의 어디쯤인지 평균 (0~1). 옵션이 없는 장비는 0
 function itemQuality(it) {
@@ -667,7 +667,8 @@ const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null &
 // 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
 // 티어 기준을 켜면 등급 규칙과 관계없이 처리한다: 전설이면서 기준을 채운 장비만 남고, 나머지(전설 미달 · 일반 · 매직 · 레어)는 분해 (등급 규칙이 판매면 판매)
 const tierOn = (A) => A.tierX > 0 && A.tierN > 0;
-const autoRuleOf = (A, it) => { const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
+const autoRuleOf = (A, it) => { if (it.sat) { const d = SAT_BY_ID[it.sat]; return A.satG && d && d.g >= A.satG ? (A.satAct === "sell" ? "sell" : "dis") : "keep"; }   // 사탄 장비는 줄 등급 기준으로만 처리한다 (옵션 티어 기준은 적용하지 않음)
+  const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
 const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && it.rarity >= 3 && goodAffixCount(it, A.tierX) >= A.tierN;   // 전설만 남긴다: 전설이 아니면 기준을 채울 수 없다
 function autoProcess(sv) {
   const A = autoRules(sv), res = { sold: 0, dis: 0, gold: 0, ore: 0 };

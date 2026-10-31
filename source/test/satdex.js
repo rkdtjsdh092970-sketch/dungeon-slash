@@ -1,0 +1,11 @@
+const { chromium } = require("playwright");
+(async () => { const b = await chromium.launch(), p = await b.newPage(); const e = []; p.on("pageerror", (x) => e.push(x.message));
+  await p.goto("file:///home/claude/game/dist/game.html"); await p.waitForTimeout(700);
+  const r = await p.evaluate(() => { save = newSave(); CX.tab = "sat"; openCodex(); const t1 = document.body.innerText.includes("사탄 옵션") && document.body.innerText.includes("무기 (");
+    Modal.close(true); const A = autoRules(save);
+    const mk = (id) => { const it = genItem(save, 5, 3, SAT_BY_ID[id].slot); it.sat = id; return it; };
+    const items = [mk("n_exp"), mk("w_trash"), mk("w_nocrit"), mk("b_vault")]; save.inv.push(...items);
+    A.satG = 3; const rules = items.map((i) => autoRuleOf(A, i)); A.satG = 0; const r0 = items.map((i) => autoRuleOf(A, i));
+    A.satG = 3; A.satAct = "sell"; const rs = autoRuleOf(A, items[0]); A.satAct = "dis"; A.keepUp = false; save.stats = save.stats || {}; const res = autoProcess(save); openAutoDis();
+    return { t1, rules, r0, rs, dis: res.dis, left: save.inv.filter((i) => i.sat).map((i) => i.sat), ui: document.body.innerText.includes("사탄 장비") }; });
+  console.log(JSON.stringify(r), e.length ? e : "noerr"); await b.close(); })();
