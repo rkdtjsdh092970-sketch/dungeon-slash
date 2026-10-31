@@ -1664,11 +1664,8 @@ const SAT_BY_ID = {}; for (const d of SAT_DEFS) SAT_BY_ID[d[0]] = { id: d[0], sl
 const SAT_GRADE = [["매우 좋음", "#ffd24a"], ["좋음", "#8dff9a"], ["애매", "#9ad8ff"], ["쓰레기", "#b0a0a0"], ["쓸모없음", "#807070"]];
 const SAT_W = [5, 17, 38, 25, 15];
 const SAT_COLOR = "#ff5a4a";
-function rollSatan(slot) {
-  const pool = SAT_DEFS.filter((d) => d[1] === slot).map((d) => SAT_BY_ID[d[0]]); if (!pool.length) return null;
-  const gs = [0, 1, 2, 3, 4].filter((g) => pool.some((p) => p.g === g)), tot = gs.reduce((a, g) => a + SAT_W[g], 0);
-  let r = Math.random() * tot, g = gs[gs.length - 1]; for (const x of gs) { r -= SAT_W[x]; if (r <= 0) { g = x; break; } }
-  const c = pool.filter((p) => p.g === g); return c[Math.floor(Math.random() * c.length)].id;
+function rollSatan(slot) {   // 부위 풀에서 모든 줄이 같은 확률
+  const pool = SAT_DEFS.filter((d) => d[1] === slot); return pool.length ? pool[Math.floor(Math.random() * pool.length)][0] : null;
 }
 function satApply(id, apply, s) {
   const d = SAT_BY_ID[id]; if (!d) return;
@@ -5979,7 +5976,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-220154";
+const BUILD_ID = "20261031-220543";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
