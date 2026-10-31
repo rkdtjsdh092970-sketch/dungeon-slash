@@ -638,7 +638,7 @@ CFG.VENOM_REGEN = +(typeof process !== "undefined" && process.env && process.env
 CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.AFFD || 0.85);   // 상성 빌드(같은 속성 공격 스킬 2개 이상)가 그 속성 보스에게 받는 피해 배율
 CFG.TAKEN_FLOOR = 0.4;   // 받는 피해 감소 상한 60% (받는 피해 배율의 하한)
 CFG.SPIRE = { END: 100, WALL: 20, SAT: 0.05, SAT_STEP: 0.015, T0: 118, T1: 175, TAB: null };   // 솟아난 탑: 100층 · 20층마다 벽 · 층 난이도는 균열 층 수준(tier)으로 환산 (TAB 이 있으면 그 표를 쓴다) · SAT = 장비 한 개가 사탄 장비일 확률
-CFG.SPIRE.TAB = (() => { const W = [160, 190, 225, 265, 310], S = [135, 162, 194, 230, 270], tab = []; for (let f = 1; f <= 100; f++) { const g = Math.floor((f - 1) / 20), pos = (f - 1) % 20; tab.push(pos === 19 ? W[g] : S[g] + (W[g] - 8 - S[g]) * pos / 18); } return tab; })();   // 벽(20·40·60·80·100층) 난이도: 균열 환산 160 / 190 / 225 / 265 / 310 — 시뮬 보정 전 초안
+CFG.SPIRE.TAB = (() => { const W = [160, 175, 190, 205, 220], S = [135, 162, 177, 192, 207], tab = []; for (let f = 1; f <= 100; f++) { const g = Math.floor((f - 1) / 20), pos = (f - 1) % 20; tab.push(pos === 19 ? W[g] : S[g] + (W[g] - 8 - S[g]) * pos / 18); } return tab; })();   // 벽(20·40·60·80·100층) 난이도: 균열 환산 160 / 175 / 190 / 205 / 220 — 황진수 스펙 시뮬(소켓 ×1.6 한계 165, ×2.5 한계 170)으로 보정
 const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
 const satRate = (f) => CFG.SPIRE.SAT + CFG.SPIRE.SAT_STEP * Math.floor(Math.max(1, f | 0) / CFG.SPIRE.WALL);   // 사탄 장비 확률: 20층마다 조금씩 오른다
 const spireTier = (f) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
@@ -5979,7 +5979,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-215217";
+const BUILD_ID = "20261031-215634";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6199,6 +6199,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.37", date: "10/31", title: "탑 난이도 조정", items: [
+    "솟아난 탑 40층 이후의 벽 난이도를 낮췄습니다. 몬스터가 한 구간에서 너무 급격히 강해지던 것을 완만하게 맞췄습니다 (1~20층은 그대로).",
+  ] },
   { ver: "4.36", date: "10/31", title: "제련소 재굴림 버튼 고정", items: [
     "1티어(최고 티어) 옵션을 재굴림하려고 하면 '정말 재굴림하시겠습니까?' 확인창이 나옵니다.",
     "제련소에서 옵션 글자 수나 줄바꿈에 따라 재굴림 버튼 위치가 달라지던 문제를 고쳤습니다. 모든 옵션 줄의 높이와 버튼 위치가 고정됩니다.",
