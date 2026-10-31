@@ -37,7 +37,7 @@ CFG.FLOOR_TAB = (() => { const tab = [], E = [19, 39, 59, 79, 99], A = CFG.FLOOR
 // ---------------------------------------------------------------
 const SPR_META = {
   c_imp: { cell: 32, h: 26 }, c_goblin: { cell: 32, h: 28 }, c_archer: { cell: 32, h: 28 }, c_shaman: { cell: 32, h: 30 }, c_brute: { cell: 32, h: 28 },
-  pri_imp: { cell: 48, h: 40 }, pri_ghoul: { cell: 48, h: 40 }, pri_skel: { cell: 48, h: 42 }, pri_necro: { cell: 48, h: 44 }, pri_brute: { cell: 48, h: 42 },
+  pri_imp: { cell: 48, h: 40 }, pri_ghoul: { cell: 48, h: 40 }, pri_skel: { cell: 48, h: 42 }, pri_necro: { cell: 48, h: 44 }, pri_brute: { cell: 48, h: 42 }, tw_imp: { cell: 48, h: 40 }, tw_ghoul: { cell: 48, h: 40 }, tw_skel: { cell: 48, h: 42 }, tw_necro: { cell: 48, h: 44 }, tw_brute: { cell: 48, h: 42 },
   ghoul: { cell: 48, h: 40 }, skel: { cell: 48, h: 42 }, necro: { cell: 48, h: 44 }, brute: { cell: 48, h: 42 }, fiend: { cell: 48, h: 40 },
   slime: { cell: 48, h: 24 }, slimeT: { cell: 48, h: 24 }, slimeL: { cell: 48, h: 24 }, mush: { cell: 48, h: 40 }, mushT: { cell: 48, h: 40 },
   bat: { cell: 48, h: 36 }, batC: { cell: 48, h: 36 }, scorp: { cell: 48, h: 34 }, wolf: { cell: 48, h: 36 }, wolfH: { cell: 48, h: 36 },
@@ -56,6 +56,7 @@ const ROSTER = [
   [["batC", 55], ["ghoul", 50], ["skel", 55], ["necro", 55], ["brute", 55], ["golem"]],             // 9 천공성
   [["fiend"], ["ghoul", -60], ["skel", -20], ["necro", -30], ["brute", -20], ["wolfH"]],            // 10 마계
   [["pri_imp"], ["pri_ghoul"], ["pri_skel"], ["pri_necro"], ["pri_brute"], ["pri_imp"]],            // 11 돌의 신전: 신관들
+  [["tw_imp"], ["tw_ghoul"], ["tw_skel"], ["tw_necro"], ["tw_brute"], ["tw_imp"]],                  // 12 솟아난 탑: 붉은 수호자들
 ];
 // 지역 특수 몬스터 (무리/근접과 달리 고유한 성질)
 // traits: split(죽으면 분열) poison chill curse explode(자폭) fast tank regen

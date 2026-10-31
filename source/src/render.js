@@ -118,7 +118,7 @@ function drawRoads(ctx, b, time) {
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
   const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
-  if (b.raid) drawRaidBack(ctx, b, time); else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
+  if (b.raid) drawRaidBack(ctx, b, time); else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : b.kind === "spire" ? 13 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
   if (!b.raid) drawRoads(ctx, b, time);
   // 장판 (화염 벽)

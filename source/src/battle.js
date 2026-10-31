@@ -72,6 +72,7 @@ function extendPlan(b, n) {
   for (let i = 0; i < Math.ceil(n / 12); i++) b.plan.splice(Math.floor(b.plan.length * (i + 0.5) / Math.ceil(n / 12)), 0, "brute");
 }
 // 돌의 신전: 신관 무리 (복사 · 수도사 · 성가 사수 · 신관) + 일정 간격의 성기사
+const TOWER_MON = { imp: ["핏빛 임프", "탑 꼭대기에서 내려온 작은 악마"], grunt: ["붉은 수호병", "탑을 오르는 자를 막는 병사"], archer: ["핏빛 궁수", "붉은 화살을 쏘는 해골 궁수"], mage: ["진홍의 사제", "피로 주문을 외는 사제"], brute: ["진홍 기사", "탑을 지키는 중무장 기사"] };
 const TEMPLE_MON = { imp: ["복사", "신전의 어린 복사"], grunt: ["수도사", "돌을 지키는 수도사"], archer: ["성가 사수", "성가와 함께 화살을 쏜다"], mage: ["신관", "축복과 저주를 읊는 신관"], brute: ["성기사", "신전을 지키는 중무장 기사"] };
 function planFor(node) {
   if (node.kind === "temple") { const pl = smoothSeq({ imp: 9, grunt: 6, archer: 4, mage: 3 }, 90); for (let i = 0; i < 6; i++) pl.splice(Math.floor(pl.length * (i + 0.5) / 6), 0, "brute"); return pl; }
@@ -203,12 +204,13 @@ function spawnCells(b, D, w, h) {
 }
 const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
-  const isBoss = type === "boss", va = b.kind === "temple" ? 10 : isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
-  const D = isBoss ? b.bossDef : type === "spec" ? specDef(va) : WARPS[type] || ENEMIES[type];
+  const isBoss = type === "boss", va = b.kind === "temple" ? 10 : b.kind === "spire" ? 11 : isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
+  const D = isBoss ? b.bossDef : type === "spec" ? specDef(Math.min(va, 9)) : WARPS[type] || ENEMIES[type];
   const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX : 1;
   const e = { id: b.nextId++, type, def: D, tier: isBoss ? "boss" : D.tier, w: isBoss ? D.w : 1, h: isBoss ? D.h : 1, lane, col, va, traits: D.traits || [],
     hp: D.hp * b.hpM * bx * gh, maxHp: D.hp * b.hpM * bx * gh, atk: D.atk * b.atkM * ga, range: D.range, interval: D.interval / b.haste, windup: D.windup,
     moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, shock: 0, vx: null, vy: null, age: 0, dead: false };
+  if (b.kind === "spire" && TOWER_MON[type]) { e.def = Object.assign({}, e.def, { name: TOWER_MON[type][0], desc: TOWER_MON[type][1] }); e.label = TOWER_MON[type][0]; }
   if (b.kind === "temple" && TEMPLE_MON[type]) { e.def = Object.assign({}, e.def, { name: TEMPLE_MON[type][0], desc: TEMPLE_MON[type][1] }); e.label = TEMPLE_MON[type][0]; }
   e.moveT = CFG.MOVE_TIME * (e.traits.includes("fast") ? 0.55 : 1); e.moveCd = e.moveT;
   e.dots = []; e.dotMul = isBoss ? CFG.DOT_BOSS : e.tier === "elite" ? CFG.DOT_ELITE : 1;

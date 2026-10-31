@@ -160,13 +160,20 @@ function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >
 function mixc(a, b, t) { const A = hexToRgb(a), B = hexToRgb(b); return `rgb(${Math.round(A[0] + (B[0] - A[0]) * t)},${Math.round(A[1] + (B[1] - A[1]) * t)},${Math.round(A[2] + (B[2] - A[2]) * t)})`; }
 function makeBackground(act) {
   const k = act; if (BG_CACHE[k]) return BG_CACHE[k];
-  const A = ACTS[Math.min(10, act > 10 ? (act === 11 ? 8 : 7) : act) - 1], W = 240, H = 135, r = seeded(act * 7919 + 13);
+  const A = act === 13 ? { sky: ["#1a0508", "#3a0a12"], ground: "#2a0c12" } : ACTS[Math.min(10, act > 10 ? (act === 11 ? 8 : 7) : act) - 1], W = 240, H = 135, r = seeded(act * 7919 + 13);
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   const grad = g.createLinearGradient(0, 0, 0, H * 0.7); grad.addColorStop(0, A.sky[0]); grad.addColorStop(1, A.sky[1]); g.fillStyle = grad; g.fillRect(0, 0, W, H);
   const rect = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
   const hills = (base, amp, col, seedOff, freq) => { const rr = seeded(act * 31 + seedOff); const ph = rr() * 6; for (let x = 0; x < W; x++) { const y = base + Math.sin(x * freq + ph) * amp + Math.sin(x * freq * 2.3 + ph * 2) * amp * 0.5; rect(x, y, 1, H - y, col); } };
   const dark = (col, f) => mixc(col, "#000000", f);
-  if (act === 11) { for (let i = 0; i < 6; i++) { g.strokeStyle = `rgba(190,120,255,${0.5 - i * 0.07})`; g.lineWidth = 3; g.beginPath(); g.arc(120, 52, 14 + i * 9, i, i + 4.4); g.stroke(); } g.fillStyle = "#0a0414"; g.beginPath(); g.arc(120, 52, 12, 0, 7); g.fill(); for (let i = 0; i < 26; i++) { const x = r() * W, y = r() * 80; rect(x, y, 3, 5, "#7a4ad8"); rect(x + 1, y + 1, 1, 2, "#e8d0ff"); } hills(88, 2, "#1c1030", 11, 0.05); }
+  if (act === 13) {   // 솟아난 탑: 붉은 첨탑 내부 — 늘어선 기둥과 아치, 핏빛 창, 떠다니는 불씨
+    const rg = g.createRadialGradient(120, 40, 4, 120, 40, 120); rg.addColorStop(0, "rgba(255,70,50,.45)"); rg.addColorStop(1, "rgba(255,70,50,0)"); g.fillStyle = rg; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 5; i++) { const x = 14 + i * 52; rect(x, 0, 18, 86, "#2a0a10"); rect(x + 2, 0, 3, 86, "#4a1018"); rect(x + 14, 0, 4, 86, "#16040a"); rect(x - 2, 78, 22, 8, "#3a0e16"); rect(x - 2, 0, 22, 6, "#3a0e16"); }
+    for (let i = 0; i < 4; i++) { const x = 40 + i * 52, y = 18; rect(x - 5, y, 10, 30, "#1a0408"); rect(x - 4, y + 2, 8, 26, "#ff3a2a"); rect(x - 2, y + 4, 4, 20, "#ffb060"); rect(x - 6, y - 4, 12, 4, "#1a0408"); rect(x - 4, y - 7, 8, 3, "#1a0408"); rect(x - 2, y - 9, 4, 2, "#1a0408"); }
+    for (let i = 0; i < 26; i++) rect(r() * W, 8 + r() * 74, 1, 1 + (r() > 0.7 ? 1 : 0), r() > 0.5 ? "#ff7040" : "#ffb070");
+    for (let i = 0; i < 4; i++) { const x = 30 + i * 52 + 26; rect(x - 1, 0, 1, 12 + r() * 10, "#4a1018"); }
+  }
+  else if (act === 11) { for (let i = 0; i < 6; i++) { g.strokeStyle = `rgba(190,120,255,${0.5 - i * 0.07})`; g.lineWidth = 3; g.beginPath(); g.arc(120, 52, 14 + i * 9, i, i + 4.4); g.stroke(); } g.fillStyle = "#0a0414"; g.beginPath(); g.arc(120, 52, 12, 0, 7); g.fill(); for (let i = 0; i < 26; i++) { const x = r() * W, y = r() * 80; rect(x, y, 3, 5, "#7a4ad8"); rect(x + 1, y + 1, 1, 2, "#e8d0ff"); } hills(88, 2, "#1c1030", 11, 0.05); }
   else if (act === 12) { for (let i = 0; i < 12; i++) { const x = r() * W, h = 24 + r() * 40; g.fillStyle = "#1a0606"; g.beginPath(); g.moveTo(x, 86); g.lineTo(x + 6, 86 - h); g.lineTo(x + 12, 86); g.fill(); } rect(96, 10, 48, 28, "#ff5a20"); rect(104, 14, 32, 20, "#ffb040"); for (let i = 0; i < 50; i++) rect(r() * W, 30 + r() * 60, 1, 3, "#ff7a30"); hills(88, 3, "#2a0808", 12, 0.05); }
   else if (act === 1) { rect(190, 14, 14, 14, "#fff2b0"); for (let i = 0; i < 6; i++) rect(r() * W, 8 + r() * 30, 22 + r() * 18, 5, "rgba(255,255,255,.8)"); hills(70, 6, "#8fc878", 1, 0.03); hills(80, 5, "#6aaa58", 2, 0.05); }
   else if (act === 2) { hills(62, 5, "#264a38", 1, 0.04); for (let i = 0; i < 26; i++) { const x = r() * W, h = 28 + r() * 22; rect(x, 78 - h, 3, h, "#22402c"); rect(x - 5, 78 - h - 6, 13, 14, "#2c5a3c"); rect(x - 3, 78 - h - 12, 9, 8, "#34684a"); } hills(84, 3, "#1e3a28", 3, 0.06); }
@@ -179,7 +186,7 @@ function makeBackground(act) {
   else if (act === 9) { for (let i = 0; i < 9; i++) rect(r() * W, 10 + r() * 55, 28 + r() * 40, 8, "rgba(255,255,255,.85)"); for (let i = 0; i < 4; i++) { const x = 20 + i * 56 + r() * 10, h = 36 + r() * 20; rect(x, 84 - h, 12, h, "#d8d4ec"); rect(x - 2, 84 - h - 4, 16, 4, "#b8b4d4"); rect(x + 3, 84 - h - 12, 6, 8, "#e8e4f8"); } hills(86, 3, "#b8b4d4", 9, 0.04); }
   else { for (let i = 0; i < 16; i++) { const x = r() * W, h = 20 + r() * 38; g.fillStyle = "#14040a"; g.beginPath(); g.moveTo(x, 86); g.lineTo(x + 5, 86 - h); g.lineTo(x + 10, 86); g.fill(); } rect(176, 12, 20, 20, "#ffb040"); rect(180, 16, 12, 12, "#ff5a20"); for (let i = 0; i < 20; i++) rect(r() * W, 60 + r() * 30, 1, 3, "#ff7a30"); hills(88, 3, "#2a0c10", 10, 0.05); }
   // 바닥
-  const gy = 84; rect(0, gy, W, H - gy, A.ground); for (let i = 0; i < 160; i++) rect(r() * W, gy + 2 + r() * (H - gy - 3), 3 + r() * 6, 1, mixc(A.ground, r() > 0.5 ? "#ffffff" : "#000000", 0.12 + r() * 0.1));
+  const gy = 84; rect(0, gy, W, H - gy, A.ground); if (act === 13) { for (let x = 0; x < W; x += 20) for (let y = gy + 2; y < H; y += 12) if (((x / 20) + ((y - gy) / 12 | 0)) % 2 === 0) rect(x, y, 20, 12, "#34101a"); for (let i = 0; i < 5; i++) rect(14 + i * 52 - 1, gy + 1, 20, 3, "rgba(255,80,60,.18)"); } for (let i = 0; i < 160; i++) rect(r() * W, gy + 2 + r() * (H - gy - 3), 3 + r() * 6, 1, mixc(A.ground, r() > 0.5 ? "#ffffff" : "#000000", 0.12 + r() * 0.1));
   rect(0, gy, W, 2, mixc(A.ground, "#ffffff", 0.25));
   const out = document.createElement("canvas"); out.width = 960; out.height = 540; const og = out.getContext("2d"); og.imageSmoothingEnabled = false; og.drawImage(c, 0, 0, W, H, 0, 0, 960, 540);
   BG_CACHE[k] = out; return out;
