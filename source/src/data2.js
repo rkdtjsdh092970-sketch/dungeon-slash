@@ -21,8 +21,9 @@ CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.
 CFG.TAKEN_FLOOR = 0.4;   // 받는 피해 감소 상한 60% (받는 피해 배율의 하한)
 CFG.SPIRE = { END: 100, WALL: 20, SAT: 0.05, T0: 118, T1: 175, TAB: null };   // 솟아난 탑: 100층 · 20층마다 벽 · 층 난이도는 균열 층 수준(tier)으로 환산 (TAB 이 있으면 그 표를 쓴다) · SAT = 장비 한 개가 사탄 장비일 확률
 CFG.SPIRE.TAB = (() => { const W = [160, 190, 225, 265, 310], S = [135, 162, 194, 230, 270], tab = []; for (let f = 1; f <= 100; f++) { const g = Math.floor((f - 1) / 20), pos = (f - 1) % 20; tab.push(pos === 19 ? W[g] : S[g] + (W[g] - 8 - S[g]) * pos / 18); } return tab; })();   // 벽(20·40·60·80·100층) 난이도: 균열 환산 160 / 190 / 225 / 265 / 310 — 시뮬 보정 전 초안
+const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
 const spireTier = (f) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
-CFG.TEMPLE = { OPEN: 1, TIERS: [130, 140, 150, 160], HI: [0.03, 0.04, 0.06, 0.08], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
+CFG.TEMPLE = { OPEN: 1, NEED: [0, 25, 50, 75], TIERS: [130, Math.round(spireTier(30)), Math.round(spireTier(55)), Math.round(spireTier(80))], HI: [0.03, 0.06, 0.10, 0.15], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
 CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.

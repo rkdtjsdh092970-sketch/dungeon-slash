@@ -639,8 +639,9 @@ CFG.EB_AFF_DEF = +(typeof process !== "undefined" && process.env && process.env.
 CFG.TAKEN_FLOOR = 0.4;   // 받는 피해 감소 상한 60% (받는 피해 배율의 하한)
 CFG.SPIRE = { END: 100, WALL: 20, SAT: 0.05, T0: 118, T1: 175, TAB: null };   // 솟아난 탑: 100층 · 20층마다 벽 · 층 난이도는 균열 층 수준(tier)으로 환산 (TAB 이 있으면 그 표를 쓴다) · SAT = 장비 한 개가 사탄 장비일 확률
 CFG.SPIRE.TAB = (() => { const W = [160, 190, 225, 265, 310], S = [135, 162, 194, 230, 270], tab = []; for (let f = 1; f <= 100; f++) { const g = Math.floor((f - 1) / 20), pos = (f - 1) % 20; tab.push(pos === 19 ? W[g] : S[g] + (W[g] - 8 - S[g]) * pos / 18); } return tab; })();   // 벽(20·40·60·80·100층) 난이도: 균열 환산 160 / 190 / 225 / 265 / 310 — 시뮬 보정 전 초안
+const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
 const spireTier = (f) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
-CFG.TEMPLE = { OPEN: 1, TIERS: [130, 140, 150, 160], HI: [0.03, 0.04, 0.06, 0.08], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
+CFG.TEMPLE = { OPEN: 1, NEED: [0, 25, 50, 75], TIERS: [130, Math.round(spireTier(30)), Math.round(spireTier(55)), Math.round(spireTier(80))], HI: [0.03, 0.06, 0.10, 0.15], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
 CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
@@ -4505,7 +4506,7 @@ function nodeToBattle(n) {
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
-  if (n.kind === "temple") { const st = Math.max(1, Math.min(CFG.TEMPLE.OPEN, G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
+  if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
   if (isEB(n.kind)) { const E = EB[n.kind], S = G[E.stage] || 1; return { kind: n.kind, act: 10, tier: E.tiers[S - 1], vsel: S, name: `${E.name} ${S}단계`, level: 100 }; }
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
@@ -5960,7 +5961,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-213034";
+const BUILD_ID = "20261031-213605";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6111,9 +6112,9 @@ function openBossHub(page) {
 // =========================================================
 const TEMPLE_ORDER = ["imp", "grunt", "archer", "mage", "brute"], TEMPLE_KEYS = ["pri_imp", "pri_ghoul", "pri_skel", "pri_necro", "pri_brute"];
 function openTemple() {
-  const T = CFG.TEMPLE, S = G.templeStage = Math.max(1, Math.min(T.OPEN, G.templeStage || 1)), unlocked = !!(save.raid && save.raid.cleared > 0);
-  const st = (s) => ({ open: s <= T.OPEN, hi: T.HI[s - 1] });
-  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= T.OPEN ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > T.OPEN ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= T.OPEN ? "입장 가능" : "🔒 준비 중"}</span><em class="${s <= T.OPEN ? "up" : ""}">${s <= T.OPEN ? (T.HI[s - 1] * 100).toFixed(1) + "%" : "?"}</em></button>`).join("");
+  const T = CFG.TEMPLE, OP = templeOpen(save), S = G.templeStage = Math.max(1, Math.min(OP, G.templeStage || 1)), unlocked = !!(save.raid && save.raid.cleared > 0);
+  const st = (s) => ({ open: s <= OP, hi: T.HI[s - 1] });
+  const tabs = [1, 2, 3, 4].map((s) => `<button class="bh-st ${s === S ? "on" : ""}" ${s <= OP ? `data-a="templest" data-s="${s}"` : "disabled"} style="--c:#ffd86a;${s > OP ? "opacity:.45;cursor:default" : ""}"><b>${s}단계</b><span>${s <= OP ? "입장 가능" : `🔒 탑 ${T.NEED[s - 1]}층`}</span><em class="${s <= OP ? "up" : ""}">${s <= OP ? (T.HI[s - 1] * 100).toFixed(1) + "%" : "?"}</em></button>`).join("");
   const mons = TEMPLE_ORDER.map((k) => `<div class="tp-mon"><div class="tp-mn">${TEMPLE_MON[k][0]}</div><div class="dim">${TEMPLE_MON[k][1]}</div></div>`).join("");
   const cur = st(S), can = unlocked;
   const html = `<h2>돌의 신전</h2><div class="bh" style="--c:#ffd86a">
@@ -6128,7 +6129,7 @@ function openTemple() {
         <button class="btn pri big bh-go" data-a="templego" ${can ? "" : "disabled"}>${can ? `돌의 신전 ${S}단계 입장` : "모르가스 클리어 필요"}</button>
       </div>
     </div>
-    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">계시의 돌 · 세공의 인장 · 골드(소량)만 나옵니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">계시의 돌 · 세공의 인장 · 골드(소량)만 나옵니다 · 2단계부터는 솟아난 탑 25 · 50 · 75층을 클리어해야 열립니다 · 장비 · 스킬 · 구슬은 나오지 않습니다</span></div>
       <div class="bh-rars"><span class="bh-rar" style="color:${STONE_T[1].color}">${STONE_T[1].ico} 계시의 돌 약 ${(cur.hi * 100).toFixed(1)}% / 클리어</span><span class="bh-rar" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 세공의 인장 약 ${(cur.hi * 100).toFixed(1)}% / 클리어</span><span class="bh-rar" style="color:#ffd24a">골드 소량</span></div>
       <div class="dim" style="margin-top:4px">계시의 돌은 원초의 돌보다 옵션 수치가 약 ${T.HI_MULT}배 높고 제련소 확인 비용이 ${T.HI_COST}배입니다. 세공의 인장은 장비의 소켓 수를 1~3개 중 무작위로 다시 정합니다.</div></div>
     <div class="bh-drops" style="margin-top:8px"><div class="bh-dttl">등장 몬스터</div><div class="tp-mons">${mons}</div></div>
@@ -6180,6 +6181,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.32", date: "10/31", title: "돌의 신전 2~4단계", items: [
+    "돌의 신전 2 · 3 · 4단계가 솟아난 탑 25 · 50 · 75층을 클리어하면 차례로 열립니다. 몬스터는 해당 탑 층보다 조금 강하고, 돌 · 세공의 인장이 나올 확률이 더 높습니다 (2단계 6% · 3단계 10% · 4단계 15%).",
+  ] },
   { ver: "4.31", date: "10/31", title: "사탄 장비 줄 추가", items: [
     "사탄 장비의 고유 줄이 28종 늘었습니다 (적중 시 추가 발동, 반격, 중첩 효과 등). 이제 부위마다 더 다양한 줄이 붙습니다.",
   ] },
