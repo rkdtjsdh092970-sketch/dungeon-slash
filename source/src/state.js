@@ -15,7 +15,10 @@ function newSave() {
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
 }
-function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
+// 확인하지 않은 돌(수천 개까지 쌓인다)은 개수로 줄여 저장한다: 서버 세이브가 커져 로그인이 느려지는 것을 막는다
+function packSave(sv) { const o = Object.assign({}, sv), rev = [], u = [0, 0]; for (const st of sv.stones || []) { if (st && !st.rev) u[st.hi ? 1 : 0]++; else rev.push(st); } o.stones = rev; o.stoneU = u; return o; }
+function unpackStones(sv) { if (!sv.stoneU) return; if (!Array.isArray(sv.stones)) sv.stones = []; for (let h = 0; h < 2; h++) for (let i = 0, n = Math.min(200000, sv.stoneU[h] | 0); i < n; i++) sv.stones.push(newStone(sv, h)); delete sv.stoneU; }
+function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave(save))); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
   const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
@@ -91,7 +94,7 @@ function clampItem(it) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; dedupeLoadout(sv);
+function clampAll(sv) { let n = 0; unpackStones(sv); dedupeLoadout(sv);
   if (sv.rift && sv.rift.best > CFG.RIFT_END) sv.rift.best = CFG.RIFT_END;   // 균열은 100층까지 (이전 상한을 넘은 기록은 100층으로 맞춘다)
   // 사라진 각인(경험치·지옥)에 쓴 조각은 돌려준다
   { const A = sv.atlas || (sv.atlas = {}), OLD = { exp: [6, 0.55], hell: [12, 0.55] }; for (const id in OLD) { const rk = A[id] | 0; if (rk > 0) { let sum = 0; for (let r = 0; r < rk; r++) sum += Math.round(OLD[id][0] * (1 + r * OLD[id][1])); sv.shards = (sv.shards || 0) + sum; } delete A[id]; } }

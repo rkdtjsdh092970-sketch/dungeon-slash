@@ -1758,7 +1758,10 @@ function newSave() {
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
 }
-function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
+// 확인하지 않은 돌(수천 개까지 쌓인다)은 개수로 줄여 저장한다: 서버 세이브가 커져 로그인이 느려지는 것을 막는다
+function packSave(sv) { const o = Object.assign({}, sv), rev = [], u = [0, 0]; for (const st of sv.stones || []) { if (st && !st.rev) u[st.hi ? 1 : 0]++; else rev.push(st); } o.stones = rev; o.stoneU = u; return o; }
+function unpackStones(sv) { if (!sv.stoneU) return; if (!Array.isArray(sv.stones)) sv.stones = []; for (let h = 0; h < 2; h++) for (let i = 0, n = Math.min(200000, sv.stoneU[h] | 0); i < n; i++) sv.stones.push(newStone(sv, h)); delete sv.stoneU; }
+function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave(save))); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
   const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
@@ -1834,7 +1837,7 @@ function clampItem(it) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; dedupeLoadout(sv);
+function clampAll(sv) { let n = 0; unpackStones(sv); dedupeLoadout(sv);
   if (sv.rift && sv.rift.best > CFG.RIFT_END) sv.rift.best = CFG.RIFT_END;   // 균열은 100층까지 (이전 상한을 넘은 기록은 100층으로 맞춘다)
   // 사라진 각인(경험치·지옥)에 쓴 조각은 돌려준다
   { const A = sv.atlas || (sv.atlas = {}), OLD = { exp: [6, 0.55], hell: [12, 0.55] }; for (const id in OLD) { const rk = A[id] | 0; if (rk > 0) { let sum = 0; for (let r = 0; r < rk; r++) sum += Math.round(OLD[id][0] * (1 + r * OLD[id][1])); sv.shards = (sv.shards || 0) + sum; } delete A[id]; } }
@@ -5629,10 +5632,10 @@ function stripAngelicLocal() {
   if (!save) return 0; const bad = (it) => !!it && (it.utier === 4 || ANG_IDS.has(it.uniq)); let n = 0;
   const k = save.inv.length; save.inv = save.inv.filter((it) => !bad(it)); n += k - save.inv.length;
   for (const s of Object.keys(save.equipped || {})) if (bad(save.equipped[s])) { delete save.equipped[s]; n++; }
-  if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
+  if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave(save))); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
   return n;
 }
-function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save, power: curPower() }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
+function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save: packSave(save), power: curPower() }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r && r.save && r.save.v !== 3) { r.save = null; r.oldSave = true; }   // v4: 이전 구조의 서버 세이브는 사용하지 않는다 (새로 시작 → 첫 저장 때 덮어쓴다)
@@ -5986,7 +5989,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-221435";
+const BUILD_ID = "20261031-222000";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6206,6 +6209,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.38", date: "10/31", title: "서버 로그인 안정화", items: [
+    "확인하지 않은 돌이 많이 쌓인 계정에서 서버 로그인 · 저장이 실패하던 문제를 고쳤습니다 (확인하지 않은 돌을 개수로 줄여 저장합니다. 돌은 그대로 유지됩니다).",
+  ] },
   { ver: "4.37", date: "10/31", title: "솟아난 탑 배경 · 몬스터", items: [
     "솟아난 탑이 붉은 첨탑 내부 배경으로 바뀌고, 탑의 몬스터가 핏빛 임프 · 붉은 수호병 · 핏빛 궁수 · 진홍의 사제 · 진홍 기사로 바뀌었습니다.",
   ] },

@@ -21,10 +21,10 @@ function stripAngelicLocal() {
   if (!save) return 0; const bad = (it) => !!it && (it.utier === 4 || ANG_IDS.has(it.uniq)); let n = 0;
   const k = save.inv.length; save.inv = save.inv.filter((it) => !bad(it)); n += k - save.inv.length;
   for (const s of Object.keys(save.equipped || {})) if (bad(save.equipped[s])) { delete save.equipped[s]; n++; }
-  if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
+  if (n) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave(save))); } catch (e) {} if (typeof refreshTop === "function") refreshTop(); toast(`운영자에 의해 엔젤릭 장비 ${n}개가 회수되었습니다`, "bad"); }
   return n;
 }
-function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save, power: curPower() }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
+function srvQueue() { if (!SRV.on || SRV.timer) return; SRV.timer = setTimeout(async () => { SRV.timer = 0; if (!SRV.on || !save) return; const r = await api("/api/save", { save: packSave(save), power: curPower() }); if (r.ok) { SRV.last = Date.now(); if (r.stripped) stripAngelicLocal(); } }, 6000); }
 async function srvLogin(name, pass) {
   SRV.name = name; SRV.pass = pass; const r = await api("/api/login", { name, pass });
   if (r && r.save && r.save.v !== 3) { r.save = null; r.oldSave = true; }   // v4: 이전 구조의 서버 세이브는 사용하지 않는다 (새로 시작 → 첫 저장 때 덮어쓴다)
