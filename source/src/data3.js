@@ -99,7 +99,7 @@ AFFIXES.push(
 // 장비 기본 능력치: 무기·장갑·목걸이는 공격력(물리)과 주문력(마법)을 함께 가진다
 // v3.23 무기 종류 (PoE식): 기본 공격력·주문력은 대부분 무기에서 나온다. 장갑·목걸이 같은 다른 부위는 소량의 플랫만 더한다.
 // 무기 기본값 + 무기 고정 옵션(공격력/주문력)에 공격력%·주문력%가 곱해지고, 나머지 부위의 플랫은 그대로 더해진다.
-const WTYPES = { sword: { name: "검", atk: 9, mag: 0, w: 30 }, staff: { name: "지팡이", atk: 0, mag: 9, w: 30 }, scythe: { name: "낫", atk: 7, mag: 3.5, w: 20 }, grimoire: { name: "마도서", atk: 3.5, mag: 7, w: 20 } };
+const WTYPES = { sword: { name: "검", atk: 9, mag: 0, w: 30 }, staff: { name: "지팡이", atk: 0, mag: 9, w: 30 } };   // 낫 · 마도서는 삭제 (이전 세이브의 낫 → 검, 마도서 → 지팡이로 바뀐다)
 const WT_IDS = Object.keys(WTYPES);
 const slotLabel = (it) => (it.slot === "weapon" && it.wt && WTYPES[it.wt] ? WTYPES[it.wt].name : SLOT_NAME[it.slot]);
 SLOT_BASE.boots = { hp: 22, def: 2 }; SLOT_BASE.weapon = {}; SLOT_BASE.gloves = { atk: 0.5, mag: 0.5, def: 1.5 }; SLOT_BASE.neck = { atk: 0.4, mag: 0.4 };

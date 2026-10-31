@@ -82,7 +82,10 @@ function socketItem(sv, it, stone, idx) {
 }
 // 이전 세이브/경매 등에서 온 장비의 범위 밖 수치를 현재 범위 안으로 맞춘다
 function clampItem(it) {
-  if (!it) return 0; let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
+  if (!it) return 0;
+  if (it.wt === "scythe") { it.wt = "sword"; it.base.atk = (it.base.atk || 0) * 9 / 7; delete it.base.mag; }   // 삭제된 무기 종류: 낫 → 검
+  else if (it.wt === "grimoire") { it.wt = "staff"; it.base.mag = (it.base.mag || 0) * 9 / 7; delete it.base.atk; }
+  let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
   for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; const [lo, hi] = affixRange(d, it.ilvl, it.rarity, a.t); const v = Math.min(hi, Math.max(lo, a.v)); if (v !== a.v) { a.v = v; n++; } }
   return n;
 }

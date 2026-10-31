@@ -914,7 +914,7 @@ AFFIXES.push(
 // 장비 기본 능력치: 무기·장갑·목걸이는 공격력(물리)과 주문력(마법)을 함께 가진다
 // v3.23 무기 종류 (PoE식): 기본 공격력·주문력은 대부분 무기에서 나온다. 장갑·목걸이 같은 다른 부위는 소량의 플랫만 더한다.
 // 무기 기본값 + 무기 고정 옵션(공격력/주문력)에 공격력%·주문력%가 곱해지고, 나머지 부위의 플랫은 그대로 더해진다.
-const WTYPES = { sword: { name: "검", atk: 9, mag: 0, w: 30 }, staff: { name: "지팡이", atk: 0, mag: 9, w: 30 }, scythe: { name: "낫", atk: 7, mag: 3.5, w: 20 }, grimoire: { name: "마도서", atk: 3.5, mag: 7, w: 20 } };
+const WTYPES = { sword: { name: "검", atk: 9, mag: 0, w: 30 }, staff: { name: "지팡이", atk: 0, mag: 9, w: 30 } };   // 낫 · 마도서는 삭제 (이전 세이브의 낫 → 검, 마도서 → 지팡이로 바뀐다)
 const WT_IDS = Object.keys(WTYPES);
 const slotLabel = (it) => (it.slot === "weapon" && it.wt && WTYPES[it.wt] ? WTYPES[it.wt].name : SLOT_NAME[it.slot]);
 SLOT_BASE.boots = { hp: 22, def: 2 }; SLOT_BASE.weapon = {}; SLOT_BASE.gloves = { atk: 0.5, mag: 0.5, def: 1.5 }; SLOT_BASE.neck = { atk: 0.4, mag: 0.4 };
@@ -1827,7 +1827,10 @@ function socketItem(sv, it, stone, idx) {
 }
 // 이전 세이브/경매 등에서 온 장비의 범위 밖 수치를 현재 범위 안으로 맞춘다
 function clampItem(it) {
-  if (!it) return 0; let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
+  if (!it) return 0;
+  if (it.wt === "scythe") { it.wt = "sword"; it.base.atk = (it.base.atk || 0) * 9 / 7; delete it.base.mag; }   // 삭제된 무기 종류: 낫 → 검
+  else if (it.wt === "grimoire") { it.wt = "staff"; it.base.mag = (it.base.mag || 0) * 9 / 7; delete it.base.atk; }
+  let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
   for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; const [lo, hi] = affixRange(d, it.ilvl, it.rarity, a.t); const v = Math.min(hi, Math.max(lo, a.v)); if (v !== a.v) { a.v = v; n++; } }
   return n;
 }
@@ -5975,7 +5978,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-214526";
+const BUILD_ID = "20261031-214729";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6195,6 +6198,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.35", date: "10/31", title: "낫 · 마도서 삭제", items: [
+    "무기 종류에서 낫과 마도서가 사라졌습니다. 이제 검과 지팡이만 나옵니다. 가지고 있던 낫은 검으로, 마도서는 지팡이로 바뀝니다 (옵션은 그대로, 기본 능력치는 검은 공격력, 지팡이는 주문력으로 합쳐집니다).",
+  ] },
   { ver: "4.34", date: "10/31", title: "사탄 장비 드랍률", items: [
     "솟아난 탑에서 사탄 장비가 나올 확률이 20층마다 조금씩 오릅니다 (1~19층 5% → 100층 12.5%).",
     "자동 분해: 사탄 장비 규칙이 다른 등급처럼 유지 / 판매 / 분해로 바뀌었고, 옵션 티어 기준이 [전설]과 [사탄] 따로 생겼습니다.",
