@@ -57,7 +57,7 @@
 .tabs{display:flex;gap:4px;flex-wrap:wrap}.tab{font:inherit;font-size:12px;color:#ccc;background:#2a2347;border:2px solid #4a4270;border-radius:3px;padding:2px 8px;cursor:pointer}.tab.on{background:#5a4a9a;color:#fff;border-color:#b8a8e8}
 .stats{font-size:12px}.stats div,.dname+.dim{display:flex;justify-content:space-between;border-bottom:1px solid #2a2347;padding:1px 0}.stats b{color:#ffe08a}
 .sets{margin-top:6px;font-size:12px;font-weight:bold}.sets .on{color:#8dff9a;font-weight:normal}.sets .off{color:#777;font-weight:normal}.setrow{margin-bottom:5px}
-.dname{font-size:16px;font-weight:bold;margin-bottom:2px}.base{margin:6px 0;color:#cfe;font-size:13px}.aff{font-size:13px;color:#aee0ff;margin:2px 0}.cmp{margin:8px 0;font-weight:bold}.cmp.up{color:#8dff9a}.cmp.dn{color:#ff8a8a}
+.dname{font-size:16px;font-weight:bold;margin-bottom:2px}.base{margin:6px 0;color:#cfe;font-size:13px}.aff{font-size:13px;color:#aee0ff;margin:2px 0}.aff.fg{display:flex;align-items:center;gap:6px;height:58px;overflow:hidden}.aff.fg .afft{flex:1;min-width:0}.aff.fg .btn{flex:0 0 112px;width:112px;white-space:nowrap;text-align:center}.cmp{margin:8px 0;font-weight:bold}.cmp.up{color:#8dff9a}.cmp.dn{color:#ff8a8a}
 .dbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.dbtns .btn{flex:1;font-size:13px}
 .sslots{display:flex;gap:10px;margin:10px 0}.sslot{flex:1;background:#0f0a1c;border:3px solid #3a3260;border-radius:5px;padding:8px;text-align:center;min-height:140px;cursor:pointer}.sslot.cursel{border-color:#ffd24a}.sslot.locked{opacity:.5;cursor:default}
 .sslot .sn{font-weight:bold;color:#ffd24a;text-align:left}.sslot select{font:inherit;font-size:12px;margin-top:4px;background:#2a2347;color:#fff;border:1px solid #8a7ab0;width:100%}.sslot .lk{font-size:30px;margin:10px 0}.sname{font-size:13px;margin:4px 0}
@@ -4975,7 +4975,7 @@ function itemDetail(it) {
 
   h += `<div class="dim">T${it.ilvl} ${slotLabel(it)}${it.sat ? ` · <b style="color:${SAT_COLOR}">사탄 등급</b>` : ""}${it.sock ? " · 소켓 " + it.sock.length : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
 
-  h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff">${affText(a)}${affRangeText(it, a)}${IB.mode === "forge" ? (rerollLocked(it, i) ? ` <button class="btn xs" disabled title="다른 줄을 이미 재굴림해서 잠겼습니다">🔒</button>` : ` <button class="btn xs" data-a="reroll" data-i="${i}" title="${it.rrIdx == null ? "옵션 재굴림 (한 줄만 굴릴 수 있습니다 — 굴리면 다른 줄은 잠깁니다)" : "옵션 재굴림"}">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>`) : ""}</div>`).join("") + `</div>`;
+  h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff${IB.mode === "forge" ? " fg" : ""}">${IB.mode === "forge" ? `<span class="afft">${affText(a)}${affRangeText(it, a)}</span>` : affText(a) + affRangeText(it, a)}${IB.mode === "forge" ? (rerollLocked(it, i) ? ` <button class="btn xs" disabled title="다른 줄을 이미 재굴림해서 잠겼습니다">🔒</button>` : ` <button class="btn xs" data-a="reroll" data-i="${i}" title="${it.rrIdx == null ? "옵션 재굴림 (한 줄만 굴릴 수 있습니다 — 굴리면 다른 줄은 잠깁니다)" : "옵션 재굴림"}">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>`) : ""}</div>`).join("") + `</div>`;
   h += satHtml(it) + socketBlock(it);
 
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
@@ -5978,7 +5978,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-214729";
+const BUILD_ID = "20261031-214938";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6198,6 +6198,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.36", date: "10/31", title: "제련소 재굴림 버튼 고정", items: [
+    "제련소에서 옵션 글자 수나 줄바꿈에 따라 재굴림 버튼 위치가 달라지던 문제를 고쳤습니다. 모든 옵션 줄의 높이와 버튼 위치가 고정됩니다.",
+  ] },
   { ver: "4.35", date: "10/31", title: "낫 · 마도서 삭제", items: [
     "무기 종류에서 낫과 마도서가 사라졌습니다. 이제 검과 지팡이만 나옵니다. 가지고 있던 낫은 검으로, 마도서는 지팡이로 바뀝니다 (옵션은 그대로, 기본 능력치는 검은 공격력, 지팡이는 주문력으로 합쳐집니다).",
   ] },
