@@ -1629,6 +1629,34 @@ const SAT_DEFS = [
   ["n_bosstrap", "neck", 3, "보스 추가 피해 +60%, 보스에게 받는 피해 +60%", [["boss", 0.6], ["bossTaken", -0.6]]],
   ["n_normal", "neck", 3, "일반 추가 피해 +50%, 보스 추가 피해 -50%", [["normal", 0.5], ["boss", -0.5]]],
   ["n_exp", "neck", 4, "경험치 획득 +100%", [["expFind", 1]]],
+  ["w_proc", "weapon", 0, "적중 시 8% 확률로 쿨타임 · 마나를 무시하고 장착한 스킬 하나 추가 발동", [["f:proc", 1]]],
+  ["w_fire", "weapon", 1, "8초 주기 중 5초간 물리 스킬 피해 +40% (화염 변환)", [["f:fire", 1]]],
+  ["w_elite", "weapon", 1, "정예 · 보스 처치 시 5초간 주는 피해 +25%", [["f:elite", 1]]],
+  ["w_spread", "weapon", 2, "중독된 적을 처치하면 가까운 적 2마리에게 중독 전파", [["f:spread", 1]]],
+  ["w_manafull", "weapon", 2, "마나가 가득 찼을 때 주는 피해 +30%, 아니면 -10%", [["f:manafull", 1]]],
+  ["w_first", "weapon", 2, "첫 번째 칸 스킬 피해 +40%, 나머지 -10%", [["f:first", 1]]],
+  ["w_empty", "weapon", 3, "빈 스킬 칸 하나당 주는 피해 +25%", [["f:empty", 1]]],
+  ["w_thunder", "weapon", 4, "적중 시 12% 확률로 장착한 번개 스킬 하나를 마나 없이 발동", [["f:thunder", 1]]],
+  ["h_ign", "helm", 2, "점화된 적 처치 시 체력 3% 회복, 점화 지속시간 -30%", [["f:ignheal", 1], ["dotDur", -0.3]]],
+  ["h_mkill", "helm", 1, "처치 시 마나 +4% 회복", [["f:mkill", 1]]],
+  ["h_lowdef", "helm", 3, "체력 30% 이하일 때 방어력 +300%", [["f:lowdef", 1]]],
+  ["h_heal", "helm", 4, "회복 효과 +50%", [["f:healamp", 1]]],
+  ["a_dodgedef", "armor", 1, "회피 상한 +20%, 회피 확률의 50%만큼 방어력 증가", [["dodgeCap", 0.7], ["f:dodgedef", 1]]],
+  ["a_counter", "armor", 1, "피격 시 8% 확률로 방어력의 300% 반격", [["f:counter", 1]]],
+  ["a_stack", "armor", 1, "피격 시 주는 피해 +1%씩 중첩 (5초, 최대 20)", [["f:stack", 1]]],
+  ["a_mana0", "armor", 4, "마나가 0일 때 방어력 +200%", [["f:mana0", 1]]],
+  ["g_leech", "gloves", 1, "중독 · 출혈이 걸린 적을 공격하면 피해의 4%를 생명력으로 회복", [["f:leech", 1]]],
+  ["g_critstack", "gloves", 1, "치명타 시 5초간 치명타 피해 +10%씩 중첩 (최대 6)", [["f:critstack", 1]]],
+  ["g_lowhp", "gloves", 3, "체력 40% 이하일 때 주는 피해 +150%, 그 이상은 -60%", [["f:lowhp", 1]]],
+  ["g_normal", "gloves", 4, "일반 등급 스킬만 장착했을 때 주는 피해 +100%", [["f:normalonly", 1]]],
+  ["g_noelem", "gloves", 0, "원소 피해를 줄 수 없는 대신 공격력 +30%(more), 방어 무시 +15%", [["atkMore", 1.3], ["ignoreDef", 0.15], ["f:noelem", 1]]],
+  ["b_shadow", "boots", 0, "6초마다 가장 앞 적에게 보이지 않는 일격(공격력 800%), 회피 상한 +20%", [["dodgeCap", 0.7], ["f:shadow", 1]]],
+  ["b_dodgeamp", "boots", 1, "회피 시 다음 스킬 피해 +30%", [["f:dodgeamp", 1]]],
+  ["b_start", "boots", 2, "전투 시작 후 3초간 주는 피해 +60%", [["f:start", 1]]],
+  ["b_ready", "boots", 4, "모든 스킬이 쿨타임 중이 아닐 때 주는 피해 +50%", [["f:ready", 1]]],
+  ["b_vault", "boots", 4, "황금 보물고에서만 주는 피해 +100%", [["f:vault", 1]]],
+  ["r_conv", "ring", 2, "마법 피해 -10%, 중독 확률 +10%, 중독 효과 +25%(more)", [["magMore", 0.9], ["poisonChance", 0.1], ["poisonMore", 1.25]]],
+  ["n_lanes", "neck", 1, "적이 있는 레인 하나당 주는 피해 +5% (최대 4레인)", [["f:lanes", 1]]],
 ];
 const SAT_BY_ID = {}; for (const d of SAT_DEFS) SAT_BY_ID[d[0]] = { id: d[0], slot: d[1], g: d[2], txt: d[3], fx: d[4] };
 const SAT_GRADE = [["매우 좋음", "#ffd24a"], ["좋음", "#8dff9a"], ["애매", "#9ad8ff"], ["쓰레기", "#b0a0a0"], ["쓸모없음", "#807070"]];
@@ -1643,6 +1671,7 @@ function rollSatan(slot) {
 function satApply(id, apply, s) {
   const d = SAT_BY_ID[id]; if (!d) return;
   for (const [k, v] of d.fx) {
+    if (k.startsWith("f:")) { s.sat[k.slice(2)] = v; continue; }
     if (k === "manaRegenPct") apply("manaRegen", v * CFG.MANA_REGEN); else if (k === "regenPct") apply("regen", v * CFG.REGEN);
     else if (k === "dpm") apply("dmgPerMana", v / CFG.DPM_K); else apply(k, v);
   }
@@ -1652,6 +1681,64 @@ const satHtml = (it) => { const d = satLine(it); return d ? `<div class="aff sat
 function genSatan(sv, ilvl, slot) {
   slot = slot || pick(SLOTS); const it = genItem(sv, ilvl, 3, slot); const id = rollSatan(slot); if (id) it.sat = id; return it;
 }
+
+// ---- 전투 훅 (코드형 줄) ----
+function satInit(b) {
+  b._si = 1; const sk = b.skills || [], act = sk.filter((x) => x && x.slot === "active" && x.dtype !== "buff" && x.dtype !== "heal");
+  b.satEmpty = sk.filter((x) => !x).length; b.satNormal = act.length > 0 && act.every((x) => !x.rarity);
+}
+const satFront = (b) => b.enemies.filter((e) => !e.dead).sort((a, c) => a.col - c.col)[0];
+function satMult(b, e, sk) {
+  const S = b.stats.sat; let m = 1; if (!S) return m;
+  if (S.noelem && sk.elem) return 0;
+  if (S.manafull) m *= b.mana >= b.maxMana * 0.99 ? 1.3 : 0.9;
+  if (S.first) m *= sk.idx === 0 ? 1.4 : 0.9;
+  if (S.empty) m *= 1 + 0.25 * (b.satEmpty || 0);
+  if (S.fire && sk.dtype !== "mag" && b.time % 8 >= 3) m *= 1.4;
+  if (S.elite && b.time < (b.sEliteT || 0)) m *= 1.25;
+  if (S.lowhp) m *= b.hp <= b.maxHp * 0.4 ? 2.5 : 0.4;
+  if (S.normalonly && b.satNormal) m *= 2;
+  if (S.start && b.time < 3) m *= 1.6;
+  if (S.ready && b.skills.every((x) => !x || x.cdLeft <= 0)) m *= 1.5;
+  if (S.vault && b.kind === "vault") m *= 2;
+  if (S.lanes) m *= 1 + 0.05 * new Set(b.enemies.filter((x) => !x.dead).map((x) => x.lane)).size;
+  if (S.stack && b.time < (b.hurtT2 || 0)) m *= 1 + 0.01 * (b.hurtStack || 0);
+  if (S.dodgeamp && b.dodgeBoost) m *= 1.3;
+  return m;
+}
+function satCrit(b) {
+  const S = b.stats.sat; if (!S || !S.critstack) return 0;
+  if (b.time > (b.csT || 0)) b.cs = 0; const v = 0.1 * (b.cs || 0); b.cs = Math.min(6, (b.cs || 0) + 1); b.csT = b.time + 5; return v;
+}
+function satOnHit(b, e, sk, dealt) {
+  const S = b.stats.sat; if (!S) return;
+  b.dodgeBoost = 0;
+  if (S.leech && e.dots && e.dots.some((d) => d.k === "poison" || d.k === "bleed")) { const want = Math.min(dealt * 0.04, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0); }
+  if ((S.proc || S.thunder) && !b._inProc && b.time >= (b.procT || 0)) {
+    const act = b.skills.filter((x) => x && x.slot === "active" && x.dtype !== "buff" && x.dtype !== "heal" && x !== sk);
+    const roll = (ch, pool) => { if (pool.length && Math.random() < ch) { b._inProc = 1; b.procT = b.time + 0.4; try { castSkillRaw(b, pool[Math.floor(Math.random() * pool.length)]); } finally { b._inProc = 0; } return true; } return false; };
+    if (!(S.proc && roll(0.08, act)) && S.thunder) roll(0.12, act.filter((x) => x.elem === "light"));
+  }
+}
+function satOnKill(b, e) {
+  const S = b.stats.sat; if (!S) return;
+  if (S.elite && (e.tier === "elite" || e.tier === "boss")) b.sEliteT = b.time + 5;
+  if (S.mkill) b.mana = Math.min(b.maxMana, b.mana + b.maxMana * 0.04);
+  const dots = e.dots || [];
+  if (S.ignheal && dots.some((d) => d.k === "ignite")) healPlayer(b, b.maxHp * 0.03);
+  if (S.spread) { const pd = dots.find((d) => d.k === "poison"); if (pd) for (const x of b.enemies.filter((y) => !y.dead && y !== e).sort((a, c) => Math.abs(a.col - e.col) - Math.abs(c.col - e.col)).slice(0, 2)) x.dots.push({ k: "poison", dps: pd.dps, t: Math.max(2, pd.t) }); }
+}
+function satOnHurt(b) {
+  const S = b.stats.sat; if (!S) return;
+  if (S.stack) { b.hurtStack = b.time < (b.hurtT2 || 0) ? Math.min(20, (b.hurtStack || 0) + 1) : 1; b.hurtT2 = b.time + 5; }
+  if (S.counter && Math.random() < 0.08) { const f = satFront(b); if (f) applyDamage(b, f, b.stats.def * 3, { src: "counter", color: "#ffb060" }); }
+}
+function satTick(b, dt) {
+  if (!b._si) satInit(b);
+  const S = b.stats.sat; if (!S) return;
+  if (S.shadow) { b.shT = (b.shT || 0) + dt; if (b.shT >= 6) { const f = satFront(b); if (f) { b.shT = 0; applyDamage(b, f, b.stats.atk * CFG.PHYS_BASE * 8, { src: "shadow", color: "#b0a0ff" }); } else b.shT = 5.9; } }
+}
+const satDefMul = (b) => { const S = b.stats.sat; if (!S) return 1; let m = 1; if (S.lowdef && b.hp <= b.maxHp * 0.3) m *= 4; if (S.mana0 && b.mana <= 0) m *= 3; return m; };
 
 // =========================================================
 // 세이브 / 장비 / 스탯 / 퀘스트 / 대장간
@@ -1799,7 +1886,7 @@ function computeStats(sv) {
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
     vsBleed: 0, vsPoison: 0, vsIgnite: 0, vsChill: 0, vsShock: 0, bleedMore: 1, poisonMore: 1, igniteMore: 1, chillMore: 1, shockMore: 1, shockChance: 0,
-    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0, sat: {} };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
@@ -1836,6 +1923,7 @@ function computeStats(sv) {
   s.dodge = s.noDodge ? 0 : Math.max(0, Math.min(s.dodgeCap, s.dodge)); s.cdr = Math.min(s.cdrCap, s.cdr); s.critChance = Math.min(0.8, s.critChance); s.spellCrit = Math.min(0.8, s.spellCrit);
   s.ignoreDef = Math.min(0.8, s.ignoreDef); s.ignoreRes = Math.min(0.8, s.ignoreRes); s.shredDef = Math.min(0.5, s.shredDef); s.shredRes = Math.min(0.5, s.shredRes);
   s.bossTaken = Math.min(0.6, s.bossTaken); s.rangedTaken = Math.min(0.6, s.rangedTaken); s.killHeal = Math.min(0.02, s.killHeal);
+  if (s.sat.dodgedef) s.def *= 1 + s.dodge * 0.5;
   if (s.noCrit) { s.critChance = 0; s.spellCrit = 0; } if (s.noLife) s.lifesteal = 0;
   s.stackCap = Math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density);
   s.lanes = Math.min(CFG.MAX_LANES, sv.lanesBase + s.laneBonus);
@@ -2640,8 +2728,8 @@ function pickPrimary(b, sk) {
 function damagePlayer(b, raw, opt) {
   opt = opt || {};
   if (b.inv > 0) return;
-  if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
-  let d = raw * (1 - b.stats.def / (b.stats.def + 5 * raw));
+  if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (b.stats.sat.dodgeamp) b.dodgeBoost = 1; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
+  const dfv = b.stats.def * satDefMul(b); let d = raw * (1 - dfv / (dfv + 5 * raw));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
   if (b.affMatch) d *= CFG.EB_AFF_DEF;
   d *= Math.max(CFG.TAKEN_FLOOR, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
@@ -2649,7 +2737,7 @@ function damagePlayer(b, raw, opt) {
   if (b.stats.manaShield && b.mana > 0) { const keep = b.maxMana * CFG.MANA_SHIELD_KEEP, avail = Math.max(0, b.mana - keep), ab = Math.min(d * b.stats.manaShield, avail / CFG.MANA_SHIELD_COST); b.mana -= ab * CFG.MANA_SHIELD_COST; d -= ab; }   // 방벽은 마나가 일정 비율 이하면 멈춘다 (스킬을 쓸 마나를 남긴다)
   b.hp -= d; b.taken += d;
   pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "-" + fmtN(d), "#ff8a8a", false);
-  b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
+  satOnHurt(b); b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
 }
 function voidPhase(b, e, si) {   // 공허의 군주 단계 설정: 단계마다 체력·공격력이 크게 오른다
   const hm = VOID_HP[si - 1], am = VOID_ATK[si - 1];
@@ -2687,7 +2775,7 @@ function ebMatch(kind, sk) {
 function hitEnemy(b, e, mult, sk, o) {
   o = o || {}; const st = b.stats, mag = sk.dtype === "mag";
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
-  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
+  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08) * satMult(b, e, sk);
   if (e.tier === "boss" && ebMatch(b.kind, sk)) dmg *= CFG.EB_AFFINITY;   // 속성 상성
   dmg *= CFG.BAL[sk.elem || (mag ? "mag" : (sk.poison >= 0.3 ? "poison" : sk.bleed >= 0.3 ? "bleed" : "phys"))] || 1;   // 빌드 계열 밸런스 보정
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
@@ -2697,10 +2785,10 @@ function hitEnemy(b, e, mult, sk, o) {
   dmg *= 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
   if (sk.elem) dmg *= 1 - clamp(e.eres[ELEMS.indexOf(sk.elem)] - st.penElem, -0.5, CFG.RES_CAP);
   const cc = mag ? (st.magCrit ? st.critChance + st.spellCrit : st.spellCrit) : st.critChance;
-  const crit = Math.random() < Math.min(0.9, cc + (sk.critAdd || 0)); if (crit) dmg *= 1 + st.critDmg;
+  const crit = Math.random() < Math.min(0.9, cc + (sk.critAdd || 0)); if (crit) dmg *= 1 + st.critDmg + satCrit(b);
   if (mag) { if (st.shredRes) e.shR = Math.min(st.shredRes, e.shR + st.shredRes * 0.34); } else if (st.shredDef) e.shD = Math.min(st.shredDef, e.shD + st.shredDef * 0.34);
   const dealt = applyDamage(b, e, dmg, { crit, src: "skill", lifesteal: sk.lifesteal, color: o.color || (sk.elem ? ELEM_COLOR[sk.elem] : null) });
-  b.dmgBy[sk.id] = (b.dmgBy[sk.id] || 0) + dealt; applyStatus(b, e, sk, dealt);
+  b.dmgBy[sk.id] = (b.dmgBy[sk.id] || 0) + dealt; applyStatus(b, e, sk, dealt); satOnHit(b, e, sk, dealt);
   if (st.manaHit && b.time >= (b.leechT || 0)) { b.mana = Math.min(b.maxMana, b.mana + b.maxMana * st.manaHit); b.leechT = b.time + 0.1; }   // 마나 흡수: 적중 시 최대 마나의 일정 %를 회복 (초당 10회까지)
   return dealt;
 }
@@ -2718,6 +2806,7 @@ function killEnemy(b, e) {
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
   if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
+  satOnKill(b, e);
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
@@ -2730,7 +2819,7 @@ function killEnemy(b, e) {
   if (e.summoned && e.owner) { const o = b.enemies.find((x) => x.id === e.owner); if (o && o.shield) { o.shield.need--; if (o.shield.need <= 0) { o.shield = null; say(b, "방어막이 깨졌다!"); sfx(b, "shatter"); } } }
   if (e.shield) e.shield = null;
 }
-function healPlayer(b, amt) { if (b.debuffs.wound) amt *= b.debuffs.wound.mult; b.hp = Math.min(b.maxHp, b.hp + amt); pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "+" + fmtN(amt), "#8dff9a", false); }
+function healPlayer(b, amt) { if (b.stats.sat.healamp) amt *= 1.5; if (b.debuffs.wound) amt *= b.debuffs.wound.mult; b.hp = Math.min(b.maxHp, b.hp + amt); pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "+" + fmtN(amt), "#8dff9a", false); }
 
 // ---------------- 스킬 ----------------
 function castSkill(b, sk) {
@@ -2854,7 +2943,7 @@ function traitHit(b, e) {
 }
 function stepBattle(b, dt) {
   if (b.over) return;
-  b.time += dt; if (b.endless) b.ddt = (b.ddt || 0) + dt;
+  b.time += dt; satTick(b, dt); if (b.endless) b.ddt = (b.ddt || 0) + dt;
   b.lsTok = Math.min(b.lsRate * 2, b.lsTok + b.lsRate * dt);
   { const h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound ? b.debuffs.wound.mult : 1) * dt); b.healRg = (b.healRg || 0) + (b.hp - h0); } if (b.inv > 0) b.inv -= dt;
   b.mana = Math.min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt);
@@ -5871,7 +5960,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261031-212710";
+const BUILD_ID = "20261031-213034";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6091,6 +6180,9 @@ function openSpire() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.31", date: "10/31", title: "사탄 장비 줄 추가", items: [
+    "사탄 장비의 고유 줄이 28종 늘었습니다 (적중 시 추가 발동, 반격, 중첩 효과 등). 이제 부위마다 더 다양한 줄이 붙습니다.",
+  ] },
   { ver: "4.30", date: "10/31", title: "솟아난 탑 오픈", items: [
     "솟아난 탑이 열렸습니다: 100층, 4레인, 20층마다 벽이 있습니다. 1층은 졸업급 장비로 여유 있게 깰 수 있고, 벽(20층~)부터는 스펙업(계시의 돌 등)이 필요합니다. 난이도는 계속 조정됩니다.",
     "새 장비 [사탄 장비]: 전설 장비에 부위마다 다른 고유 한 줄이 랜덤으로 붙습니다 (좋은 줄도, 쓸모없는 줄도 있습니다). 탑에서 일반 전설 장비와 함께 나오며, 벽 층을 처음 넘으면 1개 확정입니다.",

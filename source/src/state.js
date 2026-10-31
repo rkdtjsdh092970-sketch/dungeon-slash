@@ -144,7 +144,7 @@ function computeStats(sv) {
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
     vsBleed: 0, vsPoison: 0, vsIgnite: 0, vsChill: 0, vsShock: 0, bleedMore: 1, poisonMore: 1, igniteMore: 1, chillMore: 1, shockMore: 1, shockChance: 0,
-    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0 };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0, sat: {} };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
@@ -181,6 +181,7 @@ function computeStats(sv) {
   s.dodge = s.noDodge ? 0 : Math.max(0, Math.min(s.dodgeCap, s.dodge)); s.cdr = Math.min(s.cdrCap, s.cdr); s.critChance = Math.min(0.8, s.critChance); s.spellCrit = Math.min(0.8, s.spellCrit);
   s.ignoreDef = Math.min(0.8, s.ignoreDef); s.ignoreRes = Math.min(0.8, s.ignoreRes); s.shredDef = Math.min(0.5, s.shredDef); s.shredRes = Math.min(0.5, s.shredRes);
   s.bossTaken = Math.min(0.6, s.bossTaken); s.rangedTaken = Math.min(0.6, s.rangedTaken); s.killHeal = Math.min(0.02, s.killHeal);
+  if (s.sat.dodgedef) s.def *= 1 + s.dodge * 0.5;
   if (s.noCrit) { s.critChance = 0; s.spellCrit = 0; } if (s.noLife) s.lifesteal = 0;
   s.stackCap = Math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density);
   s.lanes = Math.min(CFG.MAX_LANES, sv.lanesBase + s.laneBonus);

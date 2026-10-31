@@ -286,8 +286,8 @@ function pickPrimary(b, sk) {
 function damagePlayer(b, raw, opt) {
   opt = opt || {};
   if (b.inv > 0) return;
-  if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
-  let d = raw * (1 - b.stats.def / (b.stats.def + 5 * raw));
+  if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (b.stats.sat.dodgeamp) b.dodgeBoost = 1; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
+  const dfv = b.stats.def * satDefMul(b); let d = raw * (1 - dfv / (dfv + 5 * raw));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
   if (b.affMatch) d *= CFG.EB_AFF_DEF;
   d *= Math.max(CFG.TAKEN_FLOOR, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
@@ -295,7 +295,7 @@ function damagePlayer(b, raw, opt) {
   if (b.stats.manaShield && b.mana > 0) { const keep = b.maxMana * CFG.MANA_SHIELD_KEEP, avail = Math.max(0, b.mana - keep), ab = Math.min(d * b.stats.manaShield, avail / CFG.MANA_SHIELD_COST); b.mana -= ab * CFG.MANA_SHIELD_COST; d -= ab; }   // 방벽은 마나가 일정 비율 이하면 멈춘다 (스킬을 쓸 마나를 남긴다)
   b.hp -= d; b.taken += d;
   pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "-" + fmtN(d), "#ff8a8a", false);
-  b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
+  satOnHurt(b); b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
 }
 function voidPhase(b, e, si) {   // 공허의 군주 단계 설정: 단계마다 체력·공격력이 크게 오른다
   const hm = VOID_HP[si - 1], am = VOID_ATK[si - 1];
@@ -333,7 +333,7 @@ function ebMatch(kind, sk) {
 function hitEnemy(b, e, mult, sk, o) {
   o = o || {}; const st = b.stats, mag = sk.dtype === "mag";
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
-  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08);
+  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08) * satMult(b, e, sk);
   if (e.tier === "boss" && ebMatch(b.kind, sk)) dmg *= CFG.EB_AFFINITY;   // 속성 상성
   dmg *= CFG.BAL[sk.elem || (mag ? "mag" : (sk.poison >= 0.3 ? "poison" : sk.bleed >= 0.3 ? "bleed" : "phys"))] || 1;   // 빌드 계열 밸런스 보정
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
@@ -343,10 +343,10 @@ function hitEnemy(b, e, mult, sk, o) {
   dmg *= 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
   if (sk.elem) dmg *= 1 - clamp(e.eres[ELEMS.indexOf(sk.elem)] - st.penElem, -0.5, CFG.RES_CAP);
   const cc = mag ? (st.magCrit ? st.critChance + st.spellCrit : st.spellCrit) : st.critChance;
-  const crit = Math.random() < Math.min(0.9, cc + (sk.critAdd || 0)); if (crit) dmg *= 1 + st.critDmg;
+  const crit = Math.random() < Math.min(0.9, cc + (sk.critAdd || 0)); if (crit) dmg *= 1 + st.critDmg + satCrit(b);
   if (mag) { if (st.shredRes) e.shR = Math.min(st.shredRes, e.shR + st.shredRes * 0.34); } else if (st.shredDef) e.shD = Math.min(st.shredDef, e.shD + st.shredDef * 0.34);
   const dealt = applyDamage(b, e, dmg, { crit, src: "skill", lifesteal: sk.lifesteal, color: o.color || (sk.elem ? ELEM_COLOR[sk.elem] : null) });
-  b.dmgBy[sk.id] = (b.dmgBy[sk.id] || 0) + dealt; applyStatus(b, e, sk, dealt);
+  b.dmgBy[sk.id] = (b.dmgBy[sk.id] || 0) + dealt; applyStatus(b, e, sk, dealt); satOnHit(b, e, sk, dealt);
   if (st.manaHit && b.time >= (b.leechT || 0)) { b.mana = Math.min(b.maxMana, b.mana + b.maxMana * st.manaHit); b.leechT = b.time + 0.1; }   // 마나 흡수: 적중 시 최대 마나의 일정 %를 회복 (초당 10회까지)
   return dealt;
 }
@@ -364,6 +364,7 @@ function killEnemy(b, e) {
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
   if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
+  satOnKill(b, e);
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
@@ -376,7 +377,7 @@ function killEnemy(b, e) {
   if (e.summoned && e.owner) { const o = b.enemies.find((x) => x.id === e.owner); if (o && o.shield) { o.shield.need--; if (o.shield.need <= 0) { o.shield = null; say(b, "방어막이 깨졌다!"); sfx(b, "shatter"); } } }
   if (e.shield) e.shield = null;
 }
-function healPlayer(b, amt) { if (b.debuffs.wound) amt *= b.debuffs.wound.mult; b.hp = Math.min(b.maxHp, b.hp + amt); pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "+" + fmtN(amt), "#8dff9a", false); }
+function healPlayer(b, amt) { if (b.stats.sat.healamp) amt *= 1.5; if (b.debuffs.wound) amt *= b.debuffs.wound.mult; b.hp = Math.min(b.maxHp, b.hp + amt); pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "+" + fmtN(amt), "#8dff9a", false); }
 
 // ---------------- 스킬 ----------------
 function castSkill(b, sk) {
@@ -500,7 +501,7 @@ function traitHit(b, e) {
 }
 function stepBattle(b, dt) {
   if (b.over) return;
-  b.time += dt; if (b.endless) b.ddt = (b.ddt || 0) + dt;
+  b.time += dt; satTick(b, dt); if (b.endless) b.ddt = (b.ddt || 0) + dt;
   b.lsTok = Math.min(b.lsRate * 2, b.lsTok + b.lsRate * dt);
   { const h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound ? b.debuffs.wound.mult : 1) * dt); b.healRg = (b.healRg || 0) + (b.hp - h0); } if (b.inv > 0) b.inv -= dt;
   b.mana = Math.min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt);
