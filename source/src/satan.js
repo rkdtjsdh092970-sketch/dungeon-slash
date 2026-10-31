@@ -93,7 +93,7 @@ function satApply(id, apply, s) {
   }
 }
 const satLine = (it) => (it && it.sat && SAT_BY_ID[it.sat] ? SAT_BY_ID[it.sat] : null);
-const satHtml = (it) => { const d = satLine(it); return d ? `<div class="aff sat" style="color:${SAT_COLOR}">✦ ${d.txt} <small style="color:${SAT_GRADE[d.g][1]}">(${SAT_GRADE[d.g][0]})</small></div>` : ""; };
+const satHtml = (it) => { const d = satLine(it); return d ? `<div class="aff sat" style="color:${SAT_COLOR}">✦ ${d.txt}</div>` : ""; };
 function genSatan(sv, ilvl, slot) {
   slot = slot || pick(SLOTS); const it = genItem(sv, ilvl, 3, slot); const id = rollSatan(slot); if (id) it.sat = id; return it;
 }

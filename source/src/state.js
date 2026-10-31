@@ -667,7 +667,7 @@ const goodAffixCount = (it, X) => (it.affixes || []).filter((a) => a.t != null &
 // 자동 분해: "X티어 이상 옵션이 N개 미만이면 처리" — 기준을 채운 장비는 유지한다
 // 티어 기준을 켜면 등급 규칙과 관계없이 처리한다: 전설이면서 기준을 채운 장비만 남고, 나머지(전설 미달 · 일반 · 매직 · 레어)는 분해 (등급 규칙이 판매면 판매)
 const tierOn = (A) => A.tierX > 0 && A.tierN > 0;
-const autoRuleOf = (A, it) => { if (it.sat) { const d = SAT_BY_ID[it.sat]; return A.satG && d && d.g >= A.satG ? (A.satAct === "sell" ? "sell" : "dis") : "keep"; }   // 사탄 장비는 줄 등급 기준으로만 처리한다 (옵션 티어 기준은 적용하지 않음)
+const autoRuleOf = (A, it) => { if (it.sat) { return A.satG ? (A.satAct === "sell" ? "sell" : "dis") : "keep"; }   // 사탄 장비는 줄 등급 기준으로만 처리한다 (옵션 티어 기준은 적용하지 않음)
   const r = A.rules[it.rarity]; return tierOn(A) && !tierKeep(A, it) ? (r === "sell" ? "sell" : "dis") : r; };
 const tierKeep = (A, it) => A.tierX > 0 && A.tierN > 0 && it.rarity >= 3 && goodAffixCount(it, A.tierX) >= A.tierN;   // 전설만 남긴다: 전설이 아니면 기준을 채울 수 없다
 function autoProcess(sv) {

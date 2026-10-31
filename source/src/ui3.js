@@ -377,7 +377,7 @@ function openAutoDis() {
   Modal.open(`<h2>자동 분해 설정</h2><div class="dim">전투가 끝날 때마다 아래 규칙으로 가방의 장비를 자동 정리합니다.<br>고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.</div>
    <label class="setrow2" style="margin-top:6px"><b>모든 전투 후 자동 정리</b> <input type="checkbox" data-i="adall" ${A.always ? "checked" : ""}></label><div class="dim">끄면 자동 반복 중에만 정리합니다</div>
    ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
-   <label class="setrow2"><span style="color:${SAT_COLOR}">사탄</span> 장비 <select data-i="adsg">${[[0, "처리 안 함"], [4, "쓸모없음 줄만"], [3, "쓰레기 이하 줄"], [2, "애매 이하 줄"], [1, "좋음 이하 줄 (매우 좋음만 유지)"]].map(([v, t]) => `<option value="${v}" ${A.satG === v ? "selected" : ""}>${t}</option>`).join("")}</select> <select data-i="adsa"><option value="dis" ${A.satAct !== "sell" ? "selected" : ""}>분해</option><option value="sell" ${A.satAct === "sell" ? "selected" : ""}>판매</option></select></label><div class="dim">사탄 장비는 고유 줄의 체감 등급으로만 처리하며, 옵션 티어 · 품질 기준은 적용하지 않습니다</div>
+   <label class="setrow2"><span style="color:${SAT_COLOR}">사탄</span> 장비 <select data-i="adsg"><option value="0" ${!A.satG ? "selected" : ""}>유지</option><option value="1" ${A.satG ? "selected" : ""}>처리</option></select> <select data-i="adsa"><option value="dis" ${A.satAct !== "sell" ? "selected" : ""}>분해</option><option value="sell" ${A.satAct === "sell" ? "selected" : ""}>판매</option></select></label><div class="dim">사탄 장비는 이 설정으로만 처리하며, 옵션 티어 · 품질 기준은 적용하지 않습니다 (처리 = 아래 방식으로 전부 처리)</div>
    <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
    <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
    <label class="setrow2">옵션 티어 기준 <select data-i="adtx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.tierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adtn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.tierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.tierX > 0 && A.tierN > 0 ? `<b>전설</b> 장비 중 <b style="color:#ffd070">${A.tierX === 1 ? "T1" : "T" + A.tierX + " 이상"} 옵션이 ${A.tierN}개 이상</b>인 것만 남기고, 나머지는 일반 · 매직 · 레어까지 모두 분해합니다 (등급 규칙이 판매면 판매). (T1은 T2 이상에도 포함, 1티어가 최고)` : "티어 기준을 고르면 기준을 채운 전설 장비만 남기고, 일반 · 매직 · 레어와 기준 미달 전설은 모두 분해합니다."}</div>
@@ -430,11 +430,10 @@ function oddsHtml() {
   return h;
 }
 function satCodexHtml() {
-  const g = SAT_GRADE, W = SAT_W; let h = `<div class="dim">사탄 장비 = 전설 장비(기본 능력치 · 옵션 5개 · 소켓은 전설과 같음) + 부위별 고유 줄 1개. 솟아난 탑에서 나오며, 줄은 부위 풀에서 <b>체감 등급</b>을 먼저 뽑고 그 안에서 균등하게 뽑습니다. 해당 부위에 없는 등급은 빼고 다시 나눕니다.</div>
-  <div style="margin:6px 0">체감 등급 확률: ${g.map((x, i) => `<span style="color:${x[1]}">${x[0]} ${W[i]}%</span>`).join(" · ")}</div>`;
+  let h = `<div class="dim">사탄 장비 = 전설 장비(기본 능력치 · 옵션 5개 · 소켓은 전설과 같음) + 부위별 고유 줄 1개. 솟아난 탑에서 나옵니다. 어떤 줄이 붙을지는 뽑아 봐야 알 수 있고, 같은 부위의 줄은 아래 중 하나가 붙습니다.</div>`;
   for (const sl of SLOTS) {
-    const pool = Object.values(SAT_BY_ID).filter((d) => d.slot === sl), gs = [0, 1, 2, 3, 4].filter((x) => pool.some((p) => p.g === x)), tot = gs.reduce((a, x) => a + W[x], 0);
-    h += `<h3 style="margin:10px 0 4px">${SLOT_NAME[sl]} <small class="dim">(${pool.length}종)</small></h3><table style="width:100%;border-collapse:collapse">` + pool.sort((a, b) => a.g - b.g).map((d) => { const n = pool.filter((p) => p.g === d.g).length; return `<tr><td style="padding:2px 6px;white-space:nowrap;color:${g[d.g][1]}">${g[d.g][0]}</td><td style="padding:2px 6px">${d.txt}</td><td style="padding:2px 6px;text-align:right;white-space:nowrap">${(W[d.g] / tot * 100 / n).toFixed(1)}%</td></tr>`; }).join("") + `</table>`;
+    const pool = Object.values(SAT_BY_ID).filter((d) => d.slot === sl);
+    h += `<h3 style="margin:10px 0 4px">${SLOT_NAME[sl]} <small class="dim">(${pool.length}종)</small></h3>` + pool.sort((a, b) => a.txt.localeCompare(b.txt, "ko")).map((d) => `<div style="padding:2px 6px;color:${SAT_COLOR}">✦ ${d.txt}</div>`).join("");
   }
   return h;
 }
