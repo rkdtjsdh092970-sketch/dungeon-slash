@@ -11,7 +11,17 @@ local PG = player:WaitForChild("PlayerGui")
 -- ── 로딩 화면 (가장 먼저 띄운다) ──
 local loadGui = Instance.new("ScreenGui"); loadGui.Name = "DungeonLoading"; loadGui.IgnoreGuiInset = true; loadGui.DisplayOrder = 100; loadGui.ResetOnSpawn = false; loadGui.Parent = PG
 local loadBg = Instance.new("Frame"); loadBg.Size = UDim2.new(1, 0, 1, 0); loadBg.BackgroundColor3 = Color3.new(1, 1, 1); loadBg.BorderSizePixel = 0; loadBg.Parent = loadGui
-do local g = Instance.new("UIGradient"); g.Color = ColorSequence.new(Color3.fromRGB(46, 26, 92), Color3.fromRGB(10, 6, 22)); g.Rotation = 90; g.Parent = loadBg end
+loadGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+local loadGrad = Instance.new("UIGradient"); loadGrad.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 34, 120)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(26, 14, 56)), ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 30, 70)) }); loadGrad.Rotation = 90; loadGrad.Parent = loadBg
+-- 움직이는 배경: 흐르는 그라데이션 + 떠오르는 빛 입자, 전투 배경 그림이 오면 천천히 흐르게 깔린다
+local loadArt = Instance.new("ImageLabel"); loadArt.BackgroundTransparency = 1; loadArt.ImageTransparency = 1; loadArt.ScaleType = Enum.ScaleType.Crop; loadArt.Size = UDim2.new(1.2, 0, 1, 0); loadArt.Position = UDim2.new(0, 0, 0, 0); loadArt.ZIndex = 1; loadArt.Parent = loadBg
+local loadDim = Instance.new("Frame"); loadDim.Size = UDim2.new(1, 0, 1, 0); loadDim.BackgroundColor3 = Color3.fromRGB(16, 8, 34); loadDim.BackgroundTransparency = 1; loadDim.BorderSizePixel = 0; loadDim.ZIndex = 2; loadDim.Parent = loadBg
+local motes = {}
+for i = 1, 36 do
+  local m = Instance.new("Frame"); local s = math.random(3, 7); m.Size = UDim2.new(0, s, 0, s); m.BorderSizePixel = 0; m.ZIndex = 3
+  m.BackgroundColor3 = (i % 3 == 0) and Color3.fromRGB(255, 200, 110) or Color3.fromRGB(200, 170, 255); m.Parent = loadBg; Instance.new("UICorner", m).CornerRadius = UDim.new(1, 0)
+  motes[i] = { f = m, x = math.random(), y = math.random(), sp = 0.03 + math.random() * 0.06, ph = math.random() * 6.28 }
+end
 local loadBox = Instance.new("Frame"); loadBox.BackgroundTransparency = 1; loadBox.AnchorPoint = Vector2.new(0.5, 0.5); loadBox.Position = UDim2.new(0.5, 0, 0.5, 0); loadBox.Size = UDim2.new(0, 560, 0, 300); loadBox.Parent = loadBg
 do local sc = Instance.new("UIScale"); sc.Parent = loadBox; local function f() local vp = workspace.CurrentCamera.ViewportSize; sc.Scale = math.clamp(math.min(vp.X / 640, vp.Y / 420), 0.5, 1.6) end; f(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(f) end
 local function logoText(t, y, size, color)
@@ -24,6 +34,20 @@ Instance.new("UICorner", loadBarBg).CornerRadius = UDim.new(1, 0); do local s = 
 local loadBar = Instance.new("Frame"); loadBar.Size = UDim2.new(0, 0, 1, 0); loadBar.BackgroundColor3 = Color3.fromRGB(255, 200, 80); loadBar.Parent = loadBarBg; Instance.new("UICorner", loadBar).CornerRadius = UDim.new(1, 0)
 local loadTxt = logoText("서버에 연결하는 중...", 250, 16, Color3.fromRGB(230, 225, 250)); loadTxt.Font = Enum.Font.GothamMedium
 local function loadStep(text, p) loadTxt.Text = text; TweenService:Create(loadBar, TweenInfo.new(0.25), { Size = UDim2.new(math.clamp(p, 0, 1), 0, 1, 0) }):Play() end
+loadBox.ZIndex = 5
+do   -- 입자 · 그라데이션 흐름 · 배경 그림 천천히 이동
+  local t0 = os.clock()
+  local conn; conn = game:GetService("RunService").RenderStepped:Connect(function(dt)
+    if not loadGui.Parent then conn:Disconnect(); return end
+    local t = os.clock() - t0
+    loadGrad.Offset = Vector2.new(0, math.sin(t * 0.4) * 0.25); loadGrad.Rotation = 90 + math.sin(t * 0.25) * 20
+    for _, m in ipairs(motes) do
+      m.y -= m.sp * dt; if m.y < -0.05 then m.y = 1.05; m.x = math.random() end
+      m.f.Position = UDim2.new(m.x + math.sin(t * 0.8 + m.ph) * 0.015, 0, m.y, 0); m.f.BackgroundTransparency = 0.25 + 0.5 * (0.5 + 0.5 * math.sin(t * 2 + m.ph))
+    end
+    loadArt.Position = UDim2.new(-0.1 + math.sin(t * 0.12) * 0.1, 0, 0, 0)
+  end)
+end
 
 -- 로블록스 기본 UI 중 이 게임에 필요 없는 것 숨김 (순위표 · 가방 · 모바일 이동 조작). 채팅과 메뉴 버튼은 그대로 둔다.
 pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false) end)
@@ -34,6 +58,11 @@ local rpc = RS:WaitForChild("Rpc")
 loadStep("게임 데이터를 준비하는 중...", 0.15)
 local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)
+task.spawn(function()   -- 전투 배경 그림이 오면 로딩 배경으로 서서히 깐다
+  local a = Sprites.art("bg1"); if not a or not loadGui.Parent then return end
+  loadArt.ImageContent = a.content
+  TweenService:Create(loadArt, TweenInfo.new(1.2), { ImageTransparency = 0 }):Play(); TweenService:Create(loadDim, TweenInfo.new(1.2), { BackgroundTransparency = 0.45 }):Play()
+end)
 
 local gui = Instance.new("ScreenGui"); gui.Name = "DungeonUI"; gui.ResetOnSpawn = false; gui.IgnoreGuiInset = true; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; gui.Parent = PG
 local INSET = math.max(36, GuiService:GetGuiInset().Y)   -- 로블록스 상단 버튼 줄 높이
@@ -621,7 +650,8 @@ makeStage()
 loadStep("준비 완료!", 1)
 setScreen("town")
 task.wait(0.35)
-loadBox.Visible = false
+loadBox.Visible = false; for _, m in ipairs(motes) do m.f.Visible = false end
+TweenService:Create(loadArt, TweenInfo.new(0.5), { ImageTransparency = 1 }):Play(); TweenService:Create(loadDim, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
 local fade = TweenService:Create(loadBg, TweenInfo.new(0.5), { BackgroundTransparency = 1 }); fade:Play(); fade.Completed:Connect(function() loadGui:Destroy() end)
 if summary and (summary.cleared or 0) == 0 then toast("오른쪽 아래 [지도]를 눌러 스테이지 1에 도전하세요!", Color3.fromRGB(255, 230, 140)) end
 

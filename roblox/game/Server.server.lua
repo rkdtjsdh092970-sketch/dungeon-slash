@@ -21,7 +21,7 @@ local function load(uid)
     local ok, v = pcall(function() return store:GetAsync("p" .. uid) end)
     if ok then return v, true end
     -- 게시된 장소를 Studio 에서 API 접근 없이 열면 항상 실패한다: 이때만 메모리 저장(실서버에서는 그대로 보호)
-    if game:GetService("RunService"):IsStudio() and tostring(v):find("StudioAccessToApisNotAllowed") then okDS = false; warn("Studio: DataStore 접근 불가 → 메모리 저장"); return nil end
+    if game:GetService("RunService"):IsStudio() then okDS = false; warn("Studio: DataStore 불러오기 실패 → 메모리 저장", v); return nil end
     task.wait(1.5)
   end
   return nil, false   -- 불러오기 실패: 새 세이브로 덮어쓰지 않도록 호출자가 구분한다
