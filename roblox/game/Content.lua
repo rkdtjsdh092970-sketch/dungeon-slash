@@ -195,5 +195,66 @@ function M.play(sv, spec, seed)
   return res
 end
 
+-- ---------- 새 문지기 (실시간: 서버가 단계를 진행하고 클라이언트가 구슬을 누른다) ----------
+local sessions = {}
+function M.wardenOpen(sv) return sv.spire ~= nil and sv.spire.best >= 100 end
+function M.wardenStart(sv, uid, seed)
+  if not M.wardenOpen(sv) then return nil, "탑 100층을 클리어해야 합니다" end
+  if sessions[uid] then return nil, "이미 도전 중입니다" end
+  local node = { kind = "warden", act = 10, tier = CFG.WARDEN.TIER }
+  local b = Battle.new(sv, node, (seed or os.time()) + (sv.nextUid or 1))
+  sessions[uid] = { b = b, sv = sv, t = os.clock() }
+  return true
+end
+function M.wardenState(uid)
+  local S = sessions[uid]; if not S then return nil end
+  local b = S.b; local boss = b.bossRef
+  return { over = b.over, win = b.win, time = b.time, hp = b.hp / b.maxHp, bossHp = boss and boss.hp / boss.maxHp or 0, orbs = Battle.orbView(b), pop = b.wPop, boom = b.wBoom, limit = CFG.WARDEN.LIMIT }
+end
+function M.wardenPop(uid, id) local S = sessions[uid]; return S and Battle.pop(S.b, id) or false end
+function M.wardenTickAll(dt)   -- 서버가 주기적으로 호출 (0.05초)
+  for uid, S in pairs(sessions) do if not S.b.over then Battle.step(S.b, dt) end end
+end
+function M.wardenFinish(sv, uid, seed)
+  local S = sessions[uid]; if not S or not S.b.over then return nil, "아직 진행 중입니다" end
+  local b = S.b; sessions[uid] = nil
+  local res = { win = b.win, time = b.time, kills = b.kills, items = {}, notes = {}, pop = b.wPop, boom = b.wBoom, gold = 0 }
+  res.gold = floor(b.gold * (b.win and 1 or 0.5)); sv.gold += res.gold
+  if not b.win then return res end
+  sv.warden = sv.warden or { clears = 0, best = 0, pops = 0 }
+  sv.warden.clears += 1; sv.warden.pops += b.wPop
+  if sv.warden.best == 0 or b.time < sv.warden.best then sv.warden.best = floor(b.time) end
+  res.notes[#res.notes + 1] = string.format("문지기 처치! %d초 (구슬 %d개 처치, 폭발 %d회)", floor(b.time), b.wPop, b.wBoom)
+  local rng = Random.new((seed or os.time()) + (sv.nextUid or 1))
+  for _ = 1, 10 do
+    local it
+    if rng:NextNumber() < 0.30 then it = Loot.genSatan(rng, sv, 6)
+    else it = Loot.genItem(rng, sv, 6, wpick(rng, { 0, 1, 2, 3 }, function(x) return ({ 0, 10, 40, 50 })[x + 1] end)) end
+    if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비" } else res.full = true end
+  end
+  sv.ore += 8; sv.orbC = (sv.orbC or 0) + 8; res.orbC = 8
+  return res
+end
+function M.wardenAbort(uid) sessions[uid] = nil end
+
+-- ---------- 새 탑 (T6 사탄 · 20층) ----------
+function M.tower2Open(sv) return sv.warden ~= nil and sv.warden.best > 0 and (sv.cls or 0) >= 3 end
+function M.tower2(sv, floorN, seed)
+  if not M.tower2Open(sv) then return nil, "새 탑은 문지기를 넘고 최종 전직을 마친 뒤에 열립니다" end
+  sv.spire2 = sv.spire2 or { best = 0 }
+  floorN = floor(floorN or 1)
+  if floorN < 1 or floorN > CFG.SPIRE.END2 or floorN > sv.spire2.best + 1 then return nil, "도전할 수 없는 층입니다" end
+  local node = { kind = "spire", act = 10, floor = floorN, tier = Battle.spireTier(floorN, 2), tw = 2 }
+  local rng = Random.new((seed or os.time()) + (sv.nextUid or 1))
+  local b = Battle.run(sv, node, rng:NextInteger(1, 2 ^ 30), 0.05, 700)
+  local res = { win = b.win, time = b.time, floor = floorN, kills = b.kills, items = {}, gold = 0 }
+  if b.win then
+    res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills
+    local first = floorN > sv.spire2.best; if first then sv.spire2.best = floorN; res.first = true end
+    for _, it in ipairs(Loot.spireDrops(rng, sv, node, floorN % 5 == 0, first)) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비" } else res.full = true end end
+  else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
+  return res
+end
+
 M.UP_TIERS = UP_TIERS; M.UP_KEYS = UP_KEYS
 return M

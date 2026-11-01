@@ -330,6 +330,46 @@ raidTick = function(b, e, dt)
   e.hp = min(R.cap, e.hp + e.maxHp * K.REGEN * dt)
   R.blast -= dt; if R.blast <= 0 then R.blast = K.BLAST; damagePlayer(b, e.atk * K.BLASTM * (1 + R.t / 60), { boss = true }) end
 end
+local function spawnWarden(b)
+  local W = CFG.WARDEN
+  b.warden = true; b.spawnCd = 1e9; b.wOrb = W.FIRST; b.wPop = 0; b.wBoom = 0
+  local e = spawnAt(b, "boss", 1, 2); b.bossRef = e
+end
+local function wardenTick(b, dt)
+  local W = CFG.WARDEN; local boss = b.bossRef
+  if not boss then return end
+  if boss.dead then for _, o in ipairs(b.enemies) do if o.orb then o.dead = true end end return end
+  local enr = b.time > W.LIMIT * 0.75 and 1 + (b.time - W.LIMIT * 0.75) / 60 or 1
+  b.wOrb -= dt
+  if b.wOrb <= 0 then
+    b.wOrb = W.EVERY
+    local ph2 = boss.hp < boss.maxHp * 0.5
+    local n = min(b.lanes, ph2 and b.lanes or max(2, b.lanes - 1)); local lanes = {}
+    for i = 0, b.lanes - 1 do lanes[#lanes + 1] = i end
+    lanes = shuffle(b, lanes)
+    for i = 1, n do
+      local o = makeEnemy(b, "imp", lanes[i], 1)
+      o.orb = true; o.fuse = ph2 and W.FUSE * 0.8 or W.FUSE; o.hp = 1; o.maxHp = 1; o.atk = 0; o.atkCd = 1e9; o.range = 99; o.traits = {}; o.eres = { 0, 0, 0, 0 }
+      o.def = table.clone(o.def); o.def.gold = 0; b.enemies[#b.enemies + 1] = o
+    end
+  end
+  for _, o in ipairs(b.enemies) do
+    if o.orb and not o.dead then
+      o.fuse -= dt
+      if o.fuse <= 0 then
+        o.dead = true; b.wBoom += 1
+        damagePlayer(b, boss.atk * W.BLASTM * enr, { undodgeable = true, boss = true })
+        boss.hp = min(boss.maxHp, boss.hp + boss.maxHp * W.HEAL)
+      end
+    end
+  end
+end
+function M.pop(b, id)   -- 클라이언트가 구슬(id)을 눌렀다
+  for _, e in ipairs(b.enemies) do
+    if e.id == id and e.orb and not e.dead then e.fuse = 1; e.hp = 0; b.wPop += 1; killEnemy(b, e); return true end
+  end
+  return false
+end
 local function summonAdds(b, type, count, owner)
   local n = 0
   for _ = 1, count do
@@ -910,6 +950,7 @@ function M.new(sv, node, seed)
   elseif EBk then b.bossDef = Mon.EB[kind].boss end
   b.plan = planFor(b, node)
   if kind == "raid" then b.plan = {}; spawnRaid(b) end
+  if kind == "warden" then b.plan = {}; spawnWarden(b) end
   b.skills = {}; b.slotCount = sv.slots or 0
   for i, l in ipairs(sv.loadout or {}) do
     if l and i <= sv.slots then
@@ -928,7 +969,7 @@ end
 
 function M.step(b, dt)
   if b.over then return end
-  b.time += dt; satTick(b, dt)
+  b.time += dt; satTick(b, dt); if b.warden then wardenTick(b, dt) end
   b.lsTok = min(b.lsRate * 2, b.lsTok + b.lsRate * dt)
   b.hp = min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound and b.debuffs.wound.mult or 1) * dt)
   if b.inv > 0 then b.inv -= dt end
@@ -1016,6 +1057,12 @@ function M.dummyDamage(sv, seconds, seed, tier)
   local t = 0; local dt = 0.05
   while t < seconds do b.hp = b.maxHp; M.step(b, dt); t += dt end   -- 체력 회복: 피해를 받지 않는다 (순수 딜 측정)
   return b.dealt, b.dmgBy
+end
+
+function M.orbView(b)
+  local out = {}
+  for _, e in ipairs(b.enemies) do if e.orb and not e.dead then out[#out + 1] = { id = e.id, lane = e.lane, fuse = e.fuse } end end
+  return out
 end
 
 function M.run(sv, node, seed, dt, tmax)
