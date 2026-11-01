@@ -73,7 +73,7 @@ const BOSSES = [
   { id: "eye",     name: "심연의 눈 아가론",     w: 2, h: 2, hp: 1000, atk: 20, range: 3, interval: 2.8, windup: 1.0, exp: 130, gold: 130, sc: 3,
     abilities: [{ id: "reflect", every: 16, dur: 5, pct: 0.35, text: "반사 막! 공격하면 피해를 입는다!" }, { id: "curse", every: 13, dur: 6, mult: 0.3, text: "저주! 받는 피해가 늘어난다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "피해 반사 · 저주" },
   { id: "angel",   name: "폐허의 대천사",       w: 2, h: 2, hp: 1050, atk: 21, range: 3, interval: 2.6, windup: 0.9, exp: 140, gold: 140, sc: 3,
-    abilities: [{ id: "shield", every: 20, dur: 8, adds: 5, text: "성스러운 방어막!" }, { id: "heal", every: 12, pct: 0.05, text: "천사가 치유한다!" }, { id: "summon", every: 18, count: 4, type: "archer", text: "성가대가 나타난다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "방어막 · 치유 · 소환" },
+    abilities: [{ id: "shield", every: 20, dur: 8, adds: 5, text: "성스러운 방어막!" }, { id: "heal", every: 12, pct: 0.01, text: "천사가 치유한다!" }, { id: "summon", every: 24, count: 4, type: "archer", text: "성가대가 나타난다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "방어막 · 치유 · 소환" },
   { id: "demon",   name: "마왕 바알제뷔트",     w: 3, h: 2, hp: 1400, atk: 23, range: 4, interval: 2.4, windup: 0.9, exp: 220, gold: 220, sc: 4,
     abilities: [{ id: "summon", every: 12, count: 5, type: "imp", text: "마왕이 군단을 부른다!" }, { id: "charge", every: 16, windup: 2.4, mult: 3.6, interrupt: 0.05, text: "마왕이 종말의 일격을 준비한다!" }, { id: "curse", every: 15, dur: 6, mult: 0.3, text: "마왕의 저주!" }, { id: "enrage", at: 0.3, text: "마왕이 진정한 힘을 드러낸다!" }, { id: "wound", every: 15, dur: 6, mult: 0.5, text: "저주받은 상처! 생명력 흡수·회복이 반감된다!" }], desc: "소환 · 일격 충전 · 저주 · 분노" },
 ];

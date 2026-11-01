@@ -241,7 +241,7 @@ function makeEnemy(b, type, lane, col) {
   e.moveT = CFG.MOVE_TIME * (e.traits.includes("fast") ? 0.55 : 1); e.moveCd = e.moveT;
   e.dots = []; e.dotMul = isBoss ? CFG.DOT_BOSS : e.tier === "elite" ? CFG.DOT_ELITE : 1;
   { const dd = (isBoss ? ENEMY_DEF.boss : ENEMY_DEF[type] || ENEMY_DEF.grunt).slice(); for (const t of e.traits) if (TRAIT_DEF[t]) { dd[0] += TRAIT_DEF[t][0]; dd[1] += TRAIT_DEF[t][1]; }
-    const sc = (1 + CFG.DEF_ACT * (Math.min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier || 0)); e.dm = Math.max(0, dd[0] * sc); e.rm = Math.max(0, dd[1] * sc); e.shD = 0; e.shR = 0; e.eres = isEB(b.kind) ? [0, 0, 0, 0] : ACT_ELEM[Math.min(9, Math.max(0, va))]; }   // 화염 정령왕: 화염 저항 없음 (화염 빌드가 통한다)
+    const sc = (1 + CFG.DEF_ACT * (Math.min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier || 0)); e.dm = Math.max(0, dd[0] * sc); e.rm = Math.max(0, dd[1] * sc); e.shD = 0; e.shR = 0; e.eres = isEB(b.kind) ? [0, 0, 0, 0] : (b.kind === "spire" || b.kind === "craid" || b.kind === "warden") ? [0.1, 0.1, 0.1, 0.1] : ACT_ELEM[Math.min(9, Math.max(0, va))]; }   // 붉은 탑의 몬스터는 속성 저항이 모두 같다 (속성 간 유불리를 없앤다)   // 화염 정령왕: 화염 저항 없음 (화염 빌드가 통한다)
   if (isBoss) {
     if (b.kind === "void") { e.vbaseHp = e.maxHp; e.vbaseAtk = e.atk; voidPhase(b, e, Math.max(1, Math.min(4, b.node.vsel || 1))); }   // 입장할 때 고른 단계의 군주 한 마리
     if (isEB(b.kind)) e.label = `${D.name} · ${b.node.vsel || 1}단계`;
@@ -346,7 +346,7 @@ function applyDamage(b, e, dmg, o) {
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   if (!b.noFx && !o.noText) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
   if (e.charge) e.charge.dealt += dmg;
-  if (e.reflect && o.src === "skill") damagePlayer(b, dmg * e.reflect.pct, { undodgeable: true });
+  if (e.reflect && o.src === "skill") damagePlayer(b, Math.min(dmg * e.reflect.pct, b.maxHp * 0.002), { undodgeable: true });   // 반사 피해는 한 방당 최대 체력의 0.2%까지 (딜이 높을수록 죽던 문제 수정)
   const ls = ((o.lifesteal || 0) + b.stats.lifesteal) * (b.debuffs.wound ? b.debuffs.wound.mult : 1);   // 작열의 낙인: 흡수 반감
   if (ls && o.src === "skill") {   // 흡수 회복은 초당 상한(토큰 버킷)을 넘지 못한다: 피해가 아무리 커져도 흡혈만으로 불사가 되지 않게
     const want = Math.min(dmg * ls, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0);

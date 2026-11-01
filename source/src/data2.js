@@ -34,7 +34,7 @@ CFG.CRAID.TIERS = [0, spireTier(30), spireTier(80), 208];
 CFG.WARDEN = { TIER: 216, K: 2, ATK: 2.0, LIMIT: 480, FIRST: 7, EVERY: 11, FUSE: 5.5, BLASTM: 7, HEAL: 0.025, NAME: "붉은 탑의 문지기" };   // 새 문지기: 공명 구슬을 직접 눌러 터뜨려야 한다 (참 파밍까지 마친 스펙 기준 전투력 측정기)   // 레이드: 이지 = 탑 30층 · 노말 = 탑 80층 · 하드 = T6 스펙
 CFG.TEMPLE = { OPEN: 1, NEED: [0, 25, 50, 75], TIERS: [130, 142, 154, 166], HI: [0.03, 0.06, 0.10, 0.15], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
 CFG.PWR_FAM = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 전투력 계열 보정 (탑 시뮬 기준)
-CFG.BAL = { phys: 1, bleed: 1, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
+CFG.BAL = { phys: 1, bleed: 1.7, poison: 1, mag: 1, fire: 1, cold: 1, light: 1, void: 1.9 };   // 계열별 최종 피해 보정 (빌드 간 격차 조정용)
 CFG.BOSS_FLOOR_K = 0.8; CFG.FLOOR_G = 1.040; CFG.FLOOR_J = 1.35; CFG.FLOOR_ATKP = 0.85; CFG.BOSS_RIFT_K = 0.4;   // v4 균열 층 난이도 (층당 · 20층 구간 점프 · 공격력 지수 · 보스 보정)
 // v4 층별 몬스터 강도 표: 각 20층 구간의 마지막 층(19·39·59·79·99)에서 "그 구간 장비를 충분히 파밍한 캐릭터"가 겨우 클리어하는 값(앵커)을 시뮬레이션으로 맞췄다.
 // 구간이 바뀌는 층(20·40·60·80·100, 보스)에서 FLOOR_JUMP배로 한 번에 뛰고, 구간 안에서는 앵커까지 완만하게(지수 보간) 오른다. 100층 이후는 층당 FLOOR_TAIL배.
