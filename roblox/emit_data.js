@@ -1,7 +1,7 @@
 const fs = require('fs');
 const order = ['util','data','data2','data3','data4','data5','data6','satan','class','state','battle','battle2'];
 const src = order.map(f => fs.readFileSync(`/home/claude/rkdtjsdh092970-sketch/dungeon-slash/source/src/${f}.js`, 'utf8')).join('\n');
-const names = ['CFG','AFFIXES','SKILLS','SKILL_RARITY','RUNES','ENEMIES','BOSSES','SAT_DEFS','C_TREES','CHARMS','CHARM_BASIC','PASSIVES','AT','TIER_SCALE','WTYPES','ITEM_RARITY','STONE_POOL','SLOTS','EQ_SLOTS','ELEMS','ELEM_NAME','UNIQUES','EB','ACT_SPECIAL','WARPS','ACT_ELEM','ENEMY_DEF','TRAIT_DEF','SINGLE_HITS','SINGLE_HIT_BONUS','GUILD_PASSIVES','GUILD_BOUNTIES'];
+const names = ['CFG','AFFIXES','SKILLS','SKILL_RARITY','RUNES','ENEMIES','BOSSES','SAT_DEFS','C_TREES','CHARMS','CHARM_BASIC','PASSIVES','AT','TIER_SCALE','WTYPES','ITEM_RARITY','STONE_POOL','SLOTS','EQ_SLOTS','ELEMS','ELEM_NAME','UNIQUES','EB','ACT_SPECIAL','WARPS','ACT_ELEM','ENEMY_DEF','TRAIT_DEF','SINGLE_HITS','SINGLE_HIT_BONUS','GUILD_PASSIVES','GUILD_BOUNTIES','SLOT_BASE','SLOT_NAME'];
 const body = src + '\nconst __o={};' + names.map(n => `try{__o.${n}=${n};}catch(e){}`).join('') + 'return __o;';
 const A = new Function(body)();
 const idRe = /^[A-Za-z_][A-Za-z0-9_]*$/;

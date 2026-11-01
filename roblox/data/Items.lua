@@ -8,6 +8,8 @@ M.ITEM_RARITY = {{name="일반",mult=1,affixes=0,cls="r0",drop=55,bossDrop=0},{n
 M.STONE_POOL = {{k="atkFlat",v=22},{k="magFlat",v=22},{k="hpFlat",v=240},{k="defFlat",v=22},{k="atkPct",v=0.1},{k="magPct",v=0.1},{k="hpPct",v=0.1},{k="critChance",v=0.04},{k="critDmg",v=0.22},{k="spellCrit",v=0.04},{k="cdr",v=0.05},{k="dodge",v=0.04},{k="lifesteal",v=0.015},{k="boss",v=0.25},{k="elite",v=0.25},{k="normal",v=0.18},{k="ranged",v=0.25},{k="physDmg",v=0.12},{k="magDmg",v=0.12},{k="fireDmg",v=0.14},{k="coldDmg",v=0.14},{k="lightDmg",v=0.14},{k="voidDmg",v=0.14},{k="ignoreDef",v=0.06},{k="ignoreRes",v=0.06},{k="dotDmg",v=0.16},{k="goldFind",v=0.15},{k="mf",v=0.12},{k="manaPct",v=0.1},{k="manaRegen",v=0.4},{k="allDmg",v=0.06}}
 M.SLOTS = {"weapon","helm","armor","gloves","boots","ring","neck"}
 M.EQ_SLOTS = {"weapon","helm","armor","gloves","boots","ring","neck","ring2"}
+M.SLOT_BASE = {weapon={},helm={def=3,hp=20},armor={hp=55,def=4},gloves={atk=0.5,mag=0.5,def=1.5},ring={hp=15},neck={atk=0.4,mag=0.4},boots={hp=22,def=2}}
+M.SLOT_NAME = {weapon="무기",helm="투구",armor="갑옷",gloves="장갑",ring="반지",ring2="반지 2",neck="목걸이",boots="신발"}
 M.ELEMS = {"fire","cold","light","void"}
 M.ELEM_NAME = {fire="화염",cold="냉기",light="번개",void="공허"}
 return M
