@@ -12,23 +12,37 @@ local okDS, store = pcall(function() return DSS:GetDataStore("DungeonSlashV1") e
 local sessions = {}   -- userId -> { sv = 세이브, busy = bool }
 
 local function load(uid)
-  if okDS then
-    for _ = 1, 3 do
-      local ok, v = pcall(function() return store:GetAsync("p" .. uid) end)
-      if ok then return v end
-      task.wait(1)
-    end
+  if not okDS then return nil end
+  for _ = 1, 4 do
+    local ok, v = pcall(function() return store:GetAsync("p" .. uid) end)
+    if ok then return v, true end
+    task.wait(1.5)
   end
-  return nil
+  return nil, false   -- 불러오기 실패: 새 세이브로 덮어쓰지 않도록 호출자가 구분한다
 end
 local function save(uid, sv)
-  if not okDS then return end
-  pcall(function() store:SetAsync("p" .. uid, sv) end)
+  if not okDS then return true end
+  for _ = 1, 3 do
+    local ok = pcall(function() store:UpdateAsync("p" .. uid, function() return sv end) end)
+    if ok then return true end
+    task.wait(1)
+  end
+  warn("저장 실패:", uid); return false
+end
+-- 오래된/불완전한 세이브에 기본값을 채운다
+local function migrate(sv, uid)
+  local base = Loot.newSave(Random.new(uid))
+  for k, v in pairs(base) do if sv[k] == nil then sv[k] = v end end
+  sv.stats = sv.stats or { kills = 0, clears = 0 }; sv.runes = sv.runes or {}; sv.q = sv.q or {}; sv.charms = sv.charms or {}
+  sv.spire = sv.spire or { best = 0 }; sv.rift = sv.rift or { best = 0 }
+  return sv
 end
 
 Players.PlayerAdded:Connect(function(p)
-  local sv = load(p.UserId) or Loot.newSave(Random.new(p.UserId))
-  sessions[p.UserId] = { sv = sv, busy = false }
+  local sv, okLoad = load(p.UserId)
+  if okLoad == false then p:Kick("데이터를 불러오지 못했습니다. 잠시 후 다시 접속해 주세요. (진행 데이터 보호)"); return end
+  sv = sv and migrate(sv, p.UserId) or Loot.newSave(Random.new(p.UserId))
+  sessions[p.UserId] = { sv = sv, busy = false, last = 0 }
 end)
 Players.PlayerRemoving:Connect(function(p)
   local s = sessions[p.UserId]; if s then save(p.UserId, s.sv); sessions[p.UserId] = nil end
@@ -157,10 +171,19 @@ rpc.OnServerInvoke = function(player, action, arg)
     if not ok then warn("guild:", r); return { err = "길드 서버 오류" } end
     return r or { err = "알 수 없는 요청" }
   end
-  local sv = s and s.sv
+  if not s then return { err = "세이브를 불러오는 중입니다" } end
+  if type(action) ~= "string" then return { err = "잘못된 요청" } end
+  local now = os.clock()
+  if action ~= "wstate" and action ~= "wpop" then
+    if now - (s.last or 0) < 0.08 then return { err = "너무 빠른 요청입니다" } end
+    s.last = now
+  end
+  if arg ~= nil and type(arg) ~= "table" and type(arg) ~= "string" and type(arg) ~= "number" then return { err = "잘못된 요청" } end
+  local sv = s.sv
   local k0, c0, b0 = 0, 0, 0
   if sv then k0, c0 = sv.stats.kills, sv.stats.clears; b0 = (sv.daily and sv.daily.bosses) or 0 end
-  local res = handle(player, action, arg)
+  local okH, res = pcall(handle, player, action, arg)
+  if not okH then warn("rpc 오류:", action, res); s.busy = false; return { err = "요청 처리 중 오류가 났습니다" } end
   if sv and (sv.stats.kills > k0 or sv.stats.clears > c0) then
     local g = Guild.guildOf(gstore, player.UserId)
     if g then

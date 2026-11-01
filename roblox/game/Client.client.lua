@@ -14,6 +14,11 @@ local function button(parent, text, pos, sz, cb, color)
 end
 local root = Instance.new("Frame"); root.Size = UDim2.new(0, 600, 0, 640); root.Position = UDim2.new(0.5, -300, 0.5, -320); root.BackgroundColor3 = Color3.fromRGB(24, 20, 44); root.Parent = gui
 Instance.new("UICorner", root).CornerRadius = UDim.new(0, 10)
+local scale = Instance.new("UIScale"); scale.Parent = root
+local function fit() local vp = workspace.CurrentCamera.ViewportSize; scale.Scale = math.max(0.4, math.min(1, vp.X / 640, vp.Y / 680)) end
+fit(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+local closeBtn = Instance.new("TextButton"); closeBtn.Text = "UI 숨김/표시"; closeBtn.Size = UDim2.new(0, 110, 0, 28); closeBtn.Position = UDim2.new(1, -120, 0, 8); closeBtn.Font = Enum.Font.GothamBold; closeBtn.TextSize = 12; closeBtn.TextColor3 = Color3.new(1, 1, 1); closeBtn.BackgroundColor3 = Color3.fromRGB(90, 40, 60); closeBtn.ZIndex = 5; closeBtn.Parent = gui
+closeBtn.MouseButton1Click:Connect(function() root.Visible = not root.Visible end)
 local top = label(root, "불러오는 중…", 13, UDim2.new(0, 12, 0, 4), UDim2.new(1, -24, 0, 36))
 local msg = label(root, "", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 38))
 local list = Instance.new("ScrollingFrame"); list.Position = UDim2.new(0, 12, 0, 178); list.Size = UDim2.new(1, -24, 1, -190); list.BackgroundColor3 = Color3.fromRGB(16, 14, 32)
@@ -34,6 +39,17 @@ local function card(title, lines, btns)
   local t = label(f, title .. (#lines > 0 and ("\n" .. table.concat(lines, "\n")) or ""), 13, UDim2.new(0, 8, 0, 4), UDim2.new(1, -150, 0, 0)); t.AutomaticSize = Enum.AutomaticSize.Y
   for i, b in ipairs(btns or {}) do button(f, b[1], UDim2.new(1, -136 + (i - 1) * 66, 0, 6), UDim2.new(0, 62, 0, 28), b[2]) end
   Instance.new("UIPadding", f).PaddingBottom = UDim.new(0, 6)
+end
+-- 문자열 입력 팝업
+local function prompt(title, placeholder, cb)
+  local ov = Instance.new("Frame"); ov.Size = UDim2.new(1, 0, 1, 0); ov.BackgroundColor3 = Color3.new(0, 0, 0); ov.BackgroundTransparency = 0.45; ov.ZIndex = 20; ov.Parent = root
+  local box = Instance.new("Frame"); box.Size = UDim2.new(0, 340, 0, 130); box.Position = UDim2.new(0.5, -170, 0.5, -65); box.BackgroundColor3 = Color3.fromRGB(40, 34, 70); box.ZIndex = 21; box.Parent = ov
+  Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+  local t = label(box, title, 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 0, 24)); t.ZIndex = 22
+  local tb = Instance.new("TextBox"); tb.PlaceholderText = placeholder; tb.Text = ""; tb.Size = UDim2.new(1, -20, 0, 32); tb.Position = UDim2.new(0, 10, 0, 40); tb.ClearTextOnFocus = false
+  tb.Font = Enum.Font.Gotham; tb.TextSize = 14; tb.TextColor3 = Color3.new(1, 1, 1); tb.BackgroundColor3 = Color3.fromRGB(16, 14, 32); tb.ZIndex = 22; tb.Parent = box
+  local ok = button(box, "확인", UDim2.new(0, 10, 0, 86), UDim2.new(0, 150, 0, 30), function() local v = tb.Text; ov:Destroy(); cb(v) end); ok.ZIndex = 22
+  local no = button(box, "취소", UDim2.new(1, -160, 0, 86), UDim2.new(0, 150, 0, 30), function() ov:Destroy() end, Color3.fromRGB(90, 40, 60)); no.ZIndex = 22
 end
 local views = {}
 local function refresh() local r = rpc:InvokeServer("state"); setSummary(r.summary) end
@@ -231,12 +247,13 @@ function views.guild()
   clear(); local r = rpc:InvokeServer("g_view"); if r.summary then setSummary(r.summary) end
   local v = r.view
   if v.none then
-    card("길드에 가입하지 않았습니다", { "창설 비용 " .. v.createCost .. "G · 이름은 2~12자" }, { { "창설", function() local e = rpc:InvokeServer("g_create", "길드" .. math.random(100, 999)); msg.Text = e.err or "창설!"; views.guild() end } })
+    card("길드에 가입하지 않았습니다", { "창설 비용 " .. v.createCost .. "G · 이름은 2~12자" }, { { "창설", function() prompt("길드 이름 (2~12자)", "이름", function(nm) local e = rpc:InvokeServer("g_create", nm); msg.Text = e.err or "창설!"; views.guild() end) end } })
     for _, g in ipairs(v.list) do card(string.format("%s (Lv%d · %d명)", g.name, g.lv, g.members), { "길드장 " .. g.leader }, { { "가입", function() local e = rpc:InvokeServer("g_join", g.id); msg.Text = e.err or "가입!"; views.guild() end } }) end
     return
   end
   card(string.format("%s · Lv%d · %d명 · 코인 %d", v.name, v.lv, v.count, v.coins), { "공지: " .. (v.motd ~= "" and v.motd or "(없음)") }, {
     { "10만 기부", function() local e = rpc:InvokeServer("g_donate", 100000); msg.Text = e.err or "기부 완료"; if e.summary then setSummary(e.summary) end; views.guild() end },
+    { "공지", function() prompt("길드 공지", "공지 내용", function(tx) local e = rpc:InvokeServer("g_motd", tx); msg.Text = e.err or ""; views.guild() end) end },
     { "탈퇴", function() rpc:InvokeServer("g_leave"); views.guild() end } })
   local gl = {}; for _, g in ipairs(v.goals) do gl[#gl + 1] = string.format("%s %d / %d%s", g.id == "kill" and "처치" or (g.id == "boss" and "보스" or "클리어"), g.prog, g.goal, g.done and " ✔" or "") end
   card("주간 길드 목표", gl, { { "보상 받기", function() local e = rpc:InvokeServer("g_claim"); msg.Text = e.err or e.msg or ""; if e.summary then setSummary(e.summary) end; views.guild() end } })
@@ -246,7 +263,17 @@ function views.guild()
     { "지난주 보상", function() local e = rpc:InvokeServer("g_bossclaim"); msg.Text = e.err or e.msg or ""; if e.summary then setSummary(e.summary) end end } })
   for _, it in ipairs(v.shop) do card(it.name .. " — 코인 " .. it.cost .. " (주 " .. it.weekly .. "회)", {}, { { "구매", function() local e = rpc:InvokeServer("g_buy", it.id); msg.Text = e.err or "구매"; if e.summary then setSummary(e.summary) end; views.guild() end } }) end
 end
-local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" }, { "일일", "daily" }, { "퀘스트", "quests" }, { "룬", "runes" }, { "길드", "guild" } }
+function views.help()
+  clear()
+  card("시작 안내", {
+    "1) 도전 탭 → 스테이지 1~5를 차례로 클리어하세요 (3·5 클리어 시 스킬 칸이 열립니다).",
+    "2) 상점에서 스킬을 사고, 장비 탭에서 더 좋은 장비를 장착하세요. 안 쓰는 장비는 판매/분해.",
+    "3) 대장간에서 강화·옵션 재굴림, 패시브 탭에서 포인트를 찍습니다 (자동 배분 있음).",
+    "4) 스테이지 5를 깨면 '균열'이 열립니다. 100층을 깨면 졸업 → 탑 · 콘텐츠 · 전직 · 참 · 문지기.",
+    "5) 일일 탭에서 매일 보상과 오프라인 보상을 받고, 길드에 가입해 주간 목표·보스에 참여하세요." }, {})
+  card("베타 안내", { "베타 테스트 중입니다. 진행 데이터는 저장되지만 밸런스·보상은 바뀔 수 있습니다.", "버그나 이상한 점은 게임 설명란/디스코드로 알려 주세요." }, {})
+end
+local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" }, { "일일", "daily" }, { "퀘스트", "quests" }, { "룬", "runes" }, { "길드", "guild" }, { "도움말", "help" } }
 local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 78); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
-for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 8) * 66, 0, math.floor((i - 1) / 8) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
-refresh(); views.fight()
+for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 9) * 66, 0, math.floor((i - 1) / 9) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
+refresh(); if (summary and (summary.cleared or 0) == 0) then views.help() else views.fight() end
