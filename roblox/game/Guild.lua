@@ -19,6 +19,7 @@ M.SHOP = {   -- 길드 코인 상점 (주간 한도). 판매 금지 항목은 Mo
   { id = "hone",    name = "연마석 20개",   cost = 70,  weekly = 4, grant = { hone = 20 } },
 }
 
+local loadG
 local function level(exp) return math.min(10, 1 + math.floor(math.sqrt(exp / 50000))) end
 M.level = level
 function M.weekKey(t) return math.floor(((t or os.time()) - 4 * 86400) / 604800) end   -- 월요일 00:00(UTC) 기준 주
@@ -36,22 +37,41 @@ end
 
 -- ---------- 저장소 ----------
 function M.memoryStore() local d = {}; return { get = function(_, k) return d[k] end, set = function(_, k, v) d[k] = v end, _d = d } end
-function M.datastoreStore(ds)   -- DataStoreService:GetDataStore("Guilds") 를 감싼다 (UpdateAsync 로 쓰기 충돌을 피한다)
+-- DataStore 는 숫자 키(userId) 테이블을 못 저장한다 → 저장할 때 키를 "#123" 문자열로, 읽을 때 숫자로 되돌린다.
+local function enc(v)
+  if type(v) ~= "table" then return v end
+  local o = {}; for k, x in pairs(v) do o[type(k) == "number" and ("#" .. k) or k] = enc(x) end; return o
+end
+local function dec(v)
+  if type(v) ~= "table" then return v end
+  local o = {}; for k, x in pairs(v) do local n = type(k) == "string" and k:match("^#(%-?%d+)$"); o[n and tonumber(n) or k] = dec(x) end; return o
+end
+M._enc, M._dec = enc, dec
+function M.datastoreStore(ds)   -- DataStoreService:GetDataStore("Guilds") 를 감싼다
   return {
-    get = function(_, k) local ok, v = pcall(function() return ds:GetAsync(k) end); return ok and v or nil end,
-    set = function(_, k, v) pcall(function() ds:SetAsync(k, v) end) end,
+    get = function(_, k) local ok, v = pcall(function() return ds:GetAsync(k) end); if ok and v ~= nil then return dec(v) end return nil end,
+    set = function(_, k, v)
+      if v == nil then pcall(function() ds:RemoveAsync(k) end) else pcall(function() ds:SetAsync(k, enc(v)) end) end
+    end,
   }
 end
+-- 길드 목록 색인 (가입 화면용): idx = { [id] = 이름 }
+local function idxSet(store, id, name) local ix = store:get("idx") or {}; ix[id] = name; store:set("idx", ix) end
+function M.list(store)
+  local out = {}; for id, name in pairs(store:get("idx") or {}) do local g = loadG(store, id); if g then out[#out + 1] = { id = id, name = g.name, members = M.memberCount(g), lv = M.level(g.exp), leader = g.members[g.leader] and g.members[g.leader].name or "?" } end end
+  table.sort(out, function(a, b) return a.lv > b.lv end); return out
+end
 
-local function loadG(store, id) return store:get("g:" .. id) end
+loadG = function(store, id) return store:get("g:" .. id) end
 local function saveG(store, g) store:set("g:" .. g.id, g) end
 local function weekOf(g, now)
   local wk = M.weekKey(now)
-  if not g.week or g.week.key ~= wk then g.week = { key = wk, prog = { kill = 0, boss = 0, clear = 0 }, claimed = {}, boss = {}, bossTries = {}, shop = {} } end
+  if not g.week or g.week.key ~= wk then g.prev = g.week; g.week = { key = wk, prog = { kill = 0, boss = 0, clear = 0 }, claimed = {}, boss = {}, bossTries = {}, shop = {} } end
   return g.week
 end
 local function members(g) local n = 0; for _ in pairs(g.members) do n += 1 end return n end
 M.memberCount = members
+M.level = level
 
 function M.guildOf(store, uid) local id = store:get("m:" .. uid); return id and loadG(store, id) or nil end
 
@@ -62,7 +82,7 @@ function M.create(store, uid, uname, name, gold, now)
   if store:get("n:" .. string.lower(name)) then return nil, "이미 있는 이름입니다" end
   local id = tostring((store:get("seq") or 0) + 1); store:set("seq", tonumber(id))
   local g = { id = id, name = name, leader = uid, exp = 0, coins = 0, motd = "", created = now or os.time(), members = { [uid] = { name = uname, joined = now or os.time(), power = 0, donated = 0, dayKey = 0, dayDonate = 0 } } }
-  saveG(store, g); store:set("m:" .. uid, id); store:set("n:" .. string.lower(name), id)
+  saveG(store, g); store:set("m:" .. uid, id); store:set("n:" .. string.lower(name), id); idxSet(store, id, name)
   return g, nil, M.CFG.CREATE_COST   -- 세 번째 값 = 차감할 골드
 end
 function M.join(store, uid, uname, id)
@@ -74,7 +94,7 @@ end
 function M.leave(store, uid)
   local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
   g.members[uid] = nil; store:set("m:" .. uid, nil)
-  if members(g) == 0 then store:set("n:" .. string.lower(g.name), nil); store:set("g:" .. g.id, nil); return { disbanded = true } end
+  if members(g) == 0 then store:set("n:" .. string.lower(g.name), nil); store:set("g:" .. g.id, nil); local ix = store:get("idx") or {}; ix[g.id] = nil; store:set("idx", ix); return { disbanded = true } end
   if g.leader == uid then   -- 전투력이 가장 높은 길드원에게 길드장을 넘긴다
     local best, bp = nil, -1; for u, m in pairs(g.members) do if (m.power or 0) > bp then bp = m.power or 0; best = u end end; g.leader = best
   end
@@ -130,6 +150,15 @@ function M.bossRanking(g, now)
 end
 function M.bossTotal(g, now) local t = 0; for _, d in pairs(weekOf(g, now).boss) do t += d end return t end
 function M.bossReward(rank) return M.CFG.BOSS_REWARD[rank] or M.CFG.BOSS_REWARD.default end   -- 주가 끝난 뒤 순위대로 수령 (수령 처리는 서버가 지난 주 데이터로 한다)
+
+function M.claimPrevBoss(store, uid, now)   -- 지난주 길드 보스 순위 보상
+  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
+  weekOf(g, now); local pv = g.prev; if not pv or not pv.boss or not pv.boss[uid] then return nil, "받을 보상이 없습니다" end
+  pv.bossClaimed = pv.bossClaimed or {}; if pv.bossClaimed[uid] then return nil, "이미 받았습니다" end
+  local rows = {}; for u, d in pairs(pv.boss) do rows[#rows + 1] = { u = u, d = d } end; table.sort(rows, function(a, b) return a.d > b.d end)
+  local rank = 0; for i, r in ipairs(rows) do if r.u == uid then rank = i end end
+  pv.bossClaimed[uid] = true; saveG(store, g); return M.bossReward(rank), nil, rank
+end
 
 -- ---------- 길드 상점 ----------
 function M.buy(store, uid, itemId, now)

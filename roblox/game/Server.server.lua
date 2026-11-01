@@ -4,6 +4,8 @@ local RS = game:GetService("ReplicatedStorage")
 local DSS = game:GetService("DataStoreService")
 local Game = require(RS.Game.Game)
 local Loot = require(RS.Game.Loot)
+local Guild = require(RS.Game.Guild)
+local Battle = require(RS.Game.Battle)
 
 local rpc = RS:FindFirstChild("Rpc") or Instance.new("RemoteFunction"); rpc.Name = "Rpc"; rpc.Parent = RS
 local okDS, store = pcall(function() return DSS:GetDataStore("DungeonSlashV1") end)
@@ -35,7 +37,7 @@ game:BindToClose(function() for uid, s in pairs(sessions) do save(uid, s.sv) end
 task.spawn(function() while true do task.wait(0.05); Game.wardenTickAll(0.05) end end)
 task.spawn(function() while true do task.wait(120); for uid, s in pairs(sessions) do save(uid, s.sv) end end end)
 
-rpc.OnServerInvoke = function(player, action, arg)
+local handle = function(player, action, arg)
   local s = sessions[player.UserId]; if not s then return { err = "세이브를 불러오는 중입니다" } end
   local sv = s.sv
   if action == "state" then return { summary = Game.summary(sv), equipped = Game.equipped(sv) }
@@ -102,4 +104,72 @@ rpc.OnServerInvoke = function(player, action, arg)
     return { result = res, summary = Game.summary(sv) }
   end
   return { err = "알 수 없는 요청" }
+end
+
+-- ---------- 길드 ----------
+local okG, gds = pcall(function() return DSS:GetDataStore("DungeonSlashGuilds") end)
+local gstore = okG and Guild.datastoreStore(gds) or Guild.memoryStore()
+if not okG then warn("길드: DataStore 사용 불가 → 메모리 저장소") end
+local function gview(player, sv)
+  local g = Guild.guildOf(gstore, player.UserId)
+  if not g then return { none = true, list = Guild.list(gstore), createCost = Guild.CFG.CREATE_COST } end
+  local now = os.time()
+  local mem = {}; for uid, m in pairs(g.members) do mem[#mem + 1] = { name = m.name, donated = m.donated, leader = uid == g.leader } end
+  table.sort(mem, function(a, b) return a.donated > b.donated end)
+  return { name = g.name, lv = Guild.level(g.exp), exp = g.exp, coins = g.coins, motd = g.motd, count = Guild.memberCount(g), leader = g.leader == player.UserId,
+    members = mem, goals = Guild.goals(g, now), bossTries = Guild.bossTriesLeft(g, player.UserId, now), bossRank = Guild.bossRanking(g, now), bossTotal = Guild.bossTotal(g, now), shop = Guild.SHOP }
+end
+local function grant(sv, t) for k, v in pairs(t) do if k == "upKeys" then sv.upKeys = (sv.upKeys or 0) + v else sv[k] = (sv[k] or 0) + v end end end
+local function guildAction(player, sv, action, arg)
+  local uid, name = player.UserId, player.Name
+  if action == "g_view" then return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_create" then
+    local g, e, cost = Guild.create(gstore, uid, name, tostring(arg), sv.gold); if not g then return { err = e } end
+    sv.gold -= cost; return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_join" then local g, e = Guild.join(gstore, uid, name, tostring(arg)); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_leave" then local g, e = Guild.leave(gstore, uid); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_motd" then local g, e = Guild.setMotd(gstore, uid, arg); if not g then return { err = e } end return { view = gview(player, sv) }
+  elseif action == "g_donate" then
+    local amt = math.floor(tonumber(arg) or 0); if amt > sv.gold then return { err = "골드가 부족합니다" } end
+    local g, e, cost = Guild.donate(gstore, uid, amt); if not g then return { err = e } end
+    sv.gold -= cost; return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_claim" then
+    local r, e = Guild.claimGoals(gstore, uid); if not r then return { err = e } end
+    grant(sv, r); return { view = gview(player, sv), summary = Game.summary(sv), msg = "강화석 " .. r.ore }
+  elseif action == "g_bossclaim" then
+    local r, e, rank = Guild.claimPrevBoss(gstore, uid); if not r then return { err = e } end
+    grant(sv, r); return { view = gview(player, sv), summary = Game.summary(sv), msg = rank .. "위 보상" }
+  elseif action == "g_boss" then
+    local g = Guild.guildOf(gstore, uid); if not g then return { err = "길드가 없습니다" } end
+    if Guild.bossTriesLeft(g, uid) <= 0 then return { err = "이번 주 도전 횟수를 다 썼습니다" } end
+    local dmg = Battle.dummyDamage(sv, Guild.CFG.BOSS_SECONDS, os.time() + uid)
+    Guild.bossSubmit(gstore, uid, dmg); return { dmg = dmg, view = gview(player, sv) }
+  elseif action == "g_buy" then
+    local grantT, e = Guild.buy(gstore, uid, tostring(arg)); if not grantT then return { err = e } end
+    grant(sv, grantT); return { view = gview(player, sv), summary = Game.summary(sv) }
+  end
+end
+
+rpc.OnServerInvoke = function(player, action, arg)
+  local s = sessions[player.UserId]
+  if s and type(action) == "string" and action:sub(1, 2) == "g_" then
+    local ok, r = pcall(guildAction, player, s.sv, action, arg)
+    if not ok then warn("guild:", r); return { err = "길드 서버 오류" } end
+    return r or { err = "알 수 없는 요청" }
+  end
+  local sv = s and s.sv
+  local k0, c0, b0 = 0, 0, 0
+  if sv then k0, c0 = sv.stats.kills, sv.stats.clears; b0 = (sv.daily and sv.daily.bosses) or 0 end
+  local res = handle(player, action, arg)
+  if sv and (sv.stats.kills > k0 or sv.stats.clears > c0) then
+    local g = Guild.guildOf(gstore, player.UserId)
+    if g then
+      pcall(function()
+        Guild.record(gstore, player.UserId, "kill", sv.stats.kills - k0)
+        Guild.record(gstore, player.UserId, "clear", sv.stats.clears - c0)
+        local b1 = (sv.daily and sv.daily.bosses) or 0; if b1 > b0 then Guild.record(gstore, player.UserId, "boss", b1 - b0) end
+      end)
+    end
+  end
+  return res
 end

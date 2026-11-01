@@ -227,7 +227,26 @@ function views.runes()
     card(tostring(k.name or k.id) .. (k.rune and (" [" .. k.rune .. "]") or ""), {}, btns)
   end
 end
-local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" }, { "일일", "daily" }, { "퀘스트", "quests" }, { "룬", "runes" } }
+function views.guild()
+  clear(); local r = rpc:InvokeServer("g_view"); if r.summary then setSummary(r.summary) end
+  local v = r.view
+  if v.none then
+    card("길드에 가입하지 않았습니다", { "창설 비용 " .. v.createCost .. "G · 이름은 2~12자" }, { { "창설", function() local e = rpc:InvokeServer("g_create", "길드" .. math.random(100, 999)); msg.Text = e.err or "창설!"; views.guild() end } })
+    for _, g in ipairs(v.list) do card(string.format("%s (Lv%d · %d명)", g.name, g.lv, g.members), { "길드장 " .. g.leader }, { { "가입", function() local e = rpc:InvokeServer("g_join", g.id); msg.Text = e.err or "가입!"; views.guild() end } }) end
+    return
+  end
+  card(string.format("%s · Lv%d · %d명 · 코인 %d", v.name, v.lv, v.count, v.coins), { "공지: " .. (v.motd ~= "" and v.motd or "(없음)") }, {
+    { "10만 기부", function() local e = rpc:InvokeServer("g_donate", 100000); msg.Text = e.err or "기부 완료"; if e.summary then setSummary(e.summary) end; views.guild() end },
+    { "탈퇴", function() rpc:InvokeServer("g_leave"); views.guild() end } })
+  local gl = {}; for _, g in ipairs(v.goals) do gl[#gl + 1] = string.format("%s %d / %d%s", g.id == "kill" and "처치" or (g.id == "boss" and "보스" or "클리어"), g.prog, g.goal, g.done and " ✔" or "") end
+  card("주간 길드 목표", gl, { { "보상 받기", function() local e = rpc:InvokeServer("g_claim"); msg.Text = e.err or e.msg or ""; if e.summary then setSummary(e.summary) end; views.guild() end } })
+  local rk = {}; for i, x in ipairs(v.bossRank) do if i <= 5 then rk[#rk + 1] = string.format("%d위 %s  %s", i, x.name, tostring(math.floor(x.damage))) end end
+  card(string.format("길드 보스 (남은 도전 %d · 합계 %s)", v.bossTries, tostring(math.floor(v.bossTotal))), rk, {
+    { "도전", function() local e = rpc:InvokeServer("g_boss"); msg.Text = e.err or ("피해 " .. math.floor(e.dmg or 0)); views.guild() end },
+    { "지난주 보상", function() local e = rpc:InvokeServer("g_bossclaim"); msg.Text = e.err or e.msg or ""; if e.summary then setSummary(e.summary) end end } })
+  for _, it in ipairs(v.shop) do card(it.name .. " — 코인 " .. it.cost .. " (주 " .. it.weekly .. "회)", {}, { { "구매", function() local e = rpc:InvokeServer("g_buy", it.id); msg.Text = e.err or "구매"; if e.summary then setSummary(e.summary) end; views.guild() end } }) end
+end
+local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" }, { "일일", "daily" }, { "퀘스트", "quests" }, { "룬", "runes" }, { "길드", "guild" } }
 local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 78); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
 for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 8) * 66, 0, math.floor((i - 1) / 8) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
 refresh(); views.fight()
