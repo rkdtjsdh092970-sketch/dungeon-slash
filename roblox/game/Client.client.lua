@@ -653,7 +653,6 @@ buildTown = function()
     end
     local hero = Sprites.artLabel(townLayer, "warrior", 0.24 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.24 * H)
     hero.Position = UDim2.new(0, 0.85 * W, 0, 0.74 * H); hero.ZIndex = 5
-    TweenService:Create(hero, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Position = UDim2.new(0, 0.85 * W, 0, 0.74 * H - 4 * K) }):Play()
   end
   updateBadges()
 end

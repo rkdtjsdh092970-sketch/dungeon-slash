@@ -139,13 +139,20 @@ function M.create(parent, W, H, replayAct)
 end
 
 -- 일러스트 영웅의 코드 애니메이션: 숨쉬기 / 공격 돌진 / 피격 붉은 번쩍임
-function M.artPose(S)
-  local a = S.plAnim; local dx, rot = 0, 0
-  local dy = math.sin(os.clock() * 3) * 2 * S.f
-  if a.name == "attack" then local k = math.clamp(a.t / 0.3, 0, 1); dx = math.sin(k * math.pi) * 18 * S.f; rot = math.sin(k * math.pi) * 8; if a.t > 0.3 then S.plAnim = { name = "idle", t = 0 } end
-  elseif a.name == "hurt" then dx = -4 * S.f; if a.t > 0.18 then S.plAnim = { name = "idle", t = 0 } end end
+function M.artPose(S)   -- 묵직한 모션: 숨쉬기 없음 · 짧게 뒤로 당겼다가 강하게 내지르기 · 피격 시 흔들리며 뒤로 밀림
+  local a = S.plAnim; local dx, dy, rot = 0, 0, 0; local u = S.u
+  if a.name == "attack" then
+    local t = a.t
+    if t < 0.08 then local k = t / 0.08; dx = -6 * u * k; rot = -3 * k              -- 힘 모으기
+    elseif t < 0.16 then local k = (t - 0.08) / 0.08; dx = -6 * u + 30 * u * k; rot = -3 + 9 * k   -- 내지르기
+    elseif t < 0.40 then local k = (t - 0.16) / 0.24; dx = 24 * u * (1 - k) ^ 2; rot = 6 * (1 - k) -- 천천히 복귀
+    else S.plAnim = { name = "idle", t = 0 } end
+  elseif a.name == "hurt" then
+    local k = math.clamp(a.t / 0.22, 0, 1); dx = -10 * u * (1 - k); dy = math.sin(a.t * 70) * 2 * u * (1 - k)
+    if a.t > 0.22 then S.plAnim = { name = "idle", t = 0 } end
+  end
   S.pl.Position = UDim2.new(0, S.plX + dx, 0, S.plY + dy); S.pl.Rotation = rot
-  S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 1 - 0.45 * M.OPT.flash, 1 - 0.45 * M.OPT.flash) or Color3.new(1, 1, 1)
+  S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 1 - 0.55 * M.OPT.flash, 1 - 0.55 * M.OPT.flash) or Color3.new(1, 1, 1)
 end
 
 M.TOP, M.HUD = 58, 1   -- 로블록스 상단 버튼 줄 높이 / HUD 배율 (Client 가 화면에 맞춰 갱신)
@@ -207,11 +214,12 @@ function M:applySnap(s, lanes)
     if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
     if not u.placed then u.placed = true; u.x = x + 70 * self.u; u.y = y end
     u.tx, u.ty = x, y; u.hp = e.hp
-    if e.dead and not u.dying then u.dying = 0; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
+    if e.dead and not u.dying then u.dying = 0; if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
     u.wind = e.wind
   end
   for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end end
+  if s.ph and s.ph > 0 then self.shake = math.max(self.shake or 0, 0.18) end
   if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); self.plAnim = { name = "hurt", t = 0 } end
   if s.c then
     local tgt; for _, u in pairs(self.units) do if not u.dying and u.tx and (not tgt or u.tx < tgt.tx) then tgt = u end end
@@ -278,6 +286,10 @@ function M:play(replay, onDone, maxSec, hud)
     while self.idx < #sn and sn[self.idx + 1].t <= self.t do self.idx += 1; self:applySnap(sn[self.idx], lanes) end
     self.timeLbl.Text = string.format("%.0f / %.0f초", math.min(self.t, total), total)
     for _, cell in pairs(self.skillCells) do if cell.left > 0 then cell.left = math.max(0, cell.left - dt * self.spd * self.userSpd); cell.ov.Size = UDim2.new(1, 0, cell.left / cell.cd, 0) end end
+    if self.shake and self.shake > 0 then   -- 화면 흔들림 (그래픽 설정의 반짝임 세기를 따른다)
+      self.shake -= dt; local m = 7 * self.u * M.OPT.flash * math.clamp(self.shake / 0.3, 0, 1)
+      self.layer.Position = UDim2.new(0, (math.random() - 0.5) * m, 0, (math.random() - 0.5) * m)
+    elseif self.layer.Position ~= UDim2.new() then self.layer.Position = UDim2.new() end
     -- 유닛 이동/애니메이션
     local k = math.min(1, dt * 9)
     for id, u in pairs(self.units) do
@@ -285,17 +297,21 @@ function M:play(replay, onDone, maxSec, hud)
       if u.tx then u.x += (u.tx - u.x) * k; u.y += (u.ty - u.y) * k end
       u.lab.Position = UDim2.new(0, u.x, 0, u.y)
       u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); u.fill.Size = UDim2.new(math.clamp(u.hp or 1, 0, 1), 0, 1, 0)
-      if u.art then   -- 일러스트: 둥실거림 / 이동 시 통통 / 공격 시 앞으로 / 사망 시 뒤로 쓰러지며 사라짐
-        local ox, oy = 0, math.sin(u.t * 3) * 1.5 * self.f
-        if u.dying then u.lab.Rotation = math.min(80, u.dying * 160); u.lab.ImageTransparency = math.clamp((u.dying - 0.4) / 0.7, 0, 1)
-        elseif u.wind then ox = -math.abs(math.sin(u.t * 12)) * 8 * self.f
-        elseif math.abs((u.tx or u.x) - u.x) > 3 then oy = -math.abs(math.sin(u.t * 10)) * 4 * self.f end
-        u.lab.Position = UDim2.new(0, u.x + ox, 0, u.y + oy)
+      if u.art then   -- 일러스트 (묵직하게): 이동은 미끄러지듯 · 공격 직전 움츠렸다 돌진 · 피격 시 뒤로 밀리며 떨림 · 사망 시 어두워지며 쓰러짐
+        local ox, oy, rot = 0, 0, 0
+        if u.dying then
+          local k = math.clamp(u.dying / 0.6, 0, 1)
+          rot = 75 * k * k; oy = 6 * self.u * k
+          local c = 1 - 0.75 * k; u.lab.ImageColor3 = Color3.new(c, c * 0.9, c * 0.9); u.lab.ImageTransparency = math.clamp((u.dying - 0.6) / 0.5, 0, 1)
+        elseif u.wind then local k = (u.t * 2.5) % 1; ox = (k < 0.7 and 6 * self.u * (k / 0.7) or -22 * self.u * ((k - 0.7) / 0.3))
+        end
+        if u.hit and u.hit > 0 and not u.dying then ox += 8 * self.u * u.hit / 0.12 + math.sin(u.t * 80) * 2 * self.u end
+        u.lab.Rotation = rot; u.lab.Position = UDim2.new(0, u.x + ox, 0, u.y + oy)
       elseif not u.boss and u.info then
         local anim = "idle"; if u.dying then anim = "death" elseif u.wind then anim = "attack" elseif math.abs((u.tx or u.x) - u.x) > 3 then anim = "walk" end
         local row, frame = Sprites.anim(u.key, anim, anim == "death" and u.dying or u.t); Sprites.setFrame(u.lab, u.info, row, frame)
       elseif u.boss and u.dying then u.lab.ImageTransparency = math.min(1, u.dying) end
-      if u.hit and u.hit > 0 then u.hit -= dt; u.lab.ImageColor3 = Color3.new(1, 1 - 0.3 * M.OPT.flash, 1 - 0.3 * M.OPT.flash) else u.lab.ImageColor3 = Color3.new(1, 1, 1) end
+      if u.hit and u.hit > 0 then u.hit -= dt; if not u.dying then u.lab.ImageColor3 = Color3.new(1, 1 - 0.5 * M.OPT.flash, 1 - 0.5 * M.OPT.flash) end elseif not u.dying then u.lab.ImageColor3 = Color3.new(1, 1, 1) end
       if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); self.units[id] = nil end end
     end
     if self.plArt then self.plAnim.t += dt; M.artPose(self)
