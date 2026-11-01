@@ -33,13 +33,19 @@ P_ARMS.push({ id: "skill", name: "스킬", color: "#6af0c0",
   s: [["집중 사격", { singleDmg: 0.06 }], ["스킬 숙련", { cdr: 0.015 }], ["지속의 달인", { persistDmg: 0.06 }], ["전용기 입문", { bossSkill: 0.20, boss: 0.06 }, 2], ["소환사의 길", { summonDmg: 0.06 }], ["스킬의 정점", { allDmg: 0.10, cdr: 0.04, skillDur: 0.10 }, 3]],
   L: [["마나 절약", { manaCostRed: 0.03 }], ["지속 연장", { skillDur: 0.08 }], ["확정 일격", { singleDmg: 0.08 }], ["보스 사냥 도구", { bossSkill: 0.25, boss: 0.08 }, 2]],
   R: [["소환 숙련", { summonDmg: 0.06 }], ["장판 숙련", { persistDmg: 0.06 }], ["상태이상 숙련", { dotDmg: 0.10 }], ["전용기 장인", { bossSkill: 0.30, cdr: 0.03 }, 2]] });
+P_ARMS.push({ id: "pierce", name: "관통", color: "#ff4a8a",   // v4.40: 물리 관통 · 방어 무시 중심 줄기 (소환 · 지속 피해가 아닌 직접 타격 물리 빌드용)
+  s: [["급소 파고들기", { ignoreDef: 0.03 }], ["약점 노출", { shredDef: 0.03 }], ["철갑 뚫기", { physDmg: 0.06 }], ["갑옷 파쇄", { ignoreDef: 0.05, shredDef: 0.05 }, 2], ["꿰뚫는 일격", { atkPct: 0.06 }], ["관통의 정점", { ignoreDef: 0.10, shredDef: 0.08, atkMore: 1.08 }, 3]],
+  L: [["날 세우기", { atkFlat: 5 }], ["침투", { ignoreDef: 0.04 }], ["단단한 적 사냥", { boss: 0.12 }], ["철벽 부수기", { shredDef: 0.07, ignoreDef: 0.05 }, 2]],
+  R: [["치명 관통", { critChance: 0.02, ignoreDef: 0.02 }], ["정조준", { critDmg: 0.10 }], ["속도", { cdr: 0.015 }], ["무자비한 일격", { critDmg: 0.15, physDmg: 0.08 }, 2]] });
 const P_BRIDGES = [   // 계열 사이를 잇는 혼합 노드 2개씩
   [["전투 마술", { atkPct: 0.03 }], ["마검", { magPct: 0.03 }]], [["마법 원소", { magDmg: 0.05 }], ["원소 조율", { elemDmg: 0.05 }]],
   [["원소 보호", { hpPct: 0.04 }], ["저항 단련", { dmgTaken: -0.02 }]], [["마나 정제", { manaCostRed: 0.02 }], ["정신 단련", { manaPct: 0.05 }]],
   [["마력 수집", { manaRegen: 0.004 }], ["마나 효율", { manaCostRed: 0.03 }]], [["사냥 본능", { normal: 0.08 }], ["민첩한 손", { cdr: 0.015 }]],
   [["스킬 연계", { cdr: 0.01, singleDmg: 0.03 }], ["전투 기술", { persistDmg: 0.03, summonDmg: 0.03 }]],
+  [["관통 훈련", { ignoreDef: 0.02 }], ["강타 훈련", { atkPct: 0.03 }]],
 ];
-const P_EXT = {   // 바깥 줄기 2개씩 (끝 노드는 주요)
+const P_EXT = {
+  pierce: { LL: [["갑옷 틈새", { shredDef: 0.05 }], ["방어 해체", { ignoreDef: 0.07, shredDef: 0.05 }, 2]], RR: [["살점 꿰기", { physDmg: 0.05 }], ["처형의 일격", { critDmg: 0.20, boss: 0.10 }, 2]] },   // 바깥 줄기 2개씩 (끝 노드는 주요)
   phys: { LL: [["출혈 숙련", { bleedChance: 0.08 }], ["피의 갈증", { dotDmg: 0.20, bleedChance: 0.10 }, 2]], RR: [["강타 숙련", { atkPct: 0.04 }], ["처형인", { critDmg: 0.15, boss: 0.10 }, 2]] },
   mag: { LL: [["점화", { igniteChance: 0.08 }], ["불길", { dotDmg: 0.20, igniteChance: 0.10 }, 2]], RR: [["비전 순환", { manaRegen: 0.004 }], ["마도 공학", { spellCrit: 0.04, magPct: 0.06, boss: 0.10 }, 2]] },
   elem: { LL: [["독 지식", { poisonChance: 0.08 }], ["맹독", { poisonChance: 0.10, dotDmg: 0.20 }, 2]], RR: [["냉기 응결", { coldDmg: 0.06 }], ["원소 해방", { elemDmg: 0.10, penElem: 0.06 }, 2]] },
@@ -56,6 +62,7 @@ const P_OUT = {   // 바깥 확장 구역: 줄기 끝에서 갈라져 핵심(◆
   mana: [["마나 흡수", { manaHit: 0.0015 }, 1], ["마력 순환", { manaRegenFlat: 3 }, 1], ["마나 흡수 II", { manaHit: 0.0015, manaPct: 0.05 }, 2], ["비전 갈증", { manaOnKill: 4, manaRegen: 0.004 }, 2], ["마나 방벽", { manaShield: 0.06, manaPct: 0.06 }, 2], ["마력의 대양", { manaHit: 0.003, manaToSpell: 0.05, manaRegen: 0.006 }, 3]],
   util: [["수집의 감각", { goldFind: 0.10 }, 1], ["행운의 손", { mf: 0.08 }, 1], ["학습", { aoeDmg: 0.05 }, 2], ["광역 감각", { aoeDmg: 0.08, cdr: 0.02 }, 2], ["탐험가", { mf: 0.06, goldFind: 0.08 }, 2], ["보물왕", { mf: 0.20, aoeDmg: 0.08, goldFind: 0.20 }, 3]],
 };
+P_OUT.pierce = [["관통 숙련", { ignoreDef: 0.04, atkPct: 0.04 }, 1], ["방어 붕괴", { shredDef: 0.05 }, 1], ["급소 관통", { boss: 0.10, elite: 0.10 }, 2], ["연속 관통", { physDmg: 0.10, cdr: 0.02 }, 2], ["철갑 붕괴", { ignoreDef: 0.07, shredDef: 0.06 }, 2], ["관통의 화신", { atkMore: 1.12, ignoreDef: 0.08, shredDef: 0.06, critDmg: 0.20 }, 3]];
 P_OUT.skill = [["숙련된 손놀림", { cdr: 0.02, singleDmg: 0.06 }, 1], ["대지의 지배", { persistDmg: 0.08, skillDur: 0.06 }, 1], ["군주의 부름", { summonDmg: 0.10 }, 2], ["처형 의식", { bossSkill: 0.30, critDmg: 0.10 }, 2], ["마력 연동", { cdr: 0.03, manaCostRed: 0.04 }, 2], ["스킬 마스터", { singleDmg: 0.15, persistDmg: 0.15, summonDmg: 0.15, bossSkill: 0.30, cdr: 0.03 }, 3]];
 const P_OUT_GEO = [[0, 7.0, "s6"], [-0.24, 7.9, "e1"], [0.24, 7.9, "e1"], [-0.24, 8.8, "e2"], [0.24, 8.8, "e3"], [0, 9.7, ["e4", "e5"]]];
 const PASSIVES = [], PASSIVE_BY_ID = {};
@@ -81,6 +88,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   // ---- 전체를 바깥으로 넓히고, 중요한 노드(주요/핵심) 사이에 흰색 연결 특성을 끼워 넣는다: 좋은 특성은 멀리 있고, 가는 길에 작은 보너스를 먹는다 ----
   const RS = 3.6; PASSIVES.forEach((p) => { p.x *= RS; p.y *= RS; });
   const FIL = {
+    pierce: [{ ignoreDef: 0.006 }, { shredDef: 0.006 }, { physDmg: 0.02 }],
     phys: [{ atkPct: 0.012 }, { critChance: 0.006 }, { physDmg: 0.02 }], mag: [{ magPct: 0.012 }, { spellCrit: 0.006 }, { magDmg: 0.02 }], elem: [{ elemDmg: 0.025 }, { penElem: 0.01 }, { aoeDmg: 0.015 }],
     def: [{ hpPct: 0.02 }, { defPct: 0.025 }, { dmgTaken: -0.005 }], mana: [{ manaPct: 0.02 }, { manaRegen: 0.0012 }, { manaHit: 0.0003 }], util: [{ cdr: 0.004 }, { goldFind: 0.03 }, { mf: 0.02 }], skill: [{ cdr: 0.004 }, { singleDmg: 0.02 }, { persistDmg: 0.02 }], bridge: [{ hpPct: 0.01, atkPct: 0.006 }, { magPct: 0.006, defPct: 0.01 }, { cdr: 0.003 }],
   };
@@ -100,6 +108,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
   }
   // v4: 노드 세분화 — 모든 주요/일반 노드 곁에 작은 위성 노드를 하나씩 더 둔다 (각 계열의 다양한 효과를 조금씩 따로 고를 수 있게). 부모 노드를 먼저 찍어야 한다
   const SAT = {
+    pierce: [{ ignoreDef: 0.02 }, { shredDef: 0.02 }, { physDmg: 0.04 }, { critDmg: 0.06 }, { atkFlat: 3 }, { boss: 0.06 }, { critChance: 0.01 }, { atkPct: 0.02 }],
     phys: [{ atkFlat: 3 }, { critChance: 0.01 }, { critDmg: 0.06 }, { physDmg: 0.04 }, { normal: 0.05 }, { boss: 0.06 }, { ignoreDef: 0.03 }, { bleedChance: 0.04 }],
     mag: [{ magPct: 0.025 }, { spellCrit: 0.01 }, { magDmg: 0.04 }, { cdr: 0.008 }, { ignoreRes: 0.03 }, { aoeDmg: 0.05 }, { manaRegen: 0.002 }, { igniteChance: 0.04 }],
     elem: [{ fireDmg: 0.04 }, { coldDmg: 0.04 }, { lightDmg: 0.04 }, { voidDmg: 0.04 }, { elemDmg: 0.05 }, { penElem: 0.03 }, { dotDmg: 0.06 }, { shockChance: 0.04 }],
@@ -108,7 +117,7 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
     util: [{ cdr: 0.008 }, { goldFind: 0.05 }, { mf: 0.03 }, { aoeDmg: 0.04 }, { chainDmg: 0.05 }, { goldFind: 0.04, mf: 0.02 }, { cdr: 0.006, aoeDmg: 0.02 }, { mf: 0.04 }],
     skill: [{ singleDmg: 0.04 }, { persistDmg: 0.04 }, { summonDmg: 0.04 }, { bossSkill: 0.12 }, { cdr: 0.008 }, { dotDmg: 0.06 }, { dotDur: 0.08 }, { skillDur: 0.06 }],
   };
-  { let k = 0; const SN = { phys: "물리", mag: "마법", elem: "원소", def: "방어", mana: "마나", util: "유틸", skill: "스킬" };
+  { let k = 0; const SN = { pierce: "관통", phys: "물리", mag: "마법", elem: "원소", def: "방어", mana: "마나", util: "유틸", skill: "스킬" };
     for (const P of PASSIVES.slice()) {
       if (P.kind === "bridge" || P.kind === "filler" || P.kind === "key" || !SAT[P.arm] || P.links.length >= 3 || /_s1$/.test(P.id)) continue;   // 연결이 3개인 노드(갈림길)에는 붙이지 않는다
       const pool = SAT[P.arm], per = pool[(k * 3 + (P.id.length * 7)) % pool.length], ang = Math.atan2(P.y, P.x) + (k % 2 ? 1 : -1) * Math.PI / 2, d = 100 + (P.kind === "notable" ? 10 : 0);

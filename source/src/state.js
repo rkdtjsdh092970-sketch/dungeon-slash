@@ -72,6 +72,8 @@ function genItem(sv, ilvl, rarity, slot, _legacy, bias) {
     const a = wpick(cand, (x) => x.w * (bias && bias[x.k] || 1)); it.affixes.push(mkAff(a, ilvl, rarity, false));
   }
   if (rarity === 3) { const n = wpick([1, 2, 3], (x) => SOCKET_W[x - 1]); it.sock = Array(n).fill(null); }
+  else if (rarity === 2) it.sock = Array(wpick([1, 2], (x) => (x === 1 ? 60 : 40))).fill(null);   // 레어: 소켓 1~2개
+  else if (rarity === 1) it.sock = [null];   // 매직: 소켓 1개
   return it;
 }
 // 소켓: 미확인의 돌에서 나온 옵션(고정 수치)을 끼운다. 장비의 기존 옵션 · 다른 소켓과 같은 종류는 끼울 수 없다
@@ -86,6 +88,7 @@ function socketItem(sv, it, stone, idx) {
 // 이전 세이브/경매 등에서 온 장비의 범위 밖 수치를 현재 범위 안으로 맞춘다
 function clampItem(it) {
   if (!it) return 0;
+  if (!it.sock && (it.rarity === 1 || it.rarity === 2)) it.sock = it.rarity === 1 ? [null] : Array(Math.random() < 0.6 ? 1 : 2).fill(null);   // 이전 매직 · 레어 장비에도 소켓을 준다
   if (it.wt === "scythe") { it.wt = "sword"; it.base.atk = (it.base.atk || 0) * 9 / 7; delete it.base.mag; }   // 삭제된 무기 종류: 낫 → 검
   else if (it.wt === "grimoire") { it.wt = "staff"; it.base.mag = (it.base.mag || 0) * 9 / 7; delete it.base.atk; }
   let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
