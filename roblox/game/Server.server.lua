@@ -41,6 +41,17 @@ rpc.OnServerInvoke = function(player, action, arg)
   elseif action == "inv" then return { inv = Game.inventory(sv) }
   elseif action == "equip" then local ok, e = Game.equip(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "dismantle" then local ok, e = Game.dismantle(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
+  elseif action == "shop" then return { rows = Game.shop(sv), summary = Game.summary(sv) }
+  elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
+  elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
+  elseif action == "levelup" then local ok, e = Game.levelUp(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
+  elseif action == "equipskill" then local ok, e = Game.equipSkill(sv, tonumber(arg.slot), tonumber(arg.uid)); return { ok = ok, err = e }
+  elseif action == "sellskill" then local ok, e = Game.sellSkill(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
+  elseif action == "passives" then return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }
+  elseif action == "autopass" then local n = Game.autoPassives(sv); return { added = n, info = Game.passiveInfo(sv), summary = Game.summary(sv) }
+  elseif action == "resetpass" then Game.resetPassives(sv); return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }
+  elseif action == "enhlist" then return { rows = Game.enhCosts(sv), summary = Game.summary(sv) }
+  elseif action == "enhance" then local ok, msg = Game.enhance(sv, tonumber(arg)); return { ok = ok, msg = msg, rows = Game.enhCosts(sv), summary = Game.summary(sv) }
   elseif action == "fight" then
     if s.busy then return { err = "전투 중입니다" } end
     s.busy = true; local res, e = Game.fight(sv, arg.kind, arg.n); s.busy = false
