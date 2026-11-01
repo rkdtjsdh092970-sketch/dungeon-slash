@@ -132,7 +132,10 @@ local PILLS = { { "lv", Color3.fromRGB(240, 200, 70), "Lv", 64 }, { "gold", Colo
 local pillLbl = {}
 for i, p in ipairs(PILLS) do
   local f = mk("Frame", { Size = UDim2.new(0, p[4], 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, LayoutOrder = i, ZIndex = 11 }, pillRow); corner(f); stroke(f, p[2], 1.5)
-  local dot = mk("Frame", { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(0, 9, 0.5, -6), BackgroundColor3 = p[2], ZIndex = 12 }, f); corner(dot)
+  local ic = ({ gold = "i_gold", ore = "i_ore", hone = "i_hone", orb = "i_chaos" })[p[1]]   -- 재화 아이콘 (없으면 색 점)
+  local ia = ic and Sprites.art(ic)
+  if ia then mk("ImageLabel", { Size = UDim2.new(0, 26, 0, 26), Position = UDim2.new(0, 2, 0.5, -13), BackgroundTransparency = 1, ImageContent = ia.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 12 }, f)
+  else local dot = mk("Frame", { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(0, 9, 0.5, -6), BackgroundColor3 = p[2], ZIndex = 12 }, f); corner(dot) end
   pillLbl[p[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 26, 0, 0), Size = UDim2.new(1, -30, 1, 0), TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Text = "-", ZIndex = 12 }, f)
 end
 -- 왼쪽 위 능력치 (마을 · 지도에서)

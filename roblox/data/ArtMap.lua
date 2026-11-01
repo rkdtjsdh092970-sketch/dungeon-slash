@@ -27,5 +27,11 @@ M.ART = {
   i_boots = { w = 96, h = 96, foot = 0.969, file = "art_i_boots.rgba", id = nil },
   i_ring = { w = 96, h = 96, foot = 0.958, file = "art_i_ring.rgba", id = nil },
   i_neck = { w = 96, h = 96, foot = 0.958, file = "art_i_neck.rgba", id = nil },
+  i_gold = { w = 96, h = 96, foot = 0.927, file = "art_i_gold.rgba", id = nil },
+  i_ore = { w = 96, h = 96, foot = 0.979, file = "art_i_ore.rgba", id = nil },
+  i_hone = { w = 96, h = 96, foot = 0.927, file = "art_i_hone.rgba", id = nil },
+  i_chaos = { w = 96, h = 96, foot = 0.99, file = "art_i_chaos.rgba", id = nil },
+  i_divine = { w = 96, h = 96, foot = 1.0, file = "art_i_divine.rgba", id = nil },
+  i_stone = { w = 96, h = 96, foot = 0.99, file = "art_i_stone.rgba", id = nil },
 }
 return M
