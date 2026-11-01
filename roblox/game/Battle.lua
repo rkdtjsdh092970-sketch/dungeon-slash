@@ -10,7 +10,7 @@ local Stats = require(script.Parent.Stats)
 local M = {}
 local floor, max, min, sqrt, pow = math.floor, math.max, math.min, math.sqrt, math.pow or function(a, b) return a ^ b end
 
-local damagePlayer, raidTick
+local damagePlayer, raidTick, killEnemy, castSkillRaw, applyDamage
 local SKILL_BY = {}; for _, d in ipairs(SK.SKILLS) do SKILL_BY[d.id] = d end
 local PLAYER_NEAR = 1
 
@@ -382,7 +382,6 @@ end
 
 -- ---------- 피해 ----------
 local function healPlayer(b, amt) if b.debuffs.wound then amt *= b.debuffs.wound.mult end; b.hp = min(b.maxHp, b.hp + amt) end
-local killEnemy, castSkillRaw, applyDamage
 -- ---------- 사탄 · 참 효과 (코드형 줄) ----------
 local function satInit(b)
   b._si = true
