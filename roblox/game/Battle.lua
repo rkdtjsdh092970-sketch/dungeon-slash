@@ -1094,7 +1094,7 @@ castSkillRaw = function(b, sk)
 end
 function M.new(sv, node, seed)
   local b = _new(sv, node, seed)
-  if M.recording then b.rec = { snaps = {}, acc = { dmg = {}, casts = {}, ph = 0 }, nextT = 0, lanes = b.lanes, cols = CFG.COLS } end
+  if M.recording then b.rec = { snaps = {}, acc = { dmg = {}, casts = {}, ph = 0 }, nextT = 0, lanes = b.lanes, cols = CFG.COLS, act = (b.kind == "temple" and 11) or ((b.kind == "spire" or b.kind == "craid" or b.kind == "warden") and 3) or ((b.kind == "rift" or b.kind == "void") and 8) or b.act or 1 } end
   return b
 end
 local WARP = { warp = 270, hwarp = 20, twarp = 45, swarp = 190, fwarp = 200, vwarp = 100 }

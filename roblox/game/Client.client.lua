@@ -12,25 +12,39 @@ local function button(parent, text, pos, sz, cb, color)
   local b = Instance.new("TextButton"); b.Text = text; b.Font = Enum.Font.GothamBold; b.TextSize = 14; b.TextColor3 = Color3.new(1, 1, 1); b.BackgroundColor3 = color or Color3.fromRGB(70, 60, 120)
   b.Position = pos; b.Size = sz; b.Parent = parent; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6); b.MouseButton1Click:Connect(cb); return b
 end
-local root = Instance.new("Frame"); root.Size = UDim2.new(0, 600, 0, 640); root.Position = UDim2.new(0.5, -300, 0.5, -320); root.BackgroundColor3 = Color3.fromRGB(24, 20, 44); root.Parent = gui
+local root = Instance.new("Frame"); root.Size = UDim2.new(0, 600, 0, 700); root.Position = UDim2.new(0.5, -300, 0.5, -350); root.BackgroundColor3 = Color3.fromRGB(24, 20, 44); root.Parent = gui
 Instance.new("UICorner", root).CornerRadius = UDim.new(0, 10)
+do local st = Instance.new("UIStroke"); st.Color = Color3.fromRGB(214, 168, 70); st.Thickness = 2; st.Parent = root end
 local scale = Instance.new("UIScale"); scale.Parent = root
-local function fit() local vp = workspace.CurrentCamera.ViewportSize; scale.Scale = math.max(0.4, math.min(1, vp.X / 640, vp.Y / 680)) end
+local function fit() local vp = workspace.CurrentCamera.ViewportSize; scale.Scale = math.max(0.4, math.min(1, vp.X / 640, vp.Y / 740)) end
 fit(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
 local closeBtn = Instance.new("TextButton"); closeBtn.Text = "UI 숨김/표시"; closeBtn.Size = UDim2.new(0, 110, 0, 28); closeBtn.Position = UDim2.new(1, -120, 0, 8); closeBtn.Font = Enum.Font.GothamBold; closeBtn.TextSize = 12; closeBtn.TextColor3 = Color3.new(1, 1, 1); closeBtn.BackgroundColor3 = Color3.fromRGB(90, 40, 60); closeBtn.ZIndex = 5; closeBtn.Parent = gui
 closeBtn.MouseButton1Click:Connect(function() root.Visible = not root.Visible end)
-local top = label(root, "불러오는 중…", 13, UDim2.new(0, 12, 0, 4), UDim2.new(1, -24, 0, 36))
-local msg = label(root, "", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 38))
-local list = Instance.new("ScrollingFrame"); list.Position = UDim2.new(0, 12, 0, 178); list.Size = UDim2.new(1, -24, 1, -190); list.BackgroundColor3 = Color3.fromRGB(16, 14, 32)
+-- 상단 자원 바 (알약 모양)
+local pillRow = Instance.new("Frame"); pillRow.BackgroundTransparency = 1; pillRow.Position = UDim2.new(0, 12, 0, 6); pillRow.Size = UDim2.new(1, -140, 0, 24); pillRow.Parent = root
+local PILLS = { { "lv", Color3.fromRGB(240, 200, 70), "Lv" }, { "gold", Color3.fromRGB(240, 190, 60), "골드" }, { "ore", Color3.fromRGB(150, 170, 200), "강화석" }, { "hone", Color3.fromRGB(110, 210, 150), "연마석" }, { "orb", Color3.fromRGB(190, 120, 240), "혼돈구슬" } }
+local pillLbl = {}
+for i, pdef in ipairs(PILLS) do
+  local f = Instance.new("Frame"); f.Size = UDim2.new(0, i == 1 and 52 or 96, 0, 24); f.Position = UDim2.new(0, i == 1 and 0 or (56 + (i - 2) * 100), 0, 0); f.BackgroundColor3 = Color3.fromRGB(14, 10, 28); f.Parent = pillRow
+  Instance.new("UICorner", f).CornerRadius = UDim.new(1, 0); local g = Instance.new("UIStroke"); g.Color = pdef[2]; g.Thickness = 1.2; g.Parent = f
+  local dot = Instance.new("Frame"); dot.Size = UDim2.new(0, 10, 0, 10); dot.Position = UDim2.new(0, 8, 0.5, -5); dot.BackgroundColor3 = pdef[2]; dot.Parent = f; Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+  local l = Instance.new("TextLabel"); l.BackgroundTransparency = 1; l.Position = UDim2.new(0, 22, 0, 0); l.Size = UDim2.new(1, -26, 1, 0); l.TextColor3 = Color3.new(1, 1, 1); l.Font = Enum.Font.GothamBold; l.TextSize = 12; l.TextXAlignment = Enum.TextXAlignment.Left; l.Text = "-"; l.Parent = f
+  pillLbl[pdef[1]] = l
+end
+local top = label(root, "", 12, UDim2.new(0, 12, 0, 34), UDim2.new(1, -24, 0, 16)); top.TextColor3 = Color3.fromRGB(190, 180, 220)
+local msg = label(root, "", 13, UDim2.new(0, 12, 0, 238), UDim2.new(1, -24, 0, 32))
+local list = Instance.new("ScrollingFrame"); list.Position = UDim2.new(0, 12, 0, 372); list.Size = UDim2.new(1, -24, 1, -384); list.BackgroundColor3 = Color3.fromRGB(16, 14, 32)
 list.CanvasSize = UDim2.new(0, 0, 0, 0); list.AutomaticCanvasSize = Enum.AutomaticSize.Y; list.Parent = root
 Instance.new("UIListLayout", list).Padding = UDim.new(0, 4)
-local ctl = Instance.new("Frame"); ctl.BackgroundTransparency = 1; ctl.Position = UDim2.new(0, 12, 0, 140); ctl.Size = UDim2.new(1, -24, 0, 34); ctl.Parent = root
+local ctl = Instance.new("Frame"); ctl.BackgroundTransparency = 1; ctl.Position = UDim2.new(0, 12, 0, 334); ctl.Size = UDim2.new(1, -24, 0, 34); ctl.Parent = root
 
 local summary; local mode = "stage"; local num = 1
 local function setSummary(s)
   if not s then return end
   summary = s
-  top.Text = string.format("Lv%d · 골드 %s · 강화석 %d · 연마석 %d · 혼돈구슬 %d · 스킬칸 %d\n체력 %.0f · 공격 %.0f · 주문 %.0f · 방어 %.0f · 치명 %.0f%% · 스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", s.level, tostring(s.gold), s.ore, s.hone, s.orbC, s.slots or 0, s.maxHp, s.atk, s.mag, s.def, s.crit * 100, s.cleared, s.riftBest, s.best)
+  local function n(x) x = math.floor(x or 0); if x >= 1e9 then return string.format("%.1fB", x / 1e9) elseif x >= 1e6 then return string.format("%.1fM", x / 1e6) elseif x >= 1e4 then return string.format("%.1fK", x / 1e3) end return tostring(x) end
+  pillLbl.lv.Text = tostring(s.level); pillLbl.gold.Text = n(s.gold); pillLbl.ore.Text = n(s.ore); pillLbl.hone.Text = n(s.hone); pillLbl.orb.Text = n(s.orbC)
+  top.Text = string.format("체력 %s · 공격 %s · 주문 %s · 방어 %s · 치명 %.0f%% │ 스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", n(s.maxHp), n(s.atk), n(s.mag), n(s.def), s.crit * 100, s.cleared, s.riftBest, s.best)
 end
 local function clear() for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end for _, c in ipairs(ctl:GetChildren()) do c:Destroy() end end
 local function card(title, lines, btns)
@@ -54,15 +68,11 @@ end
 local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 require(RS.Game.Sprites).init(rpc)
 -- 전투 재생 오버레이: replay 가 있으면 2D 무대에서 재생하고 끝나면 after() 호출
+local mainStage = Stage.create(root, 576, 180, 1); mainStage.root.Position = UDim2.new(0, 12, 0, 54)
+-- 전투 재생: 상단 무대에서 직접 재생한다 (replay 가 없으면 바로 after)
 local function playReplay(x, after)
   if not x or not x.replay or not x.replay.snaps or #x.replay.snaps == 0 then if after then after() end return end
-  local ov = Instance.new("Frame"); ov.Size = UDim2.new(1, 0, 1, 0); ov.BackgroundColor3 = Color3.new(0, 0, 0); ov.BackgroundTransparency = 0.35; ov.ZIndex = 50; ov.Active = true; ov.Parent = root
-  local stage = Stage.create(ov, 580, 300); stage.root.Position = UDim2.new(0.5, -290, 0.5, -170); stage.root.ZIndex = 51
-  local done = false
-  local function finish() if done then return end; done = true; stage:destroy(); ov:Destroy(); if after then after() end end
-  local b1 = button(ov, "건너뛰기", UDim2.new(0.5, -150, 0.5, 150), UDim2.new(0, 140, 0, 32), function() stage:skip() end, Color3.fromRGB(90, 40, 60)); b1.ZIndex = 52
-  local b2 = button(ov, "배속", UDim2.new(0.5, 10, 0.5, 150), UDim2.new(0, 140, 0, 32), function() stage:faster() end); b2.ZIndex = 52
-  stage:play(x.replay, finish, 40)
+  mainStage:play(x.replay, after, 40)
 end
 local views = {}
 local function refresh() local r = rpc:InvokeServer("state"); setSummary(r.summary) end
@@ -288,6 +298,6 @@ function views.help()
   card("베타 안내", { "베타 테스트 중입니다. 진행 데이터는 저장되지만 밸런스·보상은 바뀔 수 있습니다.", "버그나 이상한 점은 게임 설명란/디스코드로 알려 주세요." }, {})
 end
 local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" }, { "일일", "daily" }, { "퀘스트", "quests" }, { "룬", "runes" }, { "길드", "guild" }, { "도움말", "help" } }
-local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 78); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
+local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 274); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
 for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 9) * 66, 0, math.floor((i - 1) / 9) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
 refresh(); if (summary and (summary.cleared or 0) == 0) then views.help() else views.fight() end

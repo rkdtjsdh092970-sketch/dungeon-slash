@@ -8,20 +8,56 @@ local function mk(class, props, parent) local o = Instance.new(class); for k, v 
 local function hex(h) local ok, c = pcall(Color3.fromHex, h or "#ffffff"); return ok and c or Color3.new(1, 1, 1) end
 local function fmt(n) n = math.floor(n); if n >= 1e9 then return string.format("%.1fB", n / 1e9) elseif n >= 1e6 then return string.format("%.1fM", n / 1e6) elseif n >= 1e4 then return string.format("%.1fK", n / 1e3) end return tostring(n) end
 
-function M.create(parent, W, H)
-  local S = { W = W, H = H, units = {}, t = 0, idx = 0, spd = 1, alive = true }
+-- 지역별 팔레트: { 하늘 위, 하늘 아래, 실루엣, 바닥, 달/창문 }
+M.PAL = {
+  { Color3.fromRGB(70, 110, 190), Color3.fromRGB(180, 190, 220), Color3.fromRGB(50, 80, 90), Color3.fromRGB(86, 120, 70), Color3.fromRGB(255, 244, 200) },
+  { Color3.fromRGB(40, 70, 70), Color3.fromRGB(110, 150, 110), Color3.fromRGB(30, 54, 50), Color3.fromRGB(60, 90, 56), Color3.fromRGB(240, 255, 200) },
+  { Color3.fromRGB(34, 30, 52), Color3.fromRGB(88, 76, 100), Color3.fromRGB(34, 30, 44), Color3.fromRGB(70, 62, 70), Color3.fromRGB(255, 210, 140) },
+  { Color3.fromRGB(150, 90, 50), Color3.fromRGB(240, 190, 120), Color3.fromRGB(120, 80, 50), Color3.fromRGB(190, 150, 90), Color3.fromRGB(255, 240, 200) },
+  { Color3.fromRGB(30, 54, 44), Color3.fromRGB(80, 110, 80), Color3.fromRGB(24, 40, 34), Color3.fromRGB(50, 70, 50), Color3.fromRGB(220, 255, 180) },
+  { Color3.fromRGB(80, 110, 160), Color3.fromRGB(210, 230, 250), Color3.fromRGB(110, 140, 170), Color3.fromRGB(200, 215, 230), Color3.fromRGB(255, 255, 255) },
+  { Color3.fromRGB(60, 20, 20), Color3.fromRGB(190, 70, 40), Color3.fromRGB(50, 20, 20), Color3.fromRGB(90, 40, 30), Color3.fromRGB(255, 190, 90) },
+  { Color3.fromRGB(20, 12, 40), Color3.fromRGB(70, 36, 100), Color3.fromRGB(26, 16, 44), Color3.fromRGB(44, 28, 64), Color3.fromRGB(200, 140, 255) },
+  { Color3.fromRGB(80, 120, 200), Color3.fromRGB(230, 220, 250), Color3.fromRGB(150, 150, 200), Color3.fromRGB(210, 200, 230), Color3.fromRGB(255, 250, 220) },
+  { Color3.fromRGB(40, 8, 24), Color3.fromRGB(140, 30, 60), Color3.fromRGB(36, 10, 26), Color3.fromRGB(70, 20, 40), Color3.fromRGB(255, 120, 120) },
+}
+function M.create(parent, W, H, replayAct)
+  local S = { W = W, H = H, f = H / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }
   local root = mk("Frame", { Size = UDim2.new(0, W, 0, H), BackgroundColor3 = Color3.fromRGB(40, 30, 70), ClipsDescendants = true }, parent)
   mk("UICorner", { CornerRadius = UDim.new(0, 8) }, root)
-  local sky = mk("Frame", { Size = UDim2.new(1, 0, 0.55, 0), BackgroundColor3 = Color3.fromRGB(70, 50, 120), BorderSizePixel = 0 }, root)
-  mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(32, 24, 66), Color3.fromRGB(120, 78, 150)), Rotation = 90 }, sky)
-  local ground = mk("Frame", { Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.new(1, 0, 0.5, 0), BackgroundColor3 = Color3.fromRGB(58, 44, 82), BorderSizePixel = 0 }, root)
-  mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(92, 70, 112), Color3.fromRGB(34, 26, 52)), Rotation = 90 }, ground)
-  for i = 1, 5 do   -- 먼 산
-    mk("Frame", { Position = UDim2.new((i - 1) / 5, 0, 0.32, 0), Size = UDim2.new(0.28, 0, 0.2, 0), Rotation = 45, BackgroundColor3 = Color3.fromRGB(56, 40, 92), BorderSizePixel = 0, ZIndex = 1 }, root)
+  local bg = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, root)
+  local function buildBg(act)
+    bg:ClearAllChildren()
+    local P = M.PAL[((act or 1) - 1) % #M.PAL + 1]
+    local sky = mk("Frame", { Size = UDim2.new(1, 0, 0.56, 0), BackgroundColor3 = P[1], BorderSizePixel = 0 }, bg)
+    mk("UIGradient", { Color = ColorSequence.new(P[1], P[2]), Rotation = 90 }, sky)
+    math.randomseed(7)
+    for i = 1, 26 do   -- 별 / 먼지
+      mk("Frame", { Position = UDim2.new(math.random(), 0, math.random() * 0.4, 0), Size = UDim2.new(0, 2, 0, 2), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.4 + math.random() * 0.4, BorderSizePixel = 0 }, bg)
+    end
+    local moon = mk("Frame", { Position = UDim2.new(0.8, 0, 0.08, 0), Size = UDim2.new(0, 46, 0, 46), BackgroundColor3 = P[5], BackgroundTransparency = 0.1, BorderSizePixel = 0 }, bg); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, moon)
+    local halo = mk("Frame", { Position = UDim2.new(0.8, -22, 0.08, -22), Size = UDim2.new(0, 90, 0, 90), BackgroundColor3 = P[5], BackgroundTransparency = 0.82, BorderSizePixel = 0 }, bg); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, halo)
+    local x = 0   -- 지평선 실루엣
+    while x < W do
+      local w = 18 + math.random() * 34; local h = 14 + math.random() * 60
+      mk("Frame", { Position = UDim2.new(0, x, 0, H * 0.52 - h), Size = UDim2.new(0, w, 0, h + 2), BackgroundColor3 = P[3], BorderSizePixel = 0, ZIndex = 1 }, bg)
+      if math.random() < 0.45 then mk("Frame", { Position = UDim2.new(0, x + w / 2 - 2, 0, H * 0.52 - h + 8), Size = UDim2.new(0, 4, 0, 6), BackgroundColor3 = P[5], BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 1 }, bg) end
+      x += w + math.random() * 6
+    end
+    local ground = mk("Frame", { Position = UDim2.new(0, 0, 0.52, 0), Size = UDim2.new(1, 0, 0.48, 0), BackgroundColor3 = P[4], BorderSizePixel = 0, ZIndex = 2 }, bg)
+    mk("UIGradient", { Color = ColorSequence.new(P[4], P[3]), Rotation = 90 }, ground)
+    for i = 1, 3 do mk("Frame", { Position = UDim2.new(0, 0, 0.52 + i * 0.12, 0), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.7, BorderSizePixel = 0, ZIndex = 2 }, bg) end
+    for _, tx in ipairs({ 0.05, 0.97 }) do   -- 횃불 불빛
+      local g = mk("Frame", { Position = UDim2.new(tx, -30, 0.5, -30), Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = Color3.fromRGB(255, 160, 70), BackgroundTransparency = 0.8, BorderSizePixel = 0, ZIndex = 2 }, bg); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, g)
+      mk("Frame", { Position = UDim2.new(tx, -3, 0.5, -8), Size = UDim2.new(0, 6, 0, 16), BackgroundColor3 = Color3.fromRGB(255, 200, 110), BorderSizePixel = 0, ZIndex = 2 }, bg)
+    end
+
   end
+  S.buildBg = function(act) if S.act ~= act then S.act = act; buildBg(act) end end
+  S.buildBg(replayAct or 1)
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
-  S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 72)
+  S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 72 * S.f)
   S.pl.Position = UDim2.new(0, 56, 0, H * 0.72); S.pl.ZIndex = 5
   -- 상태 바
   local function bar(y, color) local bg = mk("Frame", { Position = UDim2.new(0, 10, 1, y), Size = UDim2.new(0, 160, 0, 10), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 8 }, root); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, bg)
@@ -29,6 +65,11 @@ function M.create(parent, W, H)
   S.hpBar = bar(-34, Color3.fromRGB(220, 70, 80)); S.mpBar = bar(-20, Color3.fromRGB(80, 140, 230))
   S.timeLbl = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(1, -110, 0, 6), Size = UDim2.new(0, 100, 0, 20), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 9 }, root)
   S.plAnim = { name = "idle", t = 0 }
+  S.ctrl = mk("Frame", { BackgroundTransparency = 1, Size = UDim2.new(0, 150, 0, 24), Position = UDim2.new(0, 8, 0, 6), Visible = false, ZIndex = 30 }, root)
+  local function sb(txt, x, cb) local b = mk("TextButton", { Text = txt, Size = UDim2.new(0, 68, 0, 22), Position = UDim2.new(0, x, 0, 0), BackgroundColor3 = Color3.fromRGB(30, 20, 50), BackgroundTransparency = 0.2, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, ZIndex = 30 }, S.ctrl); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, b); b.MouseButton1Click:Connect(cb) end
+  sb("배속", 0, function() S:faster() end); sb("건너뛰기", 74, function() S:skip() end)
+  S.idleConn = RunService.RenderStepped:Connect(function(dt) if S.conn or not S.alive then return end
+    S.plAnim.t += dt; local row, frame, done = Sprites.anim("warrior", "idle", S.plAnim.t); if S.plInfo then Sprites.setFrame(S.pl, S.plInfo, row, frame) end end)
   return setmetatable(S, { __index = M })
 end
 
@@ -51,7 +92,7 @@ local function unitFor(S, e, lanes)
   local u = S.units[e.id]; if u then return u end
   local boss = e.bs ~= nil
   local key, hue = e.sp, e.hu
-  local size = boss and math.min(150, 110 * (e.scl or 3) / 3 + 20) or (e.tier == "elite" and 84 or 58)
+  local size = (boss and math.min(150, 110 * (e.scl or 3) / 3 + 20) or (e.tier == "elite" and 84 or 58)) * S.f
   local lab, info
   if boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
   else lab, info = Sprites.label(S.layer, key or "ghoul", hue or 0, true, size) end
@@ -92,7 +133,9 @@ end
 
 -- replay = { snaps, lanes, win, total }, onDone(): 재생이 끝났을 때. maxSec: 최대 재생 시간(길면 배속)
 function M:play(replay, onDone, maxSec)
-  self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone
+  for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy() end; self.units = {}
+  self.buildBg(replay.act or 1)
+  self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
   local total = (replay.snaps[#replay.snaps] or { t = 1 }).t
   self.spd = math.max(1, total / (maxSec or 40)); self.userSpd = 1
   if self.conn then self.conn:Disconnect() end
@@ -122,10 +165,10 @@ function M:play(replay, onDone, maxSec)
       local row, frame, done = Sprites.anim("warrior", a.name, a.t); if done then self.plAnim = { name = "idle", t = 0 } end
       Sprites.setFrame(self.pl, self.plInfo, row, frame)
     end
-    if self.idx >= #sn and self.t >= total + 0.8 then self.conn:Disconnect(); self.conn = nil; if self.onDone then self.onDone() end end
+    if self.idx >= #sn and self.t >= total + 0.8 then self.conn:Disconnect(); self.conn = nil; self.ctrl.Visible = false; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
   end)
 end
-function M:skip() if self.conn then self.conn:Disconnect(); self.conn = nil end; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
+function M:skip() self.ctrl.Visible = false; if self.conn then self.conn:Disconnect(); self.conn = nil end; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
 function M:faster() self.userSpd = self.userSpd >= 4 and 1 or self.userSpd * 2 end
-function M:destroy() self.alive = false; if self.conn then self.conn:Disconnect() end; self.root:Destroy() end
+function M:destroy() self.alive = false; if self.idleConn then self.idleConn:Disconnect() end; if self.conn then self.conn:Disconnect() end; self.root:Destroy() end
 return M
