@@ -193,7 +193,7 @@ local function makeEnemy(b, type, lane, col)
   for _, t in ipairs(e.traits) do local T = Mon.TRAIT_DEF[t]; if T then dd[1] += T[1]; dd[2] += T[2] end end
   local sc = (1 + CFG.DEF_ACT * (min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier or 0))
   e.dm = max(0, dd[1] * sc); e.rm = max(0, dd[2] * sc); e.shD = 0; e.shR = 0
-  e.eres = Mon.ACT_ELEM[min(9, max(0, b.va)) + 1]
+  e.eres = { 0.1, 0.1, 0.1, 0.1 }   -- 붉은 탑 몬스터는 속성 저항이 모두 같다
   if isBoss then
     e.abil = {}; for _, a in ipairs(D.abilities or {}) do e.abil[#e.abil + 1] = { d = a, t = (a.every or 0) * rnd(b, 0.55, 0.9) } end
     e.dmgBase = e.atk; b.bossRef = e
@@ -303,7 +303,7 @@ local function applyDamage(b, e, dmg, o)
   if e.plate and not o.dot then dmg *= 1 - e.plate.red end
   e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time
   if e.charge then e.charge.dealt += dmg end
-  if e.reflect and o.src == "skill" then damagePlayer(b, dmg * e.reflect.pct, { undodgeable = true }) end
+  if e.reflect and o.src == "skill" then damagePlayer(b, min(dmg * e.reflect.pct, b.maxHp * 0.002), { undodgeable = true }) end
   local ls = ((o.lifesteal or 0) + b.stats.lifesteal) * (b.debuffs.wound and b.debuffs.wound.mult or 1)
   if ls > 0 and o.src == "skill" then
     local want = min(dmg * ls, b.lsTok); b.hp = min(b.maxHp, b.hp + want); b.lsTok -= want
