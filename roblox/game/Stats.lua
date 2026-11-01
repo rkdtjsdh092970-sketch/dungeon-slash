@@ -1,7 +1,8 @@
 -- computeStats 이식 (JS state.js → Luau). 서버/클라이언트 공용.
 -- 아직 이식하지 않은 것: 심연 각인(atlas), 길드 패시브, 장착 스킬 기반 전투력 필드(s.skl/mix/manaNeed)
 local Data = script.Parent.Data
-local CFG = require(Data.Config).CFG
+local Config = require(Data.Config)
+local CFG = Config.CFG
 local Items = require(Data.Items)
 local Passives = require(Data.Passives).PASSIVES
 local Sat = require(Data.Satan).SAT_DEFS
@@ -122,6 +123,9 @@ function M.computeStats(sv)
   end
   for id, on in pairs(sv.cpass or {}) do
     local per = CNODE[id]; if per and on then for k, v in pairs(per) do apply(k, v) end end
+  end
+  if sv.guildLv then
+    for _, gp in ipairs(Config.GUILD_PASSIVES) do if sv.guildLv >= gp.lv then for k, v in pairs(gp.per) do apply(k, v) end end end
   end
   s.maxMana = math.max(10, (CFG.BASE_MANA + s.manaFlat) * (1 + s.manaPct) * ml)
   s.allDmg += s.dmgPerMana * s.maxMana / 100 * CFG.DPM_K; s.manaFlatRegen = s.manaRegenFlat * ml; s.manaKill = s.manaOnKill * ml

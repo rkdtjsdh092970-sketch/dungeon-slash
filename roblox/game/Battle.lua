@@ -858,6 +858,19 @@ function M.step(b, dt)
   elseif b.time > 900 then b.over = true; b.win = false end
 end
 
+-- 허수아비 전투: 일정 시간 동안 낸 총 피해(= 길드 보스 · 전투력 측정). 보스 허수아비 1마리(체력 무한).
+function M.dummyDamage(sv, seconds, seed, tier)
+  local node = { act = 10, floor = 1, tier = tier or 150, tw = 1 }
+  local b = M.new(sv, node, seed); b.plan = {}; b.lastDealT = 0
+  local D = table.clone(Mon.BOSSES[1]); D.hp = 1e18; D.abilities = {}; D.atk = 0
+  b.bossDef = D
+  local e = makeEnemy(b, "boss", 1, 4); e.hp = 1e18; e.maxHp = 1e18; e.atk = 0; e.atkCd = 1e9; e.abil = {}; e.dummy = true; b.enemies[#b.enemies + 1] = e
+  e.dm = Mon.ENEMY_DEF.boss[1] * 20; e.rm = Mon.ENEMY_DEF.boss[2] * 20
+  local t = 0; local dt = 0.05
+  while t < seconds do b.hp = b.maxHp; M.step(b, dt); t += dt end   -- 체력 회복: 피해를 받지 않는다 (순수 딜 측정)
+  return b.dealt, b.dmgBy
+end
+
 function M.run(sv, node, seed, dt, tmax)
   local b = M.new(sv, node, seed); dt = dt or 0.05; local t = 0
   while not b.over and t < (tmax or 700) do M.step(b, dt); t += dt end
