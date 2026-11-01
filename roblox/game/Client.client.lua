@@ -56,7 +56,26 @@ pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false
 pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false) end)
 pcall(function() GuiService.TouchControlsEnabled = false end)
 
-local rpc = RS:WaitForChild("Rpc")
+-- 서버 요청은 한 줄로 세워 보낸다: 서버가 0.08초보다 빠른 연속 요청을 거절하므로 간격을 지키고, 거절되면 다시 보낸다
+local rawRpc = RS:WaitForChild("Rpc")
+local rpcLock, rpcLast = false, 0
+local FREE = { sheet = true, wstate = true, wpop = true }   -- 서버가 속도 제한을 걸지 않는 요청
+local rpc = { InvokeServer = function(_, action, arg)
+  if FREE[action] then return rawRpc:InvokeServer(action, arg) end
+  while rpcLock do task.wait() end
+  rpcLock = true
+  local ok, r = pcall(function()
+    for _ = 1, 5 do
+      local w = 0.1 - (os.clock() - rpcLast); if w > 0 then task.wait(w) end
+      local res = rawRpc:InvokeServer(action, arg); rpcLast = os.clock()
+      if not (type(res) == "table" and res.err == "너무 빠른 요청입니다") then return res end
+    end
+    return { err = "너무 빠른 요청입니다" }
+  end)
+  rpcLock = false
+  if not ok then error(r) end
+  return r
+end }
 loadStep("게임 데이터를 준비하는 중...", 0.15)
 local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)

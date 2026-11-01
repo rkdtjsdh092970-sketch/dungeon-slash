@@ -93,6 +93,7 @@ local function itemColor(it) return it.sat and M.SAT or M.RAR[(it.rarity or 0) +
 function M.inv()
   C.clear()
   local r = C.rpc:InvokeServer("inv"); local st = C.rpc:InvokeServer("state"); if st.summary then C.setSummary(st.summary) end
+  if r.err or st.err then C.msg.Text = tostring(r.err or st.err); return end
   local inv, eq = r.inv or {}, st.equipped or {}
   local bySlot = {}; for _, e in ipairs(eq) do bySlot[e.slot] = e end
   local byUid = {}; for _, it in ipairs(inv) do byUid[it.uid] = it end
@@ -168,6 +169,7 @@ function M.skStyle(id) local d = SK_BY[id]; return skColor(d), skIcon(d), d end
 function M.skills()
   C.clear()
   local r = C.rpc:InvokeServer("skills"); if r.summary then C.setSummary(r.summary) end
+  if r.err then C.msg.Text = tostring(r.err); return end
   local rows, slots = r.rows or {}, r.slots or 1
   local byUid, inSlot = {}, {}
   for _, k in ipairs(rows) do byUid[k.uid] = k; if k.slot > 0 then inSlot[k.slot] = k end end
@@ -215,6 +217,7 @@ local passSel, passCanvas
 function M.pass()
   C.clear()
   local r = C.rpc:InvokeServer("passview"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
   local v = r.view; local taken = {}; for _, id in ipairs(v.taken or {}) do taken[id] = true end
   local A = area(392)
   local head = mk("Frame", { Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1 }, A)
