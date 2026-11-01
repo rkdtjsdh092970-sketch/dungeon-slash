@@ -450,7 +450,7 @@ function views.set_beta()
   for _, x in ipairs(v.list) do card(x.name, { "UserId " .. x.id }, { { "삭제", function() op("remove", tostring(x.id)) end } }) end
 end
 local function openSettings()
-  local tabs = { { "일반", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
+  local tabs = { { "언어", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
   if isOwner then tabs[#tabs + 1] = { "베타 관리", "set_beta" } end
   openPanel("설정", tabs)
 end
