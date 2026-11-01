@@ -11,7 +11,7 @@
 - 베타 게시 체크리스트: `BETA.md`.
 
 ## 알려진 한계 / 남은 일
-- 그래픽: 지금은 웹 도트 + 코드로 그린 배경. 목표는 일러스트풍(참고: 상용 Roblox 게임 화면 — 상단 자원 바, 가로 탭, 옆면 전투, 하단 스킬 카드, 큰 피해 숫자). 이미지는 **Codex CLI(`codex exec`, image_gen)** 로 `ART_SPEC.md` 프롬프트대로 생성해 `roblox/art/` 에 커밋한다 (2026-11-02 부터 생성 가능 확인). 1차 8장 생성·연결 완료: `gen_art.py` → `sprites/art_*.rgba` + `data/ArtMap.lua`, `Stage.lua` 가 일러스트를 우선 쓰고 없으면 도트로 대체. **Studio 화면 확인은 아직 안 함.** Studio 반영 시 `data/ArtMap.lua` 를 `Game.Data.ArtMap` ModuleScript 로 새로 추가해야 일러스트가 나온다 (없으면 도트로 표시, 오류 없음). 다음: 화풍 확인 후 2차 목록.
+- 그래픽: 지금은 웹 도트 + 코드로 그린 배경. 목표는 일러스트풍(참고: 상용 Roblox 게임 화면 — 상단 자원 바, 가로 탭, 옆면 전투, 하단 스킬 카드, 큰 피해 숫자). 이미지는 **Codex CLI(`codex exec`, image_gen)** 로 `ART_SPEC.md` 프롬프트대로 생성해 `roblox/art/` 에 커밋한다 (2026-11-02 부터 생성 가능 확인). 1차 8장 생성·연결 완료: `gen_art.py` → `sprites/art_*.rgba` + `data/ArtMap.lua`, `Stage.lua` 가 일러스트를 우선 쓰고 없으면 도트로 대체. **Studio(Place1) 반영·플레이 확인 완료 (2026-11-02, Claude Code 의 roblox-studio MCP 로)**: 스테이지 1~5 에서 영웅·몬스터·보스·배경 일러스트 표시, 오류 없음. Studio 의 `SpriteMap.BASE` 는 커밋 SHA 로 고정돼 있으므로 새 그림을 올리면 그 SHA 로 바꿔야 한다 (현재 `60f67bd`). `Game.Data.ArtMap` 모듈 추가됨. Studio 저장(Ctrl+S/게시)은 사용자가 한다. 다음: 화풍 확인 후 2차 목록.
 - 출시 전: 업로드한 에셋 ID 로 전환(`SpriteMap.SHEETS[키].id`), EditableImage 의존 제거.
 - 미구현: 장비 프리셋, 심연 각인/균열 조각 사용, 세공의 인장, 상위 보스관문 UI, 정예 퀘스트, 참 광석 보너스(분해).
 - 밸런스: 단순 봇이 균열 15층 근처에서 정체. 실제 플레이어 곡선은 미검증.
