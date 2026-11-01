@@ -198,12 +198,13 @@ function buildMap() {
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
   const hub = add({ id: "RB", kind: "bosshub", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 30, name: "보스 관문", level: 100 });
   const temple = add({ id: "RTP", kind: "temple", act: 11, x: TOWER_POS[0] - 110, y: TOWER_POS[1] - 150, name: "돌의 신전", level: 100 });
+  const hub2 = add({ id: "RB2", kind: "bosshub2", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 120, name: "상위 보스 관문", level: 100 });
   const craid = add({ id: "RR", kind: "craid", act: 11, x: TOWER_POS[0] + 120, y: TOWER_POS[1] - 150, name: "레이드 던전", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
   const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
   const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
   edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
-  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
+  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]); edges.push([hub.id, hub2.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {
@@ -256,8 +257,8 @@ const TUTORIAL = [
 
 // 액트 · 노드 기본 헬퍼
 // v4: 아이템 레벨은 T1~T5 (균열 20층마다 한 단계). 단계별 성장 배율 표
-const TIER_SCALE = [1, 1.5, 2.2, 3.2, 4.6];
-const gScale = (ilvl) => TIER_SCALE[Math.max(0, Math.min(4, ilvl - 1))];
+const TIER_SCALE = [1, 1.5, 2.2, 3.2, 4.6, 6.4];   // T6(탑 100층 · 하드 레이드)는 T5의 약 1.4배
+const gScale = (ilvl) => TIER_SCALE[Math.max(0, Math.min(5, ilvl - 1))];
 // v3.23 엔드게임(아이템 레벨 11+) 성장 완만화: 기본 옵션은 레벨당 조금만 오르고, 아래쪽 추가 옵션(고정값·%)의 범위가 더 크게 오른다.
 // 아주 좋은 전설은 아이템 레벨이 한두 단계 올라도 계속 쓸 수 있어야 한다. 액트(1~10) 장비는 그대로.
 const gBase = (ilvl) => gScale(ilvl);
@@ -270,7 +271,7 @@ const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [0.5, 2.3, 8, 20, 30, 40], flat: [3.
 const atAvail = (ilvl) => { const lo = Math.max(0, 5 - ilvl), hi = Math.min(5, 8 - ilvl), o = []; for (let i = lo; i <= hi; i++) o.push(i); return o; };
 const atPick = (ilvl) => wpick(atAvail(ilvl), (i) => AT.w[i]);
 const atMul = (a, t) => (a.count ? 1 : a.flat ? AT.flat[t] : a.pct ? AT.pct[t] : 1);
-const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 5);
+const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 6);
 const actScale = (a) => (CFG.EASE[a - 1] || 1) * Math.pow(CFG.G, Math.min(a, 10) - 1) * (1 + CFG.LEVEL_STEP * (10 * Math.min(a, 10) - 5)) / (1 + CFG.LEVEL_STEP * 5);
 const nodeLevel = (n) => n.level;
 const eliteCount = (stage) => (stage >= 2 ? 1 + Math.floor(stage / 2) : 0);

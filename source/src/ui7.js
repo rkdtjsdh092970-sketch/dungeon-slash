@@ -11,17 +11,18 @@ function hubBosses() {
   ];
 }
 const hubDrops = (kind) => SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind && (isSpecialSkill(d) || d.mythOnly)).sort((a, b) => (a.unlock || 0) - (b.unlock || 0));
-function openBossHub(page) {
+function openBossHub(page, up) {
+  if (up != null) G.hubUp = !!up; const UPM = !!G.hubUp;
   const B = hubBosses(); if (page != null) G.hubPage = page; G.hubPage = ((G.hubPage || 0) + B.length) % B.length;
-  const b = B[G.hubPage], S = G[b.stage] = Math.max(1, Math.min(4, G[b.stage] || 1)), my = playerPower(computeStats(save)), have = b.kind === "void" ? save.keys : (save[b.key] || 0);
+  const b0 = B[G.hubPage], skey = UPM ? "up_" + b0.stage : b0.stage, b = UPM ? Object.assign({}, b0, { tiers: UP_TIERS, need: [0, 0, 0, 0], stage: skey }) : b0, S = G[skey] = Math.max(1, Math.min(4, G[skey] || 1)), my = playerPower(computeStats(save)), have = b.kind === "void" ? save.keys : (save[b.key] || 0), cost = UPM ? UP_KEYS : 1;
   const mult = (s) => bossRiftMult(b.tiers[s - 1]) / bossRiftMult(100), rec = (s) => HUB_BASE_POWER * mult(s) * mult(s);
-  const okNeed = save.rift.best >= b.need[S - 1], can = okNeed && have > 0;
+  const okNeed = UPM ? !!(save.craid && save.craid[2]) : save.rift.best >= b.need[S - 1], can = okNeed && have >= cost;
   const stageRows = [1, 2, 3, 4].map((s) => { const r = rec(s), ok = my >= r; return `<button class="bh-st ${s === S ? "on" : ""}" data-a="hubst" data-s="${s}"><b>${s}단계</b><span>×${mult(s).toFixed(1)}</span><em class="${ok ? "up" : "dn"}">${fmtP(r)}</em></button>`; }).join("");
-  const rr = BOSS_SKILL_RW[S - 1], rsum = rr.reduce((a, c) => a + c, 0), rn = ["일반", "희귀", "전설", "신화", "사탄", "종말"];
+  const rr = (UPM ? UP_SKILL_RW : BOSS_SKILL_RW)[S - 1], rsum = rr.reduce((a, c) => a + c, 0), rn = ["일반", "희귀", "전설", "신화", "사탄", "종말"];
   const rar = rr.map((w, i) => (w ? `<span class="bh-rar r${i}">${rn[i]} ${Math.round((100 * w) / rsum)}%</span>` : "")).join("");
   const drops = hubDrops(b.kind), tiles = drops.map((d) => `<div class="bh-sk" data-tips="${d.id}">${skIcon(d.id, 2)}<span>${d.name}</span></div>`).join("") || `<span class="dim">전용 스킬 없음</span>`;
   const tabs = B.map((x, i) => `<button class="bh-tab ${i === G.hubPage ? "on" : ""}" data-a="hubgo" data-i="${i}" style="--c:${x.color}" title="${x.short}">${x.icon}</button>`).join("");
-  const html = `<h2>보스 관문</h2><div class="bh" style="--c:${b.color}">
+  const html = `<h2>${UPM ? "상위 보스 관문" : "보스 관문"}</h2><div class="bh" style="--c:${b.color}">
     <div class="bh-nav"><button class="btn" data-a="hubprev">◀</button><div class="bh-tabs">${tabs}</div><button class="btn" data-a="hubnext">▶</button></div>
     <div class="bh-main">
       <div class="bh-art"><canvas id="bhc" width="250" height="250"></canvas><div class="bh-name">${b.name}</div><div class="bh-page">${G.hubPage + 1} / ${B.length}</div></div>
@@ -29,22 +30,22 @@ function openBossHub(page) {
         <div class="bh-feat">${b.feat}</div><div class="bh-desc">${b.D.desc || ""}</div>
         <div class="bh-sttl">단계 선택 · <span class="dim">적정 전투력</span></div><div class="bh-sts">${stageRows}</div>
         <div class="bh-me">내 전투력 <b class="${my >= rec(S) ? "up" : "dn"}">${fmtP(my)}</b> / 적정 <b>${fmtP(rec(S))}</b> <span class="dim">(${my >= rec(S) ? "충분합니다" : "부족할 수 있습니다"})</span></div>
-        <div class="bh-key">${b.keyName} <b>${have}</b>개 보유 · 입장 시 1개 소모 · 입장 조건 균열 ${b.need[S - 1]}단계 이상${okNeed ? "" : ` <span class="warn">(현재 ${save.rift.best}단계)</span>`}</div>
-        <div class="dim">열쇠 얻는 곳: 균열 · 지옥에서 전투당 1% 확률의 ${b.eye}</div>
-        <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? `균열 ${b.need[S - 1]}단계 필요` : have > 0 ? `${b.short} ${S}단계 도전` : "열쇠 필요"}</button>
+        <div class="bh-key">${b.keyName} <b>${have}</b>개 보유 · 입장 시 ${cost}개 소모 · ${UPM ? "입장 조건 노말 레이드 클리어" : `입장 조건 균열 ${b.need[S - 1]}단계 이상${okNeed ? "" : ` <span class="warn">(현재 ${save.rift.best}단계)</span>`}`}</div>
+        <div class="dim">열쇠 얻는 곳: 균열 · 지옥 · 솟아난 탑에서 전투당 1% 확률의 ${b.eye}</div>
+        <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? (UPM ? "노말 레이드 클리어 필요" : `균열 ${b.need[S - 1]}단계 필요`) : have >= cost ? `${UPM ? "상위 " : ""}${b.short} ${S}단계 도전` : `열쇠 ${cost}개 필요`}</button>
       </div>
     </div>
-    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">장비 · 원초의 돌 · 스킬 ${Math.round(BOSS_SKILL_CH[S - 1] * 100)}% (등급 확률 ↓) · 스킬에 마우스를 올리면 효과가 보입니다</span></div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">장비 · 원초의 돌 · 스킬 ${Math.round((UPM ? UP_SKILL_CH : BOSS_SKILL_CH)[S - 1] * 100)}% (등급 확률 ↓) · 스킬에 마우스를 올리면 효과가 보입니다</span></div>
       <div class="bh-rars">${rar}</div><div class="bh-sks">${tiles}</div></div>
   </div>`;
-  const go = (d) => openBossHub(((G.hubPage || 0) + d + B.length) % B.length);
+  const go = (d) => openBossHub(((G.hubPage || 0) + d + B.length) % B.length, UPM);
   Modal.open(html, { cls: "bosshub", on: {
-    hubprev: () => go(-1), hubnext: () => go(1), hubgo: (el) => openBossHub(+el.dataset.i),
-    hubst: (el) => { G[b.stage] = +el.dataset.s; openBossHub(); },
+    hubprev: () => go(-1), hubnext: () => go(1), hubgo: (el) => openBossHub(+el.dataset.i, UPM),
+    hubst: (el) => { G[skey] = +el.dataset.s; openBossHub(null, UPM); },
     hubenter: () => {
-      if (!can) return; if (b.kind === "void") { if (save.keys < 1) return; save.keys--; } else { if ((save[b.key] || 0) < 1) return; save[b.key]--; } saveGame(); Modal.close(true);
-      const hub = MAP.nodes.find((n) => n.kind === "bosshub");
-      startBattle(nodeToBattle({ kind: b.kind, act: 11 }), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openBossHub(); } });
+      if (!can) return; if (b.kind === "void") { if (save.keys < cost) return; save.keys -= cost; } else { if ((save[b.key] || 0) < cost) return; save[b.key] -= cost; } saveGame(); Modal.close(true);
+      const hub = MAP.nodes.find((n) => n.kind === (UPM ? "bosshub2" : "bosshub"));
+      startBattle(nodeToBattle({ kind: b.kind, act: 11, upper: UPM }), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openBossHub(null, UPM); } });
     },
   } });
   const cv = document.getElementById("bhc"); if (!cv) return; const ctx = cv.getContext("2d"), art = bossArt(b.D), t0 = performance.now();

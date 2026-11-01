@@ -101,11 +101,13 @@ function nodeToBattle(n) {
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
   if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
+  if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
   if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
+  if (isEB(n.kind) && n.upper) { const E = EB[n.kind], S = G["up_" + E.stage] || 1; return { kind: n.kind, act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 ${E.name} ${S}단계`, level: 100 }; }
   if (isEB(n.kind)) { const E = EB[n.kind], S = G[E.stage] || 1; return { kind: n.kind, act: 10, tier: E.tiers[S - 1], vsel: S, name: `${E.name} ${S}단계`, level: 100 }; }
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
   if (n.kind === "elite" || n.kind === "treasure") return Object.assign({}, n, { stage: n.need + (n.kind === "elite" ? 1 : 3) });
@@ -127,6 +129,8 @@ function mapPanel() {
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
   } else if (n.kind === "temple") {
     h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b>계시의 돌</b>과 <b>세공의 인장</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
+  } else if (n.kind === "bosshub2") {
+    h += `<div class="pline">여섯 보스의 상위 단계입니다. 노말 레이드를 클리어하면 열립니다.</div><div class="pline dim">입장에는 해당 보스 열쇠 ${UP_KEYS}개가 듭니다. 사탄 · 종말 등급 스킬이 나옵니다.</div>`; btnOk = un; btn = "상위 보스 관문 열기";
   } else if (n.kind === "bosshub") {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "craid") {
@@ -174,7 +178,8 @@ function raidAftermath() {
 }
 function mapGo() {
   const n = MapView.sel; if (!n || !nodeUnlocked(save, n)) return;
-  if (n.kind === "bosshub") return openBossHub();
+  if (n.kind === "bosshub") return openBossHub(null, false);
+  if (n.kind === "bosshub2") return openBossHub(null, true);
   if (n.kind === "temple") return openTemple();
   if (n.kind === "craid") return openCRaid();
   if (n.kind === "tower") return openSpire();
@@ -287,7 +292,7 @@ function openSettings() {
 function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", frost: "hell", poison: "hell", temple: "void", spire: "void", craid: "void", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 // 자동 반복이 가능한 전투. 열쇠를 쓰는 보스(공허의 군주 · 속성 보스)는 반복할 때마다 열쇠 1개를 쓰고, 열쇠가 모자라면 멈춘다
 const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
-function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0 } : null; }
+function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0, cost: node.upper ? UP_KEYS : 1 } : null; }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
@@ -337,7 +342,7 @@ function afterBattle(res, b) {
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
     const go = () => {
       if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
-      const ki = autoKeyInfo(node); if (ki) { if (ki.have < 1) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key]--; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
+      const ki = autoKeyInfo(node); if (ki) { if (ki.have < ki.cost) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key] -= ki.cost; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
       startBattle(node, G.retry);
     };
     if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
@@ -376,7 +381,7 @@ function showResult(res, b, replay) {
     ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { if (keyKind) { if (node.kind === "void") { if (save.keys < 1) return; save.keys--; } else { const E = EB[node.kind]; if ((save[E.key] || 0) < 1) return; save[E.key]--; } saveGame(); refreshTop(); } G.pending = null; Modal.close(true); startBattle(node, G.retry); },
     autoloop: (el) => {
       if (save.auto.on) { save.auto.on = false; saveGame(); updateAutoBtn(); el.textContent = autoLoopLabel(node); return; }
-      const ki = autoKeyInfo(node); if (ki && ki.have < 1) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
+      const ki = autoKeyInfo(node); if (ki && ki.have < ki.cost) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
       save.auto.on = true; if (ki) save[ki.key]--; saveGame(); refreshTop(); G.pending = null; Modal.close(true); startBattle(node, G.retry);
     },
     autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
@@ -387,7 +392,7 @@ function showResult(res, b, replay) {
   if (!replay && win && nb && save.opt && save.opt.autoNext > 0) autoNextCountdown(res, save.opt.autoNext);
 }
 // 설정 '다음 스테이지로 자동 이동': 승리 결과창에서 대기시간이 지나면 [다음] 버튼을 자동으로 누른다. 화면을 누르거나 키를 누르면 취소된다
-const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 1개 소모)` : ""}`; };
+const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 ${ki.cost}개 소모)` : ""}`; };
 const autoNextLabel = () => (save.opt && save.opt.autoNext > 0 ? `다음 스테이지 자동 이동: ON (${save.opt.autoNext}초)` : "다음 스테이지 자동 이동: OFF");
 function autoNextCountdown(res, sec) {
   const btn = document.querySelector('#modal [data-a="next"]'), modal = $("#modal"); if (!btn) return;

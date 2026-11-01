@@ -539,12 +539,13 @@ function buildMap() {
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
   const hub = add({ id: "RB", kind: "bosshub", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 30, name: "보스 관문", level: 100 });
   const temple = add({ id: "RTP", kind: "temple", act: 11, x: TOWER_POS[0] - 110, y: TOWER_POS[1] - 150, name: "돌의 신전", level: 100 });
+  const hub2 = add({ id: "RB2", kind: "bosshub2", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 120, name: "상위 보스 관문", level: 100 });
   const craid = add({ id: "RR", kind: "craid", act: 11, x: TOWER_POS[0] + 120, y: TOWER_POS[1] - 150, name: "레이드 던전", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
   const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
   const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
   edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
-  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
+  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]); edges.push([hub.id, hub2.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {
@@ -597,8 +598,8 @@ const TUTORIAL = [
 
 // 액트 · 노드 기본 헬퍼
 // v4: 아이템 레벨은 T1~T5 (균열 20층마다 한 단계). 단계별 성장 배율 표
-const TIER_SCALE = [1, 1.5, 2.2, 3.2, 4.6];
-const gScale = (ilvl) => TIER_SCALE[Math.max(0, Math.min(4, ilvl - 1))];
+const TIER_SCALE = [1, 1.5, 2.2, 3.2, 4.6, 6.4];   // T6(탑 100층 · 하드 레이드)는 T5의 약 1.4배
+const gScale = (ilvl) => TIER_SCALE[Math.max(0, Math.min(5, ilvl - 1))];
 // v3.23 엔드게임(아이템 레벨 11+) 성장 완만화: 기본 옵션은 레벨당 조금만 오르고, 아래쪽 추가 옵션(고정값·%)의 범위가 더 크게 오른다.
 // 아주 좋은 전설은 아이템 레벨이 한두 단계 올라도 계속 쓸 수 있어야 한다. 액트(1~10) 장비는 그대로.
 const gBase = (ilvl) => gScale(ilvl);
@@ -611,7 +612,7 @@ const AT = { unlock: [5, 4, 3, 2, 1, 1], w: [0.5, 2.3, 8, 20, 30, 40], flat: [3.
 const atAvail = (ilvl) => { const lo = Math.max(0, 5 - ilvl), hi = Math.min(5, 8 - ilvl), o = []; for (let i = lo; i <= hi; i++) o.push(i); return o; };
 const atPick = (ilvl) => wpick(atAvail(ilvl), (i) => AT.w[i]);
 const atMul = (a, t) => (a.count ? 1 : a.flat ? AT.flat[t] : a.pct ? AT.pct[t] : 1);
-const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 5);
+const pctScale = (ilvl) => 0.80 + 0.04 * Math.min(ilvl, 6);
 const actScale = (a) => (CFG.EASE[a - 1] || 1) * Math.pow(CFG.G, Math.min(a, 10) - 1) * (1 + CFG.LEVEL_STEP * (10 * Math.min(a, 10) - 5)) / (1 + CFG.LEVEL_STEP * 5);
 const nodeLevel = (n) => n.level;
 const eliteCount = (stage) => (stage >= 2 ? 1 + Math.floor(stage / 2) : 0);
@@ -1827,7 +1828,7 @@ EB.poison.bias = POISON_BIAS; EB.frost.bias = COLD_BIAS; EB.hive.bias = FIRE_BIA
 // 아이템 레벨 = T1~T5 (균열 20층마다 한 단계). 옵션 티어는 1티어가 최고(드묾), 6티어가 최저(흔함).
 // =====================================================================
 const wtOk = (a, it) => !(it.slot === "weapon" && it.wt && WTYPES[it.wt] && ((a.k === "atkFlat" && !WTYPES[it.wt].atk) || (a.k === "magFlat" && !WTYPES[it.wt].mag)));
-const itemTier = (it) => Math.max(1, Math.min(5, it.ilvl | 0 || 1));
+const itemTier = (it) => Math.max(1, Math.min(6, it.ilvl | 0 || 1));
 // 이 장비에 붙을 수 있는 옵션 풀 (exceptIdx: 그 줄은 제외하고 계산 — 재굴림용). 소켓 옵션과도 겹치지 않는다
 function affixPool(it, exceptIdx) {
   const used = new Set(); (it.affixes || []).forEach((x, i) => { if (i !== exceptIdx) used.add(x.k); }); for (const s of it.sock || []) if (s) used.add(s.k);
@@ -1852,7 +1853,7 @@ function affixRange(a, ilvl, rarity, t) {   // t(티어 인덱스)를 주면 그
 }
 const SOCKET_W = [50, 35, 15];   // 전설의 소켓 수 1 / 2 / 3개 확률 가중치
 function genItem(sv, ilvl, rarity, slot, _legacy, bias) {
-  slot = slot || pick(SLOTS); ilvl = Math.max(1, Math.min(5, ilvl | 0)); rarity = Math.max(0, Math.min(3, rarity | 0));
+  slot = slot || pick(SLOTS); ilvl = Math.max(1, Math.min(6, ilvl | 0)); rarity = Math.max(0, Math.min(3, rarity | 0));
   const R = ITEM_RARITY[rarity], it = { uid: sv.nextUid++, slot, ilvl, rarity, base: {}, affixes: [], enh: 0, gv: 4 }, f = gBase(ilvl) * rarMul(rarity, ilvl);
   if (slot === "weapon") { it.wt = wpick(WT_IDS, (x) => WTYPES[x].w); const T = WTYPES[it.wt]; if (T.atk) it.base.atk = T.atk * f * rnd(0.9, 1.1); if (T.mag) it.base.mag = T.mag * f * rnd(0.9, 1.1); }
   for (const k in SLOT_BASE[slot]) it.base[k] = SLOT_BASE[slot][k] * f * rnd(0.9, 1.1);
@@ -1880,7 +1881,7 @@ function clampItem(it) {
   if (!it.sock && (it.rarity === 1 || it.rarity === 2)) it.sock = it.rarity === 1 ? [null] : Array(Math.random() < 0.6 ? 1 : 2).fill(null);   // 이전 매직 · 레어 장비에도 소켓을 준다
   if (it.wt === "scythe") { it.wt = "sword"; it.base.atk = (it.base.atk || 0) * 9 / 7; delete it.base.mag; }   // 삭제된 무기 종류: 낫 → 검
   else if (it.wt === "grimoire") { it.wt = "staff"; it.base.mag = (it.base.mag || 0) * 9 / 7; delete it.base.atk; }
-  let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
+  let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(6, it.ilvl | 0 || 1));
   for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; const [lo, hi] = affixRange(d, it.ilvl, it.rarity, a.t); const v = Math.min(hi, Math.max(lo, a.v)); if (v !== a.v) { a.v = v; n++; } }
   return n;
 }
@@ -2160,11 +2161,13 @@ function bossOfSkill(d) {
 }
 const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 9, 0, 0], [5, 12, 70, 13, 0, 0]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
+const UP_SKILL_RW = [[0, 0, 0, 0, 90, 10], [0, 0, 0, 0, 80, 20], [0, 0, 0, 0, 68, 32], [0, 0, 0, 0, 55, 45]], UP_SKILL_CH = [0.15, 0.22, 0.32, 0.50];   // 상위 보스관문: 사탄 · 종말 스킬만 나온다
+const UP_TIERS = [186, 192, 199, 206], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
-function rollBossSkills(sv, kind, K) {
+function rollBossSkills(sv, kind, K, upper) {
   const out = []; if (!GRADUATED(sv)) return out; K = Math.max(1, Math.min(4, K | 1));
-  if (Math.random() >= BOSS_SKILL_CH[K - 1]) return out;
-  const w = BOSS_SKILL_RW[K - 1], r = wpick(SKILL_RARITY.map((x, i) => ({ i, w: w[i] || 0 })).filter((x) => x.w > 0), (x) => x.w).i;
+  if (Math.random() >= (upper ? UP_SKILL_CH : BOSS_SKILL_CH)[K - 1]) return out;
+  const w = (upper ? UP_SKILL_RW : BOSS_SKILL_RW)[K - 1], r = wpick(SKILL_RARITY.map((x, i) => ({ i, w: w[i] || 0 })).filter((x) => x.w > 0), (x) => x.w).i;
   if (Math.random() < 0.3) { const ps = PASSIVE_SKILLS.filter((p) => p.pt >= Math.max(1, r - 1) && p.pt <= r); if (ps.length) { out.push(genSkill(sv, pick(ps).id, 0)); return out; } }
   const all = bossSkillList(kind), myth = all.filter((d) => d.mythOnly), reg = all.filter((d) => !d.mythOnly && (r < 3 || !d.voidOnly || true));
   const pool = r >= 3 && myth.length && Math.random() < 0.4 ? myth : reg; if (!pool.length) return out;
@@ -2179,7 +2182,7 @@ function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid" || kind === "spire" || kind === "craid";
-  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
+  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && (node.floor || 0) >= CFG.SPIRE.END) || (kind === "craid" && node.diff === 3) ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
@@ -2204,11 +2207,11 @@ function rollDrops(sv, node, boss, B) {
     // 균열·보스: 일반 장비는 거의 안 나온다. 전설은 층이 높을수록 조금씩 더 잘 나온다
     const RW = late ? riftRW(node.tier, boss) : null;
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
-    if (kind === "craid" && Math.random() < (0.08 + 0.03 * (node.diff || 1)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }
-    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }   // 사탄 장비
+    if (kind === "craid" && Math.random() < (0.08 + 0.03 * (node.diff || 1)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }
+    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }   // 사탄 장비
     out.items.push(genItem(sv, ilvl, (kind === "spire" || kind === "craid") ? wpick([0, 1, 2, 3], (x) => [10, 25, 35, 30][x]) : r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
-  if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, 5));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
+  if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, ilvl));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
   // 미확인의 돌: 균열에서 드랍 (보스 층은 확정). 제련소에서 옵션을 확인한 뒤 소켓에 끼운다
   if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "raid") {
     const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : kind === "raid" ? 2.0 : 1.2;
@@ -2218,8 +2221,8 @@ function rollDrops(sv, node, boss, B) {
   // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
   if (kind === "raid") { const ks = ["void", "hive", "titan", "storm", "frost", "poison"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
-  if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1)) out.skills.push(s);
-  else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1)) out.skills.push(s);
+  if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1, node.upper)) out.skills.push(s);
+  else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1, node.upper)) out.skills.push(s);
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 3) + endlessWaves * 2) * B.ore);
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
@@ -2296,7 +2299,7 @@ function enhance(sv, it) {
   return { ok: true, success: false, msg: "강화 실패 (강화석 일부만 소모)" };
 }
 // 장착 레벨: 아이템 레벨이 높을수록 높은 캐릭터 레벨이 필요하다 (액트 진행 속도에 맞춘 표)
-const REQ_LV = [1, 20, 40, 60, 80];   // v4: 아이템 T1~T5 (균열 20층마다)
+const REQ_LV = [1, 20, 40, 60, 80, 100];   // v4: 아이템 T1~T5 (균열 20층마다)
 const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.min(CFG.LEVEL_CAP, 76 + 2 * (ilvl - 10)));
 const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
@@ -2306,8 +2309,8 @@ function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (cons
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
 // 옵션 재굴림 비용: 장비 T마다 고정 (몇 번을 굴려도, 강화 수치와 상관없이 같다) — 그 구간 균열 한 번 도는 골드 정도
-const REROLL_COST = [[150, 2], [500, 3], [1200, 4], [14000, 8], [35000, 12]];
-const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(4, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
+const REROLL_COST = [[150, 2], [500, 3], [1200, 4], [14000, 8], [35000, 12], [80000, 16]];
+const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(5, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
 // v3.23: 한 장비에서 재굴림할 수 있는 줄은 하나뿐이다. 한 줄을 굴리면(rrIdx) 나머지 줄은 잠긴다 — 같은 줄은 계속 굴릴 수 있다.
 const rerollLocked = (it, idx) => it.rrIdx != null && it.rrIdx !== idx;
 function rerollAffix(sv, it, idx) {
@@ -2327,6 +2330,7 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
+  if (n.kind === "bosshub2") return !!(sv.craid && sv.craid[2]);   // 상위 보스관문: 노말 레이드를 클리어한 뒤
   if (n.kind === "craid") return !!(sv.raid && sv.raid.tower);   // 레이드 던전: 탑이 솟은 뒤
   if (n.kind === "temple") return !!(sv.raid && sv.raid.cleared > 0);   // 돌의 신전: 심연의 문지기 모르가스를 클리어한 뒤
   if (n.kind === "endless" || n.kind === "void" || n.kind === "bosshub" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
@@ -2609,9 +2613,9 @@ function planFor(node) {
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
   if ((node.kind === "rift" || node.kind === "trial" || node.kind === "spire" || node.kind === "craid") && node.tier >= 50) { const ns = Math.min(8, 2 + Math.floor((node.tier - 50) / 12)); for (let i = 0; i < ns; i++) plan.splice(Math.floor(plan.length * (0.1 + 0.85 * (i + 0.5) / ns)), 0, "sniper"); }   // 저격수: 50단계부터, 이후 12단계마다 +1 (최대 8)
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
-  if (RIFTLIKE[node.kind] && node.kind !== "void" && !isEB(node.kind) && node.kind !== "vault" && node.kind !== "spire" && node.kind !== "craid" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
-  if ((node.kind === "rift" || node.kind === "hell") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
-  if (node.kind === "rift" || node.kind === "hell") for (const wt of ["twarp", "swarp", "fwarp", "vwarp"]) if (Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = wt;   // 철갑의 징표 · 뇌전의 징표 (같은 확률)
+  if (RIFTLIKE[node.kind] && node.kind !== "void" && !isEB(node.kind) && node.kind !== "vault" && node.kind !== "craid" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
+  if ((node.kind === "rift" || node.kind === "hell" || node.kind === "spire") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
+  if (node.kind === "rift" || node.kind === "hell" || node.kind === "spire") for (const wt of ["twarp", "swarp", "fwarp", "vwarp"]) if (Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = wt;   // 철갑의 징표 · 뇌전의 징표 (같은 확률)
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
@@ -3872,6 +3876,7 @@ const MapView = {
     if (st === "hell") { orb("#6a1010", "#ff6a30", 13 * pulse); g.fillStyle = "#ffb040"; for (let i = 0; i < 4; i++) g.fillRect(x - 6 + i * 4, y - 8 - ((Math.sin(time * 9 + i * 1.7) * 3) | 0), 3, 9); g.fillStyle = "#fff0b0"; g.fillRect(x - 1, y - 2, 3, 5); return; }
     if (n.kind === "endless") { for (let i = 0; i < 3; i++) { g.strokeStyle = `rgba(120,230,255,${0.9 - i * 0.25})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 7 + i * 5, -time * 2 + i, -time * 2 + i + 4.2); g.stroke(); } g.fillStyle = "#06141c"; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.fillStyle = "#bff4ff"; g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.fillText("∞", x, y + 4); return; }
     if (n.kind === "vault") { orb("#6a5208", "#ffd24a", 13 * pulse); g.fillStyle = "#fff0a0"; g.fillRect(x - 7, y - 4, 14, 9); g.fillStyle = "#b8860b"; g.fillRect(x - 7, y - 4, 14, 3); g.fillStyle = "#6a3a08"; g.fillRect(x - 2, y, 4, 4); g.fillStyle = "#ffe880"; g.fillRect(x - 4, y - 9, 8, 3); return; }
+    if (n.kind === "bosshub2") { orb("#2a0610", "#ff3a5a", 20 * pulse); g.fillStyle = "#ffb0c0"; g.fillRect(x - 10, y - 10, 20, 3); g.fillRect(x - 10, y + 7, 20, 3); g.fillRect(x - 10, y - 10, 3, 20); g.fillRect(x + 7, y - 10, 3, 20); g.fillStyle = "#ff3a5a"; g.fillRect(x - 3, y - 3, 6, 6); return; }
     if (n.kind === "craid") { orb("#3a0a10", "#ff4a3a", 16 * pulse); g.fillStyle = "#ffb0a0"; g.fillRect(x - 9, y - 11, 18, 3); g.fillRect(x - 6, y - 8, 12, 14); g.fillStyle = "#ff3a2a"; g.fillRect(x - 3, y - 4, 6, 8); g.fillStyle = "#1a0408"; g.fillRect(x - 1, y - 1, 2, 5); return; }
     if (n.kind === "temple") { orb("#4a3a10", "#ffd86a", 15 * pulse); g.fillStyle = "#f6ecc8"; g.fillRect(x - 11, y - 3, 22, 3); g.fillRect(x - 8, y - 9, 16, 3); g.fillRect(x - 5, y - 13, 10, 3); for (const dx of [-9, -3, 3, 8]) g.fillRect(x + dx, y, 3, 9); g.fillStyle = "#c9a84a"; g.fillRect(x - 12, y + 9, 24, 3); g.fillStyle = "#7ec8ff"; g.fillRect(x - 2, y - 7, 4, 4); return; }
     if (n.kind === "bosshub") { const arts = [10, 11, 12, 13, 14, 15], cols = ["#c070ff", "#ff9a30", "#d0d8e8", "#ffe45a", "#9ae0ff", "#8aff6a"], bi = Math.floor(time / 1.5) % 6; g.save(); g.shadowColor = cols[bi]; g.shadowBlur = 14; orb("#150c26", cols[bi], 22 * pulse); g.restore(); drawBossSprite(g, arts[bi], x, y + 21, 0.72, {}); g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.fillStyle = "#fff"; g.strokeStyle = "#000"; g.lineWidth = 3; g.strokeText("보스 관문", x, y + 38); g.fillText("보스 관문", x, y + 38); g.fillStyle = cols[bi]; for (let i = 0; i < 6; i++) { const a = time * 1.2 + i * 1.05; g.fillRect(x + Math.cos(a) * 30 - 1, y - 2 + Math.sin(a) * 11 - 1, 3, 3); } return; }
@@ -3886,7 +3891,7 @@ const MapView = {
     const cleared = st === "cleared"; orb(cleared ? "#3a6a98" : "#3a8aff", cleared ? "#8ac0e8" : "#b8dcff", 11 * (cleared ? 1 : pulse));
     if (cleared) { g.fillStyle = "#e8fff0"; g.fillRect(x - 5, y, 3, 3); g.fillRect(x - 2, y + 3, 3, 3); g.fillRect(x + 1, y, 3, 3); g.fillRect(x + 4, y - 4, 3, 3); }
   },
-  hidden(n) { return (n.kind === "tower" || n.kind === "temple" || n.kind === "craid") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
+  hidden(n) { return n.kind === "bosshub2" ? !(save && save.craid && save.craid[2]) : (n.kind === "tower" || n.kind === "temple" || n.kind === "craid") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
   drawTower(g, x, y, time) {   // 솟아오르는 탑: 아래에서부터 드러나고, 흔들리며 먼지가 인다
     const p = this.rise, H = 96 * p; g.save(); g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(x, y + 8, 26, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.rect(x - 40, y + 8 - H, 80, H + 2); g.clip();
@@ -4588,11 +4593,13 @@ function nodeToBattle(n) {
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
   if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
+  if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
   if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
+  if (isEB(n.kind) && n.upper) { const E = EB[n.kind], S = G["up_" + E.stage] || 1; return { kind: n.kind, act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 ${E.name} ${S}단계`, level: 100 }; }
   if (isEB(n.kind)) { const E = EB[n.kind], S = G[E.stage] || 1; return { kind: n.kind, act: 10, tier: E.tiers[S - 1], vsel: S, name: `${E.name} ${S}단계`, level: 100 }; }
   if (isHell(n)) return { kind: "hell", act: n.act, stage: 4, tier: Math.max(1, save.rift.best), name: `지옥 · ${n.name}`, level: 100, nodeId: n.id };
   if (n.kind === "elite" || n.kind === "treasure") return Object.assign({}, n, { stage: n.need + (n.kind === "elite" ? 1 : 3) });
@@ -4614,6 +4621,8 @@ function mapPanel() {
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
   } else if (n.kind === "temple") {
     h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b>계시의 돌</b>과 <b>세공의 인장</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
+  } else if (n.kind === "bosshub2") {
+    h += `<div class="pline">여섯 보스의 상위 단계입니다. 노말 레이드를 클리어하면 열립니다.</div><div class="pline dim">입장에는 해당 보스 열쇠 ${UP_KEYS}개가 듭니다. 사탄 · 종말 등급 스킬이 나옵니다.</div>`; btnOk = un; btn = "상위 보스 관문 열기";
   } else if (n.kind === "bosshub") {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "craid") {
@@ -4661,7 +4670,8 @@ function raidAftermath() {
 }
 function mapGo() {
   const n = MapView.sel; if (!n || !nodeUnlocked(save, n)) return;
-  if (n.kind === "bosshub") return openBossHub();
+  if (n.kind === "bosshub") return openBossHub(null, false);
+  if (n.kind === "bosshub2") return openBossHub(null, true);
   if (n.kind === "temple") return openTemple();
   if (n.kind === "craid") return openCRaid();
   if (n.kind === "tower") return openSpire();
@@ -4774,7 +4784,7 @@ function openSettings() {
 function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", frost: "hell", poison: "hell", temple: "void", spire: "void", craid: "void", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 // 자동 반복이 가능한 전투. 열쇠를 쓰는 보스(공허의 군주 · 속성 보스)는 반복할 때마다 열쇠 1개를 쓰고, 열쇠가 모자라면 멈춘다
 const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
-function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0 } : null; }
+function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0, cost: node.upper ? UP_KEYS : 1 } : null; }
 function startBattle(node, opt) {
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
@@ -4824,7 +4834,7 @@ function afterBattle(res, b) {
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
     const go = () => {
       if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
-      const ki = autoKeyInfo(node); if (ki) { if (ki.have < 1) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key]--; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
+      const ki = autoKeyInfo(node); if (ki) { if (ki.have < ki.cost) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key] -= ki.cost; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
       startBattle(node, G.retry);
     };
     if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
@@ -4863,7 +4873,7 @@ function showResult(res, b, replay) {
     ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { if (keyKind) { if (node.kind === "void") { if (save.keys < 1) return; save.keys--; } else { const E = EB[node.kind]; if ((save[E.key] || 0) < 1) return; save[E.key]--; } saveGame(); refreshTop(); } G.pending = null; Modal.close(true); startBattle(node, G.retry); },
     autoloop: (el) => {
       if (save.auto.on) { save.auto.on = false; saveGame(); updateAutoBtn(); el.textContent = autoLoopLabel(node); return; }
-      const ki = autoKeyInfo(node); if (ki && ki.have < 1) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
+      const ki = autoKeyInfo(node); if (ki && ki.have < ki.cost) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
       save.auto.on = true; if (ki) save[ki.key]--; saveGame(); refreshTop(); G.pending = null; Modal.close(true); startBattle(node, G.retry);
     },
     autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
@@ -4874,7 +4884,7 @@ function showResult(res, b, replay) {
   if (!replay && win && nb && save.opt && save.opt.autoNext > 0) autoNextCountdown(res, save.opt.autoNext);
 }
 // 설정 '다음 스테이지로 자동 이동': 승리 결과창에서 대기시간이 지나면 [다음] 버튼을 자동으로 누른다. 화면을 누르거나 키를 누르면 취소된다
-const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 1개 소모)` : ""}`; };
+const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 ${ki.cost}개 소모)` : ""}`; };
 const autoNextLabel = () => (save.opt && save.opt.autoNext > 0 ? `다음 스테이지 자동 이동: ON (${save.opt.autoNext}초)` : "다음 스테이지 자동 이동: OFF");
 function autoNextCountdown(res, sec) {
   const btn = document.querySelector('#modal [data-a="next"]'), modal = $("#modal"); if (!btn) return;
@@ -6066,7 +6076,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261101-111436";
+const BUILD_ID = "20261101-111659";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6167,17 +6177,18 @@ function hubBosses() {
   ];
 }
 const hubDrops = (kind) => SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind && (isSpecialSkill(d) || d.mythOnly)).sort((a, b) => (a.unlock || 0) - (b.unlock || 0));
-function openBossHub(page) {
+function openBossHub(page, up) {
+  if (up != null) G.hubUp = !!up; const UPM = !!G.hubUp;
   const B = hubBosses(); if (page != null) G.hubPage = page; G.hubPage = ((G.hubPage || 0) + B.length) % B.length;
-  const b = B[G.hubPage], S = G[b.stage] = Math.max(1, Math.min(4, G[b.stage] || 1)), my = playerPower(computeStats(save)), have = b.kind === "void" ? save.keys : (save[b.key] || 0);
+  const b0 = B[G.hubPage], skey = UPM ? "up_" + b0.stage : b0.stage, b = UPM ? Object.assign({}, b0, { tiers: UP_TIERS, need: [0, 0, 0, 0], stage: skey }) : b0, S = G[skey] = Math.max(1, Math.min(4, G[skey] || 1)), my = playerPower(computeStats(save)), have = b.kind === "void" ? save.keys : (save[b.key] || 0), cost = UPM ? UP_KEYS : 1;
   const mult = (s) => bossRiftMult(b.tiers[s - 1]) / bossRiftMult(100), rec = (s) => HUB_BASE_POWER * mult(s) * mult(s);
-  const okNeed = save.rift.best >= b.need[S - 1], can = okNeed && have > 0;
+  const okNeed = UPM ? !!(save.craid && save.craid[2]) : save.rift.best >= b.need[S - 1], can = okNeed && have >= cost;
   const stageRows = [1, 2, 3, 4].map((s) => { const r = rec(s), ok = my >= r; return `<button class="bh-st ${s === S ? "on" : ""}" data-a="hubst" data-s="${s}"><b>${s}단계</b><span>×${mult(s).toFixed(1)}</span><em class="${ok ? "up" : "dn"}">${fmtP(r)}</em></button>`; }).join("");
-  const rr = BOSS_SKILL_RW[S - 1], rsum = rr.reduce((a, c) => a + c, 0), rn = ["일반", "희귀", "전설", "신화", "사탄", "종말"];
+  const rr = (UPM ? UP_SKILL_RW : BOSS_SKILL_RW)[S - 1], rsum = rr.reduce((a, c) => a + c, 0), rn = ["일반", "희귀", "전설", "신화", "사탄", "종말"];
   const rar = rr.map((w, i) => (w ? `<span class="bh-rar r${i}">${rn[i]} ${Math.round((100 * w) / rsum)}%</span>` : "")).join("");
   const drops = hubDrops(b.kind), tiles = drops.map((d) => `<div class="bh-sk" data-tips="${d.id}">${skIcon(d.id, 2)}<span>${d.name}</span></div>`).join("") || `<span class="dim">전용 스킬 없음</span>`;
   const tabs = B.map((x, i) => `<button class="bh-tab ${i === G.hubPage ? "on" : ""}" data-a="hubgo" data-i="${i}" style="--c:${x.color}" title="${x.short}">${x.icon}</button>`).join("");
-  const html = `<h2>보스 관문</h2><div class="bh" style="--c:${b.color}">
+  const html = `<h2>${UPM ? "상위 보스 관문" : "보스 관문"}</h2><div class="bh" style="--c:${b.color}">
     <div class="bh-nav"><button class="btn" data-a="hubprev">◀</button><div class="bh-tabs">${tabs}</div><button class="btn" data-a="hubnext">▶</button></div>
     <div class="bh-main">
       <div class="bh-art"><canvas id="bhc" width="250" height="250"></canvas><div class="bh-name">${b.name}</div><div class="bh-page">${G.hubPage + 1} / ${B.length}</div></div>
@@ -6185,22 +6196,22 @@ function openBossHub(page) {
         <div class="bh-feat">${b.feat}</div><div class="bh-desc">${b.D.desc || ""}</div>
         <div class="bh-sttl">단계 선택 · <span class="dim">적정 전투력</span></div><div class="bh-sts">${stageRows}</div>
         <div class="bh-me">내 전투력 <b class="${my >= rec(S) ? "up" : "dn"}">${fmtP(my)}</b> / 적정 <b>${fmtP(rec(S))}</b> <span class="dim">(${my >= rec(S) ? "충분합니다" : "부족할 수 있습니다"})</span></div>
-        <div class="bh-key">${b.keyName} <b>${have}</b>개 보유 · 입장 시 1개 소모 · 입장 조건 균열 ${b.need[S - 1]}단계 이상${okNeed ? "" : ` <span class="warn">(현재 ${save.rift.best}단계)</span>`}</div>
-        <div class="dim">열쇠 얻는 곳: 균열 · 지옥에서 전투당 1% 확률의 ${b.eye}</div>
-        <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? `균열 ${b.need[S - 1]}단계 필요` : have > 0 ? `${b.short} ${S}단계 도전` : "열쇠 필요"}</button>
+        <div class="bh-key">${b.keyName} <b>${have}</b>개 보유 · 입장 시 ${cost}개 소모 · ${UPM ? "입장 조건 노말 레이드 클리어" : `입장 조건 균열 ${b.need[S - 1]}단계 이상${okNeed ? "" : ` <span class="warn">(현재 ${save.rift.best}단계)</span>`}`}</div>
+        <div class="dim">열쇠 얻는 곳: 균열 · 지옥 · 솟아난 탑에서 전투당 1% 확률의 ${b.eye}</div>
+        <button class="btn pri big bh-go" data-a="hubenter" ${can ? "" : "disabled"}>${!okNeed ? (UPM ? "노말 레이드 클리어 필요" : `균열 ${b.need[S - 1]}단계 필요`) : have >= cost ? `${UPM ? "상위 " : ""}${b.short} ${S}단계 도전` : `열쇠 ${cost}개 필요`}</button>
       </div>
     </div>
-    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">장비 · 원초의 돌 · 스킬 ${Math.round(BOSS_SKILL_CH[S - 1] * 100)}% (등급 확률 ↓) · 스킬에 마우스를 올리면 효과가 보입니다</span></div>
+    <div class="bh-drops"><div class="bh-dttl">드랍 <span class="dim">장비 · 원초의 돌 · 스킬 ${Math.round((UPM ? UP_SKILL_CH : BOSS_SKILL_CH)[S - 1] * 100)}% (등급 확률 ↓) · 스킬에 마우스를 올리면 효과가 보입니다</span></div>
       <div class="bh-rars">${rar}</div><div class="bh-sks">${tiles}</div></div>
   </div>`;
-  const go = (d) => openBossHub(((G.hubPage || 0) + d + B.length) % B.length);
+  const go = (d) => openBossHub(((G.hubPage || 0) + d + B.length) % B.length, UPM);
   Modal.open(html, { cls: "bosshub", on: {
-    hubprev: () => go(-1), hubnext: () => go(1), hubgo: (el) => openBossHub(+el.dataset.i),
-    hubst: (el) => { G[b.stage] = +el.dataset.s; openBossHub(); },
+    hubprev: () => go(-1), hubnext: () => go(1), hubgo: (el) => openBossHub(+el.dataset.i, UPM),
+    hubst: (el) => { G[skey] = +el.dataset.s; openBossHub(null, UPM); },
     hubenter: () => {
-      if (!can) return; if (b.kind === "void") { if (save.keys < 1) return; save.keys--; } else { if ((save[b.key] || 0) < 1) return; save[b.key]--; } saveGame(); Modal.close(true);
-      const hub = MAP.nodes.find((n) => n.kind === "bosshub");
-      startBattle(nodeToBattle({ kind: b.kind, act: 11 }), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openBossHub(); } });
+      if (!can) return; if (b.kind === "void") { if (save.keys < cost) return; save.keys -= cost; } else { if ((save[b.key] || 0) < cost) return; save[b.key] -= cost; } saveGame(); Modal.close(true);
+      const hub = MAP.nodes.find((n) => n.kind === (UPM ? "bosshub2" : "bosshub"));
+      startBattle(nodeToBattle({ kind: b.kind, act: 11, upper: UPM }), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openBossHub(null, UPM); } });
     },
   } });
   const cv = document.getElementById("bhc"); if (!cv) return; const ctx = cv.getContext("2d"), art = bossArt(b.D), t0 = performance.now();
@@ -6323,6 +6334,11 @@ function openCRaid() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.42", date: "11/1", title: "상위 보스 관문 · T6 장비", items: [
+    "노말 레이드를 클리어하면 [상위 보스 관문]이 열립니다. 구조는 보스 관문과 같고, 입장에는 해당 보스 열쇠 5개가 듭니다. 사탄 · 종말 등급 스킬이 나옵니다.",
+    "솟아난 탑에서도 보스 열쇠(공허의 열쇠 · 정령의 불씨 · 철갑 · 뇌전 · 서리 · 맹독의 징표)가 나옵니다.",
+    "솟아난 탑 100층과 하드 레이드를 클리어하면 [T6] 장비(전설 · 사탄)가 나옵니다. T6는 1~3티어 옵션만 붙고, 장착에 Lv.100이 필요합니다.",
+  ] },
   { ver: "4.41", date: "11/1", title: "전직 · 레이드 던전", items: [
     "솟아난 탑 옆에 [레이드 던전]이 열렸습니다 (이지 · 노말 · 하드). 각 난이도를 처음 클리어하면 1 · 2 · 3차 [전직의 서]를 얻습니다. 이지는 탑 30층, 노말은 탑 80층 수준의 몬스터이며 하드는 T6 장비가 필요한 난이도입니다.",
     "전직하면 전직 포인트 2점을 얻습니다 (패시브 포인트와 별개). 전직 패시브는 화염 · 냉기 · 번개 · 공허 · 물리&독 · 방어 · 파밍 7개 트리이고, 포인트가 적은 대신 노드 하나하나가 강합니다. 훈련소 패시브 화면의 [전직] 버튼에서 찍습니다.",

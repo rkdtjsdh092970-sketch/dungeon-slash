@@ -39,7 +39,7 @@ EB.poison.bias = POISON_BIAS; EB.frost.bias = COLD_BIAS; EB.hive.bias = FIRE_BIA
 // 아이템 레벨 = T1~T5 (균열 20층마다 한 단계). 옵션 티어는 1티어가 최고(드묾), 6티어가 최저(흔함).
 // =====================================================================
 const wtOk = (a, it) => !(it.slot === "weapon" && it.wt && WTYPES[it.wt] && ((a.k === "atkFlat" && !WTYPES[it.wt].atk) || (a.k === "magFlat" && !WTYPES[it.wt].mag)));
-const itemTier = (it) => Math.max(1, Math.min(5, it.ilvl | 0 || 1));
+const itemTier = (it) => Math.max(1, Math.min(6, it.ilvl | 0 || 1));
 // 이 장비에 붙을 수 있는 옵션 풀 (exceptIdx: 그 줄은 제외하고 계산 — 재굴림용). 소켓 옵션과도 겹치지 않는다
 function affixPool(it, exceptIdx) {
   const used = new Set(); (it.affixes || []).forEach((x, i) => { if (i !== exceptIdx) used.add(x.k); }); for (const s of it.sock || []) if (s) used.add(s.k);
@@ -64,7 +64,7 @@ function affixRange(a, ilvl, rarity, t) {   // t(티어 인덱스)를 주면 그
 }
 const SOCKET_W = [50, 35, 15];   // 전설의 소켓 수 1 / 2 / 3개 확률 가중치
 function genItem(sv, ilvl, rarity, slot, _legacy, bias) {
-  slot = slot || pick(SLOTS); ilvl = Math.max(1, Math.min(5, ilvl | 0)); rarity = Math.max(0, Math.min(3, rarity | 0));
+  slot = slot || pick(SLOTS); ilvl = Math.max(1, Math.min(6, ilvl | 0)); rarity = Math.max(0, Math.min(3, rarity | 0));
   const R = ITEM_RARITY[rarity], it = { uid: sv.nextUid++, slot, ilvl, rarity, base: {}, affixes: [], enh: 0, gv: 4 }, f = gBase(ilvl) * rarMul(rarity, ilvl);
   if (slot === "weapon") { it.wt = wpick(WT_IDS, (x) => WTYPES[x].w); const T = WTYPES[it.wt]; if (T.atk) it.base.atk = T.atk * f * rnd(0.9, 1.1); if (T.mag) it.base.mag = T.mag * f * rnd(0.9, 1.1); }
   for (const k in SLOT_BASE[slot]) it.base[k] = SLOT_BASE[slot][k] * f * rnd(0.9, 1.1);
@@ -92,7 +92,7 @@ function clampItem(it) {
   if (!it.sock && (it.rarity === 1 || it.rarity === 2)) it.sock = it.rarity === 1 ? [null] : Array(Math.random() < 0.6 ? 1 : 2).fill(null);   // 이전 매직 · 레어 장비에도 소켓을 준다
   if (it.wt === "scythe") { it.wt = "sword"; it.base.atk = (it.base.atk || 0) * 9 / 7; delete it.base.mag; }   // 삭제된 무기 종류: 낫 → 검
   else if (it.wt === "grimoire") { it.wt = "staff"; it.base.mag = (it.base.mag || 0) * 9 / 7; delete it.base.atk; }
-  let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(5, it.ilvl | 0 || 1));
+  let n = 0; it.rarity = Math.max(0, Math.min(3, it.rarity | 0)); it.ilvl = Math.max(1, Math.min(6, it.ilvl | 0 || 1));
   for (const a of it.affixes || []) { const d = AFFIXES.find((x) => x.k === a.k); if (!d) continue; const [lo, hi] = affixRange(d, it.ilvl, it.rarity, a.t); const v = Math.min(hi, Math.max(lo, a.v)); if (v !== a.v) { a.v = v; n++; } }
   return n;
 }
@@ -372,11 +372,13 @@ function bossOfSkill(d) {
 }
 const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 9, 0, 0], [5, 12, 70, 13, 0, 0]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
+const UP_SKILL_RW = [[0, 0, 0, 0, 90, 10], [0, 0, 0, 0, 80, 20], [0, 0, 0, 0, 68, 32], [0, 0, 0, 0, 55, 45]], UP_SKILL_CH = [0.15, 0.22, 0.32, 0.50];   // 상위 보스관문: 사탄 · 종말 스킬만 나온다
+const UP_TIERS = [186, 192, 199, 206], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
-function rollBossSkills(sv, kind, K) {
+function rollBossSkills(sv, kind, K, upper) {
   const out = []; if (!GRADUATED(sv)) return out; K = Math.max(1, Math.min(4, K | 1));
-  if (Math.random() >= BOSS_SKILL_CH[K - 1]) return out;
-  const w = BOSS_SKILL_RW[K - 1], r = wpick(SKILL_RARITY.map((x, i) => ({ i, w: w[i] || 0 })).filter((x) => x.w > 0), (x) => x.w).i;
+  if (Math.random() >= (upper ? UP_SKILL_CH : BOSS_SKILL_CH)[K - 1]) return out;
+  const w = (upper ? UP_SKILL_RW : BOSS_SKILL_RW)[K - 1], r = wpick(SKILL_RARITY.map((x, i) => ({ i, w: w[i] || 0 })).filter((x) => x.w > 0), (x) => x.w).i;
   if (Math.random() < 0.3) { const ps = PASSIVE_SKILLS.filter((p) => p.pt >= Math.max(1, r - 1) && p.pt <= r); if (ps.length) { out.push(genSkill(sv, pick(ps).id, 0)); return out; } }
   const all = bossSkillList(kind), myth = all.filter((d) => d.mythOnly), reg = all.filter((d) => !d.mythOnly && (r < 3 || !d.voidOnly || true));
   const pool = r >= 3 && myth.length && Math.random() < 0.4 ? myth : reg; if (!pool.length) return out;
@@ -391,7 +393,7 @@ function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid" || kind === "spire" || kind === "craid";
-  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : late ? 5 : 1;
+  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && (node.floor || 0) >= CFG.SPIRE.END) || (kind === "craid" && node.diff === 3) ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
@@ -416,11 +418,11 @@ function rollDrops(sv, node, boss, B) {
     // 균열·보스: 일반 장비는 거의 안 나온다. 전설은 층이 높을수록 조금씩 더 잘 나온다
     const RW = late ? riftRW(node.tier, boss) : null;
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
-    if (kind === "craid" && Math.random() < (0.08 + 0.03 * (node.diff || 1)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }
-    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, 5)); continue; }   // 사탄 장비
+    if (kind === "craid" && Math.random() < (0.08 + 0.03 * (node.diff || 1)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }
+    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }   // 사탄 장비
     out.items.push(genItem(sv, ilvl, (kind === "spire" || kind === "craid") ? wpick([0, 1, 2, 3], (x) => [10, 25, 35, 30][x]) : r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
-  if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, 5));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
+  if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, ilvl));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
   // 미확인의 돌: 균열에서 드랍 (보스 층은 확정). 제련소에서 옵션을 확인한 뒤 소켓에 끼운다
   if (kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "raid") {
     const T = node.tier || 1, chance = (kind === "rift" || kind === "hell") ? stoneChanceAt(T) * Math.pow(mfw, 0.3) * (B.stone || 1) : kind === "raid" ? 2.0 : 1.2;
@@ -430,8 +432,8 @@ function rollDrops(sv, node, boss, B) {
   // 레이드: 보스 스킬 한 번 추첨 (첫 처치는 반드시 하나) — 높은 등급 중심
   if (kind === "raid") { const ks = ["void", "hive", "titan", "storm", "frost", "poison"]; let got = rollBossSkills(sv, pick(ks), 4); for (let i = 0; node.firstClear && !got.length && i < 30; i++) got = rollBossSkills(sv, pick(ks), 4); for (const s of got) out.skills.push(s); }
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
-  if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1)) out.skills.push(s);
-  else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1)) out.skills.push(s);
+  if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1, node.upper)) out.skills.push(s);
+  else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1, node.upper)) out.skills.push(s);
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 3) + endlessWaves * 2) * B.ore);
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
@@ -508,7 +510,7 @@ function enhance(sv, it) {
   return { ok: true, success: false, msg: "강화 실패 (강화석 일부만 소모)" };
 }
 // 장착 레벨: 아이템 레벨이 높을수록 높은 캐릭터 레벨이 필요하다 (액트 진행 속도에 맞춘 표)
-const REQ_LV = [1, 20, 40, 60, 80];   // v4: 아이템 T1~T5 (균열 20층마다)
+const REQ_LV = [1, 20, 40, 60, 80, 100];   // v4: 아이템 T1~T5 (균열 20층마다)
 const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.min(CFG.LEVEL_CAP, 76 + 2 * (ilvl - 10)));
 const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
@@ -518,8 +520,8 @@ function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (cons
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
 function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
 // 옵션 재굴림 비용: 장비 T마다 고정 (몇 번을 굴려도, 강화 수치와 상관없이 같다) — 그 구간 균열 한 번 도는 골드 정도
-const REROLL_COST = [[150, 2], [500, 3], [1200, 4], [14000, 8], [35000, 12]];
-const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(4, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
+const REROLL_COST = [[150, 2], [500, 3], [1200, 4], [14000, 8], [35000, 12], [80000, 16]];
+const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(5, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
 // v3.23: 한 장비에서 재굴림할 수 있는 줄은 하나뿐이다. 한 줄을 굴리면(rrIdx) 나머지 줄은 잠긴다 — 같은 줄은 계속 굴릴 수 있다.
 const rerollLocked = (it, idx) => it.rrIdx != null && it.rrIdx !== idx;
 function rerollAffix(sv, it, idx) {
@@ -539,6 +541,7 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
+  if (n.kind === "bosshub2") return !!(sv.craid && sv.craid[2]);   // 상위 보스관문: 노말 레이드를 클리어한 뒤
   if (n.kind === "craid") return !!(sv.raid && sv.raid.tower);   // 레이드 던전: 탑이 솟은 뒤
   if (n.kind === "temple") return !!(sv.raid && sv.raid.cleared > 0);   // 돌의 신전: 심연의 문지기 모르가스를 클리어한 뒤
   if (n.kind === "endless" || n.kind === "void" || n.kind === "bosshub" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다

@@ -93,9 +93,9 @@ function planFor(node) {
   const plan = smoothSeq(w, nNormal);   // 구성 비율 고정
   if ((node.kind === "rift" || node.kind === "trial" || node.kind === "spire" || node.kind === "craid") && node.tier >= 50) { const ns = Math.min(8, 2 + Math.floor((node.tier - 50) / 12)); for (let i = 0; i < ns; i++) plan.splice(Math.floor(plan.length * (0.1 + 0.85 * (i + 0.5) / ns)), 0, "sniper"); }   // 저격수: 50단계부터, 이후 12단계마다 +1 (최대 8)
   for (let i = 0; i < elites; i++) plan.splice(Math.floor(plan.length * (0.15 + 0.8 * (i + 0.5) / elites)), 0, "brute");   // 정예는 일정 간격
-  if (RIFTLIKE[node.kind] && node.kind !== "void" && !isEB(node.kind) && node.kind !== "vault" && node.kind !== "spire" && node.kind !== "craid" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
-  if ((node.kind === "rift" || node.kind === "hell") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
-  if (node.kind === "rift" || node.kind === "hell") for (const wt of ["twarp", "swarp", "fwarp", "vwarp"]) if (Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = wt;   // 철갑의 징표 · 뇌전의 징표 (같은 확률)
+  if (RIFTLIKE[node.kind] && node.kind !== "void" && !isEB(node.kind) && node.kind !== "vault" && node.kind !== "craid" && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "warp";   // 공허의 열쇠
+  if ((node.kind === "rift" || node.kind === "hell" || node.kind === "spire") && Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = "hwarp";   // 정령의 불씨 (공허의 열쇠와 같은 확률)   // 열쇠: 단계와 무관하게 전투당 고정 확률
+  if (node.kind === "rift" || node.kind === "hell" || node.kind === "spire") for (const wt of ["twarp", "swarp", "fwarp", "vwarp"]) if (Math.random() < CFG.WARP_CHANCE) plan[Math.floor(plan.length * rnd(0.1, 0.9))] = wt;   // 철갑의 징표 · 뇌전의 징표 (같은 확률)
   if (boss) plan.splice(Math.floor(plan.length * 0.65), 0, "boss");
   return plan;
 }
