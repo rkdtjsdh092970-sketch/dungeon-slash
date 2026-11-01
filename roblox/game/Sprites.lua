@@ -68,6 +68,32 @@ function M.get(key, hue, flip)
   cache[ck] = info; return info
 end
 
+-- 일러스트(정적 한 장, ArtMap). 없거나 못 받으면 nil → 호출 쪽이 도트로 대체
+local okArt, ARTM = pcall(require, script.Parent.Data:FindFirstChild("ArtMap"))
+local ART = okArt and ARTM.ART or {}
+local artCache = {}
+function M.art(key)
+  if artCache[key] ~= nil then return artCache[key] or nil end
+  local meta = ART[key]; if not meta then artCache[key] = false; return nil end
+  local info = { w = meta.w, h = meta.h, foot = meta.foot or 0.92 }
+  if meta.id then info.content = Content.fromAssetId(tonumber(string.match(meta.id, "%d+")))
+  else
+    local ok, r = pcall(function() return M.rpc:InvokeServer("sheet", "art/" .. key) end)
+    if not ok or not r or not r.buf then warn("art", key, ok and r and r.err or r); artCache[key] = false; return nil end
+    local img = AssetService:CreateEditableImage({ Size = Vector2.new(meta.w, meta.h) })
+    img:WritePixelsBuffer(Vector2.zero, Vector2.new(meta.w, meta.h), r.buf)
+    info.content = Content.fromObject(img); info.img = img
+  end
+  artCache[key] = info; return info
+end
+-- 일러스트 ImageLabel. 발밑(ArtMap.foot, 그림마다 측정)이 Position 에 오도록 기준점을 잡는다.
+function M.artLabel(parent, key, size)
+  local info = M.art(key); if not info then return nil end
+  local l = Instance.new("ImageLabel"); l.BackgroundTransparency = 1; l.Size = UDim2.new(0, size, 0, size); l.AnchorPoint = Vector2.new(0.5, info.foot)
+  l.ScaleType = Enum.ScaleType.Fit; l.ImageContent = info.content; l.Parent = parent
+  return l
+end
+
 -- 애니메이션 프레임 계산 (웹 animFrame)
 function M.anim(key, anim, t)
   local rows = key == "warrior" and SPM.ROWS.warrior or SPM.ROWS.std

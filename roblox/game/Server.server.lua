@@ -7,6 +7,8 @@ local Loot = require(RS.Game.Loot)
 local Guild = require(RS.Game.Guild)
 local Battle = require(RS.Game.Battle)
 local SPM = require(RS.Game.Data.SpriteMap)
+local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))   -- 일러스트 표 (없으면 도트만)
+local ART = okArt and ARTM.ART or {}
 local HttpService = game:GetService("HttpService")
 
 local rpc = RS:FindFirstChild("Rpc") or Instance.new("RemoteFunction"); rpc.Name = "Rpc"; rpc.Parent = RS
@@ -55,7 +57,7 @@ task.spawn(function() while true do task.wait(120); for uid, s in pairs(sessions
 
 local sheetCache = {}
 local function sheetAction(arg)
-  local M = type(arg) == "string" and SPM.SHEETS[arg]; if not M then return { err = "없는 시트" } end
+  local M = type(arg) == "string" and (string.sub(arg, 1, 4) == "art/" and ART[string.sub(arg, 5)] or SPM.SHEETS[arg]); if not M then return { err = "없는 시트" } end
   if M.id then return { id = M.id, w = M.w, h = M.h, cell = M.cell } end
   if not sheetCache[arg] then
     local ok, body = pcall(function() return HttpService:GetAsync(SPM.BASE .. M.file, true) end)

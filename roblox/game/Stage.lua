@@ -28,6 +28,11 @@ function M.create(parent, W, H, replayAct)
   local bg = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, root)
   local function buildBg(act)
     bg:ClearAllChildren()
+    local art = Sprites.art("bg" .. (act or 1))   -- 일러스트 배경이 있으면 그것만 쓴다
+    if art then   -- 아래쪽 기준으로 잘라 그림의 바닥 띠가 레인(무대 아래쪽 절반)에 오게 한다
+      local rh = math.min(art.h, art.w * H / W)
+      mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Stretch, ImageContent = art.content, ImageRectOffset = Vector2.new(0, art.h - rh), ImageRectSize = Vector2.new(art.w, rh), ZIndex = 1 }, bg); return
+    end
     local P = M.PAL[((act or 1) - 1) % #M.PAL + 1]
     local sky = mk("Frame", { Size = UDim2.new(1, 0, 0.56, 0), BackgroundColor3 = P[1], BorderSizePixel = 0 }, bg)
     mk("UIGradient", { Color = ColorSequence.new(P[1], P[2]), Rotation = 90 }, sky)
@@ -57,8 +62,10 @@ function M.create(parent, W, H, replayAct)
   S.buildBg(replayAct or 1)
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
-  S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 72 * S.f)
-  S.pl.Position = UDim2.new(0, 56, 0, H * 0.72); S.pl.ZIndex = 5
+  S.plX, S.plY = 56, H * 0.72
+  S.pl = Sprites.artLabel(S.layer, "warrior", 80 * S.f); S.plArt = S.pl ~= nil
+  if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 72 * S.f) end
+  S.pl.Position = UDim2.new(0, S.plX, 0, S.plY); S.pl.ZIndex = 5
   -- 상태 바
   local function bar(y, color) local bg = mk("Frame", { Position = UDim2.new(0, 10, 1, y), Size = UDim2.new(0, 160, 0, 10), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 8 }, root); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, bg)
     local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = color, ZIndex = 9 }, bg); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, f); return f end
@@ -69,8 +76,19 @@ function M.create(parent, W, H, replayAct)
   local function sb(txt, x, cb) local b = mk("TextButton", { Text = txt, Size = UDim2.new(0, 68, 0, 22), Position = UDim2.new(0, x, 0, 0), BackgroundColor3 = Color3.fromRGB(30, 20, 50), BackgroundTransparency = 0.2, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, ZIndex = 30 }, S.ctrl); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, b); b.MouseButton1Click:Connect(cb) end
   sb("배속", 0, function() S:faster() end); sb("건너뛰기", 74, function() S:skip() end)
   S.idleConn = RunService.RenderStepped:Connect(function(dt) if S.conn or not S.alive then return end
-    S.plAnim.t += dt; local row, frame, done = Sprites.anim("warrior", "idle", S.plAnim.t); if S.plInfo then Sprites.setFrame(S.pl, S.plInfo, row, frame) end end)
+    S.plAnim.t += dt; if S.plArt then M.artPose(S) end
+    local row, frame, done = Sprites.anim("warrior", "idle", S.plAnim.t); if S.plInfo then Sprites.setFrame(S.pl, S.plInfo, row, frame) end end)
   return setmetatable(S, { __index = M })
+end
+
+-- 일러스트 영웅의 코드 애니메이션: 숨쉬기 / 공격 돌진 / 피격 붉은 번쩍임
+function M.artPose(S)
+  local a = S.plAnim; local dx, rot = 0, 0
+  local dy = math.sin(os.clock() * 3) * 2 * S.f
+  if a.name == "attack" then local k = math.clamp(a.t / 0.3, 0, 1); dx = math.sin(k * math.pi) * 18 * S.f; rot = math.sin(k * math.pi) * 8; if a.t > 0.3 then S.plAnim = { name = "idle", t = 0 } end
+  elseif a.name == "hurt" then dx = -4 * S.f; if a.t > 0.18 then S.plAnim = { name = "idle", t = 0 } end end
+  S.pl.Position = UDim2.new(0, S.plX + dx, 0, S.plY + dy); S.pl.Rotation = rot
+  S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 0.55, 0.55) or Color3.new(1, 1, 1)
 end
 
 function M:laneY(l, lanes) local top, bot = self.H * 0.5, self.H * 0.92; local lh = (bot - top) / math.max(1, lanes); return top + (l + 0.5) * lh, lh end
@@ -94,19 +112,23 @@ local function unitFor(S, e, lanes)
   local key, hue = e.sp, e.hu
   local size = (boss and math.min(150, 110 * (e.scl or 3) / 3 + 20) or (e.tier == "elite" and 84 or 58)) * S.f
   local lab, info
-  if boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
+  if boss then if (e.bh or 0) == 0 then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size) end
+  elseif key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 일러스트(색조 변형은 아직 도트)
+  local art = lab ~= nil
+  if art then -- 일러스트 사용
+  elseif boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
   else lab, info = Sprites.label(S.layer, key or "ghoul", hue or 0, true, size) end
   lab.ZIndex = 4 + (e.l or 0)
   local bar = mk("Frame", { Size = UDim2.new(0, size * 0.7, 0, 5), AnchorPoint = Vector2.new(0.5, 1), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 15 }, S.layer)
   local fill = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = boss and Color3.fromRGB(230, 90, 60) or (e.tier == "elite" and Color3.fromRGB(240, 190, 60) or Color3.fromRGB(110, 210, 110)), ZIndex = 16 }, bar)
-  u = { lab = lab, info = info, bar = bar, fill = fill, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
+  u = { lab = lab, info = info, art = art, bar = bar, fill = fill, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
   S.units[e.id] = u; return u
 end
 
 function M:applySnap(s, lanes)
   self.hpBar.Size = UDim2.new(math.clamp(s.hp, 0, 1), 0, 1, 0); self.mpBar.Size = UDim2.new(math.clamp(s.mp or 0, 0, 1), 0, 1, 0)
   local seen = {}
-  local py = self.pl.Position.Y.Offset
+  local py = self.plY
   for _, e in ipairs(s.e) do
     seen[e.id] = true
     local u = unitFor(self, e, lanes)
@@ -154,14 +176,21 @@ function M:play(replay, onDone, maxSec)
       if u.tx then u.x += (u.tx - u.x) * k; u.y += (u.ty - u.y) * k end
       u.lab.Position = UDim2.new(0, u.x, 0, u.y)
       u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); u.fill.Size = UDim2.new(math.clamp(u.hp or 1, 0, 1), 0, 1, 0)
-      if not u.boss and u.info then
+      if u.art then   -- 일러스트: 둥실거림 / 이동 시 통통 / 공격 시 앞으로 / 사망 시 뒤로 쓰러지며 사라짐
+        local ox, oy = 0, math.sin(u.t * 3) * 1.5 * self.f
+        if u.dying then u.lab.Rotation = math.min(80, u.dying * 160); u.lab.ImageTransparency = math.clamp((u.dying - 0.4) / 0.7, 0, 1)
+        elseif u.wind then ox = -math.abs(math.sin(u.t * 12)) * 8 * self.f
+        elseif math.abs((u.tx or u.x) - u.x) > 3 then oy = -math.abs(math.sin(u.t * 10)) * 4 * self.f end
+        u.lab.Position = UDim2.new(0, u.x + ox, 0, u.y + oy)
+      elseif not u.boss and u.info then
         local anim = "idle"; if u.dying then anim = "death" elseif u.wind then anim = "attack" elseif math.abs((u.tx or u.x) - u.x) > 3 then anim = "walk" end
         local row, frame = Sprites.anim(u.key, anim, anim == "death" and u.dying or u.t); Sprites.setFrame(u.lab, u.info, row, frame)
       elseif u.boss and u.dying then u.lab.ImageTransparency = math.min(1, u.dying) end
       if u.hit and u.hit > 0 then u.hit -= dt; u.lab.ImageColor3 = Color3.new(1, 0.7, 0.7) else u.lab.ImageColor3 = Color3.new(1, 1, 1) end
       if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); self.units[id] = nil end end
     end
-    if self.plInfo then
+    if self.plArt then self.plAnim.t += dt; M.artPose(self)
+    elseif self.plInfo then
       local a = self.plAnim; a.t += dt
       local row, frame, done = Sprites.anim("warrior", a.name, a.t); if done then self.plAnim = { name = "idle", t = 0 } end
       Sprites.setFrame(self.pl, self.plInfo, row, frame)
