@@ -301,3 +301,4 @@ local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" 
 local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 274); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
 for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 9) * 66, 0, math.floor((i - 1) / 9) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
 refresh(); if (summary and (summary.cleared or 0) == 0) then views.help() else views.fight() end
+shared.DungeonUI = { views = views, play = playReplay }   -- 테스트/디버그용 훅
