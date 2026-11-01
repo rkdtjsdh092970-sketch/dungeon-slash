@@ -10,6 +10,7 @@ local Stats = require(script.Parent.Stats)
 local M = {}
 local floor, max, min, sqrt, pow = math.floor, math.max, math.min, math.sqrt, math.pow or function(a, b) return a ^ b end
 
+local damagePlayer, raidTick
 local SKILL_BY = {}; for _, d in ipairs(SK.SKILLS) do SKILL_BY[d.id] = d end
 local PLAYER_NEAR = 1
 
@@ -156,9 +157,9 @@ local function centerLane(b, e) return e.lane + (e.h > 1 and rint(b, 0, e.h - 1)
 
 -- ---------- 생성 ----------
 local KEYS_ORDER = { "imp", "grunt", "archer", "mage", "spec" }
-local function smoothSeq(w, n, st)
+local function smoothSeq(w, n, st, order)
   local keys, W = {}, 0
-  for _, k in ipairs(KEYS_ORDER) do if (w[k] or 0) > 0 then keys[#keys + 1] = k; W += w[k] end end
+  for _, k in ipairs(order or KEYS_ORDER) do if (w[k] or 0) > 0 then keys[#keys + 1] = k; W += w[k] end end
   st = st or {}; local out = {}
   for _ = 1, n do
     local best
@@ -174,45 +175,82 @@ local function wavePool(act, stage, mods)
   return w
 end
 local function insertAt(plan, idx0, v) table.insert(plan, max(1, min(#plan + 1, idx0 + 1)), v) end
-local function planFor(b, node)
-  local kind = b.kind; local mods = node.mods or {}
-  local act = min(10, node.act or 10); local stage = node.stage or 10
-  local w = wavePool(act, stage, mods)
-  local nNormal, elites, boss
-  if kind == "spire" or kind == "rift" then
-    local t = node.tier; nNormal = min(110, floor(34 + 0.8 * t + 0.5)); elites = 2 + min(12, floor(t / 7))
-    boss = kind == "spire" and node.floor % 5 == 0 or (kind == "rift" and t % 5 == 0)
-    for _, m in ipairs(mods) do if m.elites then elites *= 3 end end
-  else
-    nNormal = CFG.WAVE_BASE + CFG.WAVE_STAGE * stage; elites = stage >= 2 and 1 + floor(stage / 2) or 0; boss = false
-    if kind == "boss" then nNormal = floor(nNormal * 0.55 + 0.5); boss = true end
-  end
-  local plan = smoothSeq(w, nNormal)
-  if (kind == "spire" or kind == "rift") and node.tier >= 50 then
-    local ns = min(8, 2 + floor((node.tier - 50) / 12))
-    for i = 0, ns - 1 do insertAt(plan, floor(#plan * (0.1 + 0.85 * (i + 0.5) / ns)), "sniper") end
-  end
-  for i = 0, elites - 1 do insertAt(plan, floor(#plan * (0.15 + 0.8 * (i + 0.5) / elites)), "brute") end
-  if boss then insertAt(plan, floor(#plan * 0.65), "boss") end
-  return plan
-end
 
+local BOSS_BY = {}; for _, d in ipairs(Mon.BOSSES) do BOSS_BY[d.id] = d end
+local VOID_TIER = { 100, 108, 126, 138 }
+local function bossRiftMult(t) return floorMult(t) * CFG.BOSS_RIFT_K end
+local function isEB(kind) return Mon.EB[kind] ~= nil end
+M.isEB = isEB
+local function voidPhase(b, e, si)
+  local hm = bossRiftMult(VOID_TIER[si]) / bossRiftMult(100)
+  e.vstage = si; e.maxHp = e.vbaseHp * hm; e.hp = e.maxHp; e.atk = e.vbaseAtk * hm; e.dmgBase = e.atk
+end
 local function specDef(va)
   local s = table.clone(Mon.ACT_SPECIAL[va + 1]); s.tier = "normal"; s.ranged = s.range >= 3; s.proj = va == 7 and "orb" or nil; return s
 end
 local function defOf(b, type, va)
   if type == "boss" then return b.bossDef end
   if type == "spec" then return specDef(min(va or b.va, 9)) end
-  return Mon.ENEMIES[type]
+  return Mon.WARPS[type] or Mon.ENEMIES[type]
 end
+local function warpMix(b, plan, node)
+  local kind = node.kind
+  if #plan == 0 then return end
+  if (kind == "rift" or kind == "spire" or kind == "trial" or kind == "endless") and b.rng:NextNumber() < CFG.WARP_CHANCE then plan[b.rng:NextInteger(1, #plan)] = "warp" end
+  if kind == "rift" or kind == "spire" then
+    if b.rng:NextNumber() < CFG.WARP_CHANCE then plan[b.rng:NextInteger(1, #plan)] = "hwarp" end
+    for _, wt in ipairs({ "twarp", "swarp", "fwarp", "vwarp" }) do if b.rng:NextNumber() < CFG.WARP_CHANCE then plan[b.rng:NextInteger(1, #plan)] = wt end end
+  end
+end
+local function planFor(b, node)
+  local kind = b.kind; local mods = node.mods or {}
+  local act = min(10, node.act or 10); local stage = node.stage or 10
+  local w = wavePool(act, stage, mods)
+  if kind == "temple" then
+    local pl = smoothSeq({ imp = 9, grunt = 6, archer = 4, mage = 3 }, 90)
+    for i = 0, 5 do insertAt(pl, floor(#pl * (i + 0.5) / 6), "brute") end; return pl
+  elseif kind == "warden" or kind == "raid" then return {}
+  elseif kind == "vault" then
+    local pl = smoothSeq({ coin = 12, goldbag = 1 }, 104, nil, { "coin", "goldbag" })
+    if b.rng:NextNumber() < CFG.VAULT_CHEST then insertAt(pl, floor(#pl * rnd(b, 0.35, 0.7)), "boss") end; return pl
+  elseif isEB(kind) then
+    local hw = wavePool(7, 5, mods); local pl = smoothSeq(hw, 70)
+    for i = 0, 4 do insertAt(pl, 8 + i * 14, "brute") end; insertAt(pl, 4, "boss"); return pl
+  elseif kind == "void" then
+    local pl = smoothSeq(w, 5); pl[#pl + 1] = "boss"; for _, x in ipairs(smoothSeq(w, 8)) do pl[#pl + 1] = x end; return pl
+  end
+  local nNormal, elites, boss
+  if kind == "spire" or kind == "rift" or kind == "craid" or kind == "trial" then
+    local t = node.tier; nNormal = min(110, floor(34 + 0.8 * t + 0.5)); elites = 2 + min(12, floor(t / 7))
+    boss = (kind == "craid") or (kind == "spire" and node.floor % 5 == 0) or ((kind == "rift" or kind == "trial") and t % 5 == 0)
+    for _, m in ipairs(mods) do if m.elites then elites *= 3 end end
+  elseif kind == "endless" then nNormal = 40; elites = 3; boss = false
+  else
+    nNormal = CFG.WAVE_BASE + CFG.WAVE_STAGE * stage; elites = stage >= 2 and 1 + floor(stage / 2) or 0; boss = false
+    if kind == "boss" then nNormal = floor(nNormal * 0.55 + 0.5); boss = true
+    elseif kind == "elite" then nNormal = 45; elites = 10 + act
+    elseif kind == "treasure" then nNormal = 95; elites = 0 end
+  end
+  local plan = smoothSeq(w, nNormal)
+  if (kind == "spire" or kind == "rift" or kind == "craid" or kind == "trial") and node.tier >= 50 then
+    local ns = min(8, 2 + floor((node.tier - 50) / 12))
+    for i = 0, ns - 1 do insertAt(plan, floor(#plan * (0.1 + 0.85 * (i + 0.5) / ns)), "sniper") end
+  end
+  for i = 0, elites - 1 do insertAt(plan, floor(#plan * (0.15 + 0.8 * (i + 0.5) / elites)), "brute") end
+  if kind ~= "craid" then warpMix(b, plan, node) end
+  if boss then insertAt(plan, floor(#plan * 0.65), "boss") end
+  return plan
+end
+
 local function hasTrait(e, t) for _, x in ipairs(e.traits) do if x == t then return true end end return false end
 
 local function makeEnemy(b, type, lane, col)
-  local isBoss = type == "boss"; local va = b.kind == "rift" and rint(b, 6, 9) or b.va; local D = defOf(b, type, va)
+  local isBoss = type == "boss"; local va = (b.kind == "rift" or b.kind == "trial" or b.kind == "endless" or b.kind == "void") and rint(b, 6, 9) or b.va; local D = defOf(b, type, va)
   local bx = isBoss and CFG.BOSSX or 1
+  local gh, ga = 1, 1; if b.endless then gh = 1.06 ^ ((b.ddt or 0) / 20); ga = 1.045 ^ ((b.ddt or 0) / 20) end
   local e = {
     id = b.nextId, type = type, def = D, tier = isBoss and "boss" or (D.tier or "normal"), w = isBoss and D.w or 1, h = isBoss and D.h or 1, lane = lane, col = col,
-    traits = D.traits or {}, hp = D.hp * b.hpM * bx, maxHp = D.hp * b.hpM * bx, atk = D.atk * b.atkM, range = D.range, interval = D.interval / b.haste, windup = D.windup,
+    traits = D.traits or {}, hp = D.hp * b.hpM * bx * gh, maxHp = D.hp * b.hpM * bx * gh, atk = D.atk * b.atkM * ga, range = D.range, interval = D.interval / b.haste, windup = D.windup,
     moveCd = CFG.MOVE_TIME, winding = 0, flash = 0, hurtT = 0, chill = 0, shock = 0, age = 0, dead = false, stun = 0, dots = {},
   }
   b.nextId += 1
@@ -222,8 +260,9 @@ local function makeEnemy(b, type, lane, col)
   for _, t in ipairs(e.traits) do local T = Mon.TRAIT_DEF[t]; if T then dd[1] += T[1]; dd[2] += T[2] end end
   local sc = (1 + CFG.DEF_ACT * (min(10, b.actDef or b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier or 0))
   e.dm = max(0, dd[1] * sc); e.rm = max(0, dd[2] * sc); e.shD = 0; e.shR = 0
-  e.eres = (b.kind == "spire") and { 0.1, 0.1, 0.1, 0.1 } or Mon.ACT_ELEM[min(9, max(0, va)) + 1]   -- 붉은 탑 몬스터는 속성 저항이 모두 같다
+  e.eres = isEB(b.kind) and { 0, 0, 0, 0 } or ((b.kind == "spire" or b.kind == "craid" or b.kind == "warden") and { 0.1, 0.1, 0.1, 0.1 } or Mon.ACT_ELEM[min(9, max(0, va)) + 1])   -- 붉은 탑 몬스터는 속성 저항이 모두 같다
   if isBoss then
+    if b.kind == "void" then e.vbaseHp = e.maxHp; e.vbaseAtk = e.atk; voidPhase(b, e, max(1, min(4, b.node.vsel or 1))) end
     e.abil = {}; for _, a in ipairs(D.abilities or {}) do e.abil[#e.abil + 1] = { d = a, t = (a.every or 0) * rnd(b, 0.55, 0.9) } end
     e.dmgBase = e.atk; b.bossRef = e
   end
@@ -262,6 +301,34 @@ local function trySpawn(b)
     b.spawnCd = CFG.SPAWN_INTERVAL * (e.tier == "normal" and 1 or 3); return
   end
   b.spawnCd = 0.15
+end
+local function spawnRaid(b)
+  b.raid = true; b.spawnCd = 1e9
+  local e = spawnAt(b, "boss", 0, 2); e.h = b.lanes; e.w = 3; e.range = 99
+  e.raid = { limit = CFG.RAID.THR[1] * e.maxHp, idx = 1, sealed = false, t = 0, vuln = 0, blast = 0, cap = e.maxHp, prev = e.maxHp, fails = 0 }
+  e.crystalHp = CFG.RAID.CRYSTAL * b.hpM * 1000
+end
+local function spawnCrystals(b, e)
+  local n = b.lanes; local hp = e.crystalHp / n
+  for lane = 0, n - 1 do
+    local c = makeEnemy(b, "imp", lane, 1); c.crystal = true; c.hp = hp; c.maxHp = hp; c.atk = 0; c.atkCd = 1e9; c.range = 99; c.traits = {}; c.eres = { 0, 0, 0, 0 }
+    c.def = table.clone(c.def); c.def.gold = 0; b.enemies[#b.enemies + 1] = c
+  end
+end
+raidTick = function(b, e, dt)
+  local R = e.raid; local K = CFG.RAID; if not R then return end
+  if R.vuln > 0 then R.vuln -= dt end
+  if not R.sealed then
+    if R.limit > 0 and e.hp <= R.limit + 1 then R.sealed = true; R.t = 0; R.blast = K.BLAST; R.cap = R.prev; spawnCrystals(b, e); R.fails = 0 end
+    return
+  end
+  R.t += dt
+  local any = false; for _, x in ipairs(b.enemies) do if not x.dead and x.crystal then any = true end end
+  if not any then
+    R.sealed = false; R.prev = R.limit; R.idx += 1; R.limit = K.THR[R.idx] and K.THR[R.idx] * e.maxHp or 0; R.vuln = K.VULN; e.stun = max(e.stun or 0, 2.2); return
+  end
+  e.hp = min(R.cap, e.hp + e.maxHp * K.REGEN * dt)
+  R.blast -= dt; if R.blast <= 0 then R.blast = K.BLAST; damagePlayer(b, e.atk * K.BLASTM * (1 + R.t / 60), { boss = true }) end
 end
 local function summonAdds(b, type, count, owner)
   local n = 0
@@ -362,7 +429,7 @@ local function cxHurt(b, d)
   if (b.xShield or 0) > 0 then local ab = min(b.xShield, d); b.xShield -= ab; d -= ab end
   return d
 end
-local function damagePlayer(b, raw, opt)
+damagePlayer = function(b, raw, opt)
   opt = opt or {}
   if b.inv > 0 then return end
   if not opt.undodgeable and b.rng:NextNumber() < b.stats.dodge then b.dodges += 1; if b.stats.sat.dodgeamp then b.dodgeBoost = true end; if b.stats.cm and b.stats.cm.dodge then b.dodgeBoost2 = true end; return end
@@ -410,6 +477,12 @@ applyDamage = function(b, e, dmg, o)
   o = o or {}
   if e.shield then dmg *= 0.1 end
   if e.plate and not o.dot then dmg *= 1 - e.plate.red end
+  if e.def and e.def.hive then local others = false; for _, x in ipairs(b.enemies) do if not x.dead and x ~= e then others = true end end; if #b.plan > 0 or others then return 0 end end
+  if e.def and e.def.raid and e.raid then
+    local R = e.raid
+    if R.sealed then dmg *= 0.03 elseif R.limit > 0 then dmg = min(dmg, max(0, e.hp - R.limit)) end
+    if R.vuln > 0 then dmg *= CFG.RAID.VULNM end
+  end
   e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time
   if e.charge then e.charge.dealt += dmg end
   if e.reflect and o.src == "skill" then damagePlayer(b, min(dmg * e.reflect.pct, b.maxHp * 0.002), { undodgeable = true }) end
@@ -501,6 +574,9 @@ killEnemy = function(b, e)
   if e.dead then return end
   e.dead = true
   if hasTrait(e, "split") and not e.exploded then for _ = 1, 2 do spawnNear(b, "imp", e.lane, e.col) end end
+  if e.type == "warp" then b.keys += 1 elseif e.type == "hwarp" then b.keys2 += 1 elseif e.type == "twarp" then b.keys3 += 1 elseif e.type == "swarp" then b.keys4 += 1 elseif e.type == "fwarp" then b.keys5 += 1 elseif e.type == "vwarp" then b.keys6 += 1 end
+  if e.def and (e.def.titan or e.def.storm) then for _, x in ipairs(table.clone(b.enemies)) do if x ~= e and not x.dead and x.pylon then x.hp = 0; killEnemy(b, x) end end end
+  if e.def and e.def.raid then for _, x in ipairs(table.clone(b.enemies)) do if x ~= e and not x.dead and x.crystal then x.hp = 0; killEnemy(b, x) end end end
   if e.def and e.def.hive then b.plan = {}; for _, x in ipairs(table.clone(b.enemies)) do if x ~= e and not x.dead then x.hp = 0; killEnemy(b, x) end end end
   b.kills += 1; if e.tier == "elite" then b.eliteKills += 1 end; if e.tier == "boss" then b.bossKills += 1 end
   b.gold += e.def.gold * (1.45 ^ (b.act - 1)) * (1 + b.stats.goldFind) * 2 * rnd(b, 0.8, 1.3)
@@ -749,12 +825,20 @@ local function bossAbility(b, e, a)
   elseif id == "shield" then
     local n = summonAdds(b, "grunt", d.adds, e); if n >= 1 then e.shield = { t = d.dur, need = n }; for _, x in ipairs(b.enemies) do if x.summoned and x.owner == e.id and not x.dead then x.shieldAdd = true end end end
   elseif id == "plate" then e.plate = { t = d.dur, red = d.red }
+  elseif id == "pylon" then
+    local before = {}; for _, x in ipairs(b.enemies) do before[x] = true end
+    summonAdds(b, "imp", d.count, e); for _, x in ipairs(b.enemies) do if not before[x] and not x.dead then x.pylon = true; x.maxHp = x.maxHp * 14; x.hp = x.maxHp end end
   elseif id == "chainbolt" then for i = 0, d.hits - 1 do b.events[#b.events + 1] = { t = 0.6 + i * 0.28, fn = function() damagePlayer(b, e.atk * d.mult, { boss = true }) end } end
   elseif id == "charge" then e.charge = { t = d.windup, dealt = 0, mult = d.mult, interrupt = d.interrupt }
   elseif id == "rain" then for i = 0, d.hits - 1 do b.events[#b.events + 1] = { t = 0.8 + i * 0.45, fn = function() damagePlayer(b, e.atk * d.mult, { boss = true }) end } end
   end
 end
 local function bossTick(b, e, dt)
+  if e.def.raid then raidTick(b, e, dt) end
+  if e.def.storm then local np = 0; for _, x in ipairs(b.enemies) do if x.pylon and not x.dead then np += 1 end end
+    if np > 0 then local m = 0.1 * np; b.debuffs.curse = { t = 1.0, mult = max(m, (b.debuffs.curse and b.debuffs.curse.t > 0.5) and b.debuffs.curse.mult or 0) } end end
+  if e.def.venom and not e.dead then local pz = false; for _, d in ipairs(e.dots) do if d.k == "poison" then pz = true end end; if not pz then e.hp = min(e.maxHp, e.hp + e.maxHp * CFG.VENOM_REGEN * dt) end end
+  if e.def.hive then local others = false; for _, x in ipairs(b.enemies) do if not x.dead and x ~= e then others = true end end; e.guard = (#b.plan > 0) or others end
   if e.plate then e.plate.t -= dt; if e.plate.t <= 0 then e.plate = nil end end
   for _, a in ipairs(e.abil or {}) do
     if a.d.id == "enrage" then
@@ -783,31 +867,49 @@ end
 function M.new(sv, node, seed)
   local st = Stats.computeStats(sv)
   local kind = node.kind or "spire"
-  local isFloor = kind == "spire" or kind == "rift"
+  local EBk = isEB(kind)
+  local floorLike = { spire = 1, rift = 1, trial = 1, craid = 1, warden = 1, void = 1, temple = 1, endless = 1, vault = 1, raid = 1, hell = 1 }
+  local isFloor = floorLike[kind] or EBk
   local act = max(1, min(10, node.act or 10))
   local mods = node.mods or {}
   local stage = isFloor and 4 or (node.stage or CFG.STAGES)
   local scAct = (node.tier or isFloor) and 1 or act
-  local riftMul = node.tier and floorMult(node.tier) or 1
-  local sub = kind == "spire" and node.floor or (kind == "rift" and node.tier or nil)
+  local riftMul
+  if kind == "raid" then riftMul = floorMult(CFG.RIFT_END)
+  elseif node.tier then riftMul = (kind == "void" or EBk) and bossRiftMult(node.tier) or floorMult(node.tier)
+  elseif isFloor then riftMul = floorMult(CFG.RIFT_END) else riftMul = 1 end
+  local sub = (kind == "spire" and node.floor) or (kind == "rift" and node.tier) or nil
   if sub and sub % 5 == 0 and sub % 20 ~= 0 then riftMul *= CFG.BOSS_FLOOR_K end
-  local atkExtra = isFloor and floorMult(node.tier) ^ ((kind == "spire" and CFG.SPIRE.ATKP or CFG.FLOOR_ATKP) - 1) or 1
+  local towerLike = kind == "spire" or kind == "craid" or kind == "warden" or node.upper
+  local atkExtra = 1
+  if kind == "rift" or kind == "raid" or towerLike then atkExtra = floorMult(node.tier or CFG.RIFT_END) ^ ((towerLike and CFG.SPIRE.ATKP or CFG.FLOOR_ATKP) - 1) end
+  local atkUsesRift = kind == "rift" or kind == "hell" or kind == "raid" or towerLike
   local mHp, mAtk, mHaste, capPlus = 1, 1, 1, 0
   for _, m in ipairs(mods) do mHp *= (m.hp or 1); mAtk *= (m.atk or 1); mHaste *= (m.haste or 1); if m.cap then capPlus = 1 end end
   local b = {
     node = node, act = act, actDef = act, stage = stage, kind = kind, tier = node.tier or 0, mods = mods, stats = st, time = 0, over = false, win = false, enemies = {}, zones = {}, persist = {}, dmgBy = {}, events = {},
-    nextId = 1, hp = st.maxHp, maxHp = st.maxHp, mana = st.maxMana, maxMana = st.maxMana, lanes = (kind == "spire") and 4 or st.lanes, cap = min(CFG.STACK_MAX, st.stackCap + capPlus), spawnCd = 0.3,
+    nextId = 1, hp = st.maxHp, maxHp = st.maxHp, mana = st.maxMana, maxMana = st.maxMana, lanes = st.lanes, cap = min(CFG.STACK_MAX, st.stackCap + capPlus), spawnCd = 0.3,
     kills = 0, eliteKills = 0, bossKills = 0, gold = 0, dodges = 0, taken = 0, dealt = 0, debuffs = {}, buffs = {}, poisonCd = 8, revive = st.revive, inv = 0, haste = mHaste,
-    lastDealT = 0, rng = Random.new(seed or os.time()),
-    va = kind == "spire" and 11 or (isFloor and 7 or (min(10, act) - 1)),
+    lastDealT = 0, rng = Random.new(seed or os.time()), endless = kind == "endless", ddt = 0, keys = 0, keys2 = 0, keys3 = 0, keys4 = 0, keys5 = 0, keys6 = 0,
+    va = (kind == "temple" and 10) or ((kind == "spire" or kind == "craid" or kind == "warden") and 11) or (EBk and 6) or ((kind == "rift" or kind == "trial" or kind == "endless" or kind == "void") and 7) or (min(10, act) - 1),
   }
+  if kind == "temple" or kind == "spire" or kind == "craid" or kind == "warden" then b.lanes = 4 end
   b.hpM = CFG.H0 * CFG.HPX ^ (scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * mHp
-  b.atkM = CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (isFloor and riftMul * atkExtra or riftMul) * mAtk
+  b.atkM = CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (atkUsesRift and riftMul * atkExtra or riftMul) * mAtk
+  if kind == "raid" then b.hpM *= CFG.RAID.K; b.atkM *= CFG.RAID.ATK end
+  if kind == "warden" then b.hpM *= CFG.WARDEN.K; b.atkM *= CFG.WARDEN.ATK end
   b.lsRate = b.maxHp * min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2
   if kind == "spire" then b.bossDef = Mon.BOSSES[((node.floor // 5) - 1 + 10) % 10 + 1]
-  elseif kind == "rift" then b.bossDef = Mon.BOSSES[((node.tier // 5) - 1 + 10) % 10 + 1]
-  elseif kind == "boss" then b.bossDef = Mon.BOSSES[min(10, act)] end
+  elseif kind == "rift" or kind == "trial" then b.bossDef = Mon.BOSSES[((node.tier // 5) - 1 + 10) % 10 + 1]
+  elseif kind == "boss" then b.bossDef = Mon.BOSSES[min(10, act)]
+  elseif kind == "void" then b.bossDef = BOSS_BY.void
+  elseif kind == "raid" then b.bossDef = BOSS_BY.gate
+  elseif kind == "vault" then b.bossDef = Mon.BOSSES[#Mon.BOSSES]
+  elseif kind == "warden" then b.bossDef = Mon.BOSSES[9]
+  elseif kind == "craid" then b.bossDef = Mon.BOSSES[CFG.CRAID.BOSS[node.diff + 1] % 10 + 1]
+  elseif EBk then b.bossDef = Mon.EB[kind].boss end
   b.plan = planFor(b, node)
+  if kind == "raid" then b.plan = {}; spawnRaid(b) end
   b.skills = {}; b.slotCount = sv.slots or 0
   for i, l in ipairs(sv.loadout or {}) do
     if l and i <= sv.slots then
@@ -838,6 +940,8 @@ function M.step(b, dt)
   for _, ev in ipairs(b.events) do ev.t -= dt end
   local due = filter(b.events, function(ev) return ev.t <= 0 end)
   if #due > 0 then b.events = filter(b.events, function(ev) return ev.t > 0 end); for _, ev in ipairs(due) do ev.fn() end end
+  if b.endless then b.ddt += dt; if #b.plan < 10 then local w = wavePool(10, 5, b.mods); for _, t in ipairs(smoothSeq(w, 40, b.rr)) do b.plan[#b.plan + 1] = t end; b.rr = b.rr or {} end end
+  if b.kind == "void" and b.bossRef and not b.bossRef.dead and #b.plan < 2 and #b.enemies < 5 then for _, t in ipairs(smoothSeq(wavePool(10, 10, b.mods), 6, b.rr)) do b.plan[#b.plan + 1] = t end; b.rr = b.rr or {} end
   b.spawnCd -= dt; if b.spawnCd <= 0 and #b.plan > 0 then trySpawn(b) end
   for _, e in ipairs(table.clone(b.enemies)) do
     if not e.dead then
@@ -897,7 +1001,8 @@ function M.step(b, dt)
   if b.hp <= 0 and b.revive > 0 then b.revive -= 1; b.hp = b.maxHp * 0.5; b.inv = 1.5; b.rvShieldT = b.time + 3 end
   if b.hp <= 0 then b.hp = 0; b.over = true; b.win = false
   elseif #b.plan == 0 and #b.enemies == 0 and #b.events == 0 then b.over = true; b.win = true
-  elseif b.time > 900 then b.over = true; b.win = false end
+  elseif b.endless and b.time > 1200 then b.over = true; b.win = true
+  elseif not b.endless and b.time > (b.kind == "void" and 1800 or (b.kind == "raid" and CFG.RAID.LIMIT or (b.kind == "warden" and CFG.WARDEN.LIMIT or 900))) then b.over = true; b.win = false end
 end
 
 -- 허수아비 전투: 일정 시간 동안 낸 총 피해(= 길드 보스 · 전투력 측정). 보스 허수아비 1마리(체력 무한).
