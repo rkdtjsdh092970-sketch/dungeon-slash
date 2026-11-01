@@ -33,5 +33,6 @@ M.ART = {
   i_chaos = { w = 96, h = 96, foot = 0.99, file = "art_i_chaos.rgba", id = nil },
   i_divine = { w = 96, h = 96, foot = 1.0, file = "art_i_divine.rgba", id = nil },
   i_stone = { w = 96, h = 96, foot = 0.99, file = "art_i_stone.rgba", id = nil },
+  i_speed = { w = 96, h = 96, foot = 0.938, file = "art_i_speed.rgba", id = nil },
 }
 return M

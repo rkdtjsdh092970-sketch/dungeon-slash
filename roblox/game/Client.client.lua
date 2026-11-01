@@ -836,6 +836,7 @@ end
 pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
 pcall(function() owns4 = rpc:InvokeServer("speedpass").owns == true end)
 makeStage()
+relayout()   -- 로딩 중(그림을 받는 동안) 화면 크기가 바뀌었을 수 있으므로 배치를 한 번 다시 계산
 loadStep("준비 완료!", 1)
 setScreen("town")
 task.wait(0.35)
