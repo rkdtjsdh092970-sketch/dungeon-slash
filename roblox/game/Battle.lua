@@ -246,7 +246,87 @@ end
 
 -- ---------- 피해 ----------
 local function healPlayer(b, amt) if b.debuffs.wound then amt *= b.debuffs.wound.mult end; b.hp = min(b.maxHp, b.hp + amt) end
-local killEnemy
+local killEnemy, castSkillRaw, applyDamage
+-- ---------- 사탄 · 참 효과 (코드형 줄) ----------
+local function satInit(b)
+  b._si = true
+  local n = 0; for _, x in ipairs(b.skills) do end
+  b.satEmpty = (b.slotCount or 0) - #b.skills
+  local act = {}; for _, x in ipairs(b.skills) do if x.slot == "active" and x.dtype ~= "buff" and x.dtype ~= "heal" then act[#act + 1] = x end end
+  local allNormal = #act > 0; for _, x in ipairs(act) do if (x.rarity or 0) ~= 0 then allNormal = false end end
+  b.satNormal = allNormal
+end
+local function satFront(b) local best; for _, e in ipairs(b.enemies) do if not e.dead and (best == nil or e.col < best.col) then best = e end end return best end
+local function satMult(b, e, sk)
+  local S, C = b.stats.sat, b.stats.cm or {}; local m = 1
+  if C.first and sk.idx == 0 then m *= 1 + C.first end
+  if C.full and b.mana >= b.maxMana * 0.99 then m *= 1 + C.full end
+  if C.start and b.time < 3 then m *= 1 + C.start end
+  if C.elite and b.time < (b.cEliteT or 0) then m *= 1 + C.elite end
+  if C.dodge and b.dodgeBoost2 then m *= 1 + C.dodge end
+  if S.noelem and sk.elem then return 0 end
+  if S.manafull then m *= b.mana >= b.maxMana * 0.99 and 1.3 or 0.9 end
+  if S.first then m *= sk.idx == 0 and 1.4 or 0.9 end
+  if S.empty then m *= 1 + 0.25 * (b.satEmpty or 0) end
+  if S.fire and sk.dtype ~= "mag" and b.time % 8 >= 3 then m *= 1.4 end
+  if S.elite and b.time < (b.sEliteT or 0) then m *= 1.25 end
+  if S.lowhp then m *= b.hp <= b.maxHp * 0.4 and 2.5 or 0.4 end
+  if S.normalonly and b.satNormal then m *= 2 end
+  if S.start and b.time < 3 then m *= 1.6 end
+  if S.ready then local all = true; for _, x in ipairs(b.skills) do if x.cdLeft > 0 then all = false end end; if all then m *= 1.5 end end
+  if S.lanes then local seen, n = {}, 0; for _, x in ipairs(b.enemies) do if not x.dead and not seen[x.lane] then seen[x.lane] = true; n += 1 end end; m *= 1 + 0.05 * n end
+  if S.stack and b.time < (b.hurtT2 or 0) then m *= 1 + 0.01 * (b.hurtStack or 0) end
+  if S.dodgeamp and b.dodgeBoost then m *= 1.3 end
+  return m
+end
+local function satCrit(b)
+  local S = b.stats.sat; if not S.critstack then return 0 end
+  if b.time > (b.csT or 0) then b.cs = 0 end
+  local v = 0.1 * (b.cs or 0); b.cs = min(6, (b.cs or 0) + 1); b.csT = b.time + 5; return v
+end
+local function hasDot(e, k) for _, d in ipairs(e.dots) do if d.k == k then return true end end return false end
+local function satOnHit(b, e, sk, dealt)
+  local S, C = b.stats.sat, b.stats.cm or {}
+  b.dodgeBoost = false; b.dodgeBoost2 = false
+  if C.leech and hasDot(e, "poison") then local want = min(dealt * C.leech, b.lsTok); b.hp = min(b.maxHp, b.hp + want); b.lsTok -= want end
+  if S.leech and (hasDot(e, "poison") or hasDot(e, "bleed")) then local want = min(dealt * 0.04, b.lsTok); b.hp = min(b.maxHp, b.hp + want); b.lsTok -= want end
+  if (S.proc or S.thunder) and not b._inProc and b.time >= (b.procT or 0) then
+    local act = {}; for _, x in ipairs(b.skills) do if x.slot == "active" and x.dtype ~= "buff" and x.dtype ~= "heal" and x ~= sk then act[#act + 1] = x end end
+    local function roll(ch, pool) if #pool > 0 and b.rng:NextNumber() < ch then b._inProc = true; b.procT = b.time + 0.4; castSkillRaw(b, pool[b.rng:NextInteger(1, #pool)]); b._inProc = false; return true end return false end
+    if not (S.proc and roll(0.08, act)) and S.thunder then roll(0.12, filter(act, function(x) return x.elem == "light" end)) end
+  end
+end
+local function satOnKill(b, e)
+  local S, C = b.stats.sat, b.stats.cm or {}
+  if C.mkill then b.mana = min(b.maxMana, b.mana + b.maxMana * C.mkill) end
+  if C.elite and (e.tier == "elite" or e.tier == "boss") then b.cEliteT = b.time + 5 end
+  if C.goldx and b.rng:NextNumber() < C.goldx then b.gold += e.def.gold * 1.45 ^ (b.act - 1) * 4 end
+  if S.elite and (e.tier == "elite" or e.tier == "boss") then b.sEliteT = b.time + 5 end
+  if S.mkill then b.mana = min(b.maxMana, b.mana + b.maxMana * 0.04) end
+  if S.ignheal and hasDot(e, "ignite") then b.hp = min(b.maxHp, b.hp + b.maxHp * 0.03) end
+  if S.spread then
+    local pd; for _, d in ipairs(e.dots) do if d.k == "poison" then pd = d; break end end
+    if pd then
+      local o = filter(b.enemies, function(y) return not y.dead and y ~= e end)
+      table.sort(o, function(a, c) return math.abs(a.col - e.col) < math.abs(c.col - e.col) end)
+      for i = 1, min(2, #o) do o[i].dots[#o[i].dots + 1] = { k = "poison", dps = pd.dps, t = max(2, pd.t) } end
+    end
+  end
+end
+local function satOnHurt(b)
+  local S = b.stats.sat
+  if S.stack then b.hurtStack = b.time < (b.hurtT2 or 0) and min(20, (b.hurtStack or 0) + 1) or 1; b.hurtT2 = b.time + 5 end
+  if S.counter and b.rng:NextNumber() < 0.08 then local f = satFront(b); if f then applyDamage(b, f, b.stats.def * 3, { src = "counter" }) end end
+end
+local function satTick(b, dt)
+  if not b._si then satInit(b) end
+  local S = b.stats.sat
+  if S.shadow then
+    b.shT = (b.shT or 0) + dt
+    if b.shT >= 6 then local f = satFront(b); if f then b.shT = 0; applyDamage(b, f, b.stats.atk * CFG.PHYS_BASE * 8, { src = "shadow" }) else b.shT = 5.9 end end
+  end
+end
+local function satDefMul(b) local S = b.stats.sat; local m = 1; if S.lowdef and b.hp <= b.maxHp * 0.3 then m *= 4 end; if S.mana0 and b.mana <= 0 then m *= 3 end; return m end
 local function cxHurt(b, d)
   local C = b.stats.cm; if not C then return d end
   if C.x_cap then d = min(d, b.maxHp * C.x_cap) end
@@ -256,8 +336,8 @@ end
 local function damagePlayer(b, raw, opt)
   opt = opt or {}
   if b.inv > 0 then return end
-  if not opt.undodgeable and b.rng:NextNumber() < b.stats.dodge then b.dodges += 1; return end
-  local dfv = b.stats.def
+  if not opt.undodgeable and b.rng:NextNumber() < b.stats.dodge then b.dodges += 1; if b.stats.sat.dodgeamp then b.dodgeBoost = true end; if b.stats.cm and b.stats.cm.dodge then b.dodgeBoost2 = true end; return end
+  local dfv = b.stats.def * satDefMul(b)
   local d = raw * (1 - dfv / (dfv + 5 * (CFG.DEF_POW == 1 and raw or raw ^ CFG.DEF_POW)))
   if b.debuffs.curse then d *= 1 + b.debuffs.curse.mult end
   do local C = b.stats.cm; if C then
@@ -272,7 +352,7 @@ local function damagePlayer(b, raw, opt)
     local keep = b.maxMana * CFG.MANA_SHIELD_KEEP; local avail = max(0, b.mana - keep)
     local ab = min(d * b.stats.manaShield, avail / CFG.MANA_SHIELD_COST); b.mana -= ab * CFG.MANA_SHIELD_COST; d -= ab
   end
-  b.hp -= d; b.taken += d
+  b.hp -= d; b.taken += d; satOnHurt(b)
   local C = b.stats.cm
   if C and C.x_last and not b._lg and b.hp > 0 and b.hp <= b.maxHp * 0.25 then b._lg = true; b.inv = max(b.inv or 0, 3) end
 end
@@ -295,7 +375,7 @@ local function statusMul(st, sk, e)
 end
 local ELEM_IDX = { fire = 1, cold = 2, light = 3, void = 4 }
 
-local function applyDamage(b, e, dmg, o)
+applyDamage = function(b, e, dmg, o)
   if e.dead then return 0 end
   if e.orb then return 0 end
   o = o or {}
@@ -345,7 +425,7 @@ local function hitEnemy(b, e, mult, sk, o)
   if sk.elem then inc += st.elemDmg + (st[sk.elem .. "Dmg"] or 0) end
   local dmg = (mag and st.mag * CFG.MAG_BASE or st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e)
   if b.buffs.cry then dmg *= 1 + b.buffs.cry.power end
-  dmg *= rnd(b, 0.92, 1.08)
+  dmg *= rnd(b, 0.92, 1.08) * satMult(b, e, sk)
   -- 전직 효과: 겹침 타격 · 마나 과충전 · 취약
   local C = st.cm
   if C then
@@ -369,11 +449,11 @@ local function hitEnemy(b, e, mult, sk, o)
   if sk.elem then dmg *= 1 - max(-0.5, min(CFG.RES_CAP, e.eres[ELEM_IDX[sk.elem]] - st.penElem)) end
   local cc = mag and (st.magCrit ~= 0 and st.critChance + st.spellCrit or st.spellCrit) or st.critChance
   local crit = b.rng:NextNumber() < min(0.9, cc + (sk.critAdd or 0))
-  if crit then dmg *= 1 + st.critDmg end
+  if crit then dmg *= 1 + st.critDmg + satCrit(b) end
   if mag then if st.shredRes > 0 then e.shR = min(st.shredRes, e.shR + st.shredRes * 0.34) end
   elseif st.shredDef > 0 then e.shD = min(st.shredDef, e.shD + st.shredDef * 0.34) end
   local dealt = applyDamage(b, e, dmg, { crit = crit, src = "skill", lifesteal = sk.lifesteal })
-  b.dmgBy[sk.id] = (b.dmgBy[sk.id] or 0) + dealt; applyStatus(b, e, sk, dealt)
+  b.dmgBy[sk.id] = (b.dmgBy[sk.id] or 0) + dealt; applyStatus(b, e, sk, dealt); satOnHit(b, e, sk, dealt)
   if st.manaHit > 0 and b.time >= (b.leechT or 0) then b.mana = min(b.maxMana, b.mana + b.maxMana * st.manaHit); b.leechT = b.time + 0.1 end
   -- 전직 효과: 연쇄 방전 · 빙결 파쇄 · 소멸
   if C and dealt > 0 then
@@ -416,6 +496,7 @@ killEnemy = function(b, e)
     end
     if C.x_overkill and e.hp < 0 then local o2 = near(); if #o2 > 0 then applyDamage(b, pick(b, o2), -e.hp * C.x_overkill, { src = "cx" }) end end
   end
+  satOnKill(b, e)
   if b.stats.manaKill and b.stats.manaKill > 0 then b.mana = min(b.maxMana, b.mana + b.stats.manaKill) end
   if b.stats.killHeal > 0 and not b.over then b.hp = min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound and b.debuffs.wound.mult or 1)) end
 end
@@ -574,7 +655,7 @@ end
 KINDS.hole = function(b, sk, p) b.persist[#b.persist + 1] = { kind = "hole", lane = centerLane(b, p), col = max(2, p.col), t = sk.dur, tick = 0.1, every = sk.every, sk = sk }; return true end
 local NEEDS_PRIMARY = { single = 1, multi = 1, pierce = 1, chain = 1, zone = 1, boomer = 1, cone = 1, zone2 = 1, shuri = 1, hole = 1 }
 
-local function castSkillRaw(b, sk)
+castSkillRaw = function(b, sk)
   local K = sk.kind
   if K == "buff" then
     local any = false; for _, e in ipairs(b.enemies) do if not e.dead and e.col <= sk.range then any = true end end; if not any then return false end
@@ -674,7 +755,7 @@ function M.new(sv, node, seed)
   local st = Stats.computeStats(sv)
   local act = max(1, min(10, node.act or 10))
   local riftMul = floorMult(node.tier)
-  if node.floor % 5 == 0 and node.floor % 20 ~= 0 and node.tw ~= 2 then riftMul *= CFG.BOSS_FLOOR_K end
+  if node.floor % 5 == 0 and node.floor % 20 ~= 0 then riftMul *= CFG.BOSS_FLOOR_K end
   local atkExtra = floorMult(node.tier) ^ (CFG.SPIRE.ATKP - 1)
   local b = {
     node = node, act = act, stage = 4, kind = "spire", tier = node.tier, stats = st, time = 0, over = false, win = false, enemies = {}, zones = {}, persist = {}, dmgBy = {}, events = {},
@@ -687,7 +768,7 @@ function M.new(sv, node, seed)
   b.lsRate = b.maxHp * min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2
   b.bossDef = Mon.BOSSES[((node.floor // 5) - 1 + 10) % 10 + 1]
   b.plan = planFor(b, node)
-  b.skills = {}
+  b.skills = {}; b.slotCount = sv.slots or 0
   for i, l in ipairs(sv.loadout or {}) do
     if l and i <= sv.slots then
       local inst; for _, x in ipairs(sv.skills) do if x.uid == l.uid then inst = x end end
@@ -704,7 +785,7 @@ end
 
 function M.step(b, dt)
   if b.over then return end
-  b.time += dt
+  b.time += dt; satTick(b, dt)
   b.lsTok = min(b.lsRate * 2, b.lsTok + b.lsRate * dt)
   b.hp = min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound and b.debuffs.wound.mult or 1) * dt)
   if b.inv > 0 then b.inv -= dt end
