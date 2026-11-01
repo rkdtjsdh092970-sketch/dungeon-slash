@@ -6,6 +6,14 @@
 3. 게임 설정: Max Players 20~50, 기기 PC/모바일, 연령 설정(설문) 작성, 비공개(Private) 또는 "친구/링크" 접근으로 베타.
 4. File → Publish to Roblox.
 
+## 비공개 베타 접근 (초대 전용)
+- 서버의 허용 명단이 기본으로 **닫힘(초대 전용)**. 명단에 없으면 "closed beta (invite only)" 안내와 함께 퇴장. 게임 주인과 Studio 테스트는 항상 입장.
+- 게임 주인이 게임 안 채팅으로 관리 (다시 게시 불필요, DataStore `DungeonSlashBeta`):
+  - `/beta add 닉네임` (또는 UserId) · `/beta remove 닉네임` · `/beta list`
+  - `/beta open` = 누구나 입장 (정식 출시) · `/beta close` = 다시 초대 전용
+- 체험 자체도 비공개(Private)로 두고 테스터에게 플레이 권한을 주면 이중으로 막힌다.
+- Studio 에서 명령 동작(추가/목록/삭제)은 확인함. 명단 밖 계정이 실제로 막히는지는 게시 후 다른 계정으로 확인할 것.
+
 ## 베타 중 확인할 것
 - 저장: 접속 → 진행 → 퇴장 → 재접속에서 유지되는지 (DataStore, 길드 DataStore 두 개).
 - 길드: 두 계정으로 창설/가입/기부/목표/보스.

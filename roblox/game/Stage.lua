@@ -95,15 +95,17 @@ function M.artPose(S)
   if a.name == "attack" then local k = math.clamp(a.t / 0.3, 0, 1); dx = math.sin(k * math.pi) * 18 * S.f; rot = math.sin(k * math.pi) * 8; if a.t > 0.3 then S.plAnim = { name = "idle", t = 0 } end
   elseif a.name == "hurt" then dx = -4 * S.f; if a.t > 0.18 then S.plAnim = { name = "idle", t = 0 } end end
   S.pl.Position = UDim2.new(0, S.plX + dx, 0, S.plY + dy); S.pl.Rotation = rot
-  S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 0.55, 0.55) or Color3.new(1, 1, 1)
+  S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 1 - 0.45 * M.OPT.flash, 1 - 0.45 * M.OPT.flash) or Color3.new(1, 1, 1)
 end
 
 M.TOP, M.HUD = 58, 1   -- 로블록스 상단 버튼 줄 높이 / HUD 배율 (Client 가 화면에 맞춰 갱신)
+M.OPT = { dmg = true, flash = 1 }   -- 그래픽 설정: 피해 숫자 표시 · 피격 반짝임(0 끄기 · 0.5 약하게 · 1 보통)
 -- 레인/칸: 웹 battle.js 의 LAY{x0=196,cw=124,cy=292} · laneH(3레인까지 116, 4레인 88) 와 같은 값
 function M:laneY(l, lanes) lanes = lanes or 2; local lh = lanes <= 3 and 116 or 88; local top = 292 - lh * lanes / 2; return self.oy + (top + (l + 0.5) * lh) * self.u, lh * self.u end
 function M:colX(c) return self.ox + (196 + (c - 0.5) * self.cw) * self.u end
 
 function M:floatText(text, x, y, color, size)
+  if not M.OPT.dmg then return end
   local ts = math.floor((size or 16) * self.u * 1.4)   -- 큰 피해 숫자
   local t = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0, ts * 6, 0, ts + 6), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, x, 0, y), Text = text, TextColor3 = color or Color3.new(1, 1, 0.8), Font = Enum.Font.GothamBlack, TextSize = ts, ZIndex = 20 }, self.layer)
   local st = mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 10, 30) }, t)
@@ -197,7 +199,7 @@ function M:play(replay, onDone, maxSec)
         local anim = "idle"; if u.dying then anim = "death" elseif u.wind then anim = "attack" elseif math.abs((u.tx or u.x) - u.x) > 3 then anim = "walk" end
         local row, frame = Sprites.anim(u.key, anim, anim == "death" and u.dying or u.t); Sprites.setFrame(u.lab, u.info, row, frame)
       elseif u.boss and u.dying then u.lab.ImageTransparency = math.min(1, u.dying) end
-      if u.hit and u.hit > 0 then u.hit -= dt; u.lab.ImageColor3 = Color3.new(1, 0.7, 0.7) else u.lab.ImageColor3 = Color3.new(1, 1, 1) end
+      if u.hit and u.hit > 0 then u.hit -= dt; u.lab.ImageColor3 = Color3.new(1, 1 - 0.3 * M.OPT.flash, 1 - 0.3 * M.OPT.flash) else u.lab.ImageColor3 = Color3.new(1, 1, 1) end
       if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); self.units[id] = nil end end
     end
     if self.plArt then self.plAnim.t += dt; M.artPose(self)

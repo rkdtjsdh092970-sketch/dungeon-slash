@@ -42,7 +42,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en" }
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
 end
 function M.inventory(sv)
   local out = {}

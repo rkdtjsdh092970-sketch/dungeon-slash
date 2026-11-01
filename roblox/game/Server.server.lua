@@ -68,26 +68,37 @@ local function betaAllowed(p)
   for _, id in ipairs(beta.ids) do if id == p.UserId then return true end end
   return false
 end
+-- 명단 조작 (채팅 명령과 설정 창 [베타 관리] 탭이 함께 쓴다). 결과 문구를 돌려준다.
+local function betaDo(op, arg)
+  betaLoad()
+  if op == "add" or op == "remove" then
+    arg = tostring(arg or "")
+    local id = tonumber(arg)
+    if not id then local ok, v = pcall(function() return Players:GetUserIdFromNameAsync(arg) end); id = ok and v or nil end
+    if not id then return "Player not found: " .. arg end
+    local keep = {}; for _, x in ipairs(beta.ids) do if x ~= id then keep[#keep + 1] = x end end
+    if op == "add" then keep[#keep + 1] = id end
+    beta.ids = keep; betaSave(); return string.format("Beta tester %s: %s (%d total)", op == "add" and "added" or "removed", arg, #keep)
+  elseif op == "open" or op == "close" then
+    beta.open = op == "open"; betaSave(); return beta.open and "Beta is now OPEN to everyone" or "Beta is now invite only"
+  end
+end
+local function betaView()
+  betaLoad()
+  local list = {}
+  for _, id in ipairs(beta.ids) do local ok, nm = pcall(function() return Players:GetNameFromUserIdAsync(id) end); list[#list + 1] = { id = id, name = ok and nm or tostring(id) } end
+  return { open = beta.open, list = list }
+end
 local function betaCommand(p, text)
   local cmd, arg = string.match(text, "^/beta%s+(%a+)%s*(.-)%s*$")
   if not cmd or not isOwner(p) then return end
-  betaLoad()
-  local function say(t) notice:FireClient(p, t) end
-  if cmd == "add" or cmd == "remove" then
-    local id = tonumber(arg)
-    if not id then local ok, v = pcall(function() return Players:GetUserIdFromNameAsync(arg) end); id = ok and v or nil end
-    if not id then say("Player not found: " .. arg); return end
-    local keep = {}; for _, x in ipairs(beta.ids) do if x ~= id then keep[#keep + 1] = x end end
-    if cmd == "add" then keep[#keep + 1] = id end
-    beta.ids = keep; betaSave(); say(string.format("Beta tester %s: %s (%d total)", cmd == "add" and "added" or "removed", arg, #keep))
-  elseif cmd == "list" then
-    local names = {}
-    for _, id in ipairs(beta.ids) do local ok, nm = pcall(function() return Players:GetNameFromUserIdAsync(id) end); names[#names + 1] = ok and nm or tostring(id) end
-    say((beta.open and "Beta: OPEN to everyone" or "Beta: invite only") .. " — " .. (#names > 0 and table.concat(names, ", ") or "no testers yet"))
-  elseif cmd == "open" or cmd == "close" then
-    beta.open = cmd == "open"; betaSave(); say(beta.open and "Beta is now OPEN to everyone" or "Beta is now invite only")
-  end
+  if cmd == "list" then
+    local v = betaView(); local names = {}; for _, x in ipairs(v.list) do names[#names + 1] = x.name end
+    notice:FireClient(p, (v.open and "Beta: OPEN to everyone" or "Beta: invite only") .. " — " .. (#names > 0 and table.concat(names, ", ") or "no testers yet"))
+  else local m = betaDo(cmd, arg); if m then notice:FireClient(p, m) end end
 end
+-- 설정(언어 · 그래픽 · 소리)으로 저장할 수 있는 값
+local OPT_KEYS = { ui = "number", dmg = "boolean", flash = "number", master = "number", music = "number", sfx = "number", mute = "boolean" }
 
 Players.PlayerAdded:Connect(function(p)
   if not betaAllowed(p) then p:Kick("Dungeon Slash is in closed beta (invite only). Thanks for your interest!"); return end
@@ -151,6 +162,14 @@ local handle = function(player, action, arg)
   elseif action == "reveal" then local ok, e = Game.reveal(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, label = ok and Game.stoneLabel(e) or nil, summary = Game.summary(sv) }
   elseif action == "socket" then local ok, e = Game.socket(sv, tonumber(arg.item), tonumber(arg.stone), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "setlang" then sv.lang = (arg == "ko") and "ko" or "en"; return { ok = true }
+  elseif action == "setopt" then
+    if type(arg) == "table" then sv.set = sv.set or {}; for k, v in pairs(arg) do if OPT_KEYS[k] and type(v) == OPT_KEYS[k] then sv.set[k] = v end end end
+    return { ok = true }
+  elseif action == "beta" then   -- 설정 창 [베타 관리]: 게임 주인만
+    if not isOwner(player) then return { err = "owner only" } end
+    local m = type(arg) == "table" and arg.op ~= "view" and betaDo(arg.op, arg.v) or nil
+    return { msg = m, view = betaView() }
+  elseif action == "isowner" then return { owner = isOwner(player) }
   elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }
   elseif action == "play" then
     if s.busy then return { err = "전투 중입니다" } end

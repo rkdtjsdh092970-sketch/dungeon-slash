@@ -7,7 +7,7 @@ HANGUL = re.compile('[\uac00-\ud7a3]')
 SPEC = re.compile(r'%[-+ #0]*\d*(?:\.\d+)?[a-zA-Z%]')   # Lua string.format 표시
 
 def unesc(s): return s.replace('\\n', '\n').replace('\\\\', '\\')
-KEEP = {'🌐 EN  |  한국어', '🌐 한국어  |  EN'}   # 언어 버튼: 번역하지 않음 (영어 칸에 원문 그대로)
+KEEP = {'🌐 EN  |  한국어', '🌐 한국어  |  EN', '한국어'}   # 언어 버튼: 번역하지 않음 (영어 칸에 원문 그대로)
 keys = [unesc(l.rstrip('\n')) for l in open(os.path.join(HERE, 'ko_strings.txt'), encoding='utf-8') if l.strip()]
 tr, errs = {}, []
 for i, line in enumerate(open(os.path.join(HERE, 'en.tsv'), encoding='utf-8'), 1):

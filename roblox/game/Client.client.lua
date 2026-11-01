@@ -71,7 +71,9 @@ Lang.watch(gui)
 local INSET = math.max(36, GuiService:GetGuiInset().Y)   -- 로블록스 상단 버튼 줄 높이
 local function vp() return workspace.CurrentCamera.ViewportSize end
 local K = 1   -- HUD 배율 (화면 높이 720 기준)
-local function calcK() K = math.clamp(vp().Y / 720, 0.6, 1.4); Stage.TOP = INSET; Stage.HUD = K end
+-- 설정 (서버에 저장): UI 크기 · 피해 숫자 · 피격 반짝임 · 볼륨(전체/배경음악/효과음) · 음소거
+local OPT = { ui = 1, dmg = true, flash = 1, master = 0.8, music = 0.5, sfx = 0.8, mute = false }
+local function calcK() K = math.clamp(vp().Y / 720, 0.6, 1.4) * OPT.ui; Stage.TOP = INSET; Stage.HUD = K end
 calcK()
 
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
@@ -110,14 +112,9 @@ for i, p in ipairs(PILLS) do
 end
 -- 왼쪽 위 능력치 (마을 · 지도에서)
 local statLbl = mk("TextLabel", { BackgroundColor3 = DARK, BackgroundTransparency = 0.25, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 330, 0, 44), TextColor3 = Color3.fromRGB(225, 220, 245), Font = Enum.Font.GothamMedium, TextSize = 13, TextWrapped = true, Text = "", ZIndex = 11 }, hud)
-local langBtn = mk("TextButton", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 132, 0, 34), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, Text = "", ZIndex = 11 }, hud)
-langBtn:SetAttribute("NoTr", true); corner(langBtn, 10); stroke(langBtn, GOLD, 1.5); local langScale = mk("UIScale", { Scale = K }, langBtn)
-local function langLabel() langBtn.Text = Lang.lang == "en" and "🌐 EN  |  한국어" or "🌐 한국어  |  EN" end
-langLabel(); Lang.changed.Event:Connect(langLabel)
-langBtn.MouseButton1Click:Connect(function() local l = Lang.lang == "en" and "ko" or "en"; Lang.set(l); pcall(function() rpc:InvokeServer("setlang", l) end) end)
 corner(statLbl, 8); local statScale = mk("UIScale", { Scale = K }, statLbl); mk("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, statLbl)
 -- 오른쪽 아래 이동 버튼 (모바일 점프 버튼 자리 — 이 게임은 이동 조작을 숨겼으므로 비어 있다)
-local dock = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -12), Size = UDim2.new(0, 3 * 84 + 2 * 8, 0, 72), ZIndex = 11 }, hud)
+local dock = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -12), Size = UDim2.new(0, 4 * 84 + 3 * 8, 0, 72), ZIndex = 11 }, hud)
 local dockScale = mk("UIScale", { Scale = K }, dock)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, dock)
 local dockBtn = {}
@@ -372,7 +369,7 @@ local function closePanel() panelLayer.Visible = false; clear() end
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
-  dock.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; langBtn.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
+  dock.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
   for t, b in pairs(dockBtn) do b.BackgroundColor3 = ((t == "마을" and name == "town") or (t == "지도" and name == "map")) and Color3.fromRGB(110, 80, 30) or PANEL end
   if name == "town" then buildTown() elseif name == "map" then buildMap() end
 end
@@ -389,6 +386,73 @@ local function openPanel(title, tabs, first)
   end
   if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 110, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; btns[t[2]] = b end end
   sel(first or tabs[1][2])
+end
+
+-- ── 설정 창: 일반(언어) · 그래픽 · 소리 · 베타 관리(게임 주인만) ──
+local SoundService = game:GetService("SoundService")
+local SND = {}   -- 소리 묶음: 나중에 넣는 소리는 SoundGroup 을 Music / SFX 로 지정하면 볼륨 설정을 따른다
+for _, nm in ipairs({ "Music", "SFX" }) do SND[nm] = SoundService:FindFirstChild(nm) or Instance.new("SoundGroup"); SND[nm].Name = nm; SND[nm].Parent = SoundService end
+local relayout
+local function applyOpt()
+  Stage.OPT.dmg = OPT.dmg; Stage.OPT.flash = OPT.flash
+  local m = OPT.mute and 0 or OPT.master
+  SND.Music.Volume = m * OPT.music; SND.SFX.Volume = m * OPT.sfx
+end
+local function setOpt(k, v)
+  local uiChanged = k == "ui" and OPT.ui ~= v
+  OPT[k] = v; applyOpt(); pcall(function() rpc:InvokeServer("setopt", { [k] = v }) end)
+  if uiChanged and relayout then relayout() end
+end
+local SEL = Color3.fromRGB(160, 116, 40)
+local function optRow(title, value, btns)   -- 한 줄: 제목 · (값) · 선택 버튼들
+  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(40, 34, 70); f.Size = UDim2.new(1, -16, 0, 48); f.Parent = list; corner(f, 6)
+  label(f, title, 15, UDim2.new(0, 12, 0, 0), UDim2.new(0.42, 0, 1, 0))
+  local row = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0.58, 0, 0, 36) }, f)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+  local order = 0
+  for _, b in ipairs(btns) do
+    order += 1
+    if b.value then local l = label(row, b.value, 15, UDim2.new(), UDim2.new(0, b.w or 70, 1, 0)); l.TextXAlignment = Enum.TextXAlignment.Center; l.LayoutOrder = order
+    else local x = button(row, b[1], UDim2.new(), UDim2.new(0, b.w or 96, 1, 0), b[2], b[3] and SEL or nil); x.LayoutOrder = order; if b.notr then x:SetAttribute("NoTr", true) end end
+  end
+end
+local function pct(v) return math.floor(v * 100 + 0.5) .. "%" end
+function views.set_general()
+  clear()
+  local function setLang(l) Lang.set(l); pcall(function() rpc:InvokeServer("setlang", l) end); views.set_general() end
+  optRow("언어", nil, { { "English", function() setLang("en") end, Lang.lang == "en", notr = true }, { "한국어", function() setLang("ko") end, Lang.lang == "ko", notr = true } })
+end
+function views.set_graphics()
+  clear()
+  local function pick(k, v) setOpt(k, v); views.set_graphics() end
+  optRow("화면 글자 · 버튼 크기", nil, { { "작게", function() pick("ui", 0.85) end, OPT.ui == 0.85 }, { "보통", function() pick("ui", 1) end, OPT.ui == 1 }, { "크게", function() pick("ui", 1.15) end, OPT.ui == 1.15 } })
+  optRow("피해 숫자 표시", nil, { { "켜기", function() pick("dmg", true) end, OPT.dmg }, { "끄기", function() pick("dmg", false) end, not OPT.dmg } })
+  optRow("피격 시 반짝임", nil, { { "끄기", function() pick("flash", 0) end, OPT.flash == 0 }, { "약하게", function() pick("flash", 0.5) end, OPT.flash == 0.5 }, { "보통", function() pick("flash", 1) end, OPT.flash == 1 } })
+end
+function views.set_sound()
+  clear()
+  local function vol(k, title)
+    optRow(title, nil, { { "−", function() setOpt(k, math.max(0, math.floor(OPT[k] * 10 + 0.5) / 10 - 0.1)); views.set_sound() end, false, w = 44 }, { value = pct(OPT[k]) },
+      { "+", function() setOpt(k, math.min(1, math.floor(OPT[k] * 10 + 0.5) / 10 + 0.1)); views.set_sound() end, false, w = 44 } })
+  end
+  vol("master", "전체 볼륨"); vol("music", "배경음악"); vol("sfx", "효과음")
+  optRow("음소거", nil, { { "켜기", function() setOpt("mute", true); views.set_sound() end, OPT.mute }, { "끄기", function() setOpt("mute", false); views.set_sound() end, not OPT.mute } })
+end
+local isOwner = false
+function views.set_beta()
+  clear()
+  local ok, r = pcall(function() return rpc:InvokeServer("beta", { op = "view" }) end)
+  if not ok or r.err then card("게임 주인만 사용할 수 있습니다", {}, {}); return end
+  local v = r.view
+  local function op(o, val) local r2 = rpc:InvokeServer("beta", { op = o, v = val }); views.set_beta(); msg.Text = r2.msg or r2.err or "" end
+  optRow("베타 입장", nil, { { "초대 전용", function() op("close") end, not v.open, w = 110 }, { "누구나", function() op("open") end, v.open, w = 110 } })
+  card(string.format("테스터 %d명", #v.list), { "로블록스 닉네임으로 추가합니다. 게임 주인은 항상 입장할 수 있습니다." }, { { "추가", function() prompt("추가할 테스터의 로블록스 닉네임", "닉네임", function(nm) if nm ~= "" then op("add", nm) end end) end } })
+  for _, x in ipairs(v.list) do card(x.name, { "UserId " .. x.id }, { { "삭제", function() op("remove", tostring(x.id)) end } }) end
+end
+local function openSettings()
+  local tabs = { { "일반", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
+  if isOwner then tabs[#tabs + 1] = { "베타 관리", "set_beta" } end
+  openPanel("설정", tabs)
 end
 
 -- ── 전투 시작 → 재생 → 결과 ──
@@ -633,12 +697,13 @@ end
 dockButton(1, "🏠", "마을", function() closePanel(); setScreen("town") end)
 dockButton(2, "🗺", "지도", function() closePanel(); setScreen("map") end)
 dockButton(3, "🎒", "장비", function() openPanel("장비", { { "장비", "inv" } }) end)
+dockButton(4, "⚙", "설정", function() openSettings() end)
 
 -- 화면 크기가 바뀌면 다시 배치 (전투 재생 중이면 끝난 뒤 반영)
 local relayPending = false
-local function relayout()
+relayout = function()
   relayPending = false; calcK()
-  pillScale.Scale = K; statScale.Scale = K; langScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
+  pillScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
   pillRow.Position = UDim2.new(0.5, 0, 0, INSET / 2)
   if mainStage and not mainStage.conn then makeStage() end
   townBuilt = false
@@ -649,12 +714,13 @@ workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(functio
 
 -- ── 로딩: 세이브 → 그림 → 시작 ──
 loadStep("모험 기록을 불러오는 중...", 0.3)
-for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); Lang.set(r.summary.lang or "en"); break end; task.wait(0.5) end
+for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); Lang.set(r.summary.lang or "en"); for k, v in pairs(r.summary.set or {}) do if OPT[k] ~= nil then OPT[k] = v end end; calcK(); applyOpt(); break end; task.wait(0.5) end
 do
   local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))
   local keys = {}; if okArt then for k in pairs(ARTM.ART) do keys[#keys + 1] = k end end; table.sort(keys)
   for i, k in ipairs(keys) do loadStep(string.format("그림을 불러오는 중... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k) end
 end
+pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
 makeStage()
 loadStep("준비 완료!", 1)
 setScreen("town")
