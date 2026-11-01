@@ -113,7 +113,7 @@ function M.create(parent, W, H, replayAct)
     return b
   end
   cbtn(S.ctrl, "건너뛰기 ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(60, 50, 110)).MouseButton1Click:Connect(function() S:skip() end)
-  S.spdBtn = cbtn(S.ctrl, "x1 ▾", UDim2.new(0, 128, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
+  S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 128, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
   S.spdBtn:SetAttribute("NoTr", true)
   S.spdList = mk("Frame", { Position = UDim2.new(0, 128, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, S.spdList)
@@ -211,7 +211,7 @@ function M:applySnap(s, lanes)
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
     u.wind = e.wind
   end
-  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0 end end
+  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end end
   if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); self.plAnim = { name = "hurt", t = 0 } end
   if s.c then
     local tgt; for _, u in pairs(self.units) do if not u.dying and u.tx and (not tgt or u.tx < tgt.tx) then tgt = u end end
@@ -231,7 +231,7 @@ function M:setHud(h)
   self.hud = h or {}
   self.titleLbl.Text = h and h.title or ""; self.lvLbl.Text = tostring(h and h.level or 1)
   self.userSpd = math.clamp((h and h.speed) or 1, 1, 4); if self.userSpd == 4 and not (h and h.owns4) then self.userSpd = 3 end
-  self.spdBtn.Text = "x" .. self.userSpd .. " ▾"; self.spdOpts[4].Text = (h and h.owns4) and "x4" or "x4 🔒"
+  self.spdBtn.Text = "x" .. self.userSpd .. " ▼"; self.spdOpts[4].Text = (h and h.owns4) and "x4" or "x4 🔒"
   for i = 1, 4 do self.spdOpts[i].BackgroundColor3 = i == self.userSpd and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(70, 60, 120) end
   for _, c in ipairs(self.skillBar:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
   self.skillCells = {}
@@ -257,7 +257,7 @@ function M:pickSpeed(i)
   local H = self.hud or {}
   self:speedMenu(false)
   if i == 4 and not H.owns4 then if H.onBuy4 then H.onBuy4() end; return end
-  self.userSpd = i; self.spdBtn.Text = "x" .. i .. " ▾"
+  self.userSpd = i; self.spdBtn.Text = "x" .. i .. " ▼"
   for j = 1, 4 do self.spdOpts[j].BackgroundColor3 = j == i and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(70, 60, 120) end
   if H.onSpeed then H.onSpeed(i) end
 end
