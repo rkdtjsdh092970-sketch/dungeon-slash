@@ -79,6 +79,7 @@ end }
 loadStep("게임 데이터를 준비하는 중...", 0.15)
 local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)
+local Theme = require(RS.Game.Theme)   -- 글꼴 · 색
 local Menus = require(RS.Game.Menus)   -- 장비 · 스킬 · 패시브 트리 화면
 task.spawn(function()   -- 전투 배경 그림이 오면 로딩 배경으로 서서히 깐다
   local a = Sprites.art("bg1"); if not a or not loadGui.Parent then return end
@@ -99,13 +100,13 @@ calcK()
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
 local function corner(o, r) mk("UICorner", { CornerRadius = r and UDim.new(0, r) or UDim.new(1, 0) }, o) end
 local function stroke(o, c, t) mk("UIStroke", { Color = c or Color3.fromRGB(214, 168, 70), Thickness = t or 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, o) end
-local GOLD, DARK, PANEL = Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 14, 38), Color3.fromRGB(32, 26, 58)
+local GOLD, DARK, PANEL = Theme.GOLD, Theme.DARK, Theme.PANEL
 local function label(parent, text, size, pos, sz)
   local l = Instance.new("TextLabel"); l.BackgroundTransparency = 1; l.TextColor3 = Color3.new(1, 1, 1); l.Font = Enum.Font.GothamMedium; l.TextSize = size or 16
   l.TextXAlignment = Enum.TextXAlignment.Left; l.TextWrapped = true; l.Text = text; l.Position = pos; l.Size = sz; l.Parent = parent; return l
 end
 local function button(parent, text, pos, sz, cb, color)
-  local b = Instance.new("TextButton"); b.Text = text; b.Font = Enum.Font.FredokaOne; b.TextSize = 15; b.TextColor3 = Color3.new(1, 1, 1); b.BackgroundColor3 = color or Color3.fromRGB(95, 80, 160)
+  local b = Instance.new("TextButton"); b.Text = text; b.Font = Theme.FONT; b.TextSize = 15; b.TextColor3 = Color3.new(1, 1, 1); b.BackgroundColor3 = color or Color3.fromRGB(95, 80, 160)
   b.Position = pos; b.Size = sz; b.Parent = parent; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
   local g = Instance.new("UIGradient"); g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)); g.Rotation = 90; g.Parent = b
   local s1 = Instance.new("UIStroke"); s1.Color = Color3.fromRGB(20, 10, 30); s1.Thickness = 2; s1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s1.Parent = b
@@ -172,7 +173,7 @@ end
 local root = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, INSET / 2), Size = UDim2.new(0, 880, 0, 540), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 21 }, panelLayer)
 corner(root, 14); stroke(root, GOLD, 2.5)
 local panelScale = mk("UIScale", { Scale = 1 }, root)
-local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -90, 0, 36), Font = Enum.Font.FredokaOne, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
+local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -90, 0, 36), Font = Theme.FONT, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
 local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 50), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)
 local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(16, 14, 32), BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
@@ -184,7 +185,7 @@ local function card(title, lines, btns)
   Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10); stroke(f, Color3.fromRGB(90, 76, 140), 1.5)
   local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 10, 0, 6); tb.Size = UDim2.new(1, -160, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
   local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0, 2); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = tb
-  local tt = label(tb, title, 15, UDim2.new(), UDim2.new(1, 0, 0, 0)); tt.Font = Enum.Font.FredokaOne; tt.TextColor3 = Color3.fromRGB(255, 225, 140); tt.AutomaticSize = Enum.AutomaticSize.Y; tt.LayoutOrder = 1
+  local tt = label(tb, title, 15, UDim2.new(), UDim2.new(1, 0, 0, 0)); tt.Font = Theme.FONT; tt.TextColor3 = Color3.fromRGB(255, 225, 140); tt.AutomaticSize = Enum.AutomaticSize.Y; tt.LayoutOrder = 1
   if #lines > 0 then local t = label(tb, table.concat(lines, "\n"), 13, UDim2.new(), UDim2.new(1, 0, 0, 0)); t.TextColor3 = Color3.fromRGB(225, 220, 245); t.AutomaticSize = Enum.AutomaticSize.Y; t.LayoutOrder = 2 end
   for i, b in ipairs(btns or {}) do button(f, b[1], UDim2.new(1, -150 + (i - 1) * 72, 0, 8), UDim2.new(0, 68, 0, 32), b[2]) end
   Instance.new("UIPadding", f).PaddingBottom = UDim.new(0, 10)
@@ -504,6 +505,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setS
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
+views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm
 
 -- ── 전투 시작 → 재생 → 결과 ──
 local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
@@ -511,7 +513,7 @@ corner(resBox, 16); stroke(resBox, GOLD, 3); local resScale = mk("UIScale", { Sc
 local resTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 16), Size = UDim2.new(1, 0, 0, 48), Font = Enum.Font.GothamBlack, TextSize = 40, Text = "", ZIndex = 27 }, resBox)
 mk("UIStroke", { Thickness = 3, Color = Color3.fromRGB(30, 10, 40) }, resTitle)
 local resText = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 74), Size = UDim2.new(1, -48, 0, 140), Font = Enum.Font.GothamMedium, TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(235, 230, 250), Text = "", ZIndex = 27 }, resBox)
-local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -100), Size = UDim2.new(1, -48, 0, 24), Font = Enum.Font.FredokaOne, TextSize = 17, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
+local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -100), Size = UDim2.new(1, -48, 0, 24), Font = Theme.FONT, TextSize = 17, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
 local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.new(1, -32, 0, 46), ZIndex = 27 }, resBox)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, resBtns)
 local function resultLines(x)

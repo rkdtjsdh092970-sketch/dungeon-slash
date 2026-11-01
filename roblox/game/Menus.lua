@@ -16,12 +16,13 @@ local function stroke(o, c, t) return mk("UIStroke", { Color = c, Thickness = t 
 local function hex(h) local ok, c = pcall(Color3.fromHex, h or "#ffffff"); return ok and c or Color3.new(1, 1, 1) end
 local function n(x) x = math.floor(x or 0); if x >= 1e6 then return string.format("%.1fM", x / 1e6) elseif x >= 1e4 then return string.format("%.1fK", x / 1e3) end return tostring(x) end
 
-M.FONT, M.BODY = Enum.Font.FredokaOne, Enum.Font.GothamMedium
-M.GOLD, M.DARK, M.PANEL = Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 14, 38), Color3.fromRGB(36, 30, 64)
+local Theme = require(script.Parent.Theme)
+M.FONT, M.BODY = Theme.FONT, Theme.BODY
+M.GOLD, M.DARK, M.PANEL = Theme.GOLD, Theme.DARK, Theme.PANEL
 -- 등급 색: 일반 · 매직 · 레어 · 전설 (사탄 장비는 보라)
 M.RAR = { Color3.fromRGB(205, 205, 215), Color3.fromRGB(90, 150, 255), Color3.fromRGB(255, 214, 70), Color3.fromRGB(255, 140, 40) }
 M.SAT = Color3.fromRGB(200, 90, 255)
-M.BTN = { green = Color3.fromRGB(60, 165, 80), gold = Color3.fromRGB(215, 155, 40), blue = Color3.fromRGB(60, 110, 210), red = Color3.fromRGB(185, 60, 60), purple = Color3.fromRGB(95, 80, 160), gray = Color3.fromRGB(70, 66, 90) }
+M.BTN = Theme.BTN
 local SLOT_ART = { weapon = "i_weapon", helm = "i_helm", armor = "i_armor", gloves = "i_gloves", boots = "i_boots", ring = "i_ring", ring2 = "i_ring", neck = "i_neck" }
 local SLOT_EMOJI = { weapon = "⚔", helm = "⛑", armor = "🛡", gloves = "🧤", boots = "👢", ring = "💍", ring2 = "💍", neck = "📿" }
 local ELEM = { fire = Color3.fromRGB(255, 120, 50), cold = Color3.fromRGB(110, 200, 255), light = Color3.fromRGB(255, 225, 80), void = Color3.fromRGB(170, 100, 255), phys = Color3.fromRGB(210, 210, 220) }
@@ -459,6 +460,109 @@ function M.daily()
   M.btn(bar, "일반 분해", UDim2.new(0, 120, 1, 0), M.BTN.red, function() bulk(0, "dismantle") end).LayoutOrder = 1
   M.btn(bar, "매직까지 분해", UDim2.new(0, 140, 1, 0), M.BTN.red, function() bulk(1, "dismantle") end).LayoutOrder = 2
   M.btn(bar, "매직까지 판매", UDim2.new(0, 140, 1, 0), M.BTN.gold, function() bulk(1, "sell") end).LayoutOrder = 3
+end
+
+
+-- ───────── 룬 (스킬에 끼우기) ─────────
+local runeSkill
+function M.runes()
+  C.clear()
+  local r = C.rpc:InvokeServer("runes"); if r.err then C.msg.Text = tostring(r.err); return end
+  local runes, skills = r.runes or {}, r.skills or {}
+  local A = area(392)
+  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.5, -4, 1, 0), "스킬 고르기")
+  local g = grid(L, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
+  local sel
+  for i, k in ipairs(skills) do
+    if not runeSkill then runeSkill = k.uid end
+    if k.uid == runeSkill then sel = k end
+    local col, icon = M.skStyle(k.id)
+    M.tile(g, 76, { order = i, color = col, emoji = icon, label = tostring(k.name or k.id), tl = k.rune and "◆" or nil, selected = k.uid == runeSkill, click = function() runeSkill = k.uid; M.runes() end })
+  end
+  local R = box(A, UDim2.new(0.5, 4, 0, 0), UDim2.new(0.5, -4, 1, 0), string.format("보유 룬 %d개", #runes))
+  if not sel then txt(R, "룬을 끼울 스킬이 없습니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 40), Color3.fromRGB(190, 185, 210)); return end
+  local function res(e) C.msg.Text = tostring(e.err or ""); M.runes() end
+  local head = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 0, 44), BackgroundColor3 = Color3.fromRGB(28, 22, 50) }, R); corner(head, 8)
+  txt(head, sel.rune and string.format("%s · 룬: %s", tostring(sel.name), tostring(sel.rune)) or string.format("%s · 룬 없음", tostring(sel.name)), 14, UDim2.new(0, 10, 0, 12), UDim2.new(1, -110, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+  if sel.rune then local b = M.btn(head, "룬 해제", UDim2.new(0, 92, 0, 34), M.BTN.red, function() res(C.rpc:InvokeServer("runeremove", sel.uid)) end); b.Position = UDim2.new(1, -98, 0, 5) end
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 82), Size = UDim2.new(1, -20, 1, -90), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, R)
+  mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  if #runes == 0 then txt(sc, "룬이 없습니다. 전투에서 얻을 수 있습니다.", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
+  for i, ru in ipairs(runes) do
+    local f = mk("Frame", { Size = UDim2.new(1, -8, 0, 58), BackgroundColor3 = M.PANEL, LayoutOrder = i }, sc); corner(f, 8); stroke(f, Color3.fromRGB(120, 100, 190), 1.5)
+    txt(f, "◆ " .. tostring(ru.name), 15, UDim2.new(0, 10, 0, 6), UDim2.new(1, -110, 0, 20), Color3.fromRGB(190, 160, 255), M.FONT)
+    txt(f, tostring(ru.text or ""), 12, UDim2.new(0, 10, 0, 28), UDim2.new(1, -110, 0, 26), Color3.fromRGB(215, 210, 235))
+    local b = M.btn(f, "끼우기", UDim2.new(0, 88, 0, 36), M.BTN.purple, function() res(C.rpc:InvokeServer("runeequip", { skill = sel.uid, rune = ru.uid })) end); b.Position = UDim2.new(1, -96, 0, 11)
+  end
+end
+
+-- ───────── 전직 (계열별 노드) ─────────
+local TREE_COL = { fire = Color3.fromRGB(255, 120, 60), cold = Color3.fromRGB(110, 200, 255), light = Color3.fromRGB(255, 220, 80), void = Color3.fromRGB(170, 100, 255), phys = Color3.fromRGB(210, 120, 110), def = Color3.fromRGB(140, 200, 120), farm = Color3.fromRGB(230, 190, 90) }
+function M.class()
+  C.clear()
+  local r = C.rpc:InvokeServer("class"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local v = r.view
+  local A = area(392)
+  local head = mk("Frame", { Size = UDim2.new(1, 0, 0, 44), BackgroundTransparency = 1 }, A)
+  txt(head, string.format("전직 %d차 · 남은 포인트 %d / %d", v.cls, v.left, v.points), 18, UDim2.new(0, 4, 0, 4), UDim2.new(0.55, 0, 0, 22), Color3.fromRGB(255, 220, 120), M.FONT)
+  txt(head, string.format("전직의 서  %d · %d · %d", v.books[1] or 0, v.books[2] or 0, v.books[3] or 0), 13, UDim2.new(0, 4, 0, 26), UDim2.new(0.55, 0, 0, 18), Color3.fromRGB(200, 195, 225))
+  local hb = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 2), Size = UDim2.new(0, 240, 0, 38), BackgroundTransparency = 1 }, head)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6) }, hb)
+  M.btn(hb, "전직하기", UDim2.new(0, 120, 1, 0), M.BTN.gold, function() local e = C.rpc:InvokeServer("classadvance"); C.msg.Text = tostring(e.msg or ""); M.class() end)
+  M.btn(hb, "초기화", UDim2.new(0, 90, 1, 0), M.BTN.red, function() C.rpc:InvokeServer("classreset"); M.class() end)
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 0, 0, 50), Size = UDim2.new(1, 0, 1, -50), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.X, ScrollingDirection = Enum.ScrollingDirection.X, ScrollBarThickness = 6 }, A)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  for ti, T in ipairs(v.trees or {}) do
+    local col = TREE_COL[T.id] or M.GOLD
+    local col0 = mk("Frame", { Size = UDim2.new(0, 168, 1, -10), BackgroundColor3 = M.PANEL, LayoutOrder = ti }, sc); corner(col0, 10); stroke(col0, col, 2)
+    txt(col0, T.name, 16, UDim2.new(0, 0, 0, 6), UDim2.new(1, 0, 0, 22), col, M.FONT, Enum.TextXAlignment.Center)
+    local lst = mk("Frame", { Position = UDim2.new(0, 8, 0, 34), Size = UDim2.new(1, -16, 1, -40), BackgroundTransparency = 1 }, col0)
+    mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
+    for ni, nd in ipairs(T.nodes or {}) do
+      local b = mk("TextButton", { Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = nd.has and col:Lerp(Color3.new(0, 0, 0), 0.35) or (nd.can and Color3.fromRGB(56, 48, 92) or Color3.fromRGB(32, 28, 46)), Text = "", AutoButtonColor = nd.can or nd.has, LayoutOrder = ni }, lst)
+      corner(b, 6); stroke(b, nd.has and col or Color3.fromRGB(20, 10, 30), nd.has and 2 or 1)
+      local l = txt(b, string.format("%s %s (%d)", nd.has and "●" or (nd.can and "○" or "·"), nd.name, nd.cost), 12, UDim2.new(0, 6, 0, 0), UDim2.new(1, -12, 1, 0), (nd.can or nd.has) and Color3.new(1, 1, 1) or Color3.fromRGB(130, 125, 150), M.FONT)
+      l.TextYAlignment = Enum.TextYAlignment.Center
+      b.MouseEnter:Connect(function() C.msg.Text = string.format("%s — %s", nd.name, nd.desc or "") end)
+      b.MouseButton1Click:Connect(function()
+        if nd.has then C.rpc:InvokeServer("classdrop", nd.id) elseif nd.can then C.rpc:InvokeServer("classtake", nd.id) else C.msg.Text = "아직 찍을 수 없습니다 (앞 노드 · 포인트 · 전직 단계 확인)"; return end
+        M.class()
+      end)
+    end
+  end
+end
+
+-- ───────── 참 (장착 4칸 · 보관함) ─────────
+function M.charm()
+  C.clear()
+  local r = C.rpc:InvokeServer("charms"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local v = r.view
+  if not v.unlocked then rowCard({ emoji = "🔒", title = "참", desc = "3차 전직 후에 장착할 수 있습니다.", color = Color3.fromRGB(120, 110, 150) }); return end
+  local A = area(392)
+  local T = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 168), "장착 중")
+  local row = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 0, 130), BackgroundTransparency = 1 }, T)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+  for i = 1, 4 do
+    local c = v.equipped[i]
+    local f = mk("Frame", { Size = UDim2.new(0.25, -6, 1, 0), BackgroundColor3 = c and Color3.fromRGB(44, 30, 70) or Color3.fromRGB(28, 24, 40), LayoutOrder = i }, row); corner(f, 8); stroke(f, c and Color3.fromRGB(200, 140, 255) or Color3.fromRGB(70, 66, 90), 2)
+    if c then
+      txt(f, table.concat(c.lines or {}, "\n"), 12, UDim2.new(0, 8, 0, 6), UDim2.new(1, -16, 1, -48), Color3.fromRGB(230, 220, 250))
+      local b = M.btn(f, "해제", UDim2.new(1, -16, 0, 32), M.BTN.red, function() C.rpc:InvokeServer("charmoff", i); M.charm() end); b.Position = UDim2.new(0, 8, 1, -38)
+    else txt(f, string.format("빈 칸 %d", i), 14, UDim2.new(0, 0, 0.4, 0), UDim2.new(1, 0, 0, 20), Color3.fromRGB(130, 125, 150), M.FONT, Enum.TextXAlignment.Center) end
+  end
+  local B = box(A, UDim2.new(0, 0, 0, 176), UDim2.new(1, 0, 1, -176), string.format("보관함 %d개", #(v.inv or {})))
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 30), Size = UDim2.new(1, -16, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, B)
+  mk("UIGridLayout", { CellSize = UDim2.new(0.25, -6, 0, 120), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  for i, c in ipairs(v.inv or {}) do
+    local f = mk("Frame", { BackgroundColor3 = Color3.fromRGB(40, 30, 64), LayoutOrder = i }, sc); corner(f, 8); stroke(f, Color3.fromRGB(150, 110, 210), 1.5)
+    txt(f, table.concat(c.lines or {}, "\n"), 12, UDim2.new(0, 8, 0, 6), UDim2.new(1, -16, 1, -46), Color3.fromRGB(230, 220, 250))
+    local bar = mk("Frame", { Position = UDim2.new(0, 6, 1, -38), Size = UDim2.new(1, -12, 0, 32), BackgroundTransparency = 1 }, f)
+    mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4) }, bar)
+    M.btn(bar, "장착", UDim2.new(0.5, -2, 1, 0), M.BTN.green, function() local e = C.rpc:InvokeServer("charmequip", { uid = c.uid }); C.msg.Text = tostring(e.err or ""); M.charm() end)
+    M.btn(bar, "버리기", UDim2.new(0.5, -2, 1, 0), M.BTN.red, function() C.rpc:InvokeServer("charmdrop", c.uid); M.charm() end)
+  end
 end
 
 return M

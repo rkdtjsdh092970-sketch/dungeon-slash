@@ -2,6 +2,7 @@
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Sprites = require(script.Parent.Sprites)
+local Theme = require(script.Parent.Theme)
 local M = {}
 
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
@@ -72,7 +73,7 @@ function M.create(parent, W, H, replayAct)
   -- 상태 바
   -- ── 전투 HUD (웹 battleHudBuild 구성): 로블록스 상단 버튼 줄(M.TOP) 아래부터. 크기는 Client 의 HUD 배율 M.HUD ──
   local TOP, k = M.TOP, M.HUD
-  local FONT, GOLD, EDGE = Enum.Font.FredokaOne, Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 10, 30)
+  local FONT, GOLD, EDGE = Theme.FONT, Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 10, 30)
   local function plate(props) local f = mk("Frame", props, root); mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, f); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, f); return f end
   local function outl(o, t) mk("UIStroke", { Thickness = t or 2, Color = EDGE }, o); return o end
   -- 왼쪽 위: 초상화 + 레벨 + HP/MP
@@ -249,8 +250,8 @@ function M:setHud(h)
     local f = mk("Frame", { Size = UDim2.new(0, 58 * k, 0, 58 * k), BackgroundColor3 = Color3.fromRGB(30, 22, 52), LayoutOrder = i, ZIndex = 9 }, self.skillBar)
     mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, f); mk("UIStroke", { Color = col, Thickness = 2.5 }, f)
     mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.5), Color3.fromRGB(22, 16, 36)), Rotation = 90 }, f)
-    mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0.7, 0), Text = sk.icon or "✦", TextScaled = true, Font = Enum.Font.FredokaOne, TextColor3 = col, ZIndex = 10 }, f)
-    local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0.66, 0), Size = UDim2.new(1, 0, 0.34, 0), Text = sk.name or "", TextScaled = true, Font = Enum.Font.FredokaOne, TextColor3 = Color3.new(1, 1, 1), ZIndex = 10 }, f)
+    mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0.7, 0), Text = sk.icon or "✦", TextScaled = true, Font = Theme.FONT, TextColor3 = col, ZIndex = 10 }, f)
+    local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0.66, 0), Size = UDim2.new(1, 0, 0.34, 0), Text = sk.name or "", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.new(1, 1, 1), ZIndex = 10 }, f)
     mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
     local ov = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 11 }, f)
     mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, ov)

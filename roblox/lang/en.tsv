@@ -1643,3 +1643,17 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 혼돈 구슬 (%d) · 옵션 추가	Chaos Orb (%d) · Add Affix
 확인하기	Reveal
 🔒 잠김	🔒 Locked
+%s · 룬 없음	%s · No Rune
+%s · 룬: %s	%s · Rune: %s
+끼우기	Insert
+룬을 끼울 스킬이 없습니다.	No skills to put a rune in.
+룬이 없습니다. 전투에서 얻을 수 있습니다.	No runes yet. You can get them from battles.
+보관함 %d개	Storage (%d)
+보유 룬 %d개	My Runes (%d)
+빈 칸 %d	Empty Slot %d
+스킬 고르기	Choose a Skill
+아직 찍을 수 없습니다 (앞 노드 · 포인트 · 전직 단계 확인)	Can't take this yet (check previous node · points · advancement tier)
+장착 중	Equipped
+전직 %d차 · 남은 포인트 %d / %d	Advancement Tier %d · Points Left %d / %d
+전직의 서  %d · %d · %d	Tomes of Advancement  %d · %d · %d
+전직하기	Advance
