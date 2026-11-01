@@ -102,7 +102,8 @@ function satInit(b) {
 }
 const satFront = (b) => b.enemies.filter((e) => !e.dead).sort((a, c) => a.col - c.col)[0];
 function satMult(b, e, sk) {
-  const S = b.stats.sat; let m = 1; if (!S) return m;
+  const S = b.stats.sat, C = b.stats.cm || {}; let m = 1; if (!S) return m;
+  if (C.first && sk.idx === 0) m *= 1 + C.first; if (C.full && b.mana >= b.maxMana * 0.99) m *= 1 + C.full; if (C.start && b.time < 3) m *= 1 + C.start; if (C.elite && b.time < (b.cEliteT || 0)) m *= 1 + C.elite; if (C.dodge && b.dodgeBoost2) m *= 1 + C.dodge;   // 참
   if (S.noelem && sk.elem) return 0;
   if (S.manafull) m *= b.mana >= b.maxMana * 0.99 ? 1.3 : 0.9;
   if (S.first) m *= sk.idx === 0 ? 1.4 : 0.9;
@@ -124,8 +125,9 @@ function satCrit(b) {
   if (b.time > (b.csT || 0)) b.cs = 0; const v = 0.1 * (b.cs || 0); b.cs = Math.min(6, (b.cs || 0) + 1); b.csT = b.time + 5; return v;
 }
 function satOnHit(b, e, sk, dealt) {
-  const S = b.stats.sat; if (!S) return;
-  b.dodgeBoost = 0;
+  const S = b.stats.sat, C = b.stats.cm || {}; if (!S) return;
+  b.dodgeBoost = 0; b.dodgeBoost2 = 0;
+  if (C.leech && e.dots && e.dots.some((d) => d.k === "poison")) { const want = Math.min(dealt * C.leech, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0); }
   if (S.leech && e.dots && e.dots.some((d) => d.k === "poison" || d.k === "bleed")) { const want = Math.min(dealt * 0.04, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0); }
   if ((S.proc || S.thunder) && !b._inProc && b.time >= (b.procT || 0)) {
     const act = b.skills.filter((x) => x && x.slot === "active" && x.dtype !== "buff" && x.dtype !== "heal" && x !== sk);
@@ -134,7 +136,10 @@ function satOnHit(b, e, sk, dealt) {
   }
 }
 function satOnKill(b, e) {
-  const S = b.stats.sat; if (!S) return;
+  const S = b.stats.sat, C = b.stats.cm || {}; if (!S) return;
+  if (C.mkill) b.mana = Math.min(b.maxMana, b.mana + b.maxMana * C.mkill);
+  if (C.elite && (e.tier === "elite" || e.tier === "boss")) b.cEliteT = b.time + 5;
+  if (C.goldx && Math.random() < C.goldx) b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * 4;
   if (S.elite && (e.tier === "elite" || e.tier === "boss")) b.sEliteT = b.time + 5;
   if (S.mkill) b.mana = Math.min(b.maxMana, b.mana + b.maxMana * 0.04);
   const dots = e.dots || [];

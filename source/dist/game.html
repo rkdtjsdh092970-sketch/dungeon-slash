@@ -53,7 +53,7 @@
 .eqslots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}.eqs,.tile{position:relative;background:#1c1632;border:3px solid #4a4270;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center}.eqs{height:46px}
 .eqs.empty{opacity:.35;cursor:default}.ghost{opacity:.5}.tile small,.eqs small{position:absolute;right:2px;bottom:0;font-size:10px;font-weight:bold;text-shadow:0 1px 1px #000}.tile em{position:absolute;left:2px;top:0;font-size:10px;color:#ffd24a;font-style:normal;font-weight:bold}
 .sel{outline:3px solid #fff;outline-offset:1px}.grid{display:grid;grid-template-columns:repeat(auto-fill,46px);gap:4px;overflow:auto;flex:1;align-content:start;margin:6px 0}.grid.small{display:flex;flex-wrap:wrap;justify-content:center;margin:10px 0}.grid .tile{width:46px;height:46px}
-.r0{border-color:#777}.r1{border-color:#4a8aff;color:#8ab4ff}.r2{border-color:#ffd24a;color:#ffd24a}.r3{border-color:#ff8a2a;color:#ff9a4a}.r4{border-color:#7fe08a;color:#7fe08a}.cl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0;max-height:430px;overflow:auto}.cl-card{zoom:.78}.cl-card{border:1px solid var(--c);border-radius:8px;padding:4px;background:#12102a}.cl-ttl{text-align:center;font-weight:bold;color:var(--c)}.cl-box{position:relative;width:200px;height:210px;margin:0 auto}.cl-box svg{position:absolute;left:0;top:0}.cl-nd{position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid #3a3560;background:#1a1636;color:#554e80;font-size:16px;cursor:pointer;padding:0}.cl-nd.can{border-color:var(--c);color:var(--c);box-shadow:0 0 8px var(--c)}.cl-nd.has{background:var(--c);color:#111;border-color:#fff}.cl-nd.big{width:40px;height:40px;margin:-2px}.cl-sub{font-size:11px;color:#cfe;min-height:34px;padding:2px 4px}.rsat{border-color:#ff4a3a;color:#ff6a5a;box-shadow:0 0 7px #ff4a3a99,inset 0 0 6px #ff4a3a55}.tile.rsat{background:linear-gradient(#3a1612,#1c0c0a)}span.r0{color:#ccc}
+.r0{border-color:#777}.r1{border-color:#4a8aff;color:#8ab4ff}.r2{border-color:#ffd24a;color:#ffd24a}.r3{border-color:#ff8a2a;color:#ff9a4a}.r4{border-color:#7fe08a;color:#7fe08a}.cl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0;max-height:430px;overflow:auto}.cl-card{zoom:.78}.cl-card{border:1px solid var(--c);border-radius:8px;padding:4px;background:#12102a}.cl-ttl{text-align:center;font-weight:bold;color:var(--c)}.cl-box{position:relative;width:200px;height:210px;margin:0 auto}.cl-box svg{position:absolute;left:0;top:0}.cl-nd{position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid #3a3560;background:#1a1636;color:#554e80;font-size:16px;cursor:pointer;padding:0}.cl-nd.can{border-color:var(--c);color:var(--c);box-shadow:0 0 8px var(--c)}.cl-nd.has{background:var(--c);color:#111;border-color:#fff}.cl-nd.big{width:40px;height:40px;margin:-2px}.cl-sub{font-size:11px;color:#cfe;min-height:34px;padding:2px 4px}.cm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0}.cm-grid.inv{max-height:240px;overflow:auto}.cm-card{border:1px solid var(--c,#3a3560);border-radius:8px;padding:6px;background:#12102a;font-size:12px;min-height:84px}.cm-card.empty{display:flex;align-items:center;justify-content:center;border-style:dashed}.cm-card div{margin:2px 0;color:#cfe}.cm-btns{margin-top:4px}.charmbar{display:flex;align-items:center;gap:4px;margin:4px 0;cursor:pointer}.cmslot{width:26px;height:26px;border:1px dashed #4a4270;border-radius:6px;text-align:center;line-height:24px;color:#554e80}.cmslot.on{border:1px solid var(--c);color:var(--c);background:#1a1636}.rsat{border-color:#ff4a3a;color:#ff6a5a;box-shadow:0 0 7px #ff4a3a99,inset 0 0 6px #ff4a3a55}.tile.rsat{background:linear-gradient(#3a1612,#1c0c0a)}span.r0{color:#ccc}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}.tab{font:inherit;font-size:12px;color:#ccc;background:#2a2347;border:2px solid #4a4270;border-radius:3px;padding:2px 8px;cursor:pointer}.tab.on{background:#5a4a9a;color:#fff;border-color:#b8a8e8}
 .stats{font-size:12px}.stats div,.dname+.dim{display:flex;justify-content:space-between;border-bottom:1px solid #2a2347;padding:1px 0}.stats b{color:#ffe08a}
 .sets{margin-top:6px;font-size:12px;font-weight:bold}.sets .on{color:#8dff9a;font-weight:normal}.sets .off{color:#777;font-weight:normal}.setrow{margin-bottom:5px}
@@ -644,7 +644,7 @@ CFG.SPIRE = { END: 100, WALL: 20, SAT: 0.05, SAT_STEP: 0.015, T0: 118, T1: 175, 
 CFG.SPIRE.TAB = (() => { const AN = [[1, 135], [19, 153], [20, 160], [39, 166], [40, 172], [59, 177], [60, 183], [79, 187], [80, 192], [99, 195], [100, 200]], tab = []; for (let f = 1; f <= 100; f++) { let i = 0; while (i < AN.length - 2 && f > AN[i + 1][0]) i++; const [f0, t0] = AN[i], [f1, t1] = AN[i + 1]; tab.push(Math.round((t0 + (t1 - t0) * (f - f0) / (f1 - f0)) * 10) / 10); } return tab; })();   // 벽 20 · 40 · 60 · 80 · 100층 = 환산 160 / 172 / 183 / 192 / 200 (v4.41: 데이터 보정 — 종결급 시뮬 한계가 환산 150~165, 계시의 돌 풀 장착 + 2차 전직으로 100층)
 const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
 const satRate = (f) => CFG.SPIRE.SAT + CFG.SPIRE.SAT_STEP * Math.floor(Math.max(1, f | 0) / CFG.SPIRE.WALL);   // 사탄 장비 확률: 20층마다 조금씩 오른다
-CFG.CRAID = { NAMES: ["", "이지", "노말", "하드", "문지기"], TIERS: [0, 0, 0, 0], BOSS: [0, 3, 6, 9], REQ: ["", "탑 30층을 깰 수 있는 스펙", "탑 80층 수준", "T6 장비 + 계시의 돌 풀 장착", "참 파밍까지 마친 3차 전직 스펙"] };
+CFG.CRAID = { NAMES: ["", "이지", "노말", "하드", "문지기", "참 던전"], TIERS: [0, 0, 0, 0], BOSS: [0, 3, 6, 9], REQ: ["", "탑 30층을 깰 수 있는 스펙", "탑 80층 수준", "T6 장비 + 계시의 돌 풀 장착", "참 파밍까지 마친 3차 전직 스펙", "하드 레이드와 같은 난이도"] };
 const interp = (AN, f) => { let i = 0; while (i < AN.length - 2 && f > AN[i + 1][0]) i++; const [f0, t0] = AN[i], [f1, t1] = AN[i + 1]; return Math.round((t0 + (t1 - t0) * (f - f0) / (f1 - f0)) * 10) / 10; };
 CFG.SPIRE.TAB2 = Array.from({ length: 100 }, (_, k) => interp([[1, 205], [19, 211], [20, 214], [39, 219], [40, 222], [59, 227], [60, 230], [79, 236], [80, 239], [99, 244], [100, 248]], k + 1));   // 심층 탑 (하드 레이드 클리어 후): T6 장비 기준 환산 205 ~ 248
 const spireTier = (f, tw) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; if (tw === 2) return S.TAB2[f - 1]; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
@@ -1707,7 +1707,8 @@ function satInit(b) {
 }
 const satFront = (b) => b.enemies.filter((e) => !e.dead).sort((a, c) => a.col - c.col)[0];
 function satMult(b, e, sk) {
-  const S = b.stats.sat; let m = 1; if (!S) return m;
+  const S = b.stats.sat, C = b.stats.cm || {}; let m = 1; if (!S) return m;
+  if (C.first && sk.idx === 0) m *= 1 + C.first; if (C.full && b.mana >= b.maxMana * 0.99) m *= 1 + C.full; if (C.start && b.time < 3) m *= 1 + C.start; if (C.elite && b.time < (b.cEliteT || 0)) m *= 1 + C.elite; if (C.dodge && b.dodgeBoost2) m *= 1 + C.dodge;   // 참
   if (S.noelem && sk.elem) return 0;
   if (S.manafull) m *= b.mana >= b.maxMana * 0.99 ? 1.3 : 0.9;
   if (S.first) m *= sk.idx === 0 ? 1.4 : 0.9;
@@ -1729,8 +1730,9 @@ function satCrit(b) {
   if (b.time > (b.csT || 0)) b.cs = 0; const v = 0.1 * (b.cs || 0); b.cs = Math.min(6, (b.cs || 0) + 1); b.csT = b.time + 5; return v;
 }
 function satOnHit(b, e, sk, dealt) {
-  const S = b.stats.sat; if (!S) return;
-  b.dodgeBoost = 0;
+  const S = b.stats.sat, C = b.stats.cm || {}; if (!S) return;
+  b.dodgeBoost = 0; b.dodgeBoost2 = 0;
+  if (C.leech && e.dots && e.dots.some((d) => d.k === "poison")) { const want = Math.min(dealt * C.leech, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0); }
   if (S.leech && e.dots && e.dots.some((d) => d.k === "poison" || d.k === "bleed")) { const want = Math.min(dealt * 0.04, b.lsTok), h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + want); b.lsTok -= want; b.healLS = (b.healLS || 0) + (b.hp - h0); }
   if ((S.proc || S.thunder) && !b._inProc && b.time >= (b.procT || 0)) {
     const act = b.skills.filter((x) => x && x.slot === "active" && x.dtype !== "buff" && x.dtype !== "heal" && x !== sk);
@@ -1739,7 +1741,10 @@ function satOnHit(b, e, sk, dealt) {
   }
 }
 function satOnKill(b, e) {
-  const S = b.stats.sat; if (!S) return;
+  const S = b.stats.sat, C = b.stats.cm || {}; if (!S) return;
+  if (C.mkill) b.mana = Math.min(b.maxMana, b.mana + b.maxMana * C.mkill);
+  if (C.elite && (e.tier === "elite" || e.tier === "boss")) b.cEliteT = b.time + 5;
+  if (C.goldx && Math.random() < C.goldx) b.gold += e.def.gold * Math.pow(1.45, b.act - 1) * 4;
   if (S.elite && (e.tier === "elite" || e.tier === "boss")) b.sEliteT = b.time + 5;
   if (S.mkill) b.mana = Math.min(b.maxMana, b.mana + b.maxMana * 0.04);
   const dots = e.dots || [];
@@ -1789,7 +1794,40 @@ function dropClass(sv, id) { if (!classHas(sv, id)) return false; if (C_NODES.so
 const resetClass = (sv) => { sv.cpass = {}; };
 // 전직: 전직의 서(sv.cbook[n]) 1권을 써서 n차 전직. 이전 차수를 먼저 해야 한다
 function advanceClass(sv) { const n = (sv.cls | 0) + 1; if (n > 3) return { ok: false, msg: "이미 최종 전직입니다" }; if (!sv.cbook || !(sv.cbook[n] > 0)) return { ok: false, msg: `${n}차 전직의 서가 없습니다` }; sv.cbook[n]--; sv.cls = n; return { ok: true, n, msg: `${n}차 전직 — ${C_CLASS_NAMES[n]}! 전직 포인트 2점을 얻었습니다` }; }
-const craidOpen = (sv) => 1 + (sv.craid && sv.craid[1] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] && sv.craid[3] && (sv.cls | 0) >= 3 ? 1 : 0);   // 4 = 새 문지기 (하드 클리어 + 3차 전직)   // 이지 → 노말 → 하드 순서로 열린다
+const craidOpen = (sv) => 1 + (sv.craid && sv.craid[1] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] && sv.craid[3] && (sv.cls | 0) >= 3 ? 2 : 0);   // 4 = 새 문지기 · 5 = 참 던전 (하드 클리어 + 3차 전직)   // 이지 → 노말 → 하드 순서로 열린다
+
+// ---- 참 (v4.45): 3차 전직 후 장비칸 아래 4칸. 하드 난이도 참 던전에서 얻는다. 참 하나에 2줄 (수치는 0.85~1.15배로 굴린다) ----
+// 줄 = [문구({v}에 첫 효과 수치), 효과[[스탯, 기본값]], 표시형식 p=% n=정수 f=고정(굴림 없음)]. 스탯 이름이 cm: 으로 시작하면 전투 · 드랍 코드가 읽는 값
+const CHARMS = [
+  { id: "blood", name: "피의 약속", color: "#ff6a6a", L: [["처치 시 체력 {v} 회복", [["killHeal", 0.015]], "p"], ["체력 50% 이하일 때 받는 피해 -{v}", [["cm:low50", 0.10]], "p"]] },
+  { id: "mana", name: "마나의 샘", color: "#5ad0ff", L: [["처치 시 마나 {v} 회복", [["cm:mkill", 0.03]], "p"], ["마나 소모 -{v}", [["manaCostRed", 0.08]], "p"]] },
+  { id: "gold", name: "탐욕의 동전", color: "#ffd24a", L: [["골드 획득 +{v}", [["goldFind", 0.25]], "p"], ["처치 시 {v} 확률로 골드 5배", [["cm:goldx", 0.05]], "p"]] },
+  { id: "luck", name: "행운의 부적", color: "#8dff9a", L: [["매직 파운드 +{v}", [["mf", 0.15]], "p"], ["보스 열쇠 드랍 확률 +{v}", [["cm:keyFind", 0.30]], "p"]] },
+  { id: "stone", name: "돌 수집가", color: "#c58bff", L: [["돌 드랍 확률 +{v}", [["cm:stoneFind", 0.20]], "p"], ["돌 보관 한도 +{v}", [["cm:stoneCap", 30]], "n"]] },
+  { id: "phoenix", name: "불사조의 깃털", color: "#ffb060", L: [["전투당 1회 부활", [["revive", 1]], "f"], ["부활 직후 3초간 받는 피해 -{v}", [["cm:reviveShield", 0.50]], "p"]] },
+  { id: "swift", name: "쾌속의 징표", color: "#6af0c0", L: [["쿨타임 감소 +{v}", [["cdr", 0.05]], "p"], ["스킬 지속시간 +{v}", [["skillDur", 0.10]], "p"]] },
+  { id: "breaker", name: "파쇄자의 눈", color: "#ff4a8a", L: [["방어 무시 +{v}", [["ignoreDef", 0.08]], "p"], ["보스 추가 피해 +{v}", [["boss", 0.10]], "p"]] },
+  { id: "focus", name: "집중의 부적", color: "#ffe45a", L: [["첫 번째 칸 스킬 피해 +{v}", [["cm:first", 0.20]], "p"], ["마나가 가득 찼을 때 피해 +{v}", [["cm:full", 0.10]], "p"]] },
+  { id: "bulwark", name: "철벽의 부적", color: "#6ab4ff", L: [["방어력 +{v}", [["defPct", 0.15]], "p"], ["원거리 적에게 받는 피해 -{v}", [["rangedTaken", 0.10]], "p"]] },
+  { id: "shadow", name: "그림자 장막", color: "#a0a0d0", L: [["회피 +{v}", [["dodge", 0.04]], "p"], ["회피 시 다음 스킬 피해 +{v}", [["cm:dodge", 0.15]], "p"]] },
+  { id: "swarm", name: "군집의 인장", color: "#ff9a30", L: [["광역 피해 +{v}", [["aoeDmg", 0.12]], "p"], ["칸당 몹 수 +1", [["density", 1]], "f"]] },
+  { id: "hunter", name: "사냥꾼의 직감", color: "#d8c8b0", L: [["정예 추가 피해 +{v}", [["elite", 0.15]], "p"], ["정예 · 보스 처치 시 5초간 주는 피해 +{v}", [["cm:elite", 0.10]], "p"]] },
+  { id: "tidy", name: "정리의 인장", color: "#9ad8ff", L: [["가방 칸 +{v}", [["cm:bag", 25]], "n"], ["장비 분해 시 강화석 +{v}", [["cm:ore", 0.20]], "p"]] },
+  { id: "horn", name: "개전의 나팔", color: "#ff7a3a", L: [["전투 시작 후 3초간 주는 피해 +{v}", [["cm:start", 0.25]], "p"], ["전투 시작 시 모든 스킬을 바로 쓸 수 있다", [["cm:cdStart", 1]], "f"]] },
+  { id: "fang", name: "독니의 맹세", color: "#8aff6a", L: [["중독 확률 +{v}", [["poisonChance", 0.10]], "p"], ["중독된 적을 공격하면 피해의 {v}를 체력으로 회복", [["cm:leech", 0.03]], "p"]] },
+];
+const CHARM_BY_ID = {}; for (const c of CHARMS) CHARM_BY_ID[c.id] = c;
+const charmUnlocked = (sv) => (sv.cls | 0) >= 3;
+function genCharm(sv, id) { const c = id ? CHARM_BY_ID[id] : CHARMS[Math.floor(Math.random() * CHARMS.length)]; return { uid: sv.nextUid++, charm: c.id, rl: [0.85 + Math.random() * 0.30, 0.85 + Math.random() * 0.30] }; }
+const charmLineVal = (it, li, ei) => { const L = CHARM_BY_ID[it.charm].L[li], base = L[1][ei][1]; if (L[2] === "f") return base; const v = base * (it.rl ? it.rl[li] : 1); return L[2] === "n" ? Math.round(v) : v; };
+const charmFmt = (L, v) => (L[2] === "p" ? (v * 100).toFixed(v < 0.1 ? 1 : 0).replace(/\.0$/, "") + "%" : String(Math.round(v)));
+function charmLines(it) { const C = CHARM_BY_ID[it.charm]; if (!C) return []; return C.L.map((L, li) => L[0].replace("{v}", charmFmt(L, charmLineVal(it, li, 0)))); }
+function charmEffects(sv) { const out = []; if (!charmUnlocked(sv)) return out; for (const it of sv.charms || []) { if (!it || !CHARM_BY_ID[it.charm]) continue; CHARM_BY_ID[it.charm].L.forEach((L, li) => L[1].forEach((e, ei) => out.push([e[0], charmLineVal(it, li, ei)]))); } return out; }
+const charmVal = (sv, key) => { let v = 0; for (const [k, x] of charmEffects(sv)) if (k === "cm:" + key) v += x; return v; };
+const invMax = (sv) => CFG.INV_MAX + Math.round(charmVal(sv, "bag"));
+const stoneCap = (sv) => 100 + Math.round(charmVal(sv, "stoneCap"));
+function equipCharm(sv, it, slot) { if (!charmUnlocked(sv)) return { ok: false, msg: "3차 전직 후에 쓸 수 있습니다" }; sv.charms = sv.charms || [null, null, null, null]; const i = slot != null ? slot : sv.charms.findIndex((x) => !x); if (i < 0) return { ok: false, msg: "빈 참 칸이 없습니다" }; const old = sv.charms[i]; sv.charms[i] = it; sv.charmInv = (sv.charmInv || []).filter((x) => x !== it); if (old) sv.charmInv.push(old); return { ok: true }; }
+function unequipCharm(sv, i) { const it = (sv.charms || [])[i]; if (!it) return false; sv.charms[i] = null; (sv.charmInv = sv.charmInv || []).push(it); return true; }
 
 // =========================================================
 // 세이브 / 장비 / 스탯 / 퀘스트 / 대장간
@@ -1803,7 +1841,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -1815,6 +1853,7 @@ function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.sk
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
   const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
+    if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;
     if (s.passRev !== 6) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 6; }   // 패시브 트리 개편: 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
@@ -1947,8 +1986,9 @@ function computeStats(sv) {
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
     vsBleed: 0, vsPoison: 0, vsIgnite: 0, vsChill: 0, vsShock: 0, bleedMore: 1, poisonMore: 1, igniteMore: 1, chillMore: 1, shockMore: 1, shockChance: 0,
-    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0, sat: {} };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0, sat: {}, cm: {} };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
+    if (k.charCodeAt(0) === 99 && k.startsWith("cm:")) { s.cm[k.slice(3)] = (s.cm[k.slice(3)] || 0) + v; return; }
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
       case "boss": case "elite": case "ranged": case "normal": s.add[k] += v; break;
@@ -1973,6 +2013,7 @@ function computeStats(sv) {
   if (sv.passive) { const pi = (sv.skills || []).find((x) => x.uid === sv.passive), pd = pi && SKILLS.find((x) => x.id === pi.id); if (pd && pd.per) for (const k in pd.per) { const base = pd.per[k], lv = 1 + 0.05 * ((pi.lvl || 1) - 1); apply(k, k.endsWith("More") ? 1 + (base - 1) * lv : base * lv); } }   // 패시브 스킬 칸
   for (const id in (sv.pass || {})) { const p = PASSIVE_BY_ID[id]; if (p) for (const k in p.per) apply(k, p.per[k] * sv.pass[id]); }
   s.add.boss += atlasVal(sv, "conq"); s.dmgTaken -= atlasVal(sv, "guard");   // 심연 각인: 보스 피해 · 받는 피해
+  for (const [k, v] of charmEffects(sv)) apply(k, v);   // 참
   for (const id in (sv.cpass || {})) { const cn = C_BY_ID[id]; if (cn && sv.cpass[id]) for (const k in cn.per) apply(k, cn.per[k]); }   // 전직 패시브
   if (sv.guildLv) for (const gp of GUILD_PASSIVES) if (sv.guildLv >= gp.lv) for (const k in gp.per) apply(k, gp.per[k]);   // 길드 패시브
   const sc = {};
@@ -2099,6 +2140,7 @@ function powerWith(sv, slot, item, fn) { const old = sv.equipped[slot]; sv.equip
 function dropBonus(sv, now) {
   const st = computeStats(sv), B = { mf: st.mf, qty: 1, orb: 1, exp: 1, gold: 1, unique: 1, stone: 1, key: 1, ore: 1, shard: 1, hell: 1 };
   B.mf += atlasVal(sv, "mf"); B.exp += st.expFind + atlasVal(sv, "exp"); B.gold += atlasVal(sv, "gold"); B.ore += atlasVal(sv, "ore"); B.orb += atlasVal(sv, "orb"); B.shard += atlasVal(sv, "shard"); B.key += atlasVal(sv, "key"); B.hell += atlasVal(sv, "hell");
+  B.key *= 1 + charmVal(sv, "keyFind"); B.stone *= 1 + charmVal(sv, "stoneFind");
   B.buffs = []; { const gl = sv.guildLv || 0; B.gold += 0.02 * gl; B.exp += 0.02 * gl; B.mf += 0.01 * gl; }
   if (sv.endgame) for (const w of worldBuffs(now)) { B.buffs.push(w); B.mf += w.mf || 0; B.exp *= w.exp || 1; B.gold *= w.gold || 1; B.qty *= w.qty || 1; B.orb *= w.orb || 1; B.unique *= w.unique || 1; B.stone *= w.stone || 1; B.key *= w.key || 1; }
   return B;
@@ -2131,19 +2173,19 @@ function rerollSockets(sv, it) {
 }
 function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
 // 돌 보관 한도: 미확인 돌은 종류(원초 · 계시)마다, 확인된 돌은 옵션(종류)마다 100개까지. 넘치는 돌은 자동으로 골드로 팔린다
-const STONE_CAP = 100, STONE_CONV = 20;
+const STONE_CAP = 100, STONE_CONV = 20;   // 한도는 stoneCap(sv)  (참 효과로 늘어난다)
 const stoneSellValue = (sv, st) => Math.round(stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1) * (st.rev ? 0.4 : 0.2));
 function addStone(sv, hi) {   // 드랍으로 돌을 얻는다: 한도가 차 있으면 바로 골드로 판다 (얻은 골드를 돌려준다)
-  const st = newStone(sv, hi); if (sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === (hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; return g; }
+  const st = newStone(sv, hi); if (sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === (hi ? 1 : 0)).length >= stoneCap(sv)) { const g = stoneSellValue(sv, st); sv.gold += g; return g; }
   sv.stones.push(st); return 0;
 }
 function sellStones(sv, list) { const set = new Set(list); let g = 0; for (const st of list) g += stoneSellValue(sv, st); sv.stones = sv.stones.filter((x) => !set.has(x)); sv.gold += g; return g; }
 function convertStones(sv, times) {   // 원초의 돌 20개 → 계시의 돌 1개
-  let n = 0; while (n < times) { const base = sv.stones.filter((x) => !x.rev && !x.hi); if (base.length < STONE_CONV) break; if (sv.stones.filter((x) => !x.rev && x.hi).length >= STONE_CAP) break; const rm = new Set(base.slice(0, STONE_CONV)); sv.stones = sv.stones.filter((x) => !rm.has(x)); sv.stones.push(newStone(sv, 1)); n++; }
+  let n = 0; while (n < times) { const base = sv.stones.filter((x) => !x.rev && !x.hi); if (base.length < STONE_CONV) break; if (sv.stones.filter((x) => !x.rev && x.hi).length >= stoneCap(sv)) break; const rm = new Set(base.slice(0, STONE_CONV)); sv.stones = sv.stones.filter((x) => !rm.has(x)); sv.stones.push(newStone(sv, 1)); n++; }
   return n;
 }
 function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" });
-  if (sv.stones.filter((x) => x !== st && x.rev && x.rev.k === st.rev.k && (x.hi ? 1 : 0) === (st.hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; sv.stones = sv.stones.filter((x) => x !== st); st.soldFor = g; }   // 같은 옵션이 이미 100개면 바로 판매
+  if (sv.stones.filter((x) => x !== st && x.rev && x.rev.k === st.rev.k && (x.hi ? 1 : 0) === (st.hi ? 1 : 0)).length >= stoneCap(sv)) { const g = stoneSellValue(sv, st); sv.gold += g; sv.stones = sv.stones.filter((x) => x !== st); st.soldFor = g; }   // 같은 옵션이 이미 100개면 바로 판매
   return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
 // 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
@@ -2188,6 +2230,9 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid" || kind === "spire" || kind === "craid" || kind === "warden";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && ((node.floor || 0) >= CFG.SPIRE.END || node.tw === 2)) || (kind === "craid" && node.diff === 3) || kind === "warden" ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
+  if (kind === "craid" && node.charm) {   // 참 던전: 참 1~2개 (2번째는 40%)와 골드(몹이 주는 골드)만 나온다
+    out.charms = []; if (charmUnlocked(sv)) { out.charms.push(genCharm(sv)); if (Math.random() < 0.4) out.charms.push(genCharm(sv)); } return out;
+  }
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
     if (Math.random() < ch) { if (addStone(sv, 1)) out.stoneSold = (out.stoneSold || 0) + 1; out.stonesHi = 1; }
@@ -2310,10 +2355,10 @@ const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.mi
 const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
-function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
+function dismantleYield(it, sv) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round(((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6) * (1 + (sv ? charmVal(sv, "ore") : 0)))) }; }
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
-function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
+function dismantleItem(sv, it) { const y = dismantleYield(it, sv); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
 // 옵션 재굴림 비용: 장비 T마다 고정 (몇 번을 굴려도, 강화 수치와 상관없이 같다) — 그 구간 균열 한 번 도는 골드 정도
 const REROLL_COST = [[150, 2], [500, 3], [1200, 4], [14000, 8], [35000, 12], [80000, 16]];
 const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(5, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };
@@ -2659,7 +2704,7 @@ function createBattle(sv, node) {
   if (node.kind === "warden") { b.hpM *= CFG.WARDEN.K; b.atkM *= CFG.WARDEN.ATK; }   // 돌의 신전부터는 4레인
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
-    const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
+    const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = st.cm && st.cm.cdStart ? 0 : sk.cd * 0.4; sk.idx = i; return sk;
   });
   // 속성 보스 상성: 장착한 공격 스킬 중 2개 이상이 보스의 속성이면 그 보스에게 받는 피해가 줄어든다
   if (isEB(node.kind)) { const pool = EB[node.kind].pool, nm = b.skills.filter((k) => k && k.slot === "active" && k.dtype !== "buff" && k.dtype !== "heal" && ebMatch(node.kind, k)).length; b.affMatch = nm >= 2; }
@@ -2841,9 +2886,10 @@ function pickPrimary(b, sk) {
 function damagePlayer(b, raw, opt) {
   opt = opt || {};
   if (b.inv > 0) return;
-  if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (b.stats.sat.dodgeamp) b.dodgeBoost = 1; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
+  if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (b.stats.sat.dodgeamp) b.dodgeBoost = 1; if (b.stats.cm && b.stats.cm.dodge) b.dodgeBoost2 = 1; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
   const dfv = b.stats.def * satDefMul(b); let d = raw * (1 - dfv / (dfv + 5 * raw));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
+  { const C = b.stats.cm; if (C) { if (C.low50 && b.hp <= b.maxHp * 0.5) d *= 1 - C.low50; if (C.reviveShield && b.time < (b.rvShieldT || 0)) d *= 1 - C.reviveShield; } }   // 참
   if (b.affMatch) d *= CFG.EB_AFF_DEF;
   d *= Math.max(CFG.TAKEN_FLOOR, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
   d = Math.max(1, d);
@@ -3139,7 +3185,7 @@ function stepBattle(b, dt) {
     for (const t of b.texts) { t.t -= dt; t.y -= 26 * dt; } b.texts = b.texts.filter((t) => t.t > 0);
     for (const c of b.corpses) c.t += dt; b.corpses = b.corpses.filter((c) => c.t < 1.6);
   } else b.corpses.length = 0;
-  if (b.hp <= 0 && b.revive > 0) { b.revive--; b.hp = b.maxHp * 0.5; b.inv = 1.5; b.flash = 0.4; b.shake = 0.5; say(b, "부활!", "good"); sfx(b, "revive"); fx(b, { kind: "aura", t: 1, life: 1, color: "#ffe9a0" }); }
+  if (b.hp <= 0 && b.revive > 0) { b.revive--; b.hp = b.maxHp * 0.5; b.inv = 1.5; b.rvShieldT = b.time + 3; b.flash = 0.4; b.shake = 0.5; say(b, "부활!", "good"); sfx(b, "revive"); fx(b, { kind: "aura", t: 1, life: 1, color: "#ffe9a0" }); }
   if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
   else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
@@ -3172,6 +3218,7 @@ function finishBattle(sv, b) {
     } else {
       const d = rollDrops(sv, Object.assign({}, node, { waves, voidCleared: b.voidCleared || 0, firstClear: node.kind === "boss" && sv.cleared[node.act - 1] < node.stage }), b.bossKills > 0 || node.kind === "boss", B);
       res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.stonesHi = d.stonesHi || 0; res.sockTix = d.sockTix || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
+      if (d.charms && d.charms.length) { sv.charmInv = sv.charmInv || []; sv.charmInv.push(...d.charms); res.charms = d.charms; }
       sv.inv.push(...d.items); sv.skills.push(...d.skills); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
         sv.cleared[node.act - 1] = node.stage;
@@ -3183,12 +3230,12 @@ function finishBattle(sv, b) {
       }
       if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
       if (node.kind === "warden") { const Wd = (sv.warden = sv.warden || { clears: 0, best: 0, pops: 0 }); Wd.clears++; Wd.pops += b.wPop || 0; if (!Wd.best || b.time < Wd.best) Wd.best = Math.round(b.time); res.warden = { time: b.time, best: Wd.best, pop: b.wPop || 0, boom: b.wBoom || 0 }; res.notes.push(`문지기 처치! ${Math.round(b.time)}초 (구슬 ${b.wPop || 0}개 처치, 폭발 ${b.wBoom || 0}회)`); }
-      if (node.kind === "craid") { const d = node.diff | 0, first = !(sv.craid && sv.craid[d]); sv.craid = sv.craid || [0, 0, 0, 0]; if (first) { sv.craid[d] = 1; sv.cbook = sv.cbook || [0, 0, 0, 0]; sv.cbook[d]++; res.notes.push(`📜 ${d}차 전직의 서를 얻었습니다! (레이드 ${CFG.CRAID.NAMES[d]} 최초 클리어)`); } res.craid = { diff: d, first }; }
+      if (node.kind === "craid" && !node.charm) { const d = node.diff | 0, first = !(sv.craid && sv.craid[d]); sv.craid = sv.craid || [0, 0, 0, 0]; if (first) { sv.craid[d] = 1; sv.cbook = sv.cbook || [0, 0, 0, 0]; sv.cbook[d]++; res.notes.push(`📜 ${d}차 전직의 서를 얻었습니다! (레이드 ${CFG.CRAID.NAMES[d]} 최초 클리어)`); } res.craid = { diff: d, first }; }
       if (node.kind === "spire") { const pk = node.tw === 2 ? "spire2" : "spire", P = (sv[pk] = sv[pk] || { best: 0 }); if (node.floor > P.best) { P.best = node.floor; res.notes.push(node.floor % CFG.SPIRE.WALL === 0 ? `🗼 ${node.tw === 2 ? "심층 " : ""}탑 ${node.floor}층 — 벽을 넘었습니다!` : `${node.tw === 2 ? "심층 " : ""}탑 ${node.floor}층 최초 클리어`); } res.spire = { floor: node.floor, best: P.best }; }
       if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
-    while (sv.inv.length > CFG.INV_MAX) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }
+    while (sv.inv.length > invMax(sv)) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }
   }
   purgeClearedQuests(sv);   // 방금 액트를 클리어했다면 그 액트의 남은 퀘스트를 정리
   res.voidCleared = b.voidCleared || 0;
@@ -4636,7 +4683,7 @@ function nodeToBattle(n) {
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
-  if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
+  if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 5) return { kind: "craid", act: 10, diff: 3, charm: 1, tier: CFG.CRAID.TIERS[3], name: "참 던전", level: 100 }; if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
   if (n.kind === "tower2") { const P = save.spire2 || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spire2Floor || P.best + 1))); return { kind: "spire", tw: 2, act: 10, floor: f, tier: spireTier(f, 2), first: f > P.best, name: `심층 첨탑 ${f}층`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
   if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
@@ -4875,7 +4922,7 @@ function afterBattle(res, b) {
     if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`; if (pr.sSold || pr.sDis) note += ` · 스킬 ${pr.sSold ? pr.sSold + "개 판매 " : ""}${pr.sDis ? pr.sDis + "개 분해" : ""}`;
     saveGame(); refreshTop();
     toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
-    if (save.inv.length >= CFG.INV_MAX - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
+    if (save.inv.length >= invMax(save) - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
     const go = () => {
       if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
@@ -5164,12 +5211,12 @@ function renderItems() {
   list.sort(IB.sort === "ilvl" ? (a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity : IB.sort === "up" ? (a, b) => ups.get(b) - ups.get(a) : (a, b) => (b.sat ? 4 : b.rarity) - (a.sat ? 4 : a.rarity) || tierOfItem(b) - tierOfItem(a) || b.ilvl - a.ilvl || (b.enh || 0) - (a.enh || 0));
   const eqCol = `<div class="doll">` + DOLL_ORDER.map((s) => { const it = save.equipped[s]; return it ? `<div class="eqs ${tcls(it)} ${IB.sel === it ? "sel" : ""}" ${itemColor(it) ? `style="border-color:${itemColor(it)}"` : ""} data-a="pick" data-u="${it.uid}" data-tipu="${it.uid}">${ITEM_ICON(it)}<small>${it.enh ? "+" + it.enh : ""}</small>${tierOfItem(it) === 4 ? `<i class="sp1 a">✦</i><i class="sp1 b">✧</i>` : ""}<span class="lbl">${SLOT_NAME[s]}</span></div>` : `<div class="eqs empty">${iconImg(slotType(s), 2, "ghost")}<span class="lbl">${SLOT_NAME[s]}</span></div>`; }).join("") + `</div>`;
   const nUp = save.inv.filter((it) => isUpgrade(save, it)).length;
-  const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 돌 (${save.stones.length})</button>` : `<button class="btn pri wide1" data-a="stones">💎 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
+  const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 돌 (${save.stones.length})</button>${charmUnlocked(save) ? charmBar() : ""}` : `<button class="btn pri wide1" data-a="stones">💎 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}<option value="9" ${IB.rar === 9 ? "selected" : ""}>사탄</option></select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
-  <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${CFG.INV_MAX}</div></div>
+  <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${invMax(save)}</div></div>
   <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
   const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
@@ -5179,6 +5226,7 @@ function renderItems() {
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
     equip: (el) => { if (!canEquip(save, IB.sel)) { toast(`장착 레벨 Lv.${reqLevel(IB.sel.ilvl)} 이상이 필요합니다`, "bad"); snd("error"); return; } equipItem(IB.sel, el.dataset.k || null); snd("equip"); done(); }, unequip: () => { unequipSlot(eqKey(IB.sel)); done(); },
     recommend: () => { const ch = recommendEquip(save); if (ch.length) { snd("equip"); toast(`추천 장비로 ${ch.length}칸을 교체했습니다`, "ok"); } done(); },
+    charms: () => openCharms(() => renderItems()),
     openstat: () => { Modal.onClose = null; openStats(); },
     enh: () => { const r = enhance(save, IB.sel); toast(r.msg, r.success ? "ok" : "bad"); snd(r.success ? "enh_ok" : r.ok ? "enh_fail" : "error"); saveGame(); renderItems(); },
     dis: () => { if (isProtected(IB.sel)) return; const y = dismantleItem(save, IB.sel); toast(`분해: +${fmtN(y.gold)}G, 강화석 +${y.ore}`); snd("coin"); IB.sel = null; done(); },
@@ -5376,6 +5424,7 @@ function openPassPreset(i) {
     ppback: () => openPassives(),
   } });
 }
+const charmBar = () => `<div class="charmbar" data-a="charms" title="참 열기">${[0, 1, 2, 3].map((i) => { const it = (save.charms || [])[i], C = it && CHARM_BY_ID[it.charm]; return `<div class="cmslot ${it ? "on" : ""}" style="${it ? "--c:" + C.color : ""}" title="${it ? C.name + " — " + charmLines(it).join(" / ") : "빈 칸"}">${it ? "◈" : "·"}</div>`; }).join("")}<span class="dim">참</span></div>`;
 function openPassives() {
   Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button> <button class="btn xs" data-a="clsopen">전직 ${(save.cls | 0) ? save.cls + "차" : ""}</button> &nbsp;프리셋 ${[0, 1, 2].map((i) => `<button class="btn xs pbtn ${(save.passPresets || [])[i] ? "has" : ""}" data-a="ppick" data-n="${i}" title="${(save.passPresets || [])[i] ? "눌러서 구성을 확인하고 적용" : "비어 있음 · 눌러서 현재 구성을 저장"}">${i + 1}</button>`).join("")}</div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
     ppick: (el) => openPassPreset(+el.dataset.n),
@@ -5827,7 +5876,7 @@ async function openAuction() {
     ahtab: (el) => { AH.tab = el.dataset.t; rerender(); }, ahslot: (el) => { AH.slot = el.value; rerender(); }, ahrar: (el) => { AH.minr = +el.value; rerender(); }, ahsort: (el) => { AH.sort = el.value; rerender(); }, ahuniq: (el) => { AH.uniq = el.checked; rerender(); }, ahref: rerender,
     ahbuy: async (el) => {
       const id = +el.dataset.id, price = +el.dataset.price; if (save.gold < price) return toast("골드가 부족합니다", "bad");
-      const row = (window._ahRows || []).find((x) => x.id === id); if (!(row && isSkillItem(row.item)) && save.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad");
+      const row = (window._ahRows || []).find((x) => x.id === id); if (!(row && isSkillItem(row.item)) && save.inv.length >= invMax(save)) return toast("가방이 가득 찼습니다", "bad");
       const r = await api("/api/ah/buy", { id }); if (r.err) { toast(r.err, "bad"); snd("error"); return rerender(); }
       save.gold -= r.price; r.item.uid = save.nextUid++; delete r.item.lock; if (!isSkillItem(r.item)) clampItem(r.item);
       if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else { save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1; }
@@ -6013,7 +6062,7 @@ function openStash() {
   const stHtml = isI ? S.items.map((it) => tileHtml(it, { attr: `data-a="wd" data-u="${it.uid}"`, up: false })).join("") : S.skills.map((k) => skTile(k, "wd")).join("");
   const html = `<h2>📦 창고</h2><div class="res">${iconImg("gold", 1)} ${fmtN(sv.gold)} &nbsp; 보관 <b>${stashUsed(sv)} / ${S.cap}</b> <small class="dim">(장비 ${S.items.length} · 스킬 ${S.skills.length}, 최대 ${STASH_MAX}칸)</small></div>
   <div class="itbar"><button class="tab ${isI ? "on" : ""}" data-a="sttab" data-t="item">장비</button><button class="tab ${!isI ? "on" : ""}" data-a="sttab" data-t="skill">스킬</button><button class="btn xs" data-a="stsort">자동 정렬</button><button class="btn xs" data-a="stexp" ${cost == null || sv.gold < cost ? "disabled" : ""}>${cost == null ? "최대 확장" : `+${STASH_STEP}칸 확장 (${fmtN(cost)} 골드)`}</button></div>
-  <div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div class="dim">가방 ${isI ? sv.inv.length + " / " + CFG.INV_MAX : "스킬 " + sv.skills.length} · 눌러서 창고로</div><div class="grid" style="max-height:300px;overflow:auto">${invHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div>
+  <div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div class="dim">가방 ${isI ? sv.inv.length + " / " + invMax(sv) : "스킬 " + sv.skills.length} · 눌러서 창고로</div><div class="grid" style="max-height:300px;overflow:auto">${invHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div>
   <div style="flex:1;min-width:0"><div class="dim">창고 · 눌러서 가방으로</div><div class="grid" style="max-height:300px;overflow:auto">${stHtml || `<div class="dim pad">비어 있습니다</div>`}</div></div></div>
   <div class="dim">착용·장착 중인 장비/스킬은 넣을 수 없고, 창고 물품은 판매·분해 대상에서 제외됩니다.</div>`;
   const done = () => { saveGame(); openStash(); };
@@ -6025,7 +6074,7 @@ function openStash() {
       if (isI) { const it = sv.inv.find((x) => x.uid === u); if (!it) return; if (EQ_SLOTS.some((k) => sv.equipped[k] === it) || (sv.presets || []).some((p) => p && Object.values(p.equip).includes(u))) return toast("착용 중이거나 프리셋에 포함된 장비는 넣을 수 없습니다", "bad"); sv.inv = sv.inv.filter((x) => x !== it); S.items.push(it); } else { const k = sv.skills.find((x) => x.uid === u); if (!k || stashSkillBusy(sv, k)) return; sv.skills = sv.skills.filter((x) => x !== k); S.skills.push(k); }
       snd("click"); done(); },
     wd: (el) => { const u = +el.dataset.u;
-      if (isI) { if (sv.inv.length >= CFG.INV_MAX) return toast("가방이 가득 찼습니다", "bad"); const it = S.items.find((x) => x.uid === u); if (!it) return; S.items = S.items.filter((x) => x !== it); sv.inv.push(it); } else { const k = S.skills.find((x) => x.uid === u); if (!k) return; S.skills = S.skills.filter((x) => x !== k); sv.skills.push(k); }
+      if (isI) { if (sv.inv.length >= invMax(sv)) return toast("가방이 가득 찼습니다", "bad"); const it = S.items.find((x) => x.uid === u); if (!it) return; S.items = S.items.filter((x) => x !== it); sv.inv.push(it); } else { const k = S.skills.find((x) => x.uid === u); if (!k) return; S.skills = S.skills.filter((x) => x !== k); sv.skills.push(k); }
       snd("click"); done(); },
   } });
 }
@@ -6040,7 +6089,7 @@ function stoneGroups(list) { const m = new Map(); for (const s of list) { const 
 function openStones() {
   const sv = save, cost0 = stoneRevealCost(sv), costOf = (hi) => cost0 * (hi ? CFG.TEMPLE.HI_COST : 1), un = [0, 1].map((hi) => sv.stones.filter((s) => !s.rev && (s.hi ? 1 : 0) === hi)), rv = sv.stones.filter((s) => s.rev), gr = stoneGroups(rv);
   const unRow = (hi) => un[hi].length ? `<div class="pline"><b style="color:${STONE_T[hi].color}">${STONE_T[hi].ico} ${STONE_T[hi].un}</b> <span style="color:#ffe08a">×${un[hi].length}</span></div><div class="pline"><button class="btn xs pri" data-a="streveal" data-u="${un[hi][0].uid}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>1개 확인 (${fmtN(costOf(hi))}G)</button> <button class="btn xs" data-a="stsellu" data-h="${hi}" title="미확인 돌 전부 판매">전부 팔기 (${fmtN(un[hi].length * stoneSellValue(sv, { hi }))}G)</button> <button class="btn xs" data-a="stall" data-h="${hi}" ${sv.gold >= costOf(hi) ? "" : "disabled"}>전부 확인 (${fmtN(costOf(hi) * un[hi].length)}G)</button></div>` : "";
-  const left = `<div style="flex:1;min-width:0"><div class="pline"><b>❔ 미확인된 돌</b> <span style="color:#ffe08a">×${un[0].length + un[1].length}</span></div>${unRow(0)}${un[0].length >= STONE_CONV ? `<div class="pline"><button class="btn xs" data-a="stconv" data-n="1" ${un[1].length >= STONE_CAP ? "disabled" : ""}>원초 ${STONE_CONV}개 → 계시 1개</button> <button class="btn xs" data-a="stconv" data-n="99" ${un[1].length >= STONE_CAP ? "disabled" : ""}>가능한 만큼 변환 (${Math.min(Math.floor(un[0].length / STONE_CONV), STONE_CAP - un[1].length)}회)</button></div>` : `<div class="dim pad">원초의 돌 ${STONE_CONV}개를 모으면 계시의 돌 1개로 바꿀 수 있습니다</div>`}${unRow(1)}${un[0].length + un[1].length ? "" : `<div class="dim pad">미확인된 돌이 없습니다 — 균열과 돌의 신전을 돌아 보세요</div>`}</div>`;
+  const left = `<div style="flex:1;min-width:0"><div class="pline"><b>❔ 미확인된 돌</b> <span style="color:#ffe08a">×${un[0].length + un[1].length}</span></div>${unRow(0)}${un[0].length >= STONE_CONV ? `<div class="pline"><button class="btn xs" data-a="stconv" data-n="1" ${un[1].length >= stoneCap(sv) ? "disabled" : ""}>원초 ${STONE_CONV}개 → 계시 1개</button> <button class="btn xs" data-a="stconv" data-n="99" ${un[1].length >= stoneCap(sv) ? "disabled" : ""}>가능한 만큼 변환 (${Math.min(Math.floor(un[0].length / STONE_CONV), stoneCap(sv) - un[1].length)}회)</button></div>` : `<div class="dim pad">원초의 돌 ${STONE_CONV}개를 모으면 계시의 돌 1개로 바꿀 수 있습니다</div>`}${unRow(1)}${un[0].length + un[1].length ? "" : `<div class="dim pad">미확인된 돌이 없습니다 — 균열과 돌의 신전을 돌아 보세요</div>`}</div>`;
   const section = (hi) => { const g = gr.filter((x) => x.hi === hi); if (!g.length) return ""; return stoneHead(hi, g.reduce((a, x) => a + x.uids.length, 0)) + g.map((x) => `<div class="pline">${stoneName(x.rev)}${x.uids.length > 1 ? ` <b style="color:#ffe08a">×${x.uids.length}</b>` : ""} <button class="btn xs" data-a="stdrop" data-u="${x.uids[0]}" title="1개 버리기">버리기</button> <button class="btn xs" data-a="stsell" data-k="${x.rev.k}" data-h="${x.hi}" title="이 옵션의 돌을 전부 판매">전부 팔기 (${fmtN(x.uids.length * stoneSellValue(sv, { hi: x.hi, rev: 1 }))}G)</button></div>`).join(""); };
   const right = `<div style="flex:1;min-width:0;border-left:1px solid #3a3260;padding-left:10px"><div class="pline"><b>확인된 돌</b> <span style="color:#8dff9a">${rv.length}개 · ${gr.length}종</span></div>
     <div style="max-height:300px;overflow:auto">${section(1)}${section(0)}${rv.length ? "" : `<div class="dim pad">확인된 돌이 없습니다</div>`}</div></div>`;
@@ -6048,7 +6097,7 @@ function openStones() {
   <div class="dim center"><span style="color:${STONE_T[0].color}">원초의 돌</span>은 균열에서, <span style="color:${STONE_T[1].color}">계시의 돌</span>은 돌의 신전에서 아주 드물게 드랍됩니다. 제련소에서 골드로 옵션을 확인하면 <b>고정 수치</b>의 옵션이 나옵니다 (계시의 돌은 수치가 약 ${CFG.TEMPLE.HI_MULT}배, 확인 비용 ×${CFG.TEMPLE.HI_COST}).<br>장비의 소켓에 끼우려면 장비 창 → 제련소 → 장비 선택 → [끼우기]. 장비가 이미 가진 옵션과 같은 종류는 끼울 수 없습니다.</div>
   <div style="display:flex;gap:12px;margin:8px 0;align-items:flex-start">${left}${right}</div>
   <div class="pbtns"><button class="btn" data-a="stback">돌아가기</button></div>`, { cls: "wide", on: {
-    streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(s.soldFor ? `확인: ${stoneLabel(s.rev)} — 같은 옵션이 ${STONE_CAP}개라 판매 +${fmtN(s.soldFor)}G` : `확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
+    streveal: (el) => { const s = sv.stones.find((x) => x.uid === +el.dataset.u); if (s && revealStone(sv, s)) { snd("orb"); toast(s.soldFor ? `확인: ${stoneLabel(s.rev)} — 같은 옵션이 ${stoneCap(sv)}개라 판매 +${fmtN(s.soldFor)}G` : `확인: ${stoneLabel(s.rev)}`, "ok"); saveGame(); refreshTop(); } else snd("error"); openStones(); },
     stall: (el) => { const hi = +el.dataset.h; let n = 0; for (const s of sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === hi)) { if (revealStone(sv, s)) n++; else break; } if (n) { snd("orb"); toast(`${n}개 확인`, "ok"); saveGame(); refreshTop(); } openStones(); },
     stsell: (el) => { const k = el.dataset.k, h = +el.dataset.h, L = sv.stones.filter((x) => x.rev && x.rev.k === k && (x.hi ? 1 : 0) === h); if (!L.length) return; askConfirm(`${stoneName(L[0].rev)} 돌 <b>${L.length}개</b>를 전부 판매할까요?<br>+${fmtN(L.reduce((a, x) => a + stoneSellValue(sv, x), 0))}G`, "판매", () => { const g = sellStones(sv, L); snd("coin"); toast(`돌 ${L.length}개 판매 +${fmtN(g)}G`, "ok"); saveGame(); refreshTop(); openStones(); }, false, () => openStones()); },
     stsellu: (el) => { const h = +el.dataset.h, L = sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === h); if (!L.length) return; askConfirm(`${STONE_T[h].un} <b>${L.length}개</b>를 전부 판매할까요?<br>+${fmtN(L.reduce((a, x) => a + stoneSellValue(sv, x), 0))}G`, "판매", () => { const g = sellStones(sv, L); snd("coin"); toast(`돌 ${L.length}개 판매 +${fmtN(g)}G`, "ok"); saveGame(); refreshTop(); openStones(); }, false, () => openStones()); },
@@ -6121,7 +6170,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261101-112251";
+const BUILD_ID = "20261101-112600";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6359,19 +6408,41 @@ function openClass(back) {
 }
 function openCRaid() {
   const sv = save, OP = craidOpen(sv), D = G.craidDiff = Math.max(1, Math.min(OP, G.craidDiff || 1)), N = CFG.CRAID, hub = MAP.nodes.find((n) => n.kind === "craid");
-  const tabs = [1, 2, 3, 4].map((d) => `<button class="bh-st ${d === D ? "on" : ""}" ${d <= OP ? `data-a="crd" data-d="${d}"` : "disabled"} style="--c:#ff5a4a;${d > OP ? "opacity:.45;cursor:default" : ""}"><b>${N.NAMES[d]}</b><span>${d <= OP ? (d === 4 ? (sv.warden && sv.warden.best ? "최고 " + sv.warden.best + "초" : "도전 가능") : sv.craid && sv.craid[d] ? "클리어 ✔" : "도전 가능") : d === 4 ? "🔒 하드 + 3차 전직" : "🔒 " + N.NAMES[d - 1] + " 클리어"}</span><em class="${d <= OP ? "up" : ""}">${d === 4 ? "전투력 측정" : d + "차 전직"}</em></button>`).join("");
+  const sub = (d) => (d <= OP ? (d === 4 ? (sv.warden && sv.warden.best ? "최고 " + sv.warden.best + "초" : "도전 가능") : d === 5 ? "참 파밍" : sv.craid && sv.craid[d] ? "클리어 ✔" : "도전 가능") : d === 4 || d === 5 ? "🔒 하드 + 3차 전직" : "🔒 " + N.NAMES[d - 1] + " 클리어");
+  const tabs = [1, 2, 3, 4, 5].map((d) => `<button class="bh-st ${d === D ? "on" : ""}" ${d <= OP ? `data-a="crd" data-d="${d}"` : "disabled"} style="--c:#ff5a4a;${d > OP ? "opacity:.45;cursor:default" : ""}"><b>${N.NAMES[d]}</b><span>${sub(d)}</span><em class="${d <= OP ? "up" : ""}">${d === 4 ? "전투력 측정" : d === 5 ? "참 드랍" : d + "차 전직"}</em></button>`).join("");
+  const desc = D === 4 ? `<b style="color:#ff7a6a">${CFG.WARDEN.NAME}</b> — 문지기가 <b>공명 구슬</b>을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않고, <b>직접 눌러야</b> 터집니다. 제때 못 누르면 구슬이 폭발해 큰 피해를 주고 문지기가 체력을 회복합니다. 제한 시간 ${Math.round(CFG.WARDEN.LIMIT / 60)}분의 전투력 측정기입니다.`
+    : D === 5 ? `3차 전직을 마친 사람만 들어올 수 있는 던전입니다. 하드 레이드와 같은 난이도이고, <b style="color:#ffd070">참</b>이 나옵니다. 참은 장비칸 아래 4칸에 장착하며 한 개에 2줄의 특별한 효과가 있습니다.`
+    : `탑에서 내려온 붉은 군단의 본거지입니다. 최초 클리어하면 <b style="color:#ffd070">${D}차 전직의 서</b>를 얻고, 전직하면 전직 포인트를 받아 화염 · 냉기 · 번개 · 공허 · 물리&독 · 방어 · 파밍 패시브를 찍을 수 있습니다.`;
+  const drops = D === 4 ? "드랍: T6 장비 · 사탄 장비(30%) · 구슬 · 조각 · 골드 · 기록은 걸린 시간으로 남습니다." : D === 5 ? "드랍: 참 1개 (40% 확률로 1개 더) · 골드. 참은 매번 종류와 수치가 달라집니다." : `드랍: 장비(사탄 포함) · 구슬 · 조각 · 골드${D === 3 ? " · T6 장비 · 하드 최초 클리어 시 3차 전직" : D === 2 ? " · 노말 최초 클리어 시 2차 전직" : ""} · 전직의 서는 최초 클리어 때만 나옵니다.`;
   Modal.open(`<h2>레이드 던전</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
     <div class="bh-feat">전직의 서를 얻는 곳 · 4레인</div>
-    <div class="bh-desc">${D === 4 ? `<b style="color:#ff7a6a">${CFG.WARDEN.NAME}</b> — 문지기가 <b>공명 구슬</b>을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않고, <b>직접 눌러야</b> 터집니다. 제때 못 누르면 구슬이 폭발해 큰 피해를 주고 문지기가 체력을 회복합니다. 제한 시간 ${Math.round(CFG.WARDEN.LIMIT / 60)}분의 전투력 측정기입니다.` : `탑에서 내려온 붉은 군단의 본거지입니다. 최초 클리어하면 <b style="color:#ffd070">${D}차 전직의 서</b>를 얻고, 전직하면 전직 포인트를 받아 화염 · 냉기 · 번개 · 공허 · 물리&독 · 방어 · 파밍 패시브를 찍을 수 있습니다.`}</div>
+    <div class="bh-desc">${desc}</div>
     <div class="bh-sttl">난이도</div><div class="bh-sts">${tabs}</div>
-    <div class="bh-me">권장: <b>${N.REQ[D]}</b> <span class="dim">· 몬스터 강도 균열 ${Math.round(N.TIERS[D])}층 수준</span></div>
-    <div class="bh-key dim">${D === 4 ? "드랍: T6 장비 · 사탄 장비(30%) · 구슬 · 조각 · 골드 · 기록은 걸린 시간으로 남습니다." : `드랍: 장비(사탄 포함) · 구슬 · 조각 · 골드${D === 3 ? " · T6 장비 · 하드 최초 클리어 시 3차 전직" : D === 2 ? " · 노말 최초 클리어 시 2차 전직" : ""} · 전직의 서는 최초 클리어 때만 나옵니다.`}</div>
-    <div class="center" style="margin:6px 0">현재 전직 <b>${sv.cls | 0}차</b> · 전직의 서 ${sv.cbook[1]}/${sv.cbook[2]}/${sv.cbook[3]} <button class="btn xs" data-a="crcls">전직 화면</button></div>
-    <button class="btn pri big bh-go" data-a="crgo">${D === 4 ? N.NAMES[4] : "레이드 " + N.NAMES[D]} 입장</button>
+    <div class="bh-me">권장: <b>${N.REQ[D]}</b> <span class="dim">· 몬스터 강도 균열 ${Math.round(D === 4 ? CFG.WARDEN.TIER : D === 5 ? N.TIERS[3] : N.TIERS[D])}층 수준</span></div>
+    <div class="bh-key dim">${drops}</div>
+    <div class="center" style="margin:6px 0">현재 전직 <b>${sv.cls | 0}차</b> · 전직의 서 ${sv.cbook[1]}/${sv.cbook[2]}/${sv.cbook[3]} <button class="btn xs" data-a="crcls">전직 화면</button>${charmUnlocked(sv) ? ` <button class="btn xs" data-a="crcharm">참 (${(sv.charmInv || []).length})</button>` : ""}</div>
+    <button class="btn pri big bh-go" data-a="crgo">${D === 4 ? N.NAMES[4] : D === 5 ? "참 던전" : "레이드 " + N.NAMES[D]} 입장</button>
   </div></div></div>`, { cls: "bosshub", on: {
     crd: (el) => { G.craidDiff = +el.dataset.d; openCRaid(); },
     crcls: () => openClass(() => openCRaid()),
+    crcharm: () => openCharms(() => openCRaid()),
     crgo: () => { Modal.close(true); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openCRaid(); } }); },
+  } });
+}
+
+// 참: 3차 전직 후 장비칸 아래 4칸 + 보관함
+function charmCard(it, btns) { const C = CHARM_BY_ID[it.charm]; return `<div class="cm-card" style="--c:${C.color}"><b style="color:${C.color}">◈ ${C.name}</b>${charmLines(it).map((l) => `<div>${l}</div>`).join("")}<div class="cm-btns">${btns}</div></div>`; }
+function openCharms(back) {
+  const sv = save, ok = charmUnlocked(sv), slots = sv.charms || [null, null, null, null], inv = sv.charmInv || [];
+  const slotHtml = [0, 1, 2, 3].map((i) => slots[i] ? charmCard(slots[i], `<button class="btn xs" data-a="cmoff" data-i="${i}">해제</button>`) : `<div class="cm-card empty"><span class="dim">빈 참 칸 ${i + 1}</span></div>`).join("");
+  const invHtml = inv.length ? inv.map((it) => charmCard(it, `<button class="btn xs pri" data-a="cmon" data-u="${it.uid}" ${ok ? "" : "disabled"}>장착</button> <button class="btn xs" data-a="cmdrop" data-u="${it.uid}">버리기</button>`)).join("") : `<div class="dim pad">보관 중인 참이 없습니다 — 레이드 던전의 [참 던전]에서 얻습니다</div>`;
+  Modal.open(`<h2>참</h2><div class="center dim">${ok ? "참 4칸에 장착한 참의 효과가 적용됩니다. 같은 참도 수치가 다릅니다." : "3차 전직 후에 장착할 수 있습니다."}</div>
+  <div class="cm-grid">${slotHtml}</div><div class="bh-sttl" style="margin-top:8px">보관함 ${inv.length}개</div><div class="cm-grid inv">${invHtml}</div>
+  <div class="pbtns"><button class="btn" data-a="cmx">닫기</button></div>`, { cls: "wide", on: {
+    cmon: (el) => { const it = inv.find((x) => x.uid === +el.dataset.u); if (!it) return; let r = equipCharm(sv, it); if (!r.ok && ok) { toast("빈 칸이 없어 1번 참과 바꿉니다", "ok"); r = equipCharm(sv, it, 0); } if (r.ok) { snd("equip"); saveGame(); refreshTop(); } else { toast(r.msg, "bad"); snd("error"); } openCharms(back); },
+    cmoff: (el) => { if (unequipCharm(sv, +el.dataset.i)) { snd("click"); saveGame(); refreshTop(); } openCharms(back); },
+    cmdrop: (el) => { sv.charmInv = (sv.charmInv || []).filter((x) => x.uid !== +el.dataset.u); snd("click"); saveGame(); openCharms(back); },
+    cmx: () => { if (back) back(); else Modal.close(); },
   } });
 }
 
@@ -6379,6 +6450,10 @@ function openCRaid() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.45", date: "11/1", title: "참", items: [
+    "3차 전직을 마치면 장비칸 아래에 [참] 4칸이 열립니다. 참은 한 개에 2줄의 특별한 효과(생존 · 파밍 · 편의 중심)가 있고, 같은 종류도 수치가 달라집니다. 16종: 피의 약속 · 마나의 샘 · 탐욕의 동전 · 행운의 부적 · 돌 수집가 · 불사조의 깃털 · 쾌속의 징표 · 파쇄자의 눈 · 집중의 부적 · 철벽의 부적 · 그림자 장막 · 군집의 인장 · 사냥꾼의 직감 · 정리의 인장 · 개전의 나팔 · 독니의 맹세.",
+    "참은 레이드 던전의 [참 던전](하드 레이드와 같은 난이도)에서 나옵니다.",
+  ] },
   { ver: "4.44", date: "11/1", title: "심층 첨탑", items: [
     "하드 레이드를 클리어하면 레이드 던전 옆에 [심층 첨탑]이 열립니다. 솟아난 탑보다 한 단계 깊은 100층짜리 탑으로, 20층마다 벽이 있고 드랍은 전부 T6 장비입니다 (사탄 장비 확률 +5%p).",
   ] },

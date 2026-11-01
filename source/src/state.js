@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -22,6 +22,7 @@ function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.sk
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
   const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
+    if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;
     if (s.passRev !== 6) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 6; }   // 패시브 트리 개편: 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
@@ -154,8 +155,9 @@ function computeStats(sv) {
     spellCrit: 0, magCrit: 0, manaFlat: 0, manaPct: 0, manaRegen: 0, manaCostRed: 0, manaToSpell: 0, manaShield: 0,
     manaRegenFlat: 0, manaOnKill: 0, manaHit: 0, dmgPerMana: 0, bleedChance: 0, poisonChance: 0, igniteChance: 0, dotDmg: 0, dotDur: 0,
     vsBleed: 0, vsPoison: 0, vsIgnite: 0, vsChill: 0, vsShock: 0, bleedMore: 1, poisonMore: 1, igniteMore: 1, chillMore: 1, shockMore: 1, shockChance: 0,
-    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0, sat: {} };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
+    singleDmg: 0, persistDmg: 0, summonDmg: 0, bossSkill: 0, skillDur: 0, executeDmg: 0, killHeal: 0, bossTaken: 0, rangedTaken: 0, manaToHp: 0, noCrit: 0, noLife: 0, sat: {}, cm: {} };   // 스킬 종류별 피해 · 보스 전용기 피해 · 지속시간 (패시브 스킬 계열)
   const apply = (k, v) => {
+    if (k.charCodeAt(0) === 99 && k.startsWith("cm:")) { s.cm[k.slice(3)] = (s.cm[k.slice(3)] || 0) + v; return; }
     switch (k) {
       case "atkFlat": s.atkFlat += v; break; case "hpFlat": s.hpFlat += v; break; case "defFlat": s.def += v; break;
       case "boss": case "elite": case "ranged": case "normal": s.add[k] += v; break;
@@ -180,6 +182,7 @@ function computeStats(sv) {
   if (sv.passive) { const pi = (sv.skills || []).find((x) => x.uid === sv.passive), pd = pi && SKILLS.find((x) => x.id === pi.id); if (pd && pd.per) for (const k in pd.per) { const base = pd.per[k], lv = 1 + 0.05 * ((pi.lvl || 1) - 1); apply(k, k.endsWith("More") ? 1 + (base - 1) * lv : base * lv); } }   // 패시브 스킬 칸
   for (const id in (sv.pass || {})) { const p = PASSIVE_BY_ID[id]; if (p) for (const k in p.per) apply(k, p.per[k] * sv.pass[id]); }
   s.add.boss += atlasVal(sv, "conq"); s.dmgTaken -= atlasVal(sv, "guard");   // 심연 각인: 보스 피해 · 받는 피해
+  for (const [k, v] of charmEffects(sv)) apply(k, v);   // 참
   for (const id in (sv.cpass || {})) { const cn = C_BY_ID[id]; if (cn && sv.cpass[id]) for (const k in cn.per) apply(k, cn.per[k]); }   // 전직 패시브
   if (sv.guildLv) for (const gp of GUILD_PASSIVES) if (sv.guildLv >= gp.lv) for (const k in gp.per) apply(k, gp.per[k]);   // 길드 패시브
   const sc = {};
@@ -306,6 +309,7 @@ function powerWith(sv, slot, item, fn) { const old = sv.equipped[slot]; sv.equip
 function dropBonus(sv, now) {
   const st = computeStats(sv), B = { mf: st.mf, qty: 1, orb: 1, exp: 1, gold: 1, unique: 1, stone: 1, key: 1, ore: 1, shard: 1, hell: 1 };
   B.mf += atlasVal(sv, "mf"); B.exp += st.expFind + atlasVal(sv, "exp"); B.gold += atlasVal(sv, "gold"); B.ore += atlasVal(sv, "ore"); B.orb += atlasVal(sv, "orb"); B.shard += atlasVal(sv, "shard"); B.key += atlasVal(sv, "key"); B.hell += atlasVal(sv, "hell");
+  B.key *= 1 + charmVal(sv, "keyFind"); B.stone *= 1 + charmVal(sv, "stoneFind");
   B.buffs = []; { const gl = sv.guildLv || 0; B.gold += 0.02 * gl; B.exp += 0.02 * gl; B.mf += 0.01 * gl; }
   if (sv.endgame) for (const w of worldBuffs(now)) { B.buffs.push(w); B.mf += w.mf || 0; B.exp *= w.exp || 1; B.gold *= w.gold || 1; B.qty *= w.qty || 1; B.orb *= w.orb || 1; B.unique *= w.unique || 1; B.stone *= w.stone || 1; B.key *= w.key || 1; }
   return B;
@@ -338,19 +342,19 @@ function rerollSockets(sv, it) {
 }
 function newStone(sv, hi) { return { uid: sv.nextUid++, rev: null, hi: hi ? 1 : 0 }; }
 // 돌 보관 한도: 미확인 돌은 종류(원초 · 계시)마다, 확인된 돌은 옵션(종류)마다 100개까지. 넘치는 돌은 자동으로 골드로 팔린다
-const STONE_CAP = 100, STONE_CONV = 20;
+const STONE_CAP = 100, STONE_CONV = 20;   // 한도는 stoneCap(sv)  (참 효과로 늘어난다)
 const stoneSellValue = (sv, st) => Math.round(stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1) * (st.rev ? 0.4 : 0.2));
 function addStone(sv, hi) {   // 드랍으로 돌을 얻는다: 한도가 차 있으면 바로 골드로 판다 (얻은 골드를 돌려준다)
-  const st = newStone(sv, hi); if (sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === (hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; return g; }
+  const st = newStone(sv, hi); if (sv.stones.filter((x) => !x.rev && (x.hi ? 1 : 0) === (hi ? 1 : 0)).length >= stoneCap(sv)) { const g = stoneSellValue(sv, st); sv.gold += g; return g; }
   sv.stones.push(st); return 0;
 }
 function sellStones(sv, list) { const set = new Set(list); let g = 0; for (const st of list) g += stoneSellValue(sv, st); sv.stones = sv.stones.filter((x) => !set.has(x)); sv.gold += g; return g; }
 function convertStones(sv, times) {   // 원초의 돌 20개 → 계시의 돌 1개
-  let n = 0; while (n < times) { const base = sv.stones.filter((x) => !x.rev && !x.hi); if (base.length < STONE_CONV) break; if (sv.stones.filter((x) => !x.rev && x.hi).length >= STONE_CAP) break; const rm = new Set(base.slice(0, STONE_CONV)); sv.stones = sv.stones.filter((x) => !rm.has(x)); sv.stones.push(newStone(sv, 1)); n++; }
+  let n = 0; while (n < times) { const base = sv.stones.filter((x) => !x.rev && !x.hi); if (base.length < STONE_CONV) break; if (sv.stones.filter((x) => !x.rev && x.hi).length >= stoneCap(sv)) break; const rm = new Set(base.slice(0, STONE_CONV)); sv.stones = sv.stones.filter((x) => !rm.has(x)); sv.stones.push(newStone(sv, 1)); n++; }
   return n;
 }
 function revealStone(sv, st) { const c = stoneRevealCost(sv) * (st.hi ? CFG.TEMPLE.HI_COST : 1); if (sv.gold < c) return false; if (st.rev) return false; sv.gold -= c; const p = pick(STONE_POOL), mu = st.hi ? CFG.TEMPLE.HI_MULT : 1, rv = p.v * mu; st.rev = { k: p.k, v: p.v >= 1 ? Math.round(rv) : +rv.toFixed(4) }; if (st.hi) st.rev.hi = 1; questEvent(sv, { type: "stone" });
-  if (sv.stones.filter((x) => x !== st && x.rev && x.rev.k === st.rev.k && (x.hi ? 1 : 0) === (st.hi ? 1 : 0)).length >= STONE_CAP) { const g = stoneSellValue(sv, st); sv.gold += g; sv.stones = sv.stones.filter((x) => x !== st); st.soldFor = g; }   // 같은 옵션이 이미 100개면 바로 판매
+  if (sv.stones.filter((x) => x !== st && x.rev && x.rev.k === st.rev.k && (x.hi ? 1 : 0) === (st.hi ? 1 : 0)).length >= stoneCap(sv)) { const g = stoneSellValue(sv, st); sv.gold += g; sv.stones = sv.stones.filter((x) => x !== st); st.soldFor = g; }   // 같은 옵션이 이미 100개면 바로 판매
   return true; }
 const stoneRevealCost = (sv) => Math.round(120 * Math.pow(1.45, riftRegion(Math.max(1, sv.rift ? sv.rift.best : 1)) - 1));   // 균열 1층 골드 수입의 약 1.2배
 // 보스 스킬 드랍 (졸업 후): 모든 스킬이 속성/성격에 따라 네 보스 중 한 곳에 배정된다. 희귀 이상은 그 보스에게서만 나온다.
@@ -395,6 +399,9 @@ function rollDrops(sv, node, boss, B) {
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid" || kind === "spire" || kind === "craid" || kind === "warden";
   const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && ((node.floor || 0) >= CFG.SPIRE.END || node.tw === 2)) || (kind === "craid" && node.diff === 3) || kind === "warden" ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
+  if (kind === "craid" && node.charm) {   // 참 던전: 참 1~2개 (2번째는 40%)와 골드(몹이 주는 골드)만 나온다
+    out.charms = []; if (charmUnlocked(sv)) { out.charms.push(genCharm(sv)); if (Math.random() < 0.4) out.charms.push(genCharm(sv)); } return out;
+  }
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
     if (Math.random() < ch) { if (addStone(sv, 1)) out.stoneSold = (out.stoneSold || 0) + 1; out.stonesHi = 1; }
@@ -517,10 +524,10 @@ const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.mi
 const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
-function dismantleYield(it) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6)) }; }
+function dismantleYield(it, sv) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round(((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6) * (1 + (sv ? charmVal(sv, "ore") : 0)))) }; }
 function removeItem(sv, it) { sv.inv = sv.inv.filter((x) => x !== it); for (const s of EQ_SLOTS) if (sv.equipped[s] === it) delete sv.equipped[s]; }
 function sellItem(sv, it) { sv.gold += itemValue(it); removeItem(sv, it); }
-function dismantleItem(sv, it) { const y = dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
+function dismantleItem(sv, it) { const y = dismantleYield(it, sv); sv.gold += y.gold; sv.ore += y.ore; removeItem(sv, it); return y; }
 // 옵션 재굴림 비용: 장비 T마다 고정 (몇 번을 굴려도, 강화 수치와 상관없이 같다) — 그 구간 균열 한 번 도는 골드 정도
 const REROLL_COST = [[150, 2], [500, 3], [1200, 4], [14000, 8], [35000, 12], [80000, 16]];
 const rerollCost = (it) => { const c = REROLL_COST[Math.max(0, Math.min(5, (it.ilvl || 1) - 1))]; return { gold: c[0], ore: c[1] }; };

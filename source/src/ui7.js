@@ -148,18 +148,40 @@ function openClass(back) {
 }
 function openCRaid() {
   const sv = save, OP = craidOpen(sv), D = G.craidDiff = Math.max(1, Math.min(OP, G.craidDiff || 1)), N = CFG.CRAID, hub = MAP.nodes.find((n) => n.kind === "craid");
-  const tabs = [1, 2, 3, 4].map((d) => `<button class="bh-st ${d === D ? "on" : ""}" ${d <= OP ? `data-a="crd" data-d="${d}"` : "disabled"} style="--c:#ff5a4a;${d > OP ? "opacity:.45;cursor:default" : ""}"><b>${N.NAMES[d]}</b><span>${d <= OP ? (d === 4 ? (sv.warden && sv.warden.best ? "최고 " + sv.warden.best + "초" : "도전 가능") : sv.craid && sv.craid[d] ? "클리어 ✔" : "도전 가능") : d === 4 ? "🔒 하드 + 3차 전직" : "🔒 " + N.NAMES[d - 1] + " 클리어"}</span><em class="${d <= OP ? "up" : ""}">${d === 4 ? "전투력 측정" : d + "차 전직"}</em></button>`).join("");
+  const sub = (d) => (d <= OP ? (d === 4 ? (sv.warden && sv.warden.best ? "최고 " + sv.warden.best + "초" : "도전 가능") : d === 5 ? "참 파밍" : sv.craid && sv.craid[d] ? "클리어 ✔" : "도전 가능") : d === 4 || d === 5 ? "🔒 하드 + 3차 전직" : "🔒 " + N.NAMES[d - 1] + " 클리어");
+  const tabs = [1, 2, 3, 4, 5].map((d) => `<button class="bh-st ${d === D ? "on" : ""}" ${d <= OP ? `data-a="crd" data-d="${d}"` : "disabled"} style="--c:#ff5a4a;${d > OP ? "opacity:.45;cursor:default" : ""}"><b>${N.NAMES[d]}</b><span>${sub(d)}</span><em class="${d <= OP ? "up" : ""}">${d === 4 ? "전투력 측정" : d === 5 ? "참 드랍" : d + "차 전직"}</em></button>`).join("");
+  const desc = D === 4 ? `<b style="color:#ff7a6a">${CFG.WARDEN.NAME}</b> — 문지기가 <b>공명 구슬</b>을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않고, <b>직접 눌러야</b> 터집니다. 제때 못 누르면 구슬이 폭발해 큰 피해를 주고 문지기가 체력을 회복합니다. 제한 시간 ${Math.round(CFG.WARDEN.LIMIT / 60)}분의 전투력 측정기입니다.`
+    : D === 5 ? `3차 전직을 마친 사람만 들어올 수 있는 던전입니다. 하드 레이드와 같은 난이도이고, <b style="color:#ffd070">참</b>이 나옵니다. 참은 장비칸 아래 4칸에 장착하며 한 개에 2줄의 특별한 효과가 있습니다.`
+    : `탑에서 내려온 붉은 군단의 본거지입니다. 최초 클리어하면 <b style="color:#ffd070">${D}차 전직의 서</b>를 얻고, 전직하면 전직 포인트를 받아 화염 · 냉기 · 번개 · 공허 · 물리&독 · 방어 · 파밍 패시브를 찍을 수 있습니다.`;
+  const drops = D === 4 ? "드랍: T6 장비 · 사탄 장비(30%) · 구슬 · 조각 · 골드 · 기록은 걸린 시간으로 남습니다." : D === 5 ? "드랍: 참 1개 (40% 확률로 1개 더) · 골드. 참은 매번 종류와 수치가 달라집니다." : `드랍: 장비(사탄 포함) · 구슬 · 조각 · 골드${D === 3 ? " · T6 장비 · 하드 최초 클리어 시 3차 전직" : D === 2 ? " · 노말 최초 클리어 시 2차 전직" : ""} · 전직의 서는 최초 클리어 때만 나옵니다.`;
   Modal.open(`<h2>레이드 던전</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
     <div class="bh-feat">전직의 서를 얻는 곳 · 4레인</div>
-    <div class="bh-desc">${D === 4 ? `<b style="color:#ff7a6a">${CFG.WARDEN.NAME}</b> — 문지기가 <b>공명 구슬</b>을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않고, <b>직접 눌러야</b> 터집니다. 제때 못 누르면 구슬이 폭발해 큰 피해를 주고 문지기가 체력을 회복합니다. 제한 시간 ${Math.round(CFG.WARDEN.LIMIT / 60)}분의 전투력 측정기입니다.` : `탑에서 내려온 붉은 군단의 본거지입니다. 최초 클리어하면 <b style="color:#ffd070">${D}차 전직의 서</b>를 얻고, 전직하면 전직 포인트를 받아 화염 · 냉기 · 번개 · 공허 · 물리&독 · 방어 · 파밍 패시브를 찍을 수 있습니다.`}</div>
+    <div class="bh-desc">${desc}</div>
     <div class="bh-sttl">난이도</div><div class="bh-sts">${tabs}</div>
-    <div class="bh-me">권장: <b>${N.REQ[D]}</b> <span class="dim">· 몬스터 강도 균열 ${Math.round(N.TIERS[D])}층 수준</span></div>
-    <div class="bh-key dim">${D === 4 ? "드랍: T6 장비 · 사탄 장비(30%) · 구슬 · 조각 · 골드 · 기록은 걸린 시간으로 남습니다." : `드랍: 장비(사탄 포함) · 구슬 · 조각 · 골드${D === 3 ? " · T6 장비 · 하드 최초 클리어 시 3차 전직" : D === 2 ? " · 노말 최초 클리어 시 2차 전직" : ""} · 전직의 서는 최초 클리어 때만 나옵니다.`}</div>
-    <div class="center" style="margin:6px 0">현재 전직 <b>${sv.cls | 0}차</b> · 전직의 서 ${sv.cbook[1]}/${sv.cbook[2]}/${sv.cbook[3]} <button class="btn xs" data-a="crcls">전직 화면</button></div>
-    <button class="btn pri big bh-go" data-a="crgo">${D === 4 ? N.NAMES[4] : "레이드 " + N.NAMES[D]} 입장</button>
+    <div class="bh-me">권장: <b>${N.REQ[D]}</b> <span class="dim">· 몬스터 강도 균열 ${Math.round(D === 4 ? CFG.WARDEN.TIER : D === 5 ? N.TIERS[3] : N.TIERS[D])}층 수준</span></div>
+    <div class="bh-key dim">${drops}</div>
+    <div class="center" style="margin:6px 0">현재 전직 <b>${sv.cls | 0}차</b> · 전직의 서 ${sv.cbook[1]}/${sv.cbook[2]}/${sv.cbook[3]} <button class="btn xs" data-a="crcls">전직 화면</button>${charmUnlocked(sv) ? ` <button class="btn xs" data-a="crcharm">참 (${(sv.charmInv || []).length})</button>` : ""}</div>
+    <button class="btn pri big bh-go" data-a="crgo">${D === 4 ? N.NAMES[4] : D === 5 ? "참 던전" : "레이드 " + N.NAMES[D]} 입장</button>
   </div></div></div>`, { cls: "bosshub", on: {
     crd: (el) => { G.craidDiff = +el.dataset.d; openCRaid(); },
     crcls: () => openClass(() => openCRaid()),
+    crcharm: () => openCharms(() => openCRaid()),
     crgo: () => { Modal.close(true); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openCRaid(); } }); },
+  } });
+}
+
+// 참: 3차 전직 후 장비칸 아래 4칸 + 보관함
+function charmCard(it, btns) { const C = CHARM_BY_ID[it.charm]; return `<div class="cm-card" style="--c:${C.color}"><b style="color:${C.color}">◈ ${C.name}</b>${charmLines(it).map((l) => `<div>${l}</div>`).join("")}<div class="cm-btns">${btns}</div></div>`; }
+function openCharms(back) {
+  const sv = save, ok = charmUnlocked(sv), slots = sv.charms || [null, null, null, null], inv = sv.charmInv || [];
+  const slotHtml = [0, 1, 2, 3].map((i) => slots[i] ? charmCard(slots[i], `<button class="btn xs" data-a="cmoff" data-i="${i}">해제</button>`) : `<div class="cm-card empty"><span class="dim">빈 참 칸 ${i + 1}</span></div>`).join("");
+  const invHtml = inv.length ? inv.map((it) => charmCard(it, `<button class="btn xs pri" data-a="cmon" data-u="${it.uid}" ${ok ? "" : "disabled"}>장착</button> <button class="btn xs" data-a="cmdrop" data-u="${it.uid}">버리기</button>`)).join("") : `<div class="dim pad">보관 중인 참이 없습니다 — 레이드 던전의 [참 던전]에서 얻습니다</div>`;
+  Modal.open(`<h2>참</h2><div class="center dim">${ok ? "참 4칸에 장착한 참의 효과가 적용됩니다. 같은 참도 수치가 다릅니다." : "3차 전직 후에 장착할 수 있습니다."}</div>
+  <div class="cm-grid">${slotHtml}</div><div class="bh-sttl" style="margin-top:8px">보관함 ${inv.length}개</div><div class="cm-grid inv">${invHtml}</div>
+  <div class="pbtns"><button class="btn" data-a="cmx">닫기</button></div>`, { cls: "wide", on: {
+    cmon: (el) => { const it = inv.find((x) => x.uid === +el.dataset.u); if (!it) return; let r = equipCharm(sv, it); if (!r.ok && ok) { toast("빈 칸이 없어 1번 참과 바꿉니다", "ok"); r = equipCharm(sv, it, 0); } if (r.ok) { snd("equip"); saveGame(); refreshTop(); } else { toast(r.msg, "bad"); snd("error"); } openCharms(back); },
+    cmoff: (el) => { if (unequipCharm(sv, +el.dataset.i)) { snd("click"); saveGame(); refreshTop(); } openCharms(back); },
+    cmdrop: (el) => { sv.charmInv = (sv.charmInv || []).filter((x) => x.uid !== +el.dataset.u); snd("click"); saveGame(); openCharms(back); },
+    cmx: () => { if (back) back(); else Modal.close(); },
   } });
 }

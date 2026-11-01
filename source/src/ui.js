@@ -103,7 +103,7 @@ function nodeToBattle(n) {
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
-  if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
+  if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 5) return { kind: "craid", act: 10, diff: 3, charm: 1, tier: CFG.CRAID.TIERS[3], name: "참 던전", level: 100 }; if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
   if (n.kind === "tower2") { const P = save.spire2 || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spire2Floor || P.best + 1))); return { kind: "spire", tw: 2, act: 10, floor: f, tier: spireTier(f, 2), first: f > P.best, name: `심층 첨탑 ${f}층`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
   if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
@@ -342,7 +342,7 @@ function afterBattle(res, b) {
     if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`; if (pr.sSold || pr.sDis) note += ` · 스킬 ${pr.sSold ? pr.sSold + "개 판매 " : ""}${pr.sDis ? pr.sDis + "개 분해" : ""}`;
     saveGame(); refreshTop();
     toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
-    if (save.inv.length >= CFG.INV_MAX - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
+    if (save.inv.length >= invMax(save) - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
     if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
     const go = () => {
       if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
