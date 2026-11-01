@@ -301,4 +301,9 @@ local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" 
 local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 274); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
 for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 9) * 66, 0, math.floor((i - 1) / 9) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
 refresh(); if (summary and (summary.cleared or 0) == 0) then views.help() else views.fight() end
-shared.DungeonUI = { views = views, play = playReplay }   -- 테스트/디버그용 훅
+-- 디버그 훅: gui:SetAttribute("Debug", "fight") 처럼 속성을 바꾸면 해당 동작을 실행한다 (자동 테스트용)
+gui:GetAttributeChangedSignal("Debug"):Connect(function()
+  local v = gui:GetAttribute("Debug")
+  if v == "fight" then views.fight(); local r = rpc:InvokeServer("fight", { kind = "stage", n = 1 }); if r.result then playReplay(r.result, function() setSummary(r.summary) end) end
+  elseif views[v] then views[v]() end
+end)
