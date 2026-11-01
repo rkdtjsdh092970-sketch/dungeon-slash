@@ -75,6 +75,11 @@ function M.bulk(sv, r, mode) return Extras.bulk(sv, tonumber(r) or 0, mode == "s
 function M.daily(sv) return Extras.dailyView(sv) end
 function M.dailyClaim(sv, id) return Extras.dailyClaim(sv, id) end
 function M.offline(sv) return Extras.offline(sv) end
+function M.runes(sv) return Extras.runeView(sv) end
+function M.runeEquip(sv, su, ru) return Extras.runeEquip(sv, su, ru) end
+function M.runeRemove(sv, su) return Extras.runeRemove(sv, su) end
+function M.quests(sv) return Extras.questView(sv) end
+function M.questClaim(sv, id) return Extras.questClaim(sv, id) end
 
 -- 탑 도전: 한 층을 서버에서 끝까지 계산하고 결과(보상 포함)를 세이브에 반영한다.
 function M.battle(sv, floorN, seed)
@@ -120,6 +125,8 @@ function M.fight(sv, kind, n, seed)
     res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
     local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
     Extras.onWin(sv, b.kills, boss, kind == "rift"); Extras.setRate(sv, b.gold, b.time)
+    if kind == "stage" then Extras.questEvent(sv, "kill", b.kills); if node.kind == "boss" then Extras.questEvent(sv, "boss", 1) end end
+    if kind == "rift" then Extras.questEvent(sv, "rift", 1); if boss and rng:NextNumber() < 0.2 then local rid = Extras.randomRune(rng); Extras.addRune(sv, rid); res.rune = rid end end
     local d = Loot.fieldDrops(rng, sv, node, boss)
     sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.hone += d.hone; res.hone = d.hone end; if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
@@ -156,7 +163,9 @@ function M.enhance(sv, uid, seed)
   for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == uid then it = sv.equipped[slot] end end
   if not it then for _, x in ipairs(sv.inv) do if x.uid == uid then it = x end end end
   if not it then return false, "없는 장비" end
-  return Econ.enhance(sv, it, Random.new((seed or os.time()) + uid))
+  local ok, msg = Econ.enhance(sv, it, Random.new((seed or os.time()) + uid))
+  if ok then Extras.questEvent(sv, "enhance", 1) end
+  return ok, msg
 end
 function M.enhCosts(sv) local out = {}; for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then local c = Econ.enhCost(it); out[#out + 1] = { uid = it.uid, slot = slot, enh = it.enh or 0, gold = c.gold, ore = c.ore } end end return out end
 
@@ -182,7 +191,7 @@ function M.reroll(sv, uid, idx, seed) local it = findItem(sv, uid); if not it th
 function M.chaos(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.addAffix(sv, it, Random.new((seed or os.time()) + uid)) end
 function M.divine(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.divine(sv, it, Random.new((seed or os.time()) + uid)) end
 function M.stones(sv) return Econ.stoneList(sv) end
-function M.reveal(sv, uid, seed) return Econ.revealStone(sv, uid, Random.new((seed or os.time()) + uid)) end
+function M.reveal(sv, uid, seed) local a, b = Econ.revealStone(sv, uid, Random.new((seed or os.time()) + uid)); if a then Extras.questEvent(sv, "stone", 1) end; return a, b end
 function M.socket(sv, itemUid, stoneUid, idx) return Econ.socketStone(sv, itemUid, stoneUid, idx) end
 function M.stoneLabel(rev) local d = AFFIX_BY[rev.k]; return (d and d.name or rev.k) .. " +" .. (rev.v < 5 and string.format("%.1f%%", rev.v * 100) or tostring(rev.v)) end
 

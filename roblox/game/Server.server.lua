@@ -47,6 +47,11 @@ rpc.OnServerInvoke = function(player, action, arg)
   elseif action == "daily" then return { rows = Game.daily(sv) }
   elseif action == "dailyclaim" then local ok, e = Game.dailyClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.daily(sv), summary = Game.summary(sv) }
   elseif action == "offline" then return { r = Game.offline(sv), summary = Game.summary(sv) }
+  elseif action == "runes" then return { runes = Game.runes(sv), skills = Game.skills(sv) }
+  elseif action == "runeequip" then local ok, e = Game.runeEquip(sv, tonumber(arg.skill), tonumber(arg.rune)); return { ok = ok, err = (not ok) and e or nil, runes = Game.runes(sv) }
+  elseif action == "runeremove" then local ok, e = Game.runeRemove(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, runes = Game.runes(sv) }
+  elseif action == "quests" then return { rows = Game.quests(sv) }
+  elseif action == "questclaim" then local ok, e = Game.questClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.quests(sv), summary = Game.summary(sv) }
   elseif action == "shop" then return { rows = Game.shop(sv), summary = Game.summary(sv) }
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }

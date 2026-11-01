@@ -60,6 +60,7 @@ function views.inv()
   for _, it in ipairs(r.inv) do
     card((it.sat and "✦ " or "") .. it.title, it.lines, {
       { "장착", function() local e = rpc:InvokeServer("equip", it.uid); setSummary(e.summary); views.inv() end },
+      { "판매", function() local e = rpc:InvokeServer("sell", it.uid); setSummary(e.summary); views.inv() end },
       { "분해", function() local e = rpc:InvokeServer("dismantle", it.uid); setSummary(e.summary); views.inv() end },
     })
   end
@@ -196,7 +197,37 @@ function views.warden()
     end
   end)
 end
-local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" } }
+function views.daily()
+  clear(); local o = rpc:InvokeServer("offline"); if o.summary then setSummary(o.summary) end
+  if o.r then card("오프라인 보상", { string.format("%d분 동안 자리를 비웠습니다: 골드 %d · 강화석 %d", o.r.mins, o.r.gold, o.r.ore) }, {}) end
+  local r = rpc:InvokeServer("daily")
+  for _, t in ipairs(r.rows) do
+    local ready = t.p >= t.n and not t.claimed
+    card(string.format("%s (%d/%d)", t.name, t.p, t.n), { "보상: " .. t.text }, { { t.claimed and "수령 완료" or (ready and "받기" or "진행 중"), function() if ready then local e = rpc:InvokeServer("dailyclaim", t.id); if e.summary then setSummary(e.summary) end; views.daily() end end } })
+  end
+  card("장비 일괄 정리", { "일반~마법 장비 중 강화·사탄이 아닌 것만 처리합니다." }, {
+    { "일반 분해", function() local e = rpc:InvokeServer("bulk", { r = 0, mode = "dismantle" }); setSummary(e.summary); msg.Text = e.res.n .. "개 분해"; views.daily() end },
+    { "마법까지 분해", function() local e = rpc:InvokeServer("bulk", { r = 2, mode = "dismantle" }); setSummary(e.summary); msg.Text = e.res.n .. "개 분해"; views.daily() end },
+    { "마법까지 판매", function() local e = rpc:InvokeServer("bulk", { r = 2, mode = "sell" }); setSummary(e.summary); msg.Text = e.res.n .. "개 판매"; views.daily() end } })
+end
+function views.quests()
+  clear(); local r = rpc:InvokeServer("quests")
+  for _, q in ipairs(r.rows) do
+    local ready = q.state == "done"
+    card(string.format("%s (%d/%d)", q.title, q.p, q.n), { q.desc }, { { q.state == "claimed" and "완료" or (ready and "보상 받기" or "진행 중"), function() if ready then local e = rpc:InvokeServer("questclaim", q.id); if e.summary then setSummary(e.summary) end; views.quests() end end } })
+  end
+end
+function views.runes()
+  clear(); local r = rpc:InvokeServer("runes")
+  card("보유 룬 " .. #r.runes, { "스킬 카드의 '룬' 버튼으로 끼울 스킬을 고릅니다 (아래 스킬을 먼저 선택)." }, {})
+  for _, k in ipairs(r.skills) do
+    local btns = {}
+    if k.rune then btns[#btns + 1] = { "룬 해제", function() rpc:InvokeServer("runeremove", k.uid); views.runes() end } end
+    for _, ru in ipairs(r.runes) do if #btns < 3 then btns[#btns + 1] = { string.sub(ru.name, 1, 9), function() local e = rpc:InvokeServer("runeequip", { skill = k.uid, rune = ru.uid }); msg.Text = e.err or ""; views.runes() end } end end
+    card(tostring(k.name or k.id) .. (k.rune and (" [" .. k.rune .. "]") or ""), {}, btns)
+  end
+end
+local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" }, { "일일", "daily" }, { "퀘스트", "quests" }, { "룬", "runes" } }
 local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 78); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
 for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 8) * 66, 0, math.floor((i - 1) / 8) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
 refresh(); views.fight()

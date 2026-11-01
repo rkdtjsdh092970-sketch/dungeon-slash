@@ -69,7 +69,7 @@ function M.skillList(sv)
   for _, k in ipairs(sv.skills) do
     local d = SKILL_BY[k.id]; local slot = 0
     for i, l in ipairs(sv.loadout) do if l and l.uid == k.uid then slot = i end end
-    rows[#rows + 1] = { uid = k.uid, id = k.id, name = d.name, lvl = k.lvl or 1, rarity = k.rarity or 0, slot = slot, passive = sv.passive == k.uid, honeCost = (k.lvl or 1) < M.SKILL_MAX_LV and M.honeCost(k.lvl or 1, k.rarity) or nil, dtype = d.dtype, desc = d.desc, kind = d.kind }
+    rows[#rows + 1] = { uid = k.uid, id = k.id, rune = k.rune, name = d.name, lvl = k.lvl or 1, rarity = k.rarity or 0, slot = slot, passive = sv.passive == k.uid, honeCost = (k.lvl or 1) < M.SKILL_MAX_LV and M.honeCost(k.lvl or 1, k.rarity) or nil, dtype = d.dtype, desc = d.desc, kind = d.kind }
   end
   return rows
 end

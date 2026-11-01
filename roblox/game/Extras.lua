@@ -93,4 +93,62 @@ function M.bulk(sv, maxRarity, mode)
   sv.gold += gold; sv.ore += ore
   return { n = n, gold = gold, ore = ore }
 end
+
+-- ---- 룬 ----
+local SK = require(script.Parent.Data.Skills)
+local RUNE_IDS = {}; for id in pairs(SK.RUNES) do RUNE_IDS[#RUNE_IDS + 1] = id end; table.sort(RUNE_IDS)
+function M.addRune(sv, id) sv.runes = sv.runes or {}; sv.nextUid = (sv.nextUid or 1); sv.runes[#sv.runes + 1] = { uid = sv.nextUid, id = id }; sv.nextUid += 1 end
+function M.randomRune(rng) return RUNE_IDS[rng:NextInteger(1, #RUNE_IDS)] end
+function M.runeView(sv)
+  local out = {}
+  for _, r in ipairs(sv.runes or {}) do local d = SK.RUNES[r.id]; if d then out[#out + 1] = { uid = r.uid, id = r.id, name = d.name, text = d.text } end end
+  return out
+end
+local function findSkill(sv, uid) for _, k in ipairs(sv.skills) do if k.uid == uid then return k end end end
+function M.runeEquip(sv, skillUid, runeUid)
+  local k = findSkill(sv, skillUid); if not k then return false, "없는 스킬" end
+  for i, r in ipairs(sv.runes or {}) do
+    if r.uid == runeUid then
+      table.remove(sv.runes, i)
+      if k.rune then M.addRune(sv, k.rune) end
+      k.rune = r.id; return true
+    end
+  end
+  return false, "없는 룬"
+end
+function M.runeRemove(sv, skillUid)
+  local k = findSkill(sv, skillUid); if not k or not k.rune then return false, "룬이 없습니다" end
+  M.addRune(sv, k.rune); k.rune = nil; return true
+end
+
+-- ---- 퀘스트 (1막) ----
+M.QUESTS = {
+  { id = "k1", title = "소탕", desc = "적 150마리 처치", type = "kill", n = 150, reward = { gold = 40, ore = 2 } },
+  { id = "m1", title = "첫 군주", desc = "스테이지 보스 처치", type = "boss", n = 1, reward = { gold = 60, ore = 4 } },
+  { id = "f1", title = "대장장이의 부탁", desc = "장비 2번 강화", type = "enhance", n = 2, reward = { gold = 80, ore = 4 } },
+  { id = "f2", title = "소켓의 비밀", desc = "원초의 돌 1개 확인", type = "stone", n = 1, reward = { gold = 400, ore = 6 } },
+  { id = "r1", title = "균열의 도전자", desc = "균열 3층 클리어", type = "rift", n = 3, reward = { gold = 300, ore = 10, shards = 3 } },
+}
+function M.questEvent(sv, typ, n)
+  sv.q = sv.q or {}
+  for _, d in ipairs(M.QUESTS) do
+    if d.type == typ then
+      local st = sv.q[d.id]; if not st then st = { p = 0, state = "active" }; sv.q[d.id] = st end
+      if st.state == "active" then st.p = min(d.n, st.p + (n or 1)); if st.p >= d.n then st.state = "done" end end
+    end
+  end
+end
+function M.questView(sv)
+  sv.q = sv.q or {}; local out = {}
+  for _, d in ipairs(M.QUESTS) do
+    local st = sv.q[d.id] or { p = 0, state = "active" }
+    out[#out + 1] = { id = d.id, title = d.title, desc = d.desc, n = d.n, p = st.p, state = st.state }
+  end
+  return out
+end
+function M.questClaim(sv, id)
+  local st = sv.q and sv.q[id]; if not st or st.state ~= "done" then return false, "아직 받을 수 없습니다" end
+  for _, d in ipairs(M.QUESTS) do if d.id == id then for k, v in pairs(d.reward) do sv[k] = (sv[k] or 0) + v end end end
+  st.state = "claimed"; return true
+end
 return M
