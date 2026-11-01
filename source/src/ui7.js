@@ -125,3 +125,40 @@ function openSpire() {
     spgo: () => { Modal.close(true); const hub = MAP.nodes.find((n) => n.kind === "tower"); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openSpire(); } }); },
   } });
 }
+
+// =========================================================
+// 전직 화면 + 레이드 던전 (v4.41)
+// =========================================================
+function openClass(back) {
+  const sv = save, n = sv.cls | 0, left = classPoints(sv) - classSpent(sv), nextBook = n < 3 && sv.cbook && sv.cbook[n + 1] > 0;
+  const pos = { r: [100, 22], a1: [42, 92], a2: [42, 164], b1: [158, 92], b2: [158, 164] }, links = [["r", "a1"], ["a1", "a2"], ["r", "b1"], ["b1", "b2"]];
+  const card = (T) => `<div class="cl-card" style="--c:${T.color}"><div class="cl-ttl">${T.name}</div><div class="cl-box"><svg width="200" height="210">${links.map(([a, b]) => { const A = pos[a], B = pos[b], on = classHas(sv, `${T.id}_${a}`) && classHas(sv, `${T.id}_${b}`); return `<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="${on ? T.color : "#3a3560"}" stroke-width="${on ? 4 : 2}"/>`; }).join("")}</svg>${["r", "a1", "a2", "b1", "b2"].map((k) => { const N = C_BY_ID[`${T.id}_${k}`], has = classHas(sv, N.id), can = canTakeClass(sv, N.id), [x, y] = pos[k]; return `<button class="cl-nd ${has ? "has" : can ? "can" : ""} ${N.cost > 1 ? "big" : ""}" style="left:${x - 18}px;top:${y - 18}px" data-a="${has ? "clrm" : "cltake"}" data-id="${N.id}" title="${N.name} (${N.cost}점) — ${passTextOf(N.per)}">${N.cost > 1 ? "◆" : "●"}</button>`; }).join("")}</div><div class="cl-sub">${["r", "a1", "a2", "b1", "b2"].filter((k) => classHas(sv, `${T.id}_${k}`)).map((k) => `<div>${C_BY_ID[`${T.id}_${k}`].name}: ${passTextOf(C_BY_ID[`${T.id}_${k}`].per)}</div>`).join("") || `<div class="dim">노드에 마우스를 올리면 효과가 보입니다</div>`}</div></div>`;
+  Modal.open(`<h2>전직</h2><div class="center">전직 <b style="color:#ffd070">${n}차</b>${n ? ` · ${C_CLASS_NAMES[n]}` : ""} · 전직 포인트 <b style="color:#8dff9a">${left}</b> / ${classPoints(sv)} <button class="btn xs" data-a="clreset">전부 초기화</button></div>
+  <div class="center dim" style="margin:4px 0">전직의 서 1차 ${sv.cbook[1]} · 2차 ${sv.cbook[2]} · 3차 ${sv.cbook[3]} (레이드 던전 이지 · 노말 · 하드 최초 클리어) — 전직할 때마다 전직 포인트 2점</div>
+  <div class="center"><button class="btn pri" data-a="cladv" ${nextBook ? "" : "disabled"}>${n >= 3 ? "최종 전직 완료" : nextBook ? `${n + 1}차 전직하기` : `${n + 1}차 전직의 서 필요`}</button></div>
+  <div class="cl-grid">${C_TREES.map(card).join("")}</div>
+  <div class="pbtns"><button class="btn" data-a="clx">닫기</button></div>`, { cls: "wide", on: {
+    cltake: (el) => { if (takeClass(sv, el.dataset.id)) { snd("equip"); saveGame(); refreshTop(); } else snd("error"); openClass(back); },
+    clrm: (el) => { if (dropClass(sv, el.dataset.id)) { snd("click"); saveGame(); refreshTop(); } else snd("error"); openClass(back); },
+    clreset: () => { resetClass(sv); snd("close"); saveGame(); refreshTop(); openClass(back); },
+    cladv: () => { const r = advanceClass(sv); toast(r.msg, r.ok ? "ok" : "bad"); snd(r.ok ? "enh_ok" : "error"); saveGame(); refreshTop(); openClass(back); },
+    clx: () => { if (back) back(); else Modal.close(); },
+  } });
+}
+function openCRaid() {
+  const sv = save, OP = craidOpen(sv), D = G.craidDiff = Math.max(1, Math.min(OP, G.craidDiff || 1)), N = CFG.CRAID, hub = MAP.nodes.find((n) => n.kind === "craid");
+  const tabs = [1, 2, 3].map((d) => `<button class="bh-st ${d === D ? "on" : ""}" ${d <= OP ? `data-a="crd" data-d="${d}"` : "disabled"} style="--c:#ff5a4a;${d > OP ? "opacity:.45;cursor:default" : ""}"><b>${N.NAMES[d]}</b><span>${d <= OP ? (sv.craid && sv.craid[d] ? "클리어 ✔" : "도전 가능") : "🔒 " + N.NAMES[d - 1] + " 클리어"}</span><em class="${d <= OP ? "up" : ""}">${d}차 전직</em></button>`).join("");
+  Modal.open(`<h2>레이드 던전</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
+    <div class="bh-feat">전직의 서를 얻는 곳 · 4레인</div>
+    <div class="bh-desc">탑에서 내려온 붉은 군단의 본거지입니다. 최초 클리어하면 <b style="color:#ffd070">${D}차 전직의 서</b>를 얻고, 전직하면 전직 포인트를 받아 화염 · 냉기 · 번개 · 공허 · 물리&독 · 방어 · 파밍 패시브를 찍을 수 있습니다.</div>
+    <div class="bh-sttl">난이도</div><div class="bh-sts">${tabs}</div>
+    <div class="bh-me">권장: <b>${N.REQ[D]}</b> <span class="dim">· 몬스터 강도 균열 ${Math.round(N.TIERS[D])}층 수준</span></div>
+    <div class="bh-key dim">드랍: 장비(사탄 포함) · 구슬 · 조각 · 골드${D === 3 ? " · 하드 최초 클리어 시 3차 전직" : D === 2 ? " · 노말 최초 클리어 시 2차 전직" : ""} · 전직의 서는 최초 클리어 때만 나옵니다.</div>
+    <div class="center" style="margin:6px 0">현재 전직 <b>${sv.cls | 0}차</b> · 전직의 서 ${sv.cbook[1]}/${sv.cbook[2]}/${sv.cbook[3]} <button class="btn xs" data-a="crcls">전직 화면</button></div>
+    <button class="btn pri big bh-go" data-a="crgo">레이드 ${N.NAMES[D]} 입장</button>
+  </div></div></div>`, { cls: "bosshub", on: {
+    crd: (el) => { G.craidDiff = +el.dataset.d; openCRaid(); },
+    crcls: () => openClass(() => openCRaid()),
+    crgo: () => { Modal.close(true); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openCRaid(); } }); },
+  } });
+}

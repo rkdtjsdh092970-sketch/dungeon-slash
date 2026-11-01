@@ -152,14 +152,15 @@ const PASSIVES = [], PASSIVE_BY_ID = {};
     allDmg: "주는 피해", cdr: "쿨타임 감소", lifesteal: "생명력 흡수", hpPct: "체력", defPct: "방어력", dodge: "회피", regen: "초당 체력 회복", dmgTaken: "받는 피해", goldFind: "골드 획득", expFind: "경험치 획득", mf: "MF", aoeDmg: "광역 피해", chainDmg: "번개 피해",
     fireDmg: "화염 피해", coldDmg: "냉기 피해", lightDmg: "번개 피해", voidDmg: "공허 피해", elemDmg: "원소 피해", penElem: "속성 저항 관통", ignoreDef: "방어 무시", ignoreRes: "마법저항 무시", shredDef: "대상 방어력 감소", shredRes: "대상 마법저항 감소",
     manaPct: "마나", manaHit: "적중 시 마나 흡수(최대 마나)", manaRegen: "초당 마나 재생", manaCostRed: "마나 소모 감소", dodgeCap: "회피 상한", singleDmg: "단일 대상 스킬 피해", persistDmg: "지속·장판 스킬 피해", summonDmg: "소환 스킬 피해", bossSkill: "보스 전용기 피해", skillDur: "스킬 지속시간", bleedChance: "출혈 확률", poisonChance: "중독 확률", igniteChance: "점화 확률", dotDmg: "지속 피해", dotDur: "지속 시간", dmgPerMana: "최대 마나 100당 피해" };
-  PASSIVES.forEach((p) => {
-    p.text = Object.keys(p.per).map((k) => { const v = p.per[k];
+  const textOf = (per) => {
+    return Object.keys(per).map((k) => { const v = per[k];
       if (k === "manaToHp") return `최대 마나 1당 체력 +${v}`; if (k === "manaRegenFlat") return `초당 마나 재생 +${v}`; if (k === "atkFlat") return `공격력 +${v}`; if (k === "hpFlat") return `체력 +${v}`; if (k === "defFlat") return `방어력 +${v}`; if (k === "manaFlat") return `마나 +${v}`;
       if (k === "chainJumps") return `번개 도약 +${v}`; if (k === "density") return `칸당 몹 수 +${v}`; if (k === "revive") return "전투당 1회 부활";
-      if (k === "atkMore" || k === "magMore" || k === "hpMore") return `${{ atkMore: "공격력", magMore: "주문력", hpMore: "체력" }[k]} ${v >= 1 ? "+" : ""}${Math.round((v - 1) * 100)}%`;
+      if (k === "atkMore" || k === "magMore" || k === "hpMore" || k === "defMore" || /^(ignite|poison|chill|shock|bleed)More$/.test(k)) return `${{ atkMore: "공격력", magMore: "주문력", hpMore: "체력", defMore: "방어력", igniteMore: "점화 효과", poisonMore: "중독 효과", chillMore: "냉기 둔화 효과", shockMore: "감전 효과", bleedMore: "출혈 효과" }[k]} ${v >= 1 ? "+" : ""}${Math.round((v - 1) * 100)}%`;
       if (k === "manaToSpell") return `최대 마나의 ${Math.round(v * 100)}%만큼 주문력`; if (k === "manaShield") return `받는 피해의 ${Math.round(v * 100)}%를 마나가 흡수`;
       return `${LBL[k] || k} ${v > 0 ? "+" : ""}${(v * 100).toFixed(Math.abs(v) < 0.005 ? 2 : Math.abs(v) < 0.01 ? 1 : 0).replace(/\.0$/, "")}%`; }).join(" · ");
-  });
+  };
+  PASSIVES.forEach((p) => { p.text = textOf(p.per); }); globalThis.passTextOf = textOf;
 })();
 const passivePoints = (sv) => Math.max(0, sv.level - 1) * CFG.PASSIVE_PER_LV;   // v4: 레벨마다 포인트 (균열 1층 첫 클리어 = 1레벨)
 const passiveSpent = (sv) => { let n = 0; for (const id in (sv.pass || {})) if (PASSIVE_BY_ID[id]) n += PASSIVE_BY_ID[id].cost; return n; };
