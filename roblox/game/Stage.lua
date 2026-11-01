@@ -25,7 +25,7 @@ function M.create(parent, W, H, replayAct)
   -- 웹 게임 좌표(높이 540)를 화면 높이에 꽉 맞추고, 가로는 화면 비율대로 늘린다 (여백 없음. u = 가상 1픽셀의 실제 크기)
   -- 16:9 에서는 가로 960 으로 웹과 같고, 더 넓거나 좁은 화면은 몬스터 칸 간격(cw)이 늘거나 준다
   local u = H / 540
-  local S = { W = W, H = H, u = u, ox = 0, oy = 0, cw = math.max(70, (W / u - 216) / 6), f = u * 540 / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }
+  local S = { W = W, H = H, u = u, ox = 0, oy = 60 * u, cw = math.max(70, (W / u - 216) / 6), f = u * 540 / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }   -- oy: 레인을 웹보다 60 아래로 (배경 그림의 땅 높이에 맞춤)
   local root = mk("Frame", { Size = UDim2.new(0, W, 0, H), BackgroundColor3 = Color3.fromRGB(40, 30, 70), BorderSizePixel = 0, ClipsDescendants = true }, parent)
   local bg = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, root)
   local function buildBg(act)

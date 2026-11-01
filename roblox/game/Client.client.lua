@@ -10,6 +10,8 @@ local PG = player:WaitForChild("PlayerGui")
 
 -- ── 로딩 화면 (가장 먼저 띄운다) ──
 local loadGui = Instance.new("ScreenGui"); loadGui.Name = "DungeonLoading"; loadGui.IgnoreGuiInset = true; loadGui.DisplayOrder = 100; loadGui.ResetOnSpawn = false; loadGui.Parent = PG
+local Lang = require(RS:WaitForChild("Game"):WaitForChild("Lang"))   -- 화면 글자 번역 (기본 영어, 한국어 전환 가능)
+Lang.watch(loadGui)
 local loadBg = Instance.new("Frame"); loadBg.Size = UDim2.new(1, 0, 1, 0); loadBg.BackgroundColor3 = Color3.new(1, 1, 1); loadBg.BorderSizePixel = 0; loadBg.Parent = loadGui
 loadGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 local loadGrad = Instance.new("UIGradient"); loadGrad.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 34, 120)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(26, 14, 56)), ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 30, 70)) }); loadGrad.Rotation = 90; loadGrad.Parent = loadBg
@@ -65,6 +67,7 @@ task.spawn(function()   -- 전투 배경 그림이 오면 로딩 배경으로 �
 end)
 
 local gui = Instance.new("ScreenGui"); gui.Name = "DungeonUI"; gui.ResetOnSpawn = false; gui.IgnoreGuiInset = true; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; gui.Parent = PG
+Lang.watch(gui)
 local INSET = math.max(36, GuiService:GetGuiInset().Y)   -- 로블록스 상단 버튼 줄 높이
 local function vp() return workspace.CurrentCamera.ViewportSize end
 local K = 1   -- HUD 배율 (화면 높이 720 기준)
@@ -107,6 +110,11 @@ for i, p in ipairs(PILLS) do
 end
 -- 왼쪽 위 능력치 (마을 · 지도에서)
 local statLbl = mk("TextLabel", { BackgroundColor3 = DARK, BackgroundTransparency = 0.25, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 330, 0, 44), TextColor3 = Color3.fromRGB(225, 220, 245), Font = Enum.Font.GothamMedium, TextSize = 13, TextWrapped = true, Text = "", ZIndex = 11 }, hud)
+local langBtn = mk("TextButton", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 132, 0, 34), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, Text = "", ZIndex = 11 }, hud)
+langBtn:SetAttribute("NoTr", true); corner(langBtn, 10); stroke(langBtn, GOLD, 1.5); local langScale = mk("UIScale", { Scale = K }, langBtn)
+local function langLabel() langBtn.Text = Lang.lang == "en" and "🌐 EN  |  한국어" or "🌐 한국어  |  EN" end
+langLabel(); Lang.changed.Event:Connect(langLabel)
+langBtn.MouseButton1Click:Connect(function() local l = Lang.lang == "en" and "ko" or "en"; Lang.set(l); pcall(function() rpc:InvokeServer("setlang", l) end) end)
 corner(statLbl, 8); local statScale = mk("UIScale", { Scale = K }, statLbl); mk("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, statLbl)
 -- 오른쪽 아래 이동 버튼 (모바일 점프 버튼 자리 — 이 게임은 이동 조작을 숨겼으므로 비어 있다)
 local dock = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -12), Size = UDim2.new(0, 3 * 84 + 2 * 8, 0, 72), ZIndex = 11 }, hud)
@@ -364,13 +372,13 @@ local function closePanel() panelLayer.Visible = false; clear() end
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
-  dock.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
+  dock.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; langBtn.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
   for t, b in pairs(dockBtn) do b.BackgroundColor3 = ((t == "마을" and name == "town") or (t == "지도" and name == "map")) and Color3.fromRGB(110, 80, 30) or PANEL end
   if name == "town" then buildTown() elseif name == "map" then buildMap() end
 end
 root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
 panelLayer.MouseButton1Click:Connect(closePanel)
-do local b = button(root, "✕", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20 end
+do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20 end
 local function openPanel(title, tabs, first)
   fitPanel(); panelTitle.Text = title; panelLayer.Visible = true
   for _, c in ipairs(tabRow:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
@@ -388,7 +396,7 @@ local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDi
 corner(resBox, 16); stroke(resBox, GOLD, 3); local resScale = mk("UIScale", { Scale = K }, resBox)
 local resTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 16), Size = UDim2.new(1, 0, 0, 48), Font = Enum.Font.GothamBlack, TextSize = 40, Text = "", ZIndex = 27 }, resBox)
 mk("UIStroke", { Thickness = 3, Color = Color3.fromRGB(30, 10, 40) }, resTitle)
-local resText = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 74), Size = UDim2.new(1, -48, 0, 140), Font = Enum.Font.GothamMedium, TextSize = 16, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(235, 230, 250), Text = "", ZIndex = 27 }, resBox)
+local resText = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 74), Size = UDim2.new(1, -48, 0, 140), Font = Enum.Font.GothamMedium, TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(235, 230, 250), Text = "", ZIndex = 27 }, resBox)
 local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.new(1, -32, 0, 46), ZIndex = 27 }, resBox)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, resBtns)
 local function resultLines(x)
@@ -543,7 +551,7 @@ local function showInfo(t)
   infoCard:ClearAllChildren(); corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
   local st, hint, prog = nodeState(t)
   mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 10), Size = UDim2.new(1, -80, 0, 30), Font = Enum.Font.GothamBlack, TextSize = 22, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = t.icon .. "  " .. t.name .. (prog and ("   " .. prog) or ""), ZIndex = 16 }, infoCard)
-  do local b = button(infoCard, "✕", UDim2.new(1, -50, 0, 10), UDim2.new(0, 36, 0, 32), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 16 end
+  do local b = button(infoCard, "X", UDim2.new(1, -50, 0, 10), UDim2.new(0, 36, 0, 32), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 16 end
   local desc = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 44), Size = UDim2.new(1, -36, 0, 48), Font = Enum.Font.GothamMedium, TextSize = 14, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(225, 220, 245), Text = "", ZIndex = 16 }, infoCard)
   local row = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 1, -58), Size = UDim2.new(1, -32, 0, 44), ZIndex = 16 }, infoCard)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)
@@ -630,7 +638,7 @@ dockButton(3, "🎒", "장비", function() openPanel("장비", { { "장비", "in
 local relayPending = false
 local function relayout()
   relayPending = false; calcK()
-  pillScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
+  pillScale.Scale = K; statScale.Scale = K; langScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
   pillRow.Position = UDim2.new(0.5, 0, 0, INSET / 2)
   if mainStage and not mainStage.conn then makeStage() end
   townBuilt = false
@@ -641,7 +649,7 @@ workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(functio
 
 -- ── 로딩: 세이브 → 그림 → 시작 ──
 loadStep("모험 기록을 불러오는 중...", 0.3)
-for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); break end; task.wait(0.5) end
+for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); Lang.set(r.summary.lang or "en"); break end; task.wait(0.5) end
 do
   local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))
   local keys = {}; if okArt then for k in pairs(ARTM.ART) do keys[#keys + 1] = k end end; table.sort(keys)

@@ -103,6 +103,7 @@ local handle = function(player, action, arg)
   elseif action == "stones" then local rows = Game.stones(sv); for _, r in ipairs(rows) do if r.rev then r.label = Game.stoneLabel(r.rev) end end return { rows = rows, items = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "reveal" then local ok, e = Game.reveal(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, label = ok and Game.stoneLabel(e) or nil, summary = Game.summary(sv) }
   elseif action == "socket" then local ok, e = Game.socket(sv, tonumber(arg.item), tonumber(arg.stone), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
+  elseif action == "setlang" then sv.lang = (arg == "ko") and "ko" or "en"; return { ok = true }
   elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }
   elseif action == "play" then
     if s.busy then return { err = "전투 중입니다" } end
