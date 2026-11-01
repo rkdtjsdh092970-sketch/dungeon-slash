@@ -23,6 +23,24 @@ local function sign(x) return x > 0 and 1 or (x < 0 and -1 or 0) end
 local function contains(a, v) for _, x in ipairs(a) do if x == v then return true end end return false end
 local function filter(a, f) local o = {}; for _, x in ipairs(a) do if f(x) then o[#o + 1] = x end end return o end
 
+-- ---------- 균열 변이 (JS seeded() = mulberry32 와 같은 값) ----------
+local function imul(a, b) return (bit32.band(a, 0xffff) * b + bit32.lshift(bit32.band(bit32.rshift(a, 16) * b, 0xffff), 16)) % 4294967296 end
+local function seeded(seed)
+  local a = seed % 4294967296
+  return function()
+    a = (a + 0x6D2B79F5) % 4294967296
+    local t = imul(bit32.bxor(a, bit32.rshift(a, 15)), bit32.bor(1, a))
+    t = bit32.bxor((t + imul(bit32.bxor(t, bit32.rshift(t, 7)), bit32.bor(61, t))) % 4294967296, t)
+    return bit32.bxor(t, bit32.rshift(t, 14)) / 4294967296
+  end
+end
+function M.riftMods(tier)
+  local rn = seeded(tier * 131 + 7); local n = tier < 10 and 0 or (tier < 30 and 1 or (tier < 60 and 2 or 3))
+  local pool, out = table.clone(Mon.RIFT_MODS), {}
+  for _ = 1, n do local i = math.floor(rn() * #pool) + 1; out[#out + 1] = table.remove(pool, i) end
+  return out
+end
+
 -- ---------- 난이도 표 ----------
 local function floorMult(f)
   f = max(1, f); local T = CFG.FLOOR_TAB
@@ -149,18 +167,29 @@ local function smoothSeq(w, n, st)
   end
   return out
 end
-local function wavePool(act, stage)
+local function wavePool(act, stage, mods)
   local t = (act - 1) / 9
-  return { imp = 60 - 40 * t, grunt = 40 - 10 * t, archer = 30 * t + (act >= 2 and 8 or 0), mage = act >= 3 and 8 + 22 * t or 0, spec = stage >= 2 and 11 + act or 0 }
+  local w = { imp = 60 - 40 * t, grunt = 40 - 10 * t, archer = 30 * t + (act >= 2 and 8 or 0), mage = act >= 3 and 8 + 22 * t or 0, spec = stage >= 2 and 11 + act or 0 }
+  for _, m in ipairs(mods or {}) do if m.ranged then w.archer = (w.archer + 10) * 2; w.mage = (w.mage + 6) * 2.5 end end
+  return w
 end
 local function insertAt(plan, idx0, v) table.insert(plan, max(1, min(#plan + 1, idx0 + 1)), v) end
 local function planFor(b, node)
-  local w = wavePool(10, 10)
-  local t = node.tier
-  local nNormal = min(110, floor(34 + 0.8 * t + 0.5)); local elites = 2 + min(12, floor(t / 7)); local boss = node.floor % 5 == 0
+  local kind = b.kind; local mods = node.mods or {}
+  local act = min(10, node.act or 10); local stage = node.stage or 10
+  local w = wavePool(act, stage, mods)
+  local nNormal, elites, boss
+  if kind == "spire" or kind == "rift" then
+    local t = node.tier; nNormal = min(110, floor(34 + 0.8 * t + 0.5)); elites = 2 + min(12, floor(t / 7))
+    boss = kind == "spire" and node.floor % 5 == 0 or (kind == "rift" and t % 5 == 0)
+    for _, m in ipairs(mods) do if m.elites then elites *= 3 end end
+  else
+    nNormal = CFG.WAVE_BASE + CFG.WAVE_STAGE * stage; elites = stage >= 2 and 1 + floor(stage / 2) or 0; boss = false
+    if kind == "boss" then nNormal = floor(nNormal * 0.55 + 0.5); boss = true end
+  end
   local plan = smoothSeq(w, nNormal)
-  if t >= 50 then
-    local ns = min(8, 2 + floor((t - 50) / 12))
+  if (kind == "spire" or kind == "rift") and node.tier >= 50 then
+    local ns = min(8, 2 + floor((node.tier - 50) / 12))
     for i = 0, ns - 1 do insertAt(plan, floor(#plan * (0.1 + 0.85 * (i + 0.5) / ns)), "sniper") end
   end
   for i = 0, elites - 1 do insertAt(plan, floor(#plan * (0.15 + 0.8 * (i + 0.5) / elites)), "brute") end
@@ -171,15 +200,15 @@ end
 local function specDef(va)
   local s = table.clone(Mon.ACT_SPECIAL[va + 1]); s.tier = "normal"; s.ranged = s.range >= 3; s.proj = va == 7 and "orb" or nil; return s
 end
-local function defOf(b, type)
+local function defOf(b, type, va)
   if type == "boss" then return b.bossDef end
-  if type == "spec" then return specDef(min(b.va, 9)) end
+  if type == "spec" then return specDef(min(va or b.va, 9)) end
   return Mon.ENEMIES[type]
 end
 local function hasTrait(e, t) for _, x in ipairs(e.traits) do if x == t then return true end end return false end
 
 local function makeEnemy(b, type, lane, col)
-  local isBoss = type == "boss"; local D = defOf(b, type)
+  local isBoss = type == "boss"; local va = b.kind == "rift" and rint(b, 6, 9) or b.va; local D = defOf(b, type, va)
   local bx = isBoss and CFG.BOSSX or 1
   local e = {
     id = b.nextId, type = type, def = D, tier = isBoss and "boss" or (D.tier or "normal"), w = isBoss and D.w or 1, h = isBoss and D.h or 1, lane = lane, col = col,
@@ -191,9 +220,9 @@ local function makeEnemy(b, type, lane, col)
   e.dotMul = isBoss and CFG.DOT_BOSS or (e.tier == "elite" and CFG.DOT_ELITE or 1)
   local dd = table.clone(isBoss and Mon.ENEMY_DEF.boss or Mon.ENEMY_DEF[type] or Mon.ENEMY_DEF.grunt)
   for _, t in ipairs(e.traits) do local T = Mon.TRAIT_DEF[t]; if T then dd[1] += T[1]; dd[2] += T[2] end end
-  local sc = (1 + CFG.DEF_ACT * (min(10, b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier or 0))
+  local sc = (1 + CFG.DEF_ACT * (min(10, b.actDef or b.act) - 1)) * (1 + CFG.DEF_TIER * (b.tier or 0))
   e.dm = max(0, dd[1] * sc); e.rm = max(0, dd[2] * sc); e.shD = 0; e.shR = 0
-  e.eres = { 0.1, 0.1, 0.1, 0.1 }   -- 붉은 탑 몬스터는 속성 저항이 모두 같다
+  e.eres = (b.kind == "spire") and { 0.1, 0.1, 0.1, 0.1 } or Mon.ACT_ELEM[min(9, max(0, va)) + 1]   -- 붉은 탑 몬스터는 속성 저항이 모두 같다
   if isBoss then
     e.abil = {}; for _, a in ipairs(D.abilities or {}) do e.abil[#e.abil + 1] = { d = a, t = (a.every or 0) * rnd(b, 0.55, 0.9) } end
     e.dmgBase = e.atk; b.bossRef = e
@@ -474,7 +503,7 @@ killEnemy = function(b, e)
   if hasTrait(e, "split") and not e.exploded then for _ = 1, 2 do spawnNear(b, "imp", e.lane, e.col) end end
   if e.def and e.def.hive then b.plan = {}; for _, x in ipairs(table.clone(b.enemies)) do if x ~= e and not x.dead then x.hp = 0; killEnemy(b, x) end end end
   b.kills += 1; if e.tier == "elite" then b.eliteKills += 1 end; if e.tier == "boss" then b.bossKills += 1 end
-  b.gold += e.def.gold * (1.45 ^ (b.act - 1)) * (1 + b.stats.goldFind) * 2
+  b.gold += e.def.gold * (1.45 ^ (b.act - 1)) * (1 + b.stats.goldFind) * 2 * rnd(b, 0.8, 1.3)
   if b.designated == e then b.designated = nil end
   if e.summoned and e.owner then
     for _, o in ipairs(b.enemies) do if o.id == e.owner and o.shield then o.shield.need -= 1; if o.shield.need <= 0 then o.shield = nil end end end
@@ -753,20 +782,31 @@ end
 -- ---------- 생성 / 진행 ----------
 function M.new(sv, node, seed)
   local st = Stats.computeStats(sv)
+  local kind = node.kind or "spire"
+  local isFloor = kind == "spire" or kind == "rift"
   local act = max(1, min(10, node.act or 10))
-  local riftMul = floorMult(node.tier)
-  if node.floor % 5 == 0 and node.floor % 20 ~= 0 then riftMul *= CFG.BOSS_FLOOR_K end
-  local atkExtra = floorMult(node.tier) ^ (CFG.SPIRE.ATKP - 1)
+  local mods = node.mods or {}
+  local stage = isFloor and 4 or (node.stage or CFG.STAGES)
+  local scAct = (node.tier or isFloor) and 1 or act
+  local riftMul = node.tier and floorMult(node.tier) or 1
+  local sub = kind == "spire" and node.floor or (kind == "rift" and node.tier or nil)
+  if sub and sub % 5 == 0 and sub % 20 ~= 0 then riftMul *= CFG.BOSS_FLOOR_K end
+  local atkExtra = isFloor and floorMult(node.tier) ^ ((kind == "spire" and CFG.SPIRE.ATKP or CFG.FLOOR_ATKP) - 1) or 1
+  local mHp, mAtk, mHaste, capPlus = 1, 1, 1, 0
+  for _, m in ipairs(mods) do mHp *= (m.hp or 1); mAtk *= (m.atk or 1); mHaste *= (m.haste or 1); if m.cap then capPlus = 1 end end
   local b = {
-    node = node, act = act, stage = 4, kind = "spire", tier = node.tier, stats = st, time = 0, over = false, win = false, enemies = {}, zones = {}, persist = {}, dmgBy = {}, events = {},
-    nextId = 1, hp = st.maxHp, maxHp = st.maxHp, mana = st.maxMana, maxMana = st.maxMana, lanes = 4, cap = min(CFG.STACK_MAX, st.stackCap), spawnCd = 0.3,
-    kills = 0, eliteKills = 0, bossKills = 0, gold = 0, dodges = 0, taken = 0, dealt = 0, debuffs = {}, buffs = {}, poisonCd = 8, revive = st.revive, inv = 0, haste = 1,
-    lastDealT = 0, rng = Random.new(seed or os.time()), va = 11,
+    node = node, act = act, actDef = act, stage = stage, kind = kind, tier = node.tier or 0, mods = mods, stats = st, time = 0, over = false, win = false, enemies = {}, zones = {}, persist = {}, dmgBy = {}, events = {},
+    nextId = 1, hp = st.maxHp, maxHp = st.maxHp, mana = st.maxMana, maxMana = st.maxMana, lanes = (kind == "spire") and 4 or st.lanes, cap = min(CFG.STACK_MAX, st.stackCap + capPlus), spawnCd = 0.3,
+    kills = 0, eliteKills = 0, bossKills = 0, gold = 0, dodges = 0, taken = 0, dealt = 0, debuffs = {}, buffs = {}, poisonCd = 8, revive = st.revive, inv = 0, haste = mHaste,
+    lastDealT = 0, rng = Random.new(seed or os.time()),
+    va = kind == "spire" and 11 or (isFloor and 7 or (min(10, act) - 1)),
   }
-  b.hpM = CFG.H0 * actScale(1) * (1 + CFG.STAGE_HP * 3) * riftMul
-  b.atkM = CFG.A0 * actScale(1) * (1 + CFG.STAGE_ATK * 3) * riftMul * atkExtra
+  b.hpM = CFG.H0 * CFG.HPX ^ (scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * mHp
+  b.atkM = CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (isFloor and riftMul * atkExtra or riftMul) * mAtk
   b.lsRate = b.maxHp * min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2
-  b.bossDef = Mon.BOSSES[((node.floor // 5) - 1 + 10) % 10 + 1]
+  if kind == "spire" then b.bossDef = Mon.BOSSES[((node.floor // 5) - 1 + 10) % 10 + 1]
+  elseif kind == "rift" then b.bossDef = Mon.BOSSES[((node.tier // 5) - 1 + 10) % 10 + 1]
+  elseif kind == "boss" then b.bossDef = Mon.BOSSES[min(10, act)] end
   b.plan = planFor(b, node)
   b.skills = {}; b.slotCount = sv.slots or 0
   for i, l in ipairs(sv.loadout or {}) do
@@ -778,6 +818,7 @@ function M.new(sv, node, seed)
       end
     end
   end
+  for _, m in ipairs(mods) do if m.slow then b.slowMod = (b.slowMod or 1) * m.slow end end
   b.maxReach = 0; for _, k in ipairs(b.skills) do if k.dtype ~= "buff" and k.dtype ~= "heal" and k.kind ~= "buff" and k.kind ~= "heal" then b.maxReach = max(b.maxReach, k.range or 0) end end
   if st.cm and st.cm.x_shield then b.xShield = b.maxHp * st.cm.x_shield end
   return b
@@ -791,6 +832,7 @@ function M.step(b, dt)
   if b.inv > 0 then b.inv -= dt end
   b.mana = min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt)
   for _, k in ipairs({ "slow", "freeze", "curse", "poison", "wound" }) do local d = b.debuffs[k]; if d then d.t -= dt; if d.t <= 0 then b.debuffs[k] = nil end end end
+  for _, m in ipairs(b.mods) do if m.poison then b.poisonCd -= dt; if b.poisonCd <= 0 then b.debuffs.poison = { t = 5, dps = 0.012 }; b.poisonCd = 14 end end end
   if b.buffs.cry then b.buffs.cry.t -= dt; if b.buffs.cry.t <= 0 then b.buffs.cry = nil end end
   if b.debuffs.poison then local x = b.maxHp * b.debuffs.poison.dps * dt; b.hp -= x; b.taken += x end
   for _, ev in ipairs(b.events) do ev.t -= dt end
@@ -845,7 +887,7 @@ function M.step(b, dt)
   for _, e in ipairs(b.enemies) do if #e.dots > 0 and not e.dead then tickDots(b, e, dt) end end
   b.zones = filter(b.zones, function(z) return z.t > 0 end)
   if not b.debuffs.freeze then
-    local rate = (b.debuffs.slow and b.debuffs.slow.mult or 1)
+    local rate = (b.debuffs.slow and b.debuffs.slow.mult or 1) * (b.slowMod or 1)
     for _, sk in ipairs(b.skills) do
       sk.cdLeft = max(0, sk.cdLeft - dt * rate)
       if sk.cdLeft <= 0 and castSkill(b, sk) then sk.cdLeft = sk.cd * (1 - b.stats.cdr) end
