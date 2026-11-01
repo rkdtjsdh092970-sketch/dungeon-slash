@@ -22,16 +22,19 @@ M.PAL = {
   { Color3.fromRGB(40, 8, 24), Color3.fromRGB(140, 30, 60), Color3.fromRGB(36, 10, 26), Color3.fromRGB(70, 20, 40), Color3.fromRGB(255, 120, 120) },
 }
 function M.create(parent, W, H, replayAct)
-  local S = { W = W, H = H, f = H / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }
-  local root = mk("Frame", { Size = UDim2.new(0, W, 0, H), BackgroundColor3 = Color3.fromRGB(40, 30, 70), ClipsDescendants = true }, parent)
-  mk("UICorner", { CornerRadius = UDim.new(0, 8) }, root)
+  -- 웹 게임 좌표(높이 540)를 화면 높이에 꽉 맞추고, 가로는 화면 비율대로 늘린다 (여백 없음. u = 가상 1픽셀의 실제 크기)
+  -- 16:9 에서는 가로 960 으로 웹과 같고, 더 넓거나 좁은 화면은 몬스터 칸 간격(cw)이 늘거나 준다
+  local u = H / 540
+  local S = { W = W, H = H, u = u, ox = 0, oy = 0, cw = math.max(70, (W / u - 216) / 6), f = u * 540 / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }
+  local root = mk("Frame", { Size = UDim2.new(0, W, 0, H), BackgroundColor3 = Color3.fromRGB(40, 30, 70), BorderSizePixel = 0, ClipsDescendants = true }, parent)
   local bg = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, root)
   local function buildBg(act)
     bg:ClearAllChildren()
     local art = Sprites.art("bg" .. (act or 1))   -- 일러스트 배경이 있으면 그것만 쓴다
-    if art then   -- 아래쪽 기준으로 잘라 그림의 바닥 띠가 레인(무대 아래쪽 절반)에 오게 한다
-      local rh = math.min(art.h, art.w * H / W)
-      mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Stretch, ImageContent = art.content, ImageRectOffset = Vector2.new(0, art.h - rh), ImageRectSize = Vector2.new(art.w, rh), ZIndex = 1 }, bg); return
+    if art then   -- 화면을 꽉 채우도록 자르되(좌우는 가운데, 위아래는 아래 기준) 비율은 유지한다
+      local sw, sh = art.w, art.h
+      if art.w / art.h > W / H then sw = art.h * W / H else sh = art.w * H / W end
+      mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Stretch, ImageContent = art.content, ImageRectOffset = Vector2.new((art.w - sw) / 2, art.h - sh), ImageRectSize = Vector2.new(sw, sh), ZIndex = 1 }, bg); return
     end
     local P = M.PAL[((act or 1) - 1) % #M.PAL + 1]
     local sky = mk("Frame", { Size = UDim2.new(1, 0, 0.56, 0), BackgroundColor3 = P[1], BorderSizePixel = 0 }, bg)
@@ -62,19 +65,23 @@ function M.create(parent, W, H, replayAct)
   S.buildBg(replayAct or 1)
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
-  S.plX, S.plY = 56, H * 0.72
-  S.pl = Sprites.artLabel(S.layer, "warrior", 80 * S.f); S.plArt = S.pl ~= nil
-  if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 72 * S.f) end
+  S.plX, S.plY = S.ox + 104 * u, S.oy + 336 * u   -- 웹 PLAYER_POS
+  S.pl = Sprites.artLabel(S.layer, "warrior", 104 * u); S.plArt = S.pl ~= nil
+  if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 96 * u) end
   S.pl.Position = UDim2.new(0, S.plX, 0, S.plY); S.pl.ZIndex = 5
   -- 상태 바
-  local function bar(y, color) local bg = mk("Frame", { Position = UDim2.new(0, 10, 1, y), Size = UDim2.new(0, 160, 0, 10), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 8 }, root); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, bg)
-    local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = color, ZIndex = 9 }, bg); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, f); return f end
-  S.hpBar = bar(-34, Color3.fromRGB(220, 70, 80)); S.mpBar = bar(-20, Color3.fromRGB(80, 140, 230))
-  S.timeLbl = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(1, -110, 0, 6), Size = UDim2.new(0, 100, 0, 20), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 9 }, root)
+  -- HUD: 로블록스 상단 버튼 줄(M.TOP) 아래. 왼쪽 위 체력/마나, 오른쪽 위 배속/건너뛰기 (HUD 크기는 Client 의 UIScale 값 M.HUD 를 따른다)
+  local TOP, k = M.TOP, M.HUD
+  local function bar(y, h, color) local bg = mk("Frame", { Position = UDim2.new(0, 16, 0, TOP + y * k), Size = UDim2.new(0, 240 * k, 0, h * k), BackgroundColor3 = Color3.fromRGB(18, 14, 30), BackgroundTransparency = 0.15, ZIndex = 8 }, root); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, bg); mk("UIStroke", { Color = Color3.fromRGB(20, 10, 30), Thickness = 2 }, bg)
+    local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = color, ZIndex = 9 }, bg); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, f); return f end
+  S.hpBar = bar(8, 16, Color3.fromRGB(230, 70, 80)); S.mpBar = bar(28, 10, Color3.fromRGB(80, 150, 240))
+  S.timeLbl = mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 44 * k), Size = UDim2.new(0, 180 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 9 }, root)
+  mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(20, 10, 30) }, S.timeLbl)
   S.plAnim = { name = "idle", t = 0 }
-  S.ctrl = mk("Frame", { BackgroundTransparency = 1, Size = UDim2.new(0, 150, 0, 24), Position = UDim2.new(0, 8, 0, 6), Visible = false, ZIndex = 30 }, root)
-  local function sb(txt, x, cb) local b = mk("TextButton", { Text = txt, Size = UDim2.new(0, 68, 0, 22), Position = UDim2.new(0, x, 0, 0), BackgroundColor3 = Color3.fromRGB(30, 20, 50), BackgroundTransparency = 0.2, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, ZIndex = 30 }, S.ctrl); mk("UICorner", { CornerRadius = UDim.new(0, 5) }, b); b.MouseButton1Click:Connect(cb) end
-  sb("배속", 0, function() S:faster() end); sb("건너뛰기", 74, function() S:skip() end)
+  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Size = UDim2.new(0, 186, 0, 32), Position = UDim2.new(1, -16, 0, TOP + 6 * k), Visible = false, ZIndex = 30 }, root)
+  mk("UIScale", { Scale = k }, S.ctrl)
+  local function sb(txt, x, cb) local b = mk("TextButton", { Text = txt, Size = UDim2.new(0, 88, 0, 32), Position = UDim2.new(0, x, 0, 0), BackgroundColor3 = Color3.fromRGB(30, 20, 50), BackgroundTransparency = 0.15, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 30 }, S.ctrl); mk("UICorner", { CornerRadius = UDim.new(0, 8) }, b); mk("UIStroke", { Color = Color3.fromRGB(214, 168, 70), Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b); b.MouseButton1Click:Connect(cb) end
+  sb("배속", 0, function() S:faster() end); sb("건너뛰기", 98, function() S:skip() end)
   S.idleConn = RunService.RenderStepped:Connect(function(dt) if S.conn or not S.alive then return end
     S.plAnim.t += dt; if S.plArt then M.artPose(S) end
     local row, frame, done = Sprites.anim("warrior", "idle", S.plAnim.t); if S.plInfo then Sprites.setFrame(S.pl, S.plInfo, row, frame) end end)
@@ -91,13 +98,16 @@ function M.artPose(S)
   S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 0.55, 0.55) or Color3.new(1, 1, 1)
 end
 
-function M:laneY(l, lanes) local top, bot = self.H * 0.5, self.H * 0.92; local lh = (bot - top) / math.max(1, lanes); return top + (l + 0.5) * lh, lh end
-function M:colX(c) return 120 + (c - 0.5) * ((self.W - 150) / 6) end
+M.TOP, M.HUD = 58, 1   -- 로블록스 상단 버튼 줄 높이 / HUD 배율 (Client 가 화면에 맞춰 갱신)
+-- 레인/칸: 웹 battle.js 의 LAY{x0=196,cw=124,cy=292} · laneH(3레인까지 116, 4레인 88) 와 같은 값
+function M:laneY(l, lanes) lanes = lanes or 2; local lh = lanes <= 3 and 116 or 88; local top = 292 - lh * lanes / 2; return self.oy + (top + (l + 0.5) * lh) * self.u, lh * self.u end
+function M:colX(c) return self.ox + (196 + (c - 0.5) * self.cw) * self.u end
 
 function M:floatText(text, x, y, color, size)
-  local t = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0, 100, 0, 22), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, x, 0, y), Text = text, TextColor3 = color or Color3.new(1, 1, 0.8), Font = Enum.Font.GothamBlack, TextSize = size or 16, ZIndex = 20 }, self.layer)
-  mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(20, 10, 30) }, t)
-  local tw = TweenService:Create(t, TweenInfo.new(0.7), { Position = UDim2.new(0, x, 0, y - 34), TextTransparency = 1 }); tw:Play(); tw.Completed:Connect(function() t:Destroy() end)
+  local ts = math.floor((size or 16) * self.u * 1.4)   -- 큰 피해 숫자
+  local t = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0, ts * 6, 0, ts + 6), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, x, 0, y), Text = text, TextColor3 = color or Color3.new(1, 1, 0.8), Font = Enum.Font.GothamBlack, TextSize = ts, ZIndex = 20 }, self.layer)
+  mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 10, 30) }, t)
+  local tw = TweenService:Create(t, TweenInfo.new(0.7), { Position = UDim2.new(0, x, 0, y - 40 * self.u), TextTransparency = 1 }); tw:Play(); tw.Completed:Connect(function() t:Destroy() end)
 end
 function M:flash(color, x1, y1, x2, y2)
   local len = math.max(8, math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)); local ang = math.deg(math.atan2(y2 - y1, x2 - x1))
@@ -110,7 +120,7 @@ local function unitFor(S, e, lanes)
   local u = S.units[e.id]; if u then return u end
   local boss = e.bs ~= nil
   local key, hue = e.sp, e.hu
-  local size = (boss and math.min(150, 110 * (e.scl or 3) / 3 + 20) or (e.tier == "elite" and 84 or 58)) * S.f
+  local size = (boss and math.min(224, 64 * (e.scl or 3)) or (e.tier == "elite" and 96 or 64)) * S.u   -- 웹과 같은 비율 (일반 64 · 정예 96 · 보스 sc*64)
   local lab, info
   if boss then if (e.bh or 0) == 0 then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size) end
   elseif key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 일러스트(색조 변형은 아직 도트)
@@ -119,7 +129,7 @@ local function unitFor(S, e, lanes)
   elseif boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
   else lab, info = Sprites.label(S.layer, key or "ghoul", hue or 0, true, size) end
   lab.ZIndex = 4 + (e.l or 0)
-  local bar = mk("Frame", { Size = UDim2.new(0, size * 0.7, 0, 5), AnchorPoint = Vector2.new(0.5, 1), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 15 }, S.layer)
+  local bar = mk("Frame", { Size = UDim2.new(0, size * 0.7, 0, math.max(4, 5 * S.u)), AnchorPoint = Vector2.new(0.5, 1), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 15 }, S.layer)
   local fill = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = boss and Color3.fromRGB(230, 90, 60) or (e.tier == "elite" and Color3.fromRGB(240, 190, 60) or Color3.fromRGB(110, 210, 110)), ZIndex = 16 }, bar)
   u = { lab = lab, info = info, art = art, bar = bar, fill = fill, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
   S.units[e.id] = u; return u
@@ -134,21 +144,22 @@ function M:applySnap(s, lanes)
     local u = unitFor(self, e, lanes)
     local cy, lh = self:laneY(e.l, lanes); local cw = (self.W - 150) / 6
     local x = self:colX(e.c + ((e.w or 1) - 1) / 2); local y = cy + ((e.h or 1) - 1) * lh / 2 + lh * 0.3
-    if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14; y += n * 5 end
-    if not u.placed then u.placed = true; u.x = x + 70; u.y = y end
+    if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
+    if not u.placed then u.placed = true; u.x = x + 70 * self.u; u.y = y end
     u.tx, u.ty = x, y; u.hp = e.hp
     if e.dead and not u.dying then u.dying = 0 end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
     u.wind = e.wind
   end
   for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0 end end
-  if s.ph then self:floatText("-" .. fmt(s.ph), 60, py - 70, Color3.fromRGB(255, 100, 110), 16); self.plAnim = { name = "hurt", t = 0 } end
+  if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); self.plAnim = { name = "hurt", t = 0 } end
   if s.c then
     local tgt; for _, u in pairs(self.units) do if not u.dying and u.tx and (not tgt or u.tx < tgt.tx) then tgt = u end end
     for _, c in ipairs(s.c) do
-      local col = hex(c[2]); local x2, y2 = (tgt and tgt.tx or self.W - 80), (tgt and tgt.ty - 30 or py - 30)
-      self:flash(col, 80, py - 30, x2, y2)
-      if c[4] ~= "single" then self:flash(col, 80, py - 30, x2 + 20, y2 + 24); self:flash(col, 80, py - 30, x2 + 20, y2 - 24) end
+      local u = self.u; local sx, sy = self.plX + 30 * u, py - 50 * u   -- 영웅 칼끝에서 나간다
+      local col = hex(c[2]); local x2, y2 = (tgt and tgt.tx or self.W - 80 * u), (tgt and tgt.ty - 30 * u or sy)
+      self:flash(col, sx, sy, x2, y2)
+      if c[4] ~= "single" then self:flash(col, sx, sy, x2 + 20 * u, y2 + 24 * u); self:flash(col, sx, sy, x2 + 20 * u, y2 - 24 * u) end
     end
     self.plAnim = { name = "attack", t = 0 }
   end

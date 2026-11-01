@@ -14,6 +14,17 @@ ART = [
     ('c_brute', 'mobs/brute.png', (256, 256)),
     ('boss0', 'bosses/groom.png', (256, 256)),
     ('bg1', 'bg/act1.jpg', (768, 320)),
+    # 마을 · 월드맵 (개발용 전달 크기 ~1MB 이내로 줄임. 출시 땐 원본을 업로드해 id 사용)
+    ('bg_town', 'bg/town.jpg', (640, 360)),
+    ('bg_world', 'map/world.jpg', (640, 392)),
+    ('b_skill_hall', 'town/skill_hall.png', (192, 192)),
+    ('b_forge', 'town/forge.png', (192, 192)),
+    ('b_shop', 'town/shop.png', (192, 192)),
+    ('b_quest_board', 'town/quest_board.png', (192, 192)),
+    ('b_skill_shop', 'town/skill_shop.png', (192, 192)),
+    ('b_guild', 'town/guild.png', (192, 192)),
+    ('b_trainer', 'town/trainer.png', (192, 192)),
+    ('b_notice', 'town/notice.png', (192, 192)),
 ]
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'
 lines = ['-- 자동 생성 (roblox/gen_art.py). 일러스트 표: 파일은 roblox/sprites/<file> (RGBA 8bit, w × h).',
