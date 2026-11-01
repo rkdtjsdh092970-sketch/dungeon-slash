@@ -7,6 +7,7 @@ M.PASSES = {   -- 게임패스 (영구)
   goldPlus   = { id = 0, name = "골드 +50%", gold = 0.5 },
   presetPlus = { id = 0, name = "프리셋 확장", presets = 3 },
   statsView  = { id = 0, name = "전투 통계" },
+  speed4     = { id = 2063961736, name = "4x Speed" },   -- 전투 재생 x4 배속 (x1~x3 무료). 2026-11-02 사용자가 생성
 }
 
 M.PRODUCTS = {   -- 개발자 상품 (소모성). daily = 하루 구매 한도

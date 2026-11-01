@@ -6,7 +6,7 @@ Studio 플레이 기준: 바깥 틀(로딩·마을·지도·전투·결과·설�
 
 ## 우선순위 (웹 `source/src/ui*.js` 의 화면을 옮긴다)
 1. 전투 HUD (`battleHudBuild`) — **사용자: "전투 UI 가 너무 구리다" → 전면 재디자인**: 초상화 + HP/MP 숫자, 웨이브 바, 보스 바, 스킬바(쿨타임 표시, 재생 데이터 기준), 건너뛰기, 결과 연출(`resultHtml`/`animateResult`)
-   - **배속 버튼**: 현재 배속("x1")을 보여주는 버튼 하나 → 누르면 아래로 x1 · x2 · x3 · x4 목록이 스르륵 펼쳐짐. **x1~x3 무료, x4 유료**(한 번 사면 영구 = 게임패스, 사용자 확정 2026-11-02 — 미보유 시 구매 창 `MarketplaceService:PromptGamePassPurchase`, 보유 확인 `UserOwnsGamePassAsync` 는 서버에서). 상품 ID 는 `MONETIZATION.md` 에 추가, ID 0 이면 x4 잠금 표시. 고른 배속은 설정으로 저장.
+   - **배속 버튼**: 현재 배속("x1")을 보여주는 버튼 하나 → 누르면 아래로 x1 · x2 · x3 · x4 목록이 스르륵 펼쳐짐. **x1~x3 무료, x4 유료**(한 번 사면 영구 = 게임패스, 사용자 확정 2026-11-02 — 미보유 시 구매 창 `MarketplaceService:PromptGamePassPurchase`, 보유 확인 `UserOwnsGamePassAsync` 는 서버에서). 상품 ID 는 `MONETIZATION.md` 에 추가, 게임패스 ID 2063961736 ("4x Speed", `Monetization.PASSES.speed4`). ID 0 이면 x4 잠금 표시. 고른 배속은 설정으로 저장.
 1. 장비 (`openItems`/`renderItems`/`itemDetail`/`socketBlock`/`multiPanel`/`openBulk`/프리셋): 아이템 아이콘 격자, 착용 슬롯, 툴팁(옵션 범위·비교), 다중 선택 판매/분해
 1. 스킬 (`openSkills`/`skillCells`/`skillAreaHtml`/`openRunePicker`/`openAutoSkill`): 스킬 칸, 툴팁·범위 그림, 룬
 1. 패시브 트리 (`openPassives`/`ptDraw`/`ptPreview`/`ptAllocate`/프리셋): 노드 그래프 직접 찍기
