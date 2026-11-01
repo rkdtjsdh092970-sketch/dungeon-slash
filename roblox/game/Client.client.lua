@@ -517,11 +517,11 @@ local function playSpec(title, arg) return { title = title, call = function() re
 
 -- ── 마을 (웹 초원 마을: 건물을 눌러 기능을 연다. 비슷한 기능은 한 건물에 탭으로 묶었다) ──
 local BUILD = {
-  { key = "b_skill_hall", name = "스킬 정비소", icon = "📘", x = 0.09, row = 1, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
-  { key = "b_forge", name = "제련소", icon = "🔨", x = 0.24, row = 1, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
-  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.39, row = 1, tabs = { { "장비", "inv" } } },
-  { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.54, row = 1, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
-  { key = "b_skill_shop", name = "스킬 상점", icon = "🔮", x = 0.69, row = 1, tabs = { { "스킬 구매", "shop" } } },
+  { key = "b_skill_hall", name = "스킬 정비소", icon = "📘", x = 0.08, row = 1, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
+  { key = "b_forge", name = "제련소", icon = "🔨", x = 0.22, row = 1, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
+  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.36, row = 1, tabs = { { "장비", "inv" } } },
+  { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.50, row = 1, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
+  { key = "b_skill_shop", name = "스킬 상점", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 구매", "shop" } } },
   { key = "b_guild", name = "길드", icon = "🏰", x = 0.2, row = 2, tabs = { { "길드", "guild" } } },
   { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.42, row = 2, badge = "pass", tabs = { { "패시브", "pass" }, { "전직", "class" }, { "참", "charm" } } },
   { key = "b_notice", name = "안내소", icon = "🔔", x = 0.64, row = 2, tabs = { { "도움말", "help" } } },

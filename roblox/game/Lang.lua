@@ -24,14 +24,14 @@ local function parts(s, sep, psep)   -- 구분자로 나눠 조각마다 번역
 end
 tr = function(s)
   local r = EXACT[s]; if r then return r end
-  if string.find(s, "\n", 1, true) then return parts(s, "\n", "\n") end
-  for _, f in ipairs(FMT) do
+  for _, f in ipairs(FMT) do   -- format 틀은 여러 줄짜리도 있으므로 줄로 나누기 전에 먼저 본다
     local caps = { string.match(s, f[1]) }
     if #caps > 0 then
       r = string.gsub(f[2], "%%(%d)", function(i) local c = caps[tonumber(i)]; return c and tr(c) or "" end)
       return (string.gsub(r, "%%%%", "%%"))
     end
   end
+  if string.find(s, "\n", 1, true) then return parts(s, "\n", "\n") end
   if string.find(s, " · ", 1, true) then return parts(s, " · ", " · ") end
   r = s
   for _, f in ipairs(FRAG) do
