@@ -42,6 +42,11 @@ rpc.OnServerInvoke = function(player, action, arg)
   elseif action == "inv" then return { inv = Game.inventory(sv) }
   elseif action == "equip" then local ok, e = Game.equip(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "dismantle" then local ok, e = Game.dismantle(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
+  elseif action == "sell" then local ok, e = Game.sell(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
+  elseif action == "bulk" then return { res = Game.bulk(sv, arg.r, arg.mode), summary = Game.summary(sv) }
+  elseif action == "daily" then return { rows = Game.daily(sv) }
+  elseif action == "dailyclaim" then local ok, e = Game.dailyClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.daily(sv), summary = Game.summary(sv) }
+  elseif action == "offline" then return { r = Game.offline(sv), summary = Game.summary(sv) }
   elseif action == "shop" then return { rows = Game.shop(sv), summary = Game.summary(sv) }
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }

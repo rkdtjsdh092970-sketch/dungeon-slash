@@ -9,6 +9,7 @@ local Sat = require(Data.Satan).SAT_DEFS
 local Econ = require(script.Parent.Economy)
 local Content = require(script.Parent.Content)
 local ClassCharm = require(script.Parent.ClassCharm)
+local Extras = require(script.Parent.Extras)
 
 local M = {}
 local floor = math.floor
@@ -67,11 +68,13 @@ function M.equip(sv, uid)
   end
   return false, "없는 장비"
 end
--- 분해: 강화석(ore)을 받는다
-function M.dismantle(sv, uid)
-  for i, it in ipairs(sv.inv) do if it.uid == uid then table.remove(sv.inv, i); sv.ore += 1 + it.rarity + (it.sat and 3 or 0); return true end end
-  return false, "없는 장비"
-end
+-- 판매/분해/일일/오프라인 (Extras)
+function M.dismantle(sv, uid) return Extras.dismantle(sv, uid) end
+function M.sell(sv, uid) return Extras.sell(sv, uid) end
+function M.bulk(sv, r, mode) return Extras.bulk(sv, tonumber(r) or 0, mode == "sell" and "sell" or "dismantle") end
+function M.daily(sv) return Extras.dailyView(sv) end
+function M.dailyClaim(sv, id) return Extras.dailyClaim(sv, id) end
+function M.offline(sv) return Extras.offline(sv) end
 
 -- 탑 도전: 한 층을 서버에서 끝까지 계산하고 결과(보상 포함)를 세이브에 반영한다.
 function M.battle(sv, floorN, seed)
@@ -87,6 +90,7 @@ function M.battle(sv, floorN, seed)
     local boss = floorN % 5 == 0
     res.gold = floor(b.gold); sv.gold += res.gold
     sv.stats.kills += b.kills; sv.stats.clears += 1
+    Extras.onWin(sv, b.kills, boss, false); Extras.setRate(sv, b.gold, b.time)
     if first then sv.spire.best = floorN; res.first = true; end
     local drops = Loot.spireDrops(rng, sv, node, boss, first)
     for _, it in ipairs(drops) do
@@ -115,6 +119,7 @@ function M.fight(sv, kind, n, seed)
   if b.win then
     res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
     local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
+    Extras.onWin(sv, b.kills, boss, kind == "rift"); Extras.setRate(sv, b.gold, b.time)
     local d = Loot.fieldDrops(rng, sv, node, boss)
     sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.hone += d.hone; res.hone = d.hone end; if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
