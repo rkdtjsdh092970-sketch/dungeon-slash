@@ -12,14 +12,14 @@ local function button(parent, text, pos, sz, cb, color)
   local b = Instance.new("TextButton"); b.Text = text; b.Font = Enum.Font.GothamBold; b.TextSize = 14; b.TextColor3 = Color3.new(1, 1, 1); b.BackgroundColor3 = color or Color3.fromRGB(70, 60, 120)
   b.Position = pos; b.Size = sz; b.Parent = parent; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6); b.MouseButton1Click:Connect(cb); return b
 end
-local root = Instance.new("Frame"); root.Size = UDim2.new(0, 560, 0, 600); root.Position = UDim2.new(0.5, -280, 0.5, -300); root.BackgroundColor3 = Color3.fromRGB(24, 20, 44); root.Parent = gui
+local root = Instance.new("Frame"); root.Size = UDim2.new(0, 600, 0, 640); root.Position = UDim2.new(0.5, -300, 0.5, -320); root.BackgroundColor3 = Color3.fromRGB(24, 20, 44); root.Parent = gui
 Instance.new("UICorner", root).CornerRadius = UDim.new(0, 10)
 local top = label(root, "불러오는 중…", 13, UDim2.new(0, 12, 0, 4), UDim2.new(1, -24, 0, 36))
 local msg = label(root, "", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 38))
-local list = Instance.new("ScrollingFrame"); list.Position = UDim2.new(0, 12, 0, 150); list.Size = UDim2.new(1, -24, 1, -162); list.BackgroundColor3 = Color3.fromRGB(16, 14, 32)
+local list = Instance.new("ScrollingFrame"); list.Position = UDim2.new(0, 12, 0, 178); list.Size = UDim2.new(1, -24, 1, -190); list.BackgroundColor3 = Color3.fromRGB(16, 14, 32)
 list.CanvasSize = UDim2.new(0, 0, 0, 0); list.AutomaticCanvasSize = Enum.AutomaticSize.Y; list.Parent = root
 Instance.new("UIListLayout", list).Padding = UDim.new(0, 4)
-local ctl = Instance.new("Frame"); ctl.BackgroundTransparency = 1; ctl.Position = UDim2.new(0, 12, 0, 110); ctl.Size = UDim2.new(1, -24, 0, 34); ctl.Parent = root
+local ctl = Instance.new("Frame"); ctl.BackgroundTransparency = 1; ctl.Position = UDim2.new(0, 12, 0, 140); ctl.Size = UDim2.new(1, -24, 0, 34); ctl.Parent = root
 
 local summary; local mode = "stage"; local num = 1
 local function setSummary(s)
@@ -118,7 +118,85 @@ function views.stones()
     end
   end
 end
-local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" } }
-local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 80); tabRow.Size = UDim2.new(1, -24, 0, 28); tabRow.Parent = root
-for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, (i - 1) * 78, 0, 0), UDim2.new(0, 74, 0, 26), function() views[t[2]]() end) end
+local function showResult(r)
+  if r.err then msg.Text = r.err; return false end
+  local x = r.result; setSummary(r.summary)
+  local extra = {}
+  if x.skills and #x.skills > 0 then extra[#extra + 1] = "스킬 " .. #x.skills .. "개" end
+  if x.charms and #x.charms > 0 then extra[#extra + 1] = "참 " .. #x.charms .. "개" end
+  if x.stones and x.stones > 0 then extra[#extra + 1] = "돌 " .. x.stones end
+  if x.stonesHi then extra[#extra + 1] = "계시의 돌 1" end
+  if x.sockTix then extra[#extra + 1] = "세공의 인장 1" end
+  msg.Text = string.format("%s — %.0f초 · 처치 %d · 골드 +%d · 장비 %d개%s%s", x.win and "승리" or "패배", x.time, x.kills or 0, x.gold or 0, #(x.items or {}), #extra > 0 and (" · " .. table.concat(extra, " · ")) or "", (x.notes and x.notes[1]) and ("\n" .. x.notes[1]) or "")
+  return true
+end
+function views.content()
+  clear(); local u = rpc:InvokeServer("unlocks").u
+  local function entry(title, lines, locked, btns) card(title .. (locked and "  [잠김]" or ""), lines, locked and {} or btns) end
+  local function play(spec) return function() showResult(rpc:InvokeServer("play", spec)); views.content() end end
+  entry("공허의 군주 모르가스", { "열쇠 1개 · 1~4단계 · 스킬 드랍", "열쇠 " .. u.keys }, not u.void, { { "1단계", play({ kind = "void", vsel = 1 }) }, { "2단계", play({ kind = "void", vsel = 2 }) } })
+  entry("속성 보스 (화염 · 철갑 · 뇌제 · 서리 · 독니)", { "각 보스의 징표 1개 · 1단계", string.format("징표 불씨 %d · 철갑 %d · 뇌전 %d · 서리 %d · 맹독 %d", u.keys2, u.keys3, u.keys4, u.keys5, u.keys6) }, not u.bosses, { { "화염", play({ kind = "hive", vsel = 1 }) }, { "철갑", play({ kind = "titan", vsel = 1 }) } })
+  entry("속성 보스 (이어서)", {}, not u.bosses, { { "뇌제", play({ kind = "storm", vsel = 1 }) }, { "서리", play({ kind = "frost", vsel = 1 }) } })
+  entry("속성 보스 (이어서)", {}, not u.bosses, { { "독니", play({ kind = "poison", vsel = 1 }) } })
+  entry("심연의 문 — 문지기 모르가스 (레이드)", { "처음 쓰러뜨리면 붉은 탑이 솟아오릅니다." }, not u.raid, { { "도전", play({ kind = "raid" }) } })
+  entry("황금 보물고", { "골드 위주 (보석 없음)" }, not u.vault, { { "입장", play({ kind = "vault" }) } })
+  entry("무한 균열", { "하루 3번 · 오래 버틸수록 보상" }, not u.endless, { { "입장", play({ kind = "endless" }) } })
+  entry("돌의 신전", { "계시의 돌 · 세공의 인장 (문지기 처치 후)" }, not u.temple, { { "1단계", play({ kind = "temple", vsel = 1 }) }, { "2단계", play({ kind = "temple", vsel = 2 }) } })
+  entry("레이드 던전 — 전직의 서", { "이지 · 노말 · 하드 최초 클리어마다 전직의 서" }, not u.craid, { { "이지", play({ kind = "craid", diff = 1 }) }, { "노말", play({ kind = "craid", diff = 2 }) }, { "하드", play({ kind = "craid", diff = 3 }) } })
+  entry("참 던전", { "하드 레이드 + 3차 전직" }, not u.charm, { { "입장", play({ kind = "craid", diff = 3, charm = true }) } })
+  entry("새 탑 (20층)", { "문지기 + 최종 전직 후" }, not u.tower2, { { "1층", function() showResult(rpc:InvokeServer("tower2", 1)) end }, { "다음", function() showResult(rpc:InvokeServer("tower2", 99)) end } })
+end
+function views.class()
+  clear(); local r = rpc:InvokeServer("class"); setSummary(r.summary); local v = r.view
+  card(string.format("전직 %d차 · 포인트 %d / %d · 전직의 서 %d/%d/%d", v.cls, v.left, v.points, v.books[1], v.books[2], v.books[3]), { "노드를 눌러 찍고, 다시 누르면 해제합니다 (후속 노드가 있으면 불가)." }, {
+    { "전직", function() local e = rpc:InvokeServer("classadvance"); msg.Text = tostring(e.msg or ""); views.class() end },
+    { "초기화", function() rpc:InvokeServer("classreset"); views.class() end } })
+  for _, T in ipairs(v.trees) do
+    local lines = {}
+    for _, n in ipairs(T.nodes) do lines[#lines + 1] = string.format("%s %s (%d점)%s", n.has and "●" or (n.can and "○" or "·"), n.name, n.cost, n.desc and (" — " .. n.desc) or "") end
+    local btns = {}
+    for _, n in ipairs(T.nodes) do if n.can or n.has then btns[#btns + 1] = { (n.has and "해제 " or "찍기 ") .. string.sub(n.name, 1, 4), function() rpc:InvokeServer(n.has and "classdrop" or "classtake", n.id); views.class() end } end end
+    card(T.name, lines, { btns[1], btns[2] })
+    if #btns > 2 then card(T.name .. " (이어서)", {}, { btns[3], btns[4] }) end
+  end
+end
+function views.charm()
+  clear(); local r = rpc:InvokeServer("charms"); setSummary(r.summary); local v = r.view
+  if not v.unlocked then card("참", { "3차 전직 후에 장착할 수 있습니다." }, {}); return end
+  for i = 1, 4 do local c = v.equipped[i]; if c then card("장착 " .. i, c.lines, { { "해제", function() rpc:InvokeServer("charmoff", i); views.charm() end } }) else card("빈 칸 " .. i, {}, {}) end end
+  for _, c in ipairs(v.inv) do card("보관", c.lines, { { "장착", function() local e = rpc:InvokeServer("charmequip", { uid = c.uid }); msg.Text = e.err or ""; views.charm() end }, { "버리기", function() rpc:InvokeServer("charmdrop", c.uid); views.charm() end } }) end
+end
+function views.warden()
+  clear(); local u = rpc:InvokeServer("unlocks").u
+  if not u.warden then card("새 문지기", { "솟아난 탑 100층을 클리어하면 열립니다." }, {}); return end
+  local st = rpc:InvokeServer("wstate").st
+  if not st then
+    card("새 문지기 — 공명 구슬", { "구슬이 터지기 전에 직접 눌러 없애야 합니다 (스킬은 통하지 않음).", "터진 구슬은 큰 피해를 주고 문지기를 회복시킵니다." }, { { "도전", function() local e = rpc:InvokeServer("wstart"); msg.Text = e.err or "시작!"; views.warden() end } })
+    return
+  end
+  local info = card
+  local box = Instance.new("Frame"); box.BackgroundColor3 = Color3.fromRGB(40, 34, 70); box.AutomaticSize = Enum.AutomaticSize.Y; box.Size = UDim2.new(1, -8, 0, 0); box.Parent = list
+  local lbl = label(box, "", 14, UDim2.new(0, 8, 0, 4), UDim2.new(1, -16, 0, 40)); lbl.AutomaticSize = Enum.AutomaticSize.Y
+  local grid = Instance.new("Frame"); grid.BackgroundTransparency = 1; grid.Size = UDim2.new(1, -16, 0, 150); grid.Position = UDim2.new(0, 8, 0, 56); grid.Parent = box
+  local running = true
+  task.spawn(function()
+    while running and box.Parent do
+      local s2 = rpc:InvokeServer("wstate").st
+      if not s2 then break end
+      lbl.Text = string.format("%.0f초 · 내 체력 %.0f%% · 문지기 %.1f%% · 구슬 처치 %d / 폭발 %d", s2.time, s2.hp * 100, s2.bossHp * 100, s2.pop, s2.boom)
+      for _, c in ipairs(grid:GetChildren()) do c:Destroy() end
+      for i, o in ipairs(s2.orbs) do
+        local b = button(grid, string.format("구슬 %.1f초", o.fuse), UDim2.new(0, ((i - 1) % 4) * 118, 0, math.floor((i - 1) / 4) * 40), UDim2.new(0, 112, 0, 34), function() rpc:InvokeServer("wpop", o.id) end, Color3.fromRGB(190, 70, 60))
+      end
+      if s2.over then
+        local f = rpc:InvokeServer("wfinish"); if f.result then showResult(f) end
+        running = false; task.wait(0.3); views.warden(); return
+      end
+      task.wait(0.25)
+    end
+  end)
+end
+local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" }, { "콘텐츠", "content" }, { "전직", "class" }, { "참", "charm" }, { "문지기", "warden" } }
+local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 78); tabRow.Size = UDim2.new(1, -24, 0, 56); tabRow.Parent = root
+for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, ((i - 1) % 8) * 66, 0, math.floor((i - 1) / 8) * 28), UDim2.new(0, 62, 0, 26), function() views[t[2]]() end) end
 refresh(); views.fight()
