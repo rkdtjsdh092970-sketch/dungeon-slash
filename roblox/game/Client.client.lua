@@ -51,6 +51,19 @@ local function prompt(title, placeholder, cb)
   local ok = button(box, "확인", UDim2.new(0, 10, 0, 86), UDim2.new(0, 150, 0, 30), function() local v = tb.Text; ov:Destroy(); cb(v) end); ok.ZIndex = 22
   local no = button(box, "취소", UDim2.new(1, -160, 0, 86), UDim2.new(0, 150, 0, 30), function() ov:Destroy() end, Color3.fromRGB(90, 40, 60)); no.ZIndex = 22
 end
+local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
+require(RS.Game.Sprites).init(rpc)
+-- 전투 재생 오버레이: replay 가 있으면 2D 무대에서 재생하고 끝나면 after() 호출
+local function playReplay(x, after)
+  if not x or not x.replay or not x.replay.snaps or #x.replay.snaps == 0 then if after then after() end return end
+  local ov = Instance.new("Frame"); ov.Size = UDim2.new(1, 0, 1, 0); ov.BackgroundColor3 = Color3.new(0, 0, 0); ov.BackgroundTransparency = 0.35; ov.ZIndex = 50; ov.Active = true; ov.Parent = root
+  local stage = Stage.create(ov, 580, 300); stage.root.Position = UDim2.new(0.5, -290, 0.5, -170); stage.root.ZIndex = 51
+  local done = false
+  local function finish() if done then return end; done = true; stage:destroy(); ov:Destroy(); if after then after() end end
+  local b1 = button(ov, "건너뛰기", UDim2.new(0.5, -150, 0.5, 150), UDim2.new(0, 140, 0, 32), function() stage:skip() end, Color3.fromRGB(90, 40, 60)); b1.ZIndex = 52
+  local b2 = button(ov, "배속", UDim2.new(0.5, 10, 0.5, 150), UDim2.new(0, 140, 0, 32), function() stage:faster() end); b2.ZIndex = 52
+  stage:play(x.replay, finish, 40)
+end
 local views = {}
 local function refresh() local r = rpc:InvokeServer("state"); setSummary(r.summary) end
 
@@ -66,8 +79,8 @@ function views.fight()
     local r = mode == "tower" and rpc:InvokeServer("battle", num) or rpc:InvokeServer("fight", { kind = mode, n = num })
     if r.err then msg.Text = r.err; return end
     local x = r.result
+    playReplay(x, function() setSummary(r.summary); upd() end)
     msg.Text = string.format("%s — %.0f초 · 처치 %d · 골드 +%d%s%s\n드랍 %d개%s%s", x.win and "승리" or "패배", x.time, x.kills, x.gold, x.first and " · 최초 클리어!" or "", x.levelUps and (" · 레벨 +" .. x.levelUps) or "", #x.items, x.ore and (" · 강화석 +" .. x.ore) or "", x.note and ("\n" .. x.note) or "")
-    setSummary(r.summary); upd()
   end, Color3.fromRGB(150, 60, 60))
   card("전투", { "스테이지 1~4 → 보스(5) → 균열 1~100 → 솔로 탑.", "'종류'로 바꾸고 −/+ 로 번호를 고른 뒤 도전하세요." }, {})
 end
@@ -137,7 +150,8 @@ function views.stones()
 end
 local function showResult(r)
   if r.err then msg.Text = r.err; return false end
-  local x = r.result; setSummary(r.summary)
+  local x = r.result
+  playReplay(x, function() setSummary(r.summary) end)
   local extra = {}
   if x.skills and #x.skills > 0 then extra[#extra + 1] = "스킬 " .. #x.skills .. "개" end
   if x.charms and #x.charms > 0 then extra[#extra + 1] = "참 " .. #x.charms .. "개" end

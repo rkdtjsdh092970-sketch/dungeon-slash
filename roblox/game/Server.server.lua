@@ -6,6 +6,8 @@ local Game = require(RS.Game.Game)
 local Loot = require(RS.Game.Loot)
 local Guild = require(RS.Game.Guild)
 local Battle = require(RS.Game.Battle)
+local SPM = require(RS.Game.Data.SpriteMap)
+local HttpService = game:GetService("HttpService")
 
 local rpc = RS:FindFirstChild("Rpc") or Instance.new("RemoteFunction"); rpc.Name = "Rpc"; rpc.Parent = RS
 local okDS, store = pcall(function() return DSS:GetDataStore("DungeonSlashV1") end)
@@ -51,6 +53,7 @@ game:BindToClose(function() for uid, s in pairs(sessions) do save(uid, s.sv) end
 task.spawn(function() while true do task.wait(0.05); Game.wardenTickAll(0.05) end end)
 task.spawn(function() while true do task.wait(120); for uid, s in pairs(sessions) do save(uid, s.sv) end end end)
 
+local sheetCache = {}
 local handle = function(player, action, arg)
   local s = sessions[player.UserId]; if not s then return { err = "세이브를 불러오는 중입니다" } end
   local sv = s.sv
@@ -68,6 +71,15 @@ local handle = function(player, action, arg)
   elseif action == "runeremove" then local ok, e = Game.runeRemove(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, runes = Game.runes(sv) }
   elseif action == "quests" then return { rows = Game.quests(sv) }
   elseif action == "questclaim" then local ok, e = Game.questClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.quests(sv), summary = Game.summary(sv) }
+  elseif action == "sheet" then
+    local M = type(arg) == "string" and SPM.SHEETS[arg]; if not M then return { err = "없는 시트" } end
+    if M.id then return { id = M.id, w = M.w, h = M.h, cell = M.cell } end
+    if not sheetCache[arg] then
+      local ok, body = pcall(function() return HttpService:GetAsync(SPM.BASE .. M.file, true) end)
+      if ok and #body == M.w * M.h * 4 then sheetCache[arg] = buffer.fromstring(body) else warn("시트 로드 실패", arg, ok and #body or body) end
+    end
+    if not sheetCache[arg] then return { err = "시트를 받지 못했습니다 (HttpService 확인)" } end
+    return { buf = sheetCache[arg], w = M.w, h = M.h, cell = M.cell }
   elseif action == "shop" then return { rows = Game.shop(sv), summary = Game.summary(sv) }
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
@@ -174,7 +186,7 @@ rpc.OnServerInvoke = function(player, action, arg)
   if not s then return { err = "세이브를 불러오는 중입니다" } end
   if type(action) ~= "string" then return { err = "잘못된 요청" } end
   local now = os.clock()
-  if action ~= "wstate" and action ~= "wpop" then
+  if action ~= "wstate" and action ~= "wpop" and action ~= "sheet" then
     if now - (s.last or 0) < 0.08 then return { err = "너무 빠른 요청입니다" } end
     s.last = now
   end

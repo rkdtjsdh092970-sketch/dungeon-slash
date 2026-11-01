@@ -5,6 +5,7 @@ local Data = script.Parent.Data
 local CFG = require(Data.Config).CFG
 local SK = require(Data.Skills)
 local Mon = require(Data.Monsters)
+local SPM = require(Data.SpriteMap)
 local Stats = require(script.Parent.Stats)
 
 local M = {}
@@ -1096,11 +1097,21 @@ function M.new(sv, node, seed)
   if M.recording then b.rec = { snaps = {}, acc = { dmg = {}, casts = {}, ph = 0 }, nextT = 0, lanes = b.lanes, cols = CFG.COLS } end
   return b
 end
+local WARP = { warp = 270, hwarp = 20, twarp = 45, swarp = 190, fwarp = 200, vwarp = 100 }
+local function spriteOf(b, e)   -- 웹 render.js spriteOf 와 같은 규칙: { 시트 키, 색조 }
+  if WARP[e.type] then return "eye", WARP[e.type] end
+  local va = e.va or (min(10, b.act or 1) - 1)
+  if e.type == "sniper" then local r0 = SPM.ROSTER[va + 1][3]; return r0[1], 330 end
+  local r = SPM.ROSTER[va + 1] and SPM.ROSTER[va + 1][(SPM.ROLE_IDX[e.type] or 0) + 1] or SPM.ROSTER[1][2]
+  return r[1], r[2] or 0
+end
+local function bossArt(D) if D.art then return D.art end for i, x in ipairs(Mon.BOSSES) do if x == D then return i - 1 end end return 0 end
 local function snapshot(b)
   local R = b.rec; local ens = {}
   for _, e in ipairs(b.enemies) do
     ens[#ens + 1] = { id = e.id, n = e.def and e.def.name or "?", tier = e.tier, l = e.lane, c = e.col, w = e.w, h = e.h, hp = e.maxHp > 0 and math.max(0, e.hp / e.maxHp) or 0,
-      d = R.acc.dmg[e.id], dead = e.dead or nil, hue = e.def and e.def.hue, sc = e.def and e.def.sc, ranged = e.def and e.def.ranged or nil, wind = (e.winding or 0) > 0 or nil }
+      d = R.acc.dmg[e.id], dead = e.dead or nil, hue = e.def and e.def.hue, sc = e.def and e.def.sc, ranged = e.def and e.def.ranged or nil, wind = (e.winding or 0) > 0 or nil, sp = nil }
+    if e.tier == "boss" then ens[#ens].bs = bossArt(e.def); ens[#ens].bh = e.def.hue; ens[#ens].scl = e.def.sc else ens[#ens].sp, ens[#ens].hu = spriteOf(b, e) end
   end
   R.snaps[#R.snaps + 1] = { t = math.floor(b.time * 100) / 100, hp = b.hp / b.maxHp, mp = b.maxMana > 0 and b.mana / b.maxMana or 0, e = ens, ph = R.acc.ph > 0 and math.floor(R.acc.ph) or nil, c = #R.acc.casts > 0 and R.acc.casts or nil }
   R.acc = { dmg = {}, casts = {}, ph = 0 }
