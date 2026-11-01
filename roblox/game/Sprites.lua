@@ -44,6 +44,14 @@ local function flipCells(buf, w, h, cell)   -- 칸마다 좌우 반전
 end
 
 function M.init(rpc) M.rpc = rpc end
+-- 픽셀 → EditableImage. 체험 설정에서 이미지 API 가 꺼져 있으면 실패하므로 nil 을 돌려 화면이 멈추지 않게 한다
+local editableOff = false
+function M.editable(w, h, buf)
+  if editableOff then return nil end
+  local ok, img = pcall(function() local i = AssetService:CreateEditableImage({ Size = Vector2.new(w, h) }); i:WritePixelsBuffer(Vector2.zero, Vector2.new(w, h), buf); return i end)
+  if ok then return img end
+  editableOff = true; warn("EditableImage 사용 불가 → 그림 없이 진행:", img); return nil
+end
 -- 반환: { content, w, h, cell } 또는 nil
 function M.get(key, hue, flip)
   hue = hue or 0; flip = flip and true or false
@@ -62,8 +70,7 @@ function M.get(key, hue, flip)
   local buf = raw[key]
   if hue ~= 0 then buf = shift(buf, meta.w, meta.h, hue) end
   if flip then buf = flipCells(buf, meta.w, meta.h, meta.cell) end
-  local img = AssetService:CreateEditableImage({ Size = Vector2.new(meta.w, meta.h) })
-  img:WritePixelsBuffer(Vector2.zero, Vector2.new(meta.w, meta.h), buf)
+  local img = M.editable(meta.w, meta.h, buf); if not img then return nil end
   info.content = Content.fromObject(img); info.img = img
   cache[ck] = info; return info
 end
@@ -80,8 +87,7 @@ function M.art(key)
   else
     local ok, r = pcall(function() return M.rpc:InvokeServer("sheet", "art/" .. key) end)
     if not ok or not r or not r.buf then warn("art", key, ok and r and r.err or r); artCache[key] = false; return nil end
-    local img = AssetService:CreateEditableImage({ Size = Vector2.new(meta.w, meta.h) })
-    img:WritePixelsBuffer(Vector2.zero, Vector2.new(meta.w, meta.h), r.buf)
+    local img = M.editable(meta.w, meta.h, r.buf); if not img then artCache[key] = false; return nil end
     info.content = Content.fromObject(img); info.img = img
   end
   artCache[key] = info; return info

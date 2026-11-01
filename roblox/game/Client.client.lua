@@ -497,22 +497,23 @@ end
 local MW, MH = 1800, 1100
 local NODES, BYID = {}, {}
 local function node(t) NODES[#NODES + 1] = t; BYID[t.id] = t; return t end
-node({ id = "T", name = "초원 마을", icon = "🏠", x = 520, y = 700, col = Color3.fromRGB(230, 200, 140) })
+-- 위치는 월드맵 그림(map/world.jpg)에 맞춤: 왼쪽 아래 마을 → 길을 따라 스테이지 → 가운데 보라 균열 → 오른쪽 위 화산 고원(탑)
+node({ id = "T", name = "초원 마을", icon = "🏠", x = 210, y = 575, col = Color3.fromRGB(230, 200, 140) })
+local SPOS = { { 380, 610 }, { 520, 700 }, { 640, 600 }, { 790, 690 }, { 930, 590 } }
 for s = 1, 5 do
-  local ang = 0.9 + 0.55 + (s - 1) * 0.9; local r = 90 + ((s % 2 == 1) and 8 or -6)
-  node({ id = "S" .. s, stage = s, name = s == 5 and "들판의 군주 그룸" or ("초원 " .. s), icon = s == 5 and "☠" or tostring(s), x = 520 + math.cos(ang) * r * 1.35, y = 700 + math.sin(ang) * r, col = s == 5 and Color3.fromRGB(190, 50, 70) or Color3.fromRGB(70, 140, 255) })
+  node({ id = "S" .. s, stage = s, name = s == 5 and "들판의 군주 그룸" or ("초원 " .. s), icon = s == 5 and "☠" or tostring(s), x = SPOS[s][1], y = SPOS[s][2], col = s == 5 and Color3.fromRGB(190, 50, 70) or Color3.fromRGB(70, 140, 255) })
 end
-node({ id = "R", name = "심연의 균열", icon = "🌀", x = 1180, y = 470, col = Color3.fromRGB(150, 80, 230) })
-node({ id = "RE", name = "무한 균열", icon = "∞", x = 1160, y = 600, col = Color3.fromRGB(60, 190, 230) })
-node({ id = "RB", name = "보스 관문", icon = "👑", x = 1320, y = 520, col = Color3.fromRGB(200, 120, 255) })
-node({ id = "RG", name = "황금 보물고", icon = "💰", x = 1010, y = 540, col = Color3.fromRGB(230, 180, 40) })
-node({ id = "RX", name = "심연의 문", icon = "🚪", x = 1030, y = 320, col = Color3.fromRGB(220, 80, 40) })
-node({ id = "RTW", name = "솟아난 탑", icon = "🗼", x = 1560, y = 260, col = Color3.fromRGB(200, 60, 60), tower = true })
-node({ id = "RTP", name = "돌의 신전", icon = "⛩", x = 1420, y = 130, col = Color3.fromRGB(230, 200, 100), tower = true })
-node({ id = "RR", name = "레이드 던전", icon = "⚔", x = 1650, y = 120, col = Color3.fromRGB(230, 70, 60), tower = true })
-node({ id = "RWD", name = "새 문지기", icon = "👁", x = 1730, y = 330, col = Color3.fromRGB(255, 90, 120), tower = true })
-node({ id = "RCD", name = "참 던전", icon = "✦", x = 1740, y = 200, col = Color3.fromRGB(255, 150, 220), tower = true })
-node({ id = "RTW2", name = "새 탑", icon = "🔺", x = 1530, y = 50, col = Color3.fromRGB(255, 50, 80), tower = true })
+node({ id = "R", name = "심연의 균열", icon = "🌀", x = 1160, y = 480, col = Color3.fromRGB(150, 80, 230) })
+node({ id = "RE", name = "무한 균열", icon = "∞", x = 1150, y = 650, col = Color3.fromRGB(60, 190, 230) })
+node({ id = "RB", name = "보스 관문", icon = "👑", x = 1330, y = 560, col = Color3.fromRGB(200, 120, 255) })
+node({ id = "RG", name = "황금 보물고", icon = "💰", x = 1000, y = 420, col = Color3.fromRGB(230, 180, 40) })
+node({ id = "RX", name = "심연의 문", icon = "🚪", x = 1080, y = 300, col = Color3.fromRGB(220, 80, 40) })
+node({ id = "RTW", name = "솟아난 탑", icon = "🗼", x = 1560, y = 230, col = Color3.fromRGB(200, 60, 60), tower = true })
+node({ id = "RTP", name = "돌의 신전", icon = "⛩", x = 1400, y = 120, col = Color3.fromRGB(230, 200, 100), tower = true })
+node({ id = "RR", name = "레이드 던전", icon = "⚔", x = 1650, y = 110, col = Color3.fromRGB(230, 70, 60), tower = true })
+node({ id = "RWD", name = "새 문지기", icon = "👁", x = 1720, y = 320, col = Color3.fromRGB(255, 90, 120), tower = true })
+node({ id = "RCD", name = "참 던전", icon = "✦", x = 1760, y = 190, col = Color3.fromRGB(255, 150, 220), tower = true })
+node({ id = "RTW2", name = "새 탑", icon = "🔺", x = 1520, y = 60, col = Color3.fromRGB(255, 50, 80), tower = true })
 local EDGES = { { "T", "S1" }, { "S1", "S2" }, { "S2", "S3" }, { "S3", "S4" }, { "S4", "S5" }, { "S5", "R" }, { "R", "RX" }, { "RX", "RTW" }, { "R", "RE" }, { "R", "RB" }, { "R", "RG" }, { "RTP", "RTW" }, { "RR", "RTW" }, { "RTW", "RWD" }, { "RWD", "RTW2" }, { "RR", "RCD" } }
 local U = {}   -- 서버 해금 정보
 -- 상태: hidden / locked / open / done, 잠김 안내, 진행 표시
