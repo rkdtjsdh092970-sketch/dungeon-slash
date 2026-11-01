@@ -24,7 +24,9 @@ CFG.SPIRE.TAB = (() => { const AN = [[1, 135], [19, 153], [20, 160], [39, 166], 
 const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
 const satRate = (f) => CFG.SPIRE.SAT + CFG.SPIRE.SAT_STEP * Math.floor(Math.max(1, f | 0) / CFG.SPIRE.WALL);   // 사탄 장비 확률: 20층마다 조금씩 오른다
 CFG.CRAID = { NAMES: ["", "이지", "노말", "하드", "문지기"], TIERS: [0, 0, 0, 0], BOSS: [0, 3, 6, 9], REQ: ["", "탑 30층을 깰 수 있는 스펙", "탑 80층 수준", "T6 장비 + 계시의 돌 풀 장착", "참 파밍까지 마친 3차 전직 스펙"] };
-const spireTier = (f) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
+const interp = (AN, f) => { let i = 0; while (i < AN.length - 2 && f > AN[i + 1][0]) i++; const [f0, t0] = AN[i], [f1, t1] = AN[i + 1]; return Math.round((t0 + (t1 - t0) * (f - f0) / (f1 - f0)) * 10) / 10; };
+CFG.SPIRE.TAB2 = Array.from({ length: 100 }, (_, k) => interp([[1, 205], [19, 211], [20, 214], [39, 219], [40, 222], [59, 227], [60, 230], [79, 236], [80, 239], [99, 244], [100, 248]], k + 1));   // 심층 탑 (하드 레이드 클리어 후): T6 장비 기준 환산 205 ~ 248
+const spireTier = (f, tw) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; if (tw === 2) return S.TAB2[f - 1]; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
 CFG.CRAID.TIERS = [0, spireTier(30), spireTier(80), 212];
 CFG.WARDEN = { TIER: 224, K: 3, ATK: 2.0, LIMIT: 480, FIRST: 7, EVERY: 11, FUSE: 5.5, BLASTM: 7, HEAL: 0.025, NAME: "붉은 탑의 문지기" };   // 새 문지기: 공명 구슬을 직접 눌러 터뜨려야 한다 (참 파밍까지 마친 스펙 기준 전투력 측정기)   // 레이드: 이지 = 탑 30층 · 노말 = 탑 80층 · 하드 = T6 스펙
 CFG.TEMPLE = { OPEN: 1, NEED: [0, 25, 50, 75], TIERS: [130, Math.round(spireTier(30)), Math.round(spireTier(55)), Math.round(spireTier(80))], HI: [0.03, 0.06, 0.10, 0.15], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율

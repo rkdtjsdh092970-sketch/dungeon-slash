@@ -539,13 +539,14 @@ function buildMap() {
   const endless = add({ id: "RE", kind: "endless", act: 11, x: RIFT_POS[0] - 20, y: RIFT_POS[1] + 120, name: "무한 균열", level: 100 });
   const hub = add({ id: "RB", kind: "bosshub", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 30, name: "보스 관문", level: 100 });
   const temple = add({ id: "RTP", kind: "temple", act: 11, x: TOWER_POS[0] - 110, y: TOWER_POS[1] - 150, name: "돌의 신전", level: 100 });
+  const tower2 = add({ id: "RTW2", kind: "tower2", act: 11, x: TOWER_POS[0] + 40, y: TOWER_POS[1] - 270, name: "심층 첨탑", level: 100 });
   const hub2 = add({ id: "RB2", kind: "bosshub2", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 120, name: "상위 보스 관문", level: 100 });
   const craid = add({ id: "RR", kind: "craid", act: 11, x: TOWER_POS[0] + 120, y: TOWER_POS[1] - 150, name: "레이드 던전", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
   const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
   const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
   edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
-  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]); edges.push([hub.id, hub2.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
+  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]); edges.push([craid.id, tower2.id]); edges.push([hub.id, hub2.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {
@@ -644,7 +645,9 @@ CFG.SPIRE.TAB = (() => { const AN = [[1, 135], [19, 153], [20, 160], [39, 166], 
 const templeOpen = (sv) => CFG.TEMPLE.NEED.filter((n) => !n || ((sv && sv.spire && sv.spire.best) || 0) >= n).length;   // 돌의 신전: 처음엔 1단계, 탑 25 · 50 · 75층을 클리어할 때마다 한 단계씩
 const satRate = (f) => CFG.SPIRE.SAT + CFG.SPIRE.SAT_STEP * Math.floor(Math.max(1, f | 0) / CFG.SPIRE.WALL);   // 사탄 장비 확률: 20층마다 조금씩 오른다
 CFG.CRAID = { NAMES: ["", "이지", "노말", "하드", "문지기"], TIERS: [0, 0, 0, 0], BOSS: [0, 3, 6, 9], REQ: ["", "탑 30층을 깰 수 있는 스펙", "탑 80층 수준", "T6 장비 + 계시의 돌 풀 장착", "참 파밍까지 마친 3차 전직 스펙"] };
-const spireTier = (f) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
+const interp = (AN, f) => { let i = 0; while (i < AN.length - 2 && f > AN[i + 1][0]) i++; const [f0, t0] = AN[i], [f1, t1] = AN[i + 1]; return Math.round((t0 + (t1 - t0) * (f - f0) / (f1 - f0)) * 10) / 10; };
+CFG.SPIRE.TAB2 = Array.from({ length: 100 }, (_, k) => interp([[1, 205], [19, 211], [20, 214], [39, 219], [40, 222], [59, 227], [60, 230], [79, 236], [80, 239], [99, 244], [100, 248]], k + 1));   // 심층 탑 (하드 레이드 클리어 후): T6 장비 기준 환산 205 ~ 248
+const spireTier = (f, tw) => { f = Math.max(1, Math.min(CFG.SPIRE.END, f | 0)); const S = CFG.SPIRE; if (tw === 2) return S.TAB2[f - 1]; return S.TAB ? S.TAB[f - 1] : S.T0 + (S.T1 - S.T0) * (f - 1) / (S.END - 1); };
 CFG.CRAID.TIERS = [0, spireTier(30), spireTier(80), 212];
 CFG.WARDEN = { TIER: 224, K: 3, ATK: 2.0, LIMIT: 480, FIRST: 7, EVERY: 11, FUSE: 5.5, BLASTM: 7, HEAL: 0.025, NAME: "붉은 탑의 문지기" };   // 새 문지기: 공명 구슬을 직접 눌러 터뜨려야 한다 (참 파밍까지 마친 스펙 기준 전투력 측정기)   // 레이드: 이지 = 탑 30층 · 노말 = 탑 80층 · 하드 = T6 스펙
 CFG.TEMPLE = { OPEN: 1, NEED: [0, 25, 50, 75], TIERS: [130, Math.round(spireTier(30)), Math.round(spireTier(55)), Math.round(spireTier(80))], HI: [0.03, 0.06, 0.10, 0.15], GOLD: 0.5, HI_MULT: 1.6, HI_COST: 4 };   // 돌의 신전: 단계별 몬스터 강도(균열 층 수준) · 계시의 돌 확률(클리어당) · 원초의 돌 개수 · 골드 배율
@@ -2183,7 +2186,7 @@ function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid" || kind === "spire" || kind === "craid" || kind === "warden";
-  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && (node.floor || 0) >= CFG.SPIRE.END) || (kind === "craid" && node.diff === 3) || kind === "warden" ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
+  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && ((node.floor || 0) >= CFG.SPIRE.END || node.tw === 2)) || (kind === "craid" && node.diff === 3) || kind === "warden" ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
@@ -2211,7 +2214,7 @@ function rollDrops(sv, node, boss, B) {
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
     if (kind === "warden" && Math.random() < 0.30 * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }
     if (kind === "craid" && Math.random() < (0.08 + 0.03 * (node.diff || 1)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }
-    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }   // 사탄 장비
+    if (kind === "spire" && Math.random() < (satRate(node.floor) + (node.tw === 2 ? 0.05 : 0)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }   // 사탄 장비
     out.items.push(genItem(sv, ilvl, (kind === "spire" || kind === "craid" || kind === "warden") ? wpick([0, 1, 2, 3], (x) => (kind === "warden" ? [0, 10, 40, 50] : [10, 25, 35, 30])[x]) : r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, ilvl));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
@@ -2333,6 +2336,7 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
+  if (n.kind === "tower2") return !!(sv.craid && sv.craid[3]);   // 심층 첨탑: 하드 레이드 클리어 후
   if (n.kind === "bosshub2") return !!(sv.craid && sv.craid[2]);   // 상위 보스관문: 노말 레이드를 클리어한 뒤
   if (n.kind === "craid") return !!(sv.raid && sv.raid.tower);   // 레이드 던전: 탑이 솟은 뒤
   if (n.kind === "temple") return !!(sv.raid && sv.raid.cleared > 0);   // 돌의 신전: 심연의 문지기 모르가스를 클리어한 뒤
@@ -3180,7 +3184,7 @@ function finishBattle(sv, b) {
       if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
       if (node.kind === "warden") { const Wd = (sv.warden = sv.warden || { clears: 0, best: 0, pops: 0 }); Wd.clears++; Wd.pops += b.wPop || 0; if (!Wd.best || b.time < Wd.best) Wd.best = Math.round(b.time); res.warden = { time: b.time, best: Wd.best, pop: b.wPop || 0, boom: b.wBoom || 0 }; res.notes.push(`문지기 처치! ${Math.round(b.time)}초 (구슬 ${b.wPop || 0}개 처치, 폭발 ${b.wBoom || 0}회)`); }
       if (node.kind === "craid") { const d = node.diff | 0, first = !(sv.craid && sv.craid[d]); sv.craid = sv.craid || [0, 0, 0, 0]; if (first) { sv.craid[d] = 1; sv.cbook = sv.cbook || [0, 0, 0, 0]; sv.cbook[d]++; res.notes.push(`📜 ${d}차 전직의 서를 얻었습니다! (레이드 ${CFG.CRAID.NAMES[d]} 최초 클리어)`); } res.craid = { diff: d, first }; }
-      if (node.kind === "spire") { const P = (sv.spire = sv.spire || { best: 0 }); if (node.floor > P.best) { P.best = node.floor; res.notes.push(node.floor % CFG.SPIRE.WALL === 0 ? `🗼 탑 ${node.floor}층 — 벽을 넘었습니다!` : `탑 ${node.floor}층 최초 클리어`); } res.spire = { floor: node.floor, best: P.best }; }
+      if (node.kind === "spire") { const pk = node.tw === 2 ? "spire2" : "spire", P = (sv[pk] = sv[pk] || { best: 0 }); if (node.floor > P.best) { P.best = node.floor; res.notes.push(node.floor % CFG.SPIRE.WALL === 0 ? `🗼 ${node.tw === 2 ? "심층 " : ""}탑 ${node.floor}층 — 벽을 넘었습니다!` : `${node.tw === 2 ? "심층 " : ""}탑 ${node.floor}층 최초 클리어`); } res.spire = { floor: node.floor, best: P.best }; }
       if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
@@ -3912,6 +3916,7 @@ const MapView = {
     if (st === "hell") { orb("#6a1010", "#ff6a30", 13 * pulse); g.fillStyle = "#ffb040"; for (let i = 0; i < 4; i++) g.fillRect(x - 6 + i * 4, y - 8 - ((Math.sin(time * 9 + i * 1.7) * 3) | 0), 3, 9); g.fillStyle = "#fff0b0"; g.fillRect(x - 1, y - 2, 3, 5); return; }
     if (n.kind === "endless") { for (let i = 0; i < 3; i++) { g.strokeStyle = `rgba(120,230,255,${0.9 - i * 0.25})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 7 + i * 5, -time * 2 + i, -time * 2 + i + 4.2); g.stroke(); } g.fillStyle = "#06141c"; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.fillStyle = "#bff4ff"; g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.fillText("∞", x, y + 4); return; }
     if (n.kind === "vault") { orb("#6a5208", "#ffd24a", 13 * pulse); g.fillStyle = "#fff0a0"; g.fillRect(x - 7, y - 4, 14, 9); g.fillStyle = "#b8860b"; g.fillRect(x - 7, y - 4, 14, 3); g.fillStyle = "#6a3a08"; g.fillRect(x - 2, y, 4, 4); g.fillStyle = "#ffe880"; g.fillRect(x - 4, y - 9, 8, 3); return; }
+    if (n.kind === "tower2") { orb("#20040a", "#ff2a4a", 18 * pulse); g.fillStyle = "#ffa0a8"; g.fillRect(x - 3, y - 15, 6, 4); g.fillRect(x - 6, y - 11, 12, 6); g.fillRect(x - 9, y - 5, 18, 7); g.fillRect(x - 12, y + 2, 24, 8); g.fillStyle = "#1a0408"; g.fillRect(x - 2, y + 2, 4, 8); return; }
     if (n.kind === "bosshub2") { orb("#2a0610", "#ff3a5a", 20 * pulse); g.fillStyle = "#ffb0c0"; g.fillRect(x - 10, y - 10, 20, 3); g.fillRect(x - 10, y + 7, 20, 3); g.fillRect(x - 10, y - 10, 3, 20); g.fillRect(x + 7, y - 10, 3, 20); g.fillStyle = "#ff3a5a"; g.fillRect(x - 3, y - 3, 6, 6); return; }
     if (n.kind === "craid") { orb("#3a0a10", "#ff4a3a", 16 * pulse); g.fillStyle = "#ffb0a0"; g.fillRect(x - 9, y - 11, 18, 3); g.fillRect(x - 6, y - 8, 12, 14); g.fillStyle = "#ff3a2a"; g.fillRect(x - 3, y - 4, 6, 8); g.fillStyle = "#1a0408"; g.fillRect(x - 1, y - 1, 2, 5); return; }
     if (n.kind === "temple") { orb("#4a3a10", "#ffd86a", 15 * pulse); g.fillStyle = "#f6ecc8"; g.fillRect(x - 11, y - 3, 22, 3); g.fillRect(x - 8, y - 9, 16, 3); g.fillRect(x - 5, y - 13, 10, 3); for (const dx of [-9, -3, 3, 8]) g.fillRect(x + dx, y, 3, 9); g.fillStyle = "#c9a84a"; g.fillRect(x - 12, y + 9, 24, 3); g.fillStyle = "#7ec8ff"; g.fillRect(x - 2, y - 7, 4, 4); return; }
@@ -3927,7 +3932,7 @@ const MapView = {
     const cleared = st === "cleared"; orb(cleared ? "#3a6a98" : "#3a8aff", cleared ? "#8ac0e8" : "#b8dcff", 11 * (cleared ? 1 : pulse));
     if (cleared) { g.fillStyle = "#e8fff0"; g.fillRect(x - 5, y, 3, 3); g.fillRect(x - 2, y + 3, 3, 3); g.fillRect(x + 1, y, 3, 3); g.fillRect(x + 4, y - 4, 3, 3); }
   },
-  hidden(n) { return n.kind === "bosshub2" ? !(save && save.craid && save.craid[2]) : (n.kind === "tower" || n.kind === "temple" || n.kind === "craid") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
+  hidden(n) { return n.kind === "tower2" ? !(save && save.craid && save.craid[3]) : n.kind === "bosshub2" ? !(save && save.craid && save.craid[2]) : (n.kind === "tower" || n.kind === "temple" || n.kind === "craid") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
   drawTower(g, x, y, time) {   // 솟아오르는 탑: 아래에서부터 드러나고, 흔들리며 먼지가 인다
     const p = this.rise, H = 96 * p; g.save(); g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(x, y + 8, 26, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.rect(x - 40, y + 8 - H, 80, H + 2); g.clip();
@@ -4632,6 +4637,7 @@ function nodeToBattle(n) {
   if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
+  if (n.kind === "tower2") { const P = save.spire2 || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spire2Floor || P.best + 1))); return { kind: "spire", tw: 2, act: 10, floor: f, tier: spireTier(f, 2), first: f > P.best, name: `심층 첨탑 ${f}층`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
   if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
@@ -4663,6 +4669,8 @@ function mapPanel() {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "craid") {
     h += `<div class="pline">전직의 서를 얻을 수 있는 레이드 던전입니다. 이지 · 노말 · 하드 세 난이도가 있습니다.</div><div class="pline dim">전직 ${save.cls | 0}차 · 최초 클리어마다 전직의 서를 얻습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "레이드 열기";
+  } else if (n.kind === "tower2") {
+    h += `<div class="pline">하드 레이드를 클리어하자 탑 아래에서 드러난 더 깊은 첨탑입니다.</div><div class="pline dim">100층까지 이어지고 20층마다 벽이 있습니다. T6 장비가 나옵니다.</div><div class="pline dim">최고 기록 ${(save.spire2 && save.spire2.best) || 0}층</div>`; btnOk = un; btn = "심층 첨탑 열기";
   } else if (n.kind === "tower") {
     h += `<div class="pline">문지기가 쓰러지자 먼 곳에서 솟아오른 정체불명의 탑입니다.</div><div class="pline dim">100층까지 이어지며 20층마다 벽이 있습니다. 4레인으로 전투하고, 사탄 장비가 나옵니다.</div><div class="pline dim">최고 기록 ${(save.spire && save.spire.best) || 0}층</div>`; btnOk = un; btn = "탑 열기";
   } else if (n.kind === "endless") {
@@ -4710,7 +4718,8 @@ function mapGo() {
   if (n.kind === "bosshub2") return openBossHub(null, true);
   if (n.kind === "temple") return openTemple();
   if (n.kind === "craid") return openCRaid();
-  if (n.kind === "tower") return openSpire();
+  if (n.kind === "tower") return openSpire(1);
+  if (n.kind === "tower2") return openSpire(2);
   if (n.kind === "town") return openTown(n.act);
   if (n.kind === "endless") { const E = endlessInfo(save); if (E.left < 1) return; save.endless.used++; saveGame(); }
   if (isEB(n.kind)) { const E = EB[n.kind]; if ((save[E.key] || 0) < 1 || save.rift.best < E.need[(G[E.stage] || 1) - 1]) return; save[E.key]--; saveGame(); }
@@ -4891,7 +4900,7 @@ function nextBattleOf(node, res) {
     if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
     if (!nxt || !nodeUnlocked(save, nxt)) return null; return { label: nxt.kind === "boss" ? "보스 도전 ▶" : nxt.stage === 1 ? "다음 지역 ▶" : "다음 스테이지 ▶", node: nxt, battle: nodeToBattle(nxt) };
   }
-  if (node.kind === "spire" && node.floor < CFG.SPIRE.END && node.floor + 1 <= ((save.spire && save.spire.best) || 0) + 1) { G.spireFloor = node.floor + 1; const n = MAP.nodes.find((x) => x.kind === "tower"); return { label: `${node.floor + 1}층 도전 ▶`, node: n, battle: nodeToBattle(n) }; }
+  if (node.kind === "spire" && node.floor < CFG.SPIRE.END && node.floor + 1 <= (((node.tw === 2 ? save.spire2 : save.spire) && (node.tw === 2 ? save.spire2 : save.spire).best) || 0) + 1) { G[node.tw === 2 ? "spire2Floor" : "spireFloor"] = node.floor + 1; const n = MAP.nodes.find((x) => x.kind === (node.tw === 2 ? "tower2" : "tower")); return { label: `${node.floor + 1}층 도전 ▶`, node: n, battle: nodeToBattle(n) }; }
   if (node.kind === "rift" && node.tier + 1 <= Math.min(CFG.RIFT_END, save.rift.best + 1)) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
   if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
   return null;
@@ -6112,7 +6121,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261101-112108";
+const BUILD_ID = "20261101-112251";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6309,11 +6318,11 @@ function openTemple() {
 // =========================================================
 // 솟아난 탑: 100층 · 20층마다 벽 · 4레인 · 일반 전설 장비와 사탄 장비가 나온다
 // =========================================================
-function openSpire() {
-  const S = CFG.SPIRE, P = save.spire || { best: 0 }, max = Math.min(S.END, P.best + 1), f = G.spireFloor = Math.max(1, Math.min(max, G.spireFloor || max));
-  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = (satRate(f) * 100).toFixed(1).replace(/\.0$/, "");
+function openSpire(tw) {
+  tw = tw === 2 ? 2 : 1; const FK = tw === 2 ? "spire2Floor" : "spireFloor", S = CFG.SPIRE, P = (tw === 2 ? save.spire2 : save.spire) || { best: 0 }, max = Math.min(S.END, P.best + 1), f = G[FK] = Math.max(1, Math.min(max, G[FK] || max));
+  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = ((satRate(f) + (tw === 2 ? 0.05 : 0)) * 100).toFixed(1).replace(/\.0$/, "");
   const marks = [20, 40, 60, 80, 100].map((w) => `<button class="btn xs" data-a="spfl" data-f="${w}" ${w > max ? "disabled" : ""}>${w}층${P.best >= w ? " ✔" : ""}</button>`).join(" ");
-  const html = `<h2>솟아난 탑</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
+  const html = `<h2>${tw === 2 ? "심층 첨탑" : "솟아난 탑"}</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
     <div class="bh-feat">${wall ? "🧱 벽 층" : "탑"} · 4레인</div>
     <div class="bh-desc">100층까지 이어지는 탑입니다. <b>20층마다 벽</b>이 있어 장비를 갖춰야 넘을 수 있습니다. 일반 전설 장비와 함께 부위마다 다른 고유 한 줄이 붙은 <b style="color:${SAT_COLOR}">사탄 장비</b>가 나옵니다.</div>
     <div class="bh-sttl">층 선택</div>
@@ -6324,8 +6333,8 @@ function openSpire() {
     <button class="btn pri big bh-go" data-a="spgo">탑 ${f}층 입장</button>
   </div></div></div>`;
   Modal.open(html, { cls: "bosshub", on: {
-    spd: () => { G.spireFloor = f - 1; openSpire(); }, spu: () => { G.spireFloor = f + 1; openSpire(); }, spfl: (el) => { G.spireFloor = +el.dataset.f; openSpire(); },
-    spgo: () => { Modal.close(true); const hub = MAP.nodes.find((n) => n.kind === "tower"); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openSpire(); } }); },
+    spd: () => { G[FK] = f - 1; openSpire(tw); }, spu: () => { G[FK] = f + 1; openSpire(tw); }, spfl: (el) => { G[FK] = +el.dataset.f; openSpire(tw); },
+    spgo: () => { Modal.close(true); const hub = MAP.nodes.find((n) => n.kind === (tw === 2 ? "tower2" : "tower")); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openSpire(tw); } }); },
   } });
 }
 
@@ -6370,6 +6379,9 @@ function openCRaid() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.44", date: "11/1", title: "심층 첨탑", items: [
+    "하드 레이드를 클리어하면 레이드 던전 옆에 [심층 첨탑]이 열립니다. 솟아난 탑보다 한 단계 깊은 100층짜리 탑으로, 20층마다 벽이 있고 드랍은 전부 T6 장비입니다 (사탄 장비 확률 +5%p).",
+  ] },
   { ver: "4.43", date: "11/1", title: "새 문지기", items: [
     "레이드 던전에 [붉은 탑의 문지기]가 생겼습니다 (하드 레이드 클리어 + 3차 전직 후 도전). 문지기가 만들어 내는 [공명 구슬]은 스킬이 통하지 않고 직접 눌러서 터뜨려야 합니다. 못 누르면 구슬이 폭발해 큰 피해를 주고 문지기가 체력을 회복합니다.",
     "전투력 측정기입니다: 제한 시간 8분, 걸린 시간이 기록으로 남습니다. 드랍은 T6 장비와 사탄 장비입니다.",

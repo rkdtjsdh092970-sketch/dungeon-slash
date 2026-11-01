@@ -104,6 +104,7 @@ function nodeToBattle(n) {
   if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
   if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "craid") { const d = Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
+  if (n.kind === "tower2") { const P = save.spire2 || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spire2Floor || P.best + 1))); return { kind: "spire", tw: 2, act: 10, floor: f, tier: spireTier(f, 2), first: f > P.best, name: `심층 첨탑 ${f}층`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
   if (n.kind === "temple") { const st = Math.max(1, Math.min(templeOpen(save), G.templeStage || 1)); return { kind: "temple", act: 11, tier: CFG.TEMPLE.TIERS[st - 1], vsel: st, name: `돌의 신전 ${st}단계`, level: 100 }; }
   if (n.kind === "vault") return { kind: "vault", act: 10, tier: Math.max(1, Math.floor(save.rift.best * CFG.VAULT_TIER_K)), name: "황금 보물고", level: 100 };
@@ -135,6 +136,8 @@ function mapPanel() {
     h += `<div class="pline">여섯 보스의 정보를 보고 단계를 골라 바로 입장할 수 있는 관문입니다.</div><div class="pline dim">보스 이미지 · 적정 전투력 · 드랍 스킬 목록이 표시됩니다.</div>`; btnOk = un; btn = "보스 관문 열기";
   } else if (n.kind === "craid") {
     h += `<div class="pline">전직의 서를 얻을 수 있는 레이드 던전입니다. 이지 · 노말 · 하드 세 난이도가 있습니다.</div><div class="pline dim">전직 ${save.cls | 0}차 · 최초 클리어마다 전직의 서를 얻습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "레이드 열기";
+  } else if (n.kind === "tower2") {
+    h += `<div class="pline">하드 레이드를 클리어하자 탑 아래에서 드러난 더 깊은 첨탑입니다.</div><div class="pline dim">100층까지 이어지고 20층마다 벽이 있습니다. T6 장비가 나옵니다.</div><div class="pline dim">최고 기록 ${(save.spire2 && save.spire2.best) || 0}층</div>`; btnOk = un; btn = "심층 첨탑 열기";
   } else if (n.kind === "tower") {
     h += `<div class="pline">문지기가 쓰러지자 먼 곳에서 솟아오른 정체불명의 탑입니다.</div><div class="pline dim">100층까지 이어지며 20층마다 벽이 있습니다. 4레인으로 전투하고, 사탄 장비가 나옵니다.</div><div class="pline dim">최고 기록 ${(save.spire && save.spire.best) || 0}층</div>`; btnOk = un; btn = "탑 열기";
   } else if (n.kind === "endless") {
@@ -182,7 +185,8 @@ function mapGo() {
   if (n.kind === "bosshub2") return openBossHub(null, true);
   if (n.kind === "temple") return openTemple();
   if (n.kind === "craid") return openCRaid();
-  if (n.kind === "tower") return openSpire();
+  if (n.kind === "tower") return openSpire(1);
+  if (n.kind === "tower2") return openSpire(2);
   if (n.kind === "town") return openTown(n.act);
   if (n.kind === "endless") { const E = endlessInfo(save); if (E.left < 1) return; save.endless.used++; saveGame(); }
   if (isEB(n.kind)) { const E = EB[n.kind]; if ((save[E.key] || 0) < 1 || save.rift.best < E.need[(G[E.stage] || 1) - 1]) return; save[E.key]--; saveGame(); }
@@ -363,7 +367,7 @@ function nextBattleOf(node, res) {
     if (!node.id) return null; const nxt = node.stage < CFG.STAGES ? MAP.byId[`S${node.act}-${node.stage + 1}`] : (node.act < CFG.ACTS ? MAP.byId[`S${node.act + 1}-1`] : null);
     if (!nxt || !nodeUnlocked(save, nxt)) return null; return { label: nxt.kind === "boss" ? "보스 도전 ▶" : nxt.stage === 1 ? "다음 지역 ▶" : "다음 스테이지 ▶", node: nxt, battle: nodeToBattle(nxt) };
   }
-  if (node.kind === "spire" && node.floor < CFG.SPIRE.END && node.floor + 1 <= ((save.spire && save.spire.best) || 0) + 1) { G.spireFloor = node.floor + 1; const n = MAP.nodes.find((x) => x.kind === "tower"); return { label: `${node.floor + 1}층 도전 ▶`, node: n, battle: nodeToBattle(n) }; }
+  if (node.kind === "spire" && node.floor < CFG.SPIRE.END && node.floor + 1 <= (((node.tw === 2 ? save.spire2 : save.spire) && (node.tw === 2 ? save.spire2 : save.spire).best) || 0) + 1) { G[node.tw === 2 ? "spire2Floor" : "spireFloor"] = node.floor + 1; const n = MAP.nodes.find((x) => x.kind === (node.tw === 2 ? "tower2" : "tower")); return { label: `${node.floor + 1}층 도전 ▶`, node: n, battle: nodeToBattle(n) }; }
   if (node.kind === "rift" && node.tier + 1 <= Math.min(CFG.RIFT_END, save.rift.best + 1)) { G.riftTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "rift"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "rift" }) }; }
   if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
   return null;

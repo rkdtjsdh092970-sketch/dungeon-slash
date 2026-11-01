@@ -107,11 +107,11 @@ function openTemple() {
 // =========================================================
 // 솟아난 탑: 100층 · 20층마다 벽 · 4레인 · 일반 전설 장비와 사탄 장비가 나온다
 // =========================================================
-function openSpire() {
-  const S = CFG.SPIRE, P = save.spire || { best: 0 }, max = Math.min(S.END, P.best + 1), f = G.spireFloor = Math.max(1, Math.min(max, G.spireFloor || max));
-  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = (satRate(f) * 100).toFixed(1).replace(/\.0$/, "");
+function openSpire(tw) {
+  tw = tw === 2 ? 2 : 1; const FK = tw === 2 ? "spire2Floor" : "spireFloor", S = CFG.SPIRE, P = (tw === 2 ? save.spire2 : save.spire) || { best: 0 }, max = Math.min(S.END, P.best + 1), f = G[FK] = Math.max(1, Math.min(max, G[FK] || max));
+  const wall = f % S.WALL === 0, nextWall = Math.min(S.END, Math.ceil(f / S.WALL) * S.WALL), sat = ((satRate(f) + (tw === 2 ? 0.05 : 0)) * 100).toFixed(1).replace(/\.0$/, "");
   const marks = [20, 40, 60, 80, 100].map((w) => `<button class="btn xs" data-a="spfl" data-f="${w}" ${w > max ? "disabled" : ""}>${w}층${P.best >= w ? " ✔" : ""}</button>`).join(" ");
-  const html = `<h2>솟아난 탑</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
+  const html = `<h2>${tw === 2 ? "심층 첨탑" : "솟아난 탑"}</h2><div class="bh" style="--c:#ff5a4a"><div class="bh-main"><div class="bh-info" style="flex:1">
     <div class="bh-feat">${wall ? "🧱 벽 층" : "탑"} · 4레인</div>
     <div class="bh-desc">100층까지 이어지는 탑입니다. <b>20층마다 벽</b>이 있어 장비를 갖춰야 넘을 수 있습니다. 일반 전설 장비와 함께 부위마다 다른 고유 한 줄이 붙은 <b style="color:${SAT_COLOR}">사탄 장비</b>가 나옵니다.</div>
     <div class="bh-sttl">층 선택</div>
@@ -122,8 +122,8 @@ function openSpire() {
     <button class="btn pri big bh-go" data-a="spgo">탑 ${f}층 입장</button>
   </div></div></div>`;
   Modal.open(html, { cls: "bosshub", on: {
-    spd: () => { G.spireFloor = f - 1; openSpire(); }, spu: () => { G.spireFloor = f + 1; openSpire(); }, spfl: (el) => { G.spireFloor = +el.dataset.f; openSpire(); },
-    spgo: () => { Modal.close(true); const hub = MAP.nodes.find((n) => n.kind === "tower"); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openSpire(); } }); },
+    spd: () => { G[FK] = f - 1; openSpire(tw); }, spu: () => { G[FK] = f + 1; openSpire(tw); }, spfl: (el) => { G[FK] = +el.dataset.f; openSpire(tw); },
+    spgo: () => { Modal.close(true); const hub = MAP.nodes.find((n) => n.kind === (tw === 2 ? "tower2" : "tower")); startBattle(nodeToBattle(hub), { back: () => { openMap(10); MapView.sel = hub; mapPanel(); openSpire(tw); } }); },
   } });
 }
 

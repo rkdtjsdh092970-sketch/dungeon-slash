@@ -393,7 +393,7 @@ function rollDrops(sv, node, boss, B) {
   B = B || dropBonus(sv);
   const kind = node.kind, endlessWaves = node.waves || 0;
   const late = kind === "rift" || kind === "hell" || kind === "endless" || kind === "void" || isEB(kind) || kind === "vault" || kind === "raid" || kind === "spire" || kind === "craid" || kind === "warden";
-  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && (node.floor || 0) >= CFG.SPIRE.END) || (kind === "craid" && node.diff === 3) || kind === "warden" ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
+  const ilvl = kind === "rift" || kind === "hell" ? floorTier(node.tier || 1) : (kind === "spire" && ((node.floor || 0) >= CFG.SPIRE.END || node.tw === 2)) || (kind === "craid" && node.diff === 3) || kind === "warden" ? 6 : late ? 5 : 1;   // T6: 탑 100층 · 하드 레이드
   const out = { items: [], skills: [], ore: 0, shards: 0, orbC: 0, orbD: 0, dice: 0, uniques: 0, hone: 0, runes: [], stones: 0 };
   if (kind === "temple") {   // 돌의 신전: 계시의 돌 · 세공의 인장 (같은 확률)과 골드(몹이 주는 골드)만 나온다
     const S = Math.max(1, Math.min(4, node.vsel || 1)), T = CFG.TEMPLE, mf = 1 + mfEff(B.mf) * 0.3, ch = Math.min(0.5, T.HI[S - 1] * mf);
@@ -421,7 +421,7 @@ function rollDrops(sv, node, boss, B) {
     const r = wpick(ITEM_RARITY.map((x, idx) => ({ idx, w: (RW ? RW[idx] : boss ? Math.max(x.bossDrop, x.drop * 0.5) : x.drop) * (idx >= 1 ? Math.pow(mfw, 0.3 + idx * 0.2) : 1) })), (x) => x.w).idx;
     if (kind === "warden" && Math.random() < 0.30 * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }
     if (kind === "craid" && Math.random() < (0.08 + 0.03 * (node.diff || 1)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }
-    if (kind === "spire" && Math.random() < satRate(node.floor) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }   // 사탄 장비
+    if (kind === "spire" && Math.random() < (satRate(node.floor) + (node.tw === 2 ? 0.05 : 0)) * Math.pow(mfw, 0.3)) { out.items.push(genSatan(sv, ilvl)); continue; }   // 사탄 장비
     out.items.push(genItem(sv, ilvl, (kind === "spire" || kind === "craid" || kind === "warden") ? wpick([0, 1, 2, 3], (x) => (kind === "warden" ? [0, 10, 40, 50] : [10, 25, 35, 30])[x]) : r, undefined, undefined, isEB(kind) ? EB[kind].bias : null));
   }
   if (kind === "spire" && node.first && (node.floor % CFG.SPIRE.WALL === 0) && !out.items.some((x) => x.sat)) out.items.push(genSatan(sv, ilvl));   // 벽 층을 처음 넘으면 사탄 장비 하나는 확정
@@ -543,6 +543,7 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
+  if (n.kind === "tower2") return !!(sv.craid && sv.craid[3]);   // 심층 첨탑: 하드 레이드 클리어 후
   if (n.kind === "bosshub2") return !!(sv.craid && sv.craid[2]);   // 상위 보스관문: 노말 레이드를 클리어한 뒤
   if (n.kind === "craid") return !!(sv.raid && sv.raid.tower);   // 레이드 던전: 탑이 솟은 뒤
   if (n.kind === "temple") return !!(sv.raid && sv.raid.cleared > 0);   // 돌의 신전: 심연의 문지기 모르가스를 클리어한 뒤
