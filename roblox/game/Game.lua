@@ -6,6 +6,7 @@ local Stats = require(script.Parent.Stats)
 local Battle = require(script.Parent.Battle)
 local Loot = require(script.Parent.Loot)
 local Sat = require(Data.Satan).SAT_DEFS
+local Econ = require(script.Parent.Economy)
 
 local M = {}
 local floor = math.floor
@@ -115,7 +116,14 @@ function M.fight(sv, kind, n, seed)
     local d = Loot.fieldDrops(rng, sv, node, boss)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.hone += d.hone; res.hone = d.hone end; if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it) } else res.full = true end end
-    if kind == "stage" and n > (sv.cleared or 0) then sv.cleared = n; res.first = true end
+    if kind == "stage" and n > (sv.cleared or 0) then
+      sv.cleared = n; res.first = true
+      if n >= 3 and sv.slots < 3 then sv.slots = 3; res.note = "3번 스킬 칸이 열렸습니다!" end
+      if n >= CFG.STAGES then
+        if sv.slots < 4 then sv.slots = 4; res.note = "4번 스킬 칸이 열렸습니다!" end
+        sv.lanesBase = CFG.ENDGAME_LANES; res.note = (res.note or "") .. " 스테이지 클리어! 영구 3레인과 '심연의 균열'이 열립니다."
+      end
+    end
     if kind == "rift" and n > sv.rift.best then
       local gain = math.max(0, math.min(CFG.LEVEL_CAP, 1 + n) - sv.level); sv.rift.best = n; res.first = true
       if gain > 0 then sv.level += gain; res.levelUps = gain end
@@ -124,5 +132,24 @@ function M.fight(sv, kind, n, seed)
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
   return res
 end
+
+-- 경제 API (서버가 RPC 로 호출)
+function M.shop(sv) return Econ.shopStock(sv) end
+function M.buySkill(sv, id) return Econ.buySkill(sv, id) end
+function M.skills(sv) return Econ.skillList(sv) end
+function M.levelUp(sv, uid) return Econ.levelUpSkill(sv, uid) end
+function M.equipSkill(sv, slot, uid) return Econ.equipSkill(sv, slot, uid) end
+function M.sellSkill(sv, uid) return Econ.sellSkill(sv, uid) end
+function M.autoPassives(sv) return Econ.autoPassives(sv) end
+function M.resetPassives(sv) Econ.resetPassives(sv); return true end
+function M.passiveInfo(sv) return { points = Econ.passivePoints(sv), left = Econ.passiveLeft(sv), taken = (function() local n = 0 for _ in pairs(sv.pass or {}) do n += 1 end return n end)() } end
+function M.enhance(sv, uid, seed)
+  local it = sv.equipped.weapon and nil
+  for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == uid then it = sv.equipped[slot] end end
+  if not it then for _, x in ipairs(sv.inv) do if x.uid == uid then it = x end end end
+  if not it then return false, "없는 장비" end
+  return Econ.enhance(sv, it, Random.new((seed or os.time()) + uid))
+end
+function M.enhCosts(sv) local out = {}; for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then local c = Econ.enhCost(it); out[#out + 1] = { uid = it.uid, slot = slot, enh = it.enh or 0, gold = c.gold, ore = c.ore } end end return out end
 
 return M

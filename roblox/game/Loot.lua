@@ -124,6 +124,7 @@ function M.newSave(rng)
     lanesBase = CFG.BASE_LANES, cls = 0, cpass = {}, pass = {}, charms = {}, spire = { best = 0 }, rift = { best = 0 }, cleared = 0, hone = 0, orbC = 0, stats = { kills = 0, clears = 0 }, guildLv = 0 }
   for _, slot in ipairs({ "weapon", "helm", "armor" }) do s.equipped[slot] = M.genItem(rng, s, 1, 0, slot) end
   local sk = { uid = s.nextUid, id = "strike", rarity = 0 }; s.nextUid += 1; s.skills[1] = sk; s.loadout[1] = { uid = sk.uid, rule = "front" }
+  local sm = { uid = s.nextUid, id = "smash", rarity = 0 }; s.nextUid += 1; s.skills[2] = sm; s.loadout[2] = { uid = sm.uid, rule = "front" }; s.slots = 2   -- 튜토리얼을 건너뛰고 강타까지 지급
   return s
 end
 
