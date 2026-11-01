@@ -499,10 +499,11 @@ local function openSettings()
 end
 
 -- 새 메뉴 화면 연결 (장비 · 스킬 · 패시브 트리는 Menus 모듈)
-local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "스킬", pass = "패시브" }
+local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "스킬", pass = "패시브", stones = "돌", shop = "스킬 상점", quests = "퀘스트" }
 Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
+views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
 
 -- ── 전투 시작 → 재생 → 결과 ──
 local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)

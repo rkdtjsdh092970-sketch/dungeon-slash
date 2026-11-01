@@ -201,7 +201,7 @@ function M.forgeList(sv)
       local c = Econ.enhCost(it); local rc = Econ.rerollCost(it); local affs = {}
       for i, a in ipairs(it.affixes) do affs[i] = { text = M.affixText(a), locked = Econ.rerollLocked(it, i - 1) } end
       local socks = {}; for i, s2 in ipairs(it.sock or {}) do socks[i] = s2 and (AFFIX_BY[s2.k] and AFFIX_BY[s2.k].name or s2.k) .. " +" .. (s2.v < 5 and string.format("%.1f%%", s2.v * 100) or tostring(s2.v)) or false end
-      out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), enh = it.enh or 0, enhGold = c.gold, enhOre = c.ore, rerollGold = rc.gold, rerollOre = rc.ore, affixes = affs, sockets = socks, affCount = #it.affixes }
+      out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), enh = it.enh or 0, enhGold = c.gold, enhOre = c.ore, rerollGold = rc.gold, rerollOre = rc.ore, affixes = affs, sockets = socks, affCount = #it.affixes, rarity = it.rarity or 0, sat = it.sat ~= nil }
     end
   end
   return out
