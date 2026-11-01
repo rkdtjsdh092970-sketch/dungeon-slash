@@ -1070,4 +1070,46 @@ function M.run(sv, node, seed, dt, tmax)
   return b
 end
 
+
+-- ---------- 전투 연출용 타임라인 기록 (M.recording = true 일 때만) ----------
+-- 0.2초마다 스냅샷: 체력 비율, 적 위치/체력, 구간 피해 합계, 사용한 스킬. 클라이언트가 이걸 3D 무대에서 재생한다.
+M.recording = false
+local REC_DT, REC_MAX = 0.2, 600
+local _apply, _hurt, _cast, _step, _new = applyDamage, damagePlayer, castSkillRaw, M.step, M.new
+applyDamage = function(b, e, dmg, o)
+  local r = _apply(b, e, dmg, o)
+  if b.rec and r and r > 0 then local a = b.rec.acc; a.dmg[e.id] = (a.dmg[e.id] or 0) + r end
+  return r
+end
+damagePlayer = function(b, raw, opt)
+  local before = b.hp; local r = _hurt(b, raw, opt)
+  if b.rec and b.hp < before then b.rec.acc.ph += before - b.hp end
+  return r
+end
+castSkillRaw = function(b, sk)
+  local r = _cast(b, sk)
+  if b.rec and r then local c = b.rec.acc.casts; c[#c + 1] = { sk.id, sk.color or "#ffffff", sk.elem, sk.kind } end
+  return r
+end
+function M.new(sv, node, seed)
+  local b = _new(sv, node, seed)
+  if M.recording then b.rec = { snaps = {}, acc = { dmg = {}, casts = {}, ph = 0 }, nextT = 0, lanes = b.lanes, cols = CFG.COLS } end
+  return b
+end
+local function snapshot(b)
+  local R = b.rec; local ens = {}
+  for _, e in ipairs(b.enemies) do
+    ens[#ens + 1] = { id = e.id, n = e.def and e.def.name or "?", tier = e.tier, l = e.lane, c = e.col, w = e.w, h = e.h, hp = e.maxHp > 0 and math.max(0, e.hp / e.maxHp) or 0,
+      d = R.acc.dmg[e.id], dead = e.dead or nil, hue = e.def and e.def.hue, sc = e.def and e.def.sc, ranged = e.def and e.def.ranged or nil, wind = (e.winding or 0) > 0 or nil }
+  end
+  R.snaps[#R.snaps + 1] = { t = math.floor(b.time * 100) / 100, hp = b.hp / b.maxHp, mp = b.maxMana > 0 and b.mana / b.maxMana or 0, e = ens, ph = R.acc.ph > 0 and math.floor(R.acc.ph) or nil, c = #R.acc.casts > 0 and R.acc.casts or nil }
+  R.acc = { dmg = {}, casts = {}, ph = 0 }
+end
+function M.step(b, dt)
+  _step(b, dt)
+  local R = b.rec
+  if R and #R.snaps < REC_MAX and (b.time >= R.nextT or b.over) then snapshot(b); R.nextT = b.time + REC_DT end
+  if R and b.over then R.win = b.win; R.total = b.time; M.lastRec = R end
+end
+
 return M

@@ -182,7 +182,11 @@ rpc.OnServerInvoke = function(player, action, arg)
   local sv = s.sv
   local k0, c0, b0 = 0, 0, 0
   if sv then k0, c0 = sv.stats.kills, sv.stats.clears; b0 = (sv.daily and sv.daily.bosses) or 0 end
+  local wantRec = action == "fight" or action == "battle" or action == "play"
+  if wantRec then Battle.recording = true; Battle.lastRec = nil end
   local okH, res = pcall(handle, player, action, arg)
+  Battle.recording = false
+  if wantRec and okH and type(res) == "table" and res.result and Battle.lastRec then res.result.replay = Battle.lastRec; Battle.lastRec = nil end
   if not okH then warn("rpc 오류:", action, res); s.busy = false; return { err = "요청 처리 중 오류가 났습니다" } end
   if sv and (sv.stats.kills > k0 or sv.stats.clears > c0) then
     local g = Guild.guildOf(gstore, player.UserId)
