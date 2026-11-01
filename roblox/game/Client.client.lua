@@ -10,7 +10,7 @@ local PG = player:WaitForChild("PlayerGui")
 
 -- ── 로딩 화면 (가장 먼저 띄운다) ──
 local loadGui = Instance.new("ScreenGui"); loadGui.Name = "DungeonLoading"; loadGui.IgnoreGuiInset = true; loadGui.DisplayOrder = 100; loadGui.ResetOnSpawn = false; loadGui.Parent = PG
-local loadBg = Instance.new("Frame"); loadBg.Size = UDim2.new(1, 0, 1, 0); loadBg.BackgroundColor3 = Color3.fromRGB(14, 9, 30); loadBg.BorderSizePixel = 0; loadBg.Parent = loadGui
+local loadBg = Instance.new("Frame"); loadBg.Size = UDim2.new(1, 0, 1, 0); loadBg.BackgroundColor3 = Color3.new(1, 1, 1); loadBg.BorderSizePixel = 0; loadBg.Parent = loadGui
 do local g = Instance.new("UIGradient"); g.Color = ColorSequence.new(Color3.fromRGB(46, 26, 92), Color3.fromRGB(10, 6, 22)); g.Rotation = 90; g.Parent = loadBg end
 local loadBox = Instance.new("Frame"); loadBox.BackgroundTransparency = 1; loadBox.AnchorPoint = Vector2.new(0.5, 0.5); loadBox.Position = UDim2.new(0.5, 0, 0.5, 0); loadBox.Size = UDim2.new(0, 560, 0, 300); loadBox.Parent = loadBg
 do local sc = Instance.new("UIScale"); sc.Parent = loadBox; local function f() local vp = workspace.CurrentCamera.ViewportSize; sc.Scale = math.clamp(math.min(vp.X / 640, vp.Y / 420), 0.5, 1.6) end; f(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(f) end
@@ -602,7 +602,7 @@ local function relayout()
   relayPending = false; calcK()
   pillScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
   pillRow.Position = UDim2.new(0.5, 0, 0, INSET / 2)
-  if not mainStage.conn then makeStage() end
+  if mainStage and not mainStage.conn then makeStage() end
   townBuilt = false
   if screen == "town" then buildTown() elseif screen == "map" then buildMap() end
   if panelLayer.Visible then fitPanel() end
