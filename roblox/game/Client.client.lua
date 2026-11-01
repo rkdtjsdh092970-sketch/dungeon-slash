@@ -14,8 +14,8 @@ local function button(parent, text, pos, sz, cb, color)
 end
 local root = Instance.new("Frame"); root.Size = UDim2.new(0, 560, 0, 600); root.Position = UDim2.new(0.5, -280, 0.5, -300); root.BackgroundColor3 = Color3.fromRGB(24, 20, 44); root.Parent = gui
 Instance.new("UICorner", root).CornerRadius = UDim.new(0, 10)
-local top = label(root, "불러오는 중…", 14, UDim2.new(0, 12, 0, 6), UDim2.new(1, -24, 0, 44))
-local msg = label(root, "", 14, UDim2.new(0, 12, 0, 52), UDim2.new(1, -24, 0, 54))
+local top = label(root, "불러오는 중…", 13, UDim2.new(0, 12, 0, 4), UDim2.new(1, -24, 0, 36))
+local msg = label(root, "", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 38))
 local list = Instance.new("ScrollingFrame"); list.Position = UDim2.new(0, 12, 0, 150); list.Size = UDim2.new(1, -24, 1, -162); list.BackgroundColor3 = Color3.fromRGB(16, 14, 32)
 list.CanvasSize = UDim2.new(0, 0, 0, 0); list.AutomaticCanvasSize = Enum.AutomaticSize.Y; list.Parent = root
 Instance.new("UIListLayout", list).Padding = UDim.new(0, 4)
@@ -92,10 +92,6 @@ function views.forge()
   end
 end
 local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" } }
-for i, t in ipairs(tabs) do button(root, t[1], UDim2.new(0, 12 + (i - 1) * 88, 0, 112 - 0), UDim2.new(0, 84, 0, 0), function() end) end
--- 탭 버튼은 컨트롤 줄 위에 따로 만든다
-local tabBar = Instance.new("Frame"); tabBar.BackgroundTransparency = 1; tabBar.Position = UDim2.new(0, 12, 0, 0); tabBar.Size = UDim2.new(1, -24, 0, 0); tabBar.Parent = root
-for _, c in ipairs(root:GetChildren()) do if c:IsA("TextButton") and c.Size.Y.Offset == 0 then c:Destroy() end end
-local bar = Instance.new("Frame"); bar.BackgroundTransparency = 1; bar.Position = UDim2.new(0, 12, 0, 104 - 0); bar.Size = UDim2.new(1, -24, 0, 0); bar.Parent = root; bar:Destroy()
-for i, t in ipairs(tabs) do button(top, t[1], UDim2.new(0, (i - 1) * 90, 1, 2), UDim2.new(0, 86, 0, 26), function() views[t[2]]() end) end
+local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 80); tabRow.Size = UDim2.new(1, -24, 0, 28); tabRow.Parent = root
+for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, (i - 1) * 90, 0, 0), UDim2.new(0, 86, 0, 26), function() views[t[2]]() end) end
 refresh(); views.fight()
