@@ -109,7 +109,7 @@ const floorMult = (f) => {
 };
 const riftMult = (base, tier) => floorMult(tier);   // 호환용
 const bossRiftMult = (t) => floorMult(t) * CFG.BOSS_RIFT_K;
-const riftAtkExtra = (node) => Math.pow(floorMult(node.tier || 1), CFG.FLOOR_ATKP - 1);   // 공격력은 체력보다 천천히 오른다
+const riftAtkExtra = (node) => Math.pow(floorMult(node.tier || 1), ((node.kind === "spire" || node.kind === "craid" || node.kind === "warden" || node.upper) ? CFG.SPIRE.ATKP : CFG.FLOOR_ATKP) - 1);   // 공격력은 체력보다 천천히 오른다
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
@@ -122,7 +122,7 @@ function createBattle(sv, node) {
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
     hpM: CFG.H0 * Math.pow(CFG.HPX, scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
-    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" || node.kind === "spire" || node.kind === "craid" || node.kind === "warden" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
+    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" || node.kind === "spire" || node.kind === "craid" || node.kind === "warden" || node.upper ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
@@ -287,8 +287,8 @@ function statusMul(st, sk, e) {   // 출혈·중독·점화·둔화·감전 중�
   if (has("bleed")) m *= (1 + st.vsBleed + (v && v.bleed || 0)) * st.bleedMore;
   if (has("poison")) m *= (1 + st.vsPoison + (v && v.poison || 0)) * st.poisonMore;
   if (has("ignite")) m *= (1 + st.vsIgnite + (v && v.ignite || 0)) * st.igniteMore;
-  if (e.chill > 0) m *= (1 + st.vsChill + (v && v.chill || 0)) * st.chillMore;
-  if (e.shock > 0) m *= (1 + st.vsShock + (v && v.shock || 0)) * st.shockMore;
+  if (e.chill > 0) m *= (1 + (CFG.CHILL_BASE || 0) + st.vsChill + (v && v.chill || 0)) * st.chillMore;
+  if (e.shock > 0) m *= (1 + (CFG.SHOCK_BASE || 0) + st.vsShock + (v && v.shock || 0)) * st.shockMore;
   return m;
 }
 function pickPrimary(b, sk) {
@@ -315,7 +315,7 @@ function damagePlayer(b, raw, opt) {
   opt = opt || {};
   if (b.inv > 0) return;
   if (!opt.undodgeable && Math.random() < b.stats.dodge) { b.dodges++; if (b.stats.sat.dodgeamp) b.dodgeBoost = 1; if (b.stats.cm && b.stats.cm.dodge) b.dodgeBoost2 = 1; if (!b.noFx) b.texts.push({ x: PLAYER_POS.x, y: PLAYER_POS.y - 110, text: "MISS", color: "#8fd0ff", big: false, t: 0.8, life: 0.8, word: true }); sfx(b, "dodge"); return; }
-  const dfv = b.stats.def * satDefMul(b); let d = raw * (1 - dfv / (dfv + 5 * raw));
+  const dfv = b.stats.def * satDefMul(b); let d = raw * (1 - dfv / (dfv + 5 * (CFG.DEF_POW === 1 ? raw : Math.pow(raw, CFG.DEF_POW))));
   if (b.debuffs.curse) d *= 1 + b.debuffs.curse.mult;
   { const C = b.stats.cm; if (C) { if (C.low50 && b.hp <= b.maxHp * 0.5) d *= 1 - C.low50; if (C.reviveShield && b.time < (b.rvShieldT || 0)) d *= 1 - C.reviveShield; } }   // 참
   if (b.affMatch) d *= CFG.EB_AFF_DEF;
