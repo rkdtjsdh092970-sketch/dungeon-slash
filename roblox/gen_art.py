@@ -25,6 +25,8 @@ ART = [
     ('b_guild', 'town/guild.png', (192, 192)),
     ('b_trainer', 'town/trainer.png', (192, 192)),
     ('b_notice', 'town/notice.png', (192, 192)),
+    # 아이콘 (장비 슬롯 · 재화 · 배속 패스)
+    *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'
 lines = ['-- 자동 생성 (roblox/gen_art.py). 일러스트 표: 파일은 roblox/sprites/<file> (RGBA 8bit, w × h).',

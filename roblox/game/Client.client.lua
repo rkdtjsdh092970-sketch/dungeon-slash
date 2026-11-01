@@ -60,6 +60,7 @@ local rpc = RS:WaitForChild("Rpc")
 loadStep("게임 데이터를 준비하는 중...", 0.15)
 local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)
+local Menus = require(RS.Game.Menus)   -- 장비 · 스킬 · 패시브 트리 화면
 task.spawn(function()   -- 전투 배경 그림이 오면 로딩 배경으로 서서히 깐다
   local a = Sprites.art("bg1"); if not a or not loadGui.Parent then return end
   loadArt.ImageContent = a.content
@@ -72,7 +73,7 @@ local INSET = math.max(36, GuiService:GetGuiInset().Y)   -- 로블록스 상단 
 local function vp() return workspace.CurrentCamera.ViewportSize end
 local K = 1   -- HUD 배율 (화면 높이 720 기준)
 -- 설정 (서버에 저장): UI 크기 · 피해 숫자 · 피격 반짝임 · 볼륨(전체/배경음악/효과음) · 음소거
-local OPT = { ui = 1, dmg = true, flash = 1, master = 0.8, music = 0.5, sfx = 0.8, mute = false }
+local OPT = { ui = 1, dmg = true, flash = 1, master = 0.8, music = 0.5, sfx = 0.8, mute = false, speed = 1, auto = 0, ar1 = 0, ar2 = 0, ar3 = 0, ar4 = 0 }
 local function calcK() K = math.clamp(vp().Y / 720, 0.6, 1.4) * OPT.ui; Stage.TOP = INSET; Stage.HUD = K end
 calcK()
 
@@ -85,8 +86,12 @@ local function label(parent, text, size, pos, sz)
   l.TextXAlignment = Enum.TextXAlignment.Left; l.TextWrapped = true; l.Text = text; l.Position = pos; l.Size = sz; l.Parent = parent; return l
 end
 local function button(parent, text, pos, sz, cb, color)
-  local b = Instance.new("TextButton"); b.Text = text; b.Font = Enum.Font.GothamBold; b.TextSize = 14; b.TextColor3 = Color3.new(1, 1, 1); b.BackgroundColor3 = color or Color3.fromRGB(70, 60, 120)
-  b.Position = pos; b.Size = sz; b.Parent = parent; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6); b.MouseButton1Click:Connect(cb); return b
+  local b = Instance.new("TextButton"); b.Text = text; b.Font = Enum.Font.FredokaOne; b.TextSize = 15; b.TextColor3 = Color3.new(1, 1, 1); b.BackgroundColor3 = color or Color3.fromRGB(95, 80, 160)
+  b.Position = pos; b.Size = sz; b.Parent = parent; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+  local g = Instance.new("UIGradient"); g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)); g.Rotation = 90; g.Parent = b
+  local s1 = Instance.new("UIStroke"); s1.Color = Color3.fromRGB(20, 10, 30); s1.Thickness = 2; s1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s1.Parent = b
+  local s2 = Instance.new("UIStroke"); s2.Color = Color3.fromRGB(20, 10, 30); s2.Thickness = 1.5; s2.Parent = b
+  b.MouseButton1Click:Connect(cb); return b
 end
 local function n(x) x = math.floor(x or 0); if x >= 1e9 then return string.format("%.1fB", x / 1e9) elseif x >= 1e6 then return string.format("%.1fM", x / 1e6) elseif x >= 1e4 then return string.format("%.1fK", x / 1e3) end return tostring(x) end
 
@@ -145,7 +150,7 @@ end
 local root = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, INSET / 2), Size = UDim2.new(0, 880, 0, 540), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 21 }, panelLayer)
 corner(root, 14); stroke(root, GOLD, 2.5)
 local panelScale = mk("UIScale", { Scale = 1 }, root)
-local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 10), Size = UDim2.new(1, -90, 0, 34), Font = Enum.Font.GothamBlack, TextSize = 24, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
+local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -90, 0, 36), Font = Enum.Font.FredokaOne, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
 local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 50), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)
 local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(16, 14, 32), BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
@@ -153,11 +158,14 @@ corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIP
 local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 34)); msg.ZIndex = 22; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
 local function clear() msg.Text = ""; for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end end
 local function card(title, lines, btns)
-  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(40, 34, 70); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
-  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6)
-  local t = label(f, title .. (#lines > 0 and ("\n" .. table.concat(lines, "\n")) or ""), 13, UDim2.new(0, 8, 0, 4), UDim2.new(1, -150, 0, 0)); t.AutomaticSize = Enum.AutomaticSize.Y
-  for i, b in ipairs(btns or {}) do button(f, b[1], UDim2.new(1, -136 + (i - 1) * 66, 0, 6), UDim2.new(0, 62, 0, 28), b[2]) end
-  Instance.new("UIPadding", f).PaddingBottom = UDim.new(0, 6)
+  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(44, 36, 78); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
+  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10); stroke(f, Color3.fromRGB(90, 76, 140), 1.5)
+  local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 10, 0, 6); tb.Size = UDim2.new(1, -160, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
+  local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0, 2); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = tb
+  local tt = label(tb, title, 15, UDim2.new(), UDim2.new(1, 0, 0, 0)); tt.Font = Enum.Font.FredokaOne; tt.TextColor3 = Color3.fromRGB(255, 225, 140); tt.AutomaticSize = Enum.AutomaticSize.Y; tt.LayoutOrder = 1
+  if #lines > 0 then local t = label(tb, table.concat(lines, "\n"), 13, UDim2.new(), UDim2.new(1, 0, 0, 0)); t.TextColor3 = Color3.fromRGB(225, 220, 245); t.AutomaticSize = Enum.AutomaticSize.Y; t.LayoutOrder = 2 end
+  for i, b in ipairs(btns or {}) do button(f, b[1], UDim2.new(1, -150 + (i - 1) * 72, 0, 8), UDim2.new(0, 68, 0, 32), b[2]) end
+  Instance.new("UIPadding", f).PaddingBottom = UDim.new(0, 10)
 end
 -- 문자열 입력 팝업
 local function prompt(title, placeholder, cb)
@@ -450,18 +458,36 @@ function views.set_beta()
   card(string.format("테스터 %d명", #v.list), { "로블록스 닉네임으로 추가합니다. 게임 주인은 항상 입장할 수 있습니다." }, { { "추가", function() prompt("추가할 테스터의 로블록스 닉네임", "닉네임", function(nm) if nm ~= "" then op("add", nm) end end) end } })
   for _, x in ipairs(v.list) do card(x.name, { "UserId " .. x.id }, { { "삭제", function() op("remove", tostring(x.id)) end } }) end
 end
+function views.set_auto()
+  clear()
+  local function pick(k, v) setOpt(k, v); views.set_auto() end
+  optRow("전투 후 자동 반복", nil, { { "끔", function() pick("auto", 0) end, OPT.auto == 0 }, { "같은 단계", function() pick("auto", 1) end, OPT.auto == 1 }, { "다음 단계", function() pick("auto", 2) end, OPT.auto == 2 } })
+  for i, nm in ipairs({ "일반", "매직", "레어", "전설" }) do
+    local k = "ar" .. i
+    optRow(string.format("%s 장비", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 }, { "분해", function() pick(k, 2) end, OPT[k] == 2 } })
+  end
+  card("자동 정리", { "자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방을 정리합니다. 강화한 장비와 사탄 장비는 건드리지 않습니다." }, {})
+end
 local function openSettings()
   local tabs = { { "언어", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
+  table.insert(tabs, 3, { "자동 전투", "set_auto" })
   if isOwner then tabs[#tabs + 1] = { "베타 관리", "set_beta" } end
   openPanel("설정", tabs)
 end
 
+-- 새 메뉴 화면 연결 (장비 · 스킬 · 패시브 트리는 Menus 모듈)
+local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "스킬", pass = "패시브" }
+Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
+  openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
+views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
+
 -- ── 전투 시작 → 재생 → 결과 ──
-local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 520, 0, 300), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
+local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
 corner(resBox, 16); stroke(resBox, GOLD, 3); local resScale = mk("UIScale", { Scale = K }, resBox)
 local resTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 16), Size = UDim2.new(1, 0, 0, 48), Font = Enum.Font.GothamBlack, TextSize = 40, Text = "", ZIndex = 27 }, resBox)
 mk("UIStroke", { Thickness = 3, Color = Color3.fromRGB(30, 10, 40) }, resTitle)
 local resText = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 74), Size = UDim2.new(1, -48, 0, 140), Font = Enum.Font.GothamMedium, TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(235, 230, 250), Text = "", ZIndex = 27 }, resBox)
+local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -100), Size = UDim2.new(1, -48, 0, 24), Font = Enum.Font.FredokaOne, TextSize = 17, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
 local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.new(1, -32, 0, 46), ZIndex = 27 }, resBox)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, resBtns)
 local function resultLines(x)
@@ -482,16 +508,57 @@ local function resultLines(x)
   return table.concat(L, "\n")
 end
 local launch
-local function showResultPanel(x, spec)
+local autoJob
+local function cancelAuto() if autoJob then task.cancel(autoJob); autoJob = nil end end
+local showResultPanel
+showResultPanel = function(x, spec)
   resultLayer.Visible = true
   resTitle.Text = x.win and "승리!" or "패배"; resTitle.TextColor3 = x.win and Color3.fromRGB(255, 214, 90) or Color3.fromRGB(255, 120, 120)
   resText.Text = (spec.title and (spec.title .. "\n") or "") .. resultLines(x)
   for _, c in ipairs(resBtns:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
-  local function rb(i, t, cb, col) local b = button(resBtns, t, UDim2.new(), UDim2.new(0, 108, 1, 0), cb, col); b.LayoutOrder = i; b.ZIndex = 28; b.TextSize = 16 end
+  cancelAuto(); resCount.Text = ""
+  local function rb(i, t, cb, col) local b = button(resBtns, t, UDim2.new(), UDim2.new(0, 112, 1, 0), function() cancelAuto(); cb() end, col); b.LayoutOrder = i; b.ZIndex = 28; b.TextSize = 16; return b end
   local nxt = spec.nextSpec and spec.nextSpec()
-  if nxt then rb(1, "다음 ▶", function() launch(nxt) end, Color3.fromRGB(170, 70, 60)) end
-  if not spec.noRetry then rb(2, "다시 도전", function() launch(spec) end) end
+  if nxt then rb(1, "다음 ▶", function() launch(nxt) end, Color3.fromRGB(200, 140, 40)) end
+  if not spec.noRetry then rb(2, "다시 도전", function() launch(spec) end, Color3.fromRGB(60, 110, 210)) end
   rb(3, "지도", function() setScreen("map") end); rb(4, "마을", function() setScreen("town") end)
+  local AUTO_TXT = { [0] = "자동 반복: 끔", "자동: 같은 단계", "자동: 다음 단계" }
+  if not spec.noRetry then rb(5, AUTO_TXT[OPT.auto] or AUTO_TXT[0], function() setOpt("auto", (OPT.auto + 1) % 3); showResultPanel(x, spec) end, OPT.auto > 0 and Color3.fromRGB(60, 165, 80) or Color3.fromRGB(70, 66, 90)) end
+  -- 자동 반복 (웹 autoNext): 이기면 3초 뒤 같은/다음 단계를 다시 시작, 끝날 때마다 자동 정리 규칙 적용. 지면 멈춘다
+  if OPT.auto > 0 and not spec.noRetry then
+    if not x.win then resCount.Text = "패배해서 자동 반복을 멈췄습니다"; return end
+    local target = (OPT.auto == 2 and nxt) or spec
+    autoJob = task.spawn(function()
+      for i = 3, 1, -1 do resCount.Text = string.format("자동 반복: %d초 후 시작", i); task.wait(1) end
+      autoJob = nil
+      if OPT.ar1 + OPT.ar2 + OPT.ar3 + OPT.ar4 > 0 then
+        local ok, e = pcall(function() return rpc:InvokeServer("autoclean", { OPT.ar1, OPT.ar2, OPT.ar3, OPT.ar4 }) end)
+        if ok and e.res and e.res.n > 0 then setSummary(e.summary); toast(string.format("자동 정리: 장비 %d개 · 골드 +%s · 강화석 +%s", e.res.n, n(e.res.gold), n(e.res.ore))) end
+      end
+      launch(target)
+    end)
+  end
+end
+-- x4 배속 게임패스 (4x Speed, 한 번 사면 영구)
+local SPEED4_ID = 2063961736
+local owns4 = false
+local MPS = game:GetService("MarketplaceService")
+local function buy4() pcall(function() MPS:PromptGamePassPurchase(player, SPEED4_ID) end) end
+MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought)
+  if p == player and id == SPEED4_ID and bought then
+    owns4 = true; toast("x4 배속을 쓸 수 있습니다!", Color3.fromRGB(140, 255, 160))
+    if mainStage and mainStage.hud then mainStage.hud.owns4 = true; mainStage.spdOpts[4].Text = "x4" end
+  end
+end)
+local function hudInfo(spec)
+  local sk = {}
+  local ok, r = pcall(function() return rpc:InvokeServer("skills") end)
+  if ok and r.rows then
+    table.sort(r.rows, function(a, b) return a.slot < b.slot end)
+    for _, k in ipairs(r.rows) do if k.slot > 0 then local col, icon, d = Menus.skStyle(k.id); sk[#sk + 1] = { id = k.id, name = k.name, cd = d and d.cd, color = col, icon = icon } end end
+  end
+  return { title = spec.title, level = summary and summary.level, maxHp = summary and summary.maxHp, skills = sk, speed = OPT.speed, owns4 = owns4,
+    onSpeed = function(i) setOpt("speed", i) end, onBuy4 = buy4 }
 end
 local busy = false
 launch = function(spec)
@@ -502,7 +569,7 @@ launch = function(spec)
   closePanel(); setScreen("battle")
   local x = r.result
   local function done() setSummary(r.summary); showResultPanel(x, spec) end
-  if x.replay and x.replay.snaps and #x.replay.snaps > 0 then mainStage:play(x.replay, done, 40) else done() end
+  if x.replay and x.replay.snaps and #x.replay.snaps > 0 then mainStage:play(x.replay, done, 40, hudInfo(spec)) else done() end
 end
 showResult = function(r) launch({ call = function() return r end, noRetry = true }) end
 
@@ -743,6 +810,7 @@ do
   for i, k in ipairs(keys) do loadStep(string.format("그림을 불러오는 중... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k) end
 end
 pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
+pcall(function() owns4 = rpc:InvokeServer("speedpass").owns == true end)
 makeStage()
 loadStep("준비 완료!", 1)
 setScreen("town")

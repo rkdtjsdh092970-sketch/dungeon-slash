@@ -20,5 +20,12 @@ M.ART = {
   b_guild = { w = 192, h = 192, foot = 0.979, file = "art_b_guild.rgba", id = nil },
   b_trainer = { w = 192, h = 192, foot = 0.979, file = "art_b_trainer.rgba", id = nil },
   b_notice = { w = 192, h = 192, foot = 0.995, file = "art_b_notice.rgba", id = nil },
+  i_weapon = { w = 96, h = 96, foot = 0.99, file = "art_i_weapon.rgba", id = nil },
+  i_helm = { w = 96, h = 96, foot = 0.99, file = "art_i_helm.rgba", id = nil },
+  i_armor = { w = 96, h = 96, foot = 0.969, file = "art_i_armor.rgba", id = nil },
+  i_gloves = { w = 96, h = 96, foot = 0.969, file = "art_i_gloves.rgba", id = nil },
+  i_boots = { w = 96, h = 96, foot = 0.969, file = "art_i_boots.rgba", id = nil },
+  i_ring = { w = 96, h = 96, foot = 0.958, file = "art_i_ring.rgba", id = nil },
+  i_neck = { w = 96, h = 96, foot = 0.958, file = "art_i_neck.rgba", id = nil },
 }
 return M

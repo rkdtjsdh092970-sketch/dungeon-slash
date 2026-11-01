@@ -70,18 +70,68 @@ function M.create(parent, W, H, replayAct)
   if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 96 * u) end
   S.pl.Position = UDim2.new(0, S.plX, 0, S.plY); S.pl.ZIndex = 5
   -- 상태 바
-  -- HUD: 로블록스 상단 버튼 줄(M.TOP) 아래. 왼쪽 위 체력/마나, 오른쪽 위 배속/건너뛰기 (HUD 크기는 Client 의 UIScale 값 M.HUD 를 따른다)
+  -- ── 전투 HUD (웹 battleHudBuild 구성): 로블록스 상단 버튼 줄(M.TOP) 아래부터. 크기는 Client 의 HUD 배율 M.HUD ──
   local TOP, k = M.TOP, M.HUD
-  local function bar(y, h, color) local bg = mk("Frame", { Position = UDim2.new(0, 16, 0, TOP + y * k), Size = UDim2.new(0, 240 * k, 0, h * k), BackgroundColor3 = Color3.fromRGB(18, 14, 30), BackgroundTransparency = 0.15, ZIndex = 8 }, root); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, bg); mk("UIStroke", { Color = Color3.fromRGB(20, 10, 30), Thickness = 2 }, bg)
-    local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = color, ZIndex = 9 }, bg); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, f); return f end
-  S.hpBar = bar(8, 16, Color3.fromRGB(230, 70, 80)); S.mpBar = bar(28, 10, Color3.fromRGB(80, 150, 240))
-  S.timeLbl = mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 44 * k), Size = UDim2.new(0, 180 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 9 }, root)
-  mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(20, 10, 30) }, S.timeLbl)
-  S.plAnim = { name = "idle", t = 0 }
-  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Size = UDim2.new(0, 186, 0, 32), Position = UDim2.new(1, -16, 0, TOP + 6 * k), Visible = false, ZIndex = 30 }, root)
+  local FONT, GOLD, EDGE = Enum.Font.FredokaOne, Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 10, 30)
+  local function plate(props) local f = mk("Frame", props, root); mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, f); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, f); return f end
+  local function outl(o, t) mk("UIStroke", { Thickness = t or 2, Color = EDGE }, o); return o end
+  -- 왼쪽 위: 초상화 + 레벨 + HP/MP
+  local L = plate({ Position = UDim2.new(0, 12, 0, TOP + 6 * k), Size = UDim2.new(0, 330 * k, 0, 88 * k), BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.12, ZIndex = 8 })
+  local face = mk("Frame", { Position = UDim2.new(0, 8 * k, 0, 8 * k), Size = UDim2.new(0, 72 * k, 0, 72 * k), BackgroundColor3 = Color3.fromRGB(60, 40, 100), ZIndex = 9 }, L)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, face); mk("UIStroke", { Color = GOLD, Thickness = 3 }, face)
+  local fa = Sprites.art("warrior")
+  if fa then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.4), Position = UDim2.new(0.5, 0, 0.5, 0), ImageContent = fa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 10 }, face) end
+  S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 70 * k, 0, 72 * k), Size = UDim2.new(0, 34 * k, 0, 24 * k), BackgroundColor3 = GOLD, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(15 * k), ZIndex = 11 }, L))
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, S.lvLbl)
+  local function bar(y, h, c1, c2)
+    local bg = mk("Frame", { Position = UDim2.new(0, 90 * k, 0, y * k), Size = UDim2.new(0, 228 * k, 0, h * k), BackgroundColor3 = Color3.fromRGB(10, 6, 20), ZIndex = 9 }, L)
+    mk("UICorner", { CornerRadius = UDim.new(0, 6 * k) }, bg); mk("UIStroke", { Color = EDGE, Thickness = 2 }, bg)
+    local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 10 }, bg); mk("UICorner", { CornerRadius = UDim.new(0, 6 * k) }, f)
+    mk("UIGradient", { Color = ColorSequence.new(c1, c2), Rotation = 90 }, f)
+    local t = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(h * 0.78 * k), ZIndex = 11 }, bg), 1.5)
+    return f, t
+  end
+  S.hpBar, S.hpTxt = bar(12, 24, Color3.fromRGB(255, 110, 110), Color3.fromRGB(190, 40, 50))
+  S.mpBar, S.mpTxt = bar(42, 16, Color3.fromRGB(120, 180, 255), Color3.fromRGB(50, 90, 200))
+  S.killLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 92 * k, 0, 62 * k), Size = UDim2.new(0, 226 * k, 0, 20 * k), Text = "", TextColor3 = Color3.fromRGB(255, 230, 160), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10 }, L), 1.5)
+  -- 위 가운데: 단계 이름 + 보스 체력
+  S.titleLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 4 * k), Size = UDim2.new(0, 520 * k, 0, 30 * k), Text = "", TextColor3 = Color3.fromRGB(255, 225, 140), Font = FONT, TextSize = math.floor(24 * k), ZIndex = 9 }, root), 3)
+  S.boss = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 38 * k), Size = UDim2.new(0, 460 * k, 0, 48 * k), BackgroundTransparency = 1, Visible = false, ZIndex = 9 }, root)
+  S.bossName = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20 * k), Text = "", TextColor3 = Color3.fromRGB(255, 160, 150), Font = FONT, TextSize = math.floor(17 * k), ZIndex = 10 }, S.boss), 2)
+  local bb = mk("Frame", { Position = UDim2.new(0, 0, 0, 22 * k), Size = UDim2.new(1, 0, 0, 20 * k), BackgroundColor3 = Color3.fromRGB(14, 4, 8), ZIndex = 10 }, S.boss)
+  mk("UICorner", { CornerRadius = UDim.new(0, 8 * k) }, bb); mk("UIStroke", { Color = Color3.fromRGB(150, 50, 50), Thickness = 3 }, bb)
+  S.bossFill = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 11 }, bb); mk("UICorner", { CornerRadius = UDim.new(0, 8 * k) }, S.bossFill)
+  mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(255, 100, 80), Color3.fromRGB(170, 20, 30)), Rotation = 90 }, S.bossFill)
+  S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 12 }, bb), 1.5)
+  -- 오른쪽 위: 건너뛰기 · 배속(누르면 x1~x4 가 아래로 펼쳐짐, x4 는 게임패스)
+  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 236, 0, 40), Visible = false, ZIndex = 30 }, root)
   mk("UIScale", { Scale = k }, S.ctrl)
-  local function sb(txt, x, cb) local b = mk("TextButton", { Text = txt, Size = UDim2.new(0, 88, 0, 32), Position = UDim2.new(0, x, 0, 0), BackgroundColor3 = Color3.fromRGB(30, 20, 50), BackgroundTransparency = 0.15, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 30 }, S.ctrl); mk("UICorner", { CornerRadius = UDim.new(0, 8) }, b); mk("UIStroke", { Color = Color3.fromRGB(214, 168, 70), Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b); b.MouseButton1Click:Connect(cb) end
-  sb("배속", 0, function() S:faster() end); sb("건너뛰기", 98, function() S:skip() end)
+  local function cbtn(parent, text, pos, size, color)
+    local b = mk("TextButton", { Text = text, Position = pos, Size = size, BackgroundColor3 = color, TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = 17, AutoButtonColor = true, ZIndex = 31 }, parent)
+    mk("UICorner", { CornerRadius = UDim.new(0, 10) }, b); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+    mk("UIGradient", { Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)), Rotation = 90 }, b); outl(b, 1.5)
+    return b
+  end
+  cbtn(S.ctrl, "건너뛰기 ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(60, 50, 110)).MouseButton1Click:Connect(function() S:skip() end)
+  S.spdBtn = cbtn(S.ctrl, "x1 ▾", UDim2.new(0, 128, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
+  S.spdBtn:SetAttribute("NoTr", true)
+  S.spdList = mk("Frame", { Position = UDim2.new(0, 128, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
+  mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, S.spdList)
+  S.spdOpts = {}
+  for i = 1, 4 do
+    local b = cbtn(S.spdList, "x" .. i, UDim2.new(), UDim2.new(1, 0, 0, 36), Color3.fromRGB(70, 60, 120)); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
+    b.MouseButton1Click:Connect(function() S:pickSpeed(i) end); S.spdOpts[i] = b
+  end
+  S.spdOpen = false
+  S.spdBtn.MouseButton1Click:Connect(function() S:speedMenu(not S.spdOpen) end)
+  S.timeLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 50 * k), Size = UDim2.new(0, 120 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, root), 1.5)
+  -- 아래 가운데: 장착 스킬 (쓰면 쿨타임 표시)
+  S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12 * k), Size = UDim2.new(0, 0, 0, 74 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.15, Visible = false, ZIndex = 8 }, root)
+  mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8 * k), SortOrder = Enum.SortOrder.LayoutOrder }, S.skillBar)
+  mk("UIPadding", { PaddingLeft = UDim.new(0, 8 * k), PaddingRight = UDim.new(0, 8 * k) }, S.skillBar)
+  S.skillCells = {}
+  S.plAnim = { name = "idle", t = 0 }
   S.idleConn = RunService.RenderStepped:Connect(function(dt) if S.conn or not S.alive then return end
     S.plAnim.t += dt; if S.plArt then M.artPose(S) end
     local row, frame, done = Sprites.anim("warrior", "idle", S.plAnim.t); if S.plInfo then Sprites.setFrame(S.pl, S.plInfo, row, frame) end end)
@@ -139,6 +189,14 @@ end
 
 function M:applySnap(s, lanes)
   self.hpBar.Size = UDim2.new(math.clamp(s.hp, 0, 1), 0, 1, 0); self.mpBar.Size = UDim2.new(math.clamp(s.mp or 0, 0, 1), 0, 1, 0)
+  local H = self.hud or {}
+  self.hpTxt.Text = H.maxHp and (fmt(math.max(0, s.hp) * H.maxHp) .. " / " .. fmt(H.maxHp)) or (math.floor(s.hp * 100) .. "%")
+  self.mpTxt.Text = math.floor(math.clamp(s.mp or 0, 0, 1) * 100) .. "%"
+  local boss
+  for _, e in ipairs(s.e) do if e.tier == "boss" and not e.dead then boss = e end end
+  self.boss.Visible = boss ~= nil
+  if boss then self.bossName.Text = "☠ " .. tostring(boss.n or ""); self.bossFill.Size = UDim2.new(math.clamp(boss.hp, 0, 1), 0, 1, 0); self.bossPct.Text = math.floor(boss.hp * 100) .. "%" end
+  if s.c then for _, c in ipairs(s.c) do local cell = self.skillCells[c[1]]; if cell then cell.left = cell.cd end end end
   local seen = {}
   local py = self.plY
   for _, e in ipairs(s.e) do
@@ -149,7 +207,7 @@ function M:applySnap(s, lanes)
     if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
     if not u.placed then u.placed = true; u.x = x + 70 * self.u; u.y = y end
     u.tx, u.ty = x, y; u.hp = e.hp
-    if e.dead and not u.dying then u.dying = 0 end
+    if e.dead and not u.dying then u.dying = 0; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
     u.wind = e.wind
   end
@@ -168,12 +226,49 @@ function M:applySnap(s, lanes)
 end
 
 -- replay = { snaps, lanes, win, total }, onDone(): 재생이 끝났을 때. maxSec: 최대 재생 시간(길면 배속)
-function M:play(replay, onDone, maxSec)
+-- 전투 HUD 정보: { title, level, maxHp, skills = { {id, name, cd, color, icon} }, speed, owns4, onSpeed(n), onBuy4() }
+function M:setHud(h)
+  self.hud = h or {}
+  self.titleLbl.Text = h and h.title or ""; self.lvLbl.Text = tostring(h and h.level or 1)
+  self.userSpd = math.clamp((h and h.speed) or 1, 1, 4); if self.userSpd == 4 and not (h and h.owns4) then self.userSpd = 3 end
+  self.spdBtn.Text = "x" .. self.userSpd .. " ▾"; self.spdOpts[4].Text = (h and h.owns4) and "x4" or "x4 🔒"
+  for i = 1, 4 do self.spdOpts[i].BackgroundColor3 = i == self.userSpd and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(70, 60, 120) end
+  for _, c in ipairs(self.skillBar:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+  self.skillCells = {}
+  local k = M.HUD
+  for i, sk in ipairs((h and h.skills) or {}) do
+    local col = sk.color or Color3.fromRGB(200, 200, 220)
+    local f = mk("Frame", { Size = UDim2.new(0, 58 * k, 0, 58 * k), BackgroundColor3 = Color3.fromRGB(30, 22, 52), LayoutOrder = i, ZIndex = 9 }, self.skillBar)
+    mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, f); mk("UIStroke", { Color = col, Thickness = 2.5 }, f)
+    mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.5), Color3.fromRGB(22, 16, 36)), Rotation = 90 }, f)
+    mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0.7, 0), Text = sk.icon or "✦", TextScaled = true, Font = Enum.Font.FredokaOne, TextColor3 = col, ZIndex = 10 }, f)
+    local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0.66, 0), Size = UDim2.new(1, 0, 0.34, 0), Text = sk.name or "", TextScaled = true, Font = Enum.Font.FredokaOne, TextColor3 = Color3.new(1, 1, 1), ZIndex = 10 }, f)
+    mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
+    local ov = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 11 }, f)
+    mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, ov)
+    self.skillCells[sk.id] = { cd = math.max(0.3, sk.cd or 1), left = 0, ov = ov }
+  end
+end
+function M:speedMenu(open)
+  self.spdOpen = open
+  TweenService:Create(self.spdList, TweenInfo.new(0.22, Enum.EasingStyle.Quad), { Size = UDim2.new(0, 108, 0, open and 156 or 0) }):Play()
+end
+function M:pickSpeed(i)
+  local H = self.hud or {}
+  self:speedMenu(false)
+  if i == 4 and not H.owns4 then if H.onBuy4 then H.onBuy4() end; return end
+  self.userSpd = i; self.spdBtn.Text = "x" .. i .. " ▾"
+  for j = 1, 4 do self.spdOpts[j].BackgroundColor3 = j == i and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(70, 60, 120) end
+  if H.onSpeed then H.onSpeed(i) end
+end
+function M:play(replay, onDone, maxSec, hud)
   for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy() end; self.units = {}
   self.buildBg(replay.act or 1)
+  if hud then self:setHud(hud) end
+  self.kills = 0; self.killLbl.Text = string.format("처치 %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
   self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
   local total = (replay.snaps[#replay.snaps] or { t = 1 }).t
-  self.spd = math.max(1, total / (maxSec or 40)); self.userSpd = 1
+  self.spd = math.max(1, total / (maxSec or 40)); self.userSpd = self.userSpd or 1
   if self.conn then self.conn:Disconnect() end
   local lanes = replay.lanes or 2
   self.conn = RunService.RenderStepped:Connect(function(dt)
@@ -181,7 +276,8 @@ function M:play(replay, onDone, maxSec)
     self.t += dt * self.spd * self.userSpd
     local sn = replay.snaps
     while self.idx < #sn and sn[self.idx + 1].t <= self.t do self.idx += 1; self:applySnap(sn[self.idx], lanes) end
-    self.timeLbl.Text = string.format("%.0f / %.0f초  x%.1f", math.min(self.t, total), total, self.spd * self.userSpd)
+    self.timeLbl.Text = string.format("%.0f / %.0f초", math.min(self.t, total), total)
+    for _, cell in pairs(self.skillCells) do if cell.left > 0 then cell.left = math.max(0, cell.left - dt * self.spd * self.userSpd); cell.ov.Size = UDim2.new(1, 0, cell.left / cell.cd, 0) end end
     -- 유닛 이동/애니메이션
     local k = math.min(1, dt * 9)
     for id, u in pairs(self.units) do
@@ -208,10 +304,10 @@ function M:play(replay, onDone, maxSec)
       local row, frame, done = Sprites.anim("warrior", a.name, a.t); if done then self.plAnim = { name = "idle", t = 0 } end
       Sprites.setFrame(self.pl, self.plInfo, row, frame)
     end
-    if self.idx >= #sn and self.t >= total + 0.8 then self.conn:Disconnect(); self.conn = nil; self.ctrl.Visible = false; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
+    if self.idx >= #sn and self.t >= total + 0.8 then self.conn:Disconnect(); self.conn = nil; self:hudOff(); if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
   end)
 end
-function M:skip() self.ctrl.Visible = false; if self.conn then self.conn:Disconnect(); self.conn = nil end; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
-function M:faster() self.userSpd = self.userSpd >= 4 and 1 or self.userSpd * 2 end
+function M:hudOff() self.ctrl.Visible = false; self.skillBar.Visible = false; self.boss.Visible = false; self:speedMenu(false) end
+function M:skip() self:hudOff(); if self.conn then self.conn:Disconnect(); self.conn = nil end; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
 function M:destroy() self.alive = false; if self.idleConn then self.idleConn:Disconnect() end; if self.conn then self.conn:Disconnect() end; self.root:Destroy() end
 return M

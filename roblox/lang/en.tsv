@@ -1568,3 +1568,52 @@ rpc 오류:	rpc error:
 한국어	한국어
 화면 글자 · 버튼 크기	Text & Button Size
 효과음	Sound Effects
+%.0f / %.0f초	%.0f / %.0fs
+%d개 분해	Dismantled %d items
+%d개 판매	Sold %d items
+%d번 칸에	To Slot %d
+%s\n룬: %s	%s\nRune: %s
+%s  (%d점)	%s  (%d pt)
+%s 장비	%s Gear
+x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
+— 착용 중 —\n%s	— Equipped —\n%s
+가방 %d개	Bag (%d)
+가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.	Tap an item in your bag or an equipped slot to see its details here.
+강화하러 가기	Go Enhance
+같은 단계	Same Stage
+건너뛰기 ▶▶	Skip ▶▶
+기본 공격	Basic Attack
+끔	Off
+남은 포인트 %d / %d	Points Left %d / %d
+노드 %d개를 찍었습니다	Allocated %d nodes
+다음 단계	Next Stage
+보유 스킬 %d개	My Skills (%d)
+분해 %d	Dismantle %d
+빈 칸	Empty
+스킬 정보	Skill Info
+스킬을 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 스킬은 마을의 [스킬 상점]에서 삽니다.	Tap a skill to see its details and the Level Up / Equip buttons.\nBuy new skills at the [Skill Shop] in the village.
+여러 개 선택	Select Multiple
+위력 %d%%	Power %d%%
+유지	Keep
+일괄 정리	Bulk Clean
+자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방을 정리합니다. 강화한 장비와 사탄 장비는 건드리지 않습니다.	While auto-repeating, your bag is cleaned with these rules after every battle. Enhanced and Satan gear are never touched.
+자동 반복: %d초 후 시작	Auto-repeat: starting in %ds
+자동 반복: 끔	Auto: Off
+자동 배분	Auto Allocate
+자동 전투	Auto Battle
+자동 정리	Auto Clean
+자동 정리: 장비 %d개 · 골드 +%s · 강화석 +%s	Auto Clean: %d items · Gold +%s · Upgrade Stone +%s
+자동: 같은 단계	Auto: Same Stage
+자동: 다음 단계	Auto: Next Stage
+장비 정보	Item Info
+장착 칸 (%d)	Equipped Slots (%d)
+전투 후 자동 반복	Auto-Repeat After Battle
+찍기	Allocate
+찍음	Allocated
+착용 중	Equipped
+처치 %d	Kills %d
+체력 %s · 공격 %s · 주문 %s\n방어 %s · 치명 %.0f%%	HP %s · ATK %s · SPL %s\nDEF %s · Crit %.0f%%
+쿨타임 %.1f초	Cooldown %.1fs
+판매 %d	Sell %d
+패배해서 자동 반복을 멈췄습니다	Defeated — auto-repeat stopped
+포인트가 부족하거나 이어진 길이 없습니다	Not enough points, or no connected path

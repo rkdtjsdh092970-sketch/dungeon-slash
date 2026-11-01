@@ -98,7 +98,17 @@ local function betaCommand(p, text)
   else local m = betaDo(cmd, arg); if m then notice:FireClient(p, m) end end
 end
 -- 설정(언어 · 그래픽 · 소리)으로 저장할 수 있는 값
-local OPT_KEYS = { ui = "number", dmg = "boolean", flash = "number", master = "number", music = "number", sfx = "number", mute = "boolean" }
+local OPT_KEYS = { ui = "number", dmg = "boolean", flash = "number", master = "number", music = "number", sfx = "number", mute = "boolean",
+  speed = "number", auto = "number", ar1 = "number", ar2 = "number", ar3 = "number", ar4 = "number" }   -- 배속 · 자동 반복(0 끔 1 같은 단계 2 다음 단계) · 등급별 자동 정리
+-- x4 배속 게임패스 (한 번 사면 영구). ID 는 Monetization.lua PASSES.speed4 와 같게 유지
+local SPEED4_ID = 2063961736
+local MPS = game:GetService("MarketplaceService")
+local ownsSpeed4 = {}
+local function hasSpeed4(p)
+  if ownsSpeed4[p.UserId] == nil then local ok, v = pcall(function() return MPS:UserOwnsGamePassAsync(p.UserId, SPEED4_ID) end); if ok then ownsSpeed4[p.UserId] = v end end
+  return ownsSpeed4[p.UserId] == true
+end
+MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought) if id == SPEED4_ID and bought then ownsSpeed4[p.UserId] = true end end)
 
 Players.PlayerAdded:Connect(function(p)
   if not betaAllowed(p) then p:Kick("Dungeon Slash is in closed beta (invite only). Thanks for your interest!"); return end
@@ -170,6 +180,10 @@ local handle = function(player, action, arg)
     local m = type(arg) == "table" and arg.op ~= "view" and betaDo(arg.op, arg.v) or nil
     return { msg = m, view = betaView() }
   elseif action == "isowner" then return { owner = isOwner(player) }
+  elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }
+  elseif action == "autoclean" then return { res = Game.autoClean(sv, type(arg) == "table" and arg or {}), summary = Game.summary(sv) }
+  elseif action == "passview" then return { view = Game.passView(sv), summary = Game.summary(sv) }
+  elseif action == "passtake" then local n = Game.passTake(sv, arg); return { n = n, view = Game.passView(sv), summary = Game.summary(sv) }
   elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }
   elseif action == "play" then
     if s.busy then return { err = "전투 중입니다" } end

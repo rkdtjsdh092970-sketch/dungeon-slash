@@ -46,12 +46,12 @@ function M.summary(sv)
 end
 function M.inventory(sv)
   local out = {}
-  for i, it in ipairs(sv.inv) do out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), sat = it.sat ~= nil } end
+  for i, it in ipairs(sv.inv) do out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl } end
   return out
 end
 function M.equipped(sv)
   local out = {}
-  for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), lines = M.itemLines(it) } end end
+  for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), lines = M.itemLines(it), rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl, sat = it.sat ~= nil } end end
   return out
 end
 
@@ -70,6 +70,25 @@ function M.equip(sv, uid)
 end
 -- 판매/분해/일일/오프라인 (Extras)
 function M.dismantle(sv, uid) return Extras.dismantle(sv, uid) end
+-- 자동 정리: rules[등급+1] = 0 유지 · 1 판매 · 2 분해 (강화했거나 사탄 장비는 건드리지 않음 = 일괄 정리와 같은 조건)
+function M.autoClean(sv, rules)
+  local n, gold, ore = 0, 0, 0
+  for i = #sv.inv, 1, -1 do
+    local it = sv.inv[i]; local m = tonumber(rules and rules[(it.rarity or 0) + 1]) or 0
+    if m > 0 and not it.sat and (it.enh or 0) == 0 then
+      table.remove(sv.inv, i); n += 1
+      if m == 1 then gold += Extras.itemValue(it) else local y = Extras.dismantleYield(it); gold += y.gold; ore += y.ore end
+    end
+  end
+  sv.gold += gold; sv.ore += ore
+  return { n = n, gold = gold, ore = ore }
+end
+-- 패시브 트리: 찍은 노드 목록 · 남은 포인트 / 노드 찍기(시작점에서 이어지는 경로를 한 번에)
+function M.passView(sv)
+  local t = {}; for id in pairs(sv.pass or {}) do t[#t + 1] = id end
+  return { taken = t, left = Econ.passiveLeft(sv), points = Econ.passivePoints(sv) }
+end
+function M.passTake(sv, id) return Econ.addPassivePath(sv, tostring(id)) end
 function M.sell(sv, uid) return Extras.sell(sv, uid) end
 function M.bulk(sv, r, mode) return Extras.bulk(sv, tonumber(r) or 0, mode == "sell" and "sell" or "dismantle") end
 function M.daily(sv) return Extras.dailyView(sv) end
