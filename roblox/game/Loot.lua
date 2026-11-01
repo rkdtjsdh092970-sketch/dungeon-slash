@@ -97,10 +97,31 @@ function M.spireDrops(rng, sv, node, boss, first)
   return items
 end
 
+-- 스테이지 · 균열 드랍 (장비 + 강화석 · 연마석 · 혼돈 구슬)
+local function floorTier(f) return max(1, min(5, 1 + floor((max(1, f) - 1 + 1) / 20))) end
+function M.fieldDrops(rng, sv, node, boss)
+  local kind = node.kind; local isRift = kind == "rift"
+  local ilvl = isRift and floorTier(node.tier) or 1
+  local n = isRift and (4 + min(8, floor(node.tier / 6)) + (boss and 3 or 0)) or (boss and 4 or (2 + ((node.stage or 0) >= 3 and 1 or 0)))
+  local items = {}
+  for _ = 1, n do
+    local r
+    if isRift then r = wpick(rng, { 0, 1, 2, 3 }, function(x) return ({ 30, 40, 25, 5 })[x + 1] end)
+    else r = wpick(rng, { 0, 1, 2, 3 }, function(x) local R = Items.ITEM_RARITY[x + 1]; return boss and max(R.bossDrop, R.drop * 0.5) or R.drop end) end
+    items[#items + 1] = M.genItem(rng, sv, ilvl, r)
+  end
+  local out = { items = items }
+  out.ore = floor(rng:NextInteger(1, 2) + (boss and 4 or 0) + floor((node.tier or 0) / 3) + 0.5)
+  if isRift then out.hone = max(1, floor((1 + node.tier / 8) * (boss and 2 or 1) + 0.5)) end
+  local oc = isRift and (0.4 + node.tier / 30) or ((boss and kind == "boss") and 0.4 or 0.03)
+  out.orbC = floor(oc) + (rng:NextNumber() < oc - floor(oc) and 1 or 0)
+  return out
+end
+
 -- 새 세이브 (JS newSave 이식: 시작 장비 3칸 + 일격 스킬)
 function M.newSave(rng)
   local s = { v = 3, level = 1, gold = 0, ore = 5, inv = {}, equipped = {}, skills = {}, loadout = { false, false, false, false }, slots = 1, nextUid = 1,
-    lanesBase = CFG.BASE_LANES, cls = 0, cpass = {}, pass = {}, charms = {}, spire = { best = 0 }, stats = { kills = 0, clears = 0 }, guildLv = 0 }
+    lanesBase = CFG.BASE_LANES, cls = 0, cpass = {}, pass = {}, charms = {}, spire = { best = 0 }, rift = { best = 0 }, cleared = 0, hone = 0, orbC = 0, stats = { kills = 0, clears = 0 }, guildLv = 0 }
   for _, slot in ipairs({ "weapon", "helm", "armor" }) do s.equipped[slot] = M.genItem(rng, s, 1, 0, slot) end
   local sk = { uid = s.nextUid, id = "strike", rarity = 0 }; s.nextUid += 1; s.skills[1] = sk; s.loadout[1] = { uid = sk.uid, rule = "front" }
   return s

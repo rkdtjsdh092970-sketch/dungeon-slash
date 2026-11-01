@@ -41,6 +41,11 @@ rpc.OnServerInvoke = function(player, action, arg)
   elseif action == "inv" then return { inv = Game.inventory(sv) }
   elseif action == "equip" then local ok, e = Game.equip(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "dismantle" then local ok, e = Game.dismantle(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
+  elseif action == "fight" then
+    if s.busy then return { err = "전투 중입니다" } end
+    s.busy = true; local res, e = Game.fight(sv, arg.kind, arg.n); s.busy = false
+    if not res then return { err = e } end
+    return { result = res, summary = Game.summary(sv) }
   elseif action == "battle" then
     if s.busy then return { err = "전투 중입니다" } end
     s.busy = true; local res, e = Game.battle(sv, tonumber(arg)); s.busy = false
