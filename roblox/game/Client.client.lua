@@ -180,6 +180,7 @@ local function prompt(title, placeholder, cb)
 end
 
 local views = {}
+local cancelAutoFn   -- 자동 반복 대기 취소 (메뉴를 열면 멈춘다)
 local showResult   -- 아래에서 정의 (문지기 화면이 사용)
 
 -- ── 메뉴 내용 (기존 화면 그대로) ──
@@ -374,7 +375,7 @@ local screen = "town"
 local buildTown, buildMap
 local infoCard
 local function fitPanel() local v = vp(); panelScale.Scale = math.clamp(math.min((v.X - 24) / 880, (v.Y - INSET - 16) / 540), 0.45, 1.3) end
-local function closePanel() panelLayer.Visible = false; clear() end
+local function closePanel() panelLayer.Visible = false; clear(); if screen == "battle" and mainStage and not mainStage.conn then resultLayer.Visible = true end end
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
@@ -386,7 +387,7 @@ root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
 panelLayer.MouseButton1Click:Connect(closePanel)
 do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20 end
 local function openPanel(title, tabs, first)
-  fitPanel(); panelTitle.Text = title; panelLayer.Visible = true
+  fitPanel(); panelTitle.Text = title; panelLayer.Visible = true; resultLayer.Visible = false; if cancelAutoFn then cancelAutoFn() end
   for _, c in ipairs(tabRow:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   local btns = {}
   local function sel(key)
@@ -510,6 +511,7 @@ end
 local launch
 local autoJob
 local function cancelAuto() if autoJob then task.cancel(autoJob); autoJob = nil end end
+cancelAutoFn = cancelAuto
 local showResultPanel
 showResultPanel = function(x, spec)
   resultLayer.Visible = true
