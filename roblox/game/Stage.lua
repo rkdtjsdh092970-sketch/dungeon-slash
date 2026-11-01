@@ -106,8 +106,8 @@ function M:colX(c) return self.ox + (196 + (c - 0.5) * self.cw) * self.u end
 function M:floatText(text, x, y, color, size)
   local ts = math.floor((size or 16) * self.u * 1.4)   -- 큰 피해 숫자
   local t = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0, ts * 6, 0, ts + 6), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, x, 0, y), Text = text, TextColor3 = color or Color3.new(1, 1, 0.8), Font = Enum.Font.GothamBlack, TextSize = ts, ZIndex = 20 }, self.layer)
-  mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 10, 30) }, t)
-  local tw = TweenService:Create(t, TweenInfo.new(0.7), { Position = UDim2.new(0, x, 0, y - 40 * self.u), TextTransparency = 1 }); tw:Play(); tw.Completed:Connect(function() t:Destroy() end)
+  local st = mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 10, 30) }, t)
+  local tw = TweenService:Create(t, TweenInfo.new(0.7), { Position = UDim2.new(0, x, 0, y - 40 * self.u), TextTransparency = 1 }); tw:Play(); TweenService:Create(st, TweenInfo.new(0.7), { Transparency = 1 }):Play(); tw.Completed:Connect(function() t:Destroy() end)
 end
 function M:flash(color, x1, y1, x2, y2)
   local len = math.max(8, math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)); local ang = math.deg(math.atan2(y2 - y1, x2 - x1))

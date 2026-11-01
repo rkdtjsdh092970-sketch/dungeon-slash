@@ -44,9 +44,56 @@ local function migrate(sv, uid)
   return sv
 end
 
+-- ── 비공개 베타: 허용 명단. 게임 주인만 채팅 명령으로 관리 (다시 게시할 필요 없음, DataStore "DungeonSlashBeta") ──
+--   /beta add 이름(또는 UserId) · /beta remove 이름 · /beta list · /beta open (누구나) · /beta close (초대 전용, 기본값)
+--   주인과 Studio 테스트는 항상 들어올 수 있다.
+local RunService = game:GetService("RunService")
+local notice = RS:FindFirstChild("Notice") or Instance.new("RemoteEvent"); notice.Name = "Notice"; notice.Parent = RS
+local okBeta, betaStore = pcall(function() return DSS:GetDataStore("DungeonSlashBeta") end)
+local beta, betaLoaded = { open = false, ids = {} }, false
+local function betaLoad()
+  if betaLoaded or not okBeta then return end
+  local ok, v = pcall(function() return betaStore:GetAsync("access") end)
+  if ok then betaLoaded = true; if type(v) == "table" then beta.open = v.open == true; beta.ids = v.ids or {} end end
+end
+local function betaSave() if okBeta then pcall(function() betaStore:SetAsync("access", { open = beta.open, ids = beta.ids }) end) end end
+local function isOwner(p)
+  if game.CreatorType == Enum.CreatorType.Group then local ok, r = pcall(function() return p:GetRankInGroup(game.CreatorId) end); return ok and r >= 254 end
+  return p.UserId == game.CreatorId
+end
+local function betaAllowed(p)
+  if RunService:IsStudio() or isOwner(p) then return true end
+  betaLoad()
+  if beta.open then return true end
+  for _, id in ipairs(beta.ids) do if id == p.UserId then return true end end
+  return false
+end
+local function betaCommand(p, text)
+  local cmd, arg = string.match(text, "^/beta%s+(%a+)%s*(.-)%s*$")
+  if not cmd or not isOwner(p) then return end
+  betaLoad()
+  local function say(t) notice:FireClient(p, t) end
+  if cmd == "add" or cmd == "remove" then
+    local id = tonumber(arg)
+    if not id then local ok, v = pcall(function() return Players:GetUserIdFromNameAsync(arg) end); id = ok and v or nil end
+    if not id then say("Player not found: " .. arg); return end
+    local keep = {}; for _, x in ipairs(beta.ids) do if x ~= id then keep[#keep + 1] = x end end
+    if cmd == "add" then keep[#keep + 1] = id end
+    beta.ids = keep; betaSave(); say(string.format("Beta tester %s: %s (%d total)", cmd == "add" and "added" or "removed", arg, #keep))
+  elseif cmd == "list" then
+    local names = {}
+    for _, id in ipairs(beta.ids) do local ok, nm = pcall(function() return Players:GetNameFromUserIdAsync(id) end); names[#names + 1] = ok and nm or tostring(id) end
+    say((beta.open and "Beta: OPEN to everyone" or "Beta: invite only") .. " — " .. (#names > 0 and table.concat(names, ", ") or "no testers yet"))
+  elseif cmd == "open" or cmd == "close" then
+    beta.open = cmd == "open"; betaSave(); say(beta.open and "Beta is now OPEN to everyone" or "Beta is now invite only")
+  end
+end
+
 Players.PlayerAdded:Connect(function(p)
+  if not betaAllowed(p) then p:Kick("Dungeon Slash is in closed beta (invite only). Thanks for your interest!"); return end
+  p.Chatted:Connect(function(text) betaCommand(p, text) end)
   local sv, okLoad = load(p.UserId)
-  if okLoad == false then p:Kick("데이터를 불러오지 못했습니다. 잠시 후 다시 접속해 주세요. (진행 데이터 보호)"); return end
+  if okLoad == false then p:Kick("Couldn't load your save data. Please rejoin in a moment. (Your progress is protected.)"); return end
   sv = sv and migrate(sv, p.UserId) or Loot.newSave(Random.new(p.UserId))
   sessions[p.UserId] = { sv = sv, busy = false, last = 0 }
 end)

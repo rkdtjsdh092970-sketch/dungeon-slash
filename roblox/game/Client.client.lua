@@ -671,3 +671,6 @@ gui:GetAttributeChangedSignal("Debug"):Connect(function()
   elseif v == "map" or v == "town" then setScreen(v)
   elseif views[v] then openPanel(v, { { v, v } }) end
 end)
+
+-- 서버 알림 (베타 명단 명령 결과 등)
+task.spawn(function() local ev = RS:WaitForChild("Notice", 30); if ev then ev.OnClientEvent:Connect(function(t) toast(tostring(t)) end) end end)
