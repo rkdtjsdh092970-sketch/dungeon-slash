@@ -7,6 +7,8 @@ local Battle = require(script.Parent.Battle)
 local Loot = require(script.Parent.Loot)
 local Sat = require(Data.Satan).SAT_DEFS
 local Econ = require(script.Parent.Economy)
+local Content = require(script.Parent.Content)
+local ClassCharm = require(script.Parent.ClassCharm)
 
 local M = {}
 local floor = math.floor
@@ -178,5 +180,28 @@ function M.stones(sv) return Econ.stoneList(sv) end
 function M.reveal(sv, uid, seed) return Econ.revealStone(sv, uid, Random.new((seed or os.time()) + uid)) end
 function M.socket(sv, itemUid, stoneUid, idx) return Econ.socketStone(sv, itemUid, stoneUid, idx) end
 function M.stoneLabel(rev) local d = AFFIX_BY[rev.k]; return (d and d.name or rev.k) .. " +" .. (rev.v < 5 and string.format("%.1f%%", rev.v * 100) or tostring(rev.v)) end
+
+-- 졸업 후 콘텐츠 · 전직 · 참 · 문지기 · 새 탑 (서버 RPC 가 호출)
+function M.play(sv, spec, seed) return Content.play(sv, spec, seed) end
+function M.classView(sv) return ClassCharm.view(sv) end
+function M.classTake(sv, id) return ClassCharm.take(sv, id) end
+function M.classDrop(sv, id) return ClassCharm.drop(sv, id) end
+function M.classReset(sv) ClassCharm.reset(sv); return true end
+function M.classAdvance(sv) return ClassCharm.advance(sv) end
+function M.charmView(sv) return ClassCharm.charmView(sv) end
+function M.charmEquip(sv, uid, slot) return ClassCharm.equip(sv, uid, slot) end
+function M.charmUnequip(sv, slot) return ClassCharm.unequip(sv, slot) end
+function M.charmDrop(sv, uid) return ClassCharm.drop_charm(sv, uid) end
+function M.wardenStart(sv, uid) return Content.wardenStart(sv, uid) end
+function M.wardenState(uid) return Content.wardenState(uid) end
+function M.wardenPop(uid, id) return Content.wardenPop(uid, id) end
+function M.wardenFinish(sv, uid) return Content.wardenFinish(sv, uid) end
+function M.wardenTickAll(dt) Content.wardenTickAll(dt) end
+function M.tower2(sv, n) return Content.tower2(sv, n) end
+function M.unlocks(sv)   -- 어떤 콘텐츠가 열려 있는지 (화면 표시용)
+  local grad = Content.graduated(sv); local raidDone = sv.raid and (sv.raid.cleared or 0) > 0
+  return { graduated = grad, void = grad, bosses = grad, raid = grad, vault = grad, endless = grad, temple = raidDone or false, craid = (sv.raid and sv.raid.tower) and true or false,
+    warden = Content.wardenOpen(sv), tower2 = Content.tower2Open(sv), class = (sv.raid and sv.raid.tower) and true or false, charm = (sv.cls or 0) >= 3, keys = sv.keys or 0, keys2 = sv.keys2 or 0, keys3 = sv.keys3 or 0, keys4 = sv.keys4 or 0, keys5 = sv.keys5 or 0, keys6 = sv.keys6 or 0 }
+end
 
 return M

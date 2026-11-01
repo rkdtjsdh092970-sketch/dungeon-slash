@@ -32,6 +32,7 @@ Players.PlayerRemoving:Connect(function(p)
   local s = sessions[p.UserId]; if s then save(p.UserId, s.sv); sessions[p.UserId] = nil end
 end)
 game:BindToClose(function() for uid, s in pairs(sessions) do save(uid, s.sv) end end)
+task.spawn(function() while true do task.wait(0.05); Game.wardenTickAll(0.05) end end)
 task.spawn(function() while true do task.wait(120); for uid, s in pairs(sessions) do save(uid, s.sv) end end end)
 
 rpc.OnServerInvoke = function(player, action, arg)
@@ -59,6 +60,26 @@ rpc.OnServerInvoke = function(player, action, arg)
   elseif action == "stones" then local rows = Game.stones(sv); for _, r in ipairs(rows) do if r.rev then r.label = Game.stoneLabel(r.rev) end end return { rows = rows, items = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "reveal" then local ok, e = Game.reveal(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, label = ok and Game.stoneLabel(e) or nil, summary = Game.summary(sv) }
   elseif action == "socket" then local ok, e = Game.socket(sv, tonumber(arg.item), tonumber(arg.stone), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
+  elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }
+  elseif action == "play" then
+    if s.busy then return { err = "전투 중입니다" } end
+    s.busy = true; local res, e = Game.play(sv, arg); s.busy = false
+    if not res then return { err = e } end
+    return { result = res, summary = Game.summary(sv) }
+  elseif action == "tower2" then local res, e = Game.tower2(sv, tonumber(arg)); if not res then return { err = e } end return { result = res, summary = Game.summary(sv) }
+  elseif action == "class" then return { view = Game.classView(sv), summary = Game.summary(sv) }
+  elseif action == "classtake" then local ok = Game.classTake(sv, tostring(arg)); return { ok = ok, view = Game.classView(sv), summary = Game.summary(sv) }
+  elseif action == "classdrop" then local ok = Game.classDrop(sv, tostring(arg)); return { ok = ok, view = Game.classView(sv), summary = Game.summary(sv) }
+  elseif action == "classreset" then Game.classReset(sv); return { view = Game.classView(sv), summary = Game.summary(sv) }
+  elseif action == "classadvance" then local ok, m = Game.classAdvance(sv); return { ok = ok, msg = m, view = Game.classView(sv), summary = Game.summary(sv) }
+  elseif action == "charms" then return { view = Game.charmView(sv), summary = Game.summary(sv) }
+  elseif action == "charmequip" then local ok, e = Game.charmEquip(sv, tonumber(arg.uid), tonumber(arg.slot)); return { ok = ok, err = (not ok) and e or nil, view = Game.charmView(sv), summary = Game.summary(sv) }
+  elseif action == "charmoff" then Game.charmUnequip(sv, tonumber(arg)); return { view = Game.charmView(sv), summary = Game.summary(sv) }
+  elseif action == "charmdrop" then Game.charmDrop(sv, tonumber(arg)); return { view = Game.charmView(sv), summary = Game.summary(sv) }
+  elseif action == "wstart" then local ok, e = Game.wardenStart(sv, player.UserId); return { ok = ok, err = (not ok) and e or nil }
+  elseif action == "wstate" then return { st = Game.wardenState(player.UserId) }
+  elseif action == "wpop" then return { ok = Game.wardenPop(player.UserId, tonumber(arg)) }
+  elseif action == "wfinish" then local res, e = Game.wardenFinish(sv, player.UserId); if not res then return { err = e } end return { result = res, summary = Game.summary(sv) }
   elseif action == "fight" then
     if s.busy then return { err = "전투 중입니다" } end
     s.busy = true; local res, e = Game.fight(sv, arg.kind, arg.n); s.busy = false
