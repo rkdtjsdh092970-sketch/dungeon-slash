@@ -579,7 +579,7 @@ killEnemy = function(b, e)
   if e.def and e.def.raid then for _, x in ipairs(table.clone(b.enemies)) do if x ~= e and not x.dead and x.crystal then x.hp = 0; killEnemy(b, x) end end end
   if e.def and e.def.hive then b.plan = {}; for _, x in ipairs(table.clone(b.enemies)) do if x ~= e and not x.dead then x.hp = 0; killEnemy(b, x) end end end
   b.kills += 1; if e.tier == "elite" then b.eliteKills += 1 end; if e.tier == "boss" then b.bossKills += 1 end
-  b.gold += e.def.gold * (1.45 ^ (b.act - 1)) * (1 + b.stats.goldFind) * 2 * rnd(b, 0.8, 1.3)
+  b.gold += e.def.gold * (1.45 ^ (b.act - 1)) * (b.kind == "treasure" and 3 or (b.kind == "vault" and CFG.VAULT_GOLD or (b.kind == "temple" and CFG.TEMPLE.GOLD or 1))) * (1 + b.stats.goldFind) * 2 * rnd(b, 0.8, 1.3)
   if b.designated == e then b.designated = nil end
   if e.summoned and e.owner then
     for _, o in ipairs(b.enemies) do if o.id == e.owner and o.shield then o.shield.need -= 1; if o.shield.need <= 0 then o.shield = nil end end end
