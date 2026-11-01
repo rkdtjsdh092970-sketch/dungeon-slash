@@ -113,6 +113,7 @@ function M:applySnap(s, lanes)
     local cy, lh = self:laneY(e.l, lanes); local cw = (self.W - 150) / 6
     local x = self:colX(e.c + ((e.w or 1) - 1) / 2); local y = cy + ((e.h or 1) - 1) * lh / 2 + lh * 0.3
     if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14; y += n * 5 end
+    if not u.placed then u.placed = true; u.x = x + 70; u.y = y end
     u.tx, u.ty = x, y; u.hp = e.hp
     if e.dead and not u.dying then u.dying = 0 end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
