@@ -52,6 +52,13 @@ rpc.OnServerInvoke = function(player, action, arg)
   elseif action == "resetpass" then Game.resetPassives(sv); return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }
   elseif action == "enhlist" then return { rows = Game.enhCosts(sv), summary = Game.summary(sv) }
   elseif action == "enhance" then local ok, msg = Game.enhance(sv, tonumber(arg)); return { ok = ok, msg = msg, rows = Game.enhCosts(sv), summary = Game.summary(sv) }
+  elseif action == "forge" then return { rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "reroll" then local ok, e = Game.reroll(sv, tonumber(arg.uid), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "chaos" then local ok, e = Game.chaos(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "divine" then local ok, e = Game.divine(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "stones" then local rows = Game.stones(sv); for _, r in ipairs(rows) do if r.rev then r.label = Game.stoneLabel(r.rev) end end return { rows = rows, items = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "reveal" then local ok, e = Game.reveal(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, label = ok and Game.stoneLabel(e) or nil, summary = Game.summary(sv) }
+  elseif action == "socket" then local ok, e = Game.socket(sv, tonumber(arg.item), tonumber(arg.stone), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "fight" then
     if s.busy then return { err = "전투 중입니다" } end
     s.busy = true; local res, e = Game.fight(sv, arg.kind, arg.n); s.busy = false

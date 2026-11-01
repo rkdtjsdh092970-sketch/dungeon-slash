@@ -113,15 +113,20 @@ function M.fieldDrops(rng, sv, node, boss)
   local out = { items = items }
   out.ore = floor(rng:NextInteger(1, 2) + (boss and 4 or 0) + floor((node.tier or 0) / 3) + 0.5)
   if isRift then out.hone = max(1, floor((1 + node.tier / 8) * (boss and 2 or 1) + 0.5)) end
+  if isRift then   -- 원초의 돌 (보스 층은 1개 확정 + 확률)
+    local chance = math.min(0.75, 0.30 + 0.004 * node.tier); local c = boss and 1 or 0
+    if rng:NextNumber() < chance then c += 1 end; out.stones = c
+  end
   local oc = isRift and (0.4 + node.tier / 30) or ((boss and kind == "boss") and 0.4 or 0.03)
   out.orbC = floor(oc) + (rng:NextNumber() < oc - floor(oc) and 1 or 0)
+  local od = oc * 0.05; out.orbD = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0)
   return out
 end
 
 -- 새 세이브 (JS newSave 이식: 시작 장비 3칸 + 일격 스킬)
 function M.newSave(rng)
   local s = { v = 3, level = 1, gold = 0, ore = 5, inv = {}, equipped = {}, skills = {}, loadout = { false, false, false, false }, slots = 1, nextUid = 1,
-    lanesBase = CFG.BASE_LANES, cls = 0, cpass = {}, pass = {}, charms = {}, spire = { best = 0 }, rift = { best = 0 }, cleared = 0, hone = 0, orbC = 0, stats = { kills = 0, clears = 0 }, guildLv = 0 }
+    lanesBase = CFG.BASE_LANES, cls = 0, cpass = {}, pass = {}, charms = {}, spire = { best = 0 }, rift = { best = 0 }, cleared = 0, hone = 0, orbC = 0, orbD = 0, stones = {}, stats = { kills = 0, clears = 0 }, guildLv = 0 }
   for _, slot in ipairs({ "weapon", "helm", "armor" }) do s.equipped[slot] = M.genItem(rng, s, 1, 0, slot) end
   local sk = { uid = s.nextUid, id = "strike", rarity = 0 }; s.nextUid += 1; s.skills[1] = sk; s.loadout[1] = { uid = sk.uid, rule = "front" }
   local sm = { uid = s.nextUid, id = "smash", rarity = 0 }; s.nextUid += 1; s.skills[2] = sm; s.loadout[2] = { uid = sm.uid, rule = "front" }; s.slots = 2   -- 튜토리얼을 건너뛰고 강타까지 지급

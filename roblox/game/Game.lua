@@ -39,7 +39,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0 }
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0 }
 end
 function M.inventory(sv)
   local out = {}
@@ -114,6 +114,7 @@ function M.fight(sv, kind, n, seed)
     res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
     local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
     local d = Loot.fieldDrops(rng, sv, node, boss)
+    sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.hone += d.hone; res.hone = d.hone end; if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it) } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
@@ -151,5 +152,31 @@ function M.enhance(sv, uid, seed)
   return Econ.enhance(sv, it, Random.new((seed or os.time()) + uid))
 end
 function M.enhCosts(sv) local out = {}; for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then local c = Econ.enhCost(it); out[#out + 1] = { uid = it.uid, slot = slot, enh = it.enh or 0, gold = c.gold, ore = c.ore } end end return out end
+
+-- 대장간(재굴림/구슬)과 돌
+local function findItem(sv, uid)
+  for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == uid then return sv.equipped[slot] end end
+  for _, x in ipairs(sv.inv) do if x.uid == uid then return x end end
+end
+function M.forgeList(sv)
+  local out = {}
+  for _, slot in ipairs(Items.EQ_SLOTS) do
+    local it = sv.equipped[slot]
+    if it then
+      local c = Econ.enhCost(it); local rc = Econ.rerollCost(it); local affs = {}
+      for i, a in ipairs(it.affixes) do affs[i] = { text = M.affixText(a), locked = Econ.rerollLocked(it, i - 1) } end
+      local socks = {}; for i, s2 in ipairs(it.sock or {}) do socks[i] = s2 and (AFFIX_BY[s2.k] and AFFIX_BY[s2.k].name or s2.k) .. " +" .. (s2.v < 5 and string.format("%.1f%%", s2.v * 100) or tostring(s2.v)) or false end
+      out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), enh = it.enh or 0, enhGold = c.gold, enhOre = c.ore, rerollGold = rc.gold, rerollOre = rc.ore, affixes = affs, sockets = socks, affCount = #it.affixes }
+    end
+  end
+  return out
+end
+function M.reroll(sv, uid, idx, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.rerollAffix(sv, it, tonumber(idx), Random.new((seed or os.time()) + uid)) end
+function M.chaos(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.addAffix(sv, it, Random.new((seed or os.time()) + uid)) end
+function M.divine(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.divine(sv, it, Random.new((seed or os.time()) + uid)) end
+function M.stones(sv) return Econ.stoneList(sv) end
+function M.reveal(sv, uid, seed) return Econ.revealStone(sv, uid, Random.new((seed or os.time()) + uid)) end
+function M.socket(sv, itemUid, stoneUid, idx) return Econ.socketStone(sv, itemUid, stoneUid, idx) end
+function M.stoneLabel(rev) local d = AFFIX_BY[rev.k]; return (d and d.name or rev.k) .. " +" .. (rev.v < 5 and string.format("%.1f%%", rev.v * 100) or tostring(rev.v)) end
 
 return M

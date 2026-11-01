@@ -4,6 +4,7 @@ local CFG = require(Data.Config).CFG
 local Skills = require(Data.Skills)
 local Items = require(Data.Items)
 local Passives = require(Data.Passives).PASSIVES
+local Loot = require(script.Parent.Loot)
 
 local M = {}
 local floor = math.floor
@@ -132,6 +133,70 @@ function M.enhance(sv, it, rng)
   sv.ore -= math.ceil(c.ore / 2)
   if (it.enh or 0) > 0 and rng:NextNumber() < ENH_DROP[(it.enh or 0) + 1] then it.enh -= 1; return true, "강화 실패 — +" .. (it.enh + 1) .. "에서 +" .. it.enh .. "로 하락" end
   return true, "강화 실패 (강화석 일부만 소모)"
+end
+
+
+-- ---------- 대장간: 옵션 재굴림 · 혼돈 구슬(옵션 추가) · 신성한 구슬(수치 재굴림) ----------
+local REROLL_COST = { { 150, 2 }, { 500, 3 }, { 1200, 4 }, { 14000, 8 }, { 35000, 12 }, { 80000, 16 } }
+function M.rerollCost(it) local c = REROLL_COST[math.max(1, math.min(6, it.ilvl or 1))]; return { gold = c[1], ore = c[2] } end
+function M.rerollLocked(it, idx) return it.rrIdx ~= nil and it.rrIdx ~= idx end
+local function wpickAff(rng, pool) local t = 0; for _, a in ipairs(pool) do t += a.w end; local r = rng:NextNumber() * t; for _, a in ipairs(pool) do r -= a.w; if r <= 0 then return a end end return pool[#pool] end
+function M.rerollAffix(sv, it, idx, rng)   -- idx 는 0부터 (JS 와 같다)
+  if M.rerollLocked(it, idx) then return false, "다른 줄을 이미 굴렸습니다 (한 장비에서 한 줄만 굴릴 수 있습니다)" end
+  local c = M.rerollCost(it); if sv.gold < c.gold or sv.ore < c.ore then return false, "재료가 부족합니다" end
+  local old = it.affixes[idx + 1]; if not old then return false, "없는 줄" end
+  local pool = Loot.affixPool(it, idx); if #pool == 0 then return false, "붙일 수 있는 옵션이 없습니다" end
+  it.affixes[idx + 1] = Loot.mkAff(rng, wpickAff(rng, pool), it.ilvl, it.rarity); it.rr = (it.rr or 0) + 1; it.rrIdx = idx
+  sv.gold -= c.gold; sv.ore -= c.ore; return true
+end
+function M.addAffix(sv, it, rng)
+  if it.uniq or #it.affixes >= 5 or (sv.orbC or 0) < 1 then return false, (sv.orbC or 0) < 1 and "혼돈 구슬이 없습니다" or "옵션은 최대 5줄입니다" end
+  local pool = Loot.affixPool(it); if #pool == 0 then return false, "붙일 수 있는 옵션이 없습니다" end
+  it.affixes[#it.affixes + 1] = Loot.mkAff(rng, wpickAff(rng, pool), it.ilvl, it.rarity); sv.orbC -= 1; return true
+end
+function M.divine(sv, it, rng)
+  if it.uniq or #it.affixes == 0 or (sv.orbD or 0) < 1 then return false, "신성한 구슬이 없습니다" end
+  local by = {}; for _, a in ipairs(Items.AFFIXES) do by[a.k] = a end
+  for i, a in ipairs(it.affixes) do it.affixes[i] = Loot.mkAff(rng, by[a.k], it.ilvl, it.rarity, a.t) end
+  sv.orbD -= 1; return true
+end
+
+-- ---------- 돌 (원초의 돌 → 확인 → 소켓) ----------
+local STONE_CAP = 100
+local function riftRegion(f) return math.max(1, math.min(10, math.ceil(math.max(1, f) / 10))) end
+function M.stoneRevealCost(sv) return floor(120 * 1.45 ^ (riftRegion(math.max(1, sv.rift and sv.rift.best or 1)) - 1) + 0.5) end
+function M.addStone(sv, hi)
+  sv.stones = sv.stones or {}
+  local n = 0; for _, x in ipairs(sv.stones) do if not x.rev and ((x.hi and 1 or 0) == (hi and 1 or 0)) then n += 1 end end
+  local st = { uid = sv.nextUid, hi = hi and 1 or 0 }; sv.nextUid += 1
+  if n >= STONE_CAP then local g = floor(M.stoneRevealCost(sv) * 0.2 + 0.5); sv.gold += g; return g end
+  sv.stones[#sv.stones + 1] = st; return 0
+end
+function M.revealStone(sv, uid, rng)
+  local st; for _, x in ipairs(sv.stones or {}) do if x.uid == uid then st = x end end
+  if not st or st.rev then return false, "확인할 수 없는 돌" end
+  local c = M.stoneRevealCost(sv); if sv.gold < c then return false, "골드가 부족합니다" end
+  sv.gold -= c; local p = Items.STONE_POOL[rng:NextInteger(1, #Items.STONE_POOL)]
+  st.rev = { k = p.k, v = p.v >= 1 and floor(p.v + 0.5) or tonumber(string.format("%.4f", p.v)) }; return true, st.rev
+end
+function M.socketUsable(it, k)
+  for _, a in ipairs(it.affixes or {}) do if a.k == k then return false end end
+  for _, s2 in ipairs(it.sock or {}) do if s2 and s2.k == k then return false end end
+  return true
+end
+function M.socketStone(sv, itemUid, stoneUid, idx)   -- idx 는 1부터
+  local it
+  for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == itemUid then it = sv.equipped[slot] end end
+  if not it then for _, x in ipairs(sv.inv) do if x.uid == itemUid then it = x end end end
+  local st, si; for i, x in ipairs(sv.stones or {}) do if x.uid == stoneUid then st = x; si = i end end
+  if not it or not it.sock or not st or not st.rev then return false, "끼울 수 없습니다" end
+  if idx < 1 or idx > #it.sock then return false, "소켓이 없습니다" end
+  local cur = it.sock[idx]
+  if not M.socketUsable(it, st.rev.k) and not (cur and cur.k == st.rev.k) then return false, "이미 같은 옵션이 있어 끼울 수 없습니다" end
+  it.sock[idx] = st.rev.hi and { k = st.rev.k, v = st.rev.v, hi = 1 } or { k = st.rev.k, v = st.rev.v }; table.remove(sv.stones, si); return true
+end
+function M.stoneList(sv)
+  local out = {}; for _, x in ipairs(sv.stones or {}) do out[#out + 1] = { uid = x.uid, rev = x.rev, hi = x.hi } end return out
 end
 
 return M
