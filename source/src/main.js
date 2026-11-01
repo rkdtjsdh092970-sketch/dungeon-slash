@@ -24,7 +24,7 @@ function bindInput() {
     AU.init(); AU.resume(); const [x, y] = canvasPos(ev);
     if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, CFG.RIFT_END, save.rift.best + 1)); if (n.kind === "trial" && !G.trialInit) { G.trialInit = true; G.trialTier = Math.max(1, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)); } snd("click"); if (n.kind === "bosshub" && nodeUnlocked(save, n)) { mapPanel(); openBossHub(); return; } if (n.kind === "temple") { mapPanel(); openTemple(); return; } } else MapView.sel = null; mapPanel(); }
     else if (G.screen === "town") townClick(TownView.pick(x, y));
-    else if (G.screen === "battle" && G.battle && !G.battle.over && !G.paused) { const e = pickEnemy(G.battle, x, y); if (e) { G.battle.designated = G.battle.designated === e ? null : e; snd("click"); } }
+    else if (G.screen === "battle" && G.battle && !G.battle.over && !G.paused) { const e = pickEnemy(G.battle, x, y); if (e && e.orb) { if (wardenPop(G.battle, e)) snd("click"); } else if (e) { G.battle.designated = G.battle.designated === e ? null : e; snd("click"); } }
   });
   document.addEventListener("click", (ev) => {
     AU.init(); AU.resume(); const t = ev.target.closest("[data-t]"); if (!t) return; const a = t.dataset.t;

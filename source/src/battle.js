@@ -53,7 +53,7 @@ const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
 
 // ---------------- 생성 ----------------
-const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, frost: 1, poison: 1, vault: 1, temple: 1, spire: 1, craid: 1, raid: 1 };
+const RIFTLIKE = { rift: 1, hell: 1, endless: 1, void: 1, trial: 1, hive: 1, titan: 1, storm: 1, frost: 1, poison: 1, vault: 1, temple: 1, spire: 1, craid: 1, warden: 1, raid: 1 };
 const specDef = (va) => Object.assign({ tier: "normal", ranged: ACT_SPECIAL[va].range >= 3, proj: va === 7 ? "orb" : null }, ACT_SPECIAL[va]);
 function wavePool(act, stage, mods) {
   const w = actWeights(act); w.spec = SPEC_W(act, stage);
@@ -76,6 +76,7 @@ const TOWER_MON = { imp: ["핏빛 임프", "탑 꼭대기에서 내려온 작은
 const TEMPLE_MON = { imp: ["복사", "신전의 어린 복사"], grunt: ["수도사", "돌을 지키는 수도사"], archer: ["성가 사수", "성가와 함께 화살을 쏜다"], mage: ["신관", "축복과 저주를 읊는 신관"], brute: ["성기사", "신전을 지키는 중무장 기사"] };
 function planFor(node) {
   if (node.kind === "temple") { const pl = smoothSeq({ imp: 9, grunt: 6, archer: 4, mage: 3 }, 90); for (let i = 0; i < 6; i++) pl.splice(Math.floor(pl.length * (i + 0.5) / 6), 0, "brute"); return pl; }
+  if (node.kind === "warden") return [];
   if (node.kind === "vault") { const pl = smoothSeq({ coin: 12, goldbag: 1 }, 104); if (Math.random() < CFG.VAULT_CHEST) pl.splice(Math.floor(pl.length * rnd(0.35, 0.7)), 0, "boss"); return pl; }   // 황금 보물고: 코인과 골드 보따리 (가끔 거대 보물상자)
   if (node.kind === "tutorial") return TUTORIAL[node.step].plan.slice();
   const act = Math.min(10, node.act), stage = node.stage || 10, mods = node.mods || [];
@@ -121,13 +122,14 @@ function createBattle(sv, node) {
     hp: st.maxHp, maxHp: st.maxHp, mana: st.maxMana, maxMana: st.maxMana, lanes: st.lanes, cap: Math.min(CFG.STACK_MAX, st.stackCap + (mods.some((m) => m.cap) ? 1 : 0)), spawnCd: 0.3, kills: 0, eliteKills: 0, bossKills: 0, exp: 0, gold: 0,
     dodges: 0, taken: 0, dealt: 0, designated: null, debuffs: {}, buffs: {}, shake: 0, flash: 0, banner: null, bossRef: null, poisonCd: 8,
     hpM: CFG.H0 * Math.pow(CFG.HPX, scAct - 1) * actScale(scAct) * (1 + CFG.STAGE_HP * (stage - 1)) * riftMul * (mods.reduce((a, m) => a * (m.hp || 1), 1)),
-    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" || node.kind === "spire" || node.kind === "craid" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
+    atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" || node.kind === "spire" || node.kind === "craid" || node.kind === "warden" ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
-  b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : node.kind === "craid" ? BOSSES[CFG.CRAID.BOSS[node.diff] % 10] : node.kind === "spire" ? BOSSES[(node.floor / 5 - 1 + 10) % 10 | 0] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
+  b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : node.kind === "warden" ? BOSSES[8] : node.kind === "craid" ? BOSSES[CFG.CRAID.BOSS[node.diff] % 10] : node.kind === "spire" ? BOSSES[(node.floor / 5 - 1 + 10) % 10 | 0] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }
-  if (node.kind === "temple" || node.kind === "spire" || node.kind === "craid") b.lanes = 4;   // 돌의 신전부터는 4레인
+  if (node.kind === "temple" || node.kind === "spire" || node.kind === "craid" || node.kind === "warden") b.lanes = 4;
+  if (node.kind === "warden") { b.hpM *= CFG.WARDEN.K; b.atkM *= CFG.WARDEN.ATK; }   // 돌의 신전부터는 4레인
   b.skills = sv.loadout.map((l, i) => {
     if (!l || i >= sv.slots) return null; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) return null;
     const sk = skillOf(inst); if (sk.dur && st.skillDur) sk.dur *= 1 + st.skillDur; sk.rule = l.rule || "front"; sk.cdLeft = sk.cd * 0.4; sk.idx = i; return sk;
@@ -137,6 +139,7 @@ function createBattle(sv, node) {
   if (mods.some((m) => m.slow)) b.slowMod = 0.8;
   if (node.kind === "dummy") spawnDummies(b, node);
   if (node.kind === "raid") { b.hpM *= CFG.RAID.K; b.atkM *= CFG.RAID.ATK; spawnRaid(b); }
+  if (node.kind === "warden") spawnWarden(b);
   b.maxReach = Math.max(0, ...b.skills.filter((k) => k && k.dtype !== "buff" && k.dtype !== "heal" && k.kind !== "buff" && k.kind !== "heal").map((k) => k.range || 0)); b.lastDealT = 0;
   return b;
 }
@@ -171,6 +174,29 @@ function raidTick(b, e, dt) {
   R.blast -= dt; if (R.blast <= 0) { R.blast = K.BLAST; say(b, "결계 폭발!", "boss"); sfx(b, "boom"); damagePlayer(b, e.atk * K.BLASTM * (1 + R.t / 60), { shake: 0.4, boss: true }); }
 }
 
+// ---------------- 새 문지기: 공명 구슬을 직접 눌러라 (자동 전투만으로는 깰 수 없다) ----------------
+function spawnWarden(b) {
+  b.warden = true; b.spawnCd = 1e9; b.wOrb = CFG.WARDEN.FIRST; b.wPop = 0; b.wBoom = 0;
+  const e = spawnAt(b, "boss", 1, 2); e.label = CFG.WARDEN.NAME; b.bossRef = e;
+}
+function wardenTick(b, dt) {
+  const W = CFG.WARDEN, boss = b.bossRef; if (!boss || boss.dead) return;
+  const enr = b.time > W.LIMIT * 0.75 ? 1 + (b.time - W.LIMIT * 0.75) / 60 : 1;   // 시간이 많이 흐르면 폭발이 세진다
+  b.wOrb -= dt;
+  if (b.wOrb <= 0) {
+    b.wOrb = W.EVERY; const ph2 = boss.hp < boss.maxHp * 0.5, n = Math.min(b.lanes, ph2 ? b.lanes : Math.max(2, b.lanes - 1)), lanes = []; for (let i = 0; i < b.lanes; i++) lanes.push(i);
+    for (let i = lanes.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [lanes[i], lanes[j]] = [lanes[j], lanes[i]]; }
+    for (const lane of lanes.slice(0, n)) { const o = makeEnemy(b, "imp", lane, 1); o.orb = true; o.fuse = ph2 ? W.FUSE * 0.8 : W.FUSE; o.hp = o.maxHp = 1; o.atk = 0; o.atkCd = 1e9; o.range = 99; o.traits = []; o.eres = [0, 0, 0, 0]; o.def = Object.assign({}, o.def, { name: "공명 구슬", exp: 0, gold: 0 }); o.label = "공명 구슬"; b.enemies.push(o); }
+    say(b, "공명 구슬이 나타났다! 터지기 전에 눌러서 없애라!", "boss"); sfx(b, "roar");
+  }
+  for (const o of b.enemies) {
+    if (!o.orb || o.dead) continue; o.fuse -= dt; o.label = `공명 구슬 ${Math.max(0, o.fuse).toFixed(1)}s`;
+    if (o.fuse <= 0) { o.dead = true; b.wBoom++; damagePlayer(b, boss.atk * W.BLASTM * enr, { undodgeable: true, boss: true, shake: 0.6 }); boss.hp = Math.min(boss.maxHp, boss.hp + boss.maxHp * W.HEAL); say(b, "구슬이 폭발했다! 문지기가 회복한다!", "boss"); sfx(b, "boom"); }
+  }
+  b.enemies = b.enemies.filter((o) => !(o.orb && o.dead && o.fuse <= 0));
+}
+function wardenPop(b, e) { if (!e || !e.orb || e.dead) return false; e.fuse = 1; e.hp = 0; b.wPop = (b.wPop || 0) + 1; killEnemy(b, e); sfx(b, "shatter"); return true; }
+
 // ---------------- 허수아비 (마을: 1분 DPS 측정) ----------------
 const DUMMY_SEC = 60;
 function spawnDummies(b, node) {
@@ -204,13 +230,13 @@ function spawnCells(b, D, w, h) {
 }
 const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
-  const isBoss = type === "boss", va = b.kind === "temple" ? 10 : b.kind === "spire" || b.kind === "craid" ? 11 : isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
+  const isBoss = type === "boss", va = b.kind === "temple" ? 10 : b.kind === "spire" || b.kind === "craid" || b.kind === "warden" ? 11 : isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(Math.min(va, 9)) : WARPS[type] || ENEMIES[type];
   const dd = b.ddt || 0, gh = b.endless ? Math.pow(1.06, dd / 20) : 1, ga = b.endless ? Math.pow(1.045, dd / 20) : 1, bx = isBoss ? CFG.BOSSX : 1;
   const e = { id: b.nextId++, type, def: D, tier: isBoss ? "boss" : D.tier, w: isBoss ? D.w : 1, h: isBoss ? D.h : 1, lane, col, va, traits: D.traits || [],
     hp: D.hp * b.hpM * bx * gh, maxHp: D.hp * b.hpM * bx * gh, atk: D.atk * b.atkM * ga, range: D.range, interval: D.interval / b.haste, windup: D.windup,
     moveCd: CFG.MOVE_TIME, atkCd: null, winding: 0, flash: 0, hurtT: 0, chill: 0, shock: 0, vx: null, vy: null, age: 0, dead: false };
-  if ((b.kind === "spire" || b.kind === "craid") && TOWER_MON[type]) { e.def = Object.assign({}, e.def, { name: TOWER_MON[type][0], desc: TOWER_MON[type][1] }); e.label = TOWER_MON[type][0]; }
+  if ((b.kind === "spire" || b.kind === "craid" || b.kind === "warden") && TOWER_MON[type]) { e.def = Object.assign({}, e.def, { name: TOWER_MON[type][0], desc: TOWER_MON[type][1] }); e.label = TOWER_MON[type][0]; }
   if (b.kind === "temple" && TEMPLE_MON[type]) { e.def = Object.assign({}, e.def, { name: TEMPLE_MON[type][0], desc: TEMPLE_MON[type][1] }); e.label = TEMPLE_MON[type][0]; }
   e.moveT = CFG.MOVE_TIME * (e.traits.includes("fast") ? 0.55 : 1); e.moveCd = e.moveT;
   e.dots = []; e.dotMul = isBoss ? CFG.DOT_BOSS : e.tier === "elite" ? CFG.DOT_ELITE : 1;
@@ -266,7 +292,7 @@ function statusMul(st, sk, e) {   // 출혈·중독·점화·둔화·감전 중�
   return m;
 }
 function pickPrimary(b, sk) {
-  let cand = b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= sk.range && e.hp > 0);
+  let cand = b.enemies.filter((e) => !e.dead && !e.orb && e.lane < b.lanes && e.col <= sk.range && e.hp > 0);
   if (!cand.length) return null;
   { const open = cand.filter((e) => !e.guard); if (open.length) cand = open; }   // 정령이 남아 있어 무적인 보스는 (다른 대상이 있으면) 겨냥하지 않는다: 우선순위 규칙 때문에 교착되는 것을 막는다
   if (b.designated && !b.designated.dead && cand.includes(b.designated)) return b.designated;
@@ -305,6 +331,7 @@ function voidPhase(b, e, si) {   // 공허의 군주 단계 설정: 단계마다
 }
 function applyDamage(b, e, dmg, o) {
   if (e.dead) return 0;
+  if (e.orb) return 0;   // 공명 구슬은 스킬이 통하지 않는다: 직접 눌러야 터진다
   o = o || {};
   if (e.shield) dmg *= 0.1;
   if (e.plate && !o.dot) { dmg *= 1 - e.plate.red; if (!b.noFx && (e.plateTxt || 0) < b.time) { e.plateTxt = b.time + 0.8; b.texts.push({ x: (e.vx != null ? e.vx : cellXY(b, e.lane, e.col, e.w, e.h).x), y: 120, text: "철갑!", color: "#c8d0d8", big: false, t: 0.9, life: 0.9 }); } }   // 철갑 태세: 직접 타격 대폭 감소 (지속 피해는 그대로)
@@ -503,7 +530,7 @@ function traitHit(b, e) {
 }
 function stepBattle(b, dt) {
   if (b.over) return;
-  b.time += dt; satTick(b, dt); if (b.endless) b.ddt = (b.ddt || 0) + dt;
+  b.time += dt; satTick(b, dt); if (b.warden) wardenTick(b, dt); if (b.endless) b.ddt = (b.ddt || 0) + dt;
   b.lsTok = Math.min(b.lsRate * 2, b.lsTok + b.lsRate * dt);
   { const h0 = b.hp; b.hp = Math.min(b.maxHp, b.hp + b.maxHp * (CFG.REGEN + b.stats.regen) * (b.debuffs.wound ? b.debuffs.wound.mult : 1) * dt); b.healRg = (b.healRg || 0) + (b.hp - h0); } if (b.inv > 0) b.inv -= dt;
   b.mana = Math.min(b.maxMana, b.mana + (b.maxMana * b.stats.manaRate + b.stats.manaFlatRegen) * dt);
@@ -589,7 +616,7 @@ function stepBattle(b, dt) {
   if (b.dummy) { if (b.time >= DUMMY_SEC) { b.over = true; b.win = true; } }
   else if (b.hp <= 0) { b.hp = 0; b.over = true; b.win = false; }
   else if (!b.plan.length && !b.enemies.length && !b.events.length) { b.over = true; b.win = true; }
-  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : b.kind === "raid" ? CFG.RAID.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
+  else if (b.endless ? b.time > 1200 : b.time > (b.kind === "void" ? 1800 : b.kind === "raid" ? CFG.RAID.LIMIT : b.kind === "warden" ? CFG.WARDEN.LIMIT : 900)) { b.over = true; b.win = !!b.endless; }
 }
 
 // ---------------- 종료 처리 ----------------
@@ -628,6 +655,7 @@ function finishBattle(sv, b) {
         }
       }
       if (node.kind === "raid") { const R = (sv.raid = sv.raid || { cleared: 0, best: 0 }); const first = !R.cleared; R.cleared++; if (!R.best || b.time < R.best) R.best = Math.round(b.time); if (first) res.notes.push("🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다!"); res.raid = { first, time: b.time, best: R.best }; }
+      if (node.kind === "warden") { const Wd = (sv.warden = sv.warden || { clears: 0, best: 0, pops: 0 }); Wd.clears++; Wd.pops += b.wPop || 0; if (!Wd.best || b.time < Wd.best) Wd.best = Math.round(b.time); res.warden = { time: b.time, best: Wd.best, pop: b.wPop || 0, boom: b.wBoom || 0 }; res.notes.push(`문지기 처치! ${Math.round(b.time)}초 (구슬 ${b.wPop || 0}개 처치, 폭발 ${b.wBoom || 0}회)`); }
       if (node.kind === "craid") { const d = node.diff | 0, first = !(sv.craid && sv.craid[d]); sv.craid = sv.craid || [0, 0, 0, 0]; if (first) { sv.craid[d] = 1; sv.cbook = sv.cbook || [0, 0, 0, 0]; sv.cbook[d]++; res.notes.push(`📜 ${d}차 전직의 서를 얻었습니다! (레이드 ${CFG.CRAID.NAMES[d]} 최초 클리어)`); } res.craid = { diff: d, first }; }
       if (node.kind === "spire") { const P = (sv.spire = sv.spire || { best: 0 }); if (node.floor > P.best) { P.best = node.floor; res.notes.push(node.floor % CFG.SPIRE.WALL === 0 ? `🗼 탑 ${node.floor}층 — 벽을 넘었습니다!` : `탑 ${node.floor}층 최초 클리어`); } res.spire = { floor: node.floor, best: P.best }; }
       if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }

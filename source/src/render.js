@@ -40,6 +40,11 @@ function drawEnemyBar(ctx, e, x, top) {   // 맞으면 흰 잔상이 천천히 �
 }
 function drawEnemy(ctx, b, e, time) {
   const D = e.def, x = Math.round(e.vx), y = Math.round(e.vy), appear = Math.min(1, e.age / 0.25);
+  if (e.orb) {   // 공명 구슬: 눌러서 터뜨린다. 터질 때가 가까울수록 붉고 크게 깜빡인다
+    const f = Math.max(0, e.fuse), u = Math.min(1, f / 5.5), pulse = 1 + Math.sin(time * (6 + (1 - u) * 14)) * 0.12, r = 22 * pulse * appear, cy = y - 26;
+    ctx.save(); const g = ctx.createRadialGradient(x, cy, 2, x, cy, r * 1.8); g.addColorStop(0, `rgba(255,${Math.round(220 * u + 40)},120,.95)`); g.addColorStop(0.5, "rgba(255,70,50,.55)"); g.addColorStop(1, "rgba(255,40,40,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, cy, r * 1.8, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u); ctx.stroke(); ctx.fillStyle = "#fff"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center"; ctx.fillText(f.toFixed(1), x, cy + 6); ctx.font = "bold 12px sans-serif"; ctx.fillStyle = "#ffd0c0"; ctx.fillText("눌러!", x, cy - r - 8); ctx.restore(); return;
+  }
   if (e.tier === "boss" && D.chest) { drawChestBoss(ctx, e, x, y, time, appear); if (e.hp < e.maxHp) drawEnemyBar(ctx, e, x, y - 190); return; }
   if (e.tier === "boss") {
     const bob = Math.sin(time * 2.2 + e.id) * 3, p = e.winding > 0 ? 1 - e.winding / e.windup : 0;
@@ -118,7 +123,7 @@ function drawRoads(ctx, b, time) {
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
   const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
-  if (b.raid) drawRaidBack(ctx, b, time); else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : b.kind === "spire" ? 13 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
+  if (b.raid) drawRaidBack(ctx, b, time); else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : b.kind === "spire" || b.kind === "craid" || b.kind === "warden" ? 13 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
   if (!b.raid) drawRoads(ctx, b, time);
   // 장판 (화염 벽)

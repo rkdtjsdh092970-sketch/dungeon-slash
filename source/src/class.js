@@ -28,4 +28,4 @@ function dropClass(sv, id) { if (!classHas(sv, id)) return false; if (C_NODES.so
 const resetClass = (sv) => { sv.cpass = {}; };
 // 전직: 전직의 서(sv.cbook[n]) 1권을 써서 n차 전직. 이전 차수를 먼저 해야 한다
 function advanceClass(sv) { const n = (sv.cls | 0) + 1; if (n > 3) return { ok: false, msg: "이미 최종 전직입니다" }; if (!sv.cbook || !(sv.cbook[n] > 0)) return { ok: false, msg: `${n}차 전직의 서가 없습니다` }; sv.cbook[n]--; sv.cls = n; return { ok: true, n, msg: `${n}차 전직 — ${C_CLASS_NAMES[n]}! 전직 포인트 2점을 얻었습니다` }; }
-const craidOpen = (sv) => 1 + (sv.craid && sv.craid[1] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] ? 1 : 0);   // 이지 → 노말 → 하드 순서로 열린다
+const craidOpen = (sv) => 1 + (sv.craid && sv.craid[1] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] && sv.craid[3] && (sv.cls | 0) >= 3 ? 1 : 0);   // 4 = 새 문지기 (하드 클리어 + 3차 전직)   // 이지 → 노말 → 하드 순서로 열린다
