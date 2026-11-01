@@ -84,7 +84,7 @@ function M.battle(sv, floorN, seed)
     local boss = floorN % 5 == 0
     res.gold = floor(b.gold); sv.gold += res.gold
     sv.stats.kills += b.kills; sv.stats.clears += 1
-    if first then sv.spire.best = floorN; res.first = true; sv.level = math.max(sv.level, 1 + floor(floorN / 1)) end
+    if first then sv.spire.best = floorN; res.first = true; end
     local drops = Loot.spireDrops(rng, sv, node, boss, first)
     for _, it in ipairs(drops) do
       if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil } else res.full = true end
