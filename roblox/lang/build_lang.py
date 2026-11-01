@@ -50,8 +50,6 @@ L = ['-- 자동 생성 (roblox/lang/build_lang.py). 한국어 → 영어 번역�
 L += [f'  [{lua(k)}] = {lua(e)},' for k, e in exact]
 L += ['}', '-- string.format 틀: { 패턴, 영어(%1..%n = 캡처) }', 'M.fmt = {']
 L += [f'  {{ {lua(p)}, {lua(r)} }},' for _, p, r in fmt]
-L += ['}', '-- 이어 붙인 문장용 조각 (긴 것부터)', 'M.frag = {']
-L += [f'  {{ {lua(k)}, {lua(e)} }},' for k, e in frag]
-L += ['}', 'return M']
+L += ['}', 'return M']   # 이어 붙인 문장용 조각 목록은 Lang.lua 가 exact 에서 만든다 (Studio 스크립트 20만 자 한도 때문에 중복 저장 안 함)
 open(os.path.join(ROOT, 'data', 'LangEn.lua'), 'w', encoding='utf-8', newline='\n').write('\n'.join(L) + '\n')
 print(f'ok: 문장 {len(exact)} · 틀 {len(fmt)} · 조각 {len(frag)}')

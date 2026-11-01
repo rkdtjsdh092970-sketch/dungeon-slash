@@ -3,7 +3,15 @@
 local M = { lang = "en" }
 local ok, D = pcall(require, script.Parent.Data:FindFirstChild("LangEn"))
 local EXACT, FMT, FRAG = {}, {}, {}
-if ok and D then EXACT, FMT, FRAG = D.exact, D.fmt, D.frag end
+if ok and D then
+  EXACT, FMT = D.exact, D.fmt
+  -- 조각: 한글 2자 이상 · 한 줄짜리 문장을 긴 것부터 (이어 붙인 문장에서 아는 부분을 찾아 바꾼다)
+  for k, e in pairs(EXACT) do
+    local _, nh = string.gsub(k, "[\234-\237]", "")
+    if nh >= 2 and not string.find(k, "\n", 1, true) then FRAG[#FRAG + 1] = { k, e } end
+  end
+  table.sort(FRAG, function(a, b) return #a[1] > #b[1] end)
+end
 M.changed = Instance.new("BindableEvent")
 local cache = {}
 local function hangul(s) return string.find(s, "[\234-\237]") ~= nil end   -- 한글 UTF-8 첫 바이트(EA~ED)
