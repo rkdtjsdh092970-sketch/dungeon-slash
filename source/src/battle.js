@@ -494,7 +494,7 @@ function bossAbility(b, e, a) {
     case "poison": b.debuffs.poison = { t: d.dur, dps: d.dps }; sfx(b, "debuff"); break;
     case "wound": b.debuffs.wound = { t: d.dur, mult: d.mult }; sfx(b, "debuff"); break;
     case "reflect": e.reflect = { t: d.dur, pct: d.pct }; sfx(b, "buff"); break;
-    case "shield": { e.shield = { t: d.dur, need: d.adds }; const n = summonAdds(b, "grunt", d.adds, e); e.shield.need = Math.max(1, n); sfx(b, "buff"); break; }
+    case "shield": { const n = summonAdds(b, "grunt", d.adds, e); if (n < 1) break; e.shield = { t: d.dur, need: n }; for (const x of b.enemies) if (x.summoned && x.owner === e.id && !x.dead) x.shieldAdd = true; sfx(b, "buff"); break; }
     case "plate": e.plate = { t: d.dur, red: d.red }; sfx(b, "buff"); fx(b, { kind: "ring", x: e.vx || 600, y: (e.vy || 300) - 40, t: 0.6, life: 0.6, color: "#c8d0d8", r: 100 }); break;
     case "pylon": { const before = new Set(b.enemies); summonAdds(b, "imp", d.count, e); for (const x of b.enemies) if (!before.has(x) && !x.dead) { x.pylon = true; x.hp = x.maxHp = x.maxHp * 14; } sfx(b, "summon"); break; }
     case "chainbolt": for (let i = 0; i < d.hits; i++) b.events.push({ t: 0.6 + i * 0.28, fn: () => { damagePlayer(b, e.atk * d.mult, { shake: 0.15, boss: true }); fx(b, { kind: "boom", x: PLAYER_POS.x + rnd(-24, 40), y: PLAYER_POS.y - 20, t: 0.3, life: 0.3, color: "#ffe45a", r: 56 }); sfx(b, "thunder"); } }); break;
@@ -512,6 +512,7 @@ function bossTick(b, e, dt) {
     if (a.d.id === "enrage") { if (!e.enraged && e.hp <= e.maxHp * a.d.at) { e.enraged = true; e.atk *= 1.4; e.interval *= 0.7; say(b, a.d.text, "boss"); sfx(b, "roar"); b.shake = 0.6; } continue; }
     a.t -= dt; if (a.t <= 0 && !e.charge && !e.stun) { bossAbility(b, e, a); a.t = a.d.every; }
   }
+  if (e.shield && !b.enemies.some((x) => x.shieldAdd && !x.dead && x.owner === e.id)) { e.shield = null; say(b, "방어막이 깨졌다!"); sfx(b, "shatter"); }   // 막을 지키는 졸개가 하나도 없으면 무조건 벗겨진다
   if (e.shield) { e.shield.t -= dt; if (e.shield.t <= 0) { e.shield = null; say(b, "방어막이 사라졌다."); } }
   if (e.reflect) { e.reflect.t -= dt; if (e.reflect.t <= 0) e.reflect = null; }
   if (e.stun) { e.stun -= dt; if (e.stun <= 0) e.stun = 0; }
