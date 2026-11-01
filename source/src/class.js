@@ -28,7 +28,10 @@ function dropClass(sv, id) { if (!classHas(sv, id)) return false; if (C_NODES.so
 const resetClass = (sv) => { sv.cpass = {}; };
 // 전직: 전직의 서(sv.cbook[n]) 1권을 써서 n차 전직. 이전 차수를 먼저 해야 한다
 function advanceClass(sv) { const n = (sv.cls | 0) + 1; if (n > 3) return { ok: false, msg: "이미 최종 전직입니다" }; if (!sv.cbook || !(sv.cbook[n] > 0)) return { ok: false, msg: `${n}차 전직의 서가 없습니다` }; sv.cbook[n]--; sv.cls = n; return { ok: true, n, msg: `${n}차 전직 — ${C_CLASS_NAMES[n]}! 전직 포인트 2점을 얻었습니다` }; }
-const craidOpen = (sv) => 1 + (sv.craid && sv.craid[1] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] && sv.craid[3] && (sv.cls | 0) >= 3 ? 2 : 0);   // 4 = 새 문지기 · 5 = 참 던전 (하드 클리어 + 3차 전직)   // 이지 → 노말 → 하드 순서로 열린다
+const craidOpen = (sv) => 1 + (sv.craid && sv.craid[1] ? 1 : 0) + (sv.craid && sv.craid[1] && sv.craid[2] ? 1 : 0);   // 레이드 던전 이지 · 노말 · 하드
+const wardenOpen = (sv) => !!(sv.spire && sv.spire.best >= 100);   // 새 문지기: 솟아난 탑 100층을 클리어한 뒤 (탑 밖 독립 노드)
+const charmOpen = (sv) => !!(sv.craid && sv.craid[3] && (sv.cls | 0) >= 3);   // 참 던전: 하드 클리어 + 3차 전직 (독립 노드)
+const tower2Open = (sv) => !!(sv.warden && sv.warden.best > 0 && (sv.cls | 0) >= 3);   // 새 탑: 문지기를 넘고 최종 전직을 마친 뒤
 
 // ---- 참 (v4.45): 3차 전직 후 장비칸 아래 4칸. 하드 난이도 참 던전에서 얻는다. 참 하나에 2줄 (수치는 0.85~1.15배로 굴린다) ----
 // 줄 = [문구({v}에 첫 효과 수치), 효과[[스탯, 기본값]], 표시형식 p=% n=정수 f=고정(굴림 없음)]. 스탯 이름이 cm: 으로 시작하면 전투 · 드랍 코드가 읽는 값
@@ -48,15 +51,34 @@ const CHARMS = [
   { id: "hunter", name: "사냥꾼의 직감", color: "#d8c8b0", L: [["정예 추가 피해 +{v}", [["elite", 0.15]], "p"], ["정예 · 보스 처치 시 5초간 주는 피해 +{v}", [["cm:elite", 0.10]], "p"]] },
   { id: "tidy", name: "정리의 인장", color: "#9ad8ff", L: [["가방 칸 +{v}", [["cm:bag", 25]], "n"], ["장비 분해 시 강화석 +{v}", [["cm:ore", 0.20]], "p"]] },
   { id: "horn", name: "개전의 나팔", color: "#ff7a3a", L: [["전투 시작 후 3초간 주는 피해 +{v}", [["cm:start", 0.25]], "p"], ["전투 시작 시 모든 스킬을 바로 쓸 수 있다", [["cm:cdStart", 1]], "f"]] },
-  { id: "fang", name: "독니의 맹세", color: "#8aff6a", L: [["중독 확률 +{v}", [["poisonChance", 0.10]], "p"], ["중독된 적을 공격하면 피해의 {v}를 체력으로 회복", [["cm:leech", 0.03]], "p"]] },
+  { id: "fang", name: "독니의 맹세", color: "#8aff6a", L: [["중독 중인 적에게 주는 피해 +{v}", [["vsPoison", 0.15]], "p"], ["중독된 적을 공격하면 피해의 {v}를 체력으로 회복", [["cm:leech", 0.03]], "p"]] },
 ];
 const CHARM_BY_ID = {}; for (const c of CHARMS) CHARM_BY_ID[c.id] = c;
 const charmUnlocked = (sv) => (sv.cls | 0) >= 3;
-function genCharm(sv, id) { const c = id ? CHARM_BY_ID[id] : CHARMS[Math.floor(Math.random() * CHARMS.length)]; return { uid: sv.nextUid++, charm: c.id, rl: [0.85 + Math.random() * 0.30, 0.85 + Math.random() * 0.30] }; }
-const charmLineVal = (it, li, ei) => { const L = CHARM_BY_ID[it.charm].L[li], base = L[1][ei][1]; if (L[2] === "f") return base; const v = base * (it.rl ? it.rl[li] : 1); return L[2] === "n" ? Math.round(v) : v; };
-const charmFmt = (L, v) => (L[2] === "p" ? (v * 100).toFixed(v < 0.1 ? 1 : 0).replace(/\.0$/, "") + "%" : String(Math.round(v)));
-function charmLines(it) { const C = CHARM_BY_ID[it.charm]; if (!C) return []; return C.L.map((L, li) => L[0].replace("{v}", charmFmt(L, charmLineVal(it, li, 0)))); }
-function charmEffects(sv) { const out = []; if (!charmUnlocked(sv)) return out; for (const it of sv.charms || []) { if (!it || !CHARM_BY_ID[it.charm]) continue; CHARM_BY_ID[it.charm].L.forEach((L, li) => L[1].forEach((e, ei) => out.push([e[0], charmLineVal(it, li, ei)]))); } return out; }
+// v4.47: 참 = 특수 옵션 1줄 + 기본 옵션 2줄 (이름 없음). 특수 줄은 위 16종 중 하나의 대표 효과, 기본 줄은 아래 풀에서 굴린다.
+//   (이전 버전 참은 줄 2개짜리 그대로 동작한다: it.rl 이 있으면 옛 형식)
+const CHARM_SP = { blood: 1, mana: 0, gold: 1, luck: 1, stone: 0, phoenix: 0, swift: 1, breaker: 1, focus: 0, bulwark: 1, shadow: 1, swarm: 1, hunter: 1, tidy: 0, horn: 1, fang: 1 };   // 특수 줄로 쓰는 L 번호
+const CHARM_BASIC = [
+  ["hpPct", "최대 체력 +{v}", 0.08], ["atkPct", "공격력 +{v}", 0.08], ["magPct", "마력 +{v}", 0.08], ["defPct", "방어력 +{v}", 0.10], ["critChance", "치명타 확률 +{v}", 0.03],
+  ["critDmg", "치명타 피해 +{v}", 0.12], ["cdr", "쿨타임 감소 +{v}", 0.04], ["dodge", "회피 +{v}", 0.03], ["allDmg", "모든 피해 +{v}", 0.06], ["lifesteal", "생명력 흡수 +{v}", 0.01],
+  ["manaPct", "최대 마나 +{v}", 0.08], ["goldFind", "골드 획득 +{v}", 0.12], ["mf", "매직 파운드 +{v}", 0.10], ["ignoreDef", "방어 무시 +{v}", 0.05], ["physDmg", "물리 피해 +{v}", 0.08], ["magDmg", "마법 피해 +{v}", 0.08],
+];
+const CHARM_BASIC_BY = {}; for (const b of CHARM_BASIC) CHARM_BASIC_BY[b[0]] = b;
+function genCharm(sv, id) {
+  const C = id ? CHARM_BY_ID[id] : CHARMS[Math.floor(Math.random() * CHARMS.length)], pool = CHARM_BASIC.slice(), b = [];
+  for (let n = 0; n < 2; n++) { const k = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; b.push({ k: k[0], r: 0.8 + Math.random() * 0.4 }); }
+  return { uid: sv.nextUid++, sp: C.id, r: 0.85 + Math.random() * 0.30, b };
+}
+// 줄 목록: [{ key(종류·검색용), txt(문구 {v}), eff([[스탯, 기본값]]), fmt, r(굴림), sp(특수 줄 여부) }]
+function charmRows(it) {
+  if (it.sp && CHARM_BY_ID[it.sp]) { const C = CHARM_BY_ID[it.sp], L = C.L[CHARM_SP[it.sp] | 0]; return [{ key: "sp:" + C.id, txt: L[0], eff: L[1], fmt: L[2], r: it.r, sp: 1 }].concat((it.b || []).map((x) => { const B = CHARM_BASIC_BY[x.k]; return B ? { key: B[0], txt: B[1], eff: [[B[0], B[2]]], fmt: "p", r: x.r, sp: 0 } : null; }).filter(Boolean)); }
+  const C = CHARM_BY_ID[it.charm]; return C ? C.L.map((L, li) => ({ key: "sp:" + C.id + li, txt: L[0], eff: L[1], fmt: L[2], r: it.rl ? it.rl[li] : 1, sp: li === 0 ? 1 : 0 })) : [];
+}
+const charmKind = (it) => it.sp || it.charm;
+const charmRowVal = (R, ei) => { const base = R.eff[ei][1]; if (R.fmt === "f") return base; const v = base * R.r; return R.fmt === "n" ? Math.round(v) : v; };
+const charmFmt = (L, v) => ((L === "p" || (L && L[2] === "p")) ? (v * 100).toFixed(v < 0.1 ? 1 : 0).replace(/\.0$/, "") + "%" : String(Math.round(v)));
+const charmLines = (it) => charmRows(it).map((R) => R.txt.replace("{v}", charmFmt(R.fmt, charmRowVal(R, 0))));
+function charmEffects(sv) { const out = []; if (!charmUnlocked(sv)) return out; for (const it of sv.charms || []) { if (!it) continue; for (const R of charmRows(it)) R.eff.forEach((e, ei) => out.push([e[0], charmRowVal(R, ei)])); } return out; }
 const charmVal = (sv, key) => { let v = 0; for (const [k, x] of charmEffects(sv)) if (k === "cm:" + key) v += x; return v; };
 const invMax = (sv) => CFG.INV_MAX + Math.round(charmVal(sv, "bag"));
 const stoneCap = (sv) => 100 + Math.round(charmVal(sv, "stoneCap"));

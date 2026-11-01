@@ -88,8 +88,20 @@ function socketItem(sv, it, stone, idx) {
   it.sock[idx] = stone.rev.hi ? { k: stone.rev.k, v: stone.rev.v, hi: 1 } : { k: stone.rev.k, v: stone.rev.v }; sv.stones = sv.stones.filter((x) => x !== stone); return { ok: true, msg: "소켓에 끼웠습니다" };
 }
 // 이전 세이브/경매 등에서 온 장비의 범위 밖 수치를 현재 범위 안으로 맞춘다
+const REMOVED_CH = { bleedChance: 1, poisonChance: 1, igniteChance: 1, shockChance: 1 };   // v4.47: 장비 · 룬 · 사탄 옵션에서 상태이상 확률이 사라졌다
+function dropChanceAffixes(it) {   // 이미 가진 장비의 해당 줄은 같은 티어의 다른 옵션으로 바꿔 준다
+  let n = 0; if (!it.affixes) return 0;
+  for (let i = 0; i < it.affixes.length; i++) { const a = it.affixes[i]; if (!REMOVED_CH[a.k]) continue;
+    const have = new Set(it.affixes.map((x) => x.k)), pool = (typeof affixPool === "function" ? affixPool(it, i) : []).filter((d) => !have.has(d.k) && !REMOVED_CH[d.k]);
+    if (it.uniq || it.u || !pool.length) { const alt = ["dotDmg", "dotDur", "allDmg", "physDmg", "magPct"].find((k) => !have.has(k)); a.k = alt || "allDmg"; if (a.k === "allDmg") a.v = (a.v || 0) * 0.4; }
+    else { const d = pool[Math.floor(Math.random() * pool.length)], o = mkAff(d, it.ilvl, it.rarity, false, a.t != null ? a.t : undefined); it.affixes[i] = o; }
+    n++; }
+  return n;
+}
 function clampItem(it) {
   if (!it) return 0;
+  if (it.affixes) dropChanceAffixes(it);
+  if (it.sock) for (let i = 0; i < it.sock.length; i++) { const m = it.sock[i]; if (m && REMOVED_CH[m.k]) it.sock[i] = { k: "dotDmg", v: 0.16 }; }
   if (!it.sock && (it.rarity === 1 || it.rarity === 2)) it.sock = it.rarity === 1 ? [null] : Array(Math.random() < 0.6 ? 1 : 2).fill(null);   // 이전 매직 · 레어 장비에도 소켓을 준다
   if (it.wt === "scythe") { it.wt = "sword"; it.base.atk = (it.base.atk || 0) * 9 / 7; delete it.base.mag; }   // 삭제된 무기 종류: 낫 → 검
   else if (it.wt === "grimoire") { it.wt = "staff"; it.base.mag = (it.base.mag || 0) * 9 / 7; delete it.base.atk; }
@@ -100,6 +112,9 @@ function clampItem(it) {
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
 function clampAll(sv) { let n = 0; unpackStones(sv); dedupeLoadout(sv);
+  for (const st of sv.stones || []) if (st.rev && REMOVED_CH[st.rev.k]) st.rev = { k: "dotDmg", v: 0.16 };   // 상태이상 확률 돌 → 지속 피해 돌
+  for (const k of sv.skills || []) if (k.rune === "bleed" || k.rune === "venom" || k.rune === "flame") k.rune = "power";   // 사라진 룬 → 강타의 룬
+  for (const r of sv.runes || []) if (r.id === "bleed" || r.id === "venom" || r.id === "flame") r.id = "power";
   if (sv.rift && sv.rift.best > CFG.RIFT_END) sv.rift.best = CFG.RIFT_END;   // 균열은 100층까지 (이전 상한을 넘은 기록은 100층으로 맞춘다)
   // 사라진 각인(경험치·지옥)에 쓴 조각은 돌려준다
   { const A = sv.atlas || (sv.atlas = {}), OLD = { exp: [6, 0.55], hell: [12, 0.55] }; for (const id in OLD) { const rk = A[id] | 0; if (rk > 0) { let sum = 0; for (let r = 0; r < rk; r++) sum += Math.round(OLD[id][0] * (1 + r * OLD[id][1])); sv.shards = (sv.shards || 0) + sum; } delete A[id]; } }
@@ -279,15 +294,15 @@ function powerDetail(s) {
     let cast = castMult(k, s) * bc;
     // 상태이상: 적중마다 확률로 지속 피해가 붙는다 (계수 × 지속피해 보너스)
     let dot = 0;
-    for (const st of ["bleed", "poison", "ignite"]) { const q = st === "bleed" ? !mag : st === "poison" ? !mag || k.elem === "void" : k.elem === "fire", ch = Math.min(1, (k[st] || 0) + (q ? s[st + "Chance"] : 0)); if (ch > 0) dot += ch * CFG[st.toUpperCase()].coef * (1 + s.dotDmg) * (1 + 0.3 * s.dotDur) * 0.85; }
+    for (const st of ["bleed", "poison", "ignite"]) { const q = st === "bleed" ? !mag : st === "poison" ? !mag : k.elem === "fire", ch = Math.min(1, (k[st] || 0) + (q ? s[st + "Chance"] : 0)); if (ch > 0) dot += ch * CFG[st.toUpperCase()].coef * (1 + s.dotDmg) * (1 + 0.3 * s.dotDur) * 0.85; }
     cast *= 1 + dot;
     const paid = cost > 0; if (paid) hasPaid = true; demand += cost;
-    rows.push({ k, dps: cast / cd, paid, cost, mag, dot });
+    rows.push({ k, dps: cast / cd, paid, cost, mag, dot, key: k.elem || (mag ? "mag" : k.poison >= 0.3 ? "poison" : k.bleed >= 0.3 ? "bleed" : "phys") });
   }
   // 마나 지속: 재생(초당) + 처치 회복 + 풀 마나를 오래 쓰는 몫. 부족하면 마나를 쓰는 스킬의 가동률이 떨어진다
   const supply = s.maxMana * s.manaRate + (s.manaFlatRegen || 0) + (s.manaKill || 0) * 1.2 + s.maxMana / 25 + s.maxMana * (s.manaHit || 0) * 5;   // 마나 흡수: 초당 약 5회 적중(0.1초 간격 제한) 가정
   const mf = demand > 0 ? Math.min(1, supply / demand) : 1; out.manaFactor = mf; out.demand = demand; out.supply = supply;
-  for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot }); }
+  for (const r of rows) { r.eff = r.dps * (r.paid ? mf : 1); out.dps += r.eff; out.skills.push({ id: r.k.id, name: r.k.name, dps: r.eff, mag: r.mag, paid: r.paid, dot: r.dot, key: r.key }); }
   out.dps *= buffMul; out.buff = buffMul;
   const M = s.maxMana, f = s.manaShield || 0, mshield = f > 0 ? Math.min(M * (1 - CFG.MANA_SHIELD_KEEP) / CFG.MANA_SHIELD_COST, s.maxHp * f / (1 - f)) : 0;
   out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + mshield) * mit * (1 / Math.max(CFG.TAKEN_FLOOR, 1 + s.dmgTaken)) / (1 - s.dodge);
@@ -298,7 +313,8 @@ const POWER_RAW = 6;   // 방어 효과 계산에 쓰는 "실제로 맞는 평�
 let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
 function playerPower(s) {
   const d = powerDetail(s);
-  return POWER_K * d.dps * d.ehp * statusPow(s) * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
+  let fam = 0, tot = 0; for (const r of d.skills) { fam += r.dps * (CFG.PWR_FAM[r.key] == null ? 1 : CFG.PWR_FAM[r.key]); tot += r.dps; } fam = tot > 0 ? fam / tot : 1;   // 계열별 전투력 보정: 같은 전투력이면 같은 층을 깰 수 있게 맞춘다
+  return fam * POWER_K * d.dps * d.ehp * statusPow(s) * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
 }
 const enemyIndex = (act, stage) => CFG.H0 * CFG.A0 * actScale(act) * actScale(act) * (1 + CFG.STAGE_HP * (stage - 1)) * (1 + CFG.STAGE_ATK * (stage - 1));
 const recPower = (act, stage) => CFG.REC_K * (stage === CFG.STAGES ? CFG.REC_BOSS : 1) * enemyIndex(act, stage);
@@ -327,7 +343,7 @@ const STONE_POOL = [
   { k: "atkPct", v: 0.10 }, { k: "magPct", v: 0.10 }, { k: "hpPct", v: 0.10 }, { k: "critChance", v: 0.04 }, { k: "critDmg", v: 0.22 }, { k: "spellCrit", v: 0.04 },
   { k: "cdr", v: 0.05 }, { k: "dodge", v: 0.04 }, { k: "lifesteal", v: 0.015 }, { k: "boss", v: 0.25 }, { k: "elite", v: 0.25 }, { k: "normal", v: 0.18 }, { k: "ranged", v: 0.25 },
   { k: "physDmg", v: 0.12 }, { k: "magDmg", v: 0.12 }, { k: "fireDmg", v: 0.14 }, { k: "coldDmg", v: 0.14 }, { k: "lightDmg", v: 0.14 }, { k: "voidDmg", v: 0.14 },
-  { k: "ignoreDef", v: 0.06 }, { k: "ignoreRes", v: 0.06 }, { k: "bleedChance", v: 0.10 }, { k: "poisonChance", v: 0.10 }, { k: "igniteChance", v: 0.10 }, { k: "dotDmg", v: 0.16 },
+  { k: "ignoreDef", v: 0.06 }, { k: "ignoreRes", v: 0.06 }, { k: "dotDmg", v: 0.16 },
   { k: "goldFind", v: 0.15 }, { k: "mf", v: 0.12 }, { k: "manaPct", v: 0.10 }, { k: "manaRegen", v: 0.4 }, { k: "allDmg", v: 0.06 },
 ];
 const stoneLabel = (m) => { const d = AFFIXES.find((x) => x.k === m.k); const nm = d ? d.name : (typeof MOD_LABEL !== "undefined" && MOD_LABEL[m.k] ? MOD_LABEL[m.k][0] : m.k); return `${nm} +${d && d.pct || /Pct|Chance|Dmg|crit|cdr|dodge|lifesteal|boss|elite|normal|ranged|ignore|goldFind|mf|Regen/.test(m.k) && m.v < 5 ? (m.v * 100).toFixed(m.v < 0.1 ? 1 : 0).replace(/\.0$/, "") + "%" : Math.round(m.v)}`; };
@@ -377,7 +393,7 @@ function bossOfSkill(d) {
 const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 9, 0, 0], [5, 12, 70, 13, 0, 0]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
 const UP_SKILL_RW = [[0, 0, 0, 0, 90, 10], [0, 0, 0, 0, 80, 20], [0, 0, 0, 0, 68, 32], [0, 0, 0, 0, 55, 45]], UP_SKILL_CH = [0.15, 0.22, 0.32, 0.50];   // 상위 보스관문: 사탄 · 종말 스킬만 나온다
-const UP_TIERS = [186, 192, 199, 206], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
+const UP_TIERS = [196, 203, 210, 217], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
 function rollBossSkills(sv, kind, K, upper) {
   const out = []; if (!GRADUATED(sv)) return out; K = Math.max(1, Math.min(4, K | 1));
@@ -550,9 +566,9 @@ function nodeUnlocked(sv, n) {
   if (n.kind === "town") return townUnlocked(sv, n.act);
   if (n.kind === "rift") return sv.cleared[CFG.ACTS - 1] >= CFG.STAGES;
   if (n.kind === "tower") return !!(sv.raid && sv.raid.tower);
-  if (n.kind === "tower2") return !!(sv.craid && sv.craid[3]);   // 심층 첨탑: 하드 레이드 클리어 후
+  if (n.kind === "tower2") return tower2Open(sv);   // 새 탑: 문지기 클리어 + 최종 전직
   if (n.kind === "bosshub2") return !!(sv.craid && sv.craid[2]);   // 상위 보스관문: 노말 레이드를 클리어한 뒤
-  if (n.kind === "craid") return !!(sv.raid && sv.raid.tower);   // 레이드 던전: 탑이 솟은 뒤
+  if (n.kind === "craid") return n.sub === "warden" ? wardenOpen(sv) : n.sub === "charm" ? charmOpen(sv) : !!(sv.raid && sv.raid.tower);   // 레이드 던전: 탑이 솟은 뒤
   if (n.kind === "temple") return !!(sv.raid && sv.raid.cleared > 0);   // 돌의 신전: 심연의 문지기 모르가스를 클리어한 뒤
   if (n.kind === "endless" || n.kind === "void" || n.kind === "bosshub" || isEB(n.kind) || n.kind === "vault" || n.kind === "raid") return GRADUATED(sv);   // v4: 균열 100층을 졸업한 뒤 열린다
   if (!townUnlocked(sv, n.act)) return false;

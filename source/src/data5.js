@@ -64,15 +64,15 @@ const STATUS_INFO = { shock: { name: "감전", color: "#ffe45a", st: "light" }, 
 
 // ---- 계열별 핵심 고유 장비 (출혈 · 중독 · 점화 · 마나 · 마법 치명 · 원소) ----
 UNIQUES.push(
-  U("bloodaxe", "피에 젖은 도끼", "weapon", 1, "common", 3, [["bleedChance", [0.48, 0.64]], ["dotDmg", [0.4, 0.56]], ["atkPct", [-0.112, -0.088]]], "닦아낼 틈이 없다."),
-  U("thirst", "핏빛 갈증", "gloves", 2, "common", 5, [["bleedChance", [0.287, 0.365]], ["dotDmg", [0.587, 0.717]], ["dotDur", [0.344, 0.438]], ["hpMore", 0.85], ["physDmg", [0.261, 0.339]], ["atkPct", [0.115, 0.146]]], "상처가 닫히기 전에 다시 연다."),
-  U("brand", "학살자의 낙인", "weapon", 3, "hell", 1, [["bleedChance", [0.45, 0.55]], ["dotDmg", [0.9, 1.1]], ["physDmg", 0.4], ["dmgTaken", 0.15]], "피는 마를 틈이 없다."),
-  U("viperring", "독사의 이빨", "ring", 1, "common", 3, [["poisonChance", [0.28, 0.35]], ["dotDmg", [0.2, 0.3]], ["hpPct", -0.1]], "물리면 늦는다."),
-  U("plaguemask", "역병 의사의 가면", "helm", 2, "tower", 1, [["poisonChance", [0.28, 0.35]], ["dotDmg", [0.45, 0.55]], ["regen", [0.004, 0.004]], ["expFind", [0.264, 0.336]]], "숨을 쉴 때마다 독이 퍼진다."),
-  U("venomking", "독왕의 손길", "gloves", 3, "endless", 1, [["poisonChance", [0.45, 0.55]], ["dotDmg", [0.9, 1.1]], ["dotDur", [0.44, 0.56]], ["cdr", [0.088, 0.112]], ["mf", [0.37, 0.47]]], "쌓이고 쌓여 죽음이 된다."),
-  U("pyrerobe", "화염술사의 로브", "armor", 2, "common", 6, [["igniteChance", [0.28, 0.35]], ["fireDmg", [0.28, 0.35]], ["manaPct", [0.28, 0.34]]], "불은 마나로 타오른다."),
-  U("lavaheart", "용암의 심장", "neck", 3, "hell", 1, [["igniteChance", [0.55, 0.65]], ["dotDmg", [0.7, 0.9]], ["fireDmg", [0.45, 0.55]], ["penElem", 0.1]], "식지 않는 박동."),
-  U("plaguebearer", "만병의 근원", "neck", 4, "tower", 1, [["bleedChance", [0.264, 0.336]], ["poisonChance", [0.264, 0.336]], ["igniteChance", [0.264, 0.336]], ["dotDmg", [1.1, 1.3]], ["dotDur", [0.352, 0.448]], ["allDmg", [0.176, 0.224]], ["magPct", [0.246, 0.314]]], "모든 상처는 하나로 이어진다."),
+  U("bloodaxe", "피에 젖은 도끼", "weapon", 1, "common", 3, [["dotDur", [0.48, 0.64]], ["dotDmg", [0.4, 0.56]], ["atkPct", [-0.112, -0.088]]], "닦아낼 틈이 없다."),
+  U("thirst", "핏빛 갈증", "gloves", 2, "common", 5, [["allDmg", [0.115, 0.146]], ["dotDmg", [0.587, 0.717]], ["dotDur", [0.344, 0.438]], ["hpMore", 0.85], ["physDmg", [0.261, 0.339]], ["atkPct", [0.115, 0.146]]], "상처가 닫히기 전에 다시 연다."),
+  U("brand", "학살자의 낙인", "weapon", 3, "hell", 1, [["dotDur", [0.45, 0.55]], ["dotDmg", [0.9, 1.1]], ["physDmg", 0.4], ["dmgTaken", 0.15]], "피는 마를 틈이 없다."),
+  U("viperring", "독사의 이빨", "ring", 1, "common", 3, [["dotDur", [0.28, 0.35]], ["dotDmg", [0.2, 0.3]], ["hpPct", -0.1]], "물리면 늦는다."),
+  U("plaguemask", "역병 의사의 가면", "helm", 2, "tower", 1, [["dotDur", [0.28, 0.35]], ["dotDmg", [0.45, 0.55]], ["regen", [0.004, 0.004]], ["expFind", [0.264, 0.336]]], "숨을 쉴 때마다 독이 퍼진다."),
+  U("venomking", "독왕의 손길", "gloves", 3, "endless", 1, [["allDmg", [0.18, 0.22]], ["dotDmg", [0.9, 1.1]], ["dotDur", [0.44, 0.56]], ["cdr", [0.088, 0.112]], ["mf", [0.37, 0.47]]], "쌓이고 쌓여 죽음이 된다."),
+  U("pyrerobe", "화염술사의 로브", "armor", 2, "common", 6, [["dotDmg", [0.28, 0.35]], ["fireDmg", [0.28, 0.35]], ["manaPct", [0.28, 0.34]]], "불은 마나로 타오른다."),
+  U("lavaheart", "용암의 심장", "neck", 3, "hell", 1, [["dotDur", [0.55, 0.65]], ["dotDmg", [0.7, 0.9]], ["fireDmg", [0.45, 0.55]], ["penElem", 0.1]], "식지 않는 박동."),
+  U("plaguebearer", "만병의 근원", "neck", 4, "tower", 1, [["physDmg", [0.264, 0.336]], ["vsPoison", [0.264, 0.336]], ["vsIgnite", [0.264, 0.336]], ["dotDmg", [1.1, 1.3]], ["dotDur", [0.352, 0.448]], ["allDmg", [0.176, 0.224]], ["magPct", [0.246, 0.314]]], "모든 상처는 하나로 이어진다."),
   U("manafall", "마나 폭포", "armor", 1, "common", 3, [["manaPct", [0.873, 1.032]], ["manaRegenFlat", [11.11, 14.284]], ["defMore", 0.8]], "넘쳐흘러 방어를 잊었다."),
   U("archmage", "대마도사의 지팡이", "weapon", 2, "common", 6, [["manaToSpell", [0.34, 0.4]], ["magPct", [0.36, 0.44]], ["manaRegen", 0.02], ["allDmg", 0.1]], "마나의 흐름을 지팡이로 모은다."),
   U("manabarrier", "마력 순환 갑주", "armor", 3, "common", 7, [["manaRegen", [0.039, 0.058]], ["manaPct", [0.877, 1.072]], ["manaCostRed", [0.172, 0.218]], ["hpMore", 0.6], ["magPct", [0.24, 0.306]], ["hpPct", [0.24, 0.306]], ["dmgTaken", [-0.09, -0.07]], ["allDmg", [0.138, 0.174]]], "마나가 흐르는 한 쓰러지지 않는다."),
@@ -84,11 +84,11 @@ UNIQUES.push(
 );
 // ---- 다양성 추가: 처형·처치 회복·보스/원거리 피해 감소·상태이상·골드 계열 등 ----
 UNIQUES.push(
-  U("butcheraxe", "도살자의 손도끼", "weapon", 1, "common", 1, [["atkPct", [0.24, 0.32]], ["executeDmg", [0.4, 0.56]], ["bleedChance", [0.141, 0.179]]], "끝을 보는 일에 익숙하다."),
+  U("butcheraxe", "도살자의 손도끼", "weapon", 1, "common", 1, [["atkPct", [0.24, 0.32]], ["executeDmg", [0.4, 0.56]], ["dotDmg", [0.141, 0.179]]], "끝을 보는 일에 익숙하다."),
   U("huntermark", "사냥꾼의 표식", "ring", 1, "common", 1, [["boss", [0.253, 0.323]], ["ranged", [0.253, 0.323]], ["critChance", [0.056, 0.072]]], "한 번 찍히면 놓치지 않는다."),
   U("bloodhood", "피 묻은 두건", "helm", 1, "common", 2, [["killHeal", [0.001, 0.002]], ["lifesteal", [0.011, 0.014]], ["hpPct", [0.141, 0.179]]], "쓰러진 것의 온기를 마신다."),
   U("stalkerboots", "추적자의 장화", "boots", 2, "common", 3, [["cdr", [0.08, 0.102]], ["dodge", [0.044, 0.056]], ["rangedTaken", [0.092, 0.117]], ["allDmg", [0.114, 0.146]], ["hpPct", [0.13, 0.182]]], "발소리가 없다."),
-  U("viperfang", "독사의 송곳니", "weapon", 2, "common", 4, [["poisonChance", 0.15], ["dotDmg", 0.35], ["dotDur", 0.20], ["atkPct", 0.15]], "물린 곳은 오래 아프다."),
+  U("viperfang", "독사의 송곳니", "weapon", 2, "common", 4, [["allDmg", 0.06], ["dotDmg", 0.35], ["dotDur", 0.20], ["atkPct", 0.15]], "물린 곳은 오래 아프다."),
   U("frostsigil", "한파의 인장", "ring", 2, "common", 4, [["coldDmg", [0.408, 0.519]], ["penElem", [0.093, 0.119]], ["cdr", [0.035, 0.044]], ["magPct", [0.163, 0.208]], ["spellCrit", [0.07, 0.089]]], "손끝이 시리다."),
   U("stormarbiter", "폭풍의 중재자", "gloves", 2, "common", 5, [["lightDmg", [0.443, 0.564]], ["chainDmg", [0.316, 0.403]], ["chainJumps", 1], ["magPct", [0.177, 0.225]], ["critDmg", [0.253, 0.322]]], "번개가 말을 듣는다."),
   U("bulwarkplate", "철벽의 수호자", "armor", 2, "common", 5, [["defPct", 0.25], ["bossTaken", 0.08], ["hpPct", 0.12]], "거인의 발에도 버틴다."),
@@ -100,7 +100,7 @@ UNIQUES.push(
   U("reaperscythe", "저승사자의 낫", "weapon", 3, "tower", 1, [["executeDmg", [1.178, 1.5]], ["boss", [0.491, 0.625]], ["critChance", [0.157, 0.2]], ["lifesteal", [0.02, 0.025]], ["atkPct", [0.196, 0.25]], ["magPct", [0.196, 0.25]], ["allDmg", [0.157, 0.2]]], "마지막 한 번을 위해 휘두른다."),
   U("executorring", "집행관의 반지", "ring", 2, "endless", 1, [["elite", [0.468, 0.596]], ["aoeDmg", [0.201, 0.255]], ["killHeal", [0.001, 0.002]], ["allDmg", [0.134, 0.17]], ["critDmg", [0.267, 0.34]]], "정예는 줄 세워서."),
   U("endlessboots", "무한의 장화", "boots", 3, "endless", 1, [["cdr", [0.14, 0.179]], ["dodge", [0.053, 0.067]], ["killHeal", [0.002, 0.003]], ["mf", [0.07, 0.09]], ["allDmg", [0.176, 0.223]], ["hpPct", [0.211, 0.269]]], "멈추면 쓰러진다."),
-  U("emberheart", "불씨 박힌 심장석", "neck", 2, "hell", 1, [["fireDmg", [0.528, 0.672]], ["igniteChance", [0.211, 0.269]], ["dotDmg", [0.37, 0.47]], ["magPct", [0.106, 0.134]]], "식지 않는 숯."),
+  U("emberheart", "불씨 박힌 심장석", "neck", 2, "hell", 1, [["fireDmg", [0.528, 0.672]], ["dotDur", [0.211, 0.269]], ["dotDmg", [0.37, 0.47]], ["magPct", [0.106, 0.134]]], "식지 않는 숯."),
   U("hellhound", "지옥견의 두개골", "helm", 3, "hell", 1, [["fireDmg", [0.704, 0.896]], ["killHeal", [0.001, 0.002]], ["normal", [0.493, 0.627]], ["dodge", [0.044, 0.056]], ["hpPct", [0.282, 0.358]]], "짖지 않는다. 물 뿐이다.")
 );
 UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
@@ -116,9 +116,6 @@ const RUNES = {
   pierce: { name: "관통의 룬", color: "#ffd24a", text: "방어/마법저항 15% 무시", ignore: 0.15 },
   fang: { name: "흡혈의 룬", color: "#ff6aa0", text: "생명력 흡수 +8%", lifesteal: 0.08 },
   keen: { name: "예리함의 룬", color: "#fff08a", text: "치명타 확률 +15%", crit: 0.15 },
-  bleed: { name: "출혈의 룬", color: "#e03a4a", text: "출혈 확률 +25%", bleed: 0.25 },
-  venom: { name: "독의 룬", color: "#6ae04a", text: "중독 확률 +25%", poison: 0.25 },
-  flame: { name: "점화의 룬", color: "#ff9a30", text: "점화 확률 +25%", ignite: 0.25 },
   wide: { name: "확장의 룬", color: "#c58bff", text: "지속시간·횟수 +30%, 번개 도약 +2", wide: 1.3 },
 };
 const RUNE_IDS = Object.keys(RUNES);
@@ -132,7 +129,7 @@ UNIQUES.push(
   U("windwalk", "바람걸음 장화", "boots", 2, "common", 4, [["dodge", [0.2, 0.25]], ["dodgeCap", 0.6], ["cdr", 0.1], ["manaRegenFlat", 3]], "닿지 않는 곳에서 걷는다."),
   U("riftleap", "균열 도약자의 신발", "boots", 2, "tower", 1, [["cdr", [0.288, 0.352]], ["allDmg", [0.208, 0.272]], ["hpMore", 0.85], ["atkPct", [0.141, 0.179]], ["magPct", [0.141, 0.179]]], "한 걸음에 한 층."),
   U("timestride", "시간을 걷는 신발", "boots", 3, "common", 7, [["cdr", [0.22, 0.26]], ["cdrCap", 0.65], ["manaRegen", 0.02], ["allDmg", [0.16, 0.2]]], "발걸음마다 초침이 멈춘다."),
-  U("embertrail", "불길 위의 걸음", "boots", 3, "hell", 1, [["fireDmg", [0.45, 0.55]], ["igniteChance", 0.3], ["regen", 0.008], ["dmgTaken", -0.1]], "지나간 자리에 불이 남는다."),
+  U("embertrail", "불길 위의 걸음", "boots", 3, "hell", 1, [["fireDmg", [0.45, 0.55]], ["dotDmg", 0.3], ["regen", 0.008], ["dmgTaken", -0.1]], "지나간 자리에 불이 남는다."),
   U("marchboots", "끝없는 행군의 장화", "boots", 3, "endless", 1, [["regen", [0.012, 0.015]], ["hpPct", [0.4, 0.5]], ["dmgTaken", [-0.134, -0.106]], ["manaRegenFlat", [5.28, 6.72]], ["expFind", [0.317, 0.403]]], "멈추지 않는 발."),
   U("angelstep", "천사의 발자국", "boots", 4, "common", 8, [["cdr", [0.18, 0.22]], ["allDmg", [0.22, 0.26]], ["dodge", 0.15], ["hpPct", 0.35], ["manaRegen", 0.03], ["mf", 0.5]], "밟은 자리마다 빛이 핀다."),
   U("dimshoes", "차원 도약화", "boots", 4, "tower", 1, [["cdr", [0.221, 0.281]], ["allDmg", [0.251, 0.32]], ["mf", [0.9, 1.1]], ["penElem", [0.101, 0.128]], ["manaRegenFlat", [8.04, 10.233]], ["atkPct", [0.07, 0.09]], ["magPct", [0.07, 0.09]], ["hpPct", [0.101, 0.128]]], "여기와 저기의 경계가 없다."),
@@ -143,7 +140,7 @@ UNIQUES.push(
   // 무기
   U("shardblade", "균열의 파편검", "weapon", 1, "tower", 1, [["voidDmg", [0.56, 0.72]], ["atkPct", [0.282, 0.358]], ["magPct", [0.282, 0.358]], ["hpPct", [-0.112, -0.088]]], "베면 베일수록 날이 선다."),
   U("eternalblade", "영겁의 검", "weapon", 2, "endless", 1, [["allDmg", [0.17, 0.21]], ["cdr", 0.1], ["lifesteal", 0.04]], "닳지 않는다."),
-  U("hellverdict", "지옥불의 심판자", "weapon", 4, "hell", 1, [["atkMore", 1.45], ["magMore", 1.45], ["fireDmg", 0.55], ["igniteChance", 0.3], ["ignoreRes", 0.2]], "불꽃이 판결문을 읽는다."),
+  U("hellverdict", "지옥불의 심판자", "weapon", 4, "hell", 1, [["atkMore", 1.45], ["magMore", 1.45], ["fireDmg", 0.55], ["dotDmg", 0.3], ["ignoreRes", 0.2]], "불꽃이 판결문을 읽는다."),
   // 갑옷
   U("riftwatch", "균열 파수꾼의 갑옷", "armor", 1, "tower", 1, [["hpPct", [0.489, 0.629]], ["defPct", [0.559, 0.699]], ["manaPct", [-0.168, -0.132]]], "문 앞에서 영원히 선다."),
   U("everarmor", "영원의 갑주", "armor", 4, "endless", 1, [["hpMore", [1.292, 1.372]], ["regen", [0.007, 0.008]], ["dmgTaken", [-0.224, -0.176]], ["bossTaken", [0.058, 0.074]], ["lifesteal", [0.02, 0.025]], ["hpPct", [0.097, 0.124]], ["mf", [0.431, 0.549]]], "쓰러지는 법을 잊어버렸다."),
@@ -157,8 +154,8 @@ Object.assign(MOD_LABEL, { summonDmg: ["소환 피해", "%"], persistDmg: ["지�
 ["summonDmg", "persistDmg", "singleDmg", "bossSkill"].forEach((k) => U_SCALE.add(k));
 UNIQUES.push(
   U("heroblade", "영웅의 처형검", "weapon", 3, "common", 8, [["atkPct", [0.27, 0.324]], ["physDmg", [0.45, 0.54]], ["critChance", [0.126, 0.162]], ["critDmg", [0.42, 0.54]], ["ignoreDef", 0.135]], "이름을 새긴 자는 아직 한 번도 지지 않았다."),
-  U("serpentfang", "독사왕의 송곳니", "weapon", 3, "common", 8, [["poisonChance", [0.45, 0.55]], ["dotDmg", [0.65, 0.78]], ["physDmg", [0.35, 0.45]], ["dotDur", [0.28, 0.34]], ["magPct", [0.211, 0.269]]], "상처는 작지만 끝나지 않는다."),
-  U("pyrescepter", "화염군주의 홀", "weapon", 3, "common", 8, [["fireDmg", [0.8, 0.95]], ["igniteChance", [0.24, 0.304]], ["magPct", [0.32, 0.38]], ["penElem", [0.106, 0.134]], ["allDmg", [0.088, 0.112]], ["goldFind", [0.422, 0.538]]], "손에 쥔 채로 식은 적이 없다."),
+  U("serpentfang", "독사왕의 송곳니", "weapon", 3, "common", 8, [["allDmg", [0.18, 0.22]], ["dotDmg", [0.65, 0.78]], ["physDmg", [0.35, 0.45]], ["dotDur", [0.28, 0.34]], ["magPct", [0.211, 0.269]]], "상처는 작지만 끝나지 않는다."),
+  U("pyrescepter", "화염군주의 홀", "weapon", 3, "common", 8, [["fireDmg", [0.8, 0.95]], ["dotDmg", [0.24, 0.304]], ["magPct", [0.32, 0.38]], ["penElem", [0.106, 0.134]], ["allDmg", [0.088, 0.112]], ["goldFind", [0.422, 0.538]]], "손에 쥔 채로 식은 적이 없다."),
   U("frostscepter", "서리군주의 홀", "weapon", 3, "common", 8, [["coldDmg", [0.95, 1.15]], ["magPct", [0.34, 0.4]], ["penElem", 0.15], ["spellCrit", [0.1, 0.13]], ["allDmg", 0.1], ["critDmg", 0.2], ["magMore", 1.12]], "숨결이 닿은 곳은 시간이 멈춘다."),
   U("stormscepter", "폭풍군주의 지팡이", "weapon", 3, "common", 8, [["lightDmg", [0.8, 0.95]], ["chainDmg", [0.44, 0.56]], ["magPct", [0.32, 0.38]], ["spellCrit", [0.08, 0.104]], ["allDmg", 0.1], ["magMore", 1.12]], "천둥은 지팡이가 먼저 안다."),
   U("arcanum", "비전 대마도서", "weapon", 3, "common", 8, [["manaToSpell", [0.26, 0.32]], ["manaPct", [0.36, 0.44]], ["magPct", [0.34, 0.4]], ["manaCostRed", [0.096, 0.128]], ["allDmg", 0.1], ["magMore", 1.14]], "페이지마다 마나가 고여 있다."),
@@ -225,16 +222,16 @@ Object.assign(MOD_LABEL, {
   );
   // ---- 핵심 고유 (소버린): 상태이상 중인 적에게 곱연산으로 큰 피해. 두 부위를 모두 갖추면 확실히 강하다 ----
   UNIQUES.push(
-    U("hookblade", "도살자의 갈고리", "weapon", 3, "common", 8, [["bleedChance", [0.38, 0.45]], ["bleedMore", [1.308, 1.392]], ["dotDmg", [0.45, 0.55]], ["physDmg", [0.3, 0.38]], ["mf", [0.37, 0.47]]], "한 번 걸리면 놓아주지 않는다."),
-    U("bloodbrand", "붉은 낙인 장갑", "gloves", 3, "common", 8, [["bleedMore", [1.252, 1.321]], ["vsBleed", [0.43, 0.573]], ["bleedChance", [0.358, 0.43]], ["dotDur", [0.358, 0.43]]], "피 묻은 자국이 낙인이 된다."),
-    U("toxheart", "맹독의 심장", "neck", 3, "common", 8, [["poisonChance", [0.38, 0.45]], ["poisonMore", [1.308, 1.392]], ["dotDmg", [0.5, 0.6]], ["dotDur", [0.264, 0.336]], ["magPct", [0.211, 0.269]]], "뛸 때마다 독이 돈다."),
-    U("fangseal", "독니 인장", "ring", 3, "common", 8, [["poisonMore", [1.176, 1.224]], ["vsPoison", [0.3, 0.4]], ["poisonChance", [0.25, 0.3]], ["physDmg", [0.2, 0.25]], ["goldFind", [0.422, 0.538]]], "물린 곳에서 번진다."),
-    U("cinderstaff", "작열의 불씨 지팡이", "weapon", 3, "common", 8, [["igniteChance", [0.38, 0.45]], ["igniteMore", [1.308, 1.392]], ["fireDmg", [0.6, 0.75]], ["magPct", [0.25, 0.3]], ["expFind", [0.317, 0.403]]], "불붙은 것은 더 잘 탄다."),
-    U("scorchrobe", "화상의 예복", "armor", 3, "common", 8, [["igniteMore", 1.2], ["vsIgnite", [0.3, 0.4]], ["igniteChance", [0.28, 0.34]], ["fireDmg", [0.35, 0.45]], ["hpPct", [0.2, 0.26]]], "입은 자도 데이지 않는 불길."),
+    U("hookblade", "도살자의 갈고리", "weapon", 3, "common", 8, [["dotDur", [0.38, 0.45]], ["bleedMore", [1.308, 1.392]], ["dotDmg", [0.45, 0.55]], ["physDmg", [0.3, 0.38]], ["mf", [0.37, 0.47]]], "한 번 걸리면 놓아주지 않는다."),
+    U("bloodbrand", "붉은 낙인 장갑", "gloves", 3, "common", 8, [["bleedMore", [1.252, 1.321]], ["vsBleed", [0.43, 0.573]], ["dotDmg", [0.358, 0.43]], ["dotDur", [0.358, 0.43]]], "피 묻은 자국이 낙인이 된다."),
+    U("toxheart", "맹독의 심장", "neck", 3, "common", 8, [["allDmg", [0.152, 0.18]], ["poisonMore", [1.308, 1.392]], ["dotDmg", [0.5, 0.6]], ["dotDur", [0.264, 0.336]], ["magPct", [0.211, 0.269]]], "뛸 때마다 독이 돈다."),
+    U("fangseal", "독니 인장", "ring", 3, "common", 8, [["poisonMore", [1.176, 1.224]], ["vsPoison", [0.3, 0.4]], ["dotDmg", [0.25, 0.3]], ["physDmg", [0.2, 0.25]], ["goldFind", [0.422, 0.538]]], "물린 곳에서 번진다."),
+    U("cinderstaff", "작열의 불씨 지팡이", "weapon", 3, "common", 8, [["dotDmg", [0.38, 0.45]], ["igniteMore", [1.308, 1.392]], ["fireDmg", [0.6, 0.75]], ["magPct", [0.25, 0.3]], ["expFind", [0.317, 0.403]]], "불붙은 것은 더 잘 탄다."),
+    U("scorchrobe", "화상의 예복", "armor", 3, "common", 8, [["igniteMore", 1.2], ["vsIgnite", [0.3, 0.4]], ["dotDmg", [0.28, 0.34]], ["fireDmg", [0.35, 0.45]], ["hpPct", [0.2, 0.26]]], "입은 자도 데이지 않는 불길."),
     U("rimescepter", "서리결정 홀", "weapon", 3, "common", 8, [["chillMore", [1.44, 1.56]], ["coldDmg", [0.95, 1.15]], ["magPct", [0.32, 0.38]], ["spellCrit", [0.1, 0.12]], ["allDmg", [0.123, 0.157]], ["magMore", [1.141, 1.179]], ["mf", [0.37, 0.47]]], "얼어붙은 것은 부서지기 쉽다."),
     U("shatterglove", "빙결 쇄도의 장갑", "gloves", 3, "common", 8, [["chillMore", 1.2], ["vsChill", [0.3, 0.4]], ["coldDmg", [0.35, 0.45]], ["penElem", 0.12]], "쥐면 소리 없이 금이 간다."),
-    U("arcspear", "뇌전의 심판창", "weapon", 3, "common", 8, [["shockChance", [0.4, 0.5]], ["shockMore", 1.35], ["lightDmg", [0.6, 0.75]], ["chainDmg", [0.4, 0.5]]], "번개는 이미 흔들리는 것을 노린다."),
-    U("shockcrown", "감전의 왕관", "helm", 3, "common", 8, [["shockChance", [0.28, 0.34]], ["shockMore", 1.2], ["vsShock", [0.3, 0.4]], ["spellCrit", [0.1, 0.13]], ["magPct", [0.2, 0.25]]], "머리카락이 곤두서는 순간 승부가 난다."),
+    U("arcspear", "뇌전의 심판창", "weapon", 3, "common", 8, [["dotDmg", [0.4, 0.5]], ["shockMore", 1.35], ["lightDmg", [0.6, 0.75]], ["chainDmg", [0.4, 0.5]]], "번개는 이미 흔들리는 것을 노린다."),
+    U("shockcrown", "감전의 왕관", "helm", 3, "common", 8, [["dotDmg", [0.28, 0.34]], ["shockMore", 1.2], ["vsShock", [0.3, 0.4]], ["spellCrit", [0.1, 0.13]], ["magPct", [0.2, 0.25]]], "머리카락이 곤두서는 순간 승부가 난다."),
   );
   UNIQUES.forEach((u) => { u.ico = u.slot; UNIQUE_BY_ID[u.id] = u; });
 }

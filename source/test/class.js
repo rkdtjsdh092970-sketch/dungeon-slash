@@ -7,7 +7,7 @@ const { chromium } = require("playwright");
     const p0 = playerPower(computeStats(save)); o.take = [takeClass(save, "fire_a1"), takeClass(save, "fire_r"), takeClass(save, "fire_a1"), takeClass(save, "fire_a2")]; // a1 requires r; a2 costs 2 (총 4점 > 2)
     o.left = classPoints(save) - classSpent(save); o.p = playerPower(computeStats(save)) / p0; o.drop = [dropClass(save, "fire_r"), dropClass(save, "fire_a1"), dropClass(save, "fire_r")];
     // 레이드 전투 + 클리어 보상
-    const hub = MAP.nodes.find((n) => n.kind === "craid"); G.craidDiff = 1; const nb = nodeToBattle(hub); o.nb = [nb.kind, nb.diff, Math.round(nb.tier)];
+    const hub = MAP.nodes.find((n) => n.kind === "craid" && !n.sub); G.craidDiff = 1; const nb = nodeToBattle(hub); o.nb = [nb.kind, nb.diff, Math.round(nb.tier)];
     const bt = createBattle(save, nb); o.lanes = bt.lanes; o.boss = bt.plan.includes("boss"); bt.over = true; bt.win = true; bt.bossKills = 1; bt.kills = 50; bt.time = 90; o.over = bt.over; o.win = bt.win; if (bt.win) { const res = finishBattle(save, bt); o.res = { book: save.cbook[1], clr: save.craid[1], notes: res.notes.slice(0, 2), items: res.items.length, sat: res.items.filter((x) => x.sat).length, open: craidOpen(save) }; }
     openCRaid(); o.ui1 = document.body.innerText.includes("레이드 던전") && document.body.innerText.includes("노말");
     Modal.close(true); openClass(); o.ui2 = document.body.innerText.includes("전직 포인트"); return o; });

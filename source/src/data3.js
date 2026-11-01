@@ -76,9 +76,6 @@ AFFIXES.push(
   { k: "manaOnKill", name: "처치 시 마나 회복", flat: true, gp: 0.5, range: [0.6, 1.4], w: 3, slots: ["ring", "neck", "weapon"], minIlvl: 3 },
   { k: "dmgPerMana", name: "최대 마나 100당 피해", pct: true, range: [0.003, 0.006], w: 2.5, slots: ["ring", "neck"], minIlvl: 5, minRarity: 2 },
   // 상태이상 (출혈·중독·점화)
-  { k: "bleedChance", name: "출혈 확률", pct: true, range: [0.05, 0.10], w: 4, slots: ["weapon", "gloves", "ring"], minIlvl: 2 },
-  { k: "poisonChance", name: "중독 확률", pct: true, range: [0.05, 0.10], w: 4, slots: ["weapon", "gloves", "ring"], minIlvl: 2 },
-  { k: "igniteChance", name: "점화 확률", pct: true, range: [0.05, 0.10], w: 4, slots: ["weapon", "gloves", "ring"], minIlvl: 2 },
   { k: "dotDmg", name: "지속 피해 %", pct: true, range: [0.08, 0.18], w: 4, slots: ["weapon", "gloves", "neck"], minIlvl: 3 },
   // 방어 (투구/갑옷)
   { k: "hpFlat", name: "체력", flat: true, range: [15, 30], w: 10, slots: DEFS },

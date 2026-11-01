@@ -201,11 +201,13 @@ function buildMap() {
   const tower2 = add({ id: "RTW2", kind: "tower2", act: 11, x: TOWER_POS[0] + 40, y: TOWER_POS[1] - 270, name: "심층 첨탑", level: 100 });
   const hub2 = add({ id: "RB2", kind: "bosshub2", act: 11, x: RIFT_POS[0] + 128, y: RIFT_POS[1] + 120, name: "상위 보스 관문", level: 100 });
   const craid = add({ id: "RR", kind: "craid", act: 11, x: TOWER_POS[0] + 120, y: TOWER_POS[1] - 150, name: "레이드 던전", level: 100 });
+  const wardn = add({ id: "RWD", kind: "craid", sub: "warden", act: 11, x: TOWER_POS[0] + 190, y: TOWER_POS[1] - 40, name: "새 문지기", level: 100 });
+  const charmd = add({ id: "RCD", kind: "craid", sub: "charm", act: 11, x: TOWER_POS[0] + 230, y: TOWER_POS[1] - 150, name: "참 던전", level: 100 });
   const vault = add({ id: "RG", kind: "vault", act: 11, x: RIFT_POS[0] - 160, y: RIFT_POS[1] + 50, name: "황금 보물고", level: 100 });
   const gate = add({ id: "RX", kind: "raid", act: 11, x: RIFT_POS[0] - 150, y: RIFT_POS[1] - 150, name: "심연의 문", level: 100 });
   const tower = add({ id: "RTW", kind: "tower", act: 11, x: TOWER_POS[0], y: TOWER_POS[1], name: "솟아난 탑", level: 100 });
   edges.push([rift.id, gate.id]); edges.push([gate.id, tower.id]);
-  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]); edges.push([craid.id, tower2.id]); edges.push([hub.id, hub2.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
+  edges.push([rift.id, endless.id]); edges.push([rift.id, hub.id]); edges.push([rift.id, vault.id]); edges.push([temple.id, tower.id]); edges.push([craid.id, tower.id]); edges.push([tower.id, wardn.id]); edges.push([wardn.id, tower2.id]); edges.push([craid.id, charmd.id]); edges.push([hub.id, hub2.id]);   // 돌의 신전은 균열과 이어지지 않고 솟아난 탑에서만 이어진다
   // 겹치는 노드를 서로 밀어낸다 (마을/균열 입구는 고정)
   const fixed = (n) => n.kind === "town" || n.kind === "rift" || n.kind === "tower";
   for (let it = 0; it < 80; it++) {

@@ -311,7 +311,7 @@ function openPassPreset(i) {
     ppback: () => openPassives(),
   } });
 }
-const charmBar = () => `<div class="charmbar" data-a="charms" title="참 열기">${[0, 1, 2, 3].map((i) => { const it = (save.charms || [])[i], C = it && CHARM_BY_ID[it.charm]; return `<div class="cmslot ${it ? "on" : ""}" style="${it ? "--c:" + C.color : ""}" title="${it ? C.name + " — " + charmLines(it).join(" / ") : "빈 칸"}">${it ? "◈" : "·"}</div>`; }).join("")}<span class="dim">참</span></div>`;
+const charmBar = () => `<div class="charmbar" data-a="charms" title="참 열기">${[0, 1, 2, 3].map((i) => { const it = (save.charms || [])[i]; return `<div class="cmslot ${it ? "on" : ""}" style="${it ? "--c:" + charmColor(it) : ""}" title="${it ? charmLines(it).join(" / ") : "빈 칸"}">${it ? "◈" : "·"}</div>`; }).join("")}<span class="dim">참</span></div>`;
 function openPassives() {
   Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs" data-a="preset">전부 초기화</button> <button class="btn xs" data-a="clsopen">전직 ${(save.cls | 0) ? save.cls + "차" : ""}</button> &nbsp;프리셋 ${[0, 1, 2].map((i) => `<button class="btn xs pbtn ${(save.passPresets || [])[i] ? "has" : ""}" data-a="ppick" data-n="${i}" title="${(save.passPresets || [])[i] ? "눌러서 구성을 확인하고 적용" : "비어 있음 · 눌러서 현재 구성을 저장"}">${i + 1}</button>`).join("")}</div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
     ppick: (el) => openPassPreset(+el.dataset.n),
@@ -608,13 +608,34 @@ function skillDescFull(sk, st) {
   if (sk.mult) L.push(`피해 ${Math.round(sk.mult * 100)}%${sk.count ? ` × ${sk.count}회` : ""}${sk.dur ? ` · ${sk.dur}초 지속` : ""}`);
   for (const k of ["bleed", "poison", "ignite", "shock"]) if (sk[k]) L.push(`${STATUS_INFO[k].name} 확률 ${Math.round(sk[k] * 100)}%`);
   if (sk.vs) for (const k of Object.keys(sk.vs)) L.push(`${{ bleed: "출혈", poison: "중독", ignite: "점화", chill: "둔화", shock: "감전" }[k]} 중인 적에게 +${Math.round(sk.vs[k] * 100)}% 피해`);
-  if (sk.chill) L.push("적 둔화");
+  if (sk.chill) L.push("적 둔화: 이동·공격이 50% 느려집니다 (" + (typeof sk.chill === "number" && sk.chill > 1 ? sk.chill + "초" : "잠시") + ")");
+  // v4.47: 이 스킬이 실제로 받는 피해 증가 · 상태이상 · 룬 효과를 숫자로 보여 준다
+  const mg = sk.dtype === "mag", pc = (x) => (x * 100).toFixed(1).replace(/\.0$/, "") + "%";
+  if (sk.dtype !== "buff" && sk.dtype !== "heal") {
+    let inc = st.allDmg + (mg ? st.magDmg : st.physDmg); const parts = [`모든 피해 ${pc(st.allDmg)}`, `${mg ? "마법" : "물리"} 피해 ${pc(mg ? st.magDmg : st.physDmg)}`];
+    if (sk.elem) { const e = (st.elemDmg || 0) + (st[sk.elem + "Dmg"] || 0); inc += e; parts.push(`${ELEM_NAME[sk.elem]} 피해 ${pc(e)}`); }
+    L.push(`<span style="color:#9ad8ff">적용되는 피해 증가: +${pc(inc)} (${parts.join(" · ")}) · 치명타 ${pc(mg ? (st.magCrit ? st.critChance + st.spellCrit : st.spellCrit) : st.critChance)} · 관통 ${pc(mg ? st.ignoreRes : st.ignoreDef)}</span>`);
+    for (const k of ["bleed", "poison", "ignite"]) {
+      const q = k === "bleed" ? !mg : k === "poison" ? !mg : sk.elem === "fire", own = sk[k] || 0, gear = q ? (st[k + "Chance"] || 0) : 0, tot = Math.min(1, own + gear);
+      if (tot <= 0) continue; const C = CFG[k.toUpperCase()];
+      L.push(`<span style="color:${STATUS_INFO[k].color}">${STATUS_INFO[k].name}: 적중 시 ${pc(tot)} (스킬 ${pc(own)} + 패시브·기타 ${pc(gear)}) · 맞힌 피해의 ${Math.round(C.coef * (1 + st.dotDmg) * 100)}%를 ${(C.dur * (1 + st.dotDur)).toFixed(1)}초간 · ${k === "ignite" ? "가장 강한 1개만 유지" : "최대 " + C.cap + "중첩"}</span>`);
+    }
+    const sc = (sk.shock || 0) + (sk.elem === "light" ? st.shockChance || 0 : 0); if (sc > 0) L.push(`<span style="color:#ffe45a">감전: 적중 시 ${pc(Math.min(1, sc))} · ${(4 * (1 + st.dotDur)).toFixed(1)}초간 적이 25% 느려지고 감전 보너스 적용</span>`);
+    if (sk.chill) L.push(`<span style="color:#8ae0ff">둔화 중인 적에게 +${pc(st.vsChill)}~ 추가 피해 옵션이 적용됩니다</span>`);
+  }
+  if (sk.rune) L.push(`<span style="color:${sk.rune.color}">룬: ${sk.rune.name} — ${sk.rune.text} (적용 중)</span>`);
   return L.join("<br>");
 }
 
+function runeRows(inst) {   // 룬 종류별로 한 줄: 장착하면 전투력이 얼마나 변하는지 미리 보여 준다
+  const seen = {}, old = inst.rune, p0 = playerPower(computeStats(save));
+  const rows = save.runes.filter((r) => RUNES[r.id] && (seen[r.id] ? (seen[r.id].n++, false) : (seen[r.id] = { r, n: 1 }, true)));
+  return rows.map((r) => { inst.rune = r.id; const p1 = playerPower(computeStats(save)); inst.rune = old; const d = p0 > 0 ? p1 / p0 - 1 : 0, R = RUNES[r.id];
+    return `<div class="qrow"><div class="qi"><b style="color:${R.color}">${R.name}</b> <span class="dim">×${seen[r.id].n}</span><div class="dim">${R.text}</div><div style="color:${d >= 0 ? "#8dff9a" : "#ff8a8a"}">장착 시 전투력 ${d >= 0 ? "▲ +" : "▼ "}${(d * 100).toFixed(1)}%</div></div><button class="btn xs pri" data-a="dorune" data-u="${r.uid}">장착</button></div>`; }).join("");
+}
 function openRunePicker(uid) {
   const inst = save.skills.find((x) => x.uid === uid), cur = inst.rune ? RUNES[inst.rune] : null;
-  Modal.open(`<h2>룬 장착 · ${SKILLS.find((x) => x.id === inst.id).name}</h2><div class="dim center">스킬에 룬 1개를 끼울 수 있습니다. 룬은 시련·균열에서 얻습니다.</div>${cur ? `<div class="pad center">장착 중: <b style="color:${cur.color}">${cur.name}</b> — ${cur.text} <button class="btn xs" data-a="unrune">해제</button></div>` : ""}<div class="qlist" style="height:300px">${save.runes.map((r) => `<div class="qrow"><div class="qi"><b style="color:${RUNES[r.id].color}">${RUNES[r.id].name}</b><div class="dim">${RUNES[r.id].text}</div></div><button class="btn xs pri" data-a="dorune" data-u="${r.uid}">장착</button></div>`).join("") || `<div class="dim center pad">보유한 룬이 없습니다</div>`}</div><div class="pbtns"><button class="btn" data-a="rback">돌아가기</button></div>`, { cls: "wide", on: {
+  Modal.open(`<h2>룬 장착 · ${SKILLS.find((x) => x.id === inst.id).name}</h2><div class="dim center">스킬에 룬 1개를 끼울 수 있습니다. 룬은 시련·균열에서 얻습니다.</div>${cur ? `<div class="pad center">장착 중: <b style="color:${cur.color}">${cur.name}</b> — ${cur.text} <button class="btn xs" data-a="unrune">해제</button></div>` : ""}<div class="qlist" style="height:300px">${runeRows(inst) || `<div class="dim center pad">보유한 룬이 없습니다</div>`}</div><div class="pbtns"><button class="btn" data-a="rback">돌아가기</button></div>`, { cls: "wide", on: {
     dorune: (el) => { const ru = save.runes.find((x) => x.uid === +el.dataset.u); if (!ru) return; save.runes = save.runes.filter((x) => x !== ru); if (inst.rune) save.runes.push({ uid: save.nextUid++, id: inst.rune }); inst.rune = ru.id; snd("equip"); saveGame(); openRunePicker(uid); },
     unrune: () => { if (inst.rune) save.runes.push({ uid: save.nextUid++, id: inst.rune }); inst.rune = null; saveGame(); openRunePicker(uid); },
     rback: () => openSkills(),

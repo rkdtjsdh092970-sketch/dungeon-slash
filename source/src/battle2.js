@@ -2,7 +2,7 @@
 // 상태이상(출혈·중독·점화) + 확장 스킬 엔진 (지속형/난사/설치/소환/부채꼴)
 // =========================================================
 function applyStatus(b, e, sk, dealt) {
-  if (e.dead || !(dealt > 0)) return; const st = b.stats, qual = { bleed: sk.dtype === "phys", poison: sk.dtype === "phys" || sk.elem === "void", ignite: sk.elem === "fire" };
+  if (e.dead || !(dealt > 0)) return; const st = b.stats, qual = { bleed: sk.dtype === "phys", poison: sk.dtype === "phys", ignite: sk.elem === "fire" };
   for (const k of ["bleed", "poison", "ignite"]) {
     const chance = (sk[k] || 0) + (qual[k] ? st[k + "Chance"] : 0); if (chance <= 0 || Math.random() >= chance) continue;
     const C = CFG[k.toUpperCase()], dur = C.dur * (1 + st.dotDur), dps = (dealt * C.coef * (1 + st.dotDmg) * e.dotMul) / dur;

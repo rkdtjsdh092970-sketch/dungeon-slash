@@ -4,7 +4,7 @@ const SAT_DEFS = [
   ["w_nocrit", "weapon", 0, "치명타가 발생하지 않는 대신 주문 피해 +60%(more)", [["noCrit", 1], ["magMore", 1.6]]],
   ["w_cdmana", "weapon", 1, "모든 스킬 쿨타임 -15%, 마나 소모 +40%", [["cdr", 0.15], ["manaCostRed", -0.4]]],
   ["w_manaspell", "weapon", 1, "최대 마나의 10%만큼 주문력, 최대 체력 -30%", [["manaToSpell", 0.1], ["hpMore", 0.7]]],
-  ["w_status", "weapon", 2, "점화 · 감전 · 출혈 · 중독 확률 +15%, 지속 피해 -30%", [["igniteChance", 0.15], ["shockChance", 0.15], ["bleedChance", 0.15], ["poisonChance", 0.15], ["dotDmg", -0.3]]],
+  ["w_status", "weapon", 2, "지속 피해 +35%, 치명타 피해 -35%", [["dotDmg", 0.35], ["critDmg", -0.35]]],
   ["w_trash", "weapon", 3, "모든 스킬 피해 +20%, 쿨타임 +40%", [["allDmg", 0.2], ["cdr", -0.4]]],
   ["h_boss", "helm", 1, "보스에게 받는 피해 -25%", [["bossTaken", 0.25]]],
   ["h_ranged", "helm", 2, "원거리 적에게 받는 피해 -30%", [["rangedTaken", 0.3]]],
@@ -21,7 +21,7 @@ const SAT_DEFS = [
   ["g_pen", "gloves", 1, "방어 무시 +25%, 공격력 · 주문력 -10%", [["ignoreDef", 0.25], ["atkMore", 0.9], ["magMore", 0.9]]],
   ["g_ranged", "gloves", 2, "원거리 추가 피해 +40%, 일반 추가 피해 -20%", [["ranged", 0.4], ["normal", -0.2]]],
   ["g_manahit", "gloves", 2, "마나 흡수 +0.3%, 마나 소모 +20%", [["manaHit", 0.003], ["manaCostRed", -0.2]]],
-  ["g_ign", "gloves", 2, "점화 · 감전 확률 +20%", [["igniteChance", 0.2], ["shockChance", 0.2]]],
+  ["g_ign", "gloves", 2, "화염 · 번개 피해 +20%", [["fireDmg", 0.2], ["lightDmg", 0.2]]],
   ["g_crit", "gloves", 3, "치명타 확률 +30%, 치명타 피해 -50%", [["critChance", 0.3], ["critDmg", -0.5]]],
   ["b_cdcap", "boots", 1, "쿨타임 감소 상한 +10%, 마나 소모 +20%", [["cdrCap", 0.6], ["manaCostRed", -0.2]]],
   ["b_kheal", "boots", 1, "처치 시 체력 2% 회복", [["killHeal", 0.02]]],
@@ -71,7 +71,7 @@ const SAT_DEFS = [
   ["b_start", "boots", 2, "전투 시작 후 3초간 주는 피해 +60%", [["f:start", 1]]],
   ["b_ready", "boots", 4, "모든 스킬이 쿨타임 중이 아닐 때 주는 피해 +50%", [["f:ready", 1]]],
   ["b_vault", "boots", 4, "황금 보물고에서만 주는 피해 +100%", [["f:vault", 1]]],
-  ["r_conv", "ring", 2, "마법 피해 -10%, 중독 확률 +10%, 중독 효과 +25%(more)", [["magMore", 0.9], ["poisonChance", 0.1], ["poisonMore", 1.25]]],
+  ["r_conv", "ring", 2, "마법 피해 -10%, 중독 효과 +40%(more)", [["magMore", 0.9], ["poisonMore", 1.4]]],
   ["n_lanes", "neck", 1, "적이 있는 레인 하나당 주는 피해 +5% (최대 4레인)", [["f:lanes", 1]]],
 ];
 const SAT_BY_ID = {}; for (const d of SAT_DEFS) SAT_BY_ID[d[0]] = { id: d[0], slot: d[1], g: d[2], txt: d[3], fx: d[4] };
