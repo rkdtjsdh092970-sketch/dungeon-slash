@@ -97,7 +97,7 @@ function genSatan(sv, ilvl, slot) {
 
 // ---- 전투 훅 (코드형 줄) ----
 function satInit(b) {
-  b._si = 1; const sk = b.skills || [], act = sk.filter((x) => x && x.slot === "active" && x.dtype !== "buff" && x.dtype !== "heal");
+  b._si = 1; cxStart(b); const sk = b.skills || [], act = sk.filter((x) => x && x.slot === "active" && x.dtype !== "buff" && x.dtype !== "heal");
   b.satEmpty = sk.filter((x) => !x).length; b.satNormal = act.length > 0 && act.every((x) => !x.rarity);
 }
 const satFront = (b) => b.enemies.filter((e) => !e.dead).sort((a, c) => a.col - c.col)[0];

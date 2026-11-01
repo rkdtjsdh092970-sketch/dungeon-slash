@@ -9,7 +9,7 @@ const C_TREES = [
   { id: "light", name: "번개", color: "#ffe45a", n: {
     r: ["대전", { lightDmg: 0.15, shockChance: 0.10 }, 1], a1: ["연쇄", { chainJumps: 1, chainDmg: 0.20 }, 1], a2: ["폭풍의 눈", { shockMore: 1.30, lightDmg: 0.15 }, 2], b1: ["가속", { cdr: 0.05, spellCrit: 0.04 }, 1], b2: ["뇌제의 혈통", { magMore: 1.10, penElem: 0.12, lightDmg: 0.12 }, 2] } },
   { id: "void", name: "공허", color: "#c070ff", n: {
-    r: ["공허의 속삭임", { voidDmg: 0.15, ignoreRes: 0.06 }, 1], a1: ["잠식", { poisonChance: 0.10, dotDmg: 0.20 }, 1], a2: ["심연의 손길", { poisonMore: 1.30, voidDmg: 0.15 }, 2], b1: ["저항 붕괴", { shredRes: 0.08, ignoreRes: 0.06 }, 1], b2: ["공허의 군주", { magMore: 1.10, penElem: 0.12, voidDmg: 0.12 }, 2] } },
+    r: ["공허의 속삭임", { voidDmg: 0.15, ignoreRes: 0.06 }, 1], a1: ["잠식", { voidDmg: 0.10, dotDmg: 0.20 }, 1], a2: ["심연의 손길", { poisonMore: 1.30, voidDmg: 0.15 }, 2], b1: ["저항 붕괴", { shredRes: 0.08, ignoreRes: 0.06 }, 1], b2: ["공허의 군주", { magMore: 1.10, penElem: 0.12, voidDmg: 0.12 }, 2] } },
   { id: "phys", name: "물리 · 독", color: "#ff6a8a", n: {
     r: ["날 선 본능", { atkPct: 0.12, ignoreDef: 0.06 }, 1], a1: ["맹독 도포", { poisonChance: 0.10, dotDmg: 0.25 }, 1], a2: ["치명 독", { poisonMore: 1.30, vsPoison: 0.20 }, 2], b1: ["철갑 파쇄", { shredDef: 0.08, ignoreDef: 0.06 }, 1], b2: ["학살자", { atkMore: 1.12, critDmg: 0.25, ignoreDef: 0.08 }, 2] } },
   { id: "def", name: "방어", color: "#6ab4ff", n: {
@@ -17,8 +17,20 @@ const C_TREES = [
   { id: "farm", name: "파밍", color: "#8dff9a", n: {
     r: ["탐색자", { mf: 0.15, goldFind: 0.20 }, 1], a1: ["수집가", { goldFind: 0.25 }, 1], a2: ["보물왕", { mf: 0.30, goldFind: 0.30 }, 2], b1: ["군집", { density: 1 }, 1], b2: ["사냥 효율", { aoeDmg: 0.20, cdr: 0.04, density: 1 }, 2] } },
 ];
+// v4.47: 속성마다 노드를 8개로 늘렸다. 새 3개(c0 · ca · cb)는 능력치가 아니라 전투 방식 자체를 바꾸는 효과다 (cm:x_* 키를 전투 코드가 읽는다)
+const C_EXTRA = {
+  fire: { c0: ["불씨 폭발", { "cm:x_exp": 0.10 }, 1, "적을 처치하면 주변 적에게 그 적 최대 체력의 10%만큼 폭발 피해"], ca: ["번지는 불길", { "cm:x_spread": 0.50 }, 2, "적을 처치하면 그 적에게 걸린 지속 피해(출혈 · 중독 · 점화)의 50%가 주변 적에게 옮겨 붙음"], cb: ["작열 타격", { "cm:x_echo": 0.08 }, 2, "스킬이 적중할 때 8% 확률로 피해가 두 배로 들어가는 겹침 타격"] },
+  cold: { c0: ["빙결 파쇄", { "cm:x_freeze": 0.20 }, 1, "둔화된 적에게 치명타를 입히면 20% 확률로 2초간 기절"], ca: ["서리 갑옷", { "cm:x_shield": 0.18 }, 2, "전투를 시작하면 최대 체력의 18%만큼 얼음 보호막이 생김 (피해를 먼저 흡수)"], cb: ["균열 낙인", { "cm:x_vuln": 0.015 }, 2, "적중할 때마다 대상에 취약 1중첩 (받는 피해 +1.5%, 최대 10중첩)"] },
+  light: { c0: ["연쇄 방전", { "cm:x_arc": 0.25 }, 1, "번개 스킬이 적중하면 25% 확률로 다른 적에게 번개가 튀어 피해의 50%를 줌"], ca: ["과충전", { "cm:x_mana": 0.20 }, 2, "마나가 80% 이상이면 모든 스킬 피해 +20%"], cb: ["뇌우의 일격", { "cm:x_echo": 0.08 }, 2, "스킬이 적중할 때 8% 확률로 피해가 두 배로 들어가는 겹침 타격"] },
+  void: { c0: ["침식", { "cm:x_vuln": 0.015 }, 1, "적중할 때마다 대상에 취약 1중첩 (받는 피해 +1.5%, 최대 10중첩)"], ca: ["공허 포식", { "cm:x_overkill": 0.50 }, 2, "적을 처치하고 남은 초과 피해의 50%가 다른 적에게 이어짐"], cb: ["소멸", { "cm:x_exec": 0.10 }, 2, "일반 적은 체력이 10% 아래로 떨어지면 즉시 소멸 (정예 · 보스 제외)"] },
+  phys: { c0: ["독 폭발", { "cm:x_exp": 0.10 }, 1, "적을 처치하면 주변 적에게 그 적 최대 체력의 10%만큼 폭발 피해"], ca: ["독 전이", { "cm:x_spread": 0.50 }, 2, "적을 처치하면 그 적에게 걸린 지속 피해의 50%가 주변 적에게 옮겨 붙음"], cb: ["급소 사냥", { "cm:x_echo": 0.08 }, 2, "스킬이 적중할 때 8% 확률로 피해가 두 배로 들어가는 겹침 타격"] },
+  def: { c0: ["수호의 막", { "cm:x_shield": 0.12 }, 1, "전투를 시작하면 최대 체력의 12%만큼 보호막이 생김 (피해를 먼저 흡수)"], ca: ["철벽 한계", { "cm:x_cap": 0.30 }, 2, "한 번에 받는 피해는 최대 체력의 30%를 넘지 않음"], cb: ["마지막 숨", { "cm:x_last": 1 }, 2, "체력이 25% 아래로 떨어지면 3초간 무적 (전투당 1회)"] },
+  farm: { c0: ["행운아", { "cm:goldx": 0.08 }, 1, "적을 처치할 때 8% 확률로 골드를 5배로 얻음"], ca: ["열쇠 도둑", { "cm:keyFind": 0.40 }, 2, "보스 열쇠 · 징표 드랍 확률 +40%"], cb: ["돌 사냥꾼", { "cm:stoneFind": 0.30, "cm:ore": 0.30 }, 2, "돌 드랍 확률 +30%, 장비 분해 시 강화석 +30%"] },
+};
+for (const T of C_TREES) for (const k in C_EXTRA[T.id]) T.n[k] = C_EXTRA[T.id][k];
+const C_KEYS = ["r", "a1", "a2", "b1", "b2", "c0", "ca", "cb"], C_FROM = { r: null, a1: "r", a2: "a1", b1: "r", b2: "b1", c0: "r", ca: "a2", cb: "b2" };
 const C_NODES = [], C_BY_ID = {};
-for (const T of C_TREES) for (const k of ["r", "a1", "a2", "b1", "b2"]) { const d = T.n[k], id = `${T.id}_${k}`, from = k === "r" ? null : k === "a1" || k === "b1" ? `${T.id}_r` : `${T.id}_${k[0]}1`; const N = { id, tree: T.id, k, name: d[0], per: d[1], cost: d[2], from }; C_NODES.push(N); C_BY_ID[id] = N; }
+for (const T of C_TREES) for (const k of C_KEYS) { const d = T.n[k], id = `${T.id}_${k}`, from = C_FROM[k] ? `${T.id}_${C_FROM[k]}` : null; const N = { id, tree: T.id, k, name: d[0], per: d[1], cost: d[2], from, desc: d[3] || "" }; C_NODES.push(N); C_BY_ID[id] = N; }
 const classPoints = (sv) => 2 * Math.max(0, Math.min(3, sv.cls | 0));
 const classSpent = (sv) => { let n = 0; for (const id in (sv.cpass || {})) if (C_BY_ID[id]) n += C_BY_ID[id].cost; return n; };
 const classHas = (sv, id) => !!(sv.cpass && sv.cpass[id] && C_BY_ID[id]);
@@ -84,3 +96,34 @@ const invMax = (sv) => CFG.INV_MAX + Math.round(charmVal(sv, "bag"));
 const stoneCap = (sv) => 100 + Math.round(charmVal(sv, "stoneCap"));
 function equipCharm(sv, it, slot) { if (!charmUnlocked(sv)) return { ok: false, msg: "3차 전직 후에 쓸 수 있습니다" }; sv.charms = sv.charms || [null, null, null, null]; const i = slot != null ? slot : sv.charms.findIndex((x) => !x); if (i < 0) return { ok: false, msg: "빈 참 칸이 없습니다" }; const old = sv.charms[i]; sv.charms[i] = it; sv.charmInv = (sv.charmInv || []).filter((x) => x !== it); if (old) sv.charmInv.push(old); return { ok: true }; }
 function unequipCharm(sv, i) { const it = (sv.charms || [])[i]; if (!it) return false; sv.charms[i] = null; (sv.charmInv = sv.charmInv || []).push(it); return true; }
+
+
+// ---- 전직 패시브의 전투 효과 (cm:x_*) ----
+function cxMult(b, e, sk) {   // 적중 피해 배수: 겹침 타격 · 마나 과충전 · 취약
+  const C = b.stats.cm; if (!C) return 1; let m = 1;
+  if (C.x_echo && Math.random() < C.x_echo) m *= 2;
+  if (C.x_mana && b.mana >= b.maxMana * 0.8) m *= 1 + C.x_mana;
+  if (C.x_vuln) { m *= 1 + (e.vn || 0) * C.x_vuln; e.vn = Math.min(10, (e.vn || 0) + 1); }
+  return m;
+}
+function cxHit(b, e, sk, dealt, crit) {   // 적중 뒤: 연쇄 방전 · 빙결 파쇄 · 소멸
+  const C = b.stats.cm; if (!C || !(dealt > 0)) return;
+  if (C.x_arc && sk.elem === "light" && Math.random() < C.x_arc) { const o = b.enemies.filter((x) => !x.dead && !x.orb && x !== e && x.lane < b.lanes); if (o.length) { const t = o[Math.floor(Math.random() * o.length)]; applyDamage(b, t, dealt * 0.5, { src: "cx", color: "#ffe45a" }); } }
+  if (C.x_freeze && crit && e.chill > 0 && !e.dead && Math.random() < C.x_freeze) e.stun = Math.max(e.stun || 0, 2);
+  if (C.x_exec && !e.dead && e.tier === "normal" && !e.orb && !e.crystal && e.hp > 0 && e.hp < e.maxHp * C.x_exec) { e.hp = 0; killEnemy(b, e); }
+}
+function cxKill(b, e) {   // 처치 뒤: 폭발 · 지속 피해 전이 · 초과 피해
+  const C = b.stats.cm; if (!C || e.orb || e.crystal) return;
+  const near = () => b.enemies.filter((x) => !x.dead && !x.orb && !x.crystal && x !== e && x.lane < b.lanes && Math.abs(x.lane - e.lane) <= 1 && Math.abs(x.col - e.col) <= 2);
+  if (C.x_exp) for (const x of near()) applyDamage(b, x, e.maxHp * C.x_exp, { src: "cx", color: "#ff9a50" });
+  if (C.x_spread && e.dots && e.dots.length) for (const x of near().slice(0, 4)) for (const d of e.dots) if (d.t > 0) { const list = x.dots.filter((y) => y.k === d.k), cap = CFG[d.k.toUpperCase()].cap; if (list.length < cap) x.dots.push({ k: d.k, dps: d.dps * C.x_spread, t: d.t }); }
+  if (C.x_overkill && e.hp < 0) { const o = near(); if (o.length) applyDamage(b, o[Math.floor(Math.random() * o.length)], -e.hp * C.x_overkill, { src: "cx", color: "#c070ff" }); }
+}
+function cxStart(b) { const C = b.stats.cm; if (C && C.x_shield) b.xShield = b.maxHp * C.x_shield; }
+function cxHurt(b, d) {   // 받는 피해: 한계 · 보호막 · 마지막 숨 — 최종 피해를 돌려준다
+  const C = b.stats.cm; if (!C) return d;
+  if (C.x_cap) d = Math.min(d, b.maxHp * C.x_cap);
+  if (b.xShield > 0) { const ab = Math.min(b.xShield, d); b.xShield -= ab; d -= ab; }
+  return d;
+}
+function cxAfterHurt(b) { const C = b.stats.cm; if (C && C.x_last && !b._lg && b.hp > 0 && b.hp <= b.maxHp * 0.25) { b._lg = 1; b.inv = Math.max(b.inv || 0, 3); pushText(b, PLAYER_POS.x, PLAYER_POS.y - 140, "마지막 숨!", "#ffe45a", true); } }

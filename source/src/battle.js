@@ -320,11 +320,12 @@ function damagePlayer(b, raw, opt) {
   { const C = b.stats.cm; if (C) { if (C.low50 && b.hp <= b.maxHp * 0.5) d *= 1 - C.low50; if (C.reviveShield && b.time < (b.rvShieldT || 0)) d *= 1 - C.reviveShield; } }   // 참
   if (b.affMatch) d *= CFG.EB_AFF_DEF;
   d *= Math.max(CFG.TAKEN_FLOOR, 1 + b.stats.dmgTaken); if (opt.boss) d *= 1 - b.stats.bossTaken; if (opt.ranged) d *= 1 - b.stats.rangedTaken;
-  d = Math.max(1, d);
+  d = Math.max(1, d); d = cxHurt(b, d);
+  if (d <= 0) return;
   if (b.stats.manaShield && b.mana > 0) { const keep = b.maxMana * CFG.MANA_SHIELD_KEEP, avail = Math.max(0, b.mana - keep), ab = Math.min(d * b.stats.manaShield, avail / CFG.MANA_SHIELD_COST); b.mana -= ab * CFG.MANA_SHIELD_COST; d -= ab; }   // 방벽은 마나가 일정 비율 이하면 멈춘다 (스킬을 쓸 마나를 남긴다)
   b.hp -= d; b.taken += d;
   pushText(b, PLAYER_POS.x, PLAYER_POS.y - 110, "-" + fmtN(d), "#ff8a8a", false);
-  satOnHurt(b); b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
+  satOnHurt(b); cxAfterHurt(b); b.flash = 0.18; b.pHurt = 0.2; sfx(b, "hurt"); if (opt.shake) b.shake = Math.max(b.shake, opt.shake);
 }
 function voidPhase(b, e, si) {   // 공허의 군주 단계 설정: 단계마다 체력·공격력이 크게 오른다
   const hm = VOID_HP[si - 1], am = VOID_ATK[si - 1];
@@ -363,7 +364,7 @@ function ebMatch(kind, sk) {
 function hitEnemy(b, e, mult, sk, o) {
   o = o || {}; const st = b.stats, mag = sk.dtype === "mag";
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
-  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08) * satMult(b, e, sk);
+  let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08) * satMult(b, e, sk) * cxMult(b, e, sk);
   if (e.tier === "boss" && ebMatch(b.kind, sk)) dmg *= CFG.EB_AFFINITY;   // 속성 상성
   dmg *= CFG.BAL[sk.elem || (mag ? "mag" : (sk.poison >= 0.3 ? "poison" : sk.bleed >= 0.3 ? "bleed" : "phys"))] || 1;   // 빌드 계열 밸런스 보정
   if (o.chain) dmg *= 1 + st.chainDmg; if (o.aoe) dmg *= 1 + st.aoeDmg;
@@ -376,7 +377,7 @@ function hitEnemy(b, e, mult, sk, o) {
   const crit = Math.random() < Math.min(0.9, cc + (sk.critAdd || 0)); if (crit) dmg *= 1 + st.critDmg + satCrit(b);
   if (mag) { if (st.shredRes) e.shR = Math.min(st.shredRes, e.shR + st.shredRes * 0.34); } else if (st.shredDef) e.shD = Math.min(st.shredDef, e.shD + st.shredDef * 0.34);
   const dealt = applyDamage(b, e, dmg, { crit, src: "skill", lifesteal: sk.lifesteal, color: o.color || (sk.elem ? ELEM_COLOR[sk.elem] : null) });
-  b.dmgBy[sk.id] = (b.dmgBy[sk.id] || 0) + dealt; applyStatus(b, e, sk, dealt); satOnHit(b, e, sk, dealt);
+  b.dmgBy[sk.id] = (b.dmgBy[sk.id] || 0) + dealt; applyStatus(b, e, sk, dealt); satOnHit(b, e, sk, dealt); cxHit(b, e, sk, dealt, crit);
   if (st.manaHit && b.time >= (b.leechT || 0)) { b.mana = Math.min(b.maxMana, b.mana + b.maxMana * st.manaHit); b.leechT = b.time + 0.1; }   // 마나 흡수: 적중 시 최대 마나의 일정 %를 회복 (초당 10회까지)
   return dealt;
 }
@@ -394,7 +395,7 @@ function killEnemy(b, e) {
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
   if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
-  satOnKill(b, e);
+  satOnKill(b, e); cxKill(b, e);
   if (b.stats.manaKill) b.mana = Math.min(b.maxMana, b.mana + b.stats.manaKill);
   if (b.stats.killHeal && !b.over) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * b.stats.killHeal * (b.debuffs.wound ? b.debuffs.wound.mult : 1));   // 처치 시 체력 회복
   if (b.endless) b.ddt = (b.ddt || 0) + 0.5;   // 빨리 잡을수록 위험도 시계가 빠르게 흐른다
