@@ -93,6 +93,7 @@ local function n(x) x = math.floor(x or 0); if x >= 1e9 then return string.forma
 -- ── 층 구성 (아래 → 위): 전투 무대 · 마을 · 지도 · HUD · 창 · 결과 · 알림 ──
 local stageHolder = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, gui)
 local townLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(90, 150, 90), BorderSizePixel = 0, ZIndex = 2, Visible = false }, gui)
+local mapDragged = false   -- 지도를 끌었으면 노드 클릭 무시
 local mapLayer = mk("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(60, 50, 40), BorderSizePixel = 0, ZIndex = 3, Visible = false, ScrollBarThickness = 0, ScrollingDirection = Enum.ScrollingDirection.XY, ElasticBehavior = Enum.ElasticBehavior.Never }, gui)
 local hud = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 10 }, gui)
 local panelLayer = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, Text = "", AutoButtonColor = false, ZIndex = 20, Visible = false }, gui)
@@ -686,11 +687,32 @@ buildMap = function()
       if st == "done" then local c = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -4, 0, 4), Size = UDim2.new(0, 20 * K, 0, 20 * K), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBlack, TextSize = math.floor(14 * K), ZIndex = 6 }, b); corner(c) end
       local nm = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, t.x * ms, 0, t.y * ms + sz / 2 + 2), Size = UDim2.new(0, 160 * K, 0, 20 * K), BackgroundTransparency = 1, Text = t.name, TextColor3 = st == "locked" and Color3.fromRGB(200, 195, 210) or Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = math.floor(14 * K), ZIndex = 5 }, mapLayer)
       mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(20, 10, 30) }, nm)
-      b.MouseButton1Click:Connect(function() showInfo(t) end)
+      b.MouseButton1Click:Connect(function() if not mapDragged then showInfo(t) end end)
     end
   end
   local f = target or BYID.T   -- 다음 목표가 화면 가운데 오게
   mapLayer.CanvasPosition = Vector2.new(math.clamp(f.x * ms - v.X / 2, 0, math.max(0, MW * ms - v.X)), math.clamp(f.y * ms - v.Y / 2, 0, math.max(0, MH * ms - v.Y)))
+end
+
+-- 지도 끌어서 이동 (PC 마우스: ScrollingFrame 은 마우스 끌기를 지원하지 않는다. 터치는 기본 스크롤 사용)
+do
+  local UIS = game:GetService("UserInputService")
+  local drag
+  mapLayer.InputBegan:Connect(function(io)
+    if io.UserInputType == Enum.UserInputType.MouseButton1 then drag = { start = io.Position, canvas = mapLayer.CanvasPosition }; mapDragged = false end
+  end)
+  UIS.InputChanged:Connect(function(io)
+    if drag and io.UserInputType == Enum.UserInputType.MouseMovement then
+      local d = io.Position - drag.start
+      if d.Magnitude > 6 then mapDragged = true end
+      local maxX = math.max(0, mapLayer.AbsoluteCanvasSize.X - mapLayer.AbsoluteWindowSize.X)
+      local maxY = math.max(0, mapLayer.AbsoluteCanvasSize.Y - mapLayer.AbsoluteWindowSize.Y)
+      mapLayer.CanvasPosition = Vector2.new(math.clamp(drag.canvas.X - d.X, 0, maxX), math.clamp(drag.canvas.Y - d.Y, 0, maxY))
+    end
+  end)
+  UIS.InputEnded:Connect(function(io)
+    if io.UserInputType == Enum.UserInputType.MouseButton1 and drag then drag = nil; task.defer(function() mapDragged = false end) end
+  end)
 end
 
 -- 이동 버튼
