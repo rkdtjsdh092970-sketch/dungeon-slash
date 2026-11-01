@@ -86,12 +86,39 @@ function views.pass()
   })
 end
 function views.forge()
-  clear(); local r = rpc:InvokeServer("enhlist"); setSummary(r.summary)
+  clear(); local r = rpc:InvokeServer("forge"); setSummary(r.summary)
   for _, row in ipairs(r.rows) do
-    card(string.format("%s +%d", row.slot, row.enh), { string.format("비용 %d G · 강화석 %d", row.gold, row.ore) }, { { "강화", function() local e = rpc:InvokeServer("enhance", row.uid); msg.Text = tostring(e.msg or e.err); setSummary(e.summary); views.forge() end } })
+    local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(40, 34, 70); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -8, 0, 0); f.Parent = list
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6)
+    local lay = Instance.new("UIListLayout", f); lay.Padding = UDim.new(0, 3); Instance.new("UIPadding", f).PaddingBottom = UDim.new(0, 6)
+    local t = label(f, string.format("%s  (강화 +%d)", row.title, row.enh), 14, UDim2.new(0, 8, 0, 0), UDim2.new(1, -16, 0, 20)); t.AutomaticSize = Enum.AutomaticSize.Y
+    for i, a in ipairs(row.affixes) do
+      local line = Instance.new("Frame"); line.BackgroundTransparency = 1; line.Size = UDim2.new(1, 0, 0, 24); line.Parent = f
+      label(line, a.text, 12, UDim2.new(0, 10, 0, 0), UDim2.new(1, -120, 1, 0))
+      button(line, a.locked and "잠김" or string.format("굴림 %dG/%d", row.rerollGold, row.rerollOre), UDim2.new(1, -112, 0, 0), UDim2.new(0, 104, 1, 0), function()
+        local e = rpc:InvokeServer("reroll", { uid = row.uid, idx = i - 1 }); msg.Text = e.ok and "옵션을 다시 굴렸습니다" or tostring(e.err); setSummary(e.summary); views.forge()
+      end, a.locked and Color3.fromRGB(60, 60, 60) or nil)
+    end
+    for i, sk in ipairs(row.sockets) do label(f, "◆ 소켓 " .. i .. ": " .. (sk or "비어 있음"), 12, UDim2.new(0, 10, 0, 0), UDim2.new(1, -16, 0, 18)) end
+    local br = Instance.new("Frame"); br.BackgroundTransparency = 1; br.Size = UDim2.new(1, 0, 0, 30); br.Parent = f
+    button(br, string.format("강화 %dG/%d", row.enhGold, row.enhOre), UDim2.new(0, 8, 0, 0), UDim2.new(0, 120, 1, 0), function() local e = rpc:InvokeServer("enhance", row.uid); msg.Text = tostring(e.msg or e.err); setSummary(e.summary); views.forge() end)
+    button(br, "혼돈 구슬(옵션+)", UDim2.new(0, 134, 0, 0), UDim2.new(0, 130, 1, 0), function() local e = rpc:InvokeServer("chaos", row.uid); msg.Text = e.ok and "옵션이 하나 추가되었습니다" or tostring(e.err); setSummary(e.summary); views.forge() end)
+    button(br, "신성한 구슬", UDim2.new(0, 270, 0, 0), UDim2.new(0, 110, 1, 0), function() local e = rpc:InvokeServer("divine", row.uid); msg.Text = e.ok and "수치를 다시 굴렸습니다" or tostring(e.err); setSummary(e.summary); views.forge() end)
   end
 end
-local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" } }
+function views.stones()
+  clear(); local r = rpc:InvokeServer("stones"); setSummary(r.summary)
+  card("돌 보관함", { "확인하면 옵션이 정해지고, 장비 소켓에 끼울 수 있습니다. 장비 소켓은 [대장간] 탭에서 확인하세요." }, {})
+  for _, st in ipairs(r.rows) do
+    if not st.rev then card("미확인의 돌" .. (st.hi == 1 and " (계시)" or ""), {}, { { "확인", function() local e = rpc:InvokeServer("reveal", st.uid); msg.Text = e.ok and ("확인: " .. tostring(e.label)) or tostring(e.err); setSummary(e.summary); views.stones() end } })
+    else
+      local btns = {}
+      for _, it in ipairs(r.items) do for si, sk in ipairs(it.sockets) do if not sk then btns[#btns + 1] = { string.sub(it.slot, 1, 4) .. si, function() local e = rpc:InvokeServer("socket", { item = it.uid, stone = st.uid, idx = si }); msg.Text = e.ok and "소켓에 끼웠습니다" or tostring(e.err); setSummary(e.summary); views.stones() end } end end end
+      card(st.label or "확인된 돌", { #btns > 0 and "끼울 소켓을 고르세요 →" or "빈 소켓이 없습니다" }, { btns[1], btns[2] })
+    end
+  end
+end
+local tabs = { { "도전", "fight" }, { "장비", "inv" }, { "스킬", "skills" }, { "상점", "shop" }, { "패시브", "pass" }, { "대장간", "forge" }, { "돌", "stones" } }
 local tabRow = Instance.new("Frame"); tabRow.BackgroundTransparency = 1; tabRow.Position = UDim2.new(0, 12, 0, 80); tabRow.Size = UDim2.new(1, -24, 0, 28); tabRow.Parent = root
-for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, (i - 1) * 90, 0, 0), UDim2.new(0, 86, 0, 26), function() views[t[2]]() end) end
+for i, t in ipairs(tabs) do button(tabRow, t[1], UDim2.new(0, (i - 1) * 78, 0, 0), UDim2.new(0, 74, 0, 26), function() views[t[2]]() end) end
 refresh(); views.fight()
