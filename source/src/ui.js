@@ -13,7 +13,10 @@ const skIcon = (id, sc) => skillImg(SKILLS.find((x) => x.id === id), sc || 2);
 const fmtTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 // ---------- 토스트 ----------
-function toast(msg, cls) { const t = document.createElement("div"); t.className = "toast " + (cls || ""); t.textContent = msg; $("#toasts").appendChild(t); setTimeout(() => t.remove(), 2600); }
+function toast(msg, cls) {
+  // 제련소 창이 열려 있으면 화면 가운데 알림 대신 창 안의 결과 줄에 (강화 성공 · 실패 문구가 화면을 가리지 않게)
+  if (typeof IB !== "undefined" && document.querySelector("#mbox .forge5")) { IB.fmsg = { text: msg, cls: cls || "", t: Date.now() }; const el = document.querySelector("#mbox .fmsg5"); if (el) { el.className = "fmsg5 " + (cls || ""); el.textContent = msg; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; } return; }
+  const t = document.createElement("div"); t.className = "toast " + (cls || ""); t.textContent = msg; $("#toasts").appendChild(t); setTimeout(() => t.remove(), 2600); }
 
 // ---------- 모달 ----------
 const Modal = {
