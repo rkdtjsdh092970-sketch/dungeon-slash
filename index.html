@@ -445,16 +445,18 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .mt5{display:flex;gap:5px;margin:0}.mt5 .btn{height:26px;font-size:12px!important;min-width:64px}
 .mgo5{margin-top:auto;display:flex;gap:6px;justify-content:flex-end;align-items:stretch}.mgo5{padding-top:4px}.mgo5 .btn{height:38px;min-width:34px;font-size:14px!important}.mgo5 .mg5{width:172px;font-size:16px!important}
 /* ---- 5.0 제련소 ---- */
+.frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
+.frw5{height:50px;box-sizing:border-box;flex:none}.af5{min-height:32px;box-sizing:border-box}.tbd5{flex:none;width:30px;height:18px;line-height:18px;padding:0!important;font-weight:700}.af5 .btn.xs{height:26px}.orb5 .btn{height:40px}
 .forge5{display:flex;flex-direction:column;gap:6px;height:392px}.ftop5{flex-direction:row!important;align-items:center;gap:12px;padding:4px 10px;height:30px;flex:none;font-size:13px}.fc5{display:flex;align-items:center;gap:3px;white-space:nowrap}.fc5 img{width:18px;height:18px}
-.fbody5{display:flex;gap:8px;flex:1;min-height:0}.fl5{width:250px;flex:none}.fr5b{flex:1;min-width:0;padding:6px 10px;overflow-y:auto}
+.fbody5{display:flex;gap:8px;flex:1;min-height:0}.fl5{width:250px;flex:none}.frb5{flex:1;min-width:0;padding:6px 10px;overflow-y:auto}
 .fsw5{display:flex;gap:4px;padding:4px 6px}.fsw5 .btn{flex:1;font-size:12px!important}.flist5{flex:1;overflow-y:auto;padding:2px 6px;display:flex;flex-direction:column;gap:4px}
-.fr5{display:flex;gap:8px;align-items:center;padding:3px;border:1px solid #46341e;border-radius:6px;background:#1a1412;cursor:pointer}.fr5.on{background:#462e16;border:2px solid #c49e52}.fr5 .tile{width:44px;height:44px;flex:none}.fr5 small{display:block;font-size:11px;color:#aa9b87}.fr5 b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.frw5{display:flex;gap:8px;align-items:center;padding:3px;border:1px solid #46341e;border-radius:6px;background:#1a1412;cursor:pointer}.frw5.on{background:#462e16;border:2px solid #c49e52}.frw5 .tile{width:44px;height:44px;flex:none}.frw5 small{display:block;font-size:11px;color:#aa9b87}.frw5 b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
 .fh5{display:flex;justify-content:space-between;align-items:baseline;font-size:17px;margin-bottom:4px}
 .enh5{display:flex;align-items:center;gap:10px;background:#1c1410;border-radius:8px;padding:8px 10px}.enh5>b{font-size:20px;color:#ffdc78;white-space:nowrap}.enh5 .btn{margin-left:auto}
 .cost5{display:inline-flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap}.cost5 img{width:16px;height:16px}
 .afh5{display:flex;gap:10px;align-items:baseline;margin:8px 0 4px}.afh5 b{color:#ffe18c}.afh5 small{color:#e6c88c;font-size:11px}
 .afl5{display:flex;flex-direction:column;gap:4px}.af5{display:flex;align-items:center;gap:8px;background:#1c1410;border-radius:6px;padding:4px 6px;font-size:13px}.af5.rr{border:2px solid #c49e52}
-.tb5{min-width:30px;text-align:center;border-radius:4px;color:#140c08;font-size:12px;padding:1px 0}.at5{flex:1;min-width:0}.rrt{font-style:normal;font-size:11px;color:#ffd778}
+.tbd5{min-width:30px;text-align:center;border-radius:4px;color:#140c08;font-size:12px;padding:1px 0}.atx5{flex:1;min-width:0}.rrt{font-style:normal;font-size:11px;color:#ffd778}
 .orb5{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.orb5 .btn{flex:1;font-size:12px!important;min-width:110px}
 </style></head><body>
 <div id="ttpop" class="hidden"></div>
@@ -6097,19 +6099,19 @@ function renderForge5() {
   if (!IB.sel || !rows.includes(IB.sel)) IB.sel = rows[0] || null; const sel = IB.sel;
   const cur = (ic, v, col, nm) => `<span class="fc5"><img src="${artURL(ic) || ""}" alt=""><b style="color:${col}">${nm} ${fmtN(v || 0)}</b></span>`;
   const top = `<div class="box5 ftop5"><span class="dim">보유</span>${cur("i_gold", save.gold, "#ffdc78", "골드")}${cur("i_ore", save.ore, "#c8dcff", "강화석")}${cur("i_chaos", save.orbC, "#dcaaff", "혼돈")}${cur("i_divine", save.orbD, "#ffe08a", "신성")}${cur("i_stone", save.stones.length, "#a0dcff", "돌")}${save.sockTix ? `<span class="fc5">🔏 <b>인장 ${save.sockTix}</b></span>` : ""}</div>`;
-  const L = `<div class="box5 fl5"><div class="fsw5"><button class="btn ${IB.fbag ? "" : "pri"}" data-a="fbag" data-v="0">착용 장비</button><button class="btn ${IB.fbag ? "pri" : ""}" data-a="fbag" data-v="1">가방 장비</button></div><div class="flist5">${rows.map((it) =>
-    `<div class="fr5 ${it === sel ? "on" : ""}" data-a="pick" data-u="${it.uid}">${tileHtml(it, { up: false })}<div><small>${SLOT_NAME[it.slot]}</small><b class="${RCLS(it)}">${itemTitle(it)}</b></div></div>`).join("") || `<div class="dim pad">${IB.fbag ? "가방이 비어 있습니다" : "착용한 장비가 없습니다"}</div>`}</div></div>`;
-  let R = `<div class="box5 fr5b"><div class="dim pad">장비를 고르세요</div></div>`;
+  const L = `<div class="box5 fl5"><div class="fsw5"><button class="btn ${IB.fbag ? "" : "gold"}" data-a="fbag" data-v="0">착용 장비</button><button class="btn ${IB.fbag ? "gold" : ""}" data-a="fbag" data-v="1">가방 장비</button></div><div class="flist5">${rows.map((it) =>
+    `<div class="frw5 ${it === sel ? "on" : ""}" data-a="pick" data-u="${it.uid}">${tileHtml(it, { up: false })}<div><small>${SLOT_NAME[it.slot]}</small><b class="${RCLS(it)}">${itemTitle(it)}</b></div></div>`).join("") || `<div class="dim pad">${IB.fbag ? "가방이 비어 있습니다" : "착용한 장비가 없습니다"}</div>`}</div></div>`;
+  let R = `<div class="box5 frb5"><div class="dim pad">장비를 고르세요</div></div>`;
   if (sel) {
     const c = enhCost(sel), rate = ENH_RATE[sel.enh || 0], rc = rerollCost(sel), anyRR = sel.rrIdx != null, y = dismantleYield(sel);
     const ok = (v, have) => have >= v ? "#fff" : "#ff7878";
     const aff = sel.affixes.map((a, i) => { const locked = rerollLocked(sel, i), t = a.t != null ? a.t : null;
-      return `<div class="af5 ${anyRR && !locked ? "rr" : ""}"><b class="tb5" style="background:${t != null ? TIER_COL5[Math.min(5, t)] : "#5a5a5a"}">${t != null ? "T" + (t + 1) : "–"}</b><span class="at5">${affText(a)}${affRangeText(sel, a)}</span>
-        ${locked ? "" : `${anyRR ? `<i class="rrt">★ 재굴림 줄</i>` : ""}<span class="cost5">${iconImg("gold", 1)}${fmtN(rc.gold)} ${iconImg("ore", 1)}${rc.ore}</span><button class="btn xs" data-a="reroll" data-i="${i}">재굴림</button>`}</div>`; }).join("");
-    R = `<div class="box5 fr5b"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>
-      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn pri" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
+      return `<div class="af5 ${anyRR && !locked ? "rr" : ""}"><b class="tbd5" style="background:${t != null ? TIER_COL5[Math.min(5, t)] : "#5a5a5a"}">${t != null ? "T" + (t + 1) : "–"}</b><span class="atx5">${affText(a)}${affRangeText(sel, a)}</span>
+        ${locked ? "" : `${anyRR ? `<i class="rrt">★ 재굴림 줄</i>` : ""}<span class="cost5">${iconImg("gold", 1)}${fmtN(rc.gold)} ${iconImg("ore", 1)}${rc.ore}</span><button class="btn xs blue" data-a="reroll" data-i="${i}" style="min-width:64px">재굴림</button>`}</div>`; }).join("");
+    R = `<div class="box5 frb5"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>
+      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn green" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
       <div class="afh5"><b>옵션</b><small>${anyRR ? "금빛 줄만 재굴림할 수 있습니다" : "재굴림할 줄을 하나 고르세요 — 그 뒤로는 그 줄만 재굴림됩니다"}</small></div><div class="afl5">${aff}${socketBlock(sel)}</div>
-      <div class="orb5"><button class="btn" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
+      <div class="orb5"><button class="btn purple" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn purple" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn pri" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
   }
   Modal.open(`<h2>제련소</h2><div class="forge5">${top}<div class="fbody5">${L}${R}</div></div>`, { cls: "wide", on: Object.assign(itemHandlers(rows), { fbag: (el) => { IB.fbag = el.dataset.v === "1"; IB.sel = null; renderItems(); } }) });
 }
@@ -7013,7 +7015,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-070624";
+const BUILD_ID = "20261103-071046";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7854,6 +7856,10 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.10", date: "11/3", title: "제련소 화면 고침", items: [
+    "고침: 제련소의 장비 목록 줄이 겹치고, 옵션 줄의 티어 표시가 길게 늘어나고, 옵션 글자 뒤에 어두운 막대가 깔리던 것.",
+    "제련소 아래 구슬 · 분해 버튼 줄이 늘 보이고, 옵션이 많으면 옵션 목록만 스크롤됩니다 (로블록스판과 같은 배치).",
+  ] },
   { ver: "5.09", date: "11/3", title: "지도 지점 창을 로블록스판과 같게", items: [
     "지도에서 지점을 누르면 가운데 큰 창이 열립니다: 이름 · 기록 · 설명 · 권장 전투력과 내 전투력 · 입장 버튼.",
     "심연의 균열 · 솟아난 탑은 왼쪽 층 목록에서 층을 바로 고릅니다 (보스 · 벽 층 표시, 변이 · 드랍 안내).",
@@ -8553,3 +8559,4 @@ window.addEventListener("load", () => {
 });
 
 </script></body></html>
+
