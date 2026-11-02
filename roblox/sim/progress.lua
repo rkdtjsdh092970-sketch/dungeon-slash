@@ -22,6 +22,11 @@ end
 local function upkeep(sv, fam, rng)
   while (sv.arcana or 0) >= Econ.GACHA.ARC1 do Econ.gachaPull(sv, (sv.arcana >= Econ.GACHA.ARC10) and 10 or 1, "arcana", rng, fam) end
   Game.autoEquip(sv); Econ.resetPassives(sv); Econ.autoPassives(sv); bestLoadout(sv)
+  for _ = 1, 40 do   -- 실제 플레이어처럼 남는 골드 · 강화석으로 장착 장비를 강화 (강화 수치가 가장 낮은 것부터)
+    local low
+    for _, it in pairs(sv.equipped) do if it and (it.enh or 0) < 10 and (not low or (it.enh or 0) < (low.enh or 0)) then low = it end end
+    if not low or not Econ.enhance(sv, low, rng) then break end
+  end
   if #sv.inv > 150 then for i = #sv.inv, 60, -1 do table.remove(sv.inv, i) end end
 end
 function P.run(seed, cls, freePulls, budget)
