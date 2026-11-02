@@ -352,18 +352,10 @@ const TownView = {
   drawArt(sv, time, tim) {   // 일러스트 마을: 건물은 그림에 있으니 이름표 · 강조만 (경매소 · 우편함은 코드로)
     const g = this.g, A = ACTS[this.act - 1]; drawCover(g, tim, CW, CH);
     const theme = ["#4a8a3a", "#2f6a4a", "#7a5a3a", "#c8884a", "#3a6a5a", "#6a8ab8", "#a8402a", "#6a4aa8", "#c8b86a", "#a82a3a"][this.act - 1];
-    for (const s of townSpots().slice().sort((p, q) => p.y - q.y)) {
-      const open = this.act >= s.need && !s.soon, hot = this.hover && this.hover.id === s.id && open;
-      if (s.code) { g.save(); if (!open) g.globalAlpha = 0.45; g.imageSmoothingEnabled = false; g.translate(s.x, s.y); g.scale(s.code, s.code); drawBuilding(g, s.id, 0, 0, theme, hot); g.restore(); }
-      if (hot) { g.save(); g.fillStyle = "rgba(255,240,170,.10)"; g.fillRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.strokeStyle = "#fff6b0"; g.lineWidth = 3; g.setLineDash([6, 4]); g.strokeRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.restore(); }
-      g.font = "bold 14px sans-serif"; g.textAlign = "center"; const tw = g.measureText(s.name).width + 14;
-      g.fillStyle = "rgba(10,6,12,.72)"; rrect(g, s.x - tw / 2, s.y + 6, tw, 22, 6); g.fill(); g.strokeStyle = hot ? "#fff6b0" : "rgba(214,168,70,.7)"; g.lineWidth = 1.5; rrect(g, s.x - tw / 2, s.y + 6, tw, 22, 6); g.stroke();
-      g.fillStyle = open ? (hot ? "#fff6b0" : "#f4e8d0") : "#a09ab0"; g.fillText(s.name, s.x, s.y + 22);
-      if (!open) { g.font = "11px sans-serif"; g.fillStyle = "#c8c0d8"; g.fillText(s.soon ? "준비 중" : `액트 ${s.need}에서 개방`, s.x, s.y + 40); }
-    }
+    town5Draw(g, gtime, this.hover);   // 5.0: 로블록스판 건물 8곳
     g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
   },
-  pick(mx, my) { for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
+  pick(mx, my) { if (artGet("bg_town")) return town5Pick(mx, my); for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
 };
 
 // =========================================================

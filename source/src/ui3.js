@@ -226,7 +226,7 @@ function openSkills() {
   })();
   const tabs = TABS.length > 1 ? TABS.map(([k, n]) => `<button class="tab ${SK.tab === k ? "on" : ""}" data-a="sktab" data-t="${k}">${n}</button>`).join("") : "";
   const sorts = SORTS.map(([k, n]) => `<button class="btn xs ${SK.sort === k ? "pri" : ""}" data-a="sksort" data-t="${k}">${n}</button>`).join(" ");
-  Modal.open(`<h2>스킬 (아르카나)</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
+  Modal.open(`<h2>아르카나</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
   <div class="dim center" style="font-size:12px">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 · 전투에서는 위 4칸만 씁니다 (1번 = 평타)</div><div class="skslots">${cards}</div>
   <div class="skbar"><b>${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸용 ${want === "basic" ? "평타" : want === "passive" ? "패시브" : "스킬"} ${owned.length}</b> ${tabs} <span style="margin-left:auto">정렬 ${sorts}</span></div><div class="skbot"><div class="skgrid2">${grid || `<div class="dim pad">이 칸에 넣을 스킬이 없습니다 — [소환]에서 얻으세요</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
     sktab: (el) => { SK.tab = el.dataset.t; openSkills(); }, sksort: (el) => { SK.sort = el.dataset.t; openSkills(); }, gosum: () => openSummon(),

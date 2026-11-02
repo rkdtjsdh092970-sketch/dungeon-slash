@@ -23,12 +23,13 @@ const Modal = {
     const m = $("#modal"), box = $("#mbox"), keep = !m.classList.contains("hidden") ? this.scrollSnap(box) : null;   // 같은 창을 다시 그릴 때 스크롤 위치 유지
     m.classList.remove("hidden"); box.className = o.cls || ""; box.innerHTML = (o.noClose ? "" : `<button class="x" data-a="__close">✕</button>`) + html;
     if (keep && keep.h2 === (box.querySelector("h2") || {}).textContent) this.scrollRestore(box, keep.list);
+    if (typeof grpBar === "function" && G.grp && (!G.grp.h2 || G.grp.h2 === (box.querySelector("h2") || {}).textContent)) setTimeout(grpBar, 0);
     if (!this.was) snd("open"); this.was = true;
   },
   scrollSnap(box) { const list = []; box.querySelectorAll("*").forEach((el) => { if (el.scrollTop > 0) { const sib = [...box.querySelectorAll(el.tagName + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""))]; list.push({ tag: el.tagName, cls: el.className, i: sib.indexOf(el), top: el.scrollTop }); } }); const h = box.querySelector("h2"); return { h2: h ? h.textContent : "", list }; },
   scrollRestore(box, list) { for (const it of list) { const sel = it.tag + (it.cls && typeof it.cls === "string" ? "." + it.cls.trim().split(/\s+/).join(".") : ""); const el = box.querySelectorAll(sel)[it.i]; if (el) el.scrollTop = it.top; } },
   isOpen() { return !$("#modal").classList.contains("hidden"); },
-  close(silent) { if ($("#modal").classList.contains("hidden")) return; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
+  close(silent) { if ($("#modal").classList.contains("hidden")) return; G.grp = null; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
 };
 function askConfirm(msg, yes, cb, danger, no) {
   Modal.open(`<h2>확인</h2><p class="center">${msg}</p><div class="pbtns"><button class="btn ${danger === false ? "pri" : "warn"}" data-a="cyes">${yes || "확인"}</button><button class="btn" data-a="cno">취소</button></div>`, { cls: "sm", on: { cyes: () => { Modal.close(true); cb(); }, cno: () => { if (no) { Modal.close(true); no(); } else Modal.close(); } } });
@@ -227,6 +228,7 @@ function openTown(act) {
   else { setGuide(null); $("#b-map").classList.remove("pulse"); }
 }
 function townClick(s) {
+  if (s && s.box) { snd("click"); return openGroup(s, 0); }   // 5.0: 로블록스판 건물 (탭 묶음 창)
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }

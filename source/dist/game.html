@@ -305,6 +305,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .h5card .mc{position:absolute;right:2px;top:2px;font-size:10px;background:#1c3c90;border-radius:6px;padding:0 3px;color:#fff}.h5card .mc.lack{background:#902020}
 .h5card .kn{position:absolute;left:-4px;top:16px;font-size:11px;background:#281408;border:1px solid #c09048;border-radius:50%;width:16px;height:16px;line-height:14px;text-align:center;color:#ffe}
 .h5empty{display:none}
+.grpbar{display:flex;gap:4px;justify-content:center;margin:-2px 0 6px;flex-wrap:wrap}.grpbar .tab{font-size:13px;padding:2px 12px}
 </style></head><body>
 <div id="ttpop" class="hidden"></div>
 <div id="app">
@@ -4810,18 +4811,10 @@ const TownView = {
   drawArt(sv, time, tim) {   // 일러스트 마을: 건물은 그림에 있으니 이름표 · 강조만 (경매소 · 우편함은 코드로)
     const g = this.g, A = ACTS[this.act - 1]; drawCover(g, tim, CW, CH);
     const theme = ["#4a8a3a", "#2f6a4a", "#7a5a3a", "#c8884a", "#3a6a5a", "#6a8ab8", "#a8402a", "#6a4aa8", "#c8b86a", "#a82a3a"][this.act - 1];
-    for (const s of townSpots().slice().sort((p, q) => p.y - q.y)) {
-      const open = this.act >= s.need && !s.soon, hot = this.hover && this.hover.id === s.id && open;
-      if (s.code) { g.save(); if (!open) g.globalAlpha = 0.45; g.imageSmoothingEnabled = false; g.translate(s.x, s.y); g.scale(s.code, s.code); drawBuilding(g, s.id, 0, 0, theme, hot); g.restore(); }
-      if (hot) { g.save(); g.fillStyle = "rgba(255,240,170,.10)"; g.fillRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.strokeStyle = "#fff6b0"; g.lineWidth = 3; g.setLineDash([6, 4]); g.strokeRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.restore(); }
-      g.font = "bold 14px sans-serif"; g.textAlign = "center"; const tw = g.measureText(s.name).width + 14;
-      g.fillStyle = "rgba(10,6,12,.72)"; rrect(g, s.x - tw / 2, s.y + 6, tw, 22, 6); g.fill(); g.strokeStyle = hot ? "#fff6b0" : "rgba(214,168,70,.7)"; g.lineWidth = 1.5; rrect(g, s.x - tw / 2, s.y + 6, tw, 22, 6); g.stroke();
-      g.fillStyle = open ? (hot ? "#fff6b0" : "#f4e8d0") : "#a09ab0"; g.fillText(s.name, s.x, s.y + 22);
-      if (!open) { g.font = "11px sans-serif"; g.fillStyle = "#c8c0d8"; g.fillText(s.soon ? "준비 중" : `액트 ${s.need}에서 개방`, s.x, s.y + 40); }
-    }
+    town5Draw(g, gtime, this.hover);   // 5.0: 로블록스판 건물 8곳
     g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
   },
-  pick(mx, my) { for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
+  pick(mx, my) { if (artGet("bg_town")) return town5Pick(mx, my); for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
 };
 
 // =========================================================
@@ -5346,12 +5339,13 @@ const Modal = {
     const m = $("#modal"), box = $("#mbox"), keep = !m.classList.contains("hidden") ? this.scrollSnap(box) : null;   // 같은 창을 다시 그릴 때 스크롤 위치 유지
     m.classList.remove("hidden"); box.className = o.cls || ""; box.innerHTML = (o.noClose ? "" : `<button class="x" data-a="__close">✕</button>`) + html;
     if (keep && keep.h2 === (box.querySelector("h2") || {}).textContent) this.scrollRestore(box, keep.list);
+    if (typeof grpBar === "function" && G.grp && (!G.grp.h2 || G.grp.h2 === (box.querySelector("h2") || {}).textContent)) setTimeout(grpBar, 0);
     if (!this.was) snd("open"); this.was = true;
   },
   scrollSnap(box) { const list = []; box.querySelectorAll("*").forEach((el) => { if (el.scrollTop > 0) { const sib = [...box.querySelectorAll(el.tagName + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""))]; list.push({ tag: el.tagName, cls: el.className, i: sib.indexOf(el), top: el.scrollTop }); } }); const h = box.querySelector("h2"); return { h2: h ? h.textContent : "", list }; },
   scrollRestore(box, list) { for (const it of list) { const sel = it.tag + (it.cls && typeof it.cls === "string" ? "." + it.cls.trim().split(/\s+/).join(".") : ""); const el = box.querySelectorAll(sel)[it.i]; if (el) el.scrollTop = it.top; } },
   isOpen() { return !$("#modal").classList.contains("hidden"); },
-  close(silent) { if ($("#modal").classList.contains("hidden")) return; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
+  close(silent) { if ($("#modal").classList.contains("hidden")) return; G.grp = null; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
 };
 function askConfirm(msg, yes, cb, danger, no) {
   Modal.open(`<h2>확인</h2><p class="center">${msg}</p><div class="pbtns"><button class="btn ${danger === false ? "pri" : "warn"}" data-a="cyes">${yes || "확인"}</button><button class="btn" data-a="cno">취소</button></div>`, { cls: "sm", on: { cyes: () => { Modal.close(true); cb(); }, cno: () => { if (no) { Modal.close(true); no(); } else Modal.close(); } } });
@@ -5550,6 +5544,7 @@ function openTown(act) {
   else { setGuide(null); $("#b-map").classList.remove("pulse"); }
 }
 function townClick(s) {
+  if (s && s.box) { snd("click"); return openGroup(s, 0); }   // 5.0: 로블록스판 건물 (탭 묶음 창)
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
@@ -5802,7 +5797,7 @@ function openSkillShop() {
     return `<div class="shopcard ${bought ? "sold" : ""}"><div class="sc-h">${skIcon(d.id, 3)}<div><div class="${R.cls}"><b>${R.name} ${d.name}</b></div><small class="dim">${d.slot === "basic" ? "기본 공격" : "액티브"} · 쿨 ${(d.cd * R.cdMul).toFixed(1)}s · 피해 ${Math.round(d.mult * R.mult * 100)}%</small></div></div>
       <div class="dim sc-d">${d.desc}</div><div>${skillAreaHtml(skillOf({ id: d.id, rarity: o.rarity, uid: 0 }), 10)}</div><div class="dim" style="font-size:11px">${skillDescFull(skillOf({ id: d.id, rarity: o.rarity, uid: 0 }))}</div>${bought ? `<button class="btn" disabled>구매 완료</button>` : `<button class="btn pri" data-a="buy" data-n="${i}" ${can ? "" : "disabled"}>${iconImg("gold", 1)} ${fmtN(o.price)}</button>`}</div>`;
   }).join("");
-  Modal.open(`<h2>스킬 상점</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div><div class="dim center">일반 등급 스킬을 전부 판매합니다 · 원하는 스킬을 골라 구매하세요 (같은 스킬 여러 개 구매 가능) · 높은 등급은 100층 졸업 후 보스에게서</div><div class="center" style="margin:6px 0">${tabs}</div><div class="shopgrid">${cards || '<div class="dim center pad" style="grid-column:1/-1">이 분류에는 판매 중인 스킬이 없습니다</div>'}</div>`, { cls: "wide", on: {
+  Modal.open(`<h2>아르카나 골드 상점</h2><div class="res">${iconImg("gold", 1)} ${fmtN(save.gold)}</div><div class="dim center">일반 등급 스킬을 전부 판매합니다 · 원하는 스킬을 골라 구매하세요 (같은 스킬 여러 개 구매 가능) · 높은 등급은 100층 졸업 후 보스에게서</div><div class="center" style="margin:6px 0">${tabs}</div><div class="shopgrid">${cards || '<div class="dim center pad" style="grid-column:1/-1">이 분류에는 판매 중인 스킬이 없습니다</div>'}</div>`, { cls: "wide", on: {
     stab: (el) => { SHOP_TAB = el.dataset.n; openSkillShop(); },
     buy: (el) => { if (buySkill(save, +el.dataset.n)) { snd("buy"); toast("스킬을 구매했습니다", "ok"); saveGame(); refreshTop(); } else snd("error"); openSkillShop(); },
   } });
@@ -5823,7 +5818,7 @@ function openSummon(res) {
   const got = res ? `<div class="sumgrid">${res.map((g, i) => `<div class="flip r${g.rarity}" style="animation-delay:${0.15 + i * 0.13}s"><div class="fback"><img src="${artURL("cardback") || ""}" alt=""></div><div class="ffront">${arcCard(g.id, g.rarity, { badge: lab(g), cls: g.rarity >= 2 ? "glow" + g.rarity : "" })}</div></div>`).join("")}</div>`
     : `<div class="sumintro"><img src="${artURL("cardback") || ""}" alt=""><div class="dim">같은 스킬이 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼).<br>스킬 등급은 스킬마다 정해져 있습니다.<br><b>계열 소환</b>: 고른 계열의 공격 스킬과 계열 없는 스킬(버프 · 치유)만 나옵니다.</div></div>`;
   const pity = GACHA.PITY_HARD - (save.gachaPity || 0), f = fam === "all" ? null : fam;
-  Modal.open(`<h2>스킬 소환</h2><div class="res">${iconImg("shard", 1)} 아르카나 조각 <b>${fmtN(save.hone)}</b></div>
+  Modal.open(`<h2>아르카나 소환</h2><div class="res">${iconImg("shard", 1)} 아르카나 조각 <b>${fmtN(save.hone)}</b></div>
     <div class="center" style="margin-top:4px">${tabs}</div><div class="dim center" style="font-size:12px;margin-top:4px">${rates}<br>10연 소환은 희귀 이상 1장 보장 · 전설 이상 확정까지 ${pity}회</div>${got}
     <div class="center" style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri big" data-a="s1" ${save.hone < GACHA.ARC1 ? "disabled" : ""}>1회 소환<br><small>조각 ${GACHA.ARC1}</small></button><button class="btn pri big" data-a="s10" ${save.hone < GACHA.ARC10 ? "disabled" : ""}>10회 소환<br><small>조각 ${GACHA.ARC10}</small></button><button class="btn" data-a="gshop">골드 상점<br><small>일반 · 희귀</small></button></div>`, { cls: "wide", on: {
     fam: (el) => { G.sumFam = el.dataset.f; openSummon(); },
@@ -6134,7 +6129,7 @@ function openSkills() {
   })();
   const tabs = TABS.length > 1 ? TABS.map(([k, n]) => `<button class="tab ${SK.tab === k ? "on" : ""}" data-a="sktab" data-t="${k}">${n}</button>`).join("") : "";
   const sorts = SORTS.map(([k, n]) => `<button class="btn xs ${SK.sort === k ? "pri" : ""}" data-a="sksort" data-t="${k}">${n}</button>`).join(" ");
-  Modal.open(`<h2>스킬 (아르카나)</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
+  Modal.open(`<h2>아르카나</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
   <div class="dim center" style="font-size:12px">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 · 전투에서는 위 4칸만 씁니다 (1번 = 평타)</div><div class="skslots">${cards}</div>
   <div class="skbar"><b>${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸용 ${want === "basic" ? "평타" : want === "passive" ? "패시브" : "스킬"} ${owned.length}</b> ${tabs} <span style="margin-left:auto">정렬 ${sorts}</span></div><div class="skbot"><div class="skgrid2">${grid || `<div class="dim pad">이 칸에 넣을 스킬이 없습니다 — [소환]에서 얻으세요</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
     sktab: (el) => { SK.tab = el.dataset.t; openSkills(); }, sksort: (el) => { SK.sort = el.dataset.t; openSkills(); }, gosum: () => openSummon(),
@@ -7004,7 +6999,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-062804";
+const BUILD_ID = "20261103-063003";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7311,6 +7306,50 @@ function openCharms(back) {
 }
 
 // =========================================================
+// 5.0 마을 (로블록스판 Client.lua BUILD 와 같은 건물 · 위치 · 탭 묶음)
+// 건물은 마을 그림(bg_town)에 그려져 있다. box = 그림 기준 영역 (x0, y0, x1, y1). 비슷한 기능은 한 건물에 탭으로 묶는다
+// 오른쪽 위 건물(로블록스판 Info Desk)은 웹판에서는 업데이트 게시판 (게시판 · 우편함 · 도감 · 기록)
+// =========================================================
+const TOWN5 = [
+  { id: "guild", name: "길드", box: [0.206, 0.17, 0.434, 0.47], tabs: [["길드", () => openGuild()], ["랭킹", () => openRanking()]] },
+  { id: "skillshop", name: "아르카나 소환", box: [0.455, 0.06, 0.635, 0.5], tabs: [["아르카나 소환", () => openSummon()], ["골드 상점", () => openSkillShop()]] },
+  { id: "notice", name: "업데이트 게시판", box: [0.67, 0.2, 0.815, 0.51], badge: () => typeof notesUnread === "function" && notesUnread(),
+    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
+  { id: "trainer", name: "훈련소", box: [0.0, 0.38, 0.25, 0.59], badge: () => passivePoints(save) - passiveSpent(save) > 0,
+    tabs: [["패시브", () => openPassives()], ["허수아비", () => openDummy()], ["전직", () => openClass(() => {})], ["참", () => openCharms()]] },
+  { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => Object.keys(save.q || {}).some((id) => save.q[id].state === "done"),
+    tabs: [["퀘스트", () => openBoard()], ["일일", () => openDaily()]] },
+  { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => { SK.slot = 1; openSkills(); }]] },
+  { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화 · 재굴림", () => openItems("forge")], ["돌", () => openStones()]] },
+  { id: "shop", name: "창고", box: [0.565, 0.6, 0.837, 0.885], tabs: [["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }], ["창고", () => openStash()]] },
+];
+// 탭 묶음 창: 건물을 누르면 첫 탭을 열고, 창 위에 탭 줄을 붙인다 (창이 다시 그려져도 유지)
+function openGroup(B, i) {
+  G.grp = { B, i: i || 0 }; try { B.tabs[G.grp.i][1](); } catch (e) { console.error(e); } if (G.grp) { const h = $("#mbox h2"); G.grp.h2 = h ? h.textContent : null; } grpBar();
+}
+function grpBar() {
+  const g = G.grp, box = $("#mbox"); if (!g || !box || !Modal.isOpen() || g.B.tabs.length < 2) return;
+  if (box.querySelector(".grpbar")) return;
+  const bar = document.createElement("div"); bar.className = "grpbar";
+  bar.innerHTML = g.B.tabs.map(([n], k) => `<button class="tab ${k === g.i ? "on" : ""}" data-g="${k}">${n}</button>`).join("");
+  bar.querySelectorAll("[data-g]").forEach((b) => b.onclick = (ev) => { ev.stopPropagation(); snd("click"); const k = +b.dataset.g, B = g.B; Modal.close(true); openGroup(B, k); });
+  const h2 = box.querySelector("h2"); if (h2) h2.after(bar); else box.prepend(bar);
+}
+const town5Rect = (B) => { const [x0, y0, x1, y1] = B.box; return { x: x0 * CW, y: y0 * CH, w: (x1 - x0) * CW, h: (y1 - y0) * CH }; };
+function town5Pick(mx, my) { for (const B of TOWN5) { const r = town5Rect(B); if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) return B; } return null; }
+function town5Draw(g, time, hover) {
+  for (const B of TOWN5) {
+    const r = town5Rect(B), hot = hover && hover.id === B.id, cx = r.x + r.w / 2, ly = r.y + r.h - 4;
+    if (hot) { g.save(); const gr = g.createRadialGradient(cx, r.y + r.h * 0.55, 10, cx, r.y + r.h * 0.55, Math.max(r.w, r.h) * 0.6); gr.addColorStop(0, "rgba(255,200,140,.28)"); gr.addColorStop(1, "rgba(255,200,140,0)"); g.fillStyle = gr; g.fillRect(r.x, r.y, r.w, r.h); g.restore(); }
+    g.save(); g.font = "bold 15px Georgia, serif"; g.textAlign = "center"; const tw = g.measureText(B.name).width + 22;
+    g.fillStyle = "rgba(14,8,8,.78)"; rrect(g, cx - tw / 2, ly - 12, tw, 24, 6); g.fill(); g.strokeStyle = hot ? "#ffe6a0" : "rgba(200,150,70,.85)"; g.lineWidth = 1.5; rrect(g, cx - tw / 2, ly - 12, tw, 24, 6); g.stroke();
+    g.fillStyle = hot ? "#fff3c8" : "#f0dec4"; g.fillText(B.name, cx, ly + 5);
+    if (B.badge && save && B.badge()) { g.fillStyle = "#ff4a4a"; g.beginPath(); g.arc(cx + tw / 2 - 2, ly - 10, 6 + Math.sin(time * 5), 0, 7); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke(); }
+    g.restore();
+  }
+}
+
+// =========================================================
 // 5.0 전투 화면 HUD (로블록스판 Stage.lua 와 같은 구성)
 //  왼쪽 위: 상태판(hud_plate) + 초상화 고리 + 레벨 보석 + 장식 틀 체력 · 마나 + 처치 수
 //  위 가운데: 단계 이름 · 남은 적 + 장식 틀 보스 체력
@@ -7360,7 +7399,7 @@ function hud5Tick(b) {
 // save.tut5 = 단계 (0 시작 · 99 끝). 반짝이는 테두리(#tutHi)가 눌러야 할 곳을 가리킨다
 // =========================================================
 const TUT5 = [
-  { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[스킬 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
+  { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[아르카나 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
     target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : document.querySelector('[data-a="s10"]:not([disabled])') },
   { title: "스킬 칸", text: "전투에서는 위쪽 4칸에 넣은 스킬만 씁니다 (1번 = 평타, 2~4번 = 스킬). 위 메뉴 <b>[스킬]</b>에서 <b>4번 칸</b>을 누르고, 새로 뽑은 스킬을 골라 <b>[장착]</b>하세요.", ev: "equipsk",
     target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector('[data-a="slot"]') ? document.querySelector("#modal .x") : SK.slot !== 3 ? document.querySelector('[data-a="slot"][data-s="3"]') : document.querySelector('[data-a="equipsk"]:not([disabled])') || document.querySelector('[data-a="picksk"]:not(.used)') },
@@ -7401,7 +7440,7 @@ function tutTick() {
   let t = null; try { t = T.target(); } catch (e) {}
   let r = null;
   if (t && t.map) { const n = MAP.byId[t.map], cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (n) r = { left: cr.left + (n.x - MapView.cam.x - 24) * k, top: cr.top + (n.y - MapView.cam.y - 24) * k, width: 48 * k, height: 48 * k }; }
-  else if (t && t.town) { const s = townSpots().find((x) => x.id === t.town), cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (s) r = { left: cr.left + (s.x - s.w) * k, top: cr.top + (s.y - s.h) * k, width: s.w * 2 * k, height: (s.h + 30) * k }; }
+  else if (t && t.town) { const B = TOWN5.find((x) => x.id === t.town), cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (B) { const q = town5Rect(B); r = { left: cr.left + q.x * k, top: cr.top + q.y * k, width: q.w * k, height: q.h * k }; } }
   else if (t && t.getBoundingClientRect) { const ap = $("#app").getBoundingClientRect(); let b = t.getBoundingClientRect();
     if (b.width > 0 && (b.bottom > ap.bottom - 4 || b.top < ap.top + 40) && t.scrollIntoView && tutScrollEl !== t) { tutScrollEl = t; t.scrollIntoView({ block: "center" }); b = t.getBoundingClientRect(); }   // 창 안에서 가려져 있으면 보이게
     if (b.width > 0) r = b; }
@@ -7473,6 +7512,10 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.06", date: "11/3", title: "마을 개편", items: [
+    "마을 건물이 8곳으로 정리되었습니다: 길드(길드 · 랭킹) · 아르카나 소환(소환 · 골드 상점) · 업데이트 게시판(게시판 · 우편함 · 도감 · 기록) · 훈련소(패시브 · 허수아비 · 전직 · 참) · 퀘스트 게시판(퀘스트 · 일일) · 아르카나 공방 · 제련소(강화 · 돌) · 창고(장비 · 창고).",
+    "건물 창 위의 탭으로 같은 건물의 다른 기능으로 바로 넘어갈 수 있습니다. 할 일이 있는 건물에는 빨간 점이 뜹니다.",
+  ] },
   { ver: "5.05", date: "11/3", title: "스킬 연출 개편", items: [
     "스킬 연출을 새로 만들었습니다: 마법사는 영웅 뒤 · 발밑 · 지팡이 앞 마법진, 하늘 마법진에서 쏟아지는 유성 · 벼락, 원소별 투사체와 폭발 · 얼음 가시 · 용암 · 바위 솟구침. 전사는 돌진 · 뛰어올라 내려찍기 · 순보(잔상으로 적 사이를 누비며 베기), 충격파와 잔상.",
     "새 스킬 22종은 전용 연출이 있습니다 (불새 · 태양 핵 · 공허의 눈 · 하늘 꿰뚫는 창 · 거인의 망치 · 독룡 · 혈월 등). 높은 등급일수록 연출이 크고 화려합니다.",

@@ -3,7 +3,7 @@
 // save.tut5 = 단계 (0 시작 · 99 끝). 반짝이는 테두리(#tutHi)가 눌러야 할 곳을 가리킨다
 // =========================================================
 const TUT5 = [
-  { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[스킬 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
+  { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[아르카나 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
     target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : document.querySelector('[data-a="s10"]:not([disabled])') },
   { title: "스킬 칸", text: "전투에서는 위쪽 4칸에 넣은 스킬만 씁니다 (1번 = 평타, 2~4번 = 스킬). 위 메뉴 <b>[스킬]</b>에서 <b>4번 칸</b>을 누르고, 새로 뽑은 스킬을 골라 <b>[장착]</b>하세요.", ev: "equipsk",
     target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector('[data-a="slot"]') ? document.querySelector("#modal .x") : SK.slot !== 3 ? document.querySelector('[data-a="slot"][data-s="3"]') : document.querySelector('[data-a="equipsk"]:not([disabled])') || document.querySelector('[data-a="picksk"]:not(.used)') },
@@ -44,7 +44,7 @@ function tutTick() {
   let t = null; try { t = T.target(); } catch (e) {}
   let r = null;
   if (t && t.map) { const n = MAP.byId[t.map], cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (n) r = { left: cr.left + (n.x - MapView.cam.x - 24) * k, top: cr.top + (n.y - MapView.cam.y - 24) * k, width: 48 * k, height: 48 * k }; }
-  else if (t && t.town) { const s = townSpots().find((x) => x.id === t.town), cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (s) r = { left: cr.left + (s.x - s.w) * k, top: cr.top + (s.y - s.h) * k, width: s.w * 2 * k, height: (s.h + 30) * k }; }
+  else if (t && t.town) { const B = TOWN5.find((x) => x.id === t.town), cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (B) { const q = town5Rect(B); r = { left: cr.left + q.x * k, top: cr.top + q.y * k, width: q.w * k, height: q.h * k }; } }
   else if (t && t.getBoundingClientRect) { const ap = $("#app").getBoundingClientRect(); let b = t.getBoundingClientRect();
     if (b.width > 0 && (b.bottom > ap.bottom - 4 || b.top < ap.top + 40) && t.scrollIntoView && tutScrollEl !== t) { tutScrollEl = t; t.scrollIntoView({ block: "center" }); b = t.getBoundingClientRect(); }   // 창 안에서 가려져 있으면 보이게
     if (b.width > 0) r = b; }
