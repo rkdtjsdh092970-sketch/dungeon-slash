@@ -127,7 +127,13 @@ local function button(parent, text, pos, sz, cb, color)
   local s2 = Instance.new("UIStroke"); s2.Color = Color3.fromRGB(20, 10, 30); s2.Thickness = 1.5; s2.Parent = b
   b.MouseButton1Click:Connect(cb); task.defer(Skin.button, b); return b
 end
-local function n(x) x = math.floor(x or 0); if x >= 1e9 then return string.format("%.1fB", x / 1e9) elseif x >= 1e6 then return string.format("%.1fM", x / 1e6) elseif x >= 1e4 then return string.format("%.1fK", x / 1e3) end return tostring(x) end
+local function n(x)   -- 큰 수 줄임: 유효 숫자 3자리 (9999 · 12.3K · 123K · 1.23M · … · T) — 칸 밖으로 안 나가게
+  x = math.floor(x or 0); if math.abs(x) < 1e4 then return tostring(x) end
+  for _, u in ipairs({ { 1e12, "T" }, { 1e9, "B" }, { 1e6, "M" }, { 1e3, "K" } }) do
+    if math.abs(x) >= u[1] then local v = x / u[1]; return (v >= 100 and string.format("%.0f", v) or v >= 10 and string.format("%.1f", v) or string.format("%.2f", v)) .. u[2] end
+  end
+  return tostring(x)
+end
 
 -- ── 층 구성 (아래 → 위): 전투 무대 · 마을 · 지도 · HUD · 창 · 결과 · 알림 ──
 local stageHolder = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, gui)
@@ -158,24 +164,27 @@ do
   local row = mk("Frame", { Position = UDim2.new(0, 92, 0, 8), Size = UDim2.new(1, -100, 0, 50), BackgroundTransparency = 1, ZIndex = 12 }, statLbl)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i, st in ipairs(STATS) do
-    local c = mk("Frame", { Size = UDim2.new(0.2, -4, 1, 0), BackgroundColor3 = CELL, LayoutOrder = i, ZIndex = 12 }, row); corner(c, 5); stroke(c, EDGE, 1)
+    local c = mk("Frame", { Size = UDim2.new(0.2, -4, 1, 0), BackgroundColor3 = CELL, LayoutOrder = i, ZIndex = 12, ClipsDescendants = true }, row); corner(c, 5); stroke(c, EDGE, 1)
     mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 2, 0, 3), Size = UDim2.new(1, -4, 0, 14), Text = st[2], Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(185, 170, 150), ZIndex = 13 }, c)
     local v = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 3, 0, 18), Size = UDim2.new(1, -6, 1, -21), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = st[3],
       TextXAlignment = Enum.TextXAlignment.Center, TextYAlignment = Enum.TextYAlignment.Center, ZIndex = 13 }, c)
-    mk("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 10 }, v); mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, v)
+    mk("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 6 }, v); mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, v)
     statVal[st[1]] = v
   end
   -- 진행도 띠
   local pb = mk("Frame", { Position = UDim2.new(0, 92, 0, 62), Size = UDim2.new(1, -100, 0, 22), BackgroundColor3 = CELL, ZIndex = 12 }, statLbl); corner(pb, 5); stroke(pb, EDGE, 1)
-  statPow = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.45, 0, 1, 0), Position = UDim2.new(0, 6, 0, 0), Text = "", Font = Theme.FONT, TextSize = 15, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, pb)
+  statPow = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.45, 0, 1, 0), Position = UDim2.new(0, 6, 0, 0), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, pb)
+  mk("UITextSizeConstraint", { MaxTextSize = 15, MinTextSize = 6 }, statPow)
   mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(20, 8, 4) }, statPow)
-  statProg = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.55, -8, 1, 0), Position = UDim2.new(0.45, 0, 0, 0), Text = "", Font = Theme.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(200, 190, 180), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 13 }, pb)
+  statProg = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.55, -8, 1, 0), Position = UDim2.new(0.45, 0, 0, 0), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(200, 190, 180), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 13 }, pb)
+  mk("UITextSizeConstraint", { MaxTextSize = 12, MinTextSize = 6 }, statProg)
   -- 골드: 카드 아래 금빛 판
   local gp = mk("Frame", { Position = UDim2.new(0, 0, 1, 8), Size = UDim2.new(0, 200, 0, 40), BackgroundColor3 = Color3.fromRGB(40, 28, 14), ZIndex = 11 }, statLbl); corner(gp, 8); stroke(gp, GOLD, 2)
   Skin.frame(gp, "ui_pill", 0.3, 0.5)
   local ga = Sprites.art("i_gold")
   if ga then mk("ImageLabel", { Position = UDim2.new(0, 4, 0.5, -20), Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, ImageContent = ga.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, gp) end
-  statGold = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -58, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextSize = 22, TextColor3 = Color3.fromRGB(255, 210, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, gp)
+  statGold = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -58, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(255, 210, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, gp)
+  mk("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 8 }, statGold)
   mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 16, 4) }, statGold)
 end
 -- 오른쪽 아래: 지도 ⇄ 마을 큰 버튼 (마을에선 지도, 지도에선 마을)
@@ -724,15 +733,15 @@ towerSpec = function(f) return { title = "솟아난 탑 " .. f .. "층", call = 
 local function playSpec(title, arg) return { title = title, call = function() return rpc:InvokeServer("play", arg) end } end
 
 -- ── 마을 (웹 초원 마을: 건물을 눌러 기능을 연다. 비슷한 기능은 한 건물에 탭으로 묶었다) ──
-local BUILD = {
-  { key = "b_skill_hall", name = "스킬 정비소", icon = "📘", x = 0.08, row = 1, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
-  { key = "b_forge", name = "제련소", icon = "🔨", x = 0.22, row = 1, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
-  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.36, row = 1, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
-  { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.50, row = 1, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
-  { key = "b_skill_shop", name = "스킬 소환", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } } },
-  { key = "b_guild", name = "길드", icon = "🏰", x = 0.2, row = 2, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
-  { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.42, row = 2, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
-  { key = "b_notice", name = "안내소", icon = "🔔", x = 0.64, row = 2, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
+local BUILD = {   -- x · y = 건물 발 위치(화면 비율), s = 크기(화면 높이 비율). 광장을 둘러싼 반원: 뒤쪽은 작게, 앞쪽은 크게
+  { key = "b_guild", name = "길드", icon = "🏰", x = 0.30, y = 0.60, s = 0.22, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
+  { key = "b_skill_shop", name = "스킬 소환", icon = "🔮", x = 0.50, y = 0.58, s = 0.26, tabs = { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } } },
+  { key = "b_notice", name = "안내소", icon = "🔔", x = 0.70, y = 0.60, s = 0.22, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
+  { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.13, y = 0.75, s = 0.25, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
+  { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.87, y = 0.75, s = 0.22, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
+  { key = "b_skill_hall", name = "스킬 정비소", icon = "📘", x = 0.17, y = 0.97, s = 0.30, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
+  { key = "b_forge", name = "제련소", icon = "🔨", x = 0.39, y = 0.98, s = 0.30, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
+  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.61, y = 0.97, s = 0.30, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
 }
 local townBuilt, badgeDots = false, {}
 local function updateBadges()
@@ -769,10 +778,14 @@ buildTown = function()
       Ambient.attach(townLayer, { z = 2, patches = patches, lights = lights, clouds = { math.max(cy0, 0.01), cy1, 3 }, birds = true, embers = 10 })
     else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
     for _, b in ipairs(BUILD) do
-      local size = (b.row == 1 and 0.30 or 0.25) * H; local fy = (b.row == 1 and 0.95 or 0.67) * H
-      local holder = mk("TextButton", { BackgroundTransparency = 1, Text = "", AutoButtonColor = false, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, b.x * W, 0, fy), Size = UDim2.new(0, size, 0, size), ZIndex = b.row == 1 and 4 or 3 }, townLayer)
+      local size = b.s * H; local fy = b.y * H
+      local zb = b.y > 0.9 and 4 or 3
+      -- 발밑 그림자: 건물이 바닥에 붙어 있게 (그림을 붙여 놓은 느낌 줄이기)
+      local gsh = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, b.x * W, 0, fy - size * 0.03), Size = UDim2.new(0, size * 0.85, 0, size * 0.12), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, ZIndex = zb }, townLayer); corner(gsh)
+      local holder = mk("TextButton", { BackgroundTransparency = 1, Text = "", AutoButtonColor = false, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, b.x * W, 0, fy), Size = UDim2.new(0, size, 0, size), ZIndex = zb }, townLayer)
       local a = Sprites.art(b.key)
-      if a then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), ScaleType = Enum.ScaleType.Fit, ImageContent = a.content, ZIndex = holder.ZIndex }, holder)
+      -- 밤 조명에 맞춰 살짝 어둡고 따뜻하게 (뒤쪽 건물은 더 어둡게 = 원근)
+      if a then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), ScaleType = Enum.ScaleType.Fit, ImageContent = a.content, ImageColor3 = b.y > 0.9 and Color3.fromRGB(235, 215, 200) or (b.y > 0.7 and Color3.fromRGB(215, 190, 175) or Color3.fromRGB(190, 165, 155)), ZIndex = holder.ZIndex }, holder)
       else local f = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(0.8, 0, 0.8, 0), BackgroundColor3 = Color3.fromRGB(150, 110, 80), ZIndex = holder.ZIndex }, holder); corner(f, 12); stroke(f, Color3.fromRGB(60, 30, 50), 3)
         mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = b.icon, TextScaled = true, Font = Enum.Font.GothamBold, ZIndex = holder.ZIndex }, f) end
       local hs = mk("UIScale", { Scale = 1 }, holder)
@@ -786,11 +799,6 @@ buildTown = function()
       plate.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
       if b.badge then badgeDots[b.badge] = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 2), Size = UDim2.new(0, 14, 0, 14), BackgroundColor3 = Color3.fromRGB(255, 70, 70), Visible = false, ZIndex = 7 }, plate); corner(badgeDots[b.badge]); stroke(badgeDots[b.badge], Color3.new(1, 1, 1), 2) end
     end
-    local hero = Sprites.artLabel(townLayer, Stage.heroKey(), 0.17 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.17 * H)
-    hero.Position = UDim2.new(0, 0.86 * W, 0, 0.66 * H); hero.ZIndex = 5
-    if hero:IsA("ImageLabel") then hero.ImageColor3 = Color3.fromRGB(205, 165, 140) end
-    do local hs0 = hero.Size; TweenService:Create(hero, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Size = UDim2.new(hs0.X.Scale, hs0.X.Offset * 0.99, hs0.Y.Scale, hs0.Y.Offset * 1.03) }):Play() end   -- 숨쉬기   -- 마을 밤 조명(횃불)에 맞춰 어둡고 따뜻하게
-    local sh = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = hero.Position, Size = UDim2.new(0, 0.09 * H, 0, 0.022 * H), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, ZIndex = 4 }, townLayer); corner(sh)   -- 발밑 그림자
   end
   updateBadges()
 end
