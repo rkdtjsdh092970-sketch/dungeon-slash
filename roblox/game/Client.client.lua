@@ -776,7 +776,7 @@ local MW, MH = 1800, 1100
 local NODES, BYID = {}, {}
 local function node(t) NODES[#NODES + 1] = t; BYID[t.id] = t; return t end
 -- 위치는 월드맵 그림(map/world.jpg)에 맞춤: 왼쪽 아래 마을 → 길을 따라 스테이지 → 가운데 보라 균열 → 오른쪽 위 화산 고원(탑)
-node({ id = "T", name = "초원 마을", icon = "🏠", x = 210, y = 575, col = Color3.fromRGB(230, 200, 140) })
+node({ id = "T", name = "초원 마을", icon = "🏠", x = 250, y = 790, col = Color3.fromRGB(230, 200, 140) })
 local SPOS = { { 380, 610 }, { 520, 700 }, { 640, 600 }, { 790, 690 }, { 930, 590 } }
 for s = 1, 5 do
   node({ id = "S" .. s, stage = s, name = s == 5 and "들판의 군주 그룸" or ("초원 " .. s), icon = s == 5 and "☠" or tostring(s), x = SPOS[s][1], y = SPOS[s][2], col = s == 5 and Color3.fromRGB(190, 50, 70) or Color3.fromRGB(70, 140, 255) })
