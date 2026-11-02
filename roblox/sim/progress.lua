@@ -46,6 +46,6 @@ function P.run(seed, cls, freePulls, budget)
     if battles % 5 == 0 then task.wait() end
   end
   local best = {}; for _, k in ipairs(sv.skills) do best[#best + 1] = k.id .. "r" .. (k.rarity or 0) .. "L" .. (k.lvl or 1) end
-  return { stage = sv.cleared or 0, rift = sv.rift.best, level = sv.level, power = Power.score(sv), skills = #sv.skills }
+  return { stage = sv.cleared or 0, rift = sv.rift.best, level = sv.level, power = Power.score(sv), skills = #sv.skills, sv = sv }
 end
 return P
