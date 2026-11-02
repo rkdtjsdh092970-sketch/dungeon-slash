@@ -7098,7 +7098,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-074632";
+const BUILD_ID = "20261103-074820";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7800,7 +7800,9 @@ function openQuests() { openQuests5(); }
 //  뽑으면 덱에서 카드가 날아와 줄을 서고 차례로 뒤집힌다 (신화 이상은 화면 앞으로 크게) · 누르면 한 번에 · 다 보면 누르면 닫힘
 // =========================================================
 function openSummon() {
-  const fam = G.sumFam = G.sumFam || (save.equipped.weapon && save.equipped.weapon.wt === "staff" ? "mag" : "phys");
+  const own = save.startClass === "mage" || (!save.startClass && save.equipped.weapon && save.equipped.weapon.wt === "staff") ? "mag" : "phys";
+  if (!save.sumFam || tutStep() === 0) save.sumFam = own;   // 계열은 캐릭터마다 저장 · 튜토리얼 소환은 늘 내 직업 계열
+  const fam = save.sumFam;
   const rates = GACHA.RATES.map((p, r) => `<div class="sr5"><i style="background:${SK_RCOL5[r]}"></i><b style="color:${SK_RCOL5[r]}">${SKILL_RARITY[r].name}</b><span>${p}%</span></div>`).join("");
   const pity = save.gachaPity || 0, pmax = GACHA.PITY_HARD;
   const L = `<div class="sl5"><img class="salt5" src="${artURL("summon_altar") || ""}" alt=""><div class="sgl5"></div><img class="sdk5" src="${artURL("summon_deck") || artURL("cardback") || ""}" alt=""><b class="sh5">아르카나 덱</b>
@@ -7810,7 +7812,7 @@ function openSummon() {
     <div class="sgh5"><img src="${artURL("i_arcana") || ""}" alt=""><b>아르카나 조각  ·  보유 ${fmtN(save.hone)}</b></div><div class="sbr5">${btn(1, GACHA.ARC1, "blue")}${btn(10, GACHA.ARC10, "gold", "희귀 이상 1장 보장")}</div>
     <div class="sft5">아르카나 조각: 전투 승리 · 보스 · 첫 클리어 · 일일 목표 · 퀘스트 · 아르카나 분해<br>같은 아르카나가 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼).</div></div>`;
   Modal.open(`<h2>아르카나 소환</h2><div class="sum5">${L}${R}</div>`, { cls: "wide", on: {
-    sfam: (el) => { G.sumFam = el.dataset.f; openSummon(); },
+    sfam: (el) => { save.sumFam = el.dataset.f; saveGame(); openSummon(); },
     spull: (el) => { if (el.dataset.no) { toast("아르카나 조각이 부족합니다", "bad"); snd("error"); return; }
       const deck = $("#mbox .sdk5"), dr = deck && deck.getBoundingClientRect();
       const r = gachaPull(save, +el.dataset.n, fam === "all" ? null : fam); if (!r) return snd("error");
@@ -8058,6 +8060,9 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.21", date: "11/3", title: "소환 계열 고침", items: [
+    "고침: 전사로 하다가 새로 마법사를 시작하면 튜토리얼 소환이 전사(물리) 계열로 되어 있던 것. 소환 계열은 캐릭터마다 따로 저장되고, 튜토리얼 소환은 늘 내 직업 계열로 맞춰집니다.",
+  ] },
   { ver: "5.20", date: "11/3", title: "소환 연출 위치 고침", items: [
     "고침: 큰 화면(창에 맞춰 게임이 확대될 때)에서 소환 카드가 날아올 때와 10장이 줄 설 때 오른쪽 · 아래로 밀려 잘리던 것. 이제 화면 크기와 상관없이 가운데에 맞게 줄을 섭니다.",
   ] },

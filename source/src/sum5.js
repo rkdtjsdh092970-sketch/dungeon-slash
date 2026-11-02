@@ -5,7 +5,9 @@
 //  뽑으면 덱에서 카드가 날아와 줄을 서고 차례로 뒤집힌다 (신화 이상은 화면 앞으로 크게) · 누르면 한 번에 · 다 보면 누르면 닫힘
 // =========================================================
 function openSummon() {
-  const fam = G.sumFam = G.sumFam || (save.equipped.weapon && save.equipped.weapon.wt === "staff" ? "mag" : "phys");
+  const own = save.startClass === "mage" || (!save.startClass && save.equipped.weapon && save.equipped.weapon.wt === "staff") ? "mag" : "phys";
+  if (!save.sumFam || tutStep() === 0) save.sumFam = own;   // 계열은 캐릭터마다 저장 · 튜토리얼 소환은 늘 내 직업 계열
+  const fam = save.sumFam;
   const rates = GACHA.RATES.map((p, r) => `<div class="sr5"><i style="background:${SK_RCOL5[r]}"></i><b style="color:${SK_RCOL5[r]}">${SKILL_RARITY[r].name}</b><span>${p}%</span></div>`).join("");
   const pity = save.gachaPity || 0, pmax = GACHA.PITY_HARD;
   const L = `<div class="sl5"><img class="salt5" src="${artURL("summon_altar") || ""}" alt=""><div class="sgl5"></div><img class="sdk5" src="${artURL("summon_deck") || artURL("cardback") || ""}" alt=""><b class="sh5">아르카나 덱</b>
@@ -15,7 +17,7 @@ function openSummon() {
     <div class="sgh5"><img src="${artURL("i_arcana") || ""}" alt=""><b>아르카나 조각  ·  보유 ${fmtN(save.hone)}</b></div><div class="sbr5">${btn(1, GACHA.ARC1, "blue")}${btn(10, GACHA.ARC10, "gold", "희귀 이상 1장 보장")}</div>
     <div class="sft5">아르카나 조각: 전투 승리 · 보스 · 첫 클리어 · 일일 목표 · 퀘스트 · 아르카나 분해<br>같은 아르카나가 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼).</div></div>`;
   Modal.open(`<h2>아르카나 소환</h2><div class="sum5">${L}${R}</div>`, { cls: "wide", on: {
-    sfam: (el) => { G.sumFam = el.dataset.f; openSummon(); },
+    sfam: (el) => { save.sumFam = el.dataset.f; saveGame(); openSummon(); },
     spull: (el) => { if (el.dataset.no) { toast("아르카나 조각이 부족합니다", "bad"); snd("error"); return; }
       const deck = $("#mbox .sdk5"), dr = deck && deck.getBoundingClientRect();
       const r = gachaPull(save, +el.dataset.n, fam === "all" ? null : fam); if (!r) return snd("error");
