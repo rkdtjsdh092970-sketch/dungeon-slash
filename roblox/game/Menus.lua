@@ -89,8 +89,10 @@ function M.itemCard(parent, it, order, head)
   local col = it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1]
   if head then line(head, 12, Color3.fromRGB(170, 160, 150), 0) end
   local t = line(it.title or "", 18, col, 1, M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, t)
-  if it.dp and it.dp ~= 0 then line(string.format("전투력 %s%s", it.dp > 0 and "+" or "", n(it.dp)), 14, it.dp > 0 and Color3.fromRGB(120, 255, 140) or Color3.fromRGB(255, 120, 110), 2, M.FONT)
-  elseif it.up then line("▲ 지금보다 강해집니다", 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
+  local dp, up, z0 = it.dp, it.up, ""
+  if M.cmpZero and it.dp0 ~= nil then dp, up, z0 = it.dp0, it.up0, (PLangTop.lang == "en") and "  (at +0)" or "  (+0 기준)" end   -- 장비 창의 "+0 기준 비교"
+  if dp and dp ~= 0 then line(string.format("전투력 %s%s%s", dp > 0 and "+" or "", n(dp), z0), 14, dp > 0 and Color3.fromRGB(120, 255, 140) or Color3.fromRGB(255, 120, 110), 2, M.FONT)
+  elseif up then line("▲ 지금보다 강해집니다" .. z0, 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
   rule(3)
   for i, b in ipairs(it.base or {}) do line(b, 15, Color3.fromRGB(245, 240, 230), 3 + i, M.FONT) end
   if it.aff and #it.aff > 0 then
@@ -109,6 +111,7 @@ function M.itemCard(parent, it, order, head)
   if it.satText then rule(60); line("✦ " .. it.satText, 14, M.SAT, 61) end
   return f
 end
+local PLangTop = require(script.Parent.Lang)
 -- 장비 툴팁: 마우스 옆에 바로, 착용 중인 같은 부위와 나란히 비교
 local itGui, itBox, itConn
 function M.itemTip(it, cur)
@@ -240,9 +243,11 @@ local CUR_DESC = {   -- 재화 설명 (마우스를 올리면)
   i_ore = "장비 강화 · 옵션 재굴림에 씁니다. 장비를 분해하면 얻습니다.", i_chaos = "장비 옵션의 수치를 (같은 옵션 · 티어 안에서) 다시 굴립니다 (대장간). 귀하게 나옵니다.",
   i_gem = "아르카나 소환에 쓰는 보석입니다.", i_arcana = "아르카나 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 아르카나 분해로 얻습니다.",
 }
+M.cmpZero = false   -- 장비 비교를 강화 없이(+0) 할지
+local function upOf(it) if M.cmpZero and it.up0 ~= nil then return it.up0 == true end return it.up == true end
 local function sortInv(inv)   -- 자동 정렬: 등급 → 부위 → 아이템 레벨
   table.sort(inv, function(a, b)
-    if (a.up and true or false) ~= (b.up and true or false) then return a.up and true or false end   -- 끼면 강해지는 장비(▲)가 맨 앞
+    if upOf(a) ~= upOf(b) then return upOf(a) end   -- 끼면 강해지는 장비(▲)가 맨 앞
     local ra, rb = (a.sat and 9 or a.rarity or 0), (b.sat and 9 or b.rarity or 0)
     if ra ~= rb then return ra > rb end
     local sa, sb = SLOT_ORDER[a.slot] or 99, SLOT_ORDER[b.slot] or 99
@@ -324,7 +329,12 @@ invRender = function()
   local shown = {}; for _, it in ipairs(inv) do if invTab == "all" or it.slot == invTab or (invTab == "ring" and it.slot == "ring2") then shown[#shown + 1] = it end end
   local INV_MAX = require(script.Parent.Data.Config).CFG.INV_MAX or 300
   local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), invTab == "all" and string.format("가방 %d / %d칸", #inv, INV_MAX) or string.format("가방 %d개 (전체 %d / %d칸)", #shown, #inv, INV_MAX))
-  if #inv >= INV_MAX * 0.9 then local w = txt(B, "가방이 거의 찼습니다 · 자동 분해를 켜 두세요", 11, UDim2.new(0, 150, 0, 6), UDim2.new(1, -156, 0, 16), Color3.fromRGB(255, 130, 110), M.FONT, Enum.TextXAlignment.Right); w.TextTruncate = Enum.TextTruncate.AtEnd end
+  do   -- +0 기준 비교 켜기/끄기 (강화 수치를 빼고 장비 자체만 비교)
+    local zb = M.btn(B, M.cmpZero and "+0 비교 켬" or "+0 비교 끔", UDim2.new(0, 96, 0, 22), M.cmpZero and M.BTN.gold or M.BTN.gray, function() M.cmpZero = not M.cmpZero; tipHide(); M.itemTipHide(); invRender() end)
+    zb.AnchorPoint = Vector2.new(1, 0); zb.Position = UDim2.new(1, -8, 0, 4)
+    zb.MouseEnter:Connect(function() tipShow({ title = "+0 기준 비교", lines = { "켜면 새 장비와 낀 장비를 모두 강화 없이(+0) 놓고 비교합니다.", "강화는 바꾼 뒤 다시 하면 되므로 장비 자체가 더 좋은지 볼 때 씁니다." } }) end); zb.MouseLeave:Connect(tipHide)
+  end
+  if #inv >= INV_MAX * 0.9 then local w = txt(B, "가방이 거의 찼습니다 · 자동 분해를 켜 두세요", 11, UDim2.new(0, 150, 0, 6), UDim2.new(1, -260, 0, 16), Color3.fromRGB(255, 130, 110), M.FONT, Enum.TextXAlignment.Right); w.TextTruncate = Enum.TextTruncate.AtEnd end
   local tabs = mk("Frame", { Position = UDim2.new(0, 6, 0, 32), Size = UDim2.new(1, -12, 0, 34), BackgroundTransparency = 1 }, B)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
   for i, k in ipairs(INV_TABS) do
@@ -342,7 +352,7 @@ invRender = function()
   end
   local g = grid(B, UDim2.new(0, 6, 0, 70), UDim2.new(1, -12, 1, -114), 58)
   for i, it in ipairs(shown) do
-    tiles[it.uid] = M.tile(g, 58, { order = i, itip = { it, curOf(it) }, art = artOf(it), emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or (it.up and "▲" or nil), br = it.ilvl and ("T" .. it.ilvl) or nil,
+    tiles[it.uid] = M.tile(g, 58, { order = i, itip = { it, curOf(it) }, art = artOf(it), emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or (upOf(it) and "▲" or nil), br = it.ilvl and ("T" .. it.ilvl) or nil,
       selected = (not invMulti and invSel == it.uid) or (invMulti and invPick[it.uid]), check = invMulti and invPick[it.uid] or nil,
       click = function() if invMulti then pickItem(it.uid) else selectItem(it.uid) end end })
     M.drag(tiles[it.uid], { kind = "bag", uid = it.uid }, artOf(it))

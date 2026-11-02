@@ -4,7 +4,7 @@ local CFG = require(Data.Config).CFG
 local Items = require(Data.Items)
 local Stats = require(script.Parent.Stats)
 local Power = require(script.Parent.Power)
-local powerOf, bestWith   -- 아래(전투력 부분)에서 정한다 — 위쪽 요약 · 가방 보기에서도 쓴다
+local powerOf, bestWith, slotsFor   -- 아래(전투력 부분)에서 정한다 — 위쪽 요약 · 가방 보기에서도 쓴다
 local Battle = require(script.Parent.Battle)
 local Loot = require(script.Parent.Loot)
 local Sat = require(Data.Satan).SAT_DEFS
@@ -62,7 +62,13 @@ function M.inventory(sv)
   for i, it in ipairs(sv.inv) do
     local b, a, sat = M.itemDetail(it)
     local P = bestWith(sv, it); local dp = Power.display(P) - baseD; local up = P > base * 1.0005
-    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, dp = dp, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
+    -- +0 기준 비교: 이 장비와 같은 부위에 낀 장비를 모두 강화 없이 놓고 비교 (강화는 옮겨 다시 하면 되므로)
+    local keepE = { [it] = it.enh }; for _, k in ipairs(slotsFor(it)) do local e = sv.equipped[k]; if e then keepE[e] = e.enh end end
+    for x in pairs(keepE) do x.enh = 0 end
+    local base0 = powerOf(sv); local P0 = bestWith(sv, it)
+    for x, e in pairs(keepE) do x.enh = e end
+    local dp0 = Power.display(P0) - Power.display(base0); local up0 = P0 > base0 * 1.0005
+    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, dp = dp, up0 = up0, dp0 = dp0, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
   end
   return out
 end
@@ -148,7 +154,7 @@ end
 -- 전투력 (Power.lua, 시뮬레이션 보정): ▲ 판정 · 자동 장착 · 장비 비교에 쓴다
 powerOf = function(sv) local ok, P = pcall(Power.of, sv); return ok and P or 0 end
 function M.powerNow(sv) return powerOf(sv) end
-local function slotsFor(it) return it.slot == "ring" and { "ring", "ring2" } or { it.slot } end
+slotsFor = function(it) return it.slot == "ring" and { "ring", "ring2" } or { it.slot } end
 -- 이 장비를 꼈을 때 가장 높은 원전투력 (반지는 두 칸 중 좋은 쪽)
 bestWith = function(sv, it)
   local best, bk = -1, nil
@@ -424,7 +430,6 @@ function M.fight(sv, kind, n, seed)
     if kind == "rift" then Extras.questEvent(sv, "rift", 1); if boss and rng:NextNumber() < 0.2 then local rid = Extras.randomRune(rng); Extras.addRune(sv, rid); res.rune = rid end end
     local mfv = math.max(0, Stats.computeStats(sv).mf + 0.01 * (sv.guildLv or 0))
     local d = Loot.fieldDrops(rng, sv, node, boss, 1 + mfv / (1 + mfv / CFG.MF_HALF))   -- 웹 mfEff
-    do local om = 1; local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0) end   -- 혼돈의 인장
     if (d.orbC or 0) > 0 then sv.orbC = (sv.orbC or 0) + d.orbC; res.orbC = d.orbC end; if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     d.ore = floor(d.ore + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end

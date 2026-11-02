@@ -23,13 +23,15 @@ local function smartEquip(sv, fam)
   for _, slot in ipairs(Items.EQ_SLOTS) do
     local V = validOf(fam, slot)
     local function fits(it) return (it.slot == slot or (slot == "ring2" and it.slot == "ring")) and (slot ~= "weapon" or ((fam == "mag") == ((it.base or {}).mag ~= nil))) end
+    local cur0 = sv.equipped[slot]
     local function projected(it)
       local old = sv.equipped[slot]; sv.equipped[slot] = it
+      local e0 = it.enh; if cur0 and it ~= cur0 then it.enh = math.max(it.enh or 0, cur0.enh or 0) end   -- 바꾸면 다시 강화한다고 친다 (골드 · 강화석이 남으므로)
       local i = badLine(it, V); local keep
       if i then local b = bestValid(it, i, V); if b then keep = it.affixes[i]; it.affixes[i] = Loot.mkAff(MID, b, it.ilvl, it.rarity) end end
       local p = Power.of(sv)
       if keep then it.affixes[i] = keep end
-      sv.equipped[slot] = old; return p
+      it.enh = e0; sv.equipped[slot] = old; return p
     end
     local cur = sv.equipped[slot]; local best = cur and projected(cur) or -1; local pick, pickI
     for i, it in ipairs(sv.inv) do if fits(it) then local p = projected(it); if p > best * 1.0005 then best, pick, pickI = p, it, i end end end

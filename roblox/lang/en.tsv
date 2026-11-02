@@ -2326,3 +2326,11 @@ Lv %d  ·  %d명	Lv %d  ·  %d members
 💰 골드 기부  ·  하루 10만 골드까지 · 1,000골드 = 기여도 20 + 길드 코인 1	💰 Gold Donation  ·  up to 100K gold per day · 1,000 gold = 20 contribution + 1 guild coin
 📜 공지	📜 Notice
 아이템 발견	Item Find
+  (+0 기준)	  (at +0)
++0 기준 비교	Compare at +0
++0 비교 끔	+0 Compare: Off
++0 비교 켬	+0 Compare: On
+강화는 바꾼 뒤 다시 하면 되므로 장비 자체가 더 좋은지 볼 때 씁니다.	You can re-enhance after swapping, so use this to see whether the item itself is better.
+전투력 %s%s%s	Power %s%s%s
+켜면 새 장비와 낀 장비를 모두 강화 없이(+0) 놓고 비교합니다.	When on, compares the new item and your equipped item both without enhancement (+0).
+▲ 지금보다 강해집니다  (+0 기준)	▲ Stronger than now  (at +0)

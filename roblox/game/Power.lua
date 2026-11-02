@@ -53,7 +53,7 @@ local function baseCast(k, s, act, sc)
   local bsum = s.add.boss + s.add.elite + s.add.ranged + s.add.normal; for _, v in pairs(k.bonus or {}) do bsum += v end
   return base * inc * red * er * (1 + cc * s.critDmg) * (1 + 0.15 * bsum) * kindMul(k, s)
 end
-function M.baseCast(k, s) local act = math.max(1, math.min(10, math.floor(s.avgIlvl + 0.5))); return baseCast(k, s, act, 1 + CFG.DEF_ACT * (act - 1)) end   -- 측정(sim)용
+function M.baseCast(k, s) local act = math.max(1, math.min(10, math.floor((s.refIlvl or s.avgIlvl) + 0.5))); return baseCast(k, s, act, 1 + CFG.DEF_ACT * (act - 1)) end   -- 측정(sim)용
 M.castMult = castMult
 -- 사탄 장비 · 전직(cm) 조건부 피해 배율의 기대값 (Battle satMult 와 같은 조건을 평균으로)
 local function satExp(s, k, idx, empty, lanes)
@@ -94,8 +94,9 @@ local function equippedSkills(sv)
   return out
 end
 function M.detail(s, skl, slots)
-  local act = math.max(1, math.min(10, math.floor(s.avgIlvl + 0.5))); local sc = 1 + CFG.DEF_ACT * (act - 1)
-  local refAtk = M.RAW * 6 * CFG.A0 * actScale(math.max(1, s.avgIlvl)); local mit = 1 + s.def / (5 * refAtk)
+  local ref = s.refIlvl or s.avgIlvl
+  local act = math.max(1, math.min(10, math.floor(ref + 0.5))); local sc = 1 + CFG.DEF_ACT * (act - 1)
+  local refAtk = M.RAW * 6 * CFG.A0 * actScale(math.max(1, ref)); local mit = 1 + s.def / (5 * refAtk)
   local out = { skills = {}, dps = 0, manaFactor = 1, buff = 1 }
   local demand, buffMul = 0, 1
   local cdMul = 1 - s.cdr

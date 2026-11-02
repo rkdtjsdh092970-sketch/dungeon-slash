@@ -144,6 +144,7 @@ function M.computeStats(sv)
   s.stackCap = math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density)
   s.lanes = math.min(CFG.MAX_LANES, (sv.lanesBase or 3) + s.laneBonus)
   s.avgIlvl = ilvlCnt > 0 and ilvlSum / ilvlCnt or 1
+  s.refIlvl = math.min(6, 1 + ((sv.rift and sv.rift.best) or 0) / 20)   -- 전투력 계산의 적 기준: 진행도(균열 20층마다 1티어). 낀 장비 티어로 정하면 좋은 장비를 끼는 순간 적 기준이 올라가 전투력이 내려가는 문제가 있었다
   return s
 end
 
