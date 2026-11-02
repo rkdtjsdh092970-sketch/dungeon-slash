@@ -264,6 +264,47 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .bh-rar{font-size:12px;font-weight:bold;padding:1px 8px;border-radius:8px;border:1px solid #4a4270;background:#161028}.bh-rar.r2{color:#6ab0ff}.bh-rar.r3{color:#c58bff}.bh-rar.r4{color:#ff8ab0}.bh-rar.r5{color:#ffb060}.bh-rar.r1{color:#8dff9a}
 .bh-sks{display:flex;flex-wrap:wrap;gap:6px}.bh-sk{display:flex;align-items:center;gap:6px;padding:4px 8px;border:2px solid #4a4270;border-radius:8px;background:#1c1632;cursor:help;font-size:13px}.bh-sk:hover{border-color:var(--c);background:#2a2048}
 .tp-mons{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}.tp-mon{padding:4px 10px;border:1px solid #4a4270;border-radius:8px;background:#161028;font-size:12px}.tp-mn{font-weight:bold;color:#ffd86a;font-size:13px}
+
+/* ---- 5.0 전투 HUD (로블록스판) ---- */
+#battlehud .h5L{position:absolute;left:6px;top:4px;width:330px;height:104px}
+.h5L .h5plate{position:absolute;left:18px;top:4px;width:312px;height:96px}
+.h5L .h5face{position:absolute;left:10px;top:20px;width:68px;height:68px;border-radius:50%;overflow:hidden;background:radial-gradient(#781e1e,#14060a)}
+.h5L .h5face img{width:118%;height:118%;margin:-4% 0 0 -9%;object-fit:contain}
+.h5L .h5ring{position:absolute;left:-2px;top:8px;width:92px;height:92px;pointer-events:none}
+.h5L .h5gem{position:absolute;left:32px;top:84px;width:24px;height:24px;transform:rotate(45deg);background:linear-gradient(135deg,#ffdc82,#965a19);border:2px solid #281406;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.h5L .h5gem b{transform:rotate(-45deg);font-size:12px;color:#fff;text-shadow:0 0 3px #000}
+.h5L .h5hp{position:absolute;left:96px;top:2px;width:232px;height:54px}
+.h5L .h5hp img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.h5L .h5hp .hpbar2{position:absolute;left:11.5%;top:45%;width:81%;height:28%;border:0!important;border-radius:3px;background:#3a0a10!important}
+.h5L .h5mp{position:absolute;left:123px;top:56px;width:188px;height:8px!important;border-radius:4px}
+.h5L .h5mp span{display:none}
+.h5L .h5kill{position:absolute;left:123px;top:70px;padding:1px 10px;background:#0a0606cc;border:1px solid #966e3c;border-radius:10px;font-size:12px;color:#ffe1a0}
+.h5L #status{position:absolute;left:190px;top:72px;font-size:11px;color:#ffb0a0;white-space:nowrap}
+#battlehud .h5T{position:absolute;left:50%;top:4px;transform:translateX(-50%);width:440px;text-align:center}
+.h5T #bh-name{font-size:17px;font-weight:700;color:#ffe18c;text-shadow:0 2px 0 #000,0 0 6px #000}
+.h5T .wavew{position:static!important;transform:none!important;width:300px;margin:2px auto 0!important;left:auto!important;top:auto!important;background:none!important;border:0!important;padding:0!important}
+.h5T .wavebar{height:6px!important}
+.h5T #wave-txt{font-size:12px;color:#e8dcc8;text-shadow:0 1px 2px #000}
+.h5T #bossbar{position:relative!important;left:auto!important;top:auto!important;transform:none!important;width:420px;height:44px;margin:4px auto 0}
+.h5T #bossbar .bn{font-size:14px;color:#ffa096;text-shadow:0 1px 2px #000}
+.h5T #bossbar .bb{position:absolute;left:0;right:0;top:20px;height:20px;border:0!important}
+.h5T #bossbar img{position:absolute;left:-14%;top:10px;width:128%;height:42px;pointer-events:none}
+#battlehud .h5R{position:absolute;right:8px;top:6px;left:auto!important;display:flex;gap:6px;align-items:flex-start}
+.h5R .btn{font-size:15px!important;min-width:46px}
+#h5spd{position:absolute;right:0;top:40px;display:none;flex-direction:column;gap:4px}#h5spd.open{display:flex}#h5spd .btn{width:96px}
+#h5pause{position:absolute;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:30}#h5pause.hidden{display:none}
+.h5pp{width:280px;padding:16px;background:#160c0c;border:2px solid #c09048;border-radius:10px;display:flex;flex-direction:column;gap:8px;text-align:center}.h5pp h3{color:#ffdc8c;font-size:24px;margin:0 0 4px}
+#battlehud #skillbar{position:absolute!important;left:12px!important;right:auto!important;bottom:8px!important;transform:none!important;display:flex;gap:8px;background:none!important;border:0!important;padding:0!important}
+.h5card{position:relative;width:62px;height:112px;cursor:pointer;background:none!important;border:0!important}
+.h5card .cds{position:absolute;left:0;right:0;top:0;height:20px;text-align:center;font-weight:700;font-size:17px;color:#ffebaa;text-shadow:0 0 3px #000,0 0 3px #000}
+.h5card .h5c{position:absolute;left:0;top:22px;width:62px;height:90px;border:2px solid;border-radius:7px;overflow:hidden;background:#1e1634}
+.h5card .h5c img{width:100%;height:100%;object-fit:cover}
+.h5card .h5n{position:absolute;left:0;right:0;bottom:0;background:#000a;font-size:10px;font-weight:700;text-align:center;padding:2px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.h5card .cdm{position:absolute;left:0;right:0;bottom:0;background:#0009!important;pointer-events:none}
+.h5card .rl{position:absolute;left:2px;top:2px;font-size:9px;background:#000a;border-radius:3px;padding:0 2px;color:#ffe;}
+.h5card .mc{position:absolute;right:2px;top:2px;font-size:10px;background:#1c3c90;border-radius:6px;padding:0 3px;color:#fff}.h5card .mc.lack{background:#902020}
+.h5card .kn{position:absolute;left:-4px;top:16px;font-size:11px;background:#281408;border:1px solid #c09048;border-radius:50%;width:16px;height:16px;line-height:14px;text-align:center;color:#ffe}
+.h5empty{display:none}
 </style></head><body>
 <div id="ttpop" class="hidden"></div>
 <div id="app">

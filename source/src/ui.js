@@ -326,14 +326,17 @@ function startBattle(node, opt) {
 }
 function tipBox(title, text) { G.paused = true; G.tipOpen = true; const t = $("#tip"); t.classList.remove("hidden"); t.innerHTML = `<b>${title}</b><p>${text}</p><button class="btn pri" data-t="tipok">시작</button>`; }
 function battleHudBuild(b) {
+  if (!document.querySelector("#battlehud .h5L")) hud5Build();
   $("#bh-name").textContent = b.node.name || "전투"; $("#pf-ico").src = iconURL("helm", 3); $("#pf-lv").textContent = save.level; G.hpGhost = 1; G.bossGhost = 1;
   $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot" data-i="${i}" title="클릭: 타겟 규칙 변경">${skIcon(sk.id, 3)}<div class="cdm"></div><span class="rl"></span><span class="kn">${i + 1}</span><span class="mc"></span><span class="cds"></span></div>` : `<div class="bslot off"><span class="kn">${i + 1}</span>${i >= save.slots ? "🔒" : ""}</div>`).join("");
   $$("#skillbar .bslot[data-i]").forEach((el) => el.addEventListener("click", () => { const i = +el.dataset.i, sk = G.battle.skills[i]; if (!sk) return; const n = RULE_ORDER[(RULE_ORDER.indexOf(sk.rule) + 1) % RULE_ORDER.length]; sk.rule = n; if (save.loadout[i]) save.loadout[i].rule = n; snd("click"); toast(`${SKILLS.find((d) => d.id === sk.id).name}: ${RULES[n]}`); }));
-  $("#b-speed").textContent = "×" + G.speed; updateAutoBtn();
+  hud5Skills(b); { const isM = save.equipped.weapon && save.equipped.weapon.wt === "staff", u = artURL(isM ? "mage" : "warrior"); if (u) $("#pf-ico").src = u; }
+  $("#b-speed").textContent = "×" + G.speed + " ▼"; updateAutoBtn(); $("#h5pause").classList.add("hidden");
   const canAuto = AUTO_KINDS.includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
 }
 function updateAutoBtn() { const on = save && save.auto.on; $("#b-auto").textContent = on ? "자동 ON" : "자동 OFF"; $("#b-auto").classList.toggle("pri", !!on); }
 function battleHud(b) {
+  hud5Tick(b);
   const hp = Math.max(0, b.hp / b.maxHp), dt = Math.min(0.1, G.dt || 0.016);
   G.hpGhost = hp >= G.hpGhost ? hp : Math.max(hp, G.hpGhost - dt * 0.45); $("#hp-fill").style.width = hp * 100 + "%"; $("#hp-ghost").style.width = G.hpGhost * 100 + "%"; $("#hp-txt").textContent = `${fmtN(Math.max(0, b.hp))} / ${fmtN(b.maxHp)}`;
   $("#mp-fill").style.width = Math.max(0, b.mana / b.maxMana) * 100 + "%"; $("#mp-txt").textContent = `${fmtN(Math.max(0, b.mana))} / ${fmtN(b.maxMana)}`;

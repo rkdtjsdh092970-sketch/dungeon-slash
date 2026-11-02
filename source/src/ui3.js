@@ -67,7 +67,7 @@ function itemDetail(it) {
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
   if (IB.mode === "inv") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매<br><small>${fmtN(itemValue(it))}G</small></button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
-  if (IB.mode === "inv" && SRV.on && !prot) h += `<button class="btn" data-a="ahpost">경매 등록</button>`;
+  if (false) h += "";
   return h + `</div>`;
 }
 // 인벤토리 다중 선택: 선택한 장비를 한꺼번에 판매/분해
@@ -221,7 +221,7 @@ function openSkills() {
       <div class="skkv">레벨 <b>${sel.lvl || 1}</b>${(sel.lvl || 1) < SKILL_MAX_LV ? ` <small class="dim">다음 레벨까지 같은 스킬 ${(sel.lvl || 1) - (sel.dup || 0)}장</small>` : " (최대)"}</div>
       <div class="skkv">쿨타임 <b>${sk.cd.toFixed(1)}초</b> · 피해 <b>${Math.round(sk.mult * 100)}%</b>${dps ? ` · 초당 <b class="dps">${fmtPow(dps)}</b>` : ""}</div>${sk.rune ? `<div class="skkv" style="color:${sk.rune.color}">${sk.rune.name}</div>` : ""}</div></div>
       <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${can ? "" : "disabled"}>${lab}</button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? "룬 바꾸기" : "룬 장착"}</button>
-      <button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || save.passive === sel.uid || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 || save.passive === sel.uid ? "장착 중" : "조각 +" + skillDisYield(sel)}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록</button>` : ""}
+      <button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || save.passive === sel.uid || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 || save.passive === sel.uid ? "장착 중" : "조각 +" + skillDisYield(sel)}</small></button>
       <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div></div>`;
   })();
   const tabs = TABS.length > 1 ? TABS.map(([k, n]) => `<button class="tab ${SK.tab === k ? "on" : ""}" data-a="sktab" data-t="${k}">${n}</button>`).join("") : "";
