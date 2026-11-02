@@ -112,12 +112,18 @@ function M.create(parent, W, H, replayAct)
   local function outl(o, t) mk("UIStroke", { Thickness = t or 2, Color = EDGE }, o); return o end
   -- 왼쪽 위: 초상화 + 레벨 + HP/MP
   local L = plate({ Position = UDim2.new(0, 12, 0, TOP + 6 * k), Size = UDim2.new(0, 330 * k, 0, 88 * k), BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.12, ZIndex = 8 })
-  local face = mk("Frame", { Position = UDim2.new(0, 8 * k, 0, 8 * k), Size = UDim2.new(0, 72 * k, 0, 72 * k), BackgroundColor3 = Color3.fromRGB(60, 40, 100), ZIndex = 9 }, L)
-  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, face); mk("UIStroke", { Color = GOLD, Thickness = 3 }, face)
+  -- 초상화: 어두운 원 안 붉은 빛 + 금 두 겹 고리
+  local ring = mk("Frame", { Position = UDim2.new(0, 5 * k, 0, 5 * k), Size = UDim2.new(0, 78 * k, 0, 78 * k), BackgroundColor3 = Color3.fromRGB(70, 50, 22), ZIndex = 9 }, L)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, ring); mk("UIGradient", { Rotation = 135, Color = ColorSequence.new(Color3.fromRGB(255, 225, 140), Color3.fromRGB(110, 70, 25)) }, ring)
+  local face = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1, -8 * k, 1, -8 * k), BackgroundColor3 = Color3.fromRGB(26, 10, 12), ClipsDescendants = true, ZIndex = 9 }, ring)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, face); mk("UIStroke", { Color = Color3.fromRGB(30, 14, 8), Thickness = 2 }, face)
+  mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(120, 30, 30), Color3.fromRGB(20, 6, 8)) }, face)
   local fa = Sprites.art(M.heroKey())
   if fa then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.4), Position = UDim2.new(0.5, 0, 0.5, 0), ImageContent = fa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 10 }, face) end
-  S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 70 * k, 0, 72 * k), Size = UDim2.new(0, 34 * k, 0, 24 * k), BackgroundColor3 = GOLD, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(15 * k), ZIndex = 11 }, L))
-  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, S.lvLbl)
+  -- 레벨: 초상화 아래 마름모 보석 배지
+  local gem = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 44 * k, 0, 80 * k), Size = UDim2.new(0, 26 * k, 0, 26 * k), Rotation = 45, BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 11 }, L)
+  mk("UIGradient", { Rotation = 45, Color = ColorSequence.new(Color3.fromRGB(255, 220, 130), Color3.fromRGB(150, 90, 25)) }, gem); mk("UIStroke", { Color = Color3.fromRGB(40, 20, 6), Thickness = 2 }, gem); mk("UICorner", { CornerRadius = UDim.new(0, 4 * k) }, gem)
+  S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 44 * k, 0, 80 * k), Size = UDim2.new(0, 30 * k, 0, 20 * k), BackgroundTransparency = 1, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(15 * k), ZIndex = 12 }, L))
   local function bar(y, h, c1, c2, c3, ticks)
     local B = fancyBar(L, UDim2.new(0, 90 * k, 0, y * k), UDim2.new(0, 228 * k, 0, h * k), c1, c2, c3, 9, ticks, 4)
     local t = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(h * 0.72 * k), ZIndex = 15 }, B.bg), 1.5)
@@ -125,7 +131,10 @@ function M.create(parent, W, H, replayAct)
   end
   S.hpB, S.hpTxt = bar(12, 24, Color3.fromRGB(255, 140, 120), Color3.fromRGB(215, 45, 45), Color3.fromRGB(120, 15, 25), 10)
   S.mpB, S.mpTxt = bar(42, 14, Color3.fromRGB(150, 200, 255), Color3.fromRGB(60, 110, 230), Color3.fromRGB(25, 40, 120), 0)
-  S.killLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 92 * k, 0, 62 * k), Size = UDim2.new(0, 226 * k, 0, 20 * k), Text = "", TextColor3 = Color3.fromRGB(255, 230, 160), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10 }, L), 1.5)
+  -- 처치 수: 해골 표식이 있는 작은 알약
+  local kp = mk("Frame", { Position = UDim2.new(0, 90 * k, 0, 62 * k), Size = UDim2.new(0, 110 * k, 0, 20 * k), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.2, ZIndex = 10 }, L)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, kp); mk("UIStroke", { Color = Color3.fromRGB(120, 90, 50), Thickness = 1 }, kp)
+  S.killLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 8 * k, 0, 0), Size = UDim2.new(1, -16 * k, 1, 0), Text = "", TextColor3 = Color3.fromRGB(255, 225, 160), Font = FONT, TextSize = math.floor(13 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 11 }, kp), 1.5)
   -- 위 가운데: 단계 이름 + 보스 체력
   S.titleLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 4 * k), Size = UDim2.new(0, 520 * k, 0, 30 * k), Text = "", TextColor3 = Color3.fromRGB(255, 225, 140), Font = FONT, TextSize = math.floor(24 * k), ZIndex = 9 }, root), 3)
   S.boss = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 38 * k), Size = UDim2.new(0, 460 * k, 0, 48 * k), BackgroundTransparency = 1, Visible = false, ZIndex = 9 }, root)
@@ -345,12 +354,12 @@ function M:applySnap(s, lanes)
     end
     if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
     u.tx, u.ty = x, y; u.hp = e.hp
-    if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
+    if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("☠  처치 %d", self.kills) end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.16; hits[#hits + 1] = u; if #hits <= 6 then Fx.hit(self, u) end end
     if u.wind and not e.wind and not e.dead then u.atk = 0; Fx.enemyHit(self, u, e.ranged) end   -- 모았던 공격을 내지른다
     u.wind = e.wind
   end
-  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end end
+  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("☠  처치 %d", self.kills) end end
   if s.ph and s.ph > 0 then self.shake = math.max(self.shake or 0, 0.18) end
   if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); local an = self.plAnim and self.plAnim.name; if an == "idle" or an == "hurt" or an == nil then self.plAnim = { name = "hurt", t = 0 } else self.plHurt = 0.2 end end   -- 공격 동작 중에 맞으면 동작은 끝까지, 붉은 번쩍임만
   if s.c then   -- 스킬 연출 (계열 · 원소 · 종류별, BattleFx)
@@ -400,7 +409,7 @@ function M:play(replay, onDone, maxSec, hud)
   for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy(); if u.shadow then u.shadow:Destroy() end end; self.units = {}
   self.buildBg(replay.act or 1); self:buildLanes(replay.lanes or 2)
   if hud then self:setHud(hud) end
-  self.kills = 0; self.killLbl.Text = string.format("처치 %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
+  self.kills = 0; self.killLbl.Text = string.format("☠  처치 %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
   self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
   local total = (replay.snaps[#replay.snaps] or { t = 1 }).t
   self.spd = math.max(1, total / (maxSec or 40)); self.userSpd = self.userSpd or 1

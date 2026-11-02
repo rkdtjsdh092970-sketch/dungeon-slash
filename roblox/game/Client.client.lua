@@ -684,31 +684,30 @@ views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop;
 views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
 
 -- ── 전투 시작 → 재생 → 결과 ──
-local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
-corner(resBox, 16); stroke(resBox, GOLD, 3); local resScale = mk("UIScale", { Scale = K }, resBox)
-local resTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 16), Size = UDim2.new(1, 0, 0, 48), Font = Enum.Font.GothamBlack, TextSize = 40, Text = "", ZIndex = 27 }, resBox)
-mk("UIStroke", { Thickness = 3, Color = Color3.fromRGB(30, 10, 40) }, resTitle)
-local resText = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 74), Size = UDim2.new(1, -48, 0, 140), Font = Enum.Font.GothamMedium, TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(235, 230, 250), Text = "", ZIndex = 27 }, resBox)
-local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -100), Size = UDim2.new(1, -48, 0, 24), Font = Theme.FONT, TextSize = 17, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
-local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.new(1, -32, 0, 46), ZIndex = 27 }, resBox)
+-- 결과 창: 장식 틀 · 위 가장자리에 걸친 큰 승리/패배 띠(빛) · 전투 이름 · 시간·처치 줄 · 보상은 아이콘 칩 · 버튼
+local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 660, 0, 360), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 26 }, resultLayer)
+corner(resBox, 14); Skin.frame(resBox, "ui_panel", 0.2, 0.55); local resScale = mk("UIScale", { Scale = K }, resBox)
+local resGlow = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.new(0, 520, 0, 170), BackgroundTransparency = 1, ImageTransparency = 0.35, ZIndex = 26 }, resBox)
+local resBand = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.new(0, 340, 0, 70), BackgroundColor3 = Color3.fromRGB(40, 16, 14), ZIndex = 27 }, resBox)
+corner(resBand, 10); Skin.frame(resBand, "ui_title", 0.3, 0.55)
+local resTitle = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Font = Theme.FONT, TextSize = 44, Text = "", ZIndex = 28 }, resBand)
+mk("UIStroke", { Thickness = 3, Color = Color3.fromRGB(20, 6, 4) }, resTitle)
+local resSub = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 20, 0, 50), Size = UDim2.new(1, -40, 0, 24), Font = Theme.FONT, TextSize = 18, TextColor3 = Color3.fromRGB(230, 215, 190), Text = "", ZIndex = 27 }, resBox)
+local resStat = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 80), Size = UDim2.new(0, 0, 0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(8, 5, 4), BackgroundTransparency = 0.3, ZIndex = 27 }, resBox)
+corner(resStat, 15); mk("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 16) }, resStat)
+mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder }, resStat)
+local resText = mk("Frame", { Position = UDim2.new(0, 28, 0, 122), Size = UDim2.new(1, -56, 0, 128), BackgroundTransparency = 1, ZIndex = 27 }, resBox)   -- 보상 칩
+mk("UIGridLayout", { CellSize = UDim2.new(0, 192, 0, 36), CellPadding = UDim2.new(0, 8, 0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, resText)
+local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -96), Size = UDim2.new(1, -48, 0, 22), Font = Theme.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
+local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -20), Size = UDim2.new(1, -40, 0, 46), ZIndex = 27 }, resBox)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, resBtns)
-local function resultLines(x)
-  local L = { string.format("%.0f초 · 처치 %d · 골드 +%s", x.time or 0, x.kills or 0, n(x.gold)) }
-  local ex = {}
-  if x.first then ex[#ex + 1] = "최초 클리어!" end
-  if x.levelUps then ex[#ex + 1] = "레벨 +" .. x.levelUps end
-  if x.items and #x.items > 0 then ex[#ex + 1] = "장비 " .. #x.items .. "개" end
-  if type(x.ore) == "number" and x.ore > 0 then ex[#ex + 1] = "강화석 +" .. x.ore end
-  if type(x.arcana) == "number" and x.arcana > 0 then ex[#ex + 1] = "아르카나 조각 +" .. x.arcana end
-  if x.skills and #x.skills > 0 then ex[#ex + 1] = "아르카나 " .. #x.skills .. "개" end
-  if x.charms and #x.charms > 0 then ex[#ex + 1] = "참 " .. #x.charms .. "개" end
-  if x.stones and x.stones > 0 then ex[#ex + 1] = "돌 " .. x.stones end
-  if x.stonesHi then ex[#ex + 1] = "계시의 돌 1" end
-  if x.sockTix then ex[#ex + 1] = "세공의 인장 1" end
-  if #ex > 0 then L[#L + 1] = table.concat(ex, " · ") end
-  if x.note then L[#L + 1] = x.note end
-  if x.notes and x.notes[1] then L[#L + 1] = x.notes[1] end
-  return table.concat(L, "\n")
+local function resChip(order, art, text, col)
+  local f = mk("Frame", { BackgroundColor3 = Color3.fromRGB(26, 18, 14), LayoutOrder = order, ZIndex = 27 }, resText); corner(f, 8)
+  mk("UIStroke", { Color = (col or Color3.fromRGB(200, 160, 90)):Lerp(Color3.new(0, 0, 0), 0.4), Thickness = 1.5 }, f)
+  local a = art and Sprites.art(art)
+  if a then mk("ImageLabel", { Position = UDim2.new(0, 6, 0.5, -13), Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 28 }, f) end
+  local l = mk("TextLabel", { Position = UDim2.new(0, a and 38 or 10, 0, 0), Size = UDim2.new(1, a and -44 or -16, 1, 0), BackgroundTransparency = 1, Text = text, Font = Theme.FONT, TextScaled = true, TextColor3 = col or Color3.fromRGB(245, 232, 205), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 28 }, f)
+  mk("UITextSizeConstraint", { MaxTextSize = 17, MinTextSize = 9 }, l)
 end
 local launch
 local autoJob
@@ -717,8 +716,30 @@ cancelAutoFn = cancelAuto
 local showResultPanel, tutAfterStage
 showResultPanel = function(x, spec)
   resultLayer.Visible = true
-  resTitle.Text = x.win and "승리!" or "패배"; resTitle.TextColor3 = x.win and Color3.fromRGB(255, 214, 90) or Color3.fromRGB(255, 120, 120)
-  resText.Text = (spec.title and (spec.title .. "\n") or "") .. resultLines(x)
+  resTitle.Text = x.win and "승리" or "패배"; resTitle.TextColor3 = x.win and Color3.fromRGB(255, 220, 120) or Color3.fromRGB(255, 120, 110)
+  do local ga = Sprites.art("fx_glow"); if ga then resGlow.ImageContent = ga.content; resGlow.ImageColor3 = x.win and Color3.fromRGB(255, 190, 90) or Color3.fromRGB(200, 40, 40) end end
+  resBand.Size = UDim2.new(0, 260, 0, 54); TweenService:Create(resBand, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 340, 0, 70) }):Play()
+  resSub.Text = spec.title or ""
+  for _, c in ipairs(resStat:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end
+  for i, t in ipairs({ string.format("⏱ %.0f초", x.time or 0), string.format("☠ 처치 %d", x.kills or 0) }) do
+    local l = mk("TextLabel", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = t, Font = Theme.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(220, 205, 185), LayoutOrder = i, ZIndex = 28 }, resStat)
+  end
+  for _, c in ipairs(resText:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+  local o = 0; local function chip(art, t, col) o += 1; resChip(o, art, t, col) end
+  if x.first then chip(nil, "★ 최초 클리어!", Color3.fromRGB(255, 220, 120)) end
+  if x.levelUps then chip(nil, "레벨 +" .. x.levelUps, Color3.fromRGB(150, 230, 255)) end
+  if (x.gold or 0) > 0 then chip("i_gold", "골드 +" .. n(x.gold), Color3.fromRGB(255, 215, 110)) end
+  if type(x.arcana) == "number" and x.arcana > 0 then chip("i_arcana", "아르카나 조각 +" .. x.arcana, Color3.fromRGB(240, 170, 255)) end
+  if type(x.ore) == "number" and x.ore > 0 then chip("i_ore", "강화석 +" .. x.ore, Color3.fromRGB(170, 210, 255)) end
+  if (x.orbC or 0) > 0 then chip("i_chaos", "혼돈 구슬 +" .. x.orbC, Color3.fromRGB(240, 120, 110)) end
+  if x.items and #x.items > 0 then chip("i_weapon", "장비 " .. #x.items .. "개", Color3.fromRGB(230, 200, 160)) end
+  if x.skills and #x.skills > 0 then chip("i_arcana", "아르카나 " .. #x.skills .. "장", Color3.fromRGB(240, 170, 255)) end
+  if x.stones and x.stones > 0 then chip("i_stone", "돌 +" .. x.stones, Color3.fromRGB(160, 220, 255)) end
+  if x.charms and #x.charms > 0 then chip(nil, "참 " .. #x.charms .. "개", Color3.fromRGB(255, 190, 230)) end
+  if x.stonesHi then chip("i_stone", "계시의 돌 +1", Color3.fromRGB(255, 220, 140)) end
+  if x.sockTix then chip(nil, "세공의 인장 +1", Color3.fromRGB(200, 170, 255)) end
+  if o == 0 then chip(nil, x.win and "보상 없음" or "다시 도전해 보세요 · 장비 · 아르카나 · 패시브를 강화하면 이길 수 있어요", Color3.fromRGB(200, 190, 180)) end
+  local note = x.note or (x.notes and x.notes[1]); if note then chip(nil, tostring(note), Color3.fromRGB(200, 190, 180)) end
   for _, c in ipairs(resBtns:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   cancelAuto(); resCount.Text = ""
   if x.win and spec.stage and tutAfterStage then task.delay(0.6, function() tutAfterStage(spec.stage) end) end
