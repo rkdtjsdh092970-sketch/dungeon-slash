@@ -59,3 +59,10 @@ HttpService:GetAsync 로 raw.githubusercontent 의 커밋 SHA 고정 URL(`/<sha>
 - 전투: `BattleFx.lua` 스킬별 이펙트(그림은 `gen_fx.py` → art/fx), 영웅 돌진 · 내려찍기 · 시전 · 잔상, 몹 걸음 · 덤벼들기 · 밀려남, 히트스톱. 균열 배경(bg8) 새 그림(땅이 화면 46%부터).
 - 확인 안 됨: 마법사(지팡이) 전투 연출은 Studio에서 화면으로 보지 못함. 실제 서버 미확인.
 - Studio 시험용 Debug 값: "start"(직업 선택), "tut", "tutst".
+
+## 2026-11-02 저녁 — 길드 v2 · 화면 정리 · 템포 (Claude)
+- 길드 v2: `game/Guild.lua`(문양 · 색 · 소개 · 가입 방식 open/apply/closed · 최소 레벨, 신청 · 초대, 부길드장 · 추방 · 위임, 연구 4종, 레벨별 상점, 기여도 = 콘텐츠 + 기부) · `game/GuildUI.lua`(Menus 가 20만 자 한도를 넘어 분리). 랭킹에 길드 레벨 · 길드 전투력 탭.
+- Studio 확인(시험 계정, FreshTest): 찾기 · 창설 · 홈 · 길드원 · 콘텐츠(길드 보스 도전 기록) · 연구 · 상점 · 관리(문양/색 즉시 변경) · 기부 · 랭킹 동작. **두 계정 신청/초대/추방은 아직 미확인.**
+- Studio 시험 도구: `ServerStorage` 속성 `FreshTest=true`(세이브 불러오기/저장 안 함, 길드 메모리 저장소) + `TestGold=<숫자>`(접속 시 골드 지급). Studio 에서만 동작.
+- 글꼴에 없는 기호(♛ ✦ ☾ ♞ ✠)는 빈칸으로 나온다 → 이모지나 ❖ ⚔ ☠ 만 쓴다.
+- 템포: 균열 FLOOR_TAB 30층 이후 상향, 물리 기본 피해 1.4. 목표(x3 배속 기준) 240판 50~60층, 720판 중앙값 100층. 성장 시뮬 `sim/progress.lua`(결과 marks[n] = 120·n 판의 균열 층).
