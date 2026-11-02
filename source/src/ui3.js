@@ -187,33 +187,49 @@ function skTags(sk, st) {
 }
 function openSkills() {
   const st = computeStats(save), lo = save.loadout, used = new Set(lo.filter(Boolean).map((l) => l.uid));
-  const cards = [0, 1, 2, 3].map((i) => {
-    if (i >= save.slots) return `<div class="skc locked ${SK.slot === i ? "cursel" : ""}"><div class="sn">${i + 1}</div><div style="font-size:26px;margin:14px 0 4px">🔒</div><small class="dim">${SLOT_HINT[i]}</small></div>`;
-    const l = lo[i], inst = l && save.skills.find((x) => x.uid === l.uid);
-    if (!inst) return `<div class="skc ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="sn">${i + 1}</div><div class="dim" style="margin-top:32px">비어 있음</div></div>`;
+  const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
+  const lvTxt = (inst) => `Lv.${inst.lvl || 1}${(inst.lvl || 1) < SKILL_MAX_LV ? ` <small>(${inst.dup || 0}/${inst.lvl || 1})</small>` : ""}`;
+  // 위: 장착 칸 (타로 카드)
+  const slotCard = (i) => {
+    const lab = i === 4 ? "패시브" : (i + 1) + (i === 0 ? " 평타" : "");
+    if (i < 4 && i >= save.slots) return `<div class="sks locked"><div class="skn">${lab}</div><div class="sk-empty">🔒<small>${SLOT_HINT[i]}</small></div></div>`;
+    const l = i === 4 ? (save.passive ? { uid: save.passive } : null) : lo[i], inst = l && save.skills.find((x) => x.uid === l.uid);
+    if (!inst) return `<div class="sks ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="skn">${lab}</div><div class="sk-empty">비어 있음<small>눌러서 고르기</small></div></div>`;
     const sk = skillOf(inst);
-    return `<div class="skc rk${inst.rarity} ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}" data-tips="${sk.id}"><div class="sn">${i + 1}</div>${skIcon(sk.id, 3)}<div class="sname">${skillTitle(inst)}</div><div>${skTags(sk, st)}</div><small class="dim">쿨 ${sk.cd.toFixed(1)}초 · 피해 ${Math.round(sk.mult * 100)}%</small>
-      <select data-i="rule" data-s="${i}">${RULE_ORDER.map((r) => `<option value="${r}" ${l.rule === r ? "selected" : ""}>${RULES[r]}</option>`).join("")}</select>${i > 0 ? `<button class="btn xs" data-a="clear" data-s="${i}">해제</button>` : ""}</div>`;
-  }).join("");
-  const pInst = save.passive && save.skills.find((x) => x.uid === save.passive);
-  const pcard = pInst ? (() => { const sk = skillOf(pInst); return `<div class="skc rk${pInst.rarity} ${SK.slot === 4 ? "cursel" : ""}" data-a="slot" data-s="4" data-tips="${sk.id}"><div class="sn">패시브</div>${skIcon(sk.id, 3)}<div class="sname">${skillTitle(pInst)}</div><small class="dim">Lv.${pInst.lvl || 1}</small><div><button class="btn xs" data-a="clear" data-s="4">해제</button></div></div>`; })() : `<div class="skc ${SK.slot === 4 ? "cursel" : ""}" data-a="slot" data-s="4"><div class="sn">패시브</div><div class="dim" style="margin-top:32px">비어 있음</div></div>`;
+    return `<div class="sks ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}" data-tips="${sk.id}"><div class="skn">${lab}</div>${arcCard(inst.id, inst.rarity, { badge: "Lv." + (inst.lvl || 1) })}
+      ${i < 4 ? `<select data-i="rule" data-s="${i}">${RULE_ORDER.map((r) => `<option value="${r}" ${l.rule === r ? "selected" : ""}>${RULES[r]}</option>`).join("")}</select>` : ""}${i > 0 ? `<button class="btn xs" data-a="clear" data-s="${i}">해제</button>` : ""}</div>`;
+  };
+  const cards = [0, 1, 2, 3, 4].map(slotCard).join("");
   used.add(save.passive);
   const want = SK.slot === 4 ? "passive" : SK.slot === 0 ? "basic" : "active";
-  const owned = save.skills.filter((x) => SKILLS.find((d) => d.id === x.id).slot === want).sort((a, b) => b.rarity - a.rarity);
-  const row = (inst) => { const sk = skillOf(inst), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === inst.uid);
-    return `<div class="skrow rk${inst.rarity} ${used.has(inst.uid) ? "used" : ""} ${SK.sel === inst.uid ? "picked" : ""}" data-a="picksk" data-u="${inst.uid}" data-tips="${d.id}">${skIcon(d.id, 2)}${skillAreaHtml(sk, 9)}<div class="sinfo"><div>${skillTitle(inst)} ${skTags(sk, st)} <small class="dim">Lv.${inst.lvl || 1}${(inst.lvl || 1) < SKILL_MAX_LV ? ` <small class="dim">(중복 ${inst.dup || 0}/${inst.lvl || 1})</small>` : ""}${eqi >= 0 ? " · " + (eqi + 1) + "번 칸 장착 중" : ""}</small></div><small class="dim">${sk.kind === "passive" ? d.desc.replace("[패시브] ", "") : `피해 ${Math.round(sk.mult * 100)}% · 쿨 ${sk.cd.toFixed(1)}s${sk.rune ? " · " + sk.rune.name : ""}`}</small></div></div>`; };
+  const TABS = want === "active" ? [["all", "전체"], ["single", "단일"], ["aoe", "범위"], ["dot", "지속 · 소환"], ["sup", "지원"]] : [["all", "전체"]];
+  const tabOf = (d) => ["buff", "heal"].includes(d.dtype) || ["buff", "heal"].includes(d.kind) ? "sup" : ["zone", "zone2", "aura", "orbit", "rain", "summon", "trap", "hole", "shuri"].includes(d.kind) ? "dot" : ["single", "bounce"].includes(d.kind) ? "single" : "aoe";
+  if (!TABS.some((t) => t[0] === SK.tab)) SK.tab = "all";
+  const SORTS = [["r", "등급"], ["dps", "초당 피해"], ["lv", "레벨"]]; SK.sort = SK.sort || "r";
+  const owned = save.skills.filter((x) => { const d = SKILLS.find((q) => q.id === x.id); return d && d.slot === want && (SK.tab === "all" || tabOf(d) === SK.tab); }).map((inst) => ({ inst, sk: skillOf(inst) }));
+  for (const o of owned) o.dps = o.sk.dtype === "buff" || o.sk.dtype === "heal" || want === "passive" ? 0 : dpsOf(o.sk);
+  owned.sort((a, b) => SK.sort === "dps" ? b.dps - a.dps : SK.sort === "lv" ? (b.inst.lvl || 1) - (a.inst.lvl || 1) || b.inst.rarity - a.inst.rarity : b.inst.rarity - a.inst.rarity || b.dps - a.dps);
+  const grid = owned.map(({ inst, sk, dps }) => { const eqi = lo.findIndex((l) => l && l.uid === inst.uid);
+    return `<div class="skg ${SK.sel === inst.uid ? "picked" : ""} ${used.has(inst.uid) ? "used" : ""}" data-a="picksk" data-u="${inst.uid}" data-tips="${inst.id}">${arcCard(inst.id, inst.rarity, { badge: eqi >= 0 ? (eqi + 1) + "번" : save.passive === inst.uid ? "P" : "" })}<div class="skgl">${lvTxt(inst)}${dps ? ` · <span class="dps">${fmtPow(dps)}</span>` : ""}</div></div>`; }).join("");
   const sel = save.skills.find((x) => x.uid === SK.sel), det = (() => {
-    if (!sel) return `<div class="skdet"><div class="dim center pad">스킬을 클릭하면 설명이 보이고,<br>[장착] 버튼으로 ${SK.slot + 1}번 칸에 장착합니다</div></div>`;
-    const sk = skillOf(sel), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === sel.uid), pc = promoteCost(sel), typeOk = d.slot === want, slotOk = SK.slot === 4 || SK.slot < save.slots;
-    const bon = Object.keys(sk.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(sk.bonus[k] * 100)}%`).join(", ");
-    return `<div class="skdet"><div class="dh">${skIcon(d.id, 3)}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><div class="rfx rk${sel.rarity}">${rarityFxText(sel, sk)}</div><small class="dim">Lv.${sel.lvl || 1}${(sel.lvl || 1) < SKILL_MAX_LV ? ` · 다음 레벨까지 같은 스킬 ${(sel.lvl || 1) - (sel.dup || 0)}장` : ""}${sk.rune ? " · " + sk.rune.name : ""}${eqi >= 0 ? " · " + (eqi + 1) + "번 칸 장착 중" : ""}</small></div></div>
-      <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${typeOk && slotOk && SK.slot !== 4 && skillDupSlot(save, sel, SK.slot) >= 0 ? "disabled" : typeOk && slotOk && (SK.slot === 4 ? save.passive !== sel.uid : eqi !== SK.slot) ? "" : "disabled"}>${typeOk && SK.slot !== 4 && skillDupSlot(save, sel, SK.slot) >= 0 ? `같은 스킬이 ${skillDupSlot(save, sel, SK.slot) + 1}번 칸에 장착 중` : typeOk ? (SK.slot === 4 ? (save.passive === sel.uid ? "패시브 칸 장착 중" : "패시브 칸에 장착") : eqi === SK.slot ? `${SK.slot + 1}번 칸 장착 중` : `${SK.slot + 1}번 칸에 장착`) : want === "passive" ? "패시브 스킬 전용 칸" : d.slot === "passive" ? "패시브 칸(5번째)에 장착" : want === "basic" ? "1번 칸 전용 아님" : "기본 공격 스킬"}</button>${eqi > 0 ? `<button class="btn" data-a="clear" data-s="${eqi}">해제</button>` : ""}
-<button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? `<span style="color:${sk.rune.color}">${sk.rune.name}</span>` : "룬 장착"}</button>
-      <button class="btn" data-a="sellsk" data-u="${sel.uid}" ${eqi >= 0 || save.passive === sel.uid || skillInPreset(save, sel) ? "disabled" : ""}>판매<br><small>${eqi >= 0 ? "장착 중" : fmtN(skillSellValue(sel)) + "G" + (skillInPreset(save, sel) ? " · 프리셋 포함" : "")}</small></button><button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 ? "장착 중" : "연마석 +" + skillDisYield(sel)}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록${eqi >= 0 ? "<br><small>장착 중</small>" : ""}</button>` : ""}</div>
-      <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div>`;
+    if (!sel) return `<div class="skdet"><div class="dim center pad">카드를 누르면 설명이 보이고,<br>[장착] 으로 ${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸에 넣습니다.</div></div>`;
+    const sk = skillOf(sel), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === sel.uid), typeOk = d.slot === want, slotOk = SK.slot === 4 || SK.slot < save.slots, dup = typeOk && SK.slot !== 4 ? skillDupSlot(save, sel, SK.slot) : -1;
+    const bon = Object.keys(sk.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(sk.bonus[k] * 100)}%`).join(", "), dps = d.slot === "passive" ? 0 : dpsOf(sk);
+    const can = typeOk && slotOk && dup < 0 && (SK.slot === 4 ? save.passive !== sel.uid : eqi !== SK.slot);
+    const lab = dup >= 0 ? `같은 스킬이 ${dup + 1}번 칸에` : !typeOk ? (d.slot === "basic" ? "평타는 1번 칸만" : d.slot === "passive" ? "패시브 칸 전용" : "2~4번 칸 전용") : SK.slot === 4 ? (save.passive === sel.uid ? "장착 중" : "패시브 칸에 장착") : eqi === SK.slot ? "장착 중" : `${SK.slot + 1}번 칸에 장착`;
+    return `<div class="skdet"><div class="dh">${arcCard(sel.id, sel.rarity, { cls: sel.rarity >= 2 ? "glow" + sel.rarity : "" })}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><div class="rfx rk${sel.rarity}">${rarityFxText(sel, sk)}</div>
+      <div class="skkv">레벨 <b>${sel.lvl || 1}</b>${(sel.lvl || 1) < SKILL_MAX_LV ? ` <small class="dim">다음 레벨까지 같은 스킬 ${(sel.lvl || 1) - (sel.dup || 0)}장</small>` : " (최대)"}</div>
+      <div class="skkv">쿨타임 <b>${sk.cd.toFixed(1)}초</b> · 피해 <b>${Math.round(sk.mult * 100)}%</b>${dps ? ` · 초당 <b class="dps">${fmtPow(dps)}</b>` : ""}</div>${sk.rune ? `<div class="skkv" style="color:${sk.rune.color}">${sk.rune.name}</div>` : ""}</div></div>
+      <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${can ? "" : "disabled"}>${lab}</button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? "룬 바꾸기" : "룬 장착"}</button>
+      <button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || save.passive === sel.uid || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 || save.passive === sel.uid ? "장착 중" : "조각 +" + skillDisYield(sel)}</small></button>${SRV.on ? `<button class="btn" data-a="ahpostsk" data-u="${sel.uid}" ${eqi >= 0 ? "disabled" : ""}>경매 등록</button>` : ""}
+      <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div></div>`;
   })();
-  Modal.open(`<h2>스킬 정비소</h2><div class="res"><span data-tipk="hone">아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">스킬 자동 정리</button></div>${presetRow()}<div class="dim center">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 &nbsp;|&nbsp; 적을 클릭하면 모든 스킬이 그 적을 우선 공격합니다</div><div class="skcards">${cards}${pcard}</div>
-  <h3>${SK.slot + 1}번 칸용 스킬 (${want === "basic" ? "기본 공격" : "액티브"}) <small class="dim">클릭해서 확인 → [장착] · 스킬 상점에서 골드로 구매할 수 있어요</small></h3><div class="skbot"><div class="slist skgrid">${owned.map(row).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">보유한 스킬이 없습니다</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
+  const tabs = TABS.length > 1 ? TABS.map(([k, n]) => `<button class="tab ${SK.tab === k ? "on" : ""}" data-a="sktab" data-t="${k}">${n}</button>`).join("") : "";
+  const sorts = SORTS.map(([k, n]) => `<button class="btn xs ${SK.sort === k ? "pri" : ""}" data-a="sksort" data-t="${k}">${n}</button>`).join(" ");
+  Modal.open(`<h2>스킬 (아르카나)</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
+  <div class="dim center" style="font-size:12px">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 · 전투에서는 위 4칸만 씁니다 (1번 = 평타)</div><div class="skslots">${cards}</div>
+  <div class="skbar"><b>${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸용 ${want === "basic" ? "평타" : want === "passive" ? "패시브" : "스킬"} ${owned.length}</b> ${tabs} <span style="margin-left:auto">정렬 ${sorts}</span></div><div class="skbot"><div class="skgrid2">${grid || `<div class="dim pad">이 칸에 넣을 스킬이 없습니다 — [소환]에서 얻으세요</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
+    sktab: (el) => { SK.tab = el.dataset.t; openSkills(); }, sksort: (el) => { SK.sort = el.dataset.t; openSkills(); }, gosum: () => openSummon(),
     slot: (el) => { SK.slot = +el.dataset.s; const l = SK.slot === 4 ? (save.passive ? { uid: save.passive } : null) : save.loadout[SK.slot]; SK.sel = l ? l.uid : null; if (l) snd("click"); openSkills(); },   // 장착 중인 스킬 카드를 눌러도 정보가 보인다
     picksk: (el) => { SK.sel = +el.dataset.u; snd("click"); openSkills(); },
     autosk: () => openAutoSkill(),
