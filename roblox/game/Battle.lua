@@ -1130,6 +1130,7 @@ local function snapshot(b)
     else
       ens[#ens].sp, ens[#ens].hu = spriteOf(b, e)
       R.arSent = R.arSent or {}
+      if WARP[e.type] and not R.arSent[e.id] then R.arSent[e.id] = true; ens[#ens].ar = "a8_spec"; ens[#ens].key = true end   -- 열쇠 몹: 새 그림체의 심연의 눈 (웹 도트 대신)
       if not WARP[e.type] and not R.arSent[e.id] then R.arSent[e.id] = true; ens[#ens].ar = "a" .. ((e.va or (min(10, b.act or 1) - 1)) + 1) .. "_" .. (e.type == "sniper" and "archer" or e.type) end   -- 지역별 몬스터 그림 (art/mobs/a<지역>_<역할>.png, 없으면 기존 도트)
     end
   end

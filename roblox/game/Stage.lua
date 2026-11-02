@@ -334,6 +334,11 @@ local function unitFor(S, e, lanes)
     if not lab and key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 1지역 그림 (색조 변형은 도트)
   end
   local art = lab ~= nil
+  if e.key and lab then   -- 열쇠 몹: 뒤에서 금빛 기운이 숨쉬듯 빛난다
+    local ga = Sprites.art("fx_glow")
+    if ga then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1.6, 0, 1.6, 0), BackgroundTransparency = 1, ImageContent = ga.content, ImageColor3 = Color3.fromRGB(255, 210, 90), ImageTransparency = 0.35, ZIndex = 4 }, lab)
+      TweenService:Create(g, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.75, Size = UDim2.new(1.9, 0, 1.9, 0) }):Play() end
+  end
   if art then -- 일러스트 사용
   elseif boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
   else lab, info = Sprites.label(S.layer, key or "ghoul", hue or 0, true, size) end
