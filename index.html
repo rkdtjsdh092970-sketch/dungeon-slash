@@ -2355,6 +2355,15 @@ const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
 const UP_SKILL_RW = [[0, 0, 0, 0, 90, 10], [0, 0, 0, 0, 80, 20], [0, 0, 0, 0, 68, 32], [0, 0, 0, 0, 55, 45]], UP_SKILL_CH = [0.15, 0.22, 0.32, 0.50];   // 상위 보스관문: 사탄 · 종말 스킬만 나온다
 const UP_TIERS = [196, 203, 210, 217], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
+// 4.54 (로블록스판과 같게): 보스 관문은 그 보스 속성의 평타를 떨어뜨린다. 단계 1 = 일반, 2 = 희귀까지, 3 = 희귀~전설, 4 = 전설~신화 (확률 30 · 35 · 40 · 50%)
+const GATE_BASIC = { titan: ["rapid", "crush", "twinfang", "skycleave", "heavensplit"], storm: ["spark", "galeshot", "voltlash"], poison: ["venom", "rip", "bloodclaw"], hive: ["ember", "fireball", "cometbolt"], void: ["voidbolt", "arcbarrage"], frost: ["frostbolt", "voltlash"] };
+function rollGateBasic(sv, kind, K) {
+  const st = Math.max(1, Math.min(4, K | 0 || 1)), maxT = [0, 1, 2, 3][st - 1], minT = [0, 0, 1, 2][st - 1];
+  if (Math.random() >= [0.3, 0.35, 0.4, 0.5][st - 1]) return null;
+  const ok = (id) => SKILLS.some((d) => d.id === id) && skillTier(id) <= maxT && skillTier(id) >= minT;
+  let pool = (GATE_BASIC[kind] || []).filter(ok); if (!pool.length) pool = Object.values(GATE_BASIC).flat().filter(ok);
+  return pool.length ? genSkill(sv, pick(pool)) : null;
+}
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
 function rollBossSkills(sv, kind, K, upper) {
   const out = []; if (!GRADUATED(sv)) return out; K = Math.max(1, Math.min(4, K | 1));
@@ -2420,6 +2429,7 @@ function rollDrops(sv, node, boss, B) {
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
   if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1, node.upper)) out.skills.push(s);
   else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1, node.upper)) out.skills.push(s);
+  if ((kind === "void" || isEB(kind)) && !node.upper) { const gb = rollGateBasic(sv, kind, node.vsel || 1); if (gb) out.skills.push(gb); }
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 3) + endlessWaves * 2) * B.ore);
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
@@ -6467,7 +6477,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-050616";
+const BUILD_ID = "20261103-050706";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6568,7 +6578,7 @@ function hubBosses() {
     ...["hive", "titan", "storm", "frost", "poison"].map((k) => { const E = EB[k]; return mk(k, E.boss, { short: E.name, pool: E.pool, key: E.key, keyName: E.keyName, stage: E.stage, need: E.need, tiers: E.tiers, color: E.color, icon: E.icon, feat: { hive: "화염 · 점화 빌드", titan: "물리 · 출혈 빌드 (지속 피해 필요)", storm: "번개 · 감전 빌드", frost: "냉기 · 빙결 빌드", poison: "독 · 중독 빌드 (중독 시 재생 정지)" }[k], eye: { hive: "주황색", titan: "회백색", storm: "노란색", frost: "하늘색", poison: "연두색" }[k] + " 눈알" }); }),
   ];
 }
-const hubDrops = (kind) => SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind && (isSpecialSkill(d) || d.mythOnly)).sort((a, b) => (a.unlock || 0) - (b.unlock || 0));
+const hubDrops = (kind) => [...(GATE_BASIC[kind] || []).map((id) => SKILLS.find((d) => d.id === id)).filter(Boolean), ...SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind && (isSpecialSkill(d) || d.mythOnly)).sort((a, b) => (a.unlock || 0) - (b.unlock || 0))];   // 4.54: 관문 평타 먼저
 function openBossHub(page, up) {
   if (up != null) G.hubUp = !!up; const UPM = !!G.hubUp;
   const B = hubBosses(); if (page != null) G.hubPage = page; G.hubPage = ((G.hubPage || 0) + B.length) % B.length;
@@ -6759,6 +6769,10 @@ function openCharms(back) {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "4.54", date: "11/3", title: "보스 관문 평타 드랍", items: [
+    "보스 관문 보스가 그 속성의 평타를 떨어뜨립니다 (거신: 연사 · 파쇄타 · 쌍아참 · 파천일섬 · 천참 / 폭풍: 번개 찌르기 · 질풍 연사 · 전격 채찍 / 맹독: 독침 · 찢기 · 피의 갈퀴 / 군단: 불씨 탄 · 화염구 · 혜성탄 / 공허: 공허 탄 · 비전 연사 / 서리: 서리 화살 · 전격 채찍).",
+    "단계가 높을수록 좋은 평타가 나옵니다: 1단계 일반 · 2단계 희귀까지 · 3단계 희귀~전설 · 4단계 전설~신화 (확률 30 · 35 · 40 · 50%). 같은 평타가 또 나오면 레벨이 오릅니다.",
+  ] },
   { ver: "4.53", date: "11/3", title: "새 스킬 40종", items: [
     "새 스킬 40종이 추가되었습니다: 쌍아참 · 파천일섬 · 천참 · 질풍 연사 · 폭풍 난무 · 혈월 · 독룡 · 하늘 꿰뚫는 창 · 거인의 망치 · 불새 · 태양 핵 · 영원의 겨울 · 공허의 눈 · 차원 균열 · 비전 마법(무속성) 등.",
     "평타가 아닌 새 스킬은 [스킬 소환]에서 나옵니다 (희귀 · 전설 · 신화). 새 평타는 다음 업데이트의 보스 관문 드랍으로 얻게 됩니다.",

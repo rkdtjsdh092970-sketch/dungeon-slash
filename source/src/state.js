@@ -455,6 +455,15 @@ const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
 const UP_SKILL_RW = [[0, 0, 0, 0, 90, 10], [0, 0, 0, 0, 80, 20], [0, 0, 0, 0, 68, 32], [0, 0, 0, 0, 55, 45]], UP_SKILL_CH = [0.15, 0.22, 0.32, 0.50];   // 상위 보스관문: 사탄 · 종말 스킬만 나온다
 const UP_TIERS = [196, 203, 210, 217], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
+// 4.54 (로블록스판과 같게): 보스 관문은 그 보스 속성의 평타를 떨어뜨린다. 단계 1 = 일반, 2 = 희귀까지, 3 = 희귀~전설, 4 = 전설~신화 (확률 30 · 35 · 40 · 50%)
+const GATE_BASIC = { titan: ["rapid", "crush", "twinfang", "skycleave", "heavensplit"], storm: ["spark", "galeshot", "voltlash"], poison: ["venom", "rip", "bloodclaw"], hive: ["ember", "fireball", "cometbolt"], void: ["voidbolt", "arcbarrage"], frost: ["frostbolt", "voltlash"] };
+function rollGateBasic(sv, kind, K) {
+  const st = Math.max(1, Math.min(4, K | 0 || 1)), maxT = [0, 1, 2, 3][st - 1], minT = [0, 0, 1, 2][st - 1];
+  if (Math.random() >= [0.3, 0.35, 0.4, 0.5][st - 1]) return null;
+  const ok = (id) => SKILLS.some((d) => d.id === id) && skillTier(id) <= maxT && skillTier(id) >= minT;
+  let pool = (GATE_BASIC[kind] || []).filter(ok); if (!pool.length) pool = Object.values(GATE_BASIC).flat().filter(ok);
+  return pool.length ? genSkill(sv, pick(pool)) : null;
+}
 function bossSkillList(kind) { return SKILLS.filter((d) => d.slot !== "passive" && bossOfSkill(d) === kind); }
 function rollBossSkills(sv, kind, K, upper) {
   const out = []; if (!GRADUATED(sv)) return out; K = Math.max(1, Math.min(4, K | 1));
@@ -520,6 +529,7 @@ function rollDrops(sv, node, boss, B) {
   // 스킬: 필드·균열에서는 나오지 않는다. 졸업(균열 100층) 후 공허의 군주 · 속성 보스에서만
   if (kind === "void") for (const s of rollBossSkills(sv, "void", node.vsel || 1, node.upper)) out.skills.push(s);
   else if (isEB(kind)) for (const s of rollBossSkills(sv, kind, node.vsel || 1, node.upper)) out.skills.push(s);
+  if ((kind === "void" || isEB(kind)) && !node.upper) { const gb = rollGateBasic(sv, kind, node.vsel || 1); if (gb) out.skills.push(gb); }
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 3) + endlessWaves * 2) * B.ore);
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
   if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
