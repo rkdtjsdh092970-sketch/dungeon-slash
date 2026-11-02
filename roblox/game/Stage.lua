@@ -159,6 +159,27 @@ end
 M.TOP, M.HUD = 58, 1   -- 로블록스 상단 버튼 줄 높이 / HUD 배율 (Client 가 화면에 맞춰 갱신)
 M.OPT = { dmg = true, flash = 1 }   -- 그래픽 설정: 피해 숫자 표시 · 피격 반짝임(0 끄기 · 0.5 약하게 · 1 보통)
 -- 레인/칸: 웹 battle.js 의 LAY{x0=196,cw=124,cy=292} · laneH(3레인까지 116, 4레인 88) 와 같은 값
+-- 레인 길 (웹 drawRoads): 레인마다 어두운 길 띠 + 가장자리 + 칸 자리 발판. 몬스터는 이 길을 따라 오른쪽에서 걸어 들어온다
+function M:buildLanes(lanes)
+  if self.roads then self.roads:Destroy() end
+  local u = self.u
+  local R = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 2 }, self.root); self.roads = R
+  local x0 = self.ox + (196 - 70) * u
+  for l = 0, (lanes or 2) - 1 do
+    local cy, lh = self:laneY(l, lanes)
+    local yc = cy + lh * 0.3                       -- 몬스터 발이 놓이는 높이 (applySnap 과 같은 위치)
+    local hh = math.min(26 * u, lh * 0.26)
+    local band = mk("Frame", { Position = UDim2.new(0, x0, 0, yc - hh), Size = UDim2.new(1, -x0, 0, hh * 2), BackgroundColor3 = Color3.fromRGB(14, 10, 12), BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 2 }, R)
+    mk("UICorner", { CornerRadius = UDim.new(0, hh) }, band)
+    mk("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.08, 0), NumberSequenceKeypoint.new(1, 0) }) }, band)
+    mk("UIStroke", { Color = Color3.fromRGB(150, 110, 70), Transparency = 0.45, Thickness = 2 }, band)
+    mk("Frame", { Position = UDim2.new(0, 0, 0.5, -1), Size = UDim2.new(1, 0, 0, 2), BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.6, BorderSizePixel = 0, ZIndex = 2 }, band)
+    for c = 1, 6 do   -- 칸 자리 발판
+      local pad = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, self:colX(c), 0, yc), Size = UDim2.new(0, self.cw * u * 0.62, 0, hh * 0.9), BackgroundColor3 = Color3.fromRGB(255, 230, 190), BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = 2 }, R)
+      mk("UICorner", { CornerRadius = UDim.new(1, 0) }, pad)
+    end
+  end
+end
 function M:laneY(l, lanes) lanes = lanes or 2; local lh = lanes <= 3 and 116 or 88; local top = 292 - lh * lanes / 2; return self.oy + (top + (l + 0.5) * lh) * self.u, lh * self.u end
 function M:colX(c) return self.ox + (196 + (c - 0.5) * self.cw) * self.u end
 
@@ -213,7 +234,7 @@ function M:applySnap(s, lanes)
     local cy, lh = self:laneY(e.l, lanes); local cw = (self.W - 150) / 6
     local x = self:colX(e.c + ((e.w or 1) - 1) / 2); local y = cy + ((e.h or 1) - 1) * lh / 2 + lh * 0.3
     if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
-    if not u.placed then u.placed = true; u.x = x + 70 * self.u; u.y = y end
+    if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
     u.tx, u.ty = x, y; u.hp = e.hp
     if e.dead and not u.dying then u.dying = 0; if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
@@ -272,7 +293,7 @@ function M:pickSpeed(i)
 end
 function M:play(replay, onDone, maxSec, hud)
   for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy() end; self.units = {}
-  self.buildBg(replay.act or 1)
+  self.buildBg(replay.act or 1); self:buildLanes(replay.lanes or 2)
   if hud then self:setHud(hud) end
   self.kills = 0; self.killLbl.Text = string.format("처치 %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
   self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
@@ -295,7 +316,7 @@ function M:play(replay, onDone, maxSec, hud)
     local k = math.min(1, dt * 9)
     for id, u in pairs(self.units) do
       u.t += dt
-      if u.tx then u.x += (u.tx - u.x) * k; u.y += (u.ty - u.y) * k end
+      if u.tx then local dx = (u.tx - u.x) * k; local cap = 420 * self.u * dt * self.spd * (self.userSpd or 1); u.x += math.clamp(dx, -cap, cap); u.y += (u.ty - u.y) * k end   -- 걷는 속도 상한
       u.lab.Position = UDim2.new(0, u.x, 0, u.y)
       u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); u.fill.Size = UDim2.new(math.clamp(u.hp or 1, 0, 1), 0, 1, 0)
       if u.art then   -- 일러스트 (묵직하게): 이동은 미끄러지듯 · 공격 직전 움츠렸다 돌진 · 피격 시 뒤로 밀리며 떨림 · 사망 시 어두워지며 쓰러짐
