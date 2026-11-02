@@ -5,4 +5,6 @@ M.SKILL_RARITY = {{name="일반",mult=1,cdMul=1,bonusMul=1,w=70,cls="r0"},{name=
 M.RUNES = {swift={name="속사의 룬",color="#8ad8ff",text="쿨타임 -15%",cd=0.85},power={name="강타의 룬",color="#ff8a6a",text="피해 +25% · 마나 +20%",mult=1.25,mana=1.2},thrift={name="효율의 룬",color="#6ad0ff",text="마나 소모 -40%",mana=0.6},pierce={name="관통의 룬",color="#ffd24a",text="방어/마법저항 15% 무시",ignore=0.15},fang={name="흡혈의 룬",color="#ff6aa0",text="생명력 흡수 +8%",lifesteal=0.08},keen={name="예리함의 룬",color="#fff08a",text="치명타 확률 +15%",crit=0.15},wide={name="확장의 룬",color="#c58bff",text="지속시간·횟수 +30%, 번개 도약 +2",wide=1.3}}
 M.SINGLE_HITS = {1,1,2,3,4,5}
 M.SINGLE_HIT_BONUS = {1,1,1.04,1.06,1.08,1.1}
+-- (직접 추가) 진화 계보 아르카나 · 소환 등급표: data/SkillsEvo.lua (2026-11-03)
+do local ok, E = pcall(require, script.Parent.SkillsEvo); if ok then for _, d in ipairs(E.LIST) do M.SKILLS[#M.SKILLS + 1] = d end; M.GACHA_TIER = E.GACHA end end
 return M

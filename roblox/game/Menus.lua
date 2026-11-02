@@ -465,7 +465,7 @@ local skSel
 local function skColor(d) return d and (ELEM[d.elem or ""] or hex(d.color)) or M.RAR[1] end
 local ELEM_EMOJI = { fire = "🔥", cold = "❄", light = "⚡", void = "🌀" }
 local function skIcon(d) if not d then return "?" end; return ELEM_EMOJI[d.elem or ""] or (d.slot == "basic" and "👊" or "⚔") end
-local function skArt(id) local k = "card_s_" .. tostring(id); return C.Sprites.art(k) and k or nil end   -- 스킬 타로 카드 그림
+local function skArt(id) local k = "card_s_" .. tostring(id); if C.Sprites.art(k) then return k end; local d = SK_BY[id]; if d and d.art and C.Sprites.art("card_s_" .. d.art) then return "card_s_" .. d.art end; return nil end   -- 스킬 타로 카드 그림
 M.skArt = skArt
 function M.skStyle(id) local d = SK_BY[id]; return skColor(d), skIcon(d), d end
 -- 아르카나 카드 한 장: 그림(없으면 원소 아이콘) + 등급 테두리 + 이름 띠 + Lv. o = { w, h, sel, slot, dim, click }
@@ -476,7 +476,7 @@ local function arcCard(parent, k, w, h, o)
   local b = mk("TextButton", { Size = UDim2.new(0, w, 0, h), BackgroundColor3 = Color3.fromRGB(14, 9, 22), Text = "", AutoButtonColor = false, LayoutOrder = o.order or 0 }, parent); corner(b, 8)
   local glow = mk("UIStroke", { Color = o.sel and Color3.fromRGB(255, 225, 140) or rcol, Thickness = o.sel and 3 or 1.5, Transparency = o.sel and 0 or 0.4 }, b)
   task.spawn(function()   -- 그림은 뒤에서 받아 붙인다 (카드가 많아도 창이 바로 열림). 그림 ZIndex 1 · 테두리 2 · 띠 3 · 글자 4
-    local ca = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_s_" .. tostring(k.id))
+    local ca = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_s_" .. tostring(k.id)) or (d.art and (o.gray and C.Sprites.artGray or C.Sprites.art)("card_s_" .. d.art))
     if not b.Parent then return end   -- 그림을 받는 사이 창이 바뀌었으면 그만
     if ca then mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ImageTransparency = o.dim and 0.5 or 0, ZIndex = 1 }, b)
     else
@@ -1622,7 +1622,7 @@ local function cardFace(card, r)
   local col = M.SK_RCOL[r.rarity + 1]; local scol, icon = M.skStyle(r.id)
   local face = mk("Frame", { Position = UDim2.new(0.12, 0, 0.09, 0), Size = UDim2.new(0.76, 0, 0.82, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 26), BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 83 }, card)   -- 그림은 테두리 안쪽에만 (밖으로 삐져나오거나 검은 바탕이 보이지 않게)
   mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.6), Color3.fromRGB(14, 10, 20)), Rotation = 90 }, face)
-  local ca = C.Sprites.art("card_s_" .. tostring(r.id))
+  local ca = C.Sprites.art("card_s_" .. tostring(r.id)) or (SK_BY[r.id] and SK_BY[r.id].art and C.Sprites.art("card_s_" .. SK_BY[r.id].art))
   if ca then
     mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ZIndex = 84 }, face)
     local band = mk("Frame", { Position = UDim2.new(0, 0, 0.6, 0), Size = UDim2.new(1, 0, 0.4, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 84 }, face)

@@ -1,0 +1,58 @@
+-- 아르카나 진화 계보 (2026-11-03): 일반 아르카나 12종을 뿌리로, 희귀 · 전설 · (일부) 신화 단계의 새 아르카나.
+-- 등급은 아르카나마다 고정 (tier). evo = 뿌리 아르카나, art = 전용 카드 그림이 없을 때 빌려 쓸 그림.
+-- 소환(뽑기)에 나오는 아르카나와 등급은 아래 GACHA 표가 정한다: 일반 23 · 희귀 18 · 전설 14 · 신화 10 · 사탄 5 (위로 갈수록 적다)
+local M = {}
+local function S(t) t.bonus = t.bonus or {}; t.side = t.side or 1; t.sfx = t.sfx or "slash"; t.icon = t.icon or "sword"; t.color = t.color or "#cfe4ff"; return t end
+M.LIST = {
+  -- ── 물리 1: 일격 ──
+  S{ id = "twinfang", name = "쌍아참", evo = "strike", art = "strike", tier = 1, slot = "basic", kind = "single", cd = 0.8, mult = 1.25, range = 3, unlock = 4, dtype = "phys", mana = 0, bonus = { elite = 0.2 }, desc = "두 갈래로 베는 기본 공격. 정예에게 추가 피해" },
+  S{ id = "skycleave", name = "파천일섬", evo = "strike", art = "strike", tier = 2, slot = "basic", kind = "single", cd = 0.75, mult = 1.55, range = 4, unlock = 6, dtype = "phys", mana = 0, ignoreAdd = 0.2, desc = "하늘을 가르는 기본 공격. 적 방어 20% 무시" },
+  S{ id = "heavensplit", name = "천참", evo = "strike", art = "strike", tier = 3, slot = "basic", kind = "multi", cd = 0.9, mult = 1.6, side = 0.8, range = 4, unlock = 11, dtype = "phys", mana = 0, ignoreAdd = 0.3, bonus = { boss = 0.3 }, desc = "베는 곳 주변 3x3까지 갈라 버리는 기본 공격. 방어 30% 무시, 보스에게 +30%" },
+  -- ── 물리 2: 연사 ──
+  S{ id = "galeshot", name = "질풍 연사", evo = "rapid", art = "rapid", tier = 1, slot = "basic", kind = "single", cd = 0.4, mult = 0.7, range = 5, unlock = 4, dtype = "phys", mana = 0, bleed = 0.15, icon = "dagger", desc = "바람처럼 빠른 기본 공격. 일정 확률로 출혈" },
+  S{ id = "stormdance", name = "폭풍 난무", evo = "rapid", art = "rapid", tier = 2, slot = "active", kind = "spray", cd = 6, mult = 0.6, count = 14, spread = 0, range = 6, unlock = 6, dtype = "phys", mana = 18, bleed = 0.3, proj = "arrow", shape = "spray", icon = "dagger", desc = "칼날 14개를 무작위 적에게 퍼붓고 출혈을 일으킨다" },
+  -- ── 물리 3: 찢기 (출혈) ──
+  S{ id = "bloodclaw", name = "피의 갈퀴", evo = "rip", art = "rip", tier = 1, slot = "basic", kind = "single", cd = 0.75, mult = 1.2, range = 3, unlock = 4, dtype = "phys", mana = 0, bleed = 0.45, color = "#ff6a6a", desc = "피를 부르는 기본 공격. 높은 확률로 출혈" },
+  S{ id = "crimsonstorm", name = "선혈 폭풍", evo = "rip", art = "rip", tier = 2, slot = "active", kind = "aura", cd = 12, mult = 0.75, dur = 5, every = 0.35, range = 2, unlock = 6, dtype = "phys", mana = 24, bleed = 0.5, shape = "front", color = "#ff6a6a", desc = "5초 동안 앞줄의 적을 핏빛 칼바람으로 갈아내며 출혈을 겹쳐 쌓는다" },
+  S{ id = "bloodmoon", name = "혈월", evo = "rip", art = "rip", tier = 3, slot = "active", kind = "nova", cd = 10, mult = 3.2, chill = 0, range = 6, unlock = 11, dtype = "phys", mana = 40, bleed = 1, color = "#ff4a5a", desc = "붉은 달이 떠올라 사거리 안의 모든 적을 베고 반드시 출혈시킨다" },
+  -- ── 물리 4: 독침 (중독) ──
+  S{ id = "fanghail", name = "맹독 가시", evo = "venom", art = "venom", tier = 1, slot = "active", kind = "chain", cd = 5, mult = 1.6, jumps = 4, decay = 0.85, range = 5, unlock = 4, dtype = "phys", mana = 14, poison = 0.6, color = "#8aff6a", icon = "dagger", desc = "독 가시가 적 사이를 4번 튀며 중독시킨다" },
+  S{ id = "hydra", name = "독룡의 이빨", evo = "venom", art = "venom", tier = 2, slot = "active", kind = "summon", cd = 16, mult = 3, dur = 10, every = 0.6, range = 7, unlock = 6, dtype = "phys", mana = 32, poison = 0.5, shape = "front", color = "#8aff6a", desc = "10초 동안 독룡의 머리가 앞줄의 적을 물어뜯어 중독시킨다" },
+  -- ── 물리 5: 관통창 ──
+  S{ id = "twinlance", name = "쌍창 돌격", evo = "lance", art = "lance", tier = 1, slot = "active", kind = "pierce", cd = 6, mult = 2.4, range = 6, unlock = 4, dtype = "phys", mana = 14, bleed = 0.3, icon = "spear", sfx = "pierce", color = "#9dffb0", desc = "두 자루 창으로 한 줄을 꿰뚫고 출혈시킨다" },
+  S{ id = "dragoon", name = "용기병 돌격", evo = "lance", art = "lance", tier = 2, slot = "active", kind = "pierce", cd = 7, mult = 3.6, range = 7, adj = 0.4, unlock = 6, dtype = "phys", mana = 20, ignoreAdd = 0.2, bonus = { elite = 0.3 }, icon = "spear", sfx = "pierce", color = "#9dffb0", desc = "한 줄을 꿰뚫고 위아래 줄에도 40% 충격. 방어 20% 무시, 정예에게 +30%" },
+  S{ id = "skypierce", name = "하늘 꿰뚫는 창", evo = "lance", art = "lance", tier = 3, slot = "active", kind = "pierce", cd = 7, mult = 5.5, range = 7, adj = 0.5, unlock = 11, dtype = "phys", mana = 34, ignoreAdd = 0.35, bonus = { boss = 0.4 }, icon = "spear", sfx = "pierce", color = "#b8ffd0", desc = "하늘에서 내리꽂는 창이 한 줄을 꿰뚫고 위아래 줄에 50% 충격. 방어 35% 무시, 보스에게 +40%" },
+  -- ── 물리 6: 강타 ──
+  S{ id = "groundslam", name = "대지 내려찍기", evo = "smash", art = "smash", tier = 1, slot = "active", kind = "multi", cd = 5, mult = 3, side = 0.9, range = 5, unlock = 4, dtype = "phys", mana = 14, bonus = { elite = 0.3 }, icon = "fist", sfx = "thud", color = "#ffe08a", desc = "대상 주변 3x3을 내려찍는다. 정예에게 +30%" },
+  S{ id = "giantmaul", name = "거인의 망치", evo = "smash", art = "smash", tier = 2, slot = "active", kind = "multi", cd = 8, mult = 5.2, side = 1, range = 5, unlock = 6, dtype = "phys", mana = 22, critAdd = 0.15, bonus = { elite = 0.4, boss = 0.3 }, icon = "hammer", sfx = "thud", color = "#ffe08a", desc = "거대한 망치로 3x3을 짓이긴다. 치명타 확률 +15%, 정예 +40% · 보스 +30%" },
+  -- ── 마법 1: 불씨 탄 (화염) ──
+  S{ id = "fireball", name = "화염구", evo = "ember", art = "ember", tier = 1, slot = "basic", kind = "multi", cd = 1, mult = 0.8, side = 0.6, range = 4, unlock = 4, dtype = "mag", elem = "fire", mana = 0, ignite = 0.25, icon = "flame", sfx = "fire", color = "#ff9a50", desc = "작은 폭발을 일으키는 기본 화염 공격 (3x3). 일정 확률로 점화" },
+  S{ id = "phoenix", name = "불새", evo = "ember", art = "ember", tier = 2, slot = "active", kind = "pierce", cd = 7, mult = 3.4, range = 7, unlock = 6, dtype = "mag", elem = "fire", mana = 22, ignite = 0.5, icon = "flame", sfx = "fire", color = "#ffb050", desc = "불새가 한 줄을 날아 꿰뚫으며 점화시킨다" },
+  S{ id = "suncore", name = "태양 핵", evo = "ember", art = "ember", tier = 3, slot = "active", kind = "meteor", cd = 11, mult = 3.2, count = 4, side = 1, range = 7, unlock = 11, dtype = "mag", elem = "fire", mana = 40, ignite = 0.6, bonus = { elite = 0.3, boss = 0.3 }, icon = "flame", sfx = "boom", color = "#ffd070", desc = "작은 태양 4개가 떨어져 3x3씩 불태우고 점화시킨다. 정예 · 보스에게 +30%" },
+  -- ── 마법 2: 서리 화살 (냉기) ──
+  S{ id = "frostlance", name = "서리 창", evo = "frostbolt", art = "frostbolt", tier = 1, slot = "active", kind = "pierce", cd = 5, mult = 2.2, range = 6, unlock = 4, dtype = "mag", elem = "cold", mana = 14, chill = 1, icon = "spear", sfx = "pierce", color = "#aee8ff", desc = "얼음 창이 한 줄을 꿰뚫고 둔화시킨다" },
+  S{ id = "icecage", name = "빙결 감옥", evo = "frostbolt", art = "frostbolt", tier = 2, slot = "active", kind = "nova", cd = 9, mult = 2.8, chill = 2.5, range = 6, unlock = 6, dtype = "mag", elem = "cold", mana = 24, sfx = "zap", color = "#aee8ff", desc = "사거리 안의 모든 적을 얼음 감옥에 가둬 크게 둔화시킨다" },
+  S{ id = "eternalwinter", name = "영원의 겨울", evo = "frostbolt", art = "frostbolt", tier = 3, slot = "active", kind = "zone2", zk = "snow", shape = "wide", cd = 12, mult = 0.9, dur = 6, every = 0.4, range = 7, unlock = 11, dtype = "mag", elem = "cold", mana = 40, chill = 2, sfx = "zap", color = "#d0f0ff", desc = "6초 동안 뒤쪽 넓은 구역에 끝나지 않는 겨울이 내려 맹렬히 얼린다" },
+  -- ── 마법 3: 번개 찌르기 (번개) ──
+  S{ id = "voltlash", name = "뇌전 채찍", evo = "spark", art = "spark", tier = 1, slot = "basic", kind = "chain", cd = 0.85, mult = 1.3, jumps = 3, decay = 0.7, range = 5, unlock = 4, dtype = "mag", elem = "light", mana = 0, lifesteal = 0.02, icon = "bolt", sfx = "zap", color = "#aee8ff", desc = "맞힌 적 뒤로 번개가 3번 튀는 기본 공격" },
+  S{ id = "thunderhead", name = "번개 폭풍", evo = "spark", art = "spark", tier = 2, slot = "active", kind = "rain", cd = 11, mult = 1.6, count = 10, over = 3, range = 6, unlock = 6, dtype = "mag", elem = "light", mana = 30, shock = 0.3, shape = "rain", icon = "bolt", sfx = "zap", color = "#fff08a", desc = "3초 동안 번개 10줄기가 무작위 적을 내리치고 감전시킨다" },
+  -- ── 마법 4: 공허 탄 (공허) ──
+  S{ id = "voidorb", name = "공허 구체", evo = "voidbolt", art = "voidbolt", tier = 1, slot = "active", kind = "orbit", cd = 13, mult = 1.3, dur = 8, every = 0.45, range = 3, unlock = 4, dtype = "mag", elem = "void", mana = 24, shape = "orbit", color = "#c58bff", desc = "8초 동안 공허 구체가 주위를 돌며 가까운 적을 때린다" },
+  S{ id = "riftsplit", name = "차원 균열", evo = "voidbolt", art = "voidbolt", tier = 2, slot = "active", kind = "zone2", zk = "cloud", shape = "area3", cd = 11, mult = 0.85, dur = 5, every = 0.45, range = 6, unlock = 6, dtype = "mag", elem = "void", mana = 28, ignoreAdd = 0.15, color = "#c58bff", desc = "5초 동안 3x3 차원 균열이 열려 적을 갈아낸다. 저항 15% 무시" },
+  S{ id = "voideye", name = "공허의 눈", evo = "voidbolt", art = "voidbolt", tier = 3, slot = "active", kind = "nova", cd = 10, mult = 4.2, chill = 0, range = 7, unlock = 11, dtype = "mag", elem = "void", mana = 40, ignoreAdd = 0.3, bonus = { elite = 0.3 }, color = "#d0a0ff", desc = "공허의 눈이 떠서 사거리 안의 모든 적을 짓누른다. 저항 30% 무시, 정예에게 +30%" },
+  -- ── 마법 5: 폭열탄 (화염 광역) ──
+  S{ id = "clusterbomb", name = "연쇄 폭발", evo = "bomb", art = "bomb", tier = 1, slot = "active", kind = "meteor", cd = 9, mult = 1.4, count = 3, side = 0.8, range = 6, unlock = 4, dtype = "mag", elem = "fire", mana = 20, icon = "bomb", sfx = "boom", color = "#ff9a50", desc = "폭탄 3개가 무작위 적 위에서 3x3으로 터진다" },
+  S{ id = "firecarpet", name = "화염 융단", evo = "bomb", art = "bomb", tier = 2, slot = "active", kind = "zone2", zk = "flame", shape = "area3", cd = 11, mult = 0.85, dur = 5, every = 0.45, range = 6, unlock = 6, dtype = "mag", elem = "fire", mana = 28, ignite = 0.6, icon = "bomb", sfx = "fire", color = "#ff7a30", desc = "5초 동안 3x3을 불바다로 덮고 점화시킨다" },
+  -- ── 마법 6: 체인 라이트닝 ──
+  S{ id = "arcchain", name = "뇌격 연쇄", evo = "chain", art = "chain", tier = 1, slot = "active", kind = "chain", cd = 5.5, mult = 3, jumps = 7, decay = 0.9, range = 6, unlock = 4, dtype = "mag", elem = "light", mana = 18, lifesteal = 0.03, icon = "bolt", sfx = "zap", color = "#9ad8ff", desc = "번개가 적 사이를 7번 뻗어 나간다" },
+  S{ id = "stormspear", name = "천둥 창", evo = "chain", art = "chain", tier = 2, slot = "active", kind = "pierce", cd = 7, mult = 3.6, range = 7, unlock = 6, dtype = "mag", elem = "light", mana = 22, shock = 0.4, icon = "spear", sfx = "zap", color = "#fff08a", desc = "번개 창이 한 줄을 꿰뚫고 감전시킨다" },
+}
+-- 소환에 나오는 아르카나와 등급 (여기에 없는 아르카나는 보스 · 레이드에서만 얻는다)
+M.GACHA = {}
+for _, id in ipairs({ "strike", "rapid", "crush", "spark", "smash", "bomb", "lance", "chain", "snipe", "firewall", "sweep", "cry", "rend", "volley", "venom", "iceshard", "shuriken", "p_steel", "ember", "rip", "frostbolt", "voidbolt" }) do M.GACHA[id] = 0 end
+for _, id in ipairs({ "execute", "vamp", "heal", "whirl", "trap", "blizzard" }) do M.GACHA[id] = 1 end
+for _, id in ipairs({ "meteor", "spirit" }) do M.GACHA[id] = 2 end
+for _, id in ipairs({ "solarflare", "glacierfall", "titanfist", "legion" }) do M.GACHA[id] = 3 end
+for _, id in ipairs({ "skysword", "starfall", "dragonbreath", "angelfall", "verdict" }) do M.GACHA[id] = 4 end
+for _, d in ipairs(M.LIST) do M.GACHA[d.id] = d.tier end
+return M

@@ -2334,3 +2334,70 @@ Lv %d  ·  %d명	Lv %d  ·  %d members
 전투력 %s%s%s	Power %s%s%s
 켜면 새 장비와 낀 장비를 모두 강화 없이(+0) 놓고 비교합니다.	When on, compares the new item and your equipped item both without enhancement (+0).
 ▲ 지금보다 강해집니다  (+0 기준)	▲ Stronger than now  (at +0)
+%s 등급	%s Grade
+10초 동안 독룡의 머리가 앞줄의 적을 물어뜯어 중독시킨다	For 10s, hydra heads bite front-row enemies and poison them
+3초 동안 번개 10줄기가 무작위 적을 내리치고 감전시킨다	For 3s, 10 lightning bolts strike random enemies and shock them
+5초 동안 3x3 차원 균열이 열려 적을 갈아낸다. 저항 15% 무시	For 5s, a 3x3 dimensional rift grinds enemies. Ignores resistance (15%)
+5초 동안 3x3을 불바다로 덮고 점화시킨다	For 5s, covers a 3x3 area in flames and ignites enemies
+5초 동안 앞줄의 적을 핏빛 칼바람으로 갈아내며 출혈을 겹쳐 쌓는다	For 5s, a crimson blade storm grinds the front row, stacking Bleed
+6초 동안 뒤쪽 넓은 구역에 끝나지 않는 겨울이 내려 맹렬히 얼린다	For 6s, an endless winter falls on a wide rear area, freezing enemies hard
+8초 동안 공허 구체가 주위를 돌며 가까운 적을 때린다	For 8s, void orbs circle you and strike nearby enemies
+① 시작 선물로 아르카나 조각 90개를 드렸어요.\n화면 위쪽 메뉴에서 빛나는 [소환] 아이콘(카드 덱 모양)을 누르세요.	① You received 90 Arcana Shards as a starter gift.\nTap the glowing [Summon] icon (card deck) in the top menu.
+② 소환 창이 열렸어요. 오른쪽의 빛나는 [10회 소환] 버튼을 누르면 조각 90개로 아르카나 카드 10장을 뽑습니다.\n카드가 다 뒤집히면 화면을 한 번 더 눌러 닫으세요.	② The Summon window is open. Tap the glowing [Summon x10] button on the right to draw 10 Arcana cards for 90 shards.\nWhen all cards are revealed, tap the screen again to close.
+거대한 망치로 3x3을 짓이긴다. 치명타 확률 +15%, 정예 +40% · 보스 +30%	Crushes a 3x3 area with a giant maul. Crit Chance +15%, Elites +40% · Bosses +30%
+거인의 망치	Giant's Maul
+공허 구체	Void Orbs
+공허의 눈	Eye of the Void
+공허의 눈이 떠서 사거리 안의 모든 적을 짓누른다. 저항 30% 무시, 정예에게 +30%	The Eye of the Void opens and crushes all enemies in range. Ignores resistance (30%), Elites +30%
+뇌격 연쇄	Arc Chain
+뇌전 채찍	Volt Lash
+대상 주변 3x3을 내려찍는다. 정예에게 +30%	Slams a 3x3 area around the target. Elites +30%
+대지 내려찍기	Ground Slam
+독 가시가 적 사이를 4번 튀며 중독시킨다	A venom thorn bounces between enemies 4 times, poisoning them
+독룡의 이빨	Hydra Fangs
+두 갈래로 베는 기본 공격. 정예에게 추가 피해	A twin-bladed basic attack. Bonus damage to Elites
+두 자루 창으로 한 줄을 꿰뚫고 출혈시킨다	Two spears pierce a whole row and cause Bleed
+맞힌 적 뒤로 번개가 3번 튀는 기본 공격	A basic attack whose lightning jumps 3 times behind the target
+맹독 가시	Venom Thorn
+바람처럼 빠른 기본 공격. 일정 확률로 출혈	A basic attack fast as the wind. Chance to cause Bleed
+번개 창이 한 줄을 꿰뚫고 감전시킨다	A lightning spear pierces a row and shocks enemies
+번개 폭풍	Thunderhead
+번개가 적 사이를 7번 뻗어 나간다	Lightning arcs between enemies 7 times
+베는 곳 주변 3x3까지 갈라 버리는 기본 공격. 방어 30% 무시, 보스에게 +30%	A basic attack that splits a 3x3 area around the target. Ignores defense (30%), Bosses +30%
+보유: Lv %d	Owned: Lv %d
+불새	Phoenix
+불새가 한 줄을 날아 꿰뚫으며 점화시킨다	A phoenix flies through a row, piercing and igniting enemies
+붉은 달이 떠올라 사거리 안의 모든 적을 베고 반드시 출혈시킨다	A blood moon rises, slashing all enemies in range and always causing Bleed
+빙결 감옥	Ice Prison
+사거리 안의 모든 적을 얼음 감옥에 가둬 크게 둔화시킨다	Traps all enemies in range in ice, heavily slowing them
+서리 창	Frost Lance
+선혈 폭풍	Crimson Storm
+쌍아참	Twin Fang
+쌍창 돌격	Twin Lance Charge
+아직 없음	Not owned yet
+얼음 창이 한 줄을 꿰뚫고 둔화시킨다	An ice spear pierces a row and slows enemies
+연쇄 폭발	Cluster Bomb
+영원의 겨울	Eternal Winter
+용기병 돌격	Dragoon Charge
+작은 태양 4개가 떨어져 3x3씩 불태우고 점화시킨다. 정예 · 보스에게 +30%	4 small suns fall, burning 3x3 areas and igniting enemies. Elites · Bosses +30%
+작은 폭발을 일으키는 기본 화염 공격 (3x3). 일정 확률로 점화	A basic fire attack that explodes in a small 3x3. Chance to Ignite
+전투에서는 위쪽 4칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 빛나는 새 카드를 누른 뒤 비어 있는 [4번 칸에]를 누르세요.	Only Arcana in the 4 top slots are used in battle. Open [Arcana], tap the glowing new card, then press the empty [To Slot 4].
+질풍 연사	Gale Shot
+차원 균열	Rift Split
+천둥 창	Thunder Spear
+천참	Heaven Splitter
+최대 마나 1당 체력 +4, 마나 재생 -30%	+4 Life per Max Mana, Mana Regen -30%
+칼날 14개를 무작위 적에게 퍼붓고 출혈을 일으킨다	Rains 14 blades on random enemies, causing Bleed
+태양 핵	Sun Core
+파천일섬	Sky Cleave
+폭탄 3개가 무작위 적 위에서 3x3으로 터진다	3 bombs explode in 3x3 areas over random enemies
+폭풍 난무	Storm Dance
+피를 부르는 기본 공격. 높은 확률로 출혈	A blood-calling basic attack. High chance to cause Bleed
+피의 갈퀴	Blood Claw
+하늘 꿰뚫는 창	Sky-Piercing Spear
+하늘에서 내리꽂는 창이 한 줄을 꿰뚫고 위아래 줄에 50% 충격. 방어 35% 무시, 보스에게 +40%	A spear from the sky pierces a row and hits rows above and below for 50%. Ignores defense (35%), Bosses +40%
+하늘을 가르는 기본 공격. 적 방어 20% 무시	A sky-splitting basic attack. Ignores enemy defense (20%)
+한 줄을 꿰뚫고 위아래 줄에도 40% 충격. 방어 20% 무시, 정예에게 +30%	Pierces a row and hits rows above and below for 40%. Ignores defense (20%), Elites +30%
+혈월	Blood Moon
+화염 융단	Fire Carpet
+화염구	Fireball

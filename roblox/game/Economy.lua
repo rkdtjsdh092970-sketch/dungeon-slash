@@ -234,6 +234,8 @@ function M.gachaGold(sv) return floor(300 * 1.55 ^ (M.skillAct(sv) - 1) + 0.5) e
 function M.skillTier(d)
   if type(d) == "string" then d = SKILL_BY[d] end
   if not d then return 0 end
+  if d.tier then return d.tier end
+  if Skills.GACHA_TIER and Skills.GACHA_TIER[d.id] then return Skills.GACHA_TIER[d.id] end
   if d.slot == "passive" then return d.pt or 0 end
   local u = d.unlock or 1
   if d.mythOnly or u >= 12 then return 4 elseif d.voidOnly or u >= 11 then return 3 elseif u >= 6 then return 2 elseif u >= 4 then return 1 end
@@ -284,8 +286,9 @@ end
 local function famOk(d, fam) if not fam then return true end; if d.dtype == "phys" or d.dtype == "mag" then return d.dtype == fam end; return true end
 local function gachaPool(sv, fam)
   local out = {}
-  for _, d in ipairs(Skills.SKILLS) do if not (d.slot == "passive" and (d.pt or 0) > 0) and d.id ~= "p_none" and not (d.bonus and (d.bonus.boss or 0) >= 0.8 and not SHOP_BOSS[d.id] and not d.voidOnly and not d.mythOnly) and famOk(d, fam) then out[#out + 1] = d end end
-  return out   -- 등급별로 나뉘어 있어 단계 잠금은 없다 (보스 전용 아르카나 · 상위 패시브는 보스에게서만)
+  local seen = {}
+  for _, d in ipairs(Skills.SKILLS) do if Skills.GACHA_TIER and Skills.GACHA_TIER[d.id] and not seen[d.id] and famOk(d, fam) then seen[d.id] = true; out[#out + 1] = d end end
+  return out   -- 소환 등급표(data/SkillsEvo.lua GACHA)에 있는 것만, 단계 잠금 없음 (나머지는 보스 · 레이드에서)
 end
 local function rollRarity(rng, minR)
   local G = M.GACHA; local tot = 0
