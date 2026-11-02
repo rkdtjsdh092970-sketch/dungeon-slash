@@ -100,7 +100,7 @@ function M.magicCircle(S, x, y, r, col, t, z)
   local layers = { { "fx_mc_main", 1, 40 }, { "fx_mc_runes", 1.18, -70 }, { "fx_mc_inner", 0.45, 120 } }
   local any = false
   for i, L in ipairs(layers) do
-    local o = img(S, L[1], { Position = at(x, y), Size = sz(r * 0.4 * L[2]), ImageColor3 = i == 3 and WHITE:Lerp(col, 0.4) or col, ImageTransparency = 0.05, Rotation = math.random(0, 360), ZIndex = z })
+    local o = img(S, L[1], { Position = at(x, y), Size = sz(r * 0.4 * L[2]), ImageColor3 = i == 3 and WHITE:Lerp(col, 0.4) or col, ImageTransparency = z >= 10 and 0.05 or 0.35, Rotation = math.random(0, 360), ZIndex = z })
     if o then
       any = true
       tw(o, 0.2, { Size = sz(r * 2 * L[2]) }, Enum.EasingStyle.Back, false)
@@ -109,7 +109,8 @@ function M.magicCircle(S, x, y, r, col, t, z)
     end
   end
   if not any then M.circle(S, x, y, r, col, t) end
-  M.glow(S, x, y, r * 1.4, col, t, 0.55)
+  if z >= 10 then M.glow(S, x, y, r * 1.4, col, t, 0.55)   -- 앞에 뜨는 작은 마법진만 빛을 더한다 (영웅 뒤 마법진은 영웅을 가리지 않게)
+  else local g = img(S, "fx_glow", { Position = at(x, y), Size = sz(r * 0.7), ImageColor3 = col, ImageTransparency = 0.5, ZIndex = 3 }); tw(g, t, { Size = sz(r * 2.4), ImageTransparency = 1 }) end
 end
 -- 바닥에 새겨지는 문장 (납작하게 눕힘, 돌지 않고 빛이 차올랐다 꺼진다)
 function M.sigil(S, x, y, r, col, t)
@@ -270,7 +271,7 @@ function M.cast(S, c, hits, first)
     local hx, hy = heroTip(S)
     if d.slot == "basic" then M.sigil(S, S.plX, S.plY + 4 * u, 50 * u, col, 0.3)   -- 기본 공격: 발밑 문장만 살짝
     else
-      M.magicCircle(S, S.plX - 6 * u, S.plY - 60 * u, (big and 95 or 70) * u, col, big and 0.8 or 0.5, 4)   -- 영웅 뒤에 선 마법진
+      M.magicCircle(S, S.plX - 10 * u, S.plY - 62 * u, (big and 80 or 58) * u, col, big and 0.8 or 0.5, 4)   -- 영웅 뒤에 선 마법진
       M.sigil(S, S.plX, S.plY + 4 * u, (big and 100 or 70) * u, col, big and 0.8 or 0.5)
       if big then
         M.magicCircle(S, hx + 30 * u, hy, 46 * u, col, 0.6, 16)   -- 지팡이 앞 작은 마법진
