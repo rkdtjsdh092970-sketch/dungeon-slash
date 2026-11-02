@@ -17,7 +17,7 @@ J += [('bg1', 'bg/act1.jpg', 960), ('bg8', 'bg/act8.png', 960), ('bg_title', 'bg
       ('bg_raid', 'raid/raid_arena.jpg', 960), ('cardback', 'cards/back.png', 300), ('cardf0', 'cards/frame0.png', 300), ('cardf1', 'cards/frame1.png', 300), ('cardf2', 'cards/frame2.png', 300), ('cardf3', 'cards/frame3.png', 300), ('cardf4', 'cards/frame4.png', 300), ('cburst2', 'cards/burst2.png', 300), ('cburst3', 'cards/burst3.png', 300), ('cburst4', 'cards/burst4.png', 300), ('morgath', 'raid/morgath.png', 512), ('morgath_rage', 'raid/morgath_rage.png', 512), ('ward_crystal', 'raid/ward_crystal.png', 160)]
 for f in sorted(os.listdir(os.path.join(R, 'cards', 'skill'))):   # 스킬(아르카나) 카드 그림
     J.append(('card_s_' + os.path.splitext(f)[0], 'cards/skill/' + f, 300))
-for sub, pre, mx in (('icons', 'i_', 96), ('mapicon', 'mi_', 96), ('menu', 'm_', 96)):
+for sub, pre, mx in (('icons', 'i_', 96), ('mapicon', 'mi_', 96), ('menu', 'm_', 96), ('passive', 'p_', 72)):
     for f in sorted(os.listdir(os.path.join(R, sub))):
         if f.endswith('.png'): J.append((pre + os.path.splitext(f)[0], sub + '/' + f, mx))
 import sys

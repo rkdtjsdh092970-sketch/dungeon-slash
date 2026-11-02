@@ -250,7 +250,7 @@ function ptDraw() {
   const cv = PT.cv; if (!cv || !cv.isConnected) return; const g = cv.getContext("2d"), W = cv.width, H = cv.height, t = performance.now() / 1000;
   g.clearRect(0, 0, W, H); g.save(); g.translate(W / 2 + PT.ox, H / 2 + PT.oy); g.scale(PT.sc, PT.sc);
   const col = (p) => (p.kind === "filler" ? "#e8e8f6" : p.arm === "bridge" ? "#9a9ab8" : P_ARMS.find((a) => a.id === p.arm).color);
-  g.lineWidth = 4.5 / PT.sc * 0.9;
+  g.lineWidth = 14;
   for (const p of PASSIVES) for (const q of p.links) { if (q === "C") { g.strokeStyle = passiveHas(save, p.id) ? col(p) : "#2e2850"; g.beginPath(); g.moveTo(0, 0); g.lineTo(p.x, p.y); g.stroke(); continue; } const o = PASSIVE_BY_ID[q]; if (!o || o.id < p.id) continue; const a = passiveHas(save, p.id), b = passiveHas(save, o.id); g.strokeStyle = a && b ? col(p) : a || b ? "#5a5090" : "#2a2448"; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(o.x, o.y); g.stroke(); }
   // PoE식 경로 미리보기: 마우스를 올린(또는 선택한) 노드까지 이어지는 최단 경로를 밝게 표시
   const pv = ptPreview();
@@ -258,16 +258,17 @@ function ptDraw() {
     const ok = pv.ok, lc = ok ? "#ffe27a" : "#ff6a6a"; g.save(); g.lineCap = "round"; g.lineWidth = 9 / PT.sc * 0.9; g.strokeStyle = lc; g.globalAlpha = 0.55 + 0.35 * Math.sin(t * 6); g.shadowColor = lc; g.shadowBlur = 14;
     for (const [a, b] of pv.segs) { g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); }
     g.restore(); g.save(); g.lineWidth = 5 / PT.sc * 0.9; g.strokeStyle = lc; g.globalAlpha = 0.9;
-    for (const id of pv.P.ids) { const q = PASSIVE_BY_ID[id], r = (q.kind === "key" ? 34 : q.kind === "notable" ? 25 : q.kind === "filler" ? 10 : 17) + 7; g.beginPath(); g.arc(q.x, q.y, r, 0, 7); g.stroke(); }
+    for (const id of pv.P.ids) { const q = PASSIVE_BY_ID[id], r = (q.kind === "key" ? 34 : q.kind === "notable" ? 25 : q.kind === "filler" ? 10 : 17) * 2.6 + 12; g.beginPath(); g.arc(q.x, q.y, r, 0, 7); g.stroke(); }
     const T = pv.T; g.globalAlpha = 1; const fs = Math.round(17 / PT.sc); g.font = `bold ${fs}px sans-serif`; g.textAlign = "center"; g.lineWidth = fs / 5; g.strokeStyle = "#000"; const lab = `${pv.P.cost}점`, ly = T.y - 40 - fs * 0.6; g.strokeText(lab, T.x, ly); g.fillStyle = lc; g.fillText(lab, T.x, ly); g.restore();
   } else if (PT.hover && passiveHas(save, PT.hover.id) && canRemovePassive(save, PT.hover.id)) { const q = PT.hover; g.save(); g.strokeStyle = "#ff6a6a"; g.lineWidth = 5 / PT.sc * 0.9; g.setLineDash([8, 6]); g.beginPath(); g.arc(q.x, q.y, 36, 0, 7); g.stroke(); g.restore(); }
-  g.fillStyle = "#ffd24a"; g.beginPath(); g.arc(0, 0, 34, 0, 7); g.fill(); g.fillStyle = "#3a2a08"; g.font = "bold 26px sans-serif"; g.textAlign = "center"; g.fillText("시작", 0, 9);
-  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_t10"] || PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 5700, Math.sin(ang) * 5700 + 8); g.globalAlpha = 1; }
+  g.fillStyle = "#ffd24a"; g.beginPath(); g.arc(0, 0, 90, 0, 7); g.fill(); g.fillStyle = "#3a2a08"; g.font = "bold 64px sans-serif"; g.textAlign = "center"; g.fillText("시작", 0, 22);
+  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_t10"] || PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x), fs = Math.round(26 / PT.sc); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = `bold ${fs}px sans-serif`; g.fillText(A.name + "의 길", Math.cos(ang) * 1700 + (Math.abs(Math.cos(ang)) < 0.5 ? fs * 2.4 : 0), Math.sin(ang) * 1700 + (Math.abs(Math.sin(ang)) < 0.5 ? -fs * 1.1 : 0)); g.globalAlpha = 1; }
   for (const p of PASSIVES) {
-    const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 10 : 17, c = col(p);
+    const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = (p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 10 : 17) * 2.6,   /* 5.0 트리는 노드 간격이 넓어 크게 */ c = col(p);
     g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);
     g.fillStyle = on ? c : "#14102a"; g.fill(); g.lineWidth = (p.kind === "small" ? 2 : 3) / PT.sc * 0.9; g.strokeStyle = on ? "#fff" : can ? `rgba(255,255,255,${0.55 + 0.4 * Math.sin(t * 5)})` : c + "88"; g.stroke();
     if (p.kind === "notable") { g.beginPath(); g.arc(p.x, p.y, r - 4, 0, 7); g.strokeStyle = on ? "#0008" : c + "66"; g.stroke(); }
+    if (p.icon && (p.kind === "notable" || p.kind === "key")) { const im = artGet(p.icon); if (im) { const z = r * 1.5; g.save(); g.globalAlpha = on ? 1 : 0.55; g.drawImage(im, p.x - z / 2, p.y - z / 2, z, z); g.restore(); } }
     if (PT.sel === p) { g.strokeStyle = "#fff"; g.lineWidth = 3; g.setLineDash([5, 4]); g.beginPath(); g.arc(p.x, p.y, r + 9, 0, 7); g.stroke(); g.setLineDash([]); }
     if (PT.hover === p) { g.strokeStyle = "#ffd24a"; g.lineWidth = 3; g.beginPath(); g.arc(p.x, p.y, r + 6, 0, 7); g.stroke(); }
   }
@@ -294,7 +295,7 @@ function ptAllocate(p) {   // 클릭 한 번으로 경로 전체 찍기
   if (P.cost > free) { toast(`포인트가 부족합니다 (필요 ${P.cost}점 · 남은 ${free}점)`, "bad"); snd("error"); return false; }
   addPassivePath(save, p.id); snd("equip"); _pvKey = ""; saveGame(); refreshTop(); ptInfo(); return true;
 }
-function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 11 : 17) + 10; if (d < r && d < bd) { bd = d; best = p; } } return best; }
+function ptPick(mx, my) { const cv = PT.cv, x = (mx - cv.width / 2 - PT.ox) / PT.sc, y = (my - cv.height / 2 - PT.oy) / PT.sc; let best = null, bd = 1e9; for (const p of PASSIVES) { const d = Math.hypot(p.x - x, p.y - y), r = (p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 11 : 17) * 2.6 + 30; if (d < r && d < bd) { bd = d; best = p; } } return best; }
 function ptInfo() {
   const el = $("#ptinfo"); if (!el) return; const p = PT.hover || PT.sel;
   { const a = $("#ptact"), q = PT.sel; if (a) a.innerHTML = q ? `<span>선택: <b style="color:${q.arm === "bridge" ? "#ccc" : P_ARMS.find((x) => x.id === q.arm).color}">${q.name}</b> <span class="dim">(${q.cost}점)</span></span>${(() => { const P = passivePath(save, q.id), free = passivePoints(save) - passiveSpent(save); if (!P) return `<button class="btn pri" data-a="ptadd" disabled>찍기</button>`; return `<button class="btn pri" data-a="ptadd" ${P.cost <= free ? "" : "disabled"}>${P.ids.length > 1 ? `경로 찍기 (${P.ids.length}개 · ${P.cost}점)` : "찍기"}</button>`; })()}<button class="btn" data-a="ptrm" ${canRemovePassive(save, q.id) ? "" : "disabled"}>회수</button>` : `<span class="dim">노드에 마우스를 올리면 경로가 미리보기로 표시되고, 클릭하면 경로째 찍힙니다 (우클릭: 회수)</span>`; }
