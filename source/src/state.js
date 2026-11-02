@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 0, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 100, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -153,6 +153,22 @@ function grantSkill(sv, id) {
   } else { const k = genSkill(sv, id); sv.skills.push(k); res.new = true; res.uid = k.uid; }
   return res;
 }
+// ---- 스킬 소환 (로블록스판 아르카나 소환과 같은 확률 · 천장). 재화 = 아르카나 조각(sv.hone) ----
+const GACHA = { RATES: [70, 24, 5, 0.9, 0.1], PITY10: 1, PITY_HARD: 80, PITY_HARD_R: 2, ARC1: 10, ARC10: 90 };
+const gachaPool = () => SKILLS.filter((d) => GACHA_TIER[d.id] != null);
+function gachaRoll(minR) { let tot = 0; for (let r = minR; r < GACHA.RATES.length; r++) tot += GACHA.RATES[r]; let x = Math.random() * tot; for (let r = minR; r < GACHA.RATES.length; r++) { x -= GACHA.RATES[r]; if (x <= 0) return r; } return GACHA.RATES.length - 1; }
+function gachaPull(sv, n) {
+  n = n === 10 ? 10 : 1; const cost = n === 10 ? GACHA.ARC10 : GACHA.ARC1; if ((sv.hone || 0) < cost) return null; sv.hone -= cost;
+  const pool = gachaPool(), out = []; let gotHigh = false;
+  for (let i = 1; i <= n; i++) {
+    sv.gachaPity = (sv.gachaPity || 0) + 1; let minR = sv.gachaPity >= GACHA.PITY_HARD ? GACHA.PITY_HARD_R : 0;
+    if (n === 10 && i === 10 && !gotHigh) minR = Math.max(minR, GACHA.PITY10);
+    const r = gachaRoll(minR); if (r >= GACHA.PITY10) gotHigh = true; if (r >= GACHA.PITY_HARD_R) sv.gachaPity = 0;
+    let tp = []; for (let rr = r; rr >= 0 && !tp.length; rr--) tp = pool.filter((d) => skillTier(d) === rr);
+    const d = pick(tp.length ? tp : pool); out.push(Object.assign(grantSkill(sv, d.id), { name: d.name }));
+  }
+  return out;
+}
 // 경매 · 창고에서 스킬 카드를 받을 때: 없으면 그대로, 이미 있으면 그 카드 레벨만큼 장수로 합친다 (룬은 돌려줌)
 function receiveSkill(sv, k) {
   if (!sv.skills.some((x) => x.id === k.id)) { k.rarity = skillTier(k.id); sv.skills.push(k); return; }
@@ -162,6 +178,8 @@ function receiveSkill(sv, k) {
 function migrateSkillTiers(sv) {
   if ((sv.skVer || 1) >= 2 || !sv.skills) return;
   const inLo = new Set((sv.loadout || []).filter(Boolean).map((l) => l.uid)), keep = {}, remap = {}, out = [];
+  let comp = sv.skills.length ? 900 : 0; for (const k of sv.skills) comp += 90 * Math.max(0, (k.rarity | 0) - skillTier(k.id));   // 보상: 소환 10연 10번 + 등급이 내려간 단계마다 10연 1번
+  if (comp) { sv.hone = (sv.hone || 0) + comp; sv.skComp = comp; }
   for (const k of sv.skills) {
     const K = keep[k.id]; if (!K) { keep[k.id] = k; out.push(k); continue; }
     let main = K, other = k; if (inLo.has(k.uid) && !inLo.has(K.uid)) { main = k; other = K; keep[k.id] = k; out[out.indexOf(K)] = k; }
@@ -734,7 +752,7 @@ function protectedItem(sv, it) {
 
 // ---- 일일 목표 / 오프라인 보상 / 기록 ----
 const DAILY_TASKS = [
-  { id: "kill", name: "몬스터 처치", n: 300, key: "kills", reward: { hone: 5, gold: 800 }, text: "연마석 5 · 800G" },
+  { id: "kill", name: "몬스터 처치", n: 300, key: "kills", reward: { hone: 5, gold: 800 }, text: "아르카나 조각 5 · 800G" },
   { id: "clear", name: "스테이지 클리어", n: 8, key: "clears", reward: { ore: 12 }, text: "강화석 12" },
   { id: "boss", name: "보스 처치", n: 3, key: "bosses", reward: { orbC: 1 }, text: "혼돈 구슬 1" },
   { id: "rift", name: "균열 클리어 (엔드게임)", n: 3, key: "rifts", reward: { orbD: 1, shards: 5 }, text: "신성한 구슬 1 · 균열 조각 5", endgame: true },

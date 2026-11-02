@@ -30,6 +30,22 @@ function openSkillShop() {
   } });
 }
 
+// ---------- 스킬 소환 (로블록스판 아르카나 소환) ----------
+function openSummon(res) {
+  const R = (r) => SKILL_RARITY[r], rates = GACHA.RATES.map((p, r) => `<span class="${R(r).cls}">${R(r).name} ${p}%</span>`).join(" · ");
+  const card = (g) => { const d = SKILLS.find((x) => x.id === g.id); const lab = g.new ? "NEW" : g.lvlUp ? `Lv.${g.lvlUp}!` : g.dupProg ? `${g.dupProg[0]}/${g.dupProg[1]}` : `+${g.dupHone}`;
+    return `<div class="sumc rk${g.rarity}" data-tips="${g.id}"><div class="sumi">${skillImg(d, 4)}</div><div class="${R(g.rarity).cls}" style="font-size:12px"><b>${d.name}</b></div><small class="${g.new || g.lvlUp ? "" : "dim"}">${lab}</small></div>`; };
+  const got = res ? `<div class="sumgrid">${res.map(card).join("")}</div>` : `<div class="dim center pad">같은 스킬이 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼). 스킬 등급은 스킬마다 정해져 있습니다.</div>`;
+  const pity = GACHA.PITY_HARD - (save.gachaPity || 0);
+  Modal.open(`<h2>스킬 소환</h2><div class="res">${iconImg("shard", 1)} 아르카나 조각 <b>${fmtN(save.hone)}</b></div>
+    <div class="dim center" style="font-size:12px;margin-top:30px">${rates}<br>10연 소환은 희귀 이상 1장 보장 · 전설 이상 확정까지 ${pity}회</div>${got}
+    <div class="center" style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri big" data-a="s1" ${save.hone < GACHA.ARC1 ? "disabled" : ""}>1회 소환<br><small>조각 ${GACHA.ARC1}</small></button><button class="btn pri big" data-a="s10" ${save.hone < GACHA.ARC10 ? "disabled" : ""}>10회 소환<br><small>조각 ${GACHA.ARC10}</small></button><button class="btn" data-a="gshop">골드 상점<br><small>일반 · 희귀</small></button></div>`, { cls: "wide", on: {
+    s1: () => { const r = gachaPull(save, 1); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); },
+    s10: () => { const r = gachaPull(save, 10); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); },
+    gshop: () => openSkillShop(),
+  } });
+}
+
 // ---------- 훈련소 (패시브 트리) ----------
 
 // ---------- 심연 각인 (엔드게임 재화 트리) ----------

@@ -73,7 +73,7 @@ function openTitle() {
 }
 function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
 function continueGame() {
-  const s = loadGame(); if (!s) return; save = s; AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
+  const s = loadGame(); if (!s) return; save = s; if (save.skComp) { const c = save.skComp; delete save.skComp; setTimeout(() => toast(`스킬 개편 보상: 아르카나 조각 ${fmtN(c)}개! 마을의 [스킬 소환]에서 쓰세요`, "ok"), 800); } AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
   if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
   if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
@@ -213,7 +213,7 @@ function townClick(s) {
   if (!s) return;
   if (s.soon) return openSoon(s);
   if (G.townAct < s.need) { toast(`액트 ${s.need} 마을에서 개방됩니다`); snd("error"); return; }
-  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSkillShop, trainer: openPassives, notice: openNotes, dummy: openDummy, raid: openRaid })[s.id]();
+  ({ skill: () => { SK.slot = 0; openSkills(); }, forge: () => openItems("forge"), board: openBoard, mail: openMail, shop: () => openItems("shop"), guild: openGuild, auction: openAuction, skillshop: openSummon, trainer: openPassives, notice: openNotes, dummy: openDummy, raid: openRaid })[s.id]();
 }
 function openSoon(s) { Modal.open(`<h2>${s.name}</h2><p class="center dim">다른 유저와 거래하는 장소입니다.<br>온라인 기능은 아직 준비 중입니다.</p>`, { cls: "sm" }); }
 
