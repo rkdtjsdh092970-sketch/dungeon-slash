@@ -1389,9 +1389,15 @@ local function tutSet(n) task.spawn(function() local ok, e = pcall(function() re
 -- 따라 하기 튜토리얼: 짚어 준 곳을 실제로 눌러야 다음으로 넘어간다 (버튼은 "튜토리얼 건너뛰기"뿐)
 -- guide(제목, 글, 찾기 함수, 완료 신호): 찾기 함수가 지금 눌러야 할 버튼을 돌려주면 금빛 테두리가 따라간다 (창이 바뀌면 다시 찾음)
 local tutStep, tutWait, tutNext
-local function findBtn(pred) for _, d in ipairs(gui:GetDescendants()) do if d:IsA("GuiButton") and d.Visible and pred(d) then return d end end end
+local function findBtn(pred)   -- 조건에 맞는 버튼 중 가장 작은 것 (창 뒤를 덮는 큰 바탕 버튼이 글자를 품고 있어도 진짜 버튼을 고르게)
+  local best, ba
+  for _, d in ipairs(gui:GetDescendants()) do
+    if d:IsA("GuiButton") and d.Visible and pred(d) then local a = d.AbsoluteSize.X * d.AbsoluteSize.Y; if not best or a < ba then best, ba = d, a end end
+  end
+  return best
+end
 local function hasText(d, t)
-  if d.Text and string.find(d:GetAttribute("_src") or d.Text, t, 1, true) then return true end
+  if d:IsA("TextButton") and string.find(d:GetAttribute("_src") or d.Text, t, 1, true) then return true end
   for _, l in ipairs(d:GetDescendants()) do if l:IsA("TextLabel") and string.find(l:GetAttribute("_src") or l.Text, t, 1, true) then return true end end
   return false
 end
