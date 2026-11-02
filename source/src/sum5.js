@@ -24,10 +24,11 @@ function openSummon() {
   } });
 }
 function sum5Reveal(res, from) {
-  const app = $("#app").getBoundingClientRect(), ov = document.createElement("div"); ov.className = "srv5"; $("#app").appendChild(ov);
-  const n0 = res.length, VH = app.height, VW = app.width, H = n0 === 1 ? VH * 0.5 : VH * 0.3, W = H * 2 / 3, gap = W * 0.12, rows = Math.ceil(n0 / 5);
+  const A0 = $("#app"), app = A0.getBoundingClientRect(), ov = document.createElement("div"); ov.className = "srv5"; A0.appendChild(ov);
+  const VW = A0.offsetWidth, VH = A0.offsetHeight, ks = app.width / VW || 1;   // 화면이 창에 맞춰 확대돼도 #app 안 좌표(확대 전)로 계산
+  const n0 = res.length, H = n0 === 1 ? VH * 0.5 : VH * 0.3, W = H * 2 / 3, gap = W * 0.12, rows = Math.ceil(n0 / 5);
   const slot = (i) => { const r0 = Math.floor(i / 5), c0 = i % 5, inRow = Math.min(5, n0 - r0 * 5); return [VW / 2 + (c0 - (inRow - 1) / 2) * (W + gap), VH / 2 + (r0 - (rows - 1) / 2) * (H + gap) - VH * 0.03]; };
-  const sx = from ? from.x - app.left : VW * 0.25, sy = from ? from.y - app.top : VH * 0.5;
+  const sx = from ? (from.x - app.left) / ks : VW * 0.25, sy = from ? (from.y - app.top) / ks : VH * 0.5;
   const lab = (g) => g.new ? "NEW" : g.lvlUp ? `Lv.${g.lvlUp}!` : g.dupProg ? `${g.dupProg[0]}/${g.dupProg[1]}` : `+${g.dupHone}`;
   const hint = document.createElement("div"); hint.className = "srh5"; hint.textContent = "누르면 한 번에 모두 뒤집습니다"; ov.appendChild(hint);
   let skip = false, done = false; const cards = [], T = [];

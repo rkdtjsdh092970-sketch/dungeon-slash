@@ -7098,7 +7098,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-074452";
+const BUILD_ID = "20261103-074632";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7819,10 +7819,11 @@ function openSummon() {
   } });
 }
 function sum5Reveal(res, from) {
-  const app = $("#app").getBoundingClientRect(), ov = document.createElement("div"); ov.className = "srv5"; $("#app").appendChild(ov);
-  const n0 = res.length, VH = app.height, VW = app.width, H = n0 === 1 ? VH * 0.5 : VH * 0.3, W = H * 2 / 3, gap = W * 0.12, rows = Math.ceil(n0 / 5);
+  const A0 = $("#app"), app = A0.getBoundingClientRect(), ov = document.createElement("div"); ov.className = "srv5"; A0.appendChild(ov);
+  const VW = A0.offsetWidth, VH = A0.offsetHeight, ks = app.width / VW || 1;   // 화면이 창에 맞춰 확대돼도 #app 안 좌표(확대 전)로 계산
+  const n0 = res.length, H = n0 === 1 ? VH * 0.5 : VH * 0.3, W = H * 2 / 3, gap = W * 0.12, rows = Math.ceil(n0 / 5);
   const slot = (i) => { const r0 = Math.floor(i / 5), c0 = i % 5, inRow = Math.min(5, n0 - r0 * 5); return [VW / 2 + (c0 - (inRow - 1) / 2) * (W + gap), VH / 2 + (r0 - (rows - 1) / 2) * (H + gap) - VH * 0.03]; };
-  const sx = from ? from.x - app.left : VW * 0.25, sy = from ? from.y - app.top : VH * 0.5;
+  const sx = from ? (from.x - app.left) / ks : VW * 0.25, sy = from ? (from.y - app.top) / ks : VH * 0.5;
   const lab = (g) => g.new ? "NEW" : g.lvlUp ? `Lv.${g.lvlUp}!` : g.dupProg ? `${g.dupProg[0]}/${g.dupProg[1]}` : `+${g.dupHone}`;
   const hint = document.createElement("div"); hint.className = "srh5"; hint.textContent = "누르면 한 번에 모두 뒤집습니다"; ov.appendChild(hint);
   let skip = false, done = false; const cards = [], T = [];
@@ -8057,6 +8058,9 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.20", date: "11/3", title: "소환 연출 위치 고침", items: [
+    "고침: 큰 화면(창에 맞춰 게임이 확대될 때)에서 소환 카드가 날아올 때와 10장이 줄 설 때 오른쪽 · 아래로 밀려 잘리던 것. 이제 화면 크기와 상관없이 가운데에 맞게 줄을 섭니다.",
+  ] },
   { ver: "5.19", date: "11/3", title: "소환 연출 고침", items: [
     "고침: 아르카나 소환에서 신화 · 사탄 카드가 화면 가운데로 커질 때 화면 밖으로 잘리던 것. 이제 화면 높이의 60% 크기로 딱 맞게 나오고, 나머지 카드는 뒤로 어둡게 가라앉습니다.",
   ] },
