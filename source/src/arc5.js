@@ -27,7 +27,7 @@ function setTabs5(kind, after) {
   return `<span class="set5"><b>세트</b>${[0, 1, 2].map((i) => `<button class="btn xs ${i === cur ? "gold" : ""}" data-set5="${kind}" data-i="${i}">${i + 1}</button>`).join("")}</span>`;
 }
 function arcPowerDelta(inst, slot) {   // 그 칸에 넣었을 때 전투력 변화
-  const lo0 = save.loadout.map((l) => l && Object.assign({}, l)), p0 = powerScore5(save);
+  const lo0 = save.loadout, p0 = powerScore5(save); save.loadout = lo0.map((l) => l && Object.assign({}, l));   // 복사본에서 계산 (원래 칸은 건드리지 않는다)
   const j = save.loadout.findIndex((l) => l && l.uid === inst.uid); if (j >= 0) save.loadout[j] = null;
   const dj = skillDupSlot(save, inst, slot); if (dj >= 0) save.loadout[dj] = null;
   save.loadout[slot] = { uid: inst.uid, rule: "front" }; const p1 = powerScore5(save); save.loadout = lo0; return p1 - p0;
