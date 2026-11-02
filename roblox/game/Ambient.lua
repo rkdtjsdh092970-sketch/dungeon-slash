@@ -136,7 +136,7 @@ function M.smoke(parent, x, y)
   local fx = mk("Frame", { Name = "Smoke", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = parent.ZIndex }, parent)
   local puffs = {}
   for i = 1, 7 do
-    local p = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = Color3.fromRGB(70, 64, 66), BorderSizePixel = 0, ZIndex = parent.ZIndex }, fx)
+    local p = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = Color3.fromRGB(38, 34, 36), BorderSizePixel = 0, ZIndex = parent.ZIndex }, fx)
     mk("UICorner", { CornerRadius = UDim.new(1, 0) }, p)
     puffs[i] = { f = p, life = (i - 1) / 7 }
   end
@@ -145,8 +145,8 @@ function M.smoke(parent, x, y)
       p.life += dt * 0.22; if p.life > 1 then p.life -= 1 end
       local l = p.life
       p.f.Position = UDim2.new(x + l * 0.12 + math.sin(t * 0.8 + l * 6) * 0.02, 0, y - l * 0.45, 0)
-      p.f.Size = UDim2.new(0.06 + l * 0.16, 0, 0.06 + l * 0.16, 0)
-      p.f.BackgroundTransparency = 0.45 + l * 0.55
+      p.f.Size = UDim2.new(0.05 + l * 0.12, 0, 0.05 + l * 0.12, 0)
+      p.f.BackgroundTransparency = 1 - 0.28 * math.sin(math.pi * l)   -- 투명하게 나타나 옅게 사라진다 (갑자기 터져 보이지 않게)
     end
   end)
   return fx
