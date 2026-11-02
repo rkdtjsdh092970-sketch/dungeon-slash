@@ -31,6 +31,7 @@ function P.run(seed, cls, freePulls, budget)
   local fam = cls == "mage" and "mag" or "phys"
   upkeep(sv, fam, rng)
   local battles, fails = 0, 0
+  local marks = {}   -- 120판마다 균열 최고층 (marks[2] = 240판)
   while battles < budget do
     battles += 1
     local r
@@ -43,9 +44,10 @@ function P.run(seed, cls, freePulls, budget)
       if fails >= 5 then fails = 0 end
     end
     upkeep(sv, fam, rng)
+    if battles % 120 == 0 then marks[battles // 120] = sv.rift.best end
     if battles % 5 == 0 then task.wait() end
   end
   local best = {}; for _, k in ipairs(sv.skills) do best[#best + 1] = k.id .. "r" .. (k.rarity or 0) .. "L" .. (k.lvl or 1) end
-  return { stage = sv.cleared or 0, rift = sv.rift.best, level = sv.level, power = Power.score(sv), skills = #sv.skills, sv = sv }
+  return { stage = sv.cleared or 0, rift = sv.rift.best, level = sv.level, power = Power.score(sv), skills = #sv.skills, marks = marks, sv = sv }
 end
 return P
