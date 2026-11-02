@@ -1,4 +1,4 @@
--- 스킬 역할별 기준선 보정 배율 (Battle.skillOf 에서 mult 에 곱함). 2026-11-02, 사용자 승인: 너프 없이 약한 스킬만 올림.
--- 계산: roblox/sim/skill_balance.lua — 값 = 실측 1회 배율(SkillTM) ÷ 쿨타임, 묶음 = 역할(기본·단일·관통/연쇄·범위·화면·장판·보스) × 해금 시기,
--- 묶음에서 가장 센 스킬의 85% 미만이면 그 선까지 (최대 x2.5, 지속형은 제곱근). 출혈·중독·점화가 기본으로 붙는 스킬은 측정에서 상태이상이 빠져 제외.
-return { bigshuriken = 2.500, boomer = 1.018, chain = 1.389, crush = 1.265, ember = 2.500, execute = 2.219, firemark = 2.494, firewall = 1.641, judgment = 2.500, meteor = 1.450, orbs = 1.217, rapid = 2.032, reaper = 1.006, rip = 1.949, shuriken = 1.965, smite = 1.793, snipe = 1.152, spirit = 2.500, stormmark = 1.986, strike = 1.763, thunder = 1.175, volley = 1.754 }
+-- 아르카나 역할별 기준선 보정 배율 (Battle.skillOf 에서 mult 에 곱함). 너프 없이 약한 것만 올림.
+-- 2026-11-03 재계산: 묶음 = 역할(평타 · 단일 · 관통/연쇄 · 범위 · 화면 · 장판 · 보스) × 고정 등급, 소환 · 관문 평타 · 시작 평타만 (보스 전용 특수 아르카나는 기준에서 제외).
+-- 값 = 실측 1회 배율(SkillTM) ÷ 쿨타임, 묶음에서 가장 센 것의 85% 미만이면 그 선까지 (한 번에 최대 x2.5, 지속형은 제곱근), 이전 배율에 곱함. 출혈 · 중독 · 점화 기본 아르카나는 제외.
+return { arcbolt = 1.825, arcchain = 1.991, arcmissiles = 2.500, arcward = 1.581, bigshuriken = 2.500, bomb = 1.069, boomer = 1.018, chain = 1.389, crush = 1.354, ember = 2.666, execute = 2.219, firemark = 2.494, firewall = 1.641, frostbolt = 1.994, galeshot = 2.057, giantmaul = 1.343, heavensplit = 1.360, iceshard = 2.500, judgment = 2.500, meteor = 1.625, orbs = 1.217, rapid = 2.240, reaper = 1.006, rip = 2.029, shuriken = 3.086, singularity = 1.070, skycleave = 1.140, skysword = 1.248, smite = 1.793, snipe = 1.175, spark = 1.090, spirit = 6.250, stormmark = 1.986, stormspear = 1.021, strike = 1.920, sweep = 1.347, thunder = 1.175, twinfang = 1.996, voidorb = 1.067, volley = 2.976, whirl = 1.378 }
