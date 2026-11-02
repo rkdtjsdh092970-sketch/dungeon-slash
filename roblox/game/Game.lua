@@ -105,7 +105,7 @@ function M.pickStart(sv, cls)
   local w = Loot.genItem(rng, sv, 1, 0, "weapon"); local T = Items.WTYPES[K.wt]
   w.wt = K.wt; w.base = {}; if (T.atk or 0) > 0 then w.base.atk = T.atk end; if (T.mag or 0) > 0 then w.base.mag = T.mag end
   sv.equipped.weapon = w
-  sv.skills = {}; sv.loadout = { false, false, false, false }; sv.slots = math.max(sv.slots or 3, 3)
+  sv.skills = {}; sv.loadout = { false, false, false, false }; sv.slots = math.max(sv.slots or 4, 4)
   for i, id in ipairs(K.skills) do local k = { uid = sv.nextUid, id = id, rarity = 0, lvl = 1 }; sv.nextUid += 1; sv.skills[i] = k; sv.loadout[i] = { uid = k.uid, rule = "front" } end
   sv.arcana = (sv.arcana or 0) + M.START_ARCANA; sv.startClass = cls; sv.needStart = false; sv.tut = 0   -- 튜토리얼 진행 (새 계정만, 0 → 끝나면 99)
   return true
@@ -436,9 +436,7 @@ function M.fight(sv, kind, n, seed)
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
-      if n >= 3 and sv.slots < 3 then sv.slots = 3; res.note = "3번 아르카나 칸이 열렸습니다!" end
       if n >= CFG.STAGES then
-        if sv.slots < 4 then sv.slots = 4; res.note = "4번 아르카나 칸이 열렸습니다!" end
         sv.lanesBase = CFG.ENDGAME_LANES; res.note = (res.note or "") .. " 스테이지 클리어! 영구 3레인과 '심연의 균열'이 열립니다."
       end
     end

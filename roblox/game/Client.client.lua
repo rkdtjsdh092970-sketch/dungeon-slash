@@ -1360,7 +1360,7 @@ local function coach(title, text, btns, target)
   corner(coachBox, 10); stroke(coachBox, GOLD, 2.5); mk("UIScale", { Scale = K }, coachBox); Skin.frame(coachBox, "ui_panel", 0.2, 0.5)
   local tl = mk("TextLabel", { Position = UDim2.new(0, 30, 0, 16), Size = UDim2.new(1, -60, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 22, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
   mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, tl)
-  mk("TextLabel", { Position = UDim2.new(0, 30, 0, 50), Size = UDim2.new(1, -60, 0, 96), BackgroundTransparency = 1, Text = text, TextSize = 16, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
+  mk("TextLabel", { Name = "Desc", Position = UDim2.new(0, 30, 0, 50), Size = UDim2.new(1, -60, 0, 96), BackgroundTransparency = 1, Text = text, TextSize = 16, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
   local row = mk("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -30, 1, -18), Size = UDim2.new(1, -32, 0, 40), BackgroundTransparency = 1, ZIndex = 47 }, coachBox)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i, bt in ipairs(btns) do local b = button(row, bt[1], UDim2.new(), UDim2.new(0, bt[3] or 130, 1, 0), bt[2], bt[4] or Color3.fromRGB(200, 150, 60)); b.LayoutOrder = i; b.ZIndex = 48; b.TextSize = 16 end
@@ -1377,7 +1377,7 @@ local function hasText(d, t)
   return false
 end
 local function skipAll() coachClose(); tutStep, tutWait, tutNext = nil, nil, nil; tutSet(99) end
-local function guide(title, text, finder, waitFor, nextFn)
+local function guide(title, text, finder, waitFor, nextFn, textFn)   -- textFn: 지금 화면에 맞는 안내 글 (단계 안에서 할 일이 바뀔 때)
   coach(title, text, { { "튜토리얼 건너뛰기", skipAll, 170, Color3.fromRGB(70, 66, 70) } })
   tutWait, tutNext = waitFor, nextFn
   local box = coachBox
@@ -1385,6 +1385,7 @@ local function guide(title, text, finder, waitFor, nextFn)
     local cur
     while coachBox == box and box.Parent do
       local t = finder and finder() or nil
+      if textFn then local d = box:FindFirstChild("Desc"); local tx = textFn(); if d and tx and d.Text ~= tx then d.Text = tx end end
       if t ~= cur then cur = t; if coachHl then coachHl:Destroy(); coachHl = nil end; if coachShade then coachShade:Destroy(); coachShade = nil end; if t then coach_hl(t) end end
       task.wait(0.3)
     end
@@ -1405,9 +1406,13 @@ tutorial = function(step)
   elseif step == 1 then
     guide("아르카나 소환", "시작 선물로 아르카나 조각 90개를 드렸어요. 위 메뉴의 [소환]을 열고 빛나는 [10회 소환]을 눌러 카드 10장을 뽑으세요. 다 보고 화면을 누르면 다음으로 넘어갑니다.",
       function() if panelLayer.Visible then return findBtn(function(d) return d.AbsoluteSize.Y > 40 and hasText(d, "10회 소환") end) end; return topBtn("m_gacha") end,
-      "pulled", function() tutorial(2) end)
+      "pulled", function() tutorial(2) end,
+      function()
+        if not panelLayer.Visible then return "① 시작 선물로 아르카나 조각 90개를 드렸어요.\n화면 위쪽 메뉴에서 빛나는 [소환] 아이콘(카드 덱 모양)을 누르세요." end
+        return "② 소환 창이 열렸어요. 오른쪽의 빛나는 [10회 소환] 버튼을 누르면 조각 90개로 아르카나 카드 10장을 뽑습니다.\n카드가 다 뒤집히면 화면을 한 번 더 눌러 닫으세요."
+      end)
   elseif step == 2 then
-    guide("아르카나 칸", "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 빛나는 새 카드를 누른 뒤 [N번 칸에]를 누르세요.",
+    guide("아르카나 칸", "전투에서는 위쪽 4칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 빛나는 새 카드를 누른 뒤 비어 있는 [4번 칸에]를 누르세요.",
       function()
         local pt = panelTitle:GetAttribute("_src") or panelTitle.Text
         if not panelLayer.Visible then return topBtn("m_skill") end

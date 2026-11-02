@@ -1638,6 +1638,43 @@ local function cardFace(card, r)
   local tg = lab(r.lvlUp and string.format("중복 · Lv %d", r.lvlUp) or (r.dupArc and string.format("최대 레벨 · 조각 +%d", r.dupArc)) or "NEW", 0.84, 0.07, (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120))
   if not (r.lvlUp or r.dupArc) then tg:SetAttribute("NoTr", true) end
 end
+-- 높은 등급 공개 연출 조각들 (그림 한 장 대신 빛줄기 · 충격파 · 불티 · 광택을 겹친다)
+local function zBump(g, d) g.ZIndex += d; for _, c in ipairs(g:GetDescendants()) do if c:IsA("GuiObject") then c.ZIndex += d end end end
+local function rays(parent, x, y, size, col, z, n, spin)   -- 가운데서 뻗는 빛줄기 (천천히 돈다)
+  local hub = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, size * 0.2, 0, size * 0.2), BackgroundTransparency = 1, ZIndex = z }, parent)
+  for i = 1, n do
+    local piv = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Rotation = (i - 1) * 360 / n, ZIndex = z }, hub)
+    local r = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new((i % 2 == 0) and 0.03 or 0.07, 0, 0.5, 0), BackgroundColor3 = col, BorderSizePixel = 0, ZIndex = z }, piv)
+    mk("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.6, 0.55), NumberSequenceKeypoint.new(1, 0.1) }) }, r)
+  end
+  TweenService:Create(hub, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, size, 0, size) }):Play()
+  TweenService:Create(hub, TweenInfo.new(math.abs(spin or 9), Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = (spin or 9) > 0 and 360 or -360 }):Play()
+  return hub
+end
+local function shock(parent, x, y, from, to, col, z, dur, thick)   -- 퍼지는 충격파 고리
+  local f = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, from, 0, from), BackgroundTransparency = 1, ZIndex = z }, parent)
+  mk("UICorner", { CornerRadius = UDim.new(0.5, 0) }, f)
+  local st = mk("UIStroke", { Color = col, Thickness = thick or 6, Transparency = 0 }, f)
+  TweenService:Create(f, TweenInfo.new(dur, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, to, 0, to) }):Play()
+  TweenService:Create(st, TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Transparency = 1, Thickness = 1 }):Play()
+  task.delay(dur + 0.05, function() f:Destroy() end)
+end
+local function sparks(parent, x, y, n, col, z, dist, dur)   -- 사방으로 튀는 마름모 불티
+  for _ = 1, n do
+    local a = math.random() * math.pi * 2; local d = dist * (0.45 + math.random() * 0.75); local sz = math.random(4, 11)
+    local p = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, sz, 0, sz), Rotation = 45, BackgroundColor3 = col:Lerp(Color3.new(1, 1, 1), math.random() * 0.6), BorderSizePixel = 0, ZIndex = z }, parent)
+    local t = (dur or 0.9) * (0.7 + math.random() * 0.6)
+    TweenService:Create(p, TweenInfo.new(t, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, x + math.cos(a) * d, 0, y + math.sin(a) * d + d * 0.25), BackgroundTransparency = 1, Size = UDim2.new(0, 2, 0, 2), Rotation = 45 + math.random(-200, 200) }):Play()
+    task.delay(t + 0.05, function() p:Destroy() end)
+  end
+end
+local function shine(card, z)   -- 카드 위를 쓸고 지나가는 광택
+  local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ZIndex = z }, card)
+  mk("UICorner", { CornerRadius = UDim.new(0, 10) }, f)
+  local g = mk("UIGradient", { Rotation = 25, Offset = Vector2.new(-1, 0), Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.42, 1), NumberSequenceKeypoint.new(0.5, 0.25), NumberSequenceKeypoint.new(0.58, 1), NumberSequenceKeypoint.new(1, 1) }) }, f)
+  TweenService:Create(g, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), { Offset = Vector2.new(1, 0) }):Play()
+  task.delay(0.75, function() f:Destroy() end)
+end
 local function revealResults(res, from)
   local sg = C.list:FindFirstAncestorWhichIsA("ScreenGui")
   local vs = sg.AbsoluteSize
@@ -1663,19 +1700,66 @@ local function revealResults(res, from)
     local card, r = cards[i], res[i]; if not card or card:GetAttribute("Open") then return end
     card:SetAttribute("Open", true)
     local w0 = card.Size
+    if r.rarity >= 3 and not skip then   -- 뒤집기 전: 뒷면이 점점 세게 떨린다
+      local p0 = card.Position
+      for k = 1, 14 do card.Position = p0 + UDim2.new(0, math.random(-k, k) * 0.35, 0, math.random(-k, k) * 0.35); task.wait(0.03) end
+      card.Position = p0
+    end
     local t1 = TweenService:Create(card, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.new(0, 2, w0.Y.Scale, w0.Y.Offset) }); t1:Play(); t1.Completed:Wait()
     if auras[i] then auras[i]:Destroy() end
     cardFace(card, r)
     TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = w0 }):Play()
-    if r.rarity >= 2 then
-      local b = img(ov, "card_burst" .. math.min(4, r.rarity), { AnchorPoint = Vector2.new(0.5, 0.5), Position = card.Position, Size = UDim2.new(0, W * 0.8, 0, W * 0.8), ZIndex = 81 })
-      if b then local g = 1.8 + 0.4 * (r.rarity - 2); local t = TweenService:Create(b, TweenInfo.new(0.6 + 0.2 * (r.rarity - 2), Enum.EasingStyle.Quad), { Size = UDim2.new(0, W * g * 1.2, 0, W * g * 1.2), ImageTransparency = 0.5 }); t:Play() end
-    end
-    if r.rarity >= 3 and not skip then
-      local fl = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = r.rarity >= 4 and Color3.fromRGB(255, 60, 40) or Color3.new(1, 1, 1), BackgroundTransparency = 0.3, BorderSizePixel = 0, ZIndex = 95 }, ov)
-      TweenService:Create(fl, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play(); task.delay(0.55, function() fl:Destroy() end)
+    local col = M.SK_RCOL[r.rarity + 1]
+    local cx, cy = card.Position.X.Offset, card.Position.Y.Offset
+    if r.rarity == 2 or (r.rarity >= 3 and skip) then   -- 전설 (또는 넘기기): 제자리에서 충격파 · 불티 · 광택
+      shock(ov, cx, cy, W * 0.6, W * 2.4, col, 81, 0.6, 5); sparks(ov, cx, cy, 16, col, 87, W * 1.3, 0.8); shine(card, 87)
+    elseif r.rarity >= 3 then   -- 신화 이상: 카드가 화면 앞으로 크게 다가오며 폭발 → 잠시 보여 준 뒤 제자리로
+      local satan = r.rarity >= 4
+      local mx, my = vs.X / 2, vs.Y * 0.5; local BH = vs.Y * 0.6; local BW = BH * 2 / 3
+      local dim = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = satan and Color3.fromRGB(30, 0, 0) or Color3.new(0, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 88 }, ov)
+      TweenService:Create(dim, TweenInfo.new(0.25), { BackgroundTransparency = 0.25 }):Play()
+      zBump(card, 12)
+      local glow = C.Sprites.art("fx_glow")
+      local halo = glow and mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, mx, 0, my), Size = UDim2.new(0, BW * 1.2, 0, BW * 1.2), BackgroundTransparency = 1, ImageContent = glow.content, ImageColor3 = col, ImageTransparency = 1, ZIndex = 89 }, ov)
+      TweenService:Create(card, TweenInfo.new(0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Position = UDim2.new(0, mx, 0, my), Size = UDim2.new(0, BW, 0, BH) }):Play()
+      task.wait(0.3)
+      local fl = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = satan and Color3.fromRGB(255, 70, 40) or Color3.new(1, 1, 1), BackgroundTransparency = 0.15, BorderSizePixel = 0, ZIndex = 110 }, ov)
+      TweenService:Create(fl, TweenInfo.new(0.45), { BackgroundTransparency = 1 }):Play(); task.delay(0.5, function() fl:Destroy() end)
+      local hub = rays(ov, mx, my, BH * 1.9, col:Lerp(Color3.new(1, 1, 1), 0.25), 89, 16, satan and 5 or 9)
+      local hub2 = rays(ov, mx, my, BH * 1.4, col, 89, 10, satan and -7 or -13)
+      if halo then
+        TweenService:Create(halo, TweenInfo.new(0.3), { ImageTransparency = 0.15, Size = UDim2.new(0, BW * 2.6, 0, BW * 2.6) }):Play()
+        task.delay(0.3, function() if halo.Parent then TweenService:Create(halo, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.45 }):Play() end end)
+      end
+      for k = 0, 2 do task.delay(k * 0.14, function() if ov.Parent then shock(ov, mx, my, BW * 0.7, BH * (2.2 + k * 0.5), k == 1 and Color3.new(1, 1, 1) or col, 90, 0.75 + k * 0.1, 8 - k * 2) end end) end
+      sparks(ov, mx, my, satan and 60 or 42, col, 100, BH * 0.95, 1.1)
+      task.delay(0.35, function() if ov.Parent then sparks(ov, mx, my, 24, Color3.fromRGB(255, 230, 160), 100, BH * 0.7, 1.3) end end)
+      shine(card, 105)
+      -- 등급 글자: 크게 떨어지며 쾅
+      local stamp = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, mx, 0, my - BH * 0.58), Size = UDim2.new(0, BW * 2.2, 0, BH * 0.15), BackgroundTransparency = 1, Text = M.SK_RAR[r.rarity + 1], TextScaled = true, Font = M.FONT, TextColor3 = col:Lerp(Color3.new(1, 1, 1), 0.35), TextTransparency = 1, ZIndex = 106 }, ov)
+      mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, stamp)
+      local sc = mk("UIScale", { Scale = 2.6 }, stamp)
+      TweenService:Create(sc, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+      TweenService:Create(stamp, TweenInfo.new(0.2), { TextTransparency = 0 }):Play()
+      -- 흔들림 (사탄은 더 세게, 오래)
+      task.spawn(function()
+        local p0 = UDim2.new(0, mx, 0, my); local amp, nn = satan and 14 or 6, satan and 18 or 8
+        for k = 1, nn do if not card.Parent then return end; local f = 1 - k / nn; card.Position = p0 + UDim2.new(0, math.random(-amp, amp) * f, 0, math.random(-amp, amp) * f); task.wait(0.03) end
+        card.Position = p0
+      end)
       C.toast(string.format("%s 등급! %s", M.SK_RAR[r.rarity + 1], r.name))
-      if r.rarity >= 4 then task.spawn(function() local p0 = card.Position; for _ = 1, 10 do card.Position = p0 + UDim2.new(0, math.random(-8, 8), 0, math.random(-6, 6)); task.wait(0.03) end; card.Position = p0 end) end
+      -- 보여 주기 (화면을 누르면 바로 넘어감)
+      local t0 = os.clock(); while os.clock() - t0 < (satan and 2.2 or 1.7) and not skip and ov.Parent do task.wait(0.05) end
+      if not ov.Parent then return end
+      TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut), { Position = UDim2.new(0, cx, 0, cy), Size = w0 }):Play()
+      TweenService:Create(dim, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
+      TweenService:Create(stamp, TweenInfo.new(0.3), { TextTransparency = 1 }):Play()
+      if halo then TweenService:Create(halo, TweenInfo.new(0.3), { ImageTransparency = 1 }):Play() end
+      for _, h in ipairs({ hub, hub2 }) do TweenService:Create(h, TweenInfo.new(0.3), { Size = UDim2.new(0, 0, 0, 0) }):Play() end
+      task.wait(0.36)
+      for _, g in ipairs({ dim, stamp, halo, hub, hub2 }) do if g then g:Destroy() end end
+      zBump(card, -12)
+      shock(ov, cx, cy, W * 0.6, W * 1.8, col, 81, 0.5, 4)
     end
     revealed += 1
   end
@@ -1704,8 +1788,8 @@ local function revealResults(res, from)
     -- 2) 차례로 뒤집기 (높은 등급 뒤에는 잠깐 멈춤)
     for i = 1, n0 do
       if not ov.Parent then return end
-      task.spawn(flip, i)
-      if not skip then task.wait(res[i].rarity >= 3 and 0.6 or 0.14) end
+      if res[i].rarity >= 3 and not skip then task.wait(0.3); flip(i); task.wait(0.2)   -- 신화 이상: 뜸 들인 뒤 큰 연출, 끝날 때까지 기다림
+      else task.spawn(flip, i); if not skip then task.wait(0.14) end end
     end
     task.wait(0.3); finish()
   end)
