@@ -1,4 +1,5 @@
 # 로블록스 이식 — 인수인계
+n> **먼저 볼 것**: `roblox/pending/TODO_ROBLOX.md` — 웹에서 먼저 고친 것 중 로블록스에 옮길 목록 (계정 정지 중 모아 둔 것, 패치 포함).
 
 ## 목표
 웹 게임 Dungeon Slash(2D 도트 핵앤슬래시)를 Roblox 로 이식. 솔로 콘텐츠 + 길드(개선) 포함, 경매장 제외. 수익화 구조는 `MONETIZATION.md`.
