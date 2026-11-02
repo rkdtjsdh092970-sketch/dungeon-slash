@@ -45,6 +45,29 @@ local function txt(parent, text, size, pos, sz, color, font, xa)
     TextXAlignment = xa or Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top }, parent)
 end
 -- 아이콘 타일: 등급 테두리 · 아이콘(그림 없으면 이모지/글자) · 왼쪽 위/오른쪽 아래 작은 글자
+local tipGui, tipBox, tipTitle, tipBody, tipConn
+local function tipShow(t)
+  local Players = game:GetService("Players")
+  if not tipGui then
+    tipGui = mk("ScreenGui", { Name = "DungeonTip", DisplayOrder = 60, IgnoreGuiInset = true, ResetOnSpawn = false }, Players.LocalPlayer.PlayerGui)
+    pcall(function() require(script.Parent.Lang).watch(tipGui) end)
+    tipBox = mk("Frame", { Size = UDim2.new(0, 300, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(14, 11, 20), BackgroundTransparency = 0.04, Visible = false, ZIndex = 50 }, tipGui)
+    corner(tipBox, 8); stroke(tipBox, M.GOLD, 1.5)
+    mk("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, tipBox)
+    mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, tipBox)
+    tipTitle = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextWrapped = true, Font = M.FONT, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 1, ZIndex = 51, Text = "" }, tipBox)
+    tipBody = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextWrapped = true, Font = M.BODY, TextSize = 13, TextColor3 = Color3.fromRGB(225, 220, 240), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2, ZIndex = 51, Text = "" }, tipBox)
+  end
+  tipTitle.Text = t.title or ""; tipTitle.TextColor3 = t.color or Color3.new(1, 1, 1); tipBody.Text = table.concat(t.lines or {}, "\n"); tipBox.Visible = true
+  if tipConn then tipConn:Disconnect() end
+  tipConn = game:GetService("RunService").RenderStepped:Connect(function()
+    local m = UIS:GetMouseLocation(); local vp = workspace.CurrentCamera.ViewportSize; local sz = tipBox.AbsoluteSize
+    local x = m.X + 18; if x + sz.X > vp.X - 8 then x = m.X - sz.X - 12 end
+    local y = math.clamp(m.Y - 10, 8, math.max(8, vp.Y - sz.Y - 8)); tipBox.Position = UDim2.new(0, x, 0, y)
+  end)
+end
+local function tipHide() if tipBox then tipBox.Visible = false end; if tipConn then tipConn:Disconnect(); tipConn = nil end end
+M.tipShow, M.tipHide = tipShow, tipHide
 function M.tile(parent, size, o)
   local col = o.color or M.RAR[(o.rarity or 0) + 1] or M.RAR[1]
   local b = mk("TextButton", { Size = UDim2.new(0, size, 0, size), BackgroundColor3 = Color3.fromRGB(26, 20, 44), Text = "", AutoButtonColor = false, LayoutOrder = o.order or 0 }, parent)
@@ -58,7 +81,8 @@ function M.tile(parent, size, o)
   if o.br then local l = txt(b, o.br, 13, UDim2.new(0, 2, 1, -18), UDim2.new(1, -6, 0, 16), Color3.fromRGB(120, 255, 140), M.FONT, Enum.TextXAlignment.Right); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
   if o.check then local c = mk("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = M.FONT, TextSize = 14 }, b); corner(c) end
   b.MouseEnter:Connect(function() st.Thickness = 4 end); b.MouseLeave:Connect(function() st.Thickness = o.selected and 4 or 2.5 end)
-  if o.click then b.MouseButton1Click:Connect(o.click) end
+  if o.click then b.MouseButton1Click:Connect(function() tipHide(); o.click() end) end
+  if o.tip then b.MouseEnter:Connect(function() tipShow(o.tip) end); b.MouseLeave:Connect(tipHide); b.AncestryChanged:Connect(function(_, par) if not par then tipHide() end end) end
   return b
 end
 -- 화면 영역: 창의 내용 목록 안에 고정 높이 판을 하나 만든다
@@ -106,7 +130,7 @@ function M.inv()
   mk("UIGridLayout", { CellSize = UDim2.new(0, 64, 0, 64), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, eg)
   for i, slot in ipairs(Items.EQ_SLOTS) do
     local e = bySlot[slot]
-    M.tile(eg, 64, { order = i, art = SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
+    M.tile(eg, 64, { order = i, tip = e and { title = e.title, color = itemColor(e), lines = e.lines } or nil, art = SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
       tl = e and (e.enh > 0 and ("+" .. e.enh) or nil), label = not e and Items.SLOT_NAME[slot] or nil, selected = e and invSel == e.uid,
       click = function() if e then invSel = e.uid; M.inv() end end })
   end
@@ -117,7 +141,7 @@ function M.inv()
   local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), string.format("가방 %d개", #inv))
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -78), 62)
   for i, it in ipairs(inv) do
-    M.tile(g, 62, { order = i, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
+    M.tile(g, 62, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
       selected = (not invMulti and invSel == it.uid) or (invMulti and invPick[it.uid]), check = invMulti and invPick[it.uid] or nil,
       click = function() if invMulti then invPick[it.uid] = not invPick[it.uid] or nil else invSel = it.uid end; M.inv() end })
   end
@@ -182,7 +206,7 @@ function M.skills()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i = 1, slots do
     local k = inSlot[i]; local d = k and SK_BY[k.id]
-    M.tile(row, 86, { order = i, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), emoji = k and skIcon(d) or tostring(i), dim = not k,
+    M.tile(row, 86, { order = i, tip = k and { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } } or nil, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), emoji = k and skIcon(d) or tostring(i), dim = not k,
       label = k and k.name or "빈 칸", tl = k and ("Lv" .. k.lvl) or nil, selected = k and skSel == k.uid, click = function() if k then skSel = k.uid; M.skills() end end })
   end
   -- 아래: 보유 스킬
@@ -190,7 +214,7 @@ function M.skills()
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
   for i, k in ipairs(rows) do
     local d = SK_BY[k.id]
-    M.tile(g, 76, { order = i, color = skColor(d), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
+    M.tile(g, 76, { order = i, tip = { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } }, color = skColor(d), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
   end
   -- 오른쪽: 상세
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "스킬 정보")
@@ -426,7 +450,7 @@ function M.shop()
   for i, row in ipairs(rows) do
     if row.id == shopSel then sel = row end
     local col, icon = M.skStyle(row.id)
-    M.tile(g, 84, { order = i, color = col, emoji = icon, label = row.name, br = n(row.price), selected = row.id == shopSel, click = function() shopSel = row.id; M.shop() end })
+    M.tile(g, 84, { order = i, tip = { title = row.name, color = col, lines = { row.desc or "", string.format("가격 %s 골드", n(row.price)) } }, color = col, emoji = icon, label = row.name, br = n(row.price), selected = row.id == shopSel, click = function() shopSel = row.id; M.shop() end })
   end
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "스킬 정보")
   if not sel then txt(D, "스킬을 눌러 설명을 보고 골드로 구매하세요. 산 스킬은 [스킬 정비소]에서 장착합니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 80), Color3.fromRGB(190, 185, 210)); return end
@@ -630,7 +654,7 @@ function M.stash()
     local B = box(A, UDim2.new(x, x > 0 and 4 or 0, 0, 0), UDim2.new(0.5, -4, 1, 0), title)
     local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, to == "stash" and -36 or -80), 60)
     for i, it in ipairs(list) do
-      local t = M.tile(g, 60, { order = i, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
+      local t = M.tile(g, 60, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
         click = function() local e = C.rpc:InvokeServer("stashmove", { uid = it.uid, to = to }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end })
       t.MouseEnter:Connect(function() C.msg.Text = it.title .. " · " .. table.concat(it.lines or {}, " · ") end)
     end
@@ -667,6 +691,49 @@ function M.presetBar(parent, pos, size)
     end)
   end); sv.LayoutOrder = 9
   return f
+end
+
+-- ───────── 기록 ─────────
+function M.records()
+  C.clear()
+  local r = C.rpc:InvokeServer("records"); if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local A = area(392)
+  local B = box(A, UDim2.new(0.2, 0, 0, 0), UDim2.new(0.6, 0, 1, 0), "기록")
+  local lst = mk("Frame", { Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -32, 1, -44), BackgroundTransparency = 1 }, B)
+  mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
+  for i, row in ipairs(r.view.rows) do
+    local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 24), BackgroundColor3 = i % 2 == 0 and Color3.fromRGB(36, 32, 46) or Color3.fromRGB(28, 25, 36), LayoutOrder = i }, lst); corner(f, 4)
+    txt(f, row[1], 14, UDim2.new(0, 10, 0, 3), UDim2.new(0.6, 0, 1, 0), Color3.fromRGB(205, 200, 225))
+    txt(f, row[2], 14, UDim2.new(0.6, 0, 0, 3), UDim2.new(0.4, -10, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right)
+  end
+end
+
+-- ───────── 도감: 모든 스킬 (보유 여부 · 설명) ─────────
+local codexFilter = "all"
+function M.codex()
+  C.clear()
+  local r = C.rpc:InvokeServer("records"); local owned = (r.view and r.view.owned) or {}
+  local A = area(392)
+  local bar = mk("Frame", { Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1 }, A)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+  local F = { { "all", "전체" }, { "basic", "기본 공격" }, { "fire", "화염" }, { "cold", "냉기" }, { "light", "번개" }, { "void", "공허" }, { "phys", "물리" } }
+  for i, f in ipairs(F) do local b = M.btn(bar, f[2], UDim2.new(0, 96, 1, 0), codexFilter == f[1] and M.BTN.gold or M.BTN.purple, function() codexFilter = f[1]; M.codex() end); b.LayoutOrder = i end
+  local list, have = {}, 0
+  for _, d in ipairs(Skills.SKILLS) do
+    if d.id ~= "p_none" then
+      local ok = codexFilter == "all" or (codexFilter == "basic" and d.slot == "basic") or (codexFilter == "phys" and d.slot ~= "basic" and not d.elem) or d.elem == codexFilter
+      if ok then list[#list + 1] = d; if owned[d.id] then have += 1 end end
+    end
+  end
+  local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), string.format("스킬 %d / %d 보유", have, #list))
+  local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
+  for i, d in ipairs(list) do
+    local col, icon = M.skStyle(d.id)
+    local info = { d.desc or "" }
+    if d.cd then info[#info + 1] = string.format("쿨타임 %.1f초", d.cd) end
+    info[#info + 1] = owned[d.id] and "보유 중" or "미보유"
+    M.tile(g, 76, { order = i, color = col, emoji = icon, label = d.name, dim = not owned[d.id], check = owned[d.id] or nil, tip = { title = d.name, color = col, lines = info } })
+  end
 end
 
 return M

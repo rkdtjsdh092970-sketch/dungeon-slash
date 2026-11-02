@@ -159,6 +159,17 @@ function M.statsView(sv)
   return G
 end
 function M.atlasBuy(sv, id) return Econ.atlasBuy(sv, id) end
+-- 기록 (웹 openRecords)
+function M.records(sv)
+  local st = sv.stats or {}
+  local owned = {}; for _, k in ipairs(sv.skills) do owned[k.id] = true end
+  return { rows = {
+    { "레벨", tostring(sv.level) }, { "처치한 몬스터", tostring(st.kills or 0) }, { "클리어한 전투", tostring(st.clears or 0) },
+    { "스테이지", string.format("%d/5", sv.cleared or 0) }, { "균열 최고층", string.format("%d층", sv.rift and sv.rift.best or 0) },
+    { "솟아난 탑 최고층", string.format("%d층", sv.spire and sv.spire.best or 0) }, { "무한 균열 최고 웨이브", tostring(sv.endless and sv.endless.best or 0) },
+    { "문지기 처치", (sv.raid and (sv.raid.cleared or 0) > 0) and "예" or "아니오" }, { "전직", string.format("%d차", sv.cls or 0) },
+    { "보유 장비", tostring(#sv.inv) }, { "보유 스킬", tostring(#sv.skills) }, { "균열 조각", tostring(sv.shards or 0) } }, owned = owned }
+end
 function M.skillClean(sv, rules, keepBest)
   local busy = {}
   if sv.passive then busy[sv.passive] = true end

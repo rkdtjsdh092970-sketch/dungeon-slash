@@ -190,6 +190,7 @@ local handle = function(player, action, arg)
   elseif action == "sockroll" then local ok, m = Game.sockRoll(sv, tonumber(arg)); return { ok = ok, msg = m, rows = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "sockdel" then local ok, m = Game.sockDel(sv, tonumber(arg.uid), tonumber(arg.idx)); return { ok = ok, msg = m, rows = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "skillclean" then return { res = Game.skillClean(sv, type(arg) == "table" and arg.rules or {}, type(arg) == "table" and arg.best ~= false), summary = Game.summary(sv) }
+  elseif action == "records" then return { view = Game.records(sv), summary = Game.summary(sv) }
   elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }
