@@ -1620,15 +1620,15 @@ local deckRef   -- 소환 창 왼쪽 카드 덱 (카드가 나오는 자리)
 local function cardFace(card, r)
   card:ClearAllChildren()
   local col = M.SK_RCOL[r.rarity + 1]; local scol, icon = M.skStyle(r.id)
-  local face = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 26), ZIndex = 83 }, card); corner(face, 10)
+  local face = mk("Frame", { Position = UDim2.new(0.12, 0, 0.09, 0), Size = UDim2.new(0.76, 0, 0.82, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 26), BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 83 }, card)   -- 그림은 테두리 안쪽에만 (밖으로 삐져나오거나 검은 바탕이 보이지 않게)
   mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.6), Color3.fromRGB(14, 10, 20)), Rotation = 90 }, face)
   local ca = C.Sprites.art("card_s_" .. tostring(r.id))
   if ca then
-    mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ZIndex = 84 }, face)
-    local band = mk("Frame", { Position = UDim2.new(0.07, 0, 0.58, 0), Size = UDim2.new(0.86, 0, 0.37, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 84 }, face)
+    mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ZIndex = 84 }, face)
+    local band = mk("Frame", { Position = UDim2.new(0, 0, 0.6, 0), Size = UDim2.new(1, 0, 0.4, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 84 }, face)
     mk("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.35, 0.35), NumberSequenceKeypoint.new(1, 0.15) }) }, band)
-  else mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.18, 0, 0.14, 0), Size = UDim2.new(0.64, 0, 0.42, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol, ZIndex = 84 }, face) end
-  if not img(card, "card_f" .. math.min(4, r.rarity), { Size = UDim2.new(1, 0, 1, 0), ZIndex = 85 }) then stroke(face, col, 3) end
+  else mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.1, 0, 0.08, 0), Size = UDim2.new(0.8, 0, 0.5, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol, ZIndex = 84 }, face) end
+  if not img(card, "card_f" .. math.min(4, r.rarity), { Size = UDim2.new(1, 0, 1, 0), ZIndex = 85 }) then stroke(face, col, 3); face.Position = UDim2.new(); face.Size = UDim2.new(1, 0, 1, 0) end
   local function lab(text, y, h, c)
     local l = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.06, 0, y, 0), Size = UDim2.new(0.88, 0, h, 0), Text = text, TextScaled = true, Font = M.FONT, TextColor3 = c, ZIndex = 86 }, card)
     mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l); return l
@@ -1693,20 +1693,14 @@ local function revealResults(res, from)
   end
   local sx, sy = vs.X * 0.25, vs.Y * 0.5
   if from then sx, sy = from.X, from.Y elseif deckRef and deckRef.Parent then local p = deckRef.AbsolutePosition + deckRef.AbsoluteSize / 2; sx, sy = p.X, p.Y end
-  local cards, auras = {}, {}
+  local cards = {}
   local revealed, done, skip = 0, false, false
   local hint = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.new(0, 400, 0, 24), BackgroundTransparency = 1, Text = "화면을 누르면 한꺼번에 공개", Font = M.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(200, 190, 220), ZIndex = 90 }, ov)
   local function flip(i)
     local card, r = cards[i], res[i]; if not card or card:GetAttribute("Open") then return end
     card:SetAttribute("Open", true)
     local w0 = card.Size
-    if r.rarity >= 3 and not skip then   -- 뒤집기 전: 뒷면이 점점 세게 떨린다
-      local p0 = card.Position
-      for k = 1, 14 do card.Position = p0 + UDim2.new(0, math.random(-k, k) * 0.35, 0, math.random(-k, k) * 0.35); task.wait(0.03) end
-      card.Position = p0
-    end
     local t1 = TweenService:Create(card, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.new(0, 2, w0.Y.Scale, w0.Y.Offset) }); t1:Play(); t1.Completed:Wait()
-    if auras[i] then auras[i]:Destroy() end
     cardFace(card, r)
     TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = w0 }):Play()
     local col = M.SK_RCOL[r.rarity + 1]
@@ -1775,20 +1769,13 @@ local function revealResults(res, from)
       if not img(card, "card_back", { Size = UDim2.new(1, 0, 1, 0), ZIndex = 83 }) then local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(40, 16, 22), ZIndex = 83 }, card); corner(f, 10) end
       cards[i] = card
       TweenService:Create(card, TweenInfo.new(skip and 0.01 or 0.32, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, W, 0, H), Rotation = 0 }):Play()
-      if r.rarity >= 2 then   -- 뒷면에서 새어 나오는 등급 기운
-        task.delay(0.3, function()
-          if card:GetAttribute("Open") or not ov.Parent then return end
-          local bz = img(ov, "card_burst" .. math.min(4, r.rarity), { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, W * 1.5, 0, W * 1.5), ImageTransparency = 0.8, ZIndex = 81 })
-          if bz then auras[i] = bz; TweenService:Create(bz, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.5, Rotation = 10 }):Play() end
-        end)
-      end
       if not skip then task.wait(n0 == 1 and 0.05 or 0.08) end
     end
     if not skip then task.wait(0.45) end
     -- 2) 차례로 뒤집기 (높은 등급 뒤에는 잠깐 멈춤)
     for i = 1, n0 do
       if not ov.Parent then return end
-      if res[i].rarity >= 3 and not skip then task.wait(0.3); flip(i); task.wait(0.2)   -- 신화 이상: 뜸 들인 뒤 큰 연출, 끝날 때까지 기다림
+      if res[i].rarity >= 3 and not skip then flip(i); task.wait(0.2)   -- 신화 이상: 뒤집힌 뒤 큰 연출, 끝날 때까지 기다림 (뒷면에서는 등급을 알 수 없다)
       else task.spawn(flip, i); if not skip then task.wait(0.14) end end
     end
     task.wait(0.3); finish()
@@ -1878,7 +1865,7 @@ function M.gachalist()
   C.clear()
   local r = C.rpc:InvokeServer("gacha"); if r.err or not r.view then C.msg.Text = tostring(r.err); return end
   local v = r.view; local list = v.list or {}
-  table.sort(list, function(a, b) if a.unlock ~= b.unlock then return a.unlock < b.unlock end; return a.id < b.id end)
+  table.sort(list, function(a, b) if (a.tier or 0) ~= (b.tier or 0) then return (a.tier or 0) < (b.tier or 0) end; if a.unlock ~= b.unlock then return a.unlock < b.unlock end; return a.id < b.id end)
   local A = area(392)
   local own = 0; for _, e in ipairs(list) do if e.own then own += 1 end end
   local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), string.format("소환 가능한 아르카나 %d종 · 보유 %d종", #list, own))
@@ -1886,12 +1873,11 @@ function M.gachalist()
   for i, e in ipairs(list) do
     local d = SK_BY[e.id]
     if d then
-      local locked = e.unlock > (v.act or 1)
-      local lines = { d.desc or "" }
-      if locked then lines[#lines + 1] = string.format("레벨 %d부터 소환에 나옵니다", (e.unlock - 1) * 10) end
-      if e.own then lines[#lines + 1] = string.format("보유: %s", M.SK_RAR[e.own + 1] or "") end
-      M.tile(g, 84, { order = i, tip = { title = d.name, color = skColor(d), lines = lines }, color = e.own and M.SK_RCOL[e.own + 1] or skColor(d), art = skArt(e.id), emoji = skIcon(d), label = d.name, dim = locked,
-        tl = locked and "🔒" or nil, br = e.own and M.SK_RAR[e.own + 1] or nil })
+      local t = e.tier or 0
+      local lines = { string.format("%s 등급", M.SK_RAR[t + 1] or ""), d.desc or "" }
+      if e.own then lines[#lines + 1] = string.format("보유: Lv %d", e.lvl or 1) else lines[#lines + 1] = "아직 없음" end
+      M.tile(g, 84, { order = i, tip = { title = d.name, color = M.SK_RCOL[t + 1], lines = lines }, color = M.SK_RCOL[t + 1], art = skArt(e.id), emoji = skIcon(d), label = d.name, dim = not e.own,
+        tl = M.SK_RAR[t + 1], br = e.own and ("Lv" .. (e.lvl or 1)) or nil })
     end
   end
 end

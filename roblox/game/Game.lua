@@ -107,6 +107,7 @@ function M.pickStart(sv, cls)
   sv.equipped.weapon = w
   sv.skills = {}; sv.loadout = { false, false, false, false }; sv.slots = math.max(sv.slots or 4, 4)
   for i, id in ipairs(K.skills) do local k = { uid = sv.nextUid, id = id, rarity = 0, lvl = 1 }; sv.nextUid += 1; sv.skills[i] = k; sv.loadout[i] = { uid = k.uid, rule = "front" } end
+  sv.skVer = 2   -- 아르카나 등급 고정 이후 세이브
   sv.arcana = (sv.arcana or 0) + M.START_ARCANA; sv.startClass = cls; sv.needStart = false; sv.tut = 0   -- 튜토리얼 진행 (새 계정만, 0 → 끝나면 99)
   return true
 end

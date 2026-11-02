@@ -49,13 +49,13 @@ function M.rollBossSkills(rng, sv, kind, K, upper)
   local r = wpick(rng, rl, function(i) return w[i + 1] end)
   if rng:NextNumber() < 0.3 then
     local ps = {}; for _, d in ipairs(SK.SKILLS) do if d.slot == "passive" and (d.pt or 0) >= max(1, r - 1) and (d.pt or 0) <= r then ps[#ps + 1] = d end end
-    if #ps > 0 then local d = ps[rng:NextInteger(1, #ps)]; out[#out + 1] = { uid = sv.nextUid, id = d.id, rarity = d.pt }; sv.nextUid += 1; return out end
+    if #ps > 0 then local d = ps[rng:NextInteger(1, #ps)]; out[#out + 1] = { id = d.id }; return out end
   end
   local all = bossSkillList(kind); local myth, reg = {}, {}
   for _, d in ipairs(all) do if d.mythOnly then myth[#myth + 1] = d else reg[#reg + 1] = d end end
   local pool = (r >= 3 and #myth > 0 and rng:NextNumber() < 0.4) and myth or reg
   if #pool == 0 then return out end
-  out[#out + 1] = { uid = sv.nextUid, id = pool[rng:NextInteger(1, #pool)].id, rarity = r }; sv.nextUid += 1
+  out[#out + 1] = { id = pool[rng:NextInteger(1, #pool)].id }   -- 등급은 아르카나마다 고정 (지급은 Economy.grantSkill)
   return out
 end
 
@@ -167,12 +167,12 @@ function M.play(sv, spec, seed)
     local boss = true
     for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   end
-  if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do sv.skills[#sv.skills + 1] = k; res.skills[#res.skills + 1] = k.id end end
+  if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do Econ.grantSkill(sv, k.id); res.skills[#res.skills + 1] = k.id end end
   if kind == "raid" then
     local ks = { "void", "hive", "titan", "storm", "frost", "poison" }
     local got = M.rollBossSkills(rng, sv, ks[rng:NextInteger(1, #ks)], 4)
     for i = 1, 30 do if #got > 0 or not res.first then break end; got = M.rollBossSkills(rng, sv, ks[rng:NextInteger(1, #ks)], 4) end
-    for _, k in ipairs(got) do sv.skills[#sv.skills + 1] = k; res.skills[#res.skills + 1] = k.id end
+    for _, k in ipairs(got) do Econ.grantSkill(sv, k.id); res.skills[#res.skills + 1] = k.id end
   end
   if kind == "temple" then
     local ch = min(0.5, CFG.TEMPLE.HI[node.vsel])

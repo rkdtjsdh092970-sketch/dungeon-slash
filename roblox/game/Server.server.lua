@@ -50,6 +50,7 @@ local function migrate(sv, uid)
   for _, it in pairs(sv.equipped or {}) do Loot.defUp(it) end; for _, it in ipairs(sv.inv or {}) do Loot.defUp(it) end   -- 장비 체력 · 방어 상향 (2026-11-03)
   if sv.stash then for _, it in ipairs(sv.stash.items or {}) do Loot.defUp(it) end end
   if (sv.slots or 0) < 4 then sv.slots = 4 end   -- 아르카나 칸은 처음부터 4칸 (2026-11-03)
+  require(RS.Game.Economy).migrateSkillTiers(sv)   -- 아르카나 등급 고정: 같은 아르카나 여러 장을 한 장으로 (2026-11-03)
   if (sv.passVer or 1) < 2 then   -- 패시브 v2 (4갈래 200노드): 예전 노드는 없어졌으므로 초기화 (포인트는 레벨로 계산되어 그대로 돌아온다)
     if next(sv.pass or {}) then sv.passNotice = true end
     sv.pass = {}; sv.passSets = nil; sv.passVer = 2
