@@ -181,11 +181,11 @@ function grantSkill(sv, id) {
 }
 // ---- 스킬 소환 (로블록스판 아르카나 소환과 같은 확률 · 천장). 재화 = 아르카나 조각(sv.hone) ----
 const GACHA = { RATES: [70, 24, 5, 0.9, 0.1], PITY10: 1, PITY_HARD: 80, PITY_HARD_R: 2, ARC1: 10, ARC10: 90 };
-const gachaPool = () => SKILLS.filter((d) => GACHA_TIER[d.id] != null);
+const gachaPool = (fam) => SKILLS.filter((d) => GACHA_TIER[d.id] != null && (!fam || !(d.dtype === "phys" || d.dtype === "mag") || d.dtype === fam));   // 계열 소환: 그 계열 공격 스킬 + 계열 없는 스킬
 function gachaRoll(minR) { let tot = 0; for (let r = minR; r < GACHA.RATES.length; r++) tot += GACHA.RATES[r]; let x = Math.random() * tot; for (let r = minR; r < GACHA.RATES.length; r++) { x -= GACHA.RATES[r]; if (x <= 0) return r; } return GACHA.RATES.length - 1; }
-function gachaPull(sv, n) {
+function gachaPull(sv, n, fam) {
   n = n === 10 ? 10 : 1; const cost = n === 10 ? GACHA.ARC10 : GACHA.ARC1; if ((sv.hone || 0) < cost) return null; sv.hone -= cost;
-  const pool = gachaPool(), out = []; let gotHigh = false;
+  if (fam !== "phys" && fam !== "mag") fam = null; const pool = gachaPool(fam), out = []; let gotHigh = false;
   for (let i = 1; i <= n; i++) {
     sv.gachaPity = (sv.gachaPity || 0) + 1; let minR = sv.gachaPity >= GACHA.PITY_HARD ? GACHA.PITY_HARD_R : 0;
     if (n === 10 && i === 10 && !gotHigh) minR = Math.max(minR, GACHA.PITY10);

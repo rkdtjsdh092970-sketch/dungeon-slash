@@ -27,6 +27,7 @@ const Modal = {
   },
   scrollSnap(box) { const list = []; box.querySelectorAll("*").forEach((el) => { if (el.scrollTop > 0) { const sib = [...box.querySelectorAll(el.tagName + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""))]; list.push({ tag: el.tagName, cls: el.className, i: sib.indexOf(el), top: el.scrollTop }); } }); const h = box.querySelector("h2"); return { h2: h ? h.textContent : "", list }; },
   scrollRestore(box, list) { for (const it of list) { const sel = it.tag + (it.cls && typeof it.cls === "string" ? "." + it.cls.trim().split(/\s+/).join(".") : ""); const el = box.querySelectorAll(sel)[it.i]; if (el) el.scrollTop = it.top; } },
+  isOpen() { return !$("#modal").classList.contains("hidden"); },
   close(silent) { if ($("#modal").classList.contains("hidden")) return; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
 };
 function askConfirm(msg, yes, cb, danger, no) {
@@ -77,7 +78,7 @@ function openClassPick() {
   const card = (cls, name, col, d1, d2, sk) => `<div class="cpick" data-a="pick" data-c="${cls}"><img src="${artURL(cls) || ""}" alt=""><b style="color:${col}">${name}</b><div class="dim">${d1}</div><div class="dim">${d2}</div><div style="color:#ffd98a;font-size:12px">${sk}</div></div>`;
   Modal.open(`<h2>길을 고르세요</h2><div class="dim center">첫 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 길도 바꿀 수 있어요.</div>
     <div class="cpicks">${card("warrior", "전사", "#ff8a6a", "검을 쓰는 근접 전사", "튼튼한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타")}${card("mage", "마법사", "#a89aff", "지팡이를 쓰는 마법사", "멀리서 꾸준한 비전 마법", "스킬: 비전 탄 · 비전 미사일 · 비전 폭발")}</div>`, { cls: "wide", noClose: true, on: {
-    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = "map"; openTown(1); toast("소환 조각 90개를 받았습니다 — 마을의 [스킬 소환]에서 10연 소환을 해 보세요!", "ok"); },
+    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; save.tut5 = 0; save.seen.guide = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = null; openTown(1); toast("소환 조각 90개를 받았습니다 — 마을의 [스킬 소환]에서 10연 소환을 해 보세요!", "ok"); },
   } });
 }
 function continueGame() {
@@ -312,6 +313,7 @@ function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell:
 const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
 function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0, cost: node.upper ? UP_KEYS : 1 } : null; }
 function startBattle(node, opt) {
+  if (typeof tutEvent === "function") tutEvent("battle");
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
   if (opt.tip) tipBox(opt.title, opt.tip);

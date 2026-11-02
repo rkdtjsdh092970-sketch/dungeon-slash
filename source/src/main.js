@@ -81,7 +81,7 @@ function bgStart() {
 function bgStop() { if (bgW) { bgW.terminate(); bgW = null; } if (bgTimer) { clearInterval(bgTimer); bgTimer = 0; } if (G.battle) G.battle.noFx = false; lastT = performance.now(); }
 document.addEventListener("visibilitychange", () => { if (document.hidden) bgStart(); else bgStop(); });
 function frame(ms) {
-  requestAnimationFrame(frame); const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX;
+  requestAnimationFrame(frame); try { tutTick(); } catch (e) {} const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX;
   if (G.screen === "title") drawTitle(g, gtime);
   else if (G.screen === "map") MapView.draw(save, gtime, rawDt);
   else if (G.screen === "town") TownView.draw(save, gtime);
