@@ -471,7 +471,7 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .h5T{top:3px!important;width:460px!important}.h5T #bh-name{font-size:18px;line-height:22px}
 .h5T #bossbar{width:345px!important;height:36px!important;margin:4px auto 0!important}
 .h5T #bossbar .bn{height:15px;margin:0;font-size:13px}.h5T #bossbar .bb{top:16.5px!important;height:16.5px!important;border-radius:4px}
-.h5T #bossbar img{left:-47.5px!important;top:3.2px!important;width:440px!important;height:75.3px!important}
+.h5T #bossbar img{left:-47.5px!important;top:-13.3px!important;width:440px!important;height:75.3px!important}
 #battlehud #skillbar{left:12px!important;bottom:7.5px!important;gap:6px!important}
 .h5card{width:51px!important;height:91.5px!important}
 .h5card .cds{top:0!important;bottom:auto!important;height:16.5px!important;font-size:15px!important;inset:auto 0 auto 0}
@@ -515,6 +515,8 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .pa5b{display:flex;gap:8px;height:352px}.pa5t{flex:1;min-width:0;padding:0!important}.pa5t canvas{width:100%;height:100%;display:block}
 .pa5r{width:230px;flex:none}.pa5sum{flex:1;min-height:0;overflow-y:auto;padding:4px 10px;font-size:12px}.pa5sum>div{display:flex;justify-content:space-between;line-height:19px;border-bottom:1px solid #2a2018}.pa5sum b{color:#8cffa0}
 .pa5i{flex:none;border-top:1px solid #785c30;padding:6px 8px;max-height:150px;overflow-y:auto}.pa5i .ptip{font-size:12px;margin:0 0 4px;padding:0;background:none;border:0}.pa5i .ptact{display:flex;flex-direction:column;gap:4px;margin:0;font-size:12px}.pa5i .ptact .btn{width:100%;height:32px;font-size:13px!important}
+.h5T #bossbar .bn{position:relative;z-index:3;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000,0 0 6px #000}.h5T #bossbar img{z-index:1}.h5T #bossbar .bb{z-index:0}
+.h5T #bossbar .bn{white-space:nowrap;overflow:hidden;font-size:12px!important}.h5T #bossbar .bn b{font-size:13px;max-width:290px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:bottom}
 /* ---- 5.0 제련소 ---- */
 .fpw5{font-size:13px;margin:-2px 0 6px;color:#d8ccb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
@@ -7098,7 +7100,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-074820";
+const BUILD_ID = "20261103-075249";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -8060,6 +8062,9 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.22", date: "11/3", title: "보스 체력바 고침", items: [
+    "고침: 그룸 등 보스 체력바의 빨간 막대가 장식 틀 안에 들어가지 않고 위로 삐져나오던 것 (모든 보스 공통). 긴 보스 이름은 한 줄로 줄여 보여 줍니다.",
+  ] },
   { ver: "5.21", date: "11/3", title: "소환 계열 고침", items: [
     "고침: 전사로 하다가 새로 마법사를 시작하면 튜토리얼 소환이 전사(물리) 계열로 되어 있던 것. 소환 계열은 캐릭터마다 따로 저장되고, 튜토리얼 소환은 늘 내 직업 계열로 맞춰집니다.",
   ] },
