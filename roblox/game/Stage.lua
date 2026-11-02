@@ -167,7 +167,7 @@ function M.create(parent, W, H, replayAct)
     task.defer(function() if b.Parent then Skin.button(b) end end)   -- 질감 있는 버튼 그림
     return b
   end
-  local pb = cbtn(S.ctrl, "❚❚", UDim2.new(0, 0, 0, 0), UDim2.new(0, 48, 0, 40), Color3.fromRGB(65, 62, 80)); pb:SetAttribute("NoTr", true)
+  local pb = cbtn(S.ctrl, "II", UDim2.new(0, 0, 0, 0), UDim2.new(0, 48, 0, 40), Color3.fromRGB(65, 62, 80)); pb:SetAttribute("NoTr", true)
   pb.MouseButton1Click:Connect(function() S:pause(true) end)
   cbtn(S.ctrl, "Skip ▶▶", UDim2.new(0, 56, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
   S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 184, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
@@ -448,6 +448,7 @@ function M:play(replay, onDone, maxSec, hud)
   if hud then self:setHud(hud) end
   self.kills = 0; self.killLbl.Text = string.format("☠  Kills %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
   self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
+  if self.pl then self.pl.ImageTransparency = 0 end; self.blinking = 0   -- 순보 도중 끝난 전투에서 영웅이 투명하게 남지 않게
   local total = (replay.snaps[#replay.snaps] or { t = 1 }).t
   self.spd = math.max(1, total / (maxSec or 40)); self.userSpd = self.userSpd or 1
   if self.conn then self.conn:Disconnect() end
