@@ -89,7 +89,8 @@ function M.itemCard(parent, it, order, head)
   local col = it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1]
   if head then line(head, 12, Color3.fromRGB(170, 160, 150), 0) end
   local t = line(it.title or "", 18, col, 1, M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, t)
-  if it.up then line("▲ 지금보다 강해집니다", 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
+  if it.dp and it.dp ~= 0 then line(string.format("전투력 %s%s", it.dp > 0 and "+" or "", n(it.dp)), 14, it.dp > 0 and Color3.fromRGB(120, 255, 140) or Color3.fromRGB(255, 120, 110), 2, M.FONT)
+  elseif it.up then line("▲ 지금보다 강해집니다", 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
   rule(3)
   for i, b in ipairs(it.base or {}) do line(b, 15, Color3.fromRGB(245, 240, 230), 3 + i, M.FONT) end
   if it.aff and #it.aff > 0 then
@@ -353,8 +354,13 @@ invRender = function()
       M.btn(bar, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
       M.btn(bar, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
     else
-      M.btn(bar, "여러 개 선택", UDim2.new(0, 116, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
-      M.btn(bar, "자동 분해", UDim2.new(0, 110, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
+      M.btn(bar, "여러 개 선택", UDim2.new(0, 100, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
+      M.btn(bar, "자동 분해", UDim2.new(0, 104, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
+      M.btn(bar, "자동 장착", UDim2.new(0, 104, 1, 0), M.BTN.green, function()
+        local e = C.rpc:InvokeServer("autoequip"); if e and e.summary then C.setSummary(e.summary) end
+        C.msg.Text = (e and e.n or 0) > 0 and string.format("%d칸을 더 강한 장비로 바꿨습니다 · 전투력 %s", e.n, n(e.summary and e.summary.power or 0)) or "지금이 가장 강한 조합입니다"
+        invData = nil; M.inv()
+      end).LayoutOrder = 3
     end
   end
   buildBar()

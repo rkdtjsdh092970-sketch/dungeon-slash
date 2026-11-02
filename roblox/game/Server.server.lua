@@ -179,6 +179,7 @@ local handle = function(player, action, arg)
   local sv = s.sv
   if action == "state" then return { summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "inv" then return { inv = Game.inventory(sv) }
+  elseif action == "autoequip" then local n = Game.autoEquip(sv); return { n = n, summary = Game.summary(sv) }
   elseif action == "unequip" then local ok = type(arg) == "string" and Game.unequip(sv, arg); return { ok = ok, summary = Game.summary(sv) }
   elseif action == "equip" then local ok, e; if type(arg) == "table" then ok, e = Game.equip(sv, tonumber(arg.uid), type(arg.slot) == "string" and arg.slot or nil) else ok, e = Game.equip(sv, tonumber(arg)) end; return { ok = ok, err = e, summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "dismantle" then local ok, e = Game.dismantle(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }

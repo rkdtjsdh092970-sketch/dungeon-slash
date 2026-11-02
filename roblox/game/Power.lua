@@ -133,4 +133,20 @@ function M.of(sv)
   local d = M.detail(s, equippedSkills(sv), sv.slots)
   return M.K * d.dps * d.ehp * statusPow(s) * (1 + 0.35 * (s.revive or 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density or 0)) * (1 + s.lifesteal * 2), d, s
 end
+
+-- ── 화면에 보이는 전투력 (시뮬레이션 보정, roblox/sim/calibrate_power.lua · 2026-11-02, 빌드 112개, 균열 보스층 기준 R²=0.96 · 평균 오차 약 4층) ──
+-- 실측: 깨는 층의 난이도 D(=FLOOR_TAB) 와 원전투력 P 의 관계 ln P = FIT_A + FIT_G · ln D.
+-- 보이는 전투력 = 100 × (P 로 깰 수 있는 난이도) / D(1층) → 몬스터 강함에 정비례 (2배 = 2배 강한 층), 균열 1층 권장 = 100.
+M.FIT_A, M.FIT_G = 8.352, 2.298
+local function D(f)   -- 층 난이도 (Battle floorMult 와 같음)
+  local T = CFG.FLOOR_TAB; f = math.max(1, f)
+  if f <= #T then return T[math.floor(f)] end
+  return T[#T] * (CFG.FLOOR_TAIL or 1.04) ^ (f - #T)
+end
+M.D = D
+function M.display(P) if P <= 0 then return 0 end; return math.floor(100 * math.exp((math.log(P) - M.FIT_A) / M.FIT_G) / D(1) + 0.5) end
+function M.score(sv) local P = M.of(sv); return M.display(P) end
+-- 권장 전투력: 균열 n층 / 탑 (탑 층은 난이도 tier 로, 탑 공격 배율이 더 커서 x1.3 여유)
+function M.recRift(n) return math.floor(100 * D(n) / D(1) + 0.5) end
+function M.recTier(tier, tower) return math.floor(100 * D(tier) / D(1) * (tower and 1.3 or 1) + 0.5) end
 return M

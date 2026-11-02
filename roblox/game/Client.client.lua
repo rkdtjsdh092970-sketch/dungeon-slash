@@ -142,7 +142,7 @@ local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTranspa
 -- 왼쪽 위 캐릭터 카드 (마을 · 지도에서): 초상화(Lv) | 능력치 5칸 (이름 위 · 숫자 가운데) / 진행도 띠 — 칸을 나눠 배치
 local statLbl = mk("Frame", { Active = true, BackgroundColor3 = Color3.fromRGB(16, 11, 10), BackgroundTransparency = 0.08, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 400, 0, 92), ZIndex = 11 }, hud)
 corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { Scale = K }, statLbl)
-local statVal, statProg, statLv, statGold, statFace = {}, nil, nil, nil, nil
+local statVal, statProg, statLv, statGold, statFace, statPow = {}, nil, nil, nil, nil, nil
 local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
 do
   local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
@@ -165,7 +165,9 @@ do
   end
   -- 진행도 띠
   local pb = mk("Frame", { Position = UDim2.new(0, 92, 0, 62), Size = UDim2.new(1, -100, 0, 22), BackgroundColor3 = CELL, ZIndex = 12 }, statLbl); corner(pb, 5); stroke(pb, EDGE, 1)
-  statProg = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, -8, 1, 0), Position = UDim2.new(0, 4, 0, 0), Text = "", Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(215, 205, 195), ZIndex = 13 }, pb)
+  statPow = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.45, 0, 1, 0), Position = UDim2.new(0, 6, 0, 0), Text = "", Font = Theme.FONT, TextSize = 15, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, pb)
+  mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(20, 8, 4) }, statPow)
+  statProg = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.55, -8, 1, 0), Position = UDim2.new(0.45, 0, 0, 0), Text = "", Font = Theme.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(200, 190, 180), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 13 }, pb)
   -- 골드: 카드 아래 금빛 판
   local gp = mk("Frame", { Position = UDim2.new(0, 0, 1, 8), Size = UDim2.new(0, 200, 0, 40), BackgroundColor3 = Color3.fromRGB(40, 28, 14), ZIndex = 11 }, statLbl); corner(gp, 8); stroke(gp, GOLD, 2)
   Skin.frame(gp, "ui_pill", 0.3, 0.5)
@@ -221,7 +223,7 @@ local function setSummary(s)
   local hk = s.hero or "warrior"
   if hk ~= Stage.HERO then Stage.HERO = hk; local a = Sprites.art(Stage.heroKey()); if statFace and a then statFace.ImageContent = a.content end; if heroChanged then task.defer(heroChanged) end end
   statVal.hp.Text = n(s.maxHp); statVal.atk.Text = n(s.atk); statVal.mag.Text = n(s.mag); statVal.def.Text = n(s.def); statVal.crit.Text = string.format("%.0f%%", s.crit * 100)
-  statProg.Text = string.format("스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", s.cleared, s.riftBest, s.best)
+  statPow.Text = string.format("전투력 %s", n(s.power or 0)); statProg.Text = string.format("균열 %d · 탑 %d", s.riftBest, s.best)
 end
 
 -- ── 가운데 창 (건물 · 장비 · 문지기 등): 제목 + 탭 + 내용 목록 + 메시지 ──
@@ -847,6 +849,11 @@ local function showInfo(t)
       if showMods then   -- 균열 변형 (10층부터, 층마다 정해져 있음 — 웹 riftMods)
         local ok, mods = pcall(function() return require(RS.Game.Battle).riftMods(num) end)
         if ok then for _, m in ipairs(mods) do t ..= "\n" .. string.format("변형 %s: %s", m.name, m.text) end end
+      end
+      if showMods then   -- 권장 전투력 (시뮬레이션 보정: 이 전투력이면 대체로 깬다)
+        local okP, PW = pcall(require, RS.Game.Power)
+        if okP then local rec = PW.recRift(num); local my = summary and summary.power or 0
+          t ..= "\n" .. string.format("권장 전투력 %s · 내 전투력 %s", n(rec), n(my)) .. (my >= rec and "  ✓" or "") end
       end
       desc.Text = t
     end

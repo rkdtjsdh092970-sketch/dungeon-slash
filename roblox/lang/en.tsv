@@ -1875,3 +1875,10 @@ x4 배속	x4 Speed
 그 칸에는 낄 수 없습니다	Can't equip in that slot
 세트	Set
 세트 %d	Set %d
+%d칸을 더 강한 장비로 바꿨습니다 · 전투력 %s	Upgraded %d slots · Power %s
+권장 전투력 %s · 내 전투력 %s	Recommended %s · Yours %s
+균열 %d · 탑 %d	Rift %d · Tower %d
+자동 장착	Auto Equip
+전투력 %s	Power %s
+전투력 %s%s	Power %s%s
+지금이 가장 강한 조합입니다	Already your strongest setup

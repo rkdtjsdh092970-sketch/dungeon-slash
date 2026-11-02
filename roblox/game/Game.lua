@@ -3,6 +3,7 @@ local Data = script.Parent.Data
 local CFG = require(Data.Config).CFG
 local Items = require(Data.Items)
 local Stats = require(script.Parent.Stats)
+local Power = require(script.Parent.Power)
 local Battle = require(script.Parent.Battle)
 local Loot = require(script.Parent.Loot)
 local Sat = require(Data.Satan).SAT_DEFS
@@ -42,7 +43,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior" }   -- hero: 지팡이를 끼면 마법사 모습
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)) }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
@@ -55,11 +56,11 @@ function M.itemDetail(it)
 end
 function M.inventory(sv)
   local out = {}
-  local base; pcall(function() base = M.powerNow(sv) end)
+  local base = powerOf(sv); local baseD = Power.display(base)
   for i, it in ipairs(sv.inv) do
     local b, a, sat = M.itemDetail(it)
-    local up = false; if base then pcall(function() up = M.isUpgrade(sv, it, base) end) end
-    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
+    local P = bestWith(sv, it); local dp = Power.display(P) - baseD; local up = P > base * 1.0005
+    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, dp = dp, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
   end
   return out
 end
@@ -124,26 +125,42 @@ local function ruleOf(A, it)
   if tierOn(A, it) and not tierKeep(A, it) then return r == "sell" and "sell" or "dis" end
   return r
 end
--- 전투력 근사 (▲ 판정용): 물리/마법 중 큰 쪽 피해 × 버티는 힘
-local function power(st)
-  local phys = (st.atk or 0) * (1 + (st.physDmg or 0)) * (1 + math.min(1, st.critChance or 0) * (st.critDmg or 0))
-  local mag = (st.mag or 0) * (1 + (st.magDmg or 0) + (st.elemDmg or 0)) * (1 + math.min(1, st.spellCrit or 0) * (st.critDmg or 0))
-  return math.max(phys, mag) * (st.maxHp or 1) * (1 + (st.def or 0) / ((st.def or 0) + 50))
-end
-function M.powerNow(sv) return power(Stats.computeStats(sv)) end
-function M.isUpgrade(sv, it, base)
-  base = base or power(Stats.computeStats(sv))
-  for _, k in ipairs(it.slot == "ring" and { "ring", "ring2" } or { it.slot }) do
+-- 전투력 (Power.lua, 시뮬레이션 보정): ▲ 판정 · 자동 장착 · 장비 비교에 쓴다
+local function powerOf(sv) local ok, P = pcall(Power.of, sv); return ok and P or 0 end
+function M.powerNow(sv) return powerOf(sv) end
+local function slotsFor(it) return it.slot == "ring" and { "ring", "ring2" } or { it.slot } end
+-- 이 장비를 꼈을 때 가장 높은 원전투력 (반지는 두 칸 중 좋은 쪽)
+local function bestWith(sv, it)
+  local best, bk = -1, nil
+  for _, k in ipairs(slotsFor(it)) do
     local old = sv.equipped[k]; sv.equipped[k] = it
-    local ok, p = pcall(function() return power(Stats.computeStats(sv)) end)
-    sv.equipped[k] = old
-    if ok and p > base * 1.0005 then return true end
+    local P = powerOf(sv); sv.equipped[k] = old
+    if P > best then best, bk = P, k end
   end
-  return false
+  return best, bk
+end
+function M.isUpgrade(sv, it, base) base = base or powerOf(sv); return bestWith(sv, it) > base * 1.0005 end
+-- 자동 장착: 가방에서 전투력이 가장 오르는 장비로 칸마다 바꾼다 (두 번 돌아 반지 · 세트 영향까지)
+function M.autoEquip(sv)
+  local changed = 0
+  for _ = 1, 2 do
+    for _, slot in ipairs(Items.EQ_SLOTS) do
+      local base = powerOf(sv); local pick, pickI
+      for i, it in ipairs(sv.inv) do
+        if it.slot == slot or (slot == "ring2" and it.slot == "ring") then
+          local old = sv.equipped[slot]; sv.equipped[slot] = it
+          local P = powerOf(sv); sv.equipped[slot] = old
+          if P > base * 1.0005 then base, pick, pickI = P, it, i end
+        end
+      end
+      if pick then local old = sv.equipped[slot]; sv.equipped[slot] = pick; table.remove(sv.inv, pickI); if old then sv.inv[#sv.inv + 1] = old end; changed += 1 end
+    end
+  end
+  return changed
 end
 local function presetUids(sv) local u = {}; for _, p in ipairs(sv.presets or {}) do if p then for _, id in pairs(p.equip or {}) do u[id] = true end end end; return u end
 local function autoTargets(sv)
-  local A = M.autoRules(sv); local prot = presetUids(sv); local base = A.keepUp and power(Stats.computeStats(sv)) or 0
+  local A = M.autoRules(sv); local prot = presetUids(sv); local base = A.keepUp and powerOf(sv) or 0
   local out = {}
   for i, it in ipairs(sv.inv) do
     local rule = ruleOf(A, it)
