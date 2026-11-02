@@ -2,7 +2,7 @@
 // 전투 엔진 (DOM 비의존 — 시뮬레이션에서도 그대로 사용)
 // =========================================================
 const LAY = { x0: 196, cw: 124, cy: 292 };
-const laneH = (b) => (b.lanes <= 3 ? 116 : 88);
+const laneH = (b) => (b.artBg ? (b.lanes <= 2 ? 104 : b.lanes === 3 ? 80 : 64) : b.lanes <= 3 ? 116 : 88);   // 5.0: 일러스트 배경은 땅(화면 아래쪽)에 줄을 깐다
 const laneTop = (b) => LAY.cy - (laneH(b) * b.lanes) / 2;
 function cellXY(b, lane, col, w, h) {  // 칸(또는 다칸 몸체) 중심 좌표
   w = w || 1; h = h || 1;
@@ -130,6 +130,8 @@ function createBattle(sv, node) {
     atkM: CFG.A0 * actScale(scAct) * (1 + CFG.STAGE_ATK * (stage - 1)) * (node.kind === "rift" || node.kind === "hell" || node.kind === "raid" || node.kind === "spire" || node.kind === "craid" || node.kind === "warden" || node.upper ? riftMul * riftAtkExtra(node) : riftMul) * (mods.reduce((a, m) => a * (m.atk || 1), 1)),
     haste: mods.reduce((a, m) => a * (m.haste || 1), 1), noFx: false, endless: node.kind === "endless", revive: st.revive, inv: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0 };
   b.lsRate = b.maxHp * Math.min(CFG.LS_MAX, CFG.LS_BASE + st.lifesteal * CFG.LS_PER); b.lsTok = b.lsRate * 2;   // 흡혈 회복 상한(초당)
+  b.artBg = typeof battleBgArt === "function" && !!battleBgArt(b);   // 일러스트 배경: 땅 위치에 맞춰 줄을 아래로
+  if (node.kind !== "raid") { LAY.cy = b.artBg ? 352 : 292; PLAYER_POS.y = LAY.cy + 44; }
   b.plan = node.kind === "dummy" || node.kind === "raid" ? [] : planFor(node);
   b.bossDef = node.kind === "vault" ? CHEST_BOSS : node.kind === "dummy" ? BOSSES[0] : node.kind === "raid" ? RAID_BOSS : node.kind === "void" ? VOID_BOSS : isEB(node.kind) ? EB[node.kind].boss : node.kind === "boss" ? BOSSES[ACTS[act - 1].boss] : node.kind === "warden" ? BOSSES[8] : node.kind === "craid" ? BOSSES[CFG.CRAID.BOSS[node.diff] % 10] : node.kind === "spire" ? BOSSES[(node.floor / 5 - 1 + 10) % 10 | 0] : (node.kind === "rift" || node.kind === "trial") ? BOSSES[(node.tier / 5 - 1 + 10) % 10 | 0] : null;
   if (node.kind === "tutorial") { b.hpM *= 0.5; b.atkM *= 0.5; b.lanes = Math.max(2, b.lanes); }

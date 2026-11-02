@@ -43,11 +43,11 @@ function initModal() {
 let _pwCache = 0;
 function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산값을 쓴다)
   if (!save) return 0; if (G.screen === "battle" && _pwCache) return _pwCache;
-  try { _pwCache = playerPower(computeStats(save)); } catch (e) {} return _pwCache;
+  try { _pwCache = powerScore5(save); } catch (e) {} return _pwCache;   // 5.0: 로블록스판 전투력 (균열 1층 권장 = 100, 몬스터 강함에 정비례)
 }
 function refreshTop() {
   const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
-  $("#t-exp").style.width = Math.min(100, ((s.rift ? s.rift.best : 0) / CFG.RIFT_END) * 100) + "%";   // v4: 막대 = 균열 100층 진행도
+  $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp || 0) / expNeed(s.level) * 100)) + "%";   // 5.0: 막대 = 경험치
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";

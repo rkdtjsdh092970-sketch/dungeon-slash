@@ -71,7 +71,7 @@ function drawEnemy(ctx, b, e, time) {
   let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.6)"; else if (e.shock > 0) tint = "rgba(255,240,110,.35)"; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
   const mim = artGet(mobArtKey(b, e));
   if (mim) {   // 일러스트: 숨쉬듯 둥실, 걸을 때 통통, 공격 준비 때 뒤로 젖혔다 찌르듯 앞으로
-    const hh = meta.h * sc * 1.35, wp = e.winding > 0 ? 1 - e.winding / e.windup : 0, walk = anim === "walk" ? Math.abs(Math.sin(e.age * 9)) * 4 : 0;
+    const hh = meta.h * sc * 1.35 * (b.artBg ? 0.8 + 0.2 * (e.lane / Math.max(1, b.lanes - 1)) : 1), wp = e.winding > 0 ? 1 - e.winding / e.windup : 0, walk = anim === "walk" ? Math.abs(Math.sin(e.age * 9)) * 4 : 0;
     const lean = wp < 0.7 ? wp / 0.7 * 6 : -(wp - 0.7) / 0.3 * 14;
     drawArt(ctx, mim, x + lean, y + (appear < 1 ? (1 - appear) * 12 : 0) - walk, hh, { alpha: appear, tint, sy: 1 + Math.sin(time * 3 + e.id) * 0.015 - (e.hurtT > 0 ? 0.05 : 0), sx: 1 + (e.hurtT > 0 ? 0.04 : 0) });
   } else drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
