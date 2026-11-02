@@ -12,7 +12,9 @@ local function fancyBar(parent, pos, size, cTop, cMid, cBot, z, ticks, rad)
   local c = Instance.new("UICorner", bg); c.CornerRadius = UDim.new(0, rad or 3)
   local st = Instance.new("UIStroke", bg); st.Color = Color3.fromRGB(150, 115, 60); st.Thickness = 1.5; st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
   local inner = Instance.new("Frame"); inner.Position = UDim2.new(0, 1, 0, 1); inner.Size = UDim2.new(1, -2, 1, -2); inner.BackgroundTransparency = 1; inner.ClipsDescendants = true; inner.ZIndex = z; inner.Parent = bg
-  local trail = Instance.new("Frame"); trail.Size = UDim2.new(1, 0, 1, 0); trail.BackgroundColor3 = Color3.fromRGB(255, 240, 220); trail.BorderSizePixel = 0; trail.ZIndex = z + 1; trail.Parent = inner
+  local trail = Instance.new("Frame"); trail.Size = UDim2.new(1, 0, 1, 0); trail.BackgroundColor3 = Color3.new(1, 1, 1); trail.BackgroundTransparency = 0.1; trail.BorderSizePixel = 0; trail.ZIndex = z + 1; trail.Parent = inner
+  local tg = Instance.new("UIGradient", trail); tg.Rotation = 90   -- 깎인 만큼 잠깐 남는 잔상: 밝은 주황 → 진홍 (흰 막대 대신)
+  tg.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 225, 150)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 150, 60)), ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 50, 30)) })
   local fill = Instance.new("Frame"); fill.Size = UDim2.new(1, 0, 1, 0); fill.BackgroundColor3 = Color3.new(1, 1, 1); fill.BorderSizePixel = 0; fill.ZIndex = z + 2; fill.Parent = inner
   local g = Instance.new("UIGradient", fill); g.Rotation = 90
   g.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, cTop), ColorSequenceKeypoint.new(0.45, cMid), ColorSequenceKeypoint.new(1, cBot) })
@@ -156,7 +158,7 @@ function M.create(parent, W, H, replayAct)
   end
   S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 17 }, S.bossB.bg), 1.5)
   -- 오른쪽 위: 건너뛰기 · 배속(누르면 x1~x4 가 아래로 펼쳐짐, x4 는 게임패스)
-  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 236, 0, 40), Visible = false, ZIndex = 30 }, root)
+  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 292, 0, 40), Visible = false, ZIndex = 30 }, root)
   mk("UIScale", { Scale = k }, S.ctrl)
   local function cbtn(parent, text, pos, size, color)
     local b = mk("TextButton", { Text = text, Position = pos, Size = size, BackgroundColor3 = color, TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = 17, AutoButtonColor = true, ZIndex = 31 }, parent)
@@ -165,10 +167,12 @@ function M.create(parent, W, H, replayAct)
     task.defer(function() if b.Parent then Skin.button(b) end end)   -- 질감 있는 버튼 그림
     return b
   end
-  cbtn(S.ctrl, "Skip ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
-  S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 128, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
+  local pb = cbtn(S.ctrl, "❚❚", UDim2.new(0, 0, 0, 0), UDim2.new(0, 48, 0, 40), Color3.fromRGB(65, 62, 80)); pb:SetAttribute("NoTr", true)
+  pb.MouseButton1Click:Connect(function() S:pause(true) end)
+  cbtn(S.ctrl, "Skip ▶▶", UDim2.new(0, 56, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
+  S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 184, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
   S.spdBtn:SetAttribute("NoTr", true)
-  S.spdList = mk("Frame", { Position = UDim2.new(0, 128, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
+  S.spdList = mk("Frame", { Position = UDim2.new(0, 184, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, S.spdList)
   S.spdOpts = {}
   for i = 1, 4 do
@@ -177,9 +181,20 @@ function M.create(parent, W, H, replayAct)
   end
   S.spdOpen = false
   S.spdBtn.MouseButton1Click:Connect(function() S:speedMenu(not S.spdOpen) end)
+  S.pauseOv = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, Text = "", AutoButtonColor = false, Visible = false, ZIndex = 40 }, root)
+  do
+    local pp = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 300, 0, 250), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 41 }, S.pauseOv)
+    mk("UIScale", { Scale = k }, pp); mk("UICorner", { CornerRadius = UDim.new(0, 12) }, pp); mk("UIStroke", { Color = GOLD, Thickness = 2 }, pp)
+    task.defer(function() if pp.Parent then pcall(Skin.frame, pp, "ui_panel", 0.2, 0.55) end end)
+    outl(mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 14), Size = UDim2.new(1, 0, 0, 36), Text = "Paused", Font = FONT, TextSize = 30, TextColor3 = Color3.fromRGB(255, 220, 140), ZIndex = 42 }, pp), 2)
+    local function pbtn(y, text, color, cb) local b = cbtn(pp, text, UDim2.new(0.5, -110, 0, y), UDim2.new(0, 220, 0, 44), color); b.ZIndex = 42; b.MouseButton1Click:Connect(cb) end
+    pbtn(64, "▶ Resume", Color3.fromRGB(60, 140, 70), function() S:pause(false) end)
+    pbtn(118, "Map", Color3.fromRGB(65, 62, 80), function() S:leave("map") end)
+    pbtn(172, "Return to Village", Color3.fromRGB(150, 60, 50), function() S:leave("town") end)
+  end
   S.timeLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 50 * k), Size = UDim2.new(0, 120 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, root), 1.5)
   -- 아래 가운데: 장착 스킬 (쓰면 쿨타임 표시)
-  S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12 * k), Size = UDim2.new(0, 0, 0, 74 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.15, Visible = false, ZIndex = 8 }, root)
+  S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12 * k), Size = UDim2.new(0, 0, 0, 82 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.15, Visible = false, ZIndex = 8 }, root)
   mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8 * k), SortOrder = Enum.SortOrder.LayoutOrder }, S.skillBar)
   mk("UIPadding", { PaddingLeft = UDim.new(0, 8 * k), PaddingRight = UDim.new(0, 8 * k) }, S.skillBar)
@@ -398,14 +413,20 @@ function M:setHud(h)
   local k = M.HUD
   for i, sk in ipairs((h and h.skills) or {}) do
     local col = sk.color or Color3.fromRGB(200, 200, 220)
-    local f = mk("Frame", { Size = UDim2.new(0, 58 * k, 0, 58 * k), BackgroundColor3 = Color3.fromRGB(30, 22, 52), LayoutOrder = i, ZIndex = 9 }, self.skillBar)
-    mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, f); mk("UIStroke", { Color = col, Thickness = 2.5 }, f)
+    local RCOL = { Color3.fromRGB(170, 170, 180), Color3.fromRGB(80, 150, 255), Color3.fromRGB(255, 150, 40), Color3.fromRGB(190, 90, 255), Color3.fromRGB(230, 40, 50) }
+    local rc = RCOL[(sk.rarity or 0) + 1] or col
+    local f = mk("Frame", { Size = UDim2.new(0, 50 * k, 0, 70 * k), BackgroundColor3 = Color3.fromRGB(30, 22, 52), LayoutOrder = i, ZIndex = 9, ClipsDescendants = true }, self.skillBar)   -- 카드 모양 칸
+    mk("UICorner", { CornerRadius = UDim.new(0, 7 * k) }, f); mk("UIStroke", { Color = rc, Thickness = 2.5 }, f)
     mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.5), Color3.fromRGB(22, 16, 36)), Rotation = 90 }, f)
-    mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0.7, 0), Text = sk.icon or "✦", TextScaled = true, Font = Theme.FONT, TextColor3 = col, ZIndex = 10 }, f)
-    local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0.66, 0), Size = UDim2.new(1, 0, 0.34, 0), Text = sk.name or "", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.new(1, 1, 1), ZIndex = 10 }, f)
+    local ic = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0.6, 0), Text = sk.icon or "✦", TextScaled = true, Font = Theme.FONT, TextColor3 = col, ZIndex = 10 }, f)
+    task.spawn(function()   -- 카드 그림 (전용 그림이 없으면 진화 뿌리 그림)
+      local a = Sprites.art("card_s_" .. tostring(sk.id)) or (sk.art and Sprites.art("card_s_" .. sk.art))
+      if a and f.Parent then ic.Visible = false; mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Crop, ZIndex = 10 }, f) end
+    end)
+    local band = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0.3, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 11 }, f)
+    local nm = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, -4, 1, 0), Position = UDim2.new(0, 2, 0, 0), Text = sk.name or "", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.new(1, 1, 1), ZIndex = 12 }, band)
     mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-    local ov = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 11 }, f)
-    mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, ov)
+    local ov = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 13 }, f)
     self.skillCells[sk.id] = { cd = math.max(0.3, sk.cd or 1), left = 0, ov = ov }
   end
 end
@@ -432,7 +453,7 @@ function M:play(replay, onDone, maxSec, hud)
   if self.conn then self.conn:Disconnect() end
   local lanes = replay.lanes or 2
   self.conn = RunService.RenderStepped:Connect(function(dt)
-    if not self.alive then return end
+    if not self.alive or self.paused then return end
     barTick(self.hpB, dt); barTick(self.mpB, dt); barTick(self.bossB, dt)
     local slow = 1; if self.hitstop and self.hitstop > 0 then self.hitstop -= dt; slow = 0.12 end   -- 히트스톱: 큰 타격 순간 잠깐 멈칫
     self.t += dt * self.spd * self.userSpd * slow; self.idleT = (self.idleT or 0) + dt
@@ -488,7 +509,17 @@ function M:play(replay, onDone, maxSec, hud)
     if self.idx >= #sn and self.t >= total + 0.8 then self.conn:Disconnect(); self.conn = nil; self:hudOff(); if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
   end)
 end
-function M:hudOff() self.ctrl.Visible = false; self.skillBar.Visible = false; self.boss.Visible = false; self:speedMenu(false) end
+function M:pause(on)
+  self.paused = on and self.conn ~= nil or false; self.pauseOv.Visible = self.paused
+  if self.paused then self:speedMenu(false) end
+end
+function M:leave(dest)   -- 전투를 그만 보고 나간다 (결과는 이미 서버에 반영됨): 결과 창 없이 지도 · 마을로
+  self.paused = false; self.pauseOv.Visible = false
+  if self.conn then self.conn:Disconnect(); self.conn = nil end
+  self:hudOff(); self.onDone = nil
+  local H = self.hud or {}; if H.onLeave then H.onLeave(dest) end
+end
+function M:hudOff() self.pauseOv.Visible = false; self.paused = false; self.ctrl.Visible = false; self.skillBar.Visible = false; self.boss.Visible = false; self:speedMenu(false) end
 function M:skip() self:hudOff(); if self.conn then self.conn:Disconnect(); self.conn = nil end; if self.onDone then local f = self.onDone; self.onDone = nil; f() end end
 function M:destroy() self.alive = false; if self.idleConn then self.idleConn:Disconnect() end; if self.conn then self.conn:Disconnect() end; self.root:Destroy() end
 return M

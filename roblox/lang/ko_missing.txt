@@ -4,6 +4,7 @@ Tap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are 
   (me)
 %s  Lv %d
 %s  Lv %d / %d
+%s / %s EXP
 %s Lv%d%s
 %s · Lv %d / %d
 Ambient
@@ -33,7 +34,6 @@ Key
 Lang
 Lv
 Lv 
-Lv %d   %s / %s EXP
 Lv %d  %s
 Might
 More

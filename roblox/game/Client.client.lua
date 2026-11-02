@@ -682,15 +682,24 @@ local resSub = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.ne
 local resStat = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 80), Size = UDim2.new(0, 0, 0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(8, 5, 4), BackgroundTransparency = 0.3, ZIndex = 27 }, resBox)
 corner(resStat, 15); mk("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 16) }, resStat)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder }, resStat)
-local resText = mk("Frame", { Position = UDim2.new(0, 28, 0, 122), Size = UDim2.new(1, -56, 0, 128), BackgroundTransparency = 1, ZIndex = 27 }, resBox)   -- 보상 칩
+local resText = mk("Frame", { Position = UDim2.new(0, 28, 0, 158), Size = UDim2.new(1, -56, 0, 128), BackgroundTransparency = 1, ZIndex = 27 }, resBox)   -- 보상 칩 (경험치 막대 아래)
 mk("UIGridLayout", { CellSize = UDim2.new(0, 192, 0, 36), CellPadding = UDim2.new(0, 8, 0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, resText)
--- 경험치 막대 (승리 시): 레벨 · 채워지는 막대 · 숫자
-local resExp = mk("Frame", { Position = UDim2.new(0, 28, 0, 248), Size = UDim2.new(1, -56, 0, 16), BackgroundColor3 = Color3.fromRGB(10, 8, 14), ZIndex = 27, Visible = false }, resBox); corner(resExp, 8)
-mk("UIStroke", { Color = Color3.fromRGB(90, 140, 200), Thickness = 1.5 }, resExp)
-local resExpFill = mk("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(110, 190, 255), BorderSizePixel = 0, ZIndex = 28 }, resExp); corner(resExpFill, 8)
-mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(80, 140, 255), Color3.fromRGB(150, 230, 255)) }, resExpFill)
-local resExpText = mk("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.new(1, 1, 1), Text = "", ZIndex = 29 }, resExp)
+-- 경험치 막대 (승리 시): 왼쪽 레벨 문장(마름모) + 금테 홈 + 푸른 빛 막대(광택 · 빛나는 끝) + 숫자
+local resExp = mk("Frame", { Position = UDim2.new(0, 64, 0, 120), Size = UDim2.new(1, -110, 0, 20), BackgroundColor3 = Color3.fromRGB(8, 6, 12), ZIndex = 27, Visible = false }, resBox); corner(resExp, 10)
+mk("UIStroke", { Color = Color3.fromRGB(214, 168, 70), Thickness = 2 }, resExp)
+local resExpClip = mk("Frame", { Position = UDim2.new(0, 2, 0, 2), Size = UDim2.new(1, -4, 1, -4), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 27 }, resExp); corner(resExpClip, 8)
+local resExpFill = mk("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ZIndex = 28 }, resExpClip); corner(resExpFill, 8)
+mk("UIGradient", { Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 70, 200)), ColorSequenceKeypoint.new(0.6, Color3.fromRGB(70, 150, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 235, 255)) }) }, resExpFill)
+local resExpGloss = mk("Frame", { Size = UDim2.new(1, 0, 0.45, 0), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.72, BorderSizePixel = 0, ZIndex = 29 }, resExpFill); corner(resExpGloss, 8)
+local resExpTip = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, 0, 0.5, 0), Size = UDim2.new(0, 10, 1, 6), BackgroundColor3 = Color3.fromRGB(220, 250, 255), BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 29 }, resExpFill); corner(resExpTip, 5)
+for i = 1, 9 do mk("Frame", { Position = UDim2.new(i / 10, 0, 0.2, 0), Size = UDim2.new(0, 1, 0.6, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 30 }, resExpClip) end   -- 10% 눈금
+local resExpText = mk("TextLabel", { Size = UDim2.new(1, -10, 1, 0), BackgroundTransparency = 1, Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Right, Text = "", ZIndex = 31 }, resExp)
 mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, resExpText)
+local resLv = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, -14, 0.5, 0), Size = UDim2.new(0, 38, 0, 38), Rotation = 45, BackgroundColor3 = Color3.fromRGB(30, 22, 50), ZIndex = 32 }, resExp)   -- 레벨 문장
+mk("UIStroke", { Color = Color3.fromRGB(214, 168, 70), Thickness = 2 }, resLv)
+mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(70, 110, 220), Color3.fromRGB(20, 16, 40)), Rotation = 45 }, resLv)
+local resLvText = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1.2, 0, 1.2, 0), Rotation = -45, BackgroundTransparency = 1, Font = Theme.FONT, TextSize = 15, TextColor3 = Color3.fromRGB(255, 235, 180), Text = "", ZIndex = 33 }, resLv)
+mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, resLvText); resLvText:SetAttribute("NoTr", true)
 local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -96), Size = UDim2.new(1, -48, 0, 22), Font = Theme.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
 local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -20), Size = UDim2.new(1, -40, 0, 46), ZIndex = 27 }, resBox)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, resBtns)
@@ -725,9 +734,14 @@ showResultPanel = function(x, spec)
   if x.expNeed then
     local to = math.clamp(x.expNow / math.max(1, x.expNeed), 0, 1)
     local from = x.levelUps and 0 or math.clamp((x.expNow - (x.exp or 0)) / math.max(1, x.expNeed), 0, 1)
-    resExpText.Text = string.format("Lv %d   %s / %s EXP", x.lv or 0, n(x.expNow), n(x.expNeed)); resExpText:SetAttribute("NoTr", true)
+    resExpText.Text = string.format("%s / %s EXP", n(x.expNow), n(x.expNeed)); resExpText:SetAttribute("NoTr", true)
+    resLvText.Text = tostring(x.lv or 0)
     resExpFill.Size = UDim2.new(from, 0, 1, 0)
     TweenService:Create(resExpFill, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(to, 0, 1, 0) }):Play()
+    if x.levelUps then   -- 레벨업: 문장이 커졌다 돌아오며 빛난다
+      local sc = resLv:FindFirstChildOfClass("UIScale") or mk("UIScale", {}, resLv); sc.Scale = 1.5
+      TweenService:Create(sc, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+    end
   end
   if x.levelUps then chip(nil, "Level +" .. x.levelUps, Color3.fromRGB(150, 230, 255)) end
   if (x.gold or 0) > 0 then chip("i_gold", "Gold +" .. n(x.gold), Color3.fromRGB(255, 215, 110)) end
@@ -747,6 +761,11 @@ showResultPanel = function(x, spec)
   if x.sockTix then chip(nil, "Artisan Seal +1", Color3.fromRGB(200, 170, 255)) end
   if o == 0 then chip(nil, x.win and "No rewards" or "Try again · upgrading gear, arcana and passives will get you there", Color3.fromRGB(200, 190, 180)) end
   local note = x.note or (x.notes and x.notes[1]); if note then chip(nil, tostring(note), Color3.fromRGB(200, 190, 180)) end
+  do   -- 보상 칩이 많으면 창을 늘린다 (경험치 막대 · 버튼과 겹치지 않게)
+    local rows = math.max(1, math.ceil(o / 3))
+    resText.Size = UDim2.new(1, -56, 0, rows * 42)
+    resBox.Size = UDim2.new(0, 660, 0, math.max(360, 158 + rows * 42 + 110))
+  end
   for _, c in ipairs(resBtns:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   cancelAuto(); resCount.Text = ""
   if x.win and spec.stage and tutAfterStage then task.delay(0.6, function() tutAfterStage(spec.stage) end) end
@@ -816,10 +835,11 @@ local function hudInfo(spec)
   local ok, r = pcall(function() return rpc:InvokeServer("skills") end)
   if ok and r.rows then
     table.sort(r.rows, function(a, b) return a.slot < b.slot end)
-    for _, k in ipairs(r.rows) do if k.slot > 0 then local col, icon, d = Menus.skStyle(k.id); sk[#sk + 1] = { id = k.id, name = k.name, cd = d and d.cd, color = col, icon = icon } end end
+    for _, k in ipairs(r.rows) do if k.slot > 0 then local col, icon, d = Menus.skStyle(k.id); sk[#sk + 1] = { id = k.id, name = k.name, cd = d and d.cd, color = col, icon = icon, rarity = k.rarity, art = d and d.art } end end
   end
   return { title = spec.title, level = summary and summary.level, maxHp = summary and summary.maxHp, skills = sk, speed = OPT.speed, owns4 = owns4,
-    onSpeed = function(i) setOpt("speed", i) end, onBuy4 = buy4 }
+    onSpeed = function(i) setOpt("speed", i) end, onBuy4 = buy4,
+    onLeave = function(dest) cancelAuto(); setScreen(dest) end }   -- 일시정지 → 지도 · 마을로 귀환
 end
 local busy = false
 launch = function(spec)

@@ -1699,12 +1699,14 @@ local function revealResults(res, from)
   local function flip(i)
     local card, r = cards[i], res[i]; if not card or card:GetAttribute("Open") then return end
     card:SetAttribute("Open", true)
-    local w0 = card.Size
+    local w0 = UDim2.new(0, W, 0, H)   -- 날아오는 중에 눌러도 제 크기 · 제자리로 (작은 채로 끝나지 않게)
+    local px0, py0 = slot(i)
+    TweenService:Create(card, TweenInfo.new(0.06), { Position = UDim2.new(0, px0, 0, py0), Rotation = 0 }):Play()
     local t1 = TweenService:Create(card, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.new(0, 2, w0.Y.Scale, w0.Y.Offset) }); t1:Play(); t1.Completed:Wait()
     cardFace(card, r)
     TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = w0 }):Play()
     local col = M.SK_RCOL[r.rarity + 1]
-    local cx, cy = card.Position.X.Offset, card.Position.Y.Offset
+    local cx, cy = px0, py0
     if r.rarity == 2 or (r.rarity >= 3 and skip) then   -- 전설 (또는 넘기기): 제자리에서 충격파 · 불티 · 광택
       shock(ov, cx, cy, W * 0.6, W * 2.4, col, 81, 0.6, 5); sparks(ov, cx, cy, 16, col, 87, W * 1.3, 0.8); shine(card, 87)
     elseif r.rarity >= 3 then   -- 신화 이상: 카드가 화면 앞으로 크게 다가오며 폭발 → 잠시 보여 준 뒤 제자리로
