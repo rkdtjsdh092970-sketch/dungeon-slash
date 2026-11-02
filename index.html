@@ -437,8 +437,8 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .br5{height:39px;flex:none;display:flex;flex-direction:column;justify-content:center;padding:0 8px;background:#1e1612;border:1px solid #46341e;border-radius:5px;cursor:pointer}.br5.on{background:#5a3c1a;border:1.5px solid #d6a846}.br5 b{font-size:12px}.br5 small{font-size:10px;color:#b4aa9b}
 .mr5{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow:hidden}
 .mft5{font-size:26px;font-weight:700;color:#ffe1a0;text-shadow:-1px 0 #0c0604,1px 0 #0c0604,0 -1px #0c0604,0 1px #0c0604;line-height:32px}
-.mbn5{font-size:18px;font-weight:700;line-height:26px;text-shadow:-1px 0 #0c0604,1px 0 #0c0604,0 -1px #0c0604,0 1px #0c0604;padding-right:96px}
-.mba5{position:absolute;right:0;top:0;width:96px;height:96px;pointer-events:none}
+.mbn5{font-size:18px;font-weight:700;line-height:26px;text-shadow:-1px 0 #0c0604,1px 0 #0c0604,0 -1px #0c0604,0 1px #0c0604;padding-right:128px}
+.mba5{position:absolute;right:0;top:0;width:128px;height:128px;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--c) 45%,transparent),transparent)}.mba5 img{width:100%;height:100%;object-fit:contain}
 .ml5{font-size:12px;color:#e6dccd;font-weight:700;line-height:1.25}
 .mi5{font-size:14px;color:#e1d7c8;line-height:1.45;margin-bottom:4px}
 .mlk5{margin-top:auto;text-align:center;font-size:16px;font-weight:700;color:#ff8c78;padding-bottom:20px}
@@ -7041,7 +7041,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-072408";
+const BUILD_ID = "20261103-072744";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7615,7 +7615,7 @@ function mapPanel() {
     const B = hubBosses(), cur = MPS5.hub = clamp(MPS5.hub, 0, B.length - 1), upOk = !!(save.craid && save.craid[2]), up = MPS5.hubUp && upOk, S = MPS5.hubS;
     B.forEach((b, i) => { const have = b.kind === "void" ? save.keys : save[b.key] || 0; list += `<div class="br5 ${i === cur ? "on" : ""}" data-m="boss" data-i="${i}"><b style="color:${b.color}">${b.name}</b><small>${b.keyName} ×${have}</small></div>`; });
     const b = B[cur], tiers = up ? UP_TIERS : b.tiers, need = up ? 0 : b.need[S - 1], have = b.kind === "void" ? save.keys : save[b.key] || 0, cost = up ? UP_KEYS : 1, okNeed = up ? upOk : save.rift.best >= need;
-    let r = `<div class="mbn5" style="color:${b.color}">${b.name}</div><canvas class="mba5" width="128" height="128"></canvas>${line(b.D.desc || "", "#cdc3b4", 13)}`;
+    let r = `<div class="mbn5" style="color:${b.color}">${b.name}</div><div class="mba5" style="--c:${b.color}"><img src="${artURL("boss" + bossArt(b.D)) || ""}" alt=""></div>${line(b.D.desc || "", "#cdc3b4", 13)}`;
     r += tabs([{ t: "관문" }, { t: "상위 관문", ok: upOk }], up ? 2 : 1, "hup") + tabs([1, 2, 3, 4].map((i) => ({ t: i + "단계" })), S, "hst");
     r += rec(recTier5(tiers[S - 1]));
     if (!up) r += line(okNeed ? `열림 — 균열 ${need}층 필요` : `잠김 — 균열 ${need}층 필요`, okNeed ? "#96e6a0" : "#ff826e", 13);
@@ -7645,7 +7645,6 @@ function mapPanel() {
   }
   p.innerHTML = head + `<div class="mb5">${list ? `<div class="ml5s">${list}</div>` : ""}${body}</div>`;
   const sel = p.querySelector(".fr5.on"); if (sel) sel.scrollIntoView({ block: "center" });
-  const cv = p.querySelector(".mba5"); if (cv) { const b = hubBosses()[MPS5.hub], ctx = cv.getContext("2d"); const g = ctx.createRadialGradient(64, 76, 6, 64, 76, 64); g.addColorStop(0, b.color + "55"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128); drawBossSprite(ctx, bossArt(b.D), 64, 124, 1.6, { hue: b.D.hue }); }
   if (!p.dataset.m5) { p.dataset.m5 = 1; p.addEventListener("click", mp5Click); }
 }
 function mp5Click(ev) {
@@ -7952,6 +7951,10 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.14", date: "11/3", title: "보스 관문 창 고침", items: [
+    "고침: 지도에서 보스 관문(과 돌의 신전)을 누르면 예전 창이 먼저 열리고, 닫아야 새 창이 보이던 것. 이제 새 창만 열립니다.",
+    "보스 관문 창의 보스 그림을 예전 도트 그림 대신 새 일러스트로 바꿨습니다.",
+  ] },
   { ver: "5.13", date: "11/3", title: "전투 화면을 로블록스판 배치로", items: [
     "전투 HUD 크기 · 위치를 로블록스판과 같게 맞췄습니다: 왼쪽 위 상태판(초상화 · 체력 · 마나 · 처치), 위 가운데 보스 체력바(장식 틀 안에 딱 맞게), 왼쪽 아래 아르카나 카드.",
     "고침: 아르카나 카드가 어둡게 보이던 것 (대상 표시 칸이 카드 전체를 덮고 있었음).",
@@ -8580,7 +8583,7 @@ function bindInput() {
   window.addEventListener("mouseup", () => { MapView.drag = null; });
   CV.addEventListener("click", (ev) => {
     AU.init(); AU.resume(); const [x, y] = canvasPos(ev);
-    if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, CFG.RIFT_END, save.rift.best + 1)); if (n.kind === "trial" && !G.trialInit) { G.trialInit = true; G.trialTier = Math.max(1, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)); } snd("click"); if (n.kind === "bosshub" && nodeUnlocked(save, n)) { mapPanel(); openBossHub(); return; } if (n.kind === "temple") { mapPanel(); openTemple(); return; } } else MapView.sel = null; mapPanel(); }
+    if (G.screen === "map") { if (MapView.moved) return; const n = MapView.pick(x, y); if (n) { MapView.sel = n; if (n.kind === "rift") G.riftTier = Math.max(1, Math.min(G.riftTier, CFG.RIFT_END, save.rift.best + 1)); if (n.kind === "trial" && !G.trialInit) { G.trialInit = true; G.trialTier = Math.max(1, Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)); } snd("click"); } else MapView.sel = null; mapPanel(); }
     else if (G.screen === "town") townClick(TownView.pick(x, y));
     else if (G.screen === "battle" && G.battle && !G.battle.over && !G.paused) { const e = pickEnemy(G.battle, x, y); if (e && e.orb) { if (wardenPop(G.battle, e)) snd("click"); } else if (e) { G.battle.designated = G.battle.designated === e ? null : e; snd("click"); } }
   });

@@ -61,7 +61,7 @@ function mapPanel() {
     const B = hubBosses(), cur = MPS5.hub = clamp(MPS5.hub, 0, B.length - 1), upOk = !!(save.craid && save.craid[2]), up = MPS5.hubUp && upOk, S = MPS5.hubS;
     B.forEach((b, i) => { const have = b.kind === "void" ? save.keys : save[b.key] || 0; list += `<div class="br5 ${i === cur ? "on" : ""}" data-m="boss" data-i="${i}"><b style="color:${b.color}">${b.name}</b><small>${b.keyName} ×${have}</small></div>`; });
     const b = B[cur], tiers = up ? UP_TIERS : b.tiers, need = up ? 0 : b.need[S - 1], have = b.kind === "void" ? save.keys : save[b.key] || 0, cost = up ? UP_KEYS : 1, okNeed = up ? upOk : save.rift.best >= need;
-    let r = `<div class="mbn5" style="color:${b.color}">${b.name}</div><canvas class="mba5" width="128" height="128"></canvas>${line(b.D.desc || "", "#cdc3b4", 13)}`;
+    let r = `<div class="mbn5" style="color:${b.color}">${b.name}</div><div class="mba5" style="--c:${b.color}"><img src="${artURL("boss" + bossArt(b.D)) || ""}" alt=""></div>${line(b.D.desc || "", "#cdc3b4", 13)}`;
     r += tabs([{ t: "관문" }, { t: "상위 관문", ok: upOk }], up ? 2 : 1, "hup") + tabs([1, 2, 3, 4].map((i) => ({ t: i + "단계" })), S, "hst");
     r += rec(recTier5(tiers[S - 1]));
     if (!up) r += line(okNeed ? `열림 — 균열 ${need}층 필요` : `잠김 — 균열 ${need}층 필요`, okNeed ? "#96e6a0" : "#ff826e", 13);
@@ -91,7 +91,6 @@ function mapPanel() {
   }
   p.innerHTML = head + `<div class="mb5">${list ? `<div class="ml5s">${list}</div>` : ""}${body}</div>`;
   const sel = p.querySelector(".fr5.on"); if (sel) sel.scrollIntoView({ block: "center" });
-  const cv = p.querySelector(".mba5"); if (cv) { const b = hubBosses()[MPS5.hub], ctx = cv.getContext("2d"); const g = ctx.createRadialGradient(64, 76, 6, 64, 76, 64); g.addColorStop(0, b.color + "55"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128); drawBossSprite(ctx, bossArt(b.D), 64, 124, 1.6, { hue: b.D.hue }); }
   if (!p.dataset.m5) { p.dataset.m5 = 1; p.addEventListener("click", mp5Click); }
 }
 function mp5Click(ev) {
