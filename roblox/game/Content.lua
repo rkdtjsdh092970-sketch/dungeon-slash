@@ -10,7 +10,8 @@ local Econ = require(script.Parent.Economy)
 
 local M = {}
 local floor, max, min = math.floor, math.max, math.min
-local UP_TIERS, UP_KEYS = { 196, 203, 210, 217 }, 5
+local UP_TIERS, UP_KEYS = { 194, 201, 208, 215 }, 5
+local GATE_TIERS = { 118, 119, 120, 121 }   -- 보스 관문 1~4단계 (2026-11-02 전 테스터 기준: T5 1등급1·2등급2·3등급2 → 1등급3·2등급2)
 local BOSS_SKILL_RW = { { 12, 42, 42, 4, 0, 0 }, { 8, 28, 55, 9, 0, 0 }, { 6, 18, 67, 9, 0, 0 }, { 5, 12, 70, 13, 0, 0 } }
 local BOSS_SKILL_CH = { 0.12, 0.18, 0.28, 0.45 }
 local UP_SKILL_RW = { { 0, 0, 0, 0, 90, 10 }, { 0, 0, 0, 0, 80, 20 }, { 0, 0, 0, 0, 68, 32 }, { 0, 0, 0, 0, 55, 45 } }
@@ -97,7 +98,7 @@ function M.play(sv, spec, seed)
     if spec.upper and not (sv.craid and sv.craid[2]) then return nil, "상위 관문은 노말 레이드 클리어 후 열립니다" end
     keyField = kind == "void" and "keys" or EBk.key; cost = spec.upper and UP_KEYS or 1
     if (sv[keyField] or 0) < cost then return nil, "열쇠가 부족합니다 (" .. cost .. "개 필요)" end
-    node = { kind = kind, act = 10, tier = spec.upper and UP_TIERS[vs] or 100, vsel = vs, upper = spec.upper and 1 or nil }
+    node = { kind = kind, act = 10, tier = spec.upper and UP_TIERS[vs] or GATE_TIERS[vs], vsel = vs, upper = spec.upper and 1 or nil }
   elseif kind == "raid" then
     if not graduated(sv) then return nil, "균열 100층을 졸업해야 합니다" end
     node = { kind = "raid", act = 10, tier = CFG.RIFT_END }

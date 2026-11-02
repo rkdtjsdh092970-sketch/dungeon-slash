@@ -179,7 +179,7 @@ end
 local function insertAt(plan, idx0, v) table.insert(plan, max(1, min(#plan + 1, idx0 + 1)), v) end
 
 local BOSS_BY = {}; for _, d in ipairs(Mon.BOSSES) do BOSS_BY[d.id] = d end
-local VOID_TIER = { 100, 108, 126, 138 }
+local VOID_TIER = { 100, 100, 100, 100 }   -- 단계별 강함은 Content.GATE_TIERS 로 옮김 (2026-11-02)
 local function bossRiftMult(t) return floorMult(t) * CFG.BOSS_RIFT_K end
 local function isEB(kind) return Mon.EB[kind] ~= nil end
 M.isEB = isEB
