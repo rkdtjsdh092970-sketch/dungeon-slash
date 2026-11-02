@@ -145,7 +145,8 @@ local W = { atkPct = 3, magPct = 3, hpPct = 2, defPct = 1.5, allDmg = 4, physDmg
 W.spellCrit = 2; W.elemDmg = 2.5; W.penElem = 1.5; W.magMore = 3; W.atkMore = 3; W.hpMore = 2
 -- 계열에 맞는 노드만 (검 = 물리, 지팡이 = 마법): 다른 계열 공격 노드는 점수 0
 local OFF = { phys = { magPct = 1, magDmg = 1, spellCrit = 1, elemDmg = 1, penElem = 1, magMore = 1, magFlat = 1 }, mag = { atkPct = 1, physDmg = 1, critChance = 1, atkMore = 1, atkFlat = 1, ignoreDef = 1, shredDef = 1, bleedChance = 1 } }
-local function nodeScore(p, fam) local s = 0; for k, v in pairs(p.per) do if not (fam and OFF[fam][k]) then local m = k:sub(-4) == "More" and (v - 1) * 10 or (v > 0 and v or -v); s += (W[k] or 0.2) * m end end return s end
+-- 재화 갈래(골드 · MF)는 전투력과 무관하므로 0점
+local function nodeScore(p, fam) if p.arm == "wealth" then return 0 end local s = 0; for k, v in pairs(p.per) do if not (fam and OFF[fam][k]) then local m = k:sub(-4) == "More" and (v - 1) * 10 or (v > 0 and v or -v); s += (W[k] or 0.2) * m end end return s end
 function M.autoPassives(sv)
   local w = sv.equipped and sv.equipped.weapon; local fam = (w and w.wt == "staff") and "mag" or "phys"
   local added = 0
@@ -153,7 +154,7 @@ function M.autoPassives(sv)
     local left = M.passiveLeft(sv); if left <= 0 then break end
     local bestId, bestR
     for _, p in ipairs(Passives) do
-      if not has(sv, p.id) and linked(sv, p) and p.cost <= left then local r = nodeScore(p, fam) / p.cost; if bestR == nil or r > bestR then bestR = r; bestId = p.id end end
+      if not has(sv, p.id) and linked(sv, p) and p.cost <= left then local r = nodeScore(p, fam) / p.cost + (p.arm == fam and 1e-6 or p.arm == "wealth" and -1e-6 or 0); if bestR == nil or r > bestR then bestR = r; bestId = p.id end end
     end
     if not bestId then break end
     sv.pass[bestId] = 1; added += 1

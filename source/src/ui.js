@@ -222,20 +222,35 @@ function questRow(d, st, mode) {
 // ---------- 길드 ----------
 
 // ---------- 설정 ----------
-function openSettings() {
-  const sl = (k, n) => `<label class="setrow2">${n}<input type="range" min="0" max="1" step="0.05" value="${AU.vol[k]}" data-i="vol" data-k="${k}"></label>`;
-  const inGame = G.screen !== "title"; const A = save ? save.auto : null;
-  Modal.open(`<h2>설정</h2>${sl("master", "전체 볼륨")}${sl("bgm", "배경음악")}${sl("sfx", "효과음")}
-   <label class="setrow2">음소거 <input type="checkbox" data-i="mute" ${AU.muted ? "checked" : ""}></label>
-   ${save ? `<label class="setrow2">피격 시 화면 반짝임 <select data-i="hflash">${[[0, "끄기"], [0.5, "약하게"], [1, "보통"]].map(([v, t]) => `<option value="${v}" ${(save.opt && save.opt.hitflash != null ? save.opt.hitflash : 1) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><label class="setrow2">신화 이상 스킬 장엄 연출 <input type="checkbox" data-i="grand" ${save.opt && save.opt.grand === 0 ? "" : "checked"}></label><label class="setrow2">화면 흔들림 <input type="checkbox" data-i="shk" ${save.opt && save.opt.shake === 0 ? "" : "checked"}></label><label class="setrow2">다음 스테이지로 자동 이동 <select data-i="anext">${[[0, "끄기"], [3, "3초 후"], [5, "5초 후"], [10, "10초 후"]].map(([v, t]) => `<option value="${v}" ${((save.opt && save.opt.autoNext) || 0) === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">승리 후 결과창에서 대기시간이 지나면 다음 스테이지(균열·시련은 한 단계 위)로 자동 이동합니다. 화면을 누르거나 키를 누르면 취소됩니다.</div>` : ""}
-   ${A ? (() => { autoRules(save); const opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`; return `<h3>자동 반복 · 전투 후 장비 처리</h3><div class="dim">자동 반복이 끝난 전투마다 아래 규칙으로 가방을 정리합니다 (장비는 자동으로 착용하지 않습니다)</div>
-   ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2">${x.name} 장비 <select data-i="arule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
-   <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="akeepup" ${A.keepUp ? "checked" : ""}></label><div class="dim">고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다</div>`; })() : ""}
-   <div class="pbtns"><button class="btn" data-a="srvlg" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button>${SRV.on ? `<button class="btn warn" data-a="srvout">로그아웃</button>` : ""}<button class="btn" data-a="recs">기록</button></div>${inGame ? `<div class="pbtns"><button class="btn" data-a="totitle">타이틀로</button><button class="btn warn" data-a="wipe">데이터 초기화</button></div>` : ""}`, { cls: "sm", on: {
-    vol: (el) => { AU.setVol(el.dataset.k, +el.value); if (save) { save.set[el.dataset.k] = +el.value; saveGame(); } }, mute: (el) => AU.setMuted(el.checked), grand: (el) => { (save.opt = save.opt || {}).grand = el.checked ? 1 : 0; saveGame(); }, hflash: (el) => { (save.opt = save.opt || {}).hitflash = +el.value; saveGame(); }, shk: (el) => { (save.opt = save.opt || {}).shake = el.checked ? 1 : 0; saveGame(); }, anext: (el) => { (save.opt = save.opt || {}).autoNext = +el.value; saveGame(); },
-    arule: (el) => { autoRules(save).rules[+el.dataset.r] = el.value; saveGame(); }, akeepup: (el) => { save.auto.keepUp = el.checked; saveGame(); },
-    srvlg: () => loginDialog(() => {}), srvout: () => { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); openSettings(); }, recs: () => openRecords(), totitle: () => { Modal.close(); saveGame(); openTitle(); },
-    wipe: () => askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); }),
+// 5.0 설정 (로블록스판 openSettings: 탭 묶음 · 한 줄 = 제목 + 선택 버튼). 웹에만 있는 계정 · 데이터 탭은 남긴다
+const SET5 = { tab: "graphics" };
+function openSettings(tab) {
+  if (tab) SET5.tab = tab; const T = SET5.tab, O = save ? (save.opt = save.opt || {}) : {}, inGame = G.screen !== "title" && !!save;
+  const row = (title, btns) => `<div class="st5"><b>${title}</b><span>${btns.map((x) => x.value != null ? `<em style="width:${x.w || 70}px">${x.value}</em>` : `<button class="btn ${x.on ? "gold" : ""}" data-a="s5" data-k="${x.k}" style="width:${x.w || 96}px">${x.t}</button>`).join("")}</span></div>`;
+  const pct = (v) => Math.round(v * 100) + "%", fl = O.hitflash != null ? O.hitflash : 1;
+  let body = "";
+  if (T === "graphics") body = row("피해 숫자", [{ t: "켬", on: O.dmg !== 0, k: "dmg:1" }, { t: "끔", on: O.dmg === 0, k: "dmg:0" }]) + row("타격 번쩍임", [{ t: "끔", on: fl === 0, k: "flash:0" }, { t: "약하게", on: fl === 0.5, k: "flash:0.5" }, { t: "보통", on: fl === 1, k: "flash:1" }]);
+  else if (T === "auto" && save) { const A = autoRules(save);
+    body = row("전투 후 자동 반복", [{ t: "끔", on: auto5() === 0, k: "auto:0" }, { t: "같은 단계", on: auto5() === 1, k: "auto:1" }, { t: "다음 단계", on: auto5() === 2, k: "auto:2" }])
+      + row("장비 자동 분해", [{ t: "열기", k: "autodis", w: 110 }])
+      + ["일반", "희귀", "전설"].map((nm, r) => row(`${nm} 아르카나`, [{ t: "유지", on: (A.srules[r] || "keep") === "keep", k: "sr" + r + ":keep" }, { t: "분해", on: A.srules[r] === "dis" || A.srules[r] === "sell", k: "sr" + r + ":dis" }])).join("")
+      + row("아르카나마다 가장 좋은 한 장은 남기기", [{ t: "켬", on: !!A.sBest, k: "sbest:1" }, { t: "끔", on: !A.sBest, k: "sbest:0" }])
+      + `<div class="st5 note">장비는 전투가 끝날 때마다 가방의 [자동 분해] 설정으로, 아르카나는 자동 반복 중에 위 규칙으로 정리됩니다. 장착 · 세트 · 룬 · 레벨이 오른 아르카나는 건드리지 않습니다.</div>`; }
+  else if (T === "sound") { const v = (k, title) => row(title, [{ t: "−", k: "vol-" + k, w: 44 }, { value: pct(AU.vol[k]) }, { t: "+", k: "vol+" + k, w: 44 }]);
+    body = v("master", "전체 볼륨") + v("bgm", "배경음악") + v("sfx", "효과음") + row("음소거", [{ t: "켬", on: AU.muted, k: "mute:1" }, { t: "끔", on: !AU.muted, k: "mute:0" }]); }
+  else body = row("서버 계정", SRV.on ? [{ t: "☁ " + SRV.name, w: 150 }, { t: "로그아웃", k: "srvout" }] : [{ t: "☁ 서버 로그인", k: "srvlg", w: 150 }]) + row("기록", [{ t: "열기", k: "recs" }])
+    + (inGame ? row("타이틀 화면으로", [{ t: "이동", k: "totitle" }]) + row("데이터 초기화 (되돌릴 수 없음)", [{ t: "초기화", k: "wipe" }]) : "");
+  const tabs = [["graphics", "그래픽"], ["auto", "자동 전투"], ["sound", "소리"], ["data", "계정 · 데이터"]].filter(([k]) => k !== "auto" || save);
+  Modal.open(`<h2>설정</h2><div class="grpbar">${tabs.map(([k, n]) => `<button class="tab ${T === k ? "on" : ""}" data-a="s5t" data-t="${k}">${n}</button>`).join("")}</div><div class="rl5w st5w">${body}</div>`, { cls: "wide", on: {
+    s5t: (el) => openSettings(el.dataset.t),
+    s5: (el) => { const k = el.dataset.k, [a, v] = k.split(":");
+      if (a === "dmg") O.dmg = +v; else if (a === "flash") O.hitflash = +v; else if (a === "auto") setAuto5(+v); else if (a === "autodis") { IB.mode = "inv"; return openAutoDis(); }
+      else if (a.startsWith("sr")) autoRules(save).srules[+a[2]] = v; else if (a === "sbest") autoRules(save).sBest = v === "1";
+      else if (a.startsWith("vol")) { const kk = a.slice(4), nv = Math.max(0, Math.min(1, Math.round(AU.vol[kk] * 10 + (a[3] === "+" ? 1 : -1)) / 10)); AU.setVol(kk, nv); if (save) save.set[kk] = nv; }
+      else if (a === "mute") AU.setMuted(v === "1"); else if (a === "srvlg") return loginDialog(() => openSettings()); else if (a === "srvout") { srvLogout(); toast("로그아웃했습니다 (세이브는 이 기기에 남아 있습니다)"); }
+      else if (a === "recs") return openRecords(); else if (a === "totitle") { Modal.close(); saveGame(); return openTitle(); }
+      else if (a === "wipe") return askConfirm("저장된 모든 데이터를 삭제할까요?<br>되돌릴 수 없습니다.", "삭제", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} save = null; G.battle = null; G.pending = null; openTitle(); });
+      if (save) saveGame(); snd("click"); openSettings(); },
   } });
 }
 

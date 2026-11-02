@@ -352,7 +352,7 @@ function applyDamage(b, e, dmg, o) {
   if (e.def && e.def.raid && e.raid) { const R = e.raid; if (R.sealed) dmg *= 0.03; else if (R.limit > 0) dmg = Math.min(dmg, Math.max(0, e.hp - R.limit)); if (R.vuln > 0) dmg *= CFG.RAID.VULNM; }   // 결계 중에는 거의 통하지 않고, 구간 끝에서는 더 깎이지 않는다
   e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time;
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
-  if (!b.noFx && !o.noText) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
+  if (!b.noFx && !o.noText && !(save && save.opt && save.opt.dmg === 0)) b.texts.push({ x: p.x + rnd(-14, 14), y: p.y - (e.tier === "boss" ? 120 : 52) - rnd(0, 10), text: fmtN(dmg), color: o.crit ? "#ffe45a" : o.color || "#ffffff", big: !!o.crit, t: 0.8, life: 0.8 });
   if (e.charge) e.charge.dealt += dmg;
   if (e.reflect && o.src === "skill") damagePlayer(b, Math.min(dmg * e.reflect.pct, b.maxHp * 0.002), { undodgeable: true });   // 반사 피해는 한 방당 최대 체력의 0.2%까지 (딜이 높을수록 죽던 문제 수정)
   const ls = ((o.lifesteal || 0) + b.stats.lifesteal) * (b.debuffs.wound ? b.debuffs.wound.mult : 1);   // 작열의 낙인: 흡수 반감

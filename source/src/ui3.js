@@ -395,24 +395,28 @@ function openAutoSkill() {
 }
 
 // ---------- 자동 분해 설정 (인벤토리) ----------
-function openAutoDis() {
-  const A = autoRules(save), opt = (r, v, t) => `<option value="${v}" ${A.rules[r] === v ? "selected" : ""}>${t}</option>`;
-  const nowN = save.inv.filter((it) => { const r = autoRuleOf(A, it); return r && r !== "keep" && !it.uniq && !protectedItem(save, it) && !(A.keepUp && isUpgrade(save, it, true)) && !(A.maxIlvl && it.ilvl > A.maxIlvl) && !(A.minQ && itemQuality(it) >= A.minQ) && !tierKeep(A, it); }).length;
-  Modal.open(`<h2>자동 분해 설정</h2><div class="dim">전투가 끝날 때마다 아래 규칙으로 가방의 장비를 자동 정리합니다.<br>고유·잠금·프리셋·착용 중 장비는 항상 유지됩니다.</div>
-   <label class="setrow2" style="margin-top:6px"><b>모든 전투 후 자동 정리</b> <input type="checkbox" data-i="adall" ${A.always ? "checked" : ""}></label><div class="dim">끄면 자동 반복 중에만 정리합니다</div>
-   ${ITEM_RARITY.slice(0, 5).map((x, r) => `<label class="setrow2"><span class="${RCLS({ rarity: r })}">${x.name}</span> 장비 <select data-i="adrule" data-r="${r}">${opt(r, "keep", "유지")}${opt(r, "sell", "판매")}${opt(r, "dis", "분해")}</select></label>`).join("")}
-   <label class="setrow2"><span style="color:${SAT_COLOR}">사탄</span> 장비 <select data-i="adsr">${[["keep", "유지"], ["sell", "판매"], ["dis", "분해"]].map(([v, n]) => `<option value="${v}" ${A.satRule === v ? "selected" : ""}>${n}</option>`).join("")}</select></label>
-   <label class="setrow2">전투력이 오르는 장비(▲)는 처리하지 않음 <input type="checkbox" data-i="adup" ${A.keepUp ? "checked" : ""}></label>
-   <label class="setrow2">옵션 품질 <select data-i="adq">${[[0, "제한 없음"], [0.3, "30% 미만만 처리"], [0.5, "50% 미만만 처리"], [0.7, "70% 미만만 처리"], [0.85, "85% 미만만 처리"]].map(([v, t]) => `<option value="${v}" ${A.minQ === v ? "selected" : ""}>${t}</option>`).join("")}</select></label><div class="dim">옵션 수치가 범위의 어디쯤인지의 평균입니다. 품질이 기준 이상인 장비는 유지합니다</div>
-   <label class="setrow2">전설 옵션 티어 기준 <select data-i="adtx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.tierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adtn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.tierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.tierX > 0 && A.tierN > 0 ? `<b>전설</b> 장비 중 <b style="color:#ffd070">${A.tierX === 1 ? "T1" : "T" + A.tierX + " 이상"} 옵션이 ${A.tierN}개 이상</b>인 것만 남기고, 나머지는 일반 · 매직 · 레어까지 모두 분해합니다 (등급 규칙이 판매면 판매). (T1은 T2 이상에도 포함, 1티어가 최고)` : "티어 기준을 고르면 기준을 채운 전설 장비만 남기고, 일반 · 매직 · 레어와 기준 미달 전설은 모두 분해합니다."}</div>
-   <label class="setrow2"><span style="color:${SAT_COLOR}">사탄</span> 옵션 티어 기준 <select data-i="adsx">${[[0, "제한 없음"], [1, "T1"], [2, "T2 이상"], [3, "T3 이상"], [4, "T4 이상"], [5, "T5 이상"]].map(([v, t]) => `<option value="${v}" ${A.sTierX === v ? "selected" : ""}>${t}</option>`).join("")}</select> × <select data-i="adsn">${[1, 2, 3, 4, 5].map((v) => `<option value="${v}" ${(A.sTierN || 3) === v ? "selected" : ""}>${v}개</option>`).join("")}</select> 미만이면 처리</label><div class="dim">${A.sTierX > 0 && A.sTierN > 0 ? `<b>사탄</b> 장비 중 <b style="color:#ff7a6a">${A.sTierX === 1 ? "T1" : "T" + A.sTierX + " 이상"} 옵션이 ${A.sTierN}개 이상</b>인 것만 남기고, 나머지 사탄 장비는 분해합니다 (사탄 규칙이 판매면 판매). 전설 기준과는 따로 적용됩니다.` : "사탄 장비에만 적용되는 옵션 티어 기준입니다. 고르면 기준 미달 사탄 장비를 분해합니다."}</div>
-   <label class="setrow2">아이템 레벨 상한 <input class="txt" style="width:56px" type="number" min="0" max="99" value="${A.maxIlvl}" data-i="adlv"> <small class="dim">(0 = 제한 없음, 이 레벨 이하만 처리)</small></label>
-   <div class="center" style="margin-top:8px">지금 가방에서 처리될 장비 <b style="color:#ffd070">${nowN}개</b></div>
-   <div class="pbtns"><button class="btn pri" data-a="adnow" ${nowN ? "" : "disabled"}>지금 정리하기</button><button class="btn" data-a="adsk">스킬 정리 설정</button><button class="btn" data-a="adx">닫기</button></div>`, { cls: "sm", on: {
-    adsr: (el) => { A.satRule = el.value; saveGame(); openAutoDis(); }, adsx: (el) => { A.sTierX = +el.value; if (A.sTierX > 0 && !(A.sTierN > 0)) A.sTierN = 3; saveGame(); openAutoDis(); }, adsn: (el) => { A.sTierN = +el.value; saveGame(); openAutoDis(); }, adall: (el) => { A.always = el.checked; saveGame(); }, adrule: (el) => { A.rules[+el.dataset.r] = el.value; saveGame(); openAutoDis(); }, adup: (el) => { A.keepUp = el.checked; saveGame(); openAutoDis(); },
-    adq: (el) => { A.minQ = +el.value; saveGame(); openAutoDis(); }, adtx: (el) => { A.tierX = +el.value; if (A.tierX > 0 && !(A.tierN > 0)) A.tierN = 3; saveGame(); openAutoDis(); }, adtn: (el) => { A.tierN = +el.value; saveGame(); openAutoDis(); }, adlv: (el) => { A.maxIlvl = Math.max(0, Math.min(99, Math.floor(+el.value) || 0)); saveGame(); openAutoDis(); },
-    adnow: () => { const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 (+${fmtN(r.gold)}G${r.ore ? " · 강화석 " + r.ore : ""})`, "ok"); openAutoDis(); renderItems(); },
-    adsk: () => openAutoSkill(), adx: () => { Modal.close(); renderItems(); },
+function openAutoDis() {   // 5.0: 로블록스판 autoRender 와 같은 배치 (줄마다 버튼으로 고르기)
+  const A = autoRules(save); A.minQ = 0;
+  const nowN = save.inv.filter((it) => { const r = autoRuleOf(A, it); return r && r !== "keep" && !it.uniq && !protectedItem(save, it) && !(A.keepUp && isUpgrade(save, it, true)) && !(A.maxIlvl && it.ilvl > A.maxIlvl) && !tierKeep(A, it); }).length;
+  const row = (label, col, opts) => `<div class="ad5r"><b style="${col ? "color:" + col : ""}">${label}</b><span>${opts.map(([t, on, act, w]) => `<button class="btn ${on ? "gold" : ""}" data-a="ad5" data-k="${act}" style="width:${w || 70}px">${t}</button>`).join("")}</span></div>`;
+  const RN = [["keep", "유지"], ["sell", "판매"], ["dis", "분해"]];
+  const rule = (cur, key) => RN.map(([k, n]) => [n, cur === k, key + ":" + k]);
+  const tierRows = (title, col, kx, kn) => { let h = row(title, col, [["없음", !A[kx], kx + ":0", 52], ...[1, 2, 3, 4, 5].map((x) => [x === 1 ? "T1" : "T" + x + "↑", A[kx] === x, kx + ":" + x, 52])]);
+    if (A[kx] > 0) h += row("   … 이 개수보다 적으면 처리", null, [1, 2, 3, 4, 5].map((k) => [String(k), (A[kn] || 3) === k, kn + ":" + k, 50])); return h; };
+  const body = row("모든 전투 후 정리", null, [["켬", !!A.always, "always:1"], ["끔", !A.always, "always:0"]])
+    + ITEM_RARITY.slice(0, 4).map((x, r) => row(`${x.name} 장비`, ["#cdcdd7", "#6ea0ff", "#ffd646", "#ff9628"][r], rule(A.rules[r], "rule" + r))).join("")
+    + row("사탄 장비", SAT_COLOR, rule(A.satRule, "sat"))
+    + row("▲ 전투력이 오르는 장비는 남기기", "#78ff8c", [["켬", !!A.keepUp, "keepUp:1"], ["끔", !A.keepUp, "keepUp:0"]])
+    + tierRows("전설 옵션 티어 기준", "#ff9628", "tierX", "tierN") + tierRows("사탄 옵션 티어 기준", SAT_COLOR, "sTierX", "sTierN")
+    + row("장비 티어 상한 (이하만 처리)", null, [["없음", !A.maxIlvl, "maxIlvl:0", 52], ...[1, 2, 3, 4, 5, 6].map((x) => ["T" + x, A.maxIlvl === x, "maxIlvl:" + x, 40])]);
+  Modal.open(`<h2>장비</h2><div class="box5" style="height:392px"><div class="bh5">자동 분해 설정</div><div class="dim" style="padding:4px 14px;font-size:13px">전투가 끝날 때마다 이 규칙으로 가방을 정리합니다. 고유 · 세트 · 착용 장비는 늘 남깁니다.</div>
+    <div class="ad5l">${body}</div><div class="ad5f"><b>지금 처리할 장비: ${nowN}개</b><button class="btn ${nowN ? "pri" : ""}" data-a="adnow">지금 정리</button><button class="btn blue" data-a="adx">가방으로</button></div></div>`, { cls: "wide", on: {
+    ad5: (el) => { const [k, v] = el.dataset.k.split(":");
+      if (k === "always" || k === "keepUp") A[k] = v === "1"; else if (k.startsWith("rule")) A.rules[+k.slice(4)] = v; else if (k === "sat") A.satRule = v;
+      else { A[k] = +v; if ((k === "tierX" || k === "sTierX") && +v > 0 && !(A[k === "tierX" ? "tierN" : "sTierN"] > 0)) A[k === "tierX" ? "tierN" : "sTierN"] = 3; }
+      saveGame(); openAutoDis(); },
+    adnow: () => { if (!nowN) return; const r = autoProcess(save); saveGame(); refreshTop(); toast(`정리 완료: ${r.sold}개 판매 · ${r.dis}개 분해 · 골드 +${fmtN(r.gold)}${r.ore ? " · 강화석 +" + r.ore : ""}`, "ok"); openAutoDis(); },
+    adx: () => renderItems(),
   } });
 }
 

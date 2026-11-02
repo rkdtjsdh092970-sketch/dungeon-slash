@@ -688,11 +688,11 @@ const PASS_W = { atkPct: 3, magPct: 3, hpPct: 2, defPct: 1.5, allDmg: 4, physDmg
 const PASS_OFF = { phys: { magPct: 1, magDmg: 1, spellCrit: 1, elemDmg: 1, penElem: 1, magMore: 1 }, mag: { atkPct: 1, physDmg: 1, critChance: 1, atkMore: 1, ignoreDef: 1, shredDef: 1, bleedChance: 1 } };
 function autoPassives(sv) {
   const w = sv.equipped && sv.equipped.weapon, fam = w && w.base && w.base.mag != null && w.base.atk == null ? "mag" : "phys";
-  const score = (p) => { let s = 0; for (const k in p.per) { if (PASS_OFF[fam][k]) continue; const v = p.per[k], m = k.endsWith("More") ? (v - 1) * 10 : Math.abs(v); s += (PASS_W[k] == null ? 0.2 : PASS_W[k]) * m; } return s; };
+  const score = (p) => { if (p.arm === "wealth") return 0; let s = 0; for (const k in p.per) { if (PASS_OFF[fam][k]) continue; const v = p.per[k], m = k.endsWith("More") ? (v - 1) * 10 : Math.abs(v); s += (PASS_W[k] == null ? 0.2 : PASS_W[k]) * m; } return s; };
   let added = 0;
   for (let i = 0; i < 400; i++) {
     const left = passivePoints(sv) - passiveSpent(sv); if (left <= 0) break; let best = null, br = -1e9;
-    for (const p of PASSIVES) if (!(sv.pass && sv.pass[p.id]) && canAddPassive(sv, p.id) && p.cost <= left) { const r = score(p) / p.cost; if (r > br) { br = r; best = p; } }
+    for (const p of PASSIVES) if (!(sv.pass && sv.pass[p.id]) && canAddPassive(sv, p.id) && p.cost <= left) { const r = score(p) / p.cost + (p.arm === fam ? 1e-6 : p.arm === "wealth" ? -1e-6 : 0); if (r > br) { br = r; best = p; } }
     if (!best) break; sv.pass[best.id] = 1; added++;
   }
   return added;
