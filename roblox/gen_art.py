@@ -18,6 +18,7 @@ ART = [
     *[(os.path.splitext(f)[0], 'mobs/' + f, (256, 256)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'mobs'))) if f.startswith('a') and '_' in f],   # 지역별 몬스터 a<지역>_<역할>
     *[(os.path.splitext(f)[0], 'bosses/' + f, (256, 256)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'bosses'))) if f.startswith('boss')],   # 보스 boss<번호>(_atk)
     ('bg1', 'bg/act1.jpg', (768, 320)),
+    ('bg_raid', 'raid/raid_arena.jpg', (800, 450)), ('morgath', 'raid/morgath.png', (384, 384)), ('morgath_rage', 'raid/morgath_rage.png', (384, 384)), ('ward_crystal', 'raid/ward_crystal.png', (96, 192)),   # 모르가스 전용 전투 (Codex)
     ('bg8', 'bg/act8.png', (768, 320)),
     # 마을 · 월드맵 (개발용 전달 크기 ~1MB 이내로 줄임. 출시 땐 원본을 업로드해 id 사용)
     ('bg_town', 'bg/town.jpg', (800, 450)),   # 건물이 함께 그려진 마을 (2026-11-02, 건물 그림 따로 안 씀)

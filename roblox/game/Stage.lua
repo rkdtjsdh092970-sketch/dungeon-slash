@@ -66,7 +66,7 @@ function M.create(parent, W, H, replayAct)
   local bg = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, root)
   local function buildBg(act)
     bg:ClearAllChildren()
-    local art = Sprites.art("bg" .. (act or 1))   -- 일러스트 배경이 있으면 그것만 쓴다
+    local art = (act == "raid" and Sprites.art("bg_raid")) or Sprites.art("bg" .. (act or 1))   -- 일러스트 배경이 있으면 그것만 쓴다 (모르가스 = 전용 투기장)
     if art then   -- 화면을 꽉 채우도록 자르되(좌우는 가운데, 위아래는 아래 기준) 비율은 유지한다
       local sw, sh = art.w, art.h
       if art.w / art.h > W / H then sw = art.h * W / H else sh = art.w * H / W end
@@ -326,9 +326,12 @@ local function unitFor(S, e, lanes)
   local u = S.units[e.id]; if u then return u end
   local boss = e.bs ~= nil
   local key, hue = e.sp, e.hu
-  local size = (boss and math.min(290, 84 * (e.scl or 3)) or (e.tier == "elite" and 124 or 86)) * S.u * dep   -- 웹보다 약 1.33배 크게 (일반 86 · 정예 124 · 보스 sc*84, 2026-11-03)
+  local size = (boss and math.min(290, 84 * (e.scl or 3)) or (e.tier == "elite" and 124 or 86)) * S.u * dep
+  if S.raidMode and boss then size = 430 * S.u elseif S.raidMode and e.cr then size = 120 * S.u end   -- 웹보다 약 1.33배 크게 (일반 86 · 정예 124 · 보스 sc*84, 2026-11-03)
   local lab, info
-  if boss then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size)   -- 보스 그림 (있으면 색조와 상관없이)
+  if boss and S.raidMode then lab = Sprites.artLabel(S.layer, "morgath", size) or Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size)   -- 모르가스 (앞모습)
+  elseif e.cr then lab = Sprites.artLabel(S.layer, "ward_crystal", size)   -- 결계석
+  elseif boss then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size)   -- 보스 그림 (있으면 색조와 상관없이)
   else
     if e.ar then lab = Sprites.artLabel(S.layer, e.ar, size) end   -- 지역별 몬스터 그림
     if not lab and key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 1지역 그림 (색조 변형은 도트)
@@ -386,7 +389,24 @@ function M:applySnap(s, lanes)
         y += ((kk % 2 == 0) and 1 or -1) * 6 * self.u
       end
     end
-    if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
+    if self.raidMode and u.boss then x = self.W * 0.66; y = self.plY + 60 * self.u end   -- 모르가스는 화면 가운데 오른쪽에 우뚝
+    if self.raidMode and e.rd then
+      local fx = self.raidFx
+      if fx then
+        local seal = fx:FindFirstChild("Seal"); if seal then seal.Visible = e.rd.sl == 1; seal.Position = UDim2.new(0, x, 0, y - u.size * 0.45) end
+        local vu = fx:FindFirstChild("Vuln"); if vu and e.rd.vu == 1 and not u.vuOn then TweenService:Create(vu, TweenInfo.new(0.15), { BackgroundTransparency = 0.7 }):Play(); task.delay(0.25, function() TweenService:Create(vu, TweenInfo.new(0.6), { BackgroundTransparency = 1 }):Play() end) end
+        u.vuOn = e.rd.vu == 1
+      end
+      if u.art and e.rd.en == 1 and not u.rage then u.rage = true; local ra = Sprites.art("morgath_rage"); if ra then u.lab.ImageContent = ra.content end end
+      self.raidBoss = u
+    end
+    if e.cr and self.raidBoss and not e.dead then   -- 결계석 → 보스로 이어지는 푸른 빛줄기
+      local bx, by = self.raidBoss.tx or self.raidBoss.x, (self.raidBoss.ty or self.raidBoss.y) - self.raidBoss.size * 0.45
+      local cx2, cy2 = x, y - u.size * 0.5
+      if not u.link then local ba = Sprites.art("fx_beam"); if ba then u.link = mk("ImageLabel", { AnchorPoint = Vector2.new(0, 0.5), BackgroundTransparency = 1, ImageContent = ba.content, ImageColor3 = Color3.fromRGB(140, 210, 255), ImageTransparency = 0.45, ZIndex = 4 }, self.layer) end end
+      if u.link then local dx, dy = bx - cx2, by - cy2; u.link.Position = UDim2.new(0, cx2, 0, cy2); u.link.Size = UDim2.new(0, math.sqrt(dx * dx + dy * dy), 0, 10 * self.u); u.link.Rotation = math.deg(math.atan2(dy, dx)) end
+    elseif u.link and e.dead then u.link:Destroy(); u.link = nil end
+    if not u.placed then u.placed = true; u.x = (self.raidMode and u.boss) and x or (self.W + u.size * 0.6); u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다 (모르가스는 처음부터 그 자리)
     u.tx, u.ty = x, y; u.hp = e.hp
     if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("☠  Kills %d", self.kills) end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.16; hits[#hits + 1] = u; if #hits <= 6 then Fx.hit(self, u) end end
@@ -450,8 +470,18 @@ function M:pickSpeed(i)
   if H.onSpeed then H.onSpeed(i) end
 end
 function M:play(replay, onDone, maxSec, hud)
-  for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy(); if u.shadow then u.shadow:Destroy() end end; self.units = {}
-  self.buildBg(replay.act or 1); self:buildLanes(replay.lanes or 2)
+  for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy(); if u.shadow then u.shadow:Destroy() end; if u.link then u.link:Destroy() end end; self.units = {}; self.raidBoss = nil
+  self.raidMode = replay.raid and true or false
+  self.buildBg(self.raidMode and "raid" or (replay.act or 1)); self:buildLanes(replay.lanes or 2)
+  if self.raidFx then self.raidFx:Destroy(); self.raidFx = nil end
+  if self.raidMode then   -- 모르가스 전용: 봉인 결계막 · 약점 섬광 (applySnap 이 켠다)
+    local fx = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 4 }, self.layer); self.raidFx = fx
+    local seal = mk("Frame", { Name = "Seal", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 360 * self.u, 0, 380 * self.u), BackgroundColor3 = Color3.fromRGB(90, 170, 255), BackgroundTransparency = 0.88, Visible = false, ZIndex = 30 }, fx)
+    mk("UICorner", { CornerRadius = UDim.new(0.5, 0) }, seal); local ss = mk("UIStroke", { Color = Color3.fromRGB(140, 210, 255), Thickness = 5, Transparency = 0.2 }, seal)
+    for i = 1, 3 do local r = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1 - i * 0.14, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 30 }, seal); mk("UICorner", { CornerRadius = UDim.new(0.5, 0) }, r); mk("UIStroke", { Color = Color3.fromRGB(140, 210, 255), Thickness = 2, Transparency = 0.5 }, r) end
+    TweenService:Create(ss, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.6 }):Play()
+    mk("Frame", { Name = "Vuln", Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(255, 242, 160), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 29 }, fx)
+  end
   if hud then self:setHud(hud) end
   self.kills = 0; self.killLbl.Text = string.format("☠  Kills %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
   self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
@@ -507,7 +537,7 @@ function M:play(replay, onDone, maxSec, hud)
         local row, frame = Sprites.anim(u.key, anim, anim == "death" and u.dying or u.t); Sprites.setFrame(u.lab, u.info, row, frame)
       elseif u.boss and u.dying then u.lab.ImageTransparency = math.min(1, u.dying) end
       if u.hit and u.hit > 0 then u.hit -= dt; if not u.dying then u.lab.ImageColor3 = Color3.new(1, 1 - 0.5 * M.OPT.flash, 1 - 0.5 * M.OPT.flash) end elseif not u.dying then u.lab.ImageColor3 = Color3.new(1, 1, 1) end
-      if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); u.shadow:Destroy(); self.units[id] = nil end end
+      if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); u.shadow:Destroy(); if u.link then u.link:Destroy() end; self.units[id] = nil end end
     end
     if self.plArt then self.plAnim.t += dt * slow; if self.plHurt then self.plHurt -= dt end; M.artPose(self)
     elseif self.plInfo then

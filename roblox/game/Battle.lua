@@ -1109,7 +1109,7 @@ castSkillRaw = function(b, sk)
 end
 function M.new(sv, node, seed)
   local b = _new(sv, node, seed)
-  if M.recording then b.rec = { snaps = {}, acc = { dmg = {}, casts = {}, ph = 0 }, nextT = 0, lanes = b.lanes, cols = CFG.COLS, act = (b.kind == "temple" and 11) or ((b.kind == "spire" or b.kind == "craid" or b.kind == "warden") and 3) or ((b.kind == "rift" or b.kind == "void") and 8) or b.act or 1 } end
+  if M.recording then b.rec = { snaps = {}, acc = { dmg = {}, casts = {}, ph = 0 }, nextT = 0, lanes = b.lanes, cols = CFG.COLS, act = (b.kind == "temple" and 11) or ((b.kind == "spire" or b.kind == "craid" or b.kind == "warden") and 3) or ((b.kind == "rift" or b.kind == "void") and 8) or b.act or 1, raid = b.kind == "raid" or nil } end
   return b
 end
 local WARP = { warp = 270, hwarp = 20, twarp = 45, swarp = 190, fwarp = 200, vwarp = 100 }
@@ -1126,7 +1126,9 @@ local function snapshot(b)
   for _, e in ipairs(b.enemies) do
     ens[#ens + 1] = { id = e.id, n = e.def and e.def.name or "?", tier = e.tier, l = e.lane, c = e.col, w = e.w, h = e.h, hp = e.maxHp > 0 and math.max(0, e.hp / e.maxHp) or 0,
       d = R.acc.dmg[e.id], dead = e.dead or nil, hue = e.def and e.def.hue, sc = e.def and e.def.sc, ranged = e.def and e.def.ranged or nil, wind = (e.winding or 0) > 0 or nil, sp = nil }
+    if e.crystal then ens[#ens].cr = 1 end   -- 모르가스의 결계석
     if e.tier == "boss" then ens[#ens].bs = bossArt(e.def); ens[#ens].bh = e.def.hue; ens[#ens].scl = e.def.sc
+      if e.raid then ens[#ens].rd = { sl = e.raid.sealed and 1 or nil, vu = (e.raid.vuln or 0) > 0 and 1 or nil, en = e.enraged and 1 or nil } end
     else
       ens[#ens].sp, ens[#ens].hu = spriteOf(b, e)
       R.arSent = R.arSent or {}
