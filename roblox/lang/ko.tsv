@@ -1663,3 +1663,13 @@ An arcane explosion around the target (3x3). No element	대상 주변 3x3 비전
 A staff-wielding mage	지팡이를 든 마법사
 Steady arcane magic from afar	멀리서 안정적인 비전 마법
 Arcana: Arcane Bolt · Arcane Missiles · Arcane Burst	아르카나: 비전 탄 · 비전 미사일 · 비전 폭발
+Arcane Lance	비전 창
+Arcane Ward	비전 수호구
+Arcane Nova	비전 파동
+Arcane Rain	비전 유성우
+Singularity	특이점
+An arcane lance pierces a whole row. No element	비전 창이 한 줄을 꿰뚫는다. 무속성
+For 8s, arcane orbs circle you and strike nearby enemies. No element	8초 동안 비전 구체가 주위를 돌며 가까운 적을 때린다. 무속성
+An arcane shockwave hits every enemy in range. No element	사거리 안 모든 적에게 비전 충격파. 무속성
+For 3s, 10 arcane bolts rain on random enemies. No element	3초 동안 비전 탄 10발이 무작위 적에게 쏟아진다. 무속성
+For 6s, a singularity of pure force crushes a 3x3 area. No element	6초 동안 순수한 힘의 특이점이 3x3을 짓누른다. 무속성
