@@ -327,7 +327,8 @@ list.ChildAdded:Connect(function(c)
 end)
 local function card(title, lines, btns)
   local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(20, 15, 15); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
-  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6); Skin.frame(f, "ui_card", 0.25, 0.5)   -- 질감 있는 카드 틀
+  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6); stroke(f, Color3.fromRGB(110, 84, 44), 1.2)   -- 글이 많은 카드는 그림 틀(가운데 금줄이 글자 위로 지나감) 대신 깔끔한 판
+  local cg = Instance.new("UIGradient"); cg.Rotation = 90; cg.Color = ColorSequence.new(Color3.fromRGB(34, 24, 20), Color3.fromRGB(18, 13, 12)); cg.Parent = f; f.BackgroundColor3 = Color3.new(1, 1, 1)
   local acc = Instance.new("Frame"); acc.Size = UDim2.new(0, 3, 1, -12); acc.Position = UDim2.new(0, 4, 0, 6); acc.BackgroundColor3 = Color3.fromRGB(200, 150, 70); acc.BorderSizePixel = 0; acc.Parent = f   -- 왼쪽 금빛 표시줄
   local bw = math.max(1, #(btns or {})) * 72 + 10
   local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 18, 0, 10); tb.Size = UDim2.new(1, -bw - 14, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
@@ -503,6 +504,7 @@ function views.guild()
   local v = r.view
   if v.none then
     card("길드에 가입하지 않았습니다", { "창설 비용 " .. v.createCost .. "G · 이름은 2~12자" }, { { "창설", function() prompt("길드 이름 (2~12자)", "이름", function(nm) local e = rpc:InvokeServer("g_create", nm); msg.Text = e.err or "창설!"; views.guild() end) end } })
+    card("길드에 들면", { "주간 길드 목표를 함께 채워 보상을 받습니다.", "길드 보스에 도전해 순위에 따라 강화석 · 혼돈 구슬을 받습니다.", "길드 상점에서 길드 코인으로 재료를 삽니다.", "길드 레벨이 오르면 아이템 발견(MF)이 늘어납니다." }, {})
     for _, g in ipairs(v.list) do card(string.format("%s (Lv%d · %d명)", g.name, g.lv, g.members), { "길드장 " .. g.leader }, { { "가입", function() local e = rpc:InvokeServer("g_join", g.id); msg.Text = e.err or "가입!"; views.guild() end } }) end
     return
   end
@@ -604,7 +606,7 @@ local function setOpt(k, v)
 end
 local SEL = Color3.fromRGB(160, 116, 40)
 local function optRow(title, value, btns)   -- 한 줄: 제목 · (값) · 선택 버튼들
-  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(24, 18, 15); f.Size = UDim2.new(1, -16, 0, 52); f.Parent = list; corner(f, 6); Skin.frame(f, "ui_card", 0.25, 0.5)
+  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(24, 18, 15); f.Size = UDim2.new(1, -16, 0, 52); f.Parent = list; corner(f, 6); stroke(f, Color3.fromRGB(110, 84, 44), 1.2)
   local tl = label(f, title, 15, UDim2.new(0, 18, 0, 0), UDim2.new(0.42, 0, 1, 0)); tl.TextColor3 = Color3.fromRGB(240, 225, 200); tl.Font = Theme.FONT; tl.TextWrapped = true
   local row = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0.58, 0, 0, 36) }, f)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)

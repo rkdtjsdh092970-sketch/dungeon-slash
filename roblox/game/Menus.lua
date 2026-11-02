@@ -942,16 +942,16 @@ local function pbar(parent, pos, size, frac, color)
 end
 -- 한 줄 카드 (아이콘 · 제목 · 설명 · 진행 바 · 오른쪽 버튼)
 local function rowCard(o)
-  local f = mk("Frame", { Size = UDim2.new(1, -16, 0, o.h or (o.reward and 92 or 82)), BackgroundColor3 = o.done and Color3.fromRGB(34, 52, 44) or M.PANEL, LayoutOrder = o.order or 0 }, C.list); corner(f, 10)
+  local f = mk("Frame", { Size = UDim2.new(1, -16, 0, o.h or (o.reward and 100 or 90)), BackgroundColor3 = o.done and Color3.fromRGB(34, 52, 44) or M.PANEL, LayoutOrder = o.order or 0 }, C.list); corner(f, 10)
   Skin.frame(f, "ui_card", 0.25, 0.5)
   if o.ready then local g = mk("UIStroke", { Color = M.GOLD, Thickness = 2, Transparency = 0.2 }, f); TweenService:Create(g, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.8 }):Play() end   -- 받을 수 있으면 금빛이 숨쉰다
   if o.done then f.BackgroundTransparency = 0.4 end
   local x = 18
   if o.emoji or o.art then local t = M.tile(f, 52, { art = o.art, emoji = o.emoji, color = o.color or M.GOLD }); t.Position = UDim2.new(0, 16, 0.5, -26); x = 80 end
-  local tl = txt(f, o.title, 16, UDim2.new(0, x, 0, 13), UDim2.new(1, -x - 160, 0, 20), o.done and Color3.fromRGB(170, 160, 140) or Color3.fromRGB(255, 225, 140), M.FONT); tl.TextTruncate = Enum.TextTruncate.AtEnd
-  if o.desc then local d = txt(f, o.desc, 13, UDim2.new(0, x, 0, 35), UDim2.new(1, -x - 160, 0, 18), Color3.fromRGB(215, 210, 225)); d.TextTruncate = Enum.TextTruncate.AtEnd end
-  if o.reward then local rw = txt(f, "보상  " .. o.reward, 13, UDim2.new(0, x, 0, 54), UDim2.new(1, -x - 160, 0, 16), Color3.fromRGB(240, 200, 120), M.FONT); rw.TextTruncate = Enum.TextTruncate.AtEnd end
-  if o.frac then pbar(f, UDim2.new(0, x, 1, -20), UDim2.new(1, -x - 170, 0, 9), o.frac, o.done and Color3.fromRGB(110, 110, 120) or (o.ready and Color3.fromRGB(240, 190, 70) or Color3.fromRGB(90, 200, 110))) end
+  local tl = txt(f, o.title, 16, UDim2.new(0, x, 0, 20), UDim2.new(1, -x - 160, 0, 20), o.done and Color3.fromRGB(170, 160, 140) or Color3.fromRGB(255, 225, 140), M.FONT); tl.TextTruncate = Enum.TextTruncate.AtEnd
+  if o.desc then local d = txt(f, o.desc, 13, UDim2.new(0, x, 0, 42), UDim2.new(1, -x - 160, 0, 18), Color3.fromRGB(215, 210, 225)); d.TextTruncate = Enum.TextTruncate.AtEnd end
+  if o.reward then local rw = txt(f, "보상  " .. o.reward, 13, UDim2.new(0, x, 0, 60), UDim2.new(1, -x - 160, 0, 16), Color3.fromRGB(240, 200, 120), M.FONT); rw.TextTruncate = Enum.TextTruncate.AtEnd end
+  if o.frac then pbar(f, UDim2.new(0, x, 1, -22), UDim2.new(1, -x - 170, 0, 9), o.frac, o.done and Color3.fromRGB(110, 110, 120) or (o.ready and Color3.fromRGB(240, 190, 70) or Color3.fromRGB(90, 200, 110))) end
   if o.btn then local b = M.btn(f, o.btn, UDim2.new(0, 128, 0, 40), o.btnColor or M.BTN.green, o.click); b.AnchorPoint = Vector2.new(1, 0.5); b.Position = UDim2.new(1, -12, 0.5, 0); b.Active = o.click ~= nil; b.AutoButtonColor = o.click ~= nil end
   return f
 end
@@ -1206,6 +1206,7 @@ function M.runes()
   local A = area(392)
   local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.5, -4, 1, 0), "아르카나 고르기")
   local g = grid(L, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
+  if #skills == 0 then txt(L, "아직 아르카나가 없습니다. 마을의 [아르카나 소환]에서 뽑으세요.", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 40), Color3.fromRGB(200, 185, 165)).TextWrapped = true end
   local sel
   for i, k in ipairs(skills) do
     if not runeSkill then runeSkill = k.uid end
@@ -1214,7 +1215,10 @@ function M.runes()
     M.tile(g, 76, { order = i, color = col, emoji = icon, label = tostring(k.name or k.id), tl = k.rune and "◆" or nil, selected = k.uid == runeSkill, click = function() runeSkill = k.uid; M.runes() end })
   end
   local R = box(A, UDim2.new(0.5, 4, 0, 0), UDim2.new(0.5, -4, 1, 0), string.format("보유 룬 %d개", #runes))
-  if not sel then txt(R, "룬을 끼울 아르카나가 없습니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 40), Color3.fromRGB(190, 185, 210)); return end
+  if not sel then
+    local t = txt(R, "룬은 아르카나 한 장에 하나씩 끼워 성질을 바꿉니다 (쿨타임 · 위력 · 범위 · 출혈 · 점화 등).\n\n룬은 균열 · 보스 전투에서 나옵니다. 아르카나를 먼저 얻은 뒤 왼쪽에서 고르세요.", 14, UDim2.new(0, 14, 0, 40), UDim2.new(1, -28, 0, 140), Color3.fromRGB(215, 200, 180))
+    t.TextWrapped = true; t.TextYAlignment = Enum.TextYAlignment.Top; return
+  end
   local function res(e) C.msg.Text = tostring(e.err or ""); M.runes() end
   local head = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 0, 44), BackgroundColor3 = Color3.fromRGB(28, 22, 50) }, R); corner(head, 8)
   txt(head, sel.rune and string.format("%s · 룬: %s", tostring(sel.name), tostring(sel.rune)) or string.format("%s · 룬 없음", tostring(sel.name)), 14, UDim2.new(0, 10, 0, 12), UDim2.new(1, -110, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
