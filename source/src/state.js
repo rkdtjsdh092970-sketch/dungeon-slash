@@ -135,6 +135,7 @@ for (const id of ["execute", "vamp", "whirl", "trap", "blizzard", "spirit"]) GAC
 GACHA_TIER.meteor = 2;
 for (const id of ["solarflare", "glacierfall", "titanfist", "legion"]) GACHA_TIER[id] = 3;
 for (const id of ["skysword", "starfall", "dragonbreath", "angelfall", "verdict"]) GACHA_TIER[id] = 4;
+for (const d of SKILLS) if (d.tier != null && d.slot !== "basic" && GACHA_TIER[d.id] == null) GACHA_TIER[d.id] = d.tier;   // 4.53 새 아르카나 (평타는 보스 관문에서)
 function skillTier(d) {
   if (typeof d === "string") d = SKILLS.find((x) => x.id === d); if (!d) return 0;
   if (d.tier != null) return d.tier; if (GACHA_TIER[d.id] != null) return GACHA_TIER[d.id];
