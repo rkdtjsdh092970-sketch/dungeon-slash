@@ -17,6 +17,8 @@ REF.VALID = {
 }
 -- 뽑기 기준 스킬 (계열별 대표 조합: 기본 공격 1 + 범위 2 + 단일/관통 1), 등급 · 레벨은 구간에 따라
 REF.SKILLS = { phys = { "rip", "rend", "lance", "sweep" }, mag = { "ember", "chain", "bomb", "firewall" } }
+-- 엔드게임(균열 졸업 후) 기준: 그 시기 뽑을 수 있는 후반 스킬
+REF.SKILLS_LATE = { phys = { "rip", "pierce2", "trap", "whirl" }, mag = { "ember", "storm", "blizzard", "meteor" } }
 local Q75 = { NextNumber = function() return 0.75 end, NextInteger = function(_, a, b) return a end }
 local by = {}; for _, a in ipairs(Items.AFFIXES) do by[a.k] = a end
 local function makeItem(rng, sv, slot, ilvl, tiers, fam)
@@ -41,7 +43,7 @@ function REF.build(spec)
   local miss = 0
   for _, s in ipairs({ "weapon", "helm", "armor", "gloves", "boots", "ring", "ring2", "neck" }) do local it, n = makeItem(rng, sv, s, spec.ilvl, spec.tiers, spec.fam); sv.equipped[s] = it; miss += 5 - n end
   sv.skills = {}; sv.loadout = { false, false, false, false }
-  for i, id in ipairs(REF.SKILLS[spec.fam]) do
+  for i, id in ipairs((spec.late and REF.SKILLS_LATE or REF.SKILLS)[spec.fam]) do
     local r = type(spec.skR) == "table" and spec.skR[i] or spec.skR or 0
     sv.skills[i] = { uid = i, id = id, rarity = r, lvl = spec.skL or 1 }; sv.loadout[i] = { uid = i, rule = "front" }
   end
@@ -64,7 +66,7 @@ function REF.build(spec)
 end
 -- 이 빌드가 이기는 가장 높은 난이도(tier) — nodeOf(tier) 로 전투 노드를 만든다
 function REF.maxTier(sv, nodeOf, lo, hi)
-  local function w(t) return Battle.run(sv, nodeOf(t), 1, 0.05, 600).win end
+  local function w(t) return Battle.run(sv, nodeOf(t), 1, 0.05, 900).win end   -- 레이드 제한 12분보다 길게
   if not w(lo) then return lo - 1 end
   local a, b = lo, hi
   while b - a > 1 do local m = math.floor((a + b) / 2); if w(m) then a = m else b = m end; task.wait() end
