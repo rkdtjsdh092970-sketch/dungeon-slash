@@ -38,7 +38,7 @@ function M.affixPool(it, exceptIdx)
   for _, s in ipairs(it.sock or {}) do if s then used[s.k] = true end end
   local out = {}
   for _, a in ipairs(Items.AFFIXES) do
-    if not used[a.k] and (not a.minRarity or it.rarity >= a.minRarity) and inList(a.slots, it.slot) and (not a.minIlvl or it.ilvl >= a.minIlvl) and a.k ~= "lanes" and wtOk(a, it) then out[#out + 1] = a end
+    if not used[a.k] and (not a.minRarity or it.rarity >= a.minRarity) and inList(a.slots, it.slot) and (not a.minIlvl or it.ilvl >= a.minIlvl) and a.k ~= "lanes" and (a.w or 1) > 0 and wtOk(a, it) then out[#out + 1] = a end
   end
   return out
 end
