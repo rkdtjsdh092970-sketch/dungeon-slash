@@ -26,7 +26,7 @@ M.SAT = Color3.fromRGB(200, 90, 255)
 M.ITEM_RAR = { "일반", "매직", "레어", "전설" }
 M.BTN = Theme.BTN
 local SLOT_ART = { weapon = "i_weapon", helm = "i_helm", armor = "i_armor", gloves = "i_gloves", boots = "i_boots", ring = "i_ring", ring2 = "i_ring", neck = "i_neck" }
-local function artOf(it) if it and it.wt == "staff" and C.Sprites.art("i_staff") then return "i_staff" end; return it and artOf(it) end   -- 무기는 종류별 그림 (지팡이)
+local function artOf(it) if it and it.wt == "staff" and C.Sprites.art("i_staff") then return "i_staff" end; return it and SLOT_ART[it.slot] end   -- 무기는 종류별 그림 (지팡이)
 local SLOT_EMOJI = { weapon = "⚔", helm = "⛑", armor = "🛡", gloves = "🧤", boots = "👢", ring = "💍", ring2 = "💍", neck = "📿" }
 local ELEM = { fire = Color3.fromRGB(255, 120, 50), cold = Color3.fromRGB(110, 200, 255), light = Color3.fromRGB(255, 225, 80), void = Color3.fromRGB(170, 100, 255), phys = Color3.fromRGB(210, 210, 220) }
 local SK_BY = {}; for _, d in ipairs(Skills.SKILLS) do SK_BY[d.id] = d end
