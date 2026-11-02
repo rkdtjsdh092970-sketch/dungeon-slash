@@ -66,3 +66,12 @@ HttpService:GetAsync 로 raw.githubusercontent 의 커밋 SHA 고정 URL(`/<sha>
 - Studio 시험 도구: `ServerStorage` 속성 `FreshTest=true`(세이브 불러오기/저장 안 함, 길드 메모리 저장소) + `TestGold=<숫자>`(접속 시 골드 지급). Studio 에서만 동작.
 - 글꼴에 없는 기호(♛ ✦ ☾ ♞ ✠)는 빈칸으로 나온다 → 이모지나 ❖ ⚔ ☠ 만 쓴다.
 - 템포: 균열 FLOOR_TAB 30층 이후 상향, 물리 기본 피해 1.4. 목표(x3 배속 기준) 240판 50~60층, 720판 중앙값 100층. 성장 시뮬 `sim/progress.lua`(결과 marks[n] = 120·n 판의 균열 층).
+
+## 2026-11-02~03 — 정리 · 성장 시뮬 실전화 · 그림 (Claude)
+- 폐지: 심연 각인(atlas) · 균열 조각(shards) — 드랍 · 보상 · 상점 · 재화칸 제거, migrate 에서 `sv.atlas = nil; sv.shards = nil`.
+- 전투력 기준 버그: Power 가 "끼고 있는 장비 평균 티어"로 적 기준을 잡아 좋은 장비를 끼면 전투력이 내려가던 것 → `Stats.refIlvl = min(6, 1 + rift.best/20)`.
+- 장비 창 "+0 비교" 토글(강화 수치 빼고 비교). 튜토리얼 강조 장식(art/ui/tut_corner · tut_arrow).
+- 그림: 아르카나 카드 원소별 색으로 재생성(빨강 일색 금지), 지역 몬스터 art/mobs/a<지역>_<역할>.png, 보스 art/bosses/boss<n>(_atk).png — 전투 화면 표시는 Studio 미확인.
+- '마나 1당 체력'(manaToHp): 일반 옵션 가중치 0(새로 안 붙음) → 사탄 갑옷 효과 `a_mom`(마나 1당 체력 +4, 마나 재생 -30%). 전사의 강인함은 넣었다가 제거.
+- **주의: `data/Items.lua` · `data/Satan.lua` · `data/Config.lua` 는 웹에서 자동 변환된 파일인데 직접 고쳤다.** 변환 스크립트를 다시 돌리면 위 수정(manaToHp w=0, a_mom, 강인함 키 제거 등)이 사라지니 다시 넣을 것.
+- 성장 시뮬 봇(sim/progress.lua)은 실제 플레이처럼: 유효 옵션 기준 장착 · 재굴림 · 혼돈 구슬 · 강화 · 퀘스트/일일 · 원초의 돌 · 룬, 막히면 아래층 파밍(지면 드랍 0이라 3층씩 더 내려감).
