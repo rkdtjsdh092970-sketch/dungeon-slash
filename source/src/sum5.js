@@ -37,12 +37,12 @@ function sum5Reveal(res, from) {
     later(30 + i * (n0 === 1 ? 50 : 80), () => { c.style.left = x + "px"; c.style.top = y + "px"; c.style.transform = "translate(-50%,-50%)"; }); });
   const flip = (i) => { const c = cards[i]; if (!c || c.classList.contains("open")) return; c.classList.add("open"); const g = res[i], col = SK_RCOL5[g.rarity];
     if (g.rarity >= 2) { c.style.setProperty("--c", col); c.classList.add("rare"); }
-    if (g.rarity >= 3 && !skip) { c.classList.add("big"); ov.classList.add("dim" + g.rarity); const st = document.createElement("div"); st.className = "sst5"; st.style.color = col; st.textContent = SKILL_RARITY[g.rarity].name; ov.appendChild(st); toast(`${SKILL_RARITY[g.rarity].name}! ${SKILLS.find((d) => d.id === g.id).name}`, "ok"); snd("legend");
-      later(g.rarity >= 4 ? 2200 : 1700, () => { c.classList.remove("big"); ov.classList.remove("dim3", "dim4"); st.remove(); }); } };
+    if (g.rarity >= 3 && !skip) { const BH = VH * 0.6, BW = BH * 2 / 3; c.style.width = BW + "px"; c.style.height = BH + "px"; c.classList.add("big"); ov.classList.add("dim" + g.rarity); const st = document.createElement("div"); st.className = "sst5"; st.style.color = col; st.textContent = SKILL_RARITY[g.rarity].name; ov.appendChild(st); toast(`${SKILL_RARITY[g.rarity].name}! ${SKILLS.find((d) => d.id === g.id).name}`, "ok"); snd("legend");
+      later(g.rarity >= 4 ? 2200 : 1700, () => { c.classList.remove("big"); c.style.width = W + "px"; c.style.height = H + "px"; ov.classList.remove("dim3", "dim4"); st.remove(); }); } };
   let t = 30 + n0 * (n0 === 1 ? 50 : 80) + 450;
   res.forEach((g, i) => { later(t, () => flip(i)); t += g.rarity >= 3 ? (g.rarity >= 4 ? 2600 : 2100) : 140; });
   later(t + 300, () => { done = true; hint.textContent = "누르면 닫힙니다"; });
   ov.onclick = () => { if (done) { ov.classList.add("out"); setTimeout(() => ov.remove(), 200); if (typeof tutEvent === "function") tutEvent("pulled"); return; }
-    skip = true; T.forEach(clearTimeout); cards.forEach((c, i) => { const [x, y] = slot(i); c.style.transition = "none"; c.style.left = x + "px"; c.style.top = y + "px"; c.style.transform = "translate(-50%,-50%)"; c.classList.remove("big"); flip(i); });
+    skip = true; T.forEach(clearTimeout); cards.forEach((c, i) => { const [x, y] = slot(i); c.style.transition = "none"; c.style.left = x + "px"; c.style.top = y + "px"; c.style.transform = "translate(-50%,-50%)"; c.classList.remove("big"); c.style.width = W + "px"; c.style.height = H + "px"; flip(i); });
     ov.classList.remove("dim3", "dim4"); ov.querySelectorAll(".sst5").forEach((e) => e.remove()); done = true; hint.textContent = "누르면 닫힙니다"; };
 }

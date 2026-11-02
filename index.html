@@ -502,13 +502,13 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .sbr5{display:flex;gap:8px;padding:0 6px}.sb5{flex:1;height:84px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px}.sb5 b{font-size:20px}.sb5 span{display:flex;align-items:center;gap:4px}.sb5 span img{width:18px;height:18px}.sb5 em{font-style:normal;font-size:16px;font-weight:700}.sb5 small{font-size:11px;color:#ffe6a0}.sb5[data-no]{filter:grayscale(.6) brightness(.8)}
 .sft5{position:absolute;left:14px;right:14px;bottom:10px;font-size:12px;color:#b4aac8;line-height:1.4}.sr5b{position:relative}
 .srv5{position:absolute;inset:0;z-index:80;background:rgba(6,4,10,.75);animation:srv5 .25s both;cursor:pointer;overflow:hidden}@keyframes srv5{from{background:rgba(6,4,10,0)}}.srv5.out{opacity:0;transition:opacity .2s}
-.srv5.dim3::before,.srv5.dim4::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:1}.srv5.dim4::before{background:rgba(40,0,0,.6)}
+.srv5.dim3::before,.srv5.dim4::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:3}.srv5.dim4::before{background:rgba(40,0,0,.6)}
 .srh5{position:absolute;left:0;right:0;bottom:24px;text-align:center;font-size:16px;font-weight:700;color:#c8bedc}
 .src5{position:absolute;transition:left .32s cubic-bezier(.2,.9,.3,1),top .32s cubic-bezier(.2,.9,.3,1),transform .32s cubic-bezier(.2,.9,.3,1);perspective:800px;z-index:2}
 .src5>div{position:absolute;inset:0;backface-visibility:hidden;transition:transform .34s}.src5 .sbk5 img{width:100%;height:100%;object-fit:cover;border-radius:8px}.src5 .sfc5{transform:rotateY(180deg)}.src5 .sfc5 .acard{width:100%;height:100%}
 .src5.open .sbk5{transform:rotateY(180deg)}.src5.open .sfc5{transform:rotateY(0)}
-.src5.rare.open{filter:drop-shadow(0 0 14px var(--c))}.src5.big{z-index:5;left:50%!important;top:50%!important;transform:translate(-50%,-50%) scale(2)!important}
-.sst5{position:absolute;left:0;right:0;top:8%;text-align:center;font-family:Georgia,serif;font-size:54px;font-weight:700;z-index:6;text-shadow:0 0 4px #000,0 0 18px currentColor;animation:sst5 .32s cubic-bezier(.3,1.6,.5,1) both}@keyframes sst5{from{transform:scale(2.6);opacity:0}}
+.src5.rare.open{filter:drop-shadow(0 0 14px var(--c))}.src5.big{z-index:5;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;transition:left .42s cubic-bezier(.3,1.5,.5,1),top .42s cubic-bezier(.3,1.5,.5,1),width .42s cubic-bezier(.3,1.5,.5,1),height .42s cubic-bezier(.3,1.5,.5,1)}
+.sst5{position:absolute;left:0;right:0;top:4%;text-align:center;font-family:Georgia,serif;font-size:54px;font-weight:700;z-index:6;text-shadow:0 0 4px #000,0 0 18px currentColor;animation:sst5 .32s cubic-bezier(.3,1.6,.5,1) both}@keyframes sst5{from{transform:scale(2.6);opacity:0}}
 /* ---- 5.0 패시브 (로블록스판 M.pass) ---- */
 .pa5h{display:flex;align-items:center;gap:10px;height:40px}.pa5p{font-size:17px;color:#ffdc78;white-space:nowrap}.pa5p span{color:#fff}.pa5h .set5{margin-left:0}.pa5h>span:last-child .btn{height:32px;width:100px;font-size:14px!important;white-space:nowrap;padding:0 4px!important}
 .pa5s{width:170px;height:28px;background:#181210;border:1.5px solid #785c30;border-radius:6px;color:#fff;padding:0 8px;font-size:13px}
@@ -7098,7 +7098,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-074254";
+const BUILD_ID = "20261103-074452";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7832,13 +7832,13 @@ function sum5Reveal(res, from) {
     later(30 + i * (n0 === 1 ? 50 : 80), () => { c.style.left = x + "px"; c.style.top = y + "px"; c.style.transform = "translate(-50%,-50%)"; }); });
   const flip = (i) => { const c = cards[i]; if (!c || c.classList.contains("open")) return; c.classList.add("open"); const g = res[i], col = SK_RCOL5[g.rarity];
     if (g.rarity >= 2) { c.style.setProperty("--c", col); c.classList.add("rare"); }
-    if (g.rarity >= 3 && !skip) { c.classList.add("big"); ov.classList.add("dim" + g.rarity); const st = document.createElement("div"); st.className = "sst5"; st.style.color = col; st.textContent = SKILL_RARITY[g.rarity].name; ov.appendChild(st); toast(`${SKILL_RARITY[g.rarity].name}! ${SKILLS.find((d) => d.id === g.id).name}`, "ok"); snd("legend");
-      later(g.rarity >= 4 ? 2200 : 1700, () => { c.classList.remove("big"); ov.classList.remove("dim3", "dim4"); st.remove(); }); } };
+    if (g.rarity >= 3 && !skip) { const BH = VH * 0.6, BW = BH * 2 / 3; c.style.width = BW + "px"; c.style.height = BH + "px"; c.classList.add("big"); ov.classList.add("dim" + g.rarity); const st = document.createElement("div"); st.className = "sst5"; st.style.color = col; st.textContent = SKILL_RARITY[g.rarity].name; ov.appendChild(st); toast(`${SKILL_RARITY[g.rarity].name}! ${SKILLS.find((d) => d.id === g.id).name}`, "ok"); snd("legend");
+      later(g.rarity >= 4 ? 2200 : 1700, () => { c.classList.remove("big"); c.style.width = W + "px"; c.style.height = H + "px"; ov.classList.remove("dim3", "dim4"); st.remove(); }); } };
   let t = 30 + n0 * (n0 === 1 ? 50 : 80) + 450;
   res.forEach((g, i) => { later(t, () => flip(i)); t += g.rarity >= 3 ? (g.rarity >= 4 ? 2600 : 2100) : 140; });
   later(t + 300, () => { done = true; hint.textContent = "누르면 닫힙니다"; });
   ov.onclick = () => { if (done) { ov.classList.add("out"); setTimeout(() => ov.remove(), 200); if (typeof tutEvent === "function") tutEvent("pulled"); return; }
-    skip = true; T.forEach(clearTimeout); cards.forEach((c, i) => { const [x, y] = slot(i); c.style.transition = "none"; c.style.left = x + "px"; c.style.top = y + "px"; c.style.transform = "translate(-50%,-50%)"; c.classList.remove("big"); flip(i); });
+    skip = true; T.forEach(clearTimeout); cards.forEach((c, i) => { const [x, y] = slot(i); c.style.transition = "none"; c.style.left = x + "px"; c.style.top = y + "px"; c.style.transform = "translate(-50%,-50%)"; c.classList.remove("big"); c.style.width = W + "px"; c.style.height = H + "px"; flip(i); });
     ov.classList.remove("dim3", "dim4"); ov.querySelectorAll(".sst5").forEach((e) => e.remove()); done = true; hint.textContent = "누르면 닫힙니다"; };
 }
 
@@ -8057,6 +8057,9 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.19", date: "11/3", title: "소환 연출 고침", items: [
+    "고침: 아르카나 소환에서 신화 · 사탄 카드가 화면 가운데로 커질 때 화면 밖으로 잘리던 것. 이제 화면 높이의 60% 크기로 딱 맞게 나오고, 나머지 카드는 뒤로 어둡게 가라앉습니다.",
+  ] },
   { ver: "5.18", date: "11/3", title: "화면 흔들림 제거 · 모르가스 레이드 새 그림", items: [
     "전투 중 피격 · 스킬 · 보스 등장 때마다 화면 전체가 들썩이던 흔들림을 없앴습니다. 고유 장비를 얻을 때 화면을 흔들던 연출도 없앴습니다.",
     "심연의 문지기 모르가스 레이드를 로블록스판과 같은 화면으로: 전용 투기장 일러스트 배경, 모르가스 앞모습 일러스트(분노하면 다른 그림), 영웅은 왼쪽에 평소 모습으로.",
