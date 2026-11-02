@@ -6,5 +6,5 @@ M.RUNES = {swift={name="Rune of Rapid Fire",color="#8ad8ff",text="Cooldown -15%"
 M.SINGLE_HITS = {1,1,2,3,4,5}
 M.SINGLE_HIT_BONUS = {1,1,1.04,1.06,1.08,1.1}
 -- (직접 추가) 진화 계보 아르카나 · 소환 등급표: data/SkillsEvo.lua (2026-11-03)
-do local ok, E = pcall(require, script.Parent.SkillsEvo); if ok then for _, d in ipairs(E.LIST) do M.SKILLS[#M.SKILLS + 1] = d end; M.GACHA_TIER = E.GACHA; M.BASIC = E.BASIC end end
+do local ok, E = pcall(require, script.Parent.SkillsEvo); if ok then for _, d in ipairs(E.LIST) do M.SKILLS[#M.SKILLS + 1] = d end; M.GACHA_TIER = E.GACHA; M.BASIC = E.BASIC; M.GATE_BASIC = E.GATE_BASIC end end
 return M

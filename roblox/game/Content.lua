@@ -11,7 +11,7 @@ local Econ = require(script.Parent.Economy)
 local M = {}
 local floor, max, min = math.floor, math.max, math.min
 local UP_TIERS, UP_KEYS = { 165.7, 171.7, 177.7, 183.6 }, 5   -- 2026-11-02 재보정: 탑 100층 비례 (참 4개 조건은 시뮬 불가)
-local GATE_TIERS = { 108.5, 109.5, 110.5, 113 }   -- 2026-11-02 재보정 (sim/endgame_calib.lua, 난이도당 24판 · 승률 60%)
+local GATE_TIERS = { 108.5, 111, 116, 128 }   -- 2026-11-03: 4단계는 솟아오른 탑 약 40층 수준 (신화 평타를 떨어뜨림)   -- 2026-11-02 재보정 (sim/endgame_calib.lua, 난이도당 24판 · 승률 60%)
 M.GATE_TIERS, M.UP_TIERS = GATE_TIERS, UP_TIERS   -- 지도 창 권장 전투력 표시용   -- 보스 관문 1~4단계 (2026-11-02 전 테스터 기준: T5 1등급1·2등급2·3등급2 → 1등급3·2등급2)
 local BOSS_SKILL_RW = { { 12, 42, 42, 4, 0, 0 }, { 8, 28, 55, 9, 0, 0 }, { 6, 18, 67, 9, 0, 0 }, { 5, 12, 70, 13, 0, 0 } }
 local BOSS_SKILL_CH = { 0.12, 0.18, 0.28, 0.45 }
@@ -168,6 +168,15 @@ function M.play(sv, spec, seed)
     for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "Satan Gear" or "Gear", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   end
   if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do Econ.grantSkill(sv, k.id); res.skills[#res.skills + 1] = k.id end end
+  if kind == "void" or EBk then   -- 상위 평타: 관문 단계 1~2 = 희귀, 3 = 전설까지, 4 = 신화까지 (확률 30 · 35 · 40 · 50%)
+    local st = max(1, min(4, node.vsel or 1)); local maxT = ({ 1, 1, 2, 3 })[st]
+    if rng:NextNumber() < ({ 0.3, 0.35, 0.4, 0.5 })[st] then
+      local pool = {}
+      for _, id in ipairs((SK.GATE_BASIC or {})[kind] or {}) do if Econ.skillTier(id) <= maxT then pool[#pool + 1] = id end end
+      if #pool == 0 then for _, L in pairs(SK.GATE_BASIC or {}) do for _, id in ipairs(L) do if Econ.skillTier(id) <= maxT then pool[#pool + 1] = id end end end end
+      if #pool > 0 then local id = pool[rng:NextInteger(1, #pool)]; local g = Econ.grantSkill(sv, id); res.skills[#res.skills + 1] = id; res.newBasic = g.new and g.name or nil end
+    end
+  end
   if kind == "raid" then
     local ks = { "void", "hive", "titan", "storm", "frost", "poison" }
     local got = M.rollBossSkills(rng, sv, ks[rng:NextInteger(1, #ks)], 4)
