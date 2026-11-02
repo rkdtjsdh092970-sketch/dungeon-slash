@@ -4,7 +4,8 @@ local TweenService = game:GetService("TweenService")
 local Sprites = require(script.Parent.Sprites)
 local Theme = require(script.Parent.Theme)
 local Ambient = require(script.Parent.Ambient)   -- 불씨 · 안개 · 일렁이는 빛 · 배경 흔들림
-local Fx = require(script.Parent.BattleFx)   -- 스킬 · 타격 이펙트
+local Fx = require(script.Parent.BattleFx)
+local Skin = require(script.Parent.Skin)   -- 버튼 · 판 그림 (마을 · 창과 같은 질감)   -- 스킬 · 타격 이펙트
 local M = {}
 
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
@@ -78,7 +79,7 @@ function M.create(parent, W, H, replayAct)
   -- ── 전투 HUD (웹 battleHudBuild 구성): 로블록스 상단 버튼 줄(M.TOP) 아래부터. 크기는 Client 의 HUD 배율 M.HUD ──
   local TOP, k = M.TOP, M.HUD
   local FONT, GOLD, EDGE = Theme.FONT, Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 10, 30)
-  local function plate(props) local f = mk("Frame", props, root); mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, f); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, f); return f end
+  local function plate(props) local f = mk("Frame", props, root); mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, f); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, f); task.defer(function() if f.Parent then Skin.frame(f, "ui_panel", 0.2, 0.35) end end); return f end   -- 질감 있는 틀
   local function outl(o, t) mk("UIStroke", { Thickness = t or 2, Color = EDGE }, o); return o end
   -- 왼쪽 위: 초상화 + 레벨 + HP/MP
   local L = plate({ Position = UDim2.new(0, 12, 0, TOP + 6 * k), Size = UDim2.new(0, 330 * k, 0, 88 * k), BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.12, ZIndex = 8 })
@@ -115,16 +116,17 @@ function M.create(parent, W, H, replayAct)
     local b = mk("TextButton", { Text = text, Position = pos, Size = size, BackgroundColor3 = color, TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = 17, AutoButtonColor = true, ZIndex = 31 }, parent)
     mk("UICorner", { CornerRadius = UDim.new(0, 10) }, b); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
     mk("UIGradient", { Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)), Rotation = 90 }, b); outl(b, 1.5)
+    task.defer(function() if b.Parent then Skin.button(b) end end)   -- 질감 있는 버튼 그림
     return b
   end
-  cbtn(S.ctrl, "건너뛰기 ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(60, 50, 110)).MouseButton1Click:Connect(function() S:skip() end)
+  cbtn(S.ctrl, "건너뛰기 ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
   S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 128, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
   S.spdBtn:SetAttribute("NoTr", true)
   S.spdList = mk("Frame", { Position = UDim2.new(0, 128, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, S.spdList)
   S.spdOpts = {}
   for i = 1, 4 do
-    local b = cbtn(S.spdList, "x" .. i, UDim2.new(), UDim2.new(1, 0, 0, 36), Color3.fromRGB(70, 60, 120)); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
+    local b = cbtn(S.spdList, "x" .. i, UDim2.new(), UDim2.new(1, 0, 0, 36), Color3.fromRGB(65, 62, 80)); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
     b.MouseButton1Click:Connect(function() S:pickSpeed(i) end); S.spdOpts[i] = b
   end
   S.spdOpen = false
@@ -132,7 +134,7 @@ function M.create(parent, W, H, replayAct)
   S.timeLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 50 * k), Size = UDim2.new(0, 120 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, root), 1.5)
   -- 아래 가운데: 장착 스킬 (쓰면 쿨타임 표시)
   S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12 * k), Size = UDim2.new(0, 0, 0, 74 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.15, Visible = false, ZIndex = 8 }, root)
-  mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar)
+  mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar); task.defer(function() Skin.frame(S.skillBar, "ui_panel", 0.2, 0.35) end)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8 * k), SortOrder = Enum.SortOrder.LayoutOrder }, S.skillBar)
   mk("UIPadding", { PaddingLeft = UDim.new(0, 8 * k), PaddingRight = UDim.new(0, 8 * k) }, S.skillBar)
   S.skillCells = {}
@@ -322,7 +324,7 @@ function M:setHud(h)
   self.titleLbl.Text = h and h.title or ""; self.lvLbl.Text = tostring(h and h.level or 1)
   self.userSpd = math.clamp((h and h.speed) or 1, 1, 4); if self.userSpd == 4 and not (h and h.owns4) then self.userSpd = 3 end
   self.spdBtn.Text = "x" .. self.userSpd .. " ▼"; self.spdOpts[4].Text = (h and h.owns4) and "x4" or "x4 🔒"
-  for i = 1, 4 do self.spdOpts[i].BackgroundColor3 = i == self.userSpd and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(70, 60, 120) end
+  for i = 1, 4 do self.spdOpts[i].BackgroundColor3 = i == self.userSpd and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(65, 62, 80) end
   for _, c in ipairs(self.skillBar:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
   self.skillCells = {}
   local k = M.HUD
@@ -348,7 +350,7 @@ function M:pickSpeed(i)
   self:speedMenu(false)
   if i == 4 and not H.owns4 then if H.onBuy4 then H.onBuy4() end; return end
   self.userSpd = i; self.spdBtn.Text = "x" .. i .. " ▼"
-  for j = 1, 4 do self.spdOpts[j].BackgroundColor3 = j == i and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(70, 60, 120) end
+  for j = 1, 4 do self.spdOpts[j].BackgroundColor3 = j == i and Color3.fromRGB(200, 140, 40) or Color3.fromRGB(65, 62, 80) end
   if H.onSpeed then H.onSpeed(i) end
 end
 function M:play(replay, onDone, maxSec, hud)

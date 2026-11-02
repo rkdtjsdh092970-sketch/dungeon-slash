@@ -13,11 +13,14 @@ local function slice(par, key, z, e, scale)
 end
 M.slice = slice
 -- 버튼 색 → 그림 (가까운 색으로)
-local KEYS = { { "gold", Color3.fromRGB(180, 130, 50) }, { "red", Color3.fromRGB(150, 50, 50) }, { "blue", Color3.fromRGB(55, 90, 150) }, { "gray", Color3.fromRGB(65, 62, 80) } }
+local KEYS = { { "gold", Color3.fromRGB(180, 130, 50) }, { "red", Color3.fromRGB(150, 50, 50) }, { "blue", Color3.fromRGB(55, 90, 150) }, { "gray", Color3.fromRGB(65, 62, 80) },
+  { "purple", Color3.fromRGB(110, 60, 160) }, { "green", Color3.fromRGB(60, 150, 80) } }
+local FALLBACK = { purple = "blue", green = "gold" }   -- 그림이 없으면 비슷한 색으로
 local function keyFor(c)
   local best, bd = "gray", 1e9
   for _, k in ipairs(KEYS) do local d = (c.R - k[2].R) ^ 2 + (c.G - k[2].G) ^ 2 + (c.B - k[2].B) ^ 2; if d < bd then best, bd = k[1], d end end
-  if c.G > c.R and c.G > c.B then best = "gold" end   -- 초록(확인 · 받기)은 금색 버튼으로
+  if c.G > c.R and c.G > c.B then best = "green" end   -- 초록(확인 · 받기)
+  if not Sprites.art("ui_btn_" .. best) then best = FALLBACK[best] or "gray" end
   return best
 end
 -- 버튼 종류: SkinTab 속성 = 탭(금색이면 선택됨), SkinClose 속성 = 닫기(X 그림), 그 외 = 색에 맞는 버튼
@@ -32,14 +35,16 @@ function M.button(b)
   local img = slice(b, key, b.ZIndex, 0.3, 0.5); if not img then return end
   b:SetAttribute("Skinned", true); plain(b)
   b.BackgroundTransparency = 1
-  local lbl = mk("TextLabel", { Name = "SkinText", BackgroundTransparency = 1, Size = UDim2.new(1, -8, 1, 0), Position = UDim2.new(0, 4, 0, 0), Text = b.Text, Font = b.Font, TextSize = b.TextSize,
+  -- 글자: 버튼 안쪽 여백 안에서, 넘치면 저절로 작아진다 (삐져나오지 않게). 최대 크기 = 원래 TextSize
+  local lbl = mk("TextLabel", { Name = "SkinText", BackgroundTransparency = 1, Size = UDim2.new(1, -16, 1, -8), Position = UDim2.new(0, 8, 0, 4), Text = b.Text, Font = b.Font, TextScaled = true,
     TextColor3 = Color3.fromRGB(245, 232, 205), TextWrapped = true, ZIndex = 1 }, b)
+  local fit = mk("UITextSizeConstraint", { MaxTextSize = math.max(8, b.TextSize), MinTextSize = 7 }, lbl)
   lbl:SetAttribute("NoTr", true)
   mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, lbl)
   b.TextTransparency = 1
   if b:GetAttribute("SkinClose") then lbl.Visible = false end   -- 그림에 X 가 있다
   b:GetPropertyChangedSignal("Text"):Connect(function() lbl.Text = b.Text end)
-  b:GetPropertyChangedSignal("TextSize"):Connect(function() lbl.TextSize = b.TextSize end)
+  b:GetPropertyChangedSignal("TextSize"):Connect(function() fit.MaxTextSize = math.max(8, b.TextSize) end)
   b:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()   -- 선택 표시 등으로 색이 바뀌면 그림도 바꾼다
     local a = Sprites.art(pick(b)); if a then img.ImageContent = a.content end
     b.BackgroundTransparency = 1
