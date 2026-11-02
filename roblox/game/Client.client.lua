@@ -1290,20 +1290,34 @@ local coachBox, coachHl
 local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end; if coachShade then coachShade:Destroy(); coachShade = nil end end
 local coach_hl
 local coachShade
-coach_hl = function(target)   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다 + 나머지 화면은 어둡게 덮어 누를 수 없게 (튜토리얼은 짚은 곳만)
+coach_hl = function(target)   -- 눌러야 할 곳: 둥근 금빛 테두리(빛이 테두리를 따라 돎) + 숨쉬는 바깥 빛 + 통통 튀는 화살표, 나머지 화면은 어둡게 덮어 누를 수 없게
     if coachShade then coachShade:Destroy() end
     coachShade = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 44 }, gui)
     local sides = {}
-    for i = 1, 4 do sides[i] = mk("TextButton", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ZIndex = 44 }, coachShade) end
+    for i = 1, 4 do sides[i] = mk("TextButton", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ZIndex = 44 }, coachShade) end
     local shade = coachShade
     coachHl = mk("Frame", { BackgroundTransparency = 1, ZIndex = 45 }, gui)
-    local sk = mk("UIStroke", { Color = Color3.fromRGB(255, 220, 120), Thickness = 4 }, coachHl); corner(coachHl, 10)
-    TweenService:Create(sk, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8, Transparency = 0.4 }):Play()
     local hl = coachHl
+    local glow = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1, 10, 1, 10), BackgroundTransparency = 1, ZIndex = 45 }, hl)
+    corner(glow, 18); local gs = mk("UIStroke", { Color = Color3.fromRGB(255, 190, 90), Thickness = 10, Transparency = 0.75 }, glow)
+    TweenService:Create(glow, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Size = UDim2.new(1, 22, 1, 22) }):Play()
+    TweenService:Create(gs, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.92 }):Play()
+    local ring = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 46 }, hl)
+    corner(ring, 14); local rs = mk("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 3 }, ring)
+    local grad = mk("UIGradient", { Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 170, 60)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 245, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 170, 60)) }) }, rs)
+    TweenService:Create(grad, TweenInfo.new(2.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = 360 }):Play()
+    local arrow = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, Text = "▼", TextSize = 34, Font = Enum.Font.GothamBold, TextColor3 = Color3.fromRGB(255, 215, 120), ZIndex = 47 }, gui)
+    arrow:SetAttribute("NoTr", true); mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(40, 16, 6) }, arrow)
+    local t0 = os.clock()
     local conn; conn = game:GetService("RunService").RenderStepped:Connect(function()
-      if not hl.Parent or not target.Parent then conn:Disconnect(); if hl.Parent then hl:Destroy() end; if shade.Parent then shade:Destroy() end; return end
-      local p, z = target.AbsolutePosition, target.AbsoluteSize
+      if not hl.Parent or not target.Parent then conn:Disconnect(); if hl.Parent then hl:Destroy() end; if shade.Parent then shade:Destroy() end; if arrow.Parent then arrow:Destroy() end; return end
+      local o = gui.AbsolutePosition   -- 화면 좌표 → 이 화면(안전 영역 기준) 좌표: 이 차이를 빼지 않으면 위로 밀린다
+      local p, z = target.AbsolutePosition - o, target.AbsoluteSize
       hl.Position = UDim2.new(0, p.X - 6, 0, p.Y - 6); hl.Size = UDim2.new(0, z.X + 12, 0, z.Y + 12)
+      local bob = math.abs(math.sin((os.clock() - t0) * 4)) * 10
+      local below = target.AbsolutePosition.Y - o.Y < 90   -- 화면 위쪽 버튼이면 아래에서 위로 가리킨다
+      arrow.Text = below and "▲" or "▼"
+      arrow.Position = below and UDim2.new(0, p.X + z.X / 2, 0, p.Y + z.Y + 28 + bob) or UDim2.new(0, p.X + z.X / 2, 0, p.Y - 28 - bob)
       local x0, y0, x1, y1 = p.X - 4, p.Y - 4, p.X + z.X + 4, p.Y + z.Y + 4
       sides[1].Position = UDim2.new(0, 0, 0, 0); sides[1].Size = UDim2.new(1, 0, 0, math.max(0, y0))                    -- 위
       sides[2].Position = UDim2.new(0, 0, 0, y1); sides[2].Size = UDim2.new(1, 0, 1, -y1)                               -- 아래
