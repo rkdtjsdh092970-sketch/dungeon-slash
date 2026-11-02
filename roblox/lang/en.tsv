@@ -2027,3 +2027,12 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 환영합니다, 	Welcome, 
 스킬: 일격 · 찢기(범위) · 강타	Skills: Strike · Rend (area) · Smash
 스킬: 불씨 · 체인 라이트닝 · 폭열탄	Skills: Ember · Chain Lightning · Firebomb
+%s · %d번 소켓에 끼울 돌	Stone for %s · socket %d
+끼울 수 있는 돌이 없습니다.	No stones to socket.
+누르면 이 돌을 삭제할 수 있습니다 (회수 불가)	Click to destroy this stone (cannot be recovered)
+보유	Owned
+빈 소켓 · 눌러서 돌 끼우기	Empty socket · click to insert a stone
+신성	Divine
+인장	Seals
+혼돈	Chaos
+확인하지 않은 돌 %d개 → [돌] 탭에서 확인	%d unrevealed stones → reveal in the [Stones] tab

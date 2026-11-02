@@ -763,7 +763,7 @@ local BUILD = {   -- 건물은 배경 그림(bg/town.jpg)에 함께 그려져 �
   { key = "b_quest_board", name = "퀘스트 게시판", box = { 0.83, 0.38, 0.99, 0.65 }, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
   { key = "b_skill_hall", name = "스킬 정비소", box = { 0.06, 0.53, 0.335, 0.85 }, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
   { key = "b_forge", name = "제련소", box = { 0.338, 0.53, 0.553, 0.87 }, smoke = { 0.375, 0.0 }, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
-  { key = "b_shop", name = "장비 상점", box = { 0.565, 0.60, 0.837, 0.885 }, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
+  { key = "b_shop", name = "창고", box = { 0.565, 0.60, 0.837, 0.885 }, tabs = { { "창고", "stash" }, { "장비", "inv" } } },   -- 장비 보관 (가방 아이콘과 같은 창, 창고 먼저)
 }
 local townBuilt, badgeDots = false, {}
 local function updateBadges()

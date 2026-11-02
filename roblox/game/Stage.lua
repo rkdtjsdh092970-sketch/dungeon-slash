@@ -160,6 +160,14 @@ function M:heroPose(name, arg)
     end
   end
 end
+-- 동작 그림: 영웅이 실제로 칼을 젖히고 · 베어 내리고 · 치켜들고, 마법사는 지팡이를 치켜들고 · 내뻗는다 (art/hero/<영웅>_<동작>.png, 없으면 기본 그림)
+local function setPose(S, pk)
+  if S.poseK == pk then return end
+  S.poseK = pk
+  local base = M.heroKey()
+  local a = (pk and Sprites.art(base .. "_" .. pk)) or Sprites.art(base); if not a then return end
+  S.pl.ImageContent = a.content; S.pl.AnchorPoint = Vector2.new(0.5, a.foot)
+end
 -- 일러스트 영웅의 코드 애니메이션 (묵직하게: 짧게 모았다가 강하게 내지르고 천천히 돌아온다)
 function M.artPose(S)
   local a = S.plAnim; local dx, dy, rot = 0, 0, 0; local u = S.u; local t = a.t
@@ -194,6 +202,16 @@ function M.artPose(S)
   else   -- 서 있을 때: 아주 느리게 숨쉬듯 (몸이 살짝 오르내림)
     dy = math.sin((S.idleT or 0) * 2.2) * 1.2 * u
   end
+  -- 단계별 동작 그림 (전사: 젖힘 → 베기 / 뛰어올라 치켜듦 → 베기, 마법사: 치켜듦 → 내뻗음)
+  local pk
+  if a.name == "attack" or a.name == "throw" then pk = t < 0.08 and "windup" or (t < 0.3 and "slash" or nil)
+  elseif a.name == "lunge" then pk = t < 0.07 and "windup" or (t < 0.32 and "slash" or nil)
+  elseif a.name == "slam" then pk = t < 0.17 and "overhead" or (t < 0.42 and "slash" or nil)
+  elseif a.name == "cast" then local hold = a.big and 0.22 or 0.12; pk = t < hold and "raise" or (t < hold + 0.3 and "cast" or nil) end
+  if M.heroKey() == "mage" then if pk == "windup" or pk == "overhead" then pk = "raise" elseif pk == "slash" then pk = "cast" end
+  elseif pk == "raise" then pk = "windup" elseif pk == "cast" then pk = "slash" end
+  setPose(S, pk)
+  rot *= pk and 0.4 or 1   -- 그림이 동작을 보여 주니 기울기는 조금만
   S.pl.Position = UDim2.new(0, S.plX + dx, 0, S.plY + dy); S.pl.Rotation = rot
   local hurt = a.name == "hurt" or (S.plHurt or 0) > 0
   S.pl.ImageColor3 = hurt and Color3.new(1, 1 - 0.55 * M.OPT.flash, 1 - 0.55 * M.OPT.flash) or Color3.new(1, 1, 1)
