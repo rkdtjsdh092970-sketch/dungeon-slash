@@ -91,7 +91,7 @@ M.START_KITS = {
   warrior = { wt = "sword", skills = { "strike", "rend", "smash" } },
   mage = { wt = "staff", skills = { "ember", "chain", "bomb" } },
 }
-M.START_ARCANA = 50   -- 시작 무료 소환 (시뮬레이션으로 정함: roblox/sim)
+M.START_ARCANA = 90   -- 시작 무료 10연차 1번. 시뮬레이션(sim/progress.lua): 스타터 세트만으로 초반 100% 클리어 → 시작 소환은 진행이 아니라 첫 뽑기 경험용
 function M.pickStart(sv, cls)
   if not sv.needStart then return false, "이미 시작했습니다" end
   local K = M.START_KITS[cls]; if not K then return false, "없는 직업" end
