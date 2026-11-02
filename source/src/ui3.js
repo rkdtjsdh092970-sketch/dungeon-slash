@@ -431,7 +431,7 @@ const pctS = (v, d) => (v * 100).toFixed(d == null ? 1 : d) + "%";
 function oddsHtml() {
   const H = (t) => `<h3 style="margin:10px 0 4px">${t}</h3>`, row = (...c) => `<tr>${c.map((x, i) => `<td style="padding:2px 8px;${i ? "text-align:right" : ""}">${x}</td>`).join("")}</tr>`, tbl = (rows) => `<table style="width:100%;border-collapse:collapse;font-size:12px">${rows.join("")}</table>`;
   const R = ITEM_RARITY, sumD = R.reduce((a, x) => a + x.drop, 0), sumB = R.reduce((a, x) => a + x.bossDrop, 0);
-  let h = `<div class="dim">모든 확률은 MF·월드 버프 적용 전 기본값입니다. 균열은 20층마다 아이템 T가 오르고 (T1 1~19층 · T2 20~39 · T3 40~59 · T4 60~79 · T5 80층~), 레벨은 균열 층 첫 클리어마다 오릅니다.</div>`;
+  let h = `<div class="dim">모든 확률은 MF·월드 버프 적용 전 기본값입니다. 균열은 20층마다 아이템 T가 오르고 (T1 1~19층 · T2 20~39 · T3 40~59 · T4 60~79 · T5 80층~), 레벨은 승리 경험치로 오릅니다.</div>`;
   h += H("① 장비 등급 · 전설 드랍 확률 (아이템 1개당)");
   const lr = (t, boss) => { const w = riftRW(t, boss), s = w[0] + w[1] + w[2] + w[3]; return row(`균열 ${t}층${boss ? " (보스 층)" : ""}`, pctS(w[0] / s, 0), pctS(w[1] / s, 0), pctS(w[2] / s, 0), `<b style="color:#ffcf6a">${pctS(w[3] / s)}</b>`, `${riftItemN(t, boss)}개 (전설 평균 ${(riftItemN(t, boss) * riftLegendShare(t, boss)).toFixed(1)}개)`); };
   h += tbl([row("<b>출처</b>", "일반", "매직", "레어", "<b>전설</b>", "드랍 개수"),
