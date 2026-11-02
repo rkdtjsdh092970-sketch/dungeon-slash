@@ -141,7 +141,7 @@ function itemHandlers(list) {
       const a = IB.sel.affixes[i]; if (a && a.t === 0 && !rerollLocked(IB.sel, i)) askConfirm(`이 옵션은 <b style="color:#ffd070">1티어(최고 티어)</b>입니다.<br>정말 재굴림하시겠습니까?<br><small class="dim">${affText(a)}</small>`, "재굴림", doIt, true, () => renderItems()); else doIt(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
-    gofor: () => { const it = IB.sel; IB.mode = "forge"; IB.sel = it; renderItems(); },
+    gofor: () => { const it = IB.sel; IB.fbag = !EQ_SLOTS.some((k) => save.equipped[k] === it); Modal.close(true); G.grp = null; openGroup(TOWN5.find((b) => b.id === "forge"), 0); IB.sel = it; IB.mode = "forge"; renderItems(); },
   }, presetHandlers(renderItems));
 }
 // ---------- 5.0 가방 (로블록스판 Menus.invRender 배치) ----------
@@ -194,7 +194,7 @@ function renderForge5() {
     const nowP = pw(sel.enh || 0), nxtP = (sel.enh || 0) < 10 ? pw((sel.enh || 0) + 1) : null;
     const powLine = `<div class="fpw5">전투력 <b style="color:#ffe08a">${fmtN(P0)}</b>${eqd ? (nxtP != null ? ` · 강화 성공 시 ${fmtN(nxtP)} ${dl(nxtP - P0)}` : "") : ` · 착용하면 ${dl(nowP - P0)}${nxtP != null ? ` · 강화 후 착용하면 ${dl(nxtP - P0)}` : ""}`}</div>`;
     R = `<div class="box5 frb5"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>${powLine}
-      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn green" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
+      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn green" data-a="enh">+${(sel.enh || 0) + 1} 강화${nxtP != null ? `<small style="display:block;font-size:11px;color:${nxtP - (eqd ? P0 : nowP) >= 0 ? "#8dff9a" : "#ff8a8a"}">전투력 ▲${fmtN(Math.abs(Math.round(nxtP - (eqd ? P0 : nowP))))}</small>` : ""}</button>`}</div>
       <div class="afh5"><b>옵션</b><small>${anyRR ? "금빛 줄만 재굴림할 수 있습니다" : "재굴림할 줄을 하나 고르세요 — 그 뒤로는 그 줄만 재굴림됩니다"}</small></div><div class="afl5">${aff}${socketBlock(sel)}</div>
       <div class="orb5"><button class="btn purple" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn purple" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn pri" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
   }

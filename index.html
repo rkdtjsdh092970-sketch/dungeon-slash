@@ -519,6 +519,12 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .h5T #bossbar .bn{white-space:nowrap;overflow:hidden;font-size:12px!important}.h5T #bossbar .bn b{font-size:13px;max-width:290px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:bottom}
 .gray5{filter:grayscale(1) brightness(.6)}.cxf5{display:flex;gap:4px;height:30px}.cxf5 .btn{width:64px;font-size:12px!important}.ag5.c3{grid-template-columns:repeat(3,1fr);margin-top:10px}
 .bm .bh5 .btn{white-space:nowrap;flex:none}.g5>.dim.pad{grid-column:1/-1;white-space:nowrap}
+/* 5.28: 장비 칸 등급 색 (로블록스판 M.RAR) · 강화 표시 */
+.tile.r0,.d5.r0{border-color:#cdcdd7!important}.tile.r1,.d5.r1{border-color:#5a96ff!important}.tile.r2,.d5.r2{border-color:#ffd646!important}.tile.r3,.d5.r3{border-color:#ff8c28!important}.tile.rsat,.d5.rsat{border-color:#c85aff!important}
+.tile.r1{background:linear-gradient(#1c2a48,#161024)!important}.tile.r2{background:linear-gradient(#3e3416,#161024)!important}.tile.r3{background:linear-gradient(#45260e,#161024)!important}.tile.rsat{background:linear-gradient(#3a1650,#161024)!important}
+.tile em,.d5 em{left:2px!important;top:2px!important;font-size:10px!important;font-style:normal;font-weight:800;color:#ffe9a8!important;background:rgba(20,12,8,.88);border:1px solid #b88a3a;border-radius:4px;padding:0 3px;line-height:12px;text-shadow:none}
+.grpbar{position:sticky;top:-2px;z-index:6;background:#120c10}
+.acard .acname{color:#fff!important;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000,0 0 3px #000}
 /* ---- 5.0 제련소 ---- */
 .fpw5{font-size:13px;margin:-2px 0 6px;color:#d8ccb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
@@ -5656,9 +5662,11 @@ const Modal = {
   open(html, o) {
     o = o || {}; this.on = o.on || {}; this.onClose = o.onClose || null; this.persistent = !!o.persistent;
     const m = $("#modal"), box = $("#mbox"), keep = !m.classList.contains("hidden") ? this.scrollSnap(box) : null;   // 같은 창을 다시 그릴 때 스크롤 위치 유지
+    const pool = {}; if (keep) for (const im of box.querySelectorAll("img[src]")) (pool[im.getAttribute("src")] = pool[im.getAttribute("src")] || []).push(im);   // 같은 창을 다시 그릴 때 이미 그려진 그림을 다시 쓴다 (깜빡임 방지)
     m.classList.remove("hidden"); box.className = o.cls || ""; box.innerHTML = (o.noClose ? "" : `<button class="x" data-a="__close">✕</button>`) + html;
+    for (const im of box.querySelectorAll("img[src]")) { const q = keep && pool[im.getAttribute("src")]; if (q && q.length) { const old = q.pop(); old.className = im.className; old.setAttribute("style", im.getAttribute("style") || ""); old.alt = im.alt; im.replaceWith(old); } else im.decoding = "sync"; }   // 새 그림은 그려질 때 바로 (빈 칸 한 프레임 없이)
     if (keep && keep.h2 === (box.querySelector("h2") || {}).textContent) this.scrollRestore(box, keep.list);
-    if (typeof grpBar === "function" && G.grp && (!G.grp.h2 || G.grp.h2 === (box.querySelector("h2") || {}).textContent)) setTimeout(grpBar, 0);
+    if (typeof grpBar === "function" && G.grp && (!G.grp.h2 || G.grp.h2 === (box.querySelector("h2") || {}).textContent)) grpBar();   // 같은 틱에 탭 줄을 붙인다 (한 프레임 늦게 붙으면 화면이 출렁임)
     if (!this.was) snd("open"); this.was = true;
   },
   scrollSnap(box) { const list = []; box.querySelectorAll("*").forEach((el) => { if (el.scrollTop > 0) { const sib = [...box.querySelectorAll(el.tagName + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""))]; list.push({ tag: el.tagName, cls: el.className, i: sib.indexOf(el), top: el.scrollTop }); } }); const h = box.querySelector("h2"); return { h2: h ? h.textContent : "", list }; },
@@ -6223,7 +6231,7 @@ function itemHandlers(list) {
       const a = IB.sel.affixes[i]; if (a && a.t === 0 && !rerollLocked(IB.sel, i)) askConfirm(`이 옵션은 <b style="color:#ffd070">1티어(최고 티어)</b>입니다.<br>정말 재굴림하시겠습니까?<br><small class="dim">${affText(a)}</small>`, "재굴림", doIt, true, () => renderItems()); else doIt(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
-    gofor: () => { const it = IB.sel; IB.mode = "forge"; IB.sel = it; renderItems(); },
+    gofor: () => { const it = IB.sel; IB.fbag = !EQ_SLOTS.some((k) => save.equipped[k] === it); Modal.close(true); G.grp = null; openGroup(TOWN5.find((b) => b.id === "forge"), 0); IB.sel = it; IB.mode = "forge"; renderItems(); },
   }, presetHandlers(renderItems));
 }
 // ---------- 5.0 가방 (로블록스판 Menus.invRender 배치) ----------
@@ -6276,7 +6284,7 @@ function renderForge5() {
     const nowP = pw(sel.enh || 0), nxtP = (sel.enh || 0) < 10 ? pw((sel.enh || 0) + 1) : null;
     const powLine = `<div class="fpw5">전투력 <b style="color:#ffe08a">${fmtN(P0)}</b>${eqd ? (nxtP != null ? ` · 강화 성공 시 ${fmtN(nxtP)} ${dl(nxtP - P0)}` : "") : ` · 착용하면 ${dl(nowP - P0)}${nxtP != null ? ` · 강화 후 착용하면 ${dl(nxtP - P0)}` : ""}`}</div>`;
     R = `<div class="box5 frb5"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>${powLine}
-      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn green" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
+      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn green" data-a="enh">+${(sel.enh || 0) + 1} 강화${nxtP != null ? `<small style="display:block;font-size:11px;color:${nxtP - (eqd ? P0 : nowP) >= 0 ? "#8dff9a" : "#ff8a8a"}">전투력 ▲${fmtN(Math.abs(Math.round(nxtP - (eqd ? P0 : nowP))))}</small>` : ""}</button>`}</div>
       <div class="afh5"><b>옵션</b><small>${anyRR ? "금빛 줄만 재굴림할 수 있습니다" : "재굴림할 줄을 하나 고르세요 — 그 뒤로는 그 줄만 재굴림됩니다"}</small></div><div class="afl5">${aff}${socketBlock(sel)}</div>
       <div class="orb5"><button class="btn purple" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn purple" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn pri" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
   }
@@ -7182,7 +7190,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-081846";
+const BUILD_ID = "20261103-082418";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7467,18 +7475,21 @@ function setSwitch5(sv, kind, i) {
   if (kind === "gear") {
     const saveE = (k) => { P[k].equip = Object.fromEntries(EQ_SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])); P[k].eqSet = true; };
     saveE(cur); if (P[i].eqSet) { for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
-      for (const s of EQ_SLOTS) { const u = P[i].equip[s], j = u != null ? sv.inv.findIndex((x) => x.uid === u) : -1; if (j >= 0) sv.equipped[s] = sv.inv.splice(j, 1)[0]; } } else saveE(i);
+      for (const s of EQ_SLOTS) { const u = P[i].equip[s], j = u != null ? sv.inv.findIndex((x) => x.uid === u) : -1; if (j >= 0) sv.equipped[s] = sv.inv.splice(j, 1)[0]; } }
+    else { for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; } saveE(i); }   // 빈 세트: 아무것도 안 낀 상태로 시작
   } else if (kind === "skill") {
     const saveL = (k) => { P[k].loadout = [0, 1, 2, 3].map((j) => { const l = sv.loadout[j]; return l ? { uid: l.uid, rule: l.rule } : null; }); P[k].loSet = true; };
-    saveL(cur); if (P[i].loSet) { const seen = new Set(); sv.loadout = [0, 1, 2, 3].map((j) => { const l = P[i].loadout[j], k = l && sv.skills.find((x) => x.uid === l.uid); if (!k || seen.has(k.id) || j >= (sv.slots || 4)) return null; seen.add(k.id); return { uid: l.uid, rule: l.rule || "front" }; }); } else saveL(i);
+    saveL(cur); if (P[i].loSet) { const seen = new Set(); sv.loadout = [0, 1, 2, 3].map((j) => { const l = P[i].loadout[j], k = l && sv.skills.find((x) => x.uid === l.uid); if (!k || seen.has(k.id) || j >= (sv.slots || 4)) return null; seen.add(k.id); return { uid: l.uid, rule: l.rule || "front" }; }); } else { sv.loadout = [sv.loadout[0] || null, null, null, null]; saveL(i); }   // 빈 세트: 평타만 남기고 비운다
   } else { sv.passSets = sv.passSets || []; sv.passSets[cur] = Object.assign({}, sv.pass || {}); sv.pass = Object.assign({}, sv.passSets[i] || {}); }
   sv.sets[kind] = i;
 }
+const SET5_AFTER = {};
 function setTabs5(kind, after) {
-  const cur = (save.sets && save.sets[kind]) || 0;
-  setTimeout(() => { for (const b of $$(`#mbox [data-set5="${kind}"]`)) b.onclick = (ev) => { ev.stopPropagation(); const i = +b.dataset.i; if (i === cur) return; setSwitch5(save, kind, i); snd("equip"); toast(`세트 ${i + 1}`); saveGame(); refreshTop(); after(); }; }, 0);
+  const cur = (save.sets && save.sets[kind]) || 0; SET5_AFTER[kind] = after;
   return `<span class="set5"><b>세트</b>${[0, 1, 2].map((i) => `<button class="btn xs ${i === cur ? "gold" : ""}" data-set5="${kind}" data-i="${i}">${i + 1}</button>`).join("")}</span>`;
 }
+document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-set5]"); if (!b || !save) return; ev.stopPropagation(); const kind = b.dataset.set5, i = +b.dataset.i, cur = (save.sets && save.sets[kind]) || 0; if (i === cur) return;
+  setSwitch5(save, kind, i); snd("equip"); toast(`세트 ${i + 1}`); saveGame(); refreshTop(); if (SET5_AFTER[kind]) SET5_AFTER[kind](); }, true);
 function arcPowerDelta(inst, slot) {   // 그 칸에 넣었을 때 전투력 변화
   const lo0 = save.loadout, p0 = powerScore5(save); save.loadout = lo0.map((l) => l && Object.assign({}, l));   // 복사본에서 계산 (원래 칸은 건드리지 않는다)
   const j = save.loadout.findIndex((l) => l && l.uid === inst.uid); if (j >= 0) save.loadout[j] = null;
@@ -7490,7 +7501,7 @@ function openSkills() {
   const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
   const slotOf = (uid) => lo.findIndex((l) => l && l.uid === uid);
   const card = (inst, w, h) => { const j = slotOf(inst.uid), d = SKILLS.find((x) => x.id === inst.id) || {};
-    return `<div class="ac5 ${ARC5.sel === inst.uid ? "sel" : ""} ${j >= 0 ? "eqd" : ""}" style="width:${w}px;height:${h}px;--rc:${SK_RCOL5[inst.rarity] || SK_RCOL5[0]}" data-a="asel" data-u="${inst.uid}" draggable="true" data-drag="${inst.uid}" data-k="${d.slot || ""}">${arcCard(inst.id, inst.rarity, {})}<i class="lv5">Lv${inst.lvl || 1}</i>${j >= 0 ? `<i class="sn5">${j + 1}</i>` : ""}</div>`; };
+    return `<div class="ac5 ${ARC5.sel === inst.uid ? "sel" : ""} ${j >= 0 ? "eqd" : ""}" style="width:${w}px;height:${h}px;--rc:${SK_RCOL5[inst.rarity] || SK_RCOL5[0]}" data-a="asel" data-u="${inst.uid}" draggable="true" data-drag="${inst.uid}" data-k="${d.slot || ""}">${arcCard(inst.id, inst.rarity, {})}<i class="lv5">Lv${inst.lvl || 1}</i></div>`; };
   // 장착 칸
   let eq = "";
   for (let i = 0; i < slots; i++) {
@@ -7499,9 +7510,9 @@ function openSkills() {
     eq += `<div class="es5" data-drop="${i}">${inst ? card(inst, 88, 130) : `<div class="emp5"><img src="${artURL("cardback") || ""}" alt=""><span>${i === 0 ? "평타" : i + 1 + "번 칸"}<br>비어 있음<br>(끌어다 놓기)</span></div>`}${i === 0 ? `<div class="bt5">BASIC ATTACK</div>` : ""}</div>`;
   }
   // 보유
-  const F = [["all", "전체"], ["phys", "물리"], ["mag", "마법"], ["eq", "장착 중"], ["basic", "평타"]];
+  const F = [["all", "전체"], ["phys", "물리"], ["mag", "마법"], ["basic", "평타"]]; if (ARC5.filter === "eq") ARC5.filter = "all";
   const rows = save.skills.map((inst) => ({ inst, d: SKILLS.find((x) => x.id === inst.id) })).filter((r) => r.d);
-  const shown = rows.filter(({ inst, d }) => ARC5.filter === "all" || (ARC5.filter === "eq" && slotOf(inst.uid) >= 0) || (ARC5.filter === "basic" && d.slot === "basic") || (ARC5.filter === "phys" && d.dtype === "phys") || (ARC5.filter === "mag" && d.dtype === "mag"));
+  const shown = rows.filter(({ inst }) => slotOf(inst.uid) < 0).filter(({ inst, d }) => ARC5.filter === "all" || (ARC5.filter === "eq" && slotOf(inst.uid) >= 0) || (ARC5.filter === "basic" && d.slot === "basic") || (ARC5.filter === "phys" && d.dtype === "phys") || (ARC5.filter === "mag" && d.dtype === "mag"));
   for (const r of shown) r.dps = r.d.slot === "passive" || r.d.dtype === "buff" || r.d.dtype === "heal" ? 0 : dpsOf(skillOf(r.inst));
   shown.sort((a, b) => ((slotOf(b.inst.uid) >= 0) - (slotOf(a.inst.uid) >= 0)) || (ARC5.sort === "dps" ? b.dps - a.dps : ARC5.sort === "lvl" ? (b.inst.lvl || 1) - (a.inst.lvl || 1) : 0) || b.inst.rarity - a.inst.rarity || (b.inst.lvl || 1) - (a.inst.lvl || 1));
   const grid = shown.map(({ inst }) => card(inst, 60, 88)).join("") || `<div class="dim pad">이 분류에 아르카나가 없습니다.</div>`;
@@ -7524,7 +7535,7 @@ function openSkills() {
     if (d.slot !== "passive") for (let i = 0; i < slots; i++) if ((i === 0) === isBasic && j !== i) { const dv = arcPowerDelta(sel, i); parts.push(`${i === 0 ? "평타" : i + 1 + "번"} ${dv >= 0 ? "▲+" : "▼"}${fmtN(Math.abs(dv))}`);
       btns.push(`<button class="btn blue" data-a="aeq" data-s="${i}">${i === 0 ? "평타 칸" : i + 1 + "번 칸으로"}<small style="color:${dv >= 0 ? "#82ff96" : "#ff786e"}">${dv >= 0 ? "▲" : "▼"}${fmtN(Math.abs(dv))}</small></button>`); }
     if (j < 0 && !isBasic) btns.push(`<button class="btn pri" data-a="dissk" data-u="${sel.uid}">분해</button>`);
-    const RN = { front: "앞줄", auto: "자동", boss: "보스 먼저", ranged: "원거리 먼저", elite: "정예 먼저", normal: "일반 먼저" };
+    const RN = RULES;
     const rule = j >= 0 && lo[j] ? lo[j].rule || "front" : null;
     right = `<div class="adh5">${arcCard(sel.id, sel.rarity, {})}<div style="min-width:0"><b class="adn5">${d.name}</b><div style="color:${SK_RCOL5[sel.rarity]};font-weight:700">${R.name} · Lv ${sel.lvl || 1} / ${SKILL_MAX_LV}${(sel.lvl || 1) < SKILL_MAX_LV ? `  (중복 ${sel.dup || 0}/${sel.lvl || 1})` : ""}</div><div class="tg5">${tags.join(" · ")}</div>
       <div class="ag5"><div><small>초당 피해</small><b style="color:#ffc86e">${dps ? fmtPow(dps) : "–"}</b></div><div><small>1회 위력</small><b>${Math.round(sk.mult * 100)}%</b></div><div><small>쿨타임</small><b>${sk.cd.toFixed(1)}초</b></div><div><small>사거리</small><b>${sk.range ? sk.range + "칸" : "–"}</b></div><div><small>범위</small><b>${area}</b></div><div><small>마나</small><b>${sk.mana ? Math.round(sk.mana) : "없음"}</b></div></div></div></div>
@@ -7536,7 +7547,7 @@ function openSkills() {
     asel: (el) => { ARC5.sel = +el.dataset.u; snd("click"); openSkills(); },
     aflt: (el) => { ARC5.filter = el.dataset.f; openSkills(); }, asrt: () => { ARC5.sort = { rar: "dps", dps: "lvl", lvl: "rar" }[ARC5.sort]; openSkills(); },
     aeq: (el) => arcEquip(ARC5.sel, +el.dataset.s),
-    arule: () => { const RL = ["front", "auto", "boss", "ranged", "elite", "normal"], l = save.loadout[slotOf(ARC5.sel)]; if (!l) return; l.rule = RL[(RL.indexOf(l.rule || "front") + 1) % RL.length]; saveGame(); snd("click"); openSkills(); },
+    arule: () => { const RL = ["front", "auto", "boss", "ranged", "elite", "normal"], l = save.loadout[slotOf(ARC5.sel)]; if (!l) return; l.rule = RL[(RL.indexOf(l.rule || "front") + 1) % RL.length]; if (G.battle && G.battle.skills) { const bs = G.battle.skills[slotOf(ARC5.sel)]; if (bs) bs.rule = l.rule; } saveGame(); snd("click"); openSkills(); },
     dissk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; const h = dismantleSkill(save, inst); if (h == null) return toast("장착 중이거나 세트에 포함된 아르카나는 분해할 수 없습니다", "bad"); ARC5.sel = null; snd("coin"); toast(`분해 · 아르카나 조각 +${h}`, "ok"); saveGame(); refreshTop(); openSkills(); },
   } });
   arc5Wire();
@@ -7558,7 +7569,7 @@ function arc5Wire() {   // 끌어다 놓기 + 뒤에서 도는 마법진 · 룬 
   const cv = $("#mbox .arcbg5"); if (!cv) return; const g = cv.getContext("2d"), t0 = performance.now();
   const L = [["fx_mc_main", 1, 90, 0.18], ["fx_mc_runes", 1.18, -140, 0.14], ["fx_mc_inner", 0.42, 60, 0.2]], P = [];
   const tint = (im) => { if (!im || !im.width) return null; const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d"); x.drawImage(im, 0, 0); x.globalCompositeOperation = "source-atop"; x.fillStyle = "rgb(170,120,255)"; x.fillRect(0, 0, c.width, c.height); return c; };
-  const IM = L.map((l) => tint(artGet(l[0])));
+  const IM = ARC5.im && ARC5.im[0] ? ARC5.im : (ARC5.im = L.map((l) => tint(artGet(l[0]))));   // 물들인 그림은 한 번만 만든다
   const tick = () => { if (!cv.isConnected) return; const t = (performance.now() - t0) / 1000, W = cv.width, H = cv.height; g.clearRect(0, 0, W, H);
     L.forEach((l, i) => { const im = IM[i]; if (!im) return; const s = 520 * l[1]; g.save(); g.globalAlpha = l[3] * (i === 0 ? 0.75 + 0.25 * Math.sin(t * 1.05) : 1); g.translate(W / 2, H * 0.55); g.rotate(t * Math.PI * 2 / l[2]); g.drawImage(im, -s / 2, -s / 2, s, s); g.restore(); });
     if (Math.random() < 0.07) P.push({ x: Math.random() * W, y: H, vx: (Math.random() - 0.5) * 10, vy: -(0.6 + Math.random() * 0.4) * H / 4.5, r: 1 + Math.random() * 1.5, t: 0, life: 3 + Math.random() * 3 });
@@ -8126,7 +8137,7 @@ function tutTick() {
   .tabs .tab,.itabs .tab{margin:1px}
   .skdet,.sks,.skg,.sumc,.advb,.rs-chip,.rs-stat,.shopcard{background-color:#1a1012 !important;border-color:#6a4a2a !important}
   .sks.cursel,.skg.picked{border-color:#f0c060 !important}
-  .tile{background-color:#1c1214 !important;border-color:#5a4030}
+  .tile{background-color:#1c1214 !important}
   select,input[type=text],input[type=number]{background:#1a1012 !important;color:#f0e0c8 !important;border:1px solid #7a5a34 !important;border-radius:3px}
   #mbox h3{color:#e8c47a}
   #mappanel{background:linear-gradient(#1c1010f0,#100808f0) !important;border:2px solid #8a6a38 !important}
@@ -8164,6 +8175,13 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.28", date: "11/3", title: "깜빡임 · 가방 · 제련소 · 아르카나 고침", items: [
+    "화면 깜빡임 줄임: 창 안을 누를 때 이미 보이던 그림은 그대로 두고 바뀐 부분만 다시 그립니다. 건물 창의 탭 줄이 한 프레임 늦게 붙어 화면이 출렁이던 것도 고쳤습니다.",
+    "가방 · 착용 칸 테두리가 등급 색(일반 회색 · 매직 파랑 · 레어 노랑 · 전설 주황 · 사탄 보라)으로 나옵니다. 강화 표시(+7)는 작은 금테 상자로.",
+    "세트 1 · 2 · 3: 빈 세트로 바꾸면 장비를 모두 벗은(아르카나는 평타만 남은) 상태로 시작합니다. 버튼이 가끔 안 눌리던 것도 고쳤습니다.",
+    "가방의 [강화하기]를 누르면 제련소에서 그 장비가 바로 선택됩니다. 제련소 [+1 강화] 버튼에 오르는 전투력이 표시됩니다. 창을 내려도 위 탭(강화 · 돌)이 늘 보입니다.",
+    "아르카나 창: 장착한 카드는 보유 목록에 나오지 않습니다 (번호 표시 없음). 신화 · 사탄 카드 이름이 잘 보이게 흰 글씨로. 전투 중에 [대상]을 바꾸면 그 전투에도 바로 적용됩니다.",
+  ] },
   { ver: "5.27", date: "11/3", title: "가방 비교에 [돌 제외]", items: [
     "가방 위 [돌 제외]를 켜면 새 장비와 착용 장비 둘 다 소켓에 끼운 돌을 빼고 비교합니다 (▲ 표시 · 전투력 비교). [+0 비교]와 함께 켜면 강화 · 돌을 모두 뺀 장비 자체만 비교합니다. 실제로 끼운 돌은 그대로입니다.",
     "고침: 가방이 비었을 때 '비어 있습니다'가 세로로 깨지던 것.",

@@ -14,18 +14,21 @@ function setSwitch5(sv, kind, i) {
   if (kind === "gear") {
     const saveE = (k) => { P[k].equip = Object.fromEntries(EQ_SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])); P[k].eqSet = true; };
     saveE(cur); if (P[i].eqSet) { for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
-      for (const s of EQ_SLOTS) { const u = P[i].equip[s], j = u != null ? sv.inv.findIndex((x) => x.uid === u) : -1; if (j >= 0) sv.equipped[s] = sv.inv.splice(j, 1)[0]; } } else saveE(i);
+      for (const s of EQ_SLOTS) { const u = P[i].equip[s], j = u != null ? sv.inv.findIndex((x) => x.uid === u) : -1; if (j >= 0) sv.equipped[s] = sv.inv.splice(j, 1)[0]; } }
+    else { for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; } saveE(i); }   // 빈 세트: 아무것도 안 낀 상태로 시작
   } else if (kind === "skill") {
     const saveL = (k) => { P[k].loadout = [0, 1, 2, 3].map((j) => { const l = sv.loadout[j]; return l ? { uid: l.uid, rule: l.rule } : null; }); P[k].loSet = true; };
-    saveL(cur); if (P[i].loSet) { const seen = new Set(); sv.loadout = [0, 1, 2, 3].map((j) => { const l = P[i].loadout[j], k = l && sv.skills.find((x) => x.uid === l.uid); if (!k || seen.has(k.id) || j >= (sv.slots || 4)) return null; seen.add(k.id); return { uid: l.uid, rule: l.rule || "front" }; }); } else saveL(i);
+    saveL(cur); if (P[i].loSet) { const seen = new Set(); sv.loadout = [0, 1, 2, 3].map((j) => { const l = P[i].loadout[j], k = l && sv.skills.find((x) => x.uid === l.uid); if (!k || seen.has(k.id) || j >= (sv.slots || 4)) return null; seen.add(k.id); return { uid: l.uid, rule: l.rule || "front" }; }); } else { sv.loadout = [sv.loadout[0] || null, null, null, null]; saveL(i); }   // 빈 세트: 평타만 남기고 비운다
   } else { sv.passSets = sv.passSets || []; sv.passSets[cur] = Object.assign({}, sv.pass || {}); sv.pass = Object.assign({}, sv.passSets[i] || {}); }
   sv.sets[kind] = i;
 }
+const SET5_AFTER = {};
 function setTabs5(kind, after) {
-  const cur = (save.sets && save.sets[kind]) || 0;
-  setTimeout(() => { for (const b of $$(`#mbox [data-set5="${kind}"]`)) b.onclick = (ev) => { ev.stopPropagation(); const i = +b.dataset.i; if (i === cur) return; setSwitch5(save, kind, i); snd("equip"); toast(`세트 ${i + 1}`); saveGame(); refreshTop(); after(); }; }, 0);
+  const cur = (save.sets && save.sets[kind]) || 0; SET5_AFTER[kind] = after;
   return `<span class="set5"><b>세트</b>${[0, 1, 2].map((i) => `<button class="btn xs ${i === cur ? "gold" : ""}" data-set5="${kind}" data-i="${i}">${i + 1}</button>`).join("")}</span>`;
 }
+document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-set5]"); if (!b || !save) return; ev.stopPropagation(); const kind = b.dataset.set5, i = +b.dataset.i, cur = (save.sets && save.sets[kind]) || 0; if (i === cur) return;
+  setSwitch5(save, kind, i); snd("equip"); toast(`세트 ${i + 1}`); saveGame(); refreshTop(); if (SET5_AFTER[kind]) SET5_AFTER[kind](); }, true);
 function arcPowerDelta(inst, slot) {   // 그 칸에 넣었을 때 전투력 변화
   const lo0 = save.loadout, p0 = powerScore5(save); save.loadout = lo0.map((l) => l && Object.assign({}, l));   // 복사본에서 계산 (원래 칸은 건드리지 않는다)
   const j = save.loadout.findIndex((l) => l && l.uid === inst.uid); if (j >= 0) save.loadout[j] = null;
@@ -37,7 +40,7 @@ function openSkills() {
   const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
   const slotOf = (uid) => lo.findIndex((l) => l && l.uid === uid);
   const card = (inst, w, h) => { const j = slotOf(inst.uid), d = SKILLS.find((x) => x.id === inst.id) || {};
-    return `<div class="ac5 ${ARC5.sel === inst.uid ? "sel" : ""} ${j >= 0 ? "eqd" : ""}" style="width:${w}px;height:${h}px;--rc:${SK_RCOL5[inst.rarity] || SK_RCOL5[0]}" data-a="asel" data-u="${inst.uid}" draggable="true" data-drag="${inst.uid}" data-k="${d.slot || ""}">${arcCard(inst.id, inst.rarity, {})}<i class="lv5">Lv${inst.lvl || 1}</i>${j >= 0 ? `<i class="sn5">${j + 1}</i>` : ""}</div>`; };
+    return `<div class="ac5 ${ARC5.sel === inst.uid ? "sel" : ""} ${j >= 0 ? "eqd" : ""}" style="width:${w}px;height:${h}px;--rc:${SK_RCOL5[inst.rarity] || SK_RCOL5[0]}" data-a="asel" data-u="${inst.uid}" draggable="true" data-drag="${inst.uid}" data-k="${d.slot || ""}">${arcCard(inst.id, inst.rarity, {})}<i class="lv5">Lv${inst.lvl || 1}</i></div>`; };
   // 장착 칸
   let eq = "";
   for (let i = 0; i < slots; i++) {
@@ -46,9 +49,9 @@ function openSkills() {
     eq += `<div class="es5" data-drop="${i}">${inst ? card(inst, 88, 130) : `<div class="emp5"><img src="${artURL("cardback") || ""}" alt=""><span>${i === 0 ? "평타" : i + 1 + "번 칸"}<br>비어 있음<br>(끌어다 놓기)</span></div>`}${i === 0 ? `<div class="bt5">BASIC ATTACK</div>` : ""}</div>`;
   }
   // 보유
-  const F = [["all", "전체"], ["phys", "물리"], ["mag", "마법"], ["eq", "장착 중"], ["basic", "평타"]];
+  const F = [["all", "전체"], ["phys", "물리"], ["mag", "마법"], ["basic", "평타"]]; if (ARC5.filter === "eq") ARC5.filter = "all";
   const rows = save.skills.map((inst) => ({ inst, d: SKILLS.find((x) => x.id === inst.id) })).filter((r) => r.d);
-  const shown = rows.filter(({ inst, d }) => ARC5.filter === "all" || (ARC5.filter === "eq" && slotOf(inst.uid) >= 0) || (ARC5.filter === "basic" && d.slot === "basic") || (ARC5.filter === "phys" && d.dtype === "phys") || (ARC5.filter === "mag" && d.dtype === "mag"));
+  const shown = rows.filter(({ inst }) => slotOf(inst.uid) < 0).filter(({ inst, d }) => ARC5.filter === "all" || (ARC5.filter === "eq" && slotOf(inst.uid) >= 0) || (ARC5.filter === "basic" && d.slot === "basic") || (ARC5.filter === "phys" && d.dtype === "phys") || (ARC5.filter === "mag" && d.dtype === "mag"));
   for (const r of shown) r.dps = r.d.slot === "passive" || r.d.dtype === "buff" || r.d.dtype === "heal" ? 0 : dpsOf(skillOf(r.inst));
   shown.sort((a, b) => ((slotOf(b.inst.uid) >= 0) - (slotOf(a.inst.uid) >= 0)) || (ARC5.sort === "dps" ? b.dps - a.dps : ARC5.sort === "lvl" ? (b.inst.lvl || 1) - (a.inst.lvl || 1) : 0) || b.inst.rarity - a.inst.rarity || (b.inst.lvl || 1) - (a.inst.lvl || 1));
   const grid = shown.map(({ inst }) => card(inst, 60, 88)).join("") || `<div class="dim pad">이 분류에 아르카나가 없습니다.</div>`;
@@ -71,7 +74,7 @@ function openSkills() {
     if (d.slot !== "passive") for (let i = 0; i < slots; i++) if ((i === 0) === isBasic && j !== i) { const dv = arcPowerDelta(sel, i); parts.push(`${i === 0 ? "평타" : i + 1 + "번"} ${dv >= 0 ? "▲+" : "▼"}${fmtN(Math.abs(dv))}`);
       btns.push(`<button class="btn blue" data-a="aeq" data-s="${i}">${i === 0 ? "평타 칸" : i + 1 + "번 칸으로"}<small style="color:${dv >= 0 ? "#82ff96" : "#ff786e"}">${dv >= 0 ? "▲" : "▼"}${fmtN(Math.abs(dv))}</small></button>`); }
     if (j < 0 && !isBasic) btns.push(`<button class="btn pri" data-a="dissk" data-u="${sel.uid}">분해</button>`);
-    const RN = { front: "앞줄", auto: "자동", boss: "보스 먼저", ranged: "원거리 먼저", elite: "정예 먼저", normal: "일반 먼저" };
+    const RN = RULES;
     const rule = j >= 0 && lo[j] ? lo[j].rule || "front" : null;
     right = `<div class="adh5">${arcCard(sel.id, sel.rarity, {})}<div style="min-width:0"><b class="adn5">${d.name}</b><div style="color:${SK_RCOL5[sel.rarity]};font-weight:700">${R.name} · Lv ${sel.lvl || 1} / ${SKILL_MAX_LV}${(sel.lvl || 1) < SKILL_MAX_LV ? `  (중복 ${sel.dup || 0}/${sel.lvl || 1})` : ""}</div><div class="tg5">${tags.join(" · ")}</div>
       <div class="ag5"><div><small>초당 피해</small><b style="color:#ffc86e">${dps ? fmtPow(dps) : "–"}</b></div><div><small>1회 위력</small><b>${Math.round(sk.mult * 100)}%</b></div><div><small>쿨타임</small><b>${sk.cd.toFixed(1)}초</b></div><div><small>사거리</small><b>${sk.range ? sk.range + "칸" : "–"}</b></div><div><small>범위</small><b>${area}</b></div><div><small>마나</small><b>${sk.mana ? Math.round(sk.mana) : "없음"}</b></div></div></div></div>
@@ -83,7 +86,7 @@ function openSkills() {
     asel: (el) => { ARC5.sel = +el.dataset.u; snd("click"); openSkills(); },
     aflt: (el) => { ARC5.filter = el.dataset.f; openSkills(); }, asrt: () => { ARC5.sort = { rar: "dps", dps: "lvl", lvl: "rar" }[ARC5.sort]; openSkills(); },
     aeq: (el) => arcEquip(ARC5.sel, +el.dataset.s),
-    arule: () => { const RL = ["front", "auto", "boss", "ranged", "elite", "normal"], l = save.loadout[slotOf(ARC5.sel)]; if (!l) return; l.rule = RL[(RL.indexOf(l.rule || "front") + 1) % RL.length]; saveGame(); snd("click"); openSkills(); },
+    arule: () => { const RL = ["front", "auto", "boss", "ranged", "elite", "normal"], l = save.loadout[slotOf(ARC5.sel)]; if (!l) return; l.rule = RL[(RL.indexOf(l.rule || "front") + 1) % RL.length]; if (G.battle && G.battle.skills) { const bs = G.battle.skills[slotOf(ARC5.sel)]; if (bs) bs.rule = l.rule; } saveGame(); snd("click"); openSkills(); },
     dissk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; const h = dismantleSkill(save, inst); if (h == null) return toast("장착 중이거나 세트에 포함된 아르카나는 분해할 수 없습니다", "bad"); ARC5.sel = null; snd("coin"); toast(`분해 · 아르카나 조각 +${h}`, "ok"); saveGame(); refreshTop(); openSkills(); },
   } });
   arc5Wire();
@@ -105,7 +108,7 @@ function arc5Wire() {   // 끌어다 놓기 + 뒤에서 도는 마법진 · 룬 
   const cv = $("#mbox .arcbg5"); if (!cv) return; const g = cv.getContext("2d"), t0 = performance.now();
   const L = [["fx_mc_main", 1, 90, 0.18], ["fx_mc_runes", 1.18, -140, 0.14], ["fx_mc_inner", 0.42, 60, 0.2]], P = [];
   const tint = (im) => { if (!im || !im.width) return null; const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d"); x.drawImage(im, 0, 0); x.globalCompositeOperation = "source-atop"; x.fillStyle = "rgb(170,120,255)"; x.fillRect(0, 0, c.width, c.height); return c; };
-  const IM = L.map((l) => tint(artGet(l[0])));
+  const IM = ARC5.im && ARC5.im[0] ? ARC5.im : (ARC5.im = L.map((l) => tint(artGet(l[0]))));   // 물들인 그림은 한 번만 만든다
   const tick = () => { if (!cv.isConnected) return; const t = (performance.now() - t0) / 1000, W = cv.width, H = cv.height; g.clearRect(0, 0, W, H);
     L.forEach((l, i) => { const im = IM[i]; if (!im) return; const s = 520 * l[1]; g.save(); g.globalAlpha = l[3] * (i === 0 ? 0.75 + 0.25 * Math.sin(t * 1.05) : 1); g.translate(W / 2, H * 0.55); g.rotate(t * Math.PI * 2 / l[2]); g.drawImage(im, -s / 2, -s / 2, s, s); g.restore(); });
     if (Math.random() < 0.07) P.push({ x: Math.random() * W, y: H, vx: (Math.random() - 0.5) * 10, vy: -(0.6 + Math.random() * 0.4) * H / 4.5, r: 1 + Math.random() * 1.5, t: 0, life: 3 + Math.random() * 3 });

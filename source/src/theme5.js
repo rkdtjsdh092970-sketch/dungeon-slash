@@ -24,7 +24,7 @@
   .tabs .tab,.itabs .tab{margin:1px}
   .skdet,.sks,.skg,.sumc,.advb,.rs-chip,.rs-stat,.shopcard{background-color:#1a1012 !important;border-color:#6a4a2a !important}
   .sks.cursel,.skg.picked{border-color:#f0c060 !important}
-  .tile{background-color:#1c1214 !important;border-color:#5a4030}
+  .tile{background-color:#1c1214 !important}
   select,input[type=text],input[type=number]{background:#1a1012 !important;color:#f0e0c8 !important;border:1px solid #7a5a34 !important;border-radius:3px}
   #mbox h3{color:#e8c47a}
   #mappanel{background:linear-gradient(#1c1010f0,#100808f0) !important;border:2px solid #8a6a38 !important}
