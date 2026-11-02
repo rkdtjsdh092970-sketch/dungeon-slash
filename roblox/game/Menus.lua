@@ -555,7 +555,7 @@ function M.skills()
   local function cardArt(id) local dd = SK_BY[id]; if C.Sprites.art("card_s_" .. tostring(id)) then return "card_s_" .. tostring(id) end; return dd and dd.art and ("card_s_" .. dd.art) or nil end
   for i = 1, slots do
     if i == 2 then   -- 평타 칸과 아르카나 칸 사이 구분선
-      local sep = mk("Frame", { Size = UDim2.new(0, 3, 0, 120), BackgroundColor3 = Color3.fromRGB(214, 168, 70), BackgroundTransparency = 0.3, BorderSizePixel = 0, LayoutOrder = 1 }, row)
+      local sep = mk("Frame", { Size = UDim2.new(0, 3, 0, 120), BackgroundColor3 = Color3.fromRGB(214, 168, 70), BackgroundTransparency = 0.3, BorderSizePixel = 0, LayoutOrder = 3 }, row)
       local _ = sep
     end
     local k = inSlot[i]
