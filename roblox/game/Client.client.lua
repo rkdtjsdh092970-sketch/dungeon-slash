@@ -1316,7 +1316,7 @@ coach_hl = function(target)   -- 눌러야 할 곳: 둥근 금빛 테두리(빛�
     end
     -- 가리키는 화살표 (art/ui/tut_arrow.png, 없으면 글자)
     local aa = Sprites.art("tut_arrow")
-    local arrow = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 34, 0, 64), BackgroundTransparency = 1, ZIndex = 47, ScaleType = Enum.ScaleType.Fit }, gui)
+    local arrow = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 92, 0, 92), BackgroundTransparency = 1, ZIndex = 47, ScaleType = Enum.ScaleType.Fit }, gui)
     if aa then arrow.ImageContent = aa.content else local t = mk("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "▼", TextScaled = true, TextColor3 = Color3.fromRGB(255, 215, 120), ZIndex = 47 }, arrow); t:SetAttribute("NoTr", true) end
     -- 테두리를 따라 흩날리는 불티
     local sparks = {}
@@ -1333,9 +1333,9 @@ coach_hl = function(target)   -- 눌러야 할 곳: 둥근 금빛 테두리(빛�
       local bob = math.abs(math.sin((os.clock() - t0) * 4)) * 10
       local below = target.AbsolutePosition.Y - o.Y < 90   -- 화면 위쪽 버튼이면 아래에서 위로 가리킨다
       arrow.Rotation = below and 180 or 0
-      arrow.Position = below and UDim2.new(0, p.X + z.X / 2, 0, p.Y + z.Y + 40 + bob) or UDim2.new(0, p.X + z.X / 2, 0, p.Y - 40 - bob)
+      arrow.Position = below and UDim2.new(0, p.X + z.X / 2, 0, p.Y + z.Y + 52 + bob) or UDim2.new(0, p.X + z.X / 2, 0, p.Y - 52 - bob)
       local tm = os.clock() - t0
-      local cs = math.clamp(math.min(z.X, z.Y) * 0.55, 26, 56); local br = 6 + math.abs(math.sin(tm * 3)) * 5   -- 모서리가 안팎으로 숨쉰다
+      local cs = math.clamp(math.min(z.X, z.Y) * 0.95, 64, 110); local br = 6 + math.abs(math.sin(tm * 3)) * 5   -- 모서리가 안팎으로 숨쉰다
       local cx = { p.X - br, p.X + z.X + br, p.X + z.X + br, p.X - br }; local cy = { p.Y - br, p.Y - br, p.Y + z.Y + br, p.Y + z.Y + br }
       local sx, sy = { 1, -1, -1, 1 }, { 1, 1, -1, -1 }   -- 그림 속 꺾인 꼭짓점이 그림 가장자리에서 16% 안쪽이므로 중심을 그만큼 대상 쪽으로
       for i, c in ipairs(corners) do c.Size = UDim2.new(0, cs, 0, cs); c.Position = UDim2.new(0, cx[i] + sx[i] * cs * 0.34, 0, cy[i] + sy[i] * cs * 0.34) end
