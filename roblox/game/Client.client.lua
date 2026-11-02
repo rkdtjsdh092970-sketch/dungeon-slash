@@ -1206,7 +1206,8 @@ local coachBox, coachHl
 local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end end
 local function coach(title, text, btns, target)
   coachClose()
-  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, INSET + 120 * K), Size = UDim2.new(0, 660, 0, 190), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
+  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -10),   -- 화면 아래 (열린 창의 버튼을 가리지 않게)
+    Size = UDim2.new(0, 660, 0, 190), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
   corner(coachBox, 10); stroke(coachBox, GOLD, 2.5); mk("UIScale", { Scale = K }, coachBox); Skin.frame(coachBox, "ui_panel", 0.2, 0.5)
   local tl = mk("TextLabel", { Position = UDim2.new(0, 36, 0, 18), Size = UDim2.new(1, -72, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 24, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
   mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, tl)
