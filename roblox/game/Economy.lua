@@ -42,11 +42,24 @@ function M.buySkill(sv, id)
 end
 local function findSkill(sv, uid) for _, k in ipairs(sv.skills) do if k.uid == uid then return k end end end
 function M.honeCost(lvl, rarity) return floor((3 + 2 * lvl) * (HONE_RMUL[(rarity or 0) + 1] or 1) + 0.5) end
+-- 평타 강화 (골드). 다른 아르카나는 같은 아르카나를 다시 소환하면 레벨이 오른다
+function M.basicUpCost(k) return floor(150 * 1.32 ^ ((k.lvl or 1) - 1) * (1 + (k.rarity or 0)) + 0.5) end
 function M.levelUpSkill(sv, uid)
   local k = findSkill(sv, uid); if not k then return false, "Arcana not found" end
+  local d = SKILL_BY[k.id]; if not d or d.slot ~= "basic" then return false, "Level up by summoning the same Arcana again" end
   local lvl = k.lvl or 1; if lvl >= M.SKILL_MAX_LV then return false, "Max level reached" end
-  local c = M.honeCost(lvl, k.rarity); if (sv.hone or 0) < c then return false, "Not enough Honing Stones" end
-  sv.hone -= c; k.lvl = lvl + 1; return true
+  local c = M.basicUpCost(k); if (sv.gold or 0) < c then return false, "Not enough gold" end
+  sv.gold -= c; k.lvl = lvl + 1; return true
+end
+-- 평타 세트: 레벨에 도달한 평타를 준다. 새로 받은 것의 이름 목록을 돌려준다
+function M.grantBasics(sv)
+  local got = {}; local have = {}; for _, k in ipairs(sv.skills or {}) do have[k.id] = true end
+  for _, b in ipairs(Skills.BASIC or {}) do
+    if (sv.level or 1) >= b[2] and not have[b[1]] and SKILL_BY[b[1]] then
+      sv.skills[#sv.skills + 1] = { uid = sv.nextUid, id = b[1], rarity = M.skillTier(b[1]), lvl = 1 }; sv.nextUid += 1; have[b[1]] = true; got[#got + 1] = SKILL_BY[b[1]].name
+    end
+  end
+  return got
 end
 -- 장착: slotIdx 는 1~sv.slots. 이미 다른 칸에 있으면 그 칸을 비운다
 function M.equipSkill(sv, slotIdx, uid, rule)
@@ -83,7 +96,7 @@ function M.skillList(sv)
   for _, k in ipairs(sv.skills) do
     local d = SKILL_BY[k.id]; local slot, rule = 0, nil
     for i, l in ipairs(sv.loadout) do if l and l.uid == k.uid then slot = i; rule = l.rule end end
-    rows[#rows + 1] = { uid = k.uid, id = k.id, rune = k.rune, rule = rule, name = d.name, lvl = k.lvl or 1, rarity = k.rarity or 0, slot = slot, passive = sv.passive == k.uid, honeCost = nil, maxLv = M.SKILL_MAX_LV, dtype = d.dtype, desc = d.desc, kind = d.kind }
+    rows[#rows + 1] = { uid = k.uid, id = k.id, rune = k.rune, rule = rule, name = d.name, lvl = k.lvl or 1, rarity = k.rarity or 0, slot = slot, passive = sv.passive == k.uid, honeCost = nil, upCost = (d.slot == "basic") and M.basicUpCost(k) or nil, maxLv = M.SKILL_MAX_LV, dtype = d.dtype, desc = d.desc, kind = d.kind }
   end
   return rows
 end

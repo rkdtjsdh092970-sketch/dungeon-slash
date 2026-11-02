@@ -108,6 +108,7 @@ function M.pickStart(sv, cls)
   sv.skills = {}; sv.loadout = { false, false, false, false }; sv.slots = math.max(sv.slots or 4, 4)
   for i, id in ipairs(K.skills) do local k = { uid = sv.nextUid, id = id, rarity = 0, lvl = 1 }; sv.nextUid += 1; sv.skills[i] = k; sv.loadout[i] = { uid = k.uid, rule = "front" } end
   sv.skVer = 2   -- 아르카나 등급 고정 이후 세이브
+  Econ.grantBasics(sv)   -- 1레벨 평타 (일격 · 불씨 탄; 스타터에 있는 것은 그대로)
   sv.arcana = (sv.arcana or 0) + M.START_ARCANA; sv.startClass = cls; sv.needStart = false; sv.tut = 0   -- 튜토리얼 진행 (새 계정만, 0 → 끝나면 99)
   return true
 end
@@ -465,6 +466,7 @@ function M.fight(sv, kind, n, seed)
     if kind == "stage" or kind == "rift" then
       local first = res.first == true; local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
       res.exp = winExp(sv, kind, n, first, boss); local ups = grantExp(sv, res.exp); if ups > 0 then res.levelUps = ups end
+      if ups > 0 then local nb = Econ.grantBasics(sv); if #nb > 0 then res.newBasics = nb end end   -- 레벨이 올라 새 평타
       res.lv, res.expNow, res.expNeed = sv.level, floor(sv.exp or 0), M.expNeed(sv.level)   -- 결과 창 경험치 막대
     end
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end

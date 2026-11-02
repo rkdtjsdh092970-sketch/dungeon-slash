@@ -669,7 +669,10 @@ function M.skills()
       end
       if #parts > 0 then pw.Text = "Power if equipped:  " .. table.concat(parts, "   "); pw:SetAttribute("NoTr", true); pw.TextColor3 = Color3.fromRGB(230, 220, 170) end
     end)
-    if k.slot == 0 then M.btn(ab, "Dismantle", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "Salvaged · gained Arcana Shards" end end).LayoutOrder = 20 end
+    if isBasic and k.upCost and (k.lvl or 1) < (k.maxLv or 20) then   -- 평타는 골드로 강화
+      M.btn(ab, string.format("Upgrade %sG", n(k.upCost)), UDim2.new(), M.BTN.gold, function() res(C.rpc:InvokeServer("levelup", k.uid)) end).LayoutOrder = 0
+    end
+    if k.slot == 0 and not isBasic then M.btn(ab, "Dismantle", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "Salvaged · gained Arcana Shards" end end).LayoutOrder = 20 end
     if k.slot > 0 and d.slot ~= "passive" then   -- 대상 규칙: 누를 때마다 다음 규칙
       local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
       local RULE_NAME = { front = "Front Row", auto = "Auto", boss = "Boss First", ranged = "Ranged First", elite = "Elite First", normal = "Normal First" }

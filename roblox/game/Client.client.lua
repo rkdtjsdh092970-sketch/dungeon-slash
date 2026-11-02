@@ -744,6 +744,7 @@ showResultPanel = function(x, spec)
     end
   end
   if x.levelUps then chip(nil, "Level +" .. x.levelUps, Color3.fromRGB(150, 230, 255)) end
+  for _, nb in ipairs(x.newBasics or {}) do chip(nil, string.format("New basic attack: %s", tostring(nb)), Color3.fromRGB(255, 225, 150)) end
   if (x.gold or 0) > 0 then chip("i_gold", "Gold +" .. n(x.gold), Color3.fromRGB(255, 215, 110)) end
   if type(x.arcana) == "number" and x.arcana > 0 then chip("i_arcana", "Arcana Shards +" .. x.arcana, Color3.fromRGB(240, 170, 255)) end
   if type(x.ore) == "number" and x.ore > 0 then chip("i_ore", "Upgrade Stone +" .. x.ore, Color3.fromRGB(170, 210, 255)) end

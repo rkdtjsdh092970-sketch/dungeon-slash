@@ -46,13 +46,22 @@ M.LIST = {
   -- ── 마법 6: 체인 라이트닝 ──
   S{ id = "arcchain", name = "Arc Chain", evo = "chain", art = "chain", tier = 1, slot = "active", kind = "chain", cd = 5.5, mult = 3, jumps = 7, decay = 0.9, range = 6, unlock = 4, dtype = "mag", elem = "light", mana = 18, lifesteal = 0.03, icon = "bolt", sfx = "zap", color = "#9ad8ff", desc = "Lightning arcs between enemies 7 times" },
   S{ id = "stormspear", name = "Thunder Spear", evo = "chain", art = "chain", tier = 2, slot = "active", kind = "pierce", cd = 7, mult = 3.6, range = 7, unlock = 6, dtype = "mag", elem = "light", mana = 22, shock = 0.4, icon = "spear", sfx = "zap", color = "#fff08a", desc = "A lightning spear pierces a row and shocks enemies" },
+  -- ── 마법 평타 상위 (평타 세트의 전설 · 신화 자리) ──
+  S{ id = "arcbarrage", name = "Arcane Barrage", art = "voidbolt", tier = 2, slot = "basic", kind = "single", cd = 0.6, mult = 0.95, range = 5, unlock = 6, dtype = "mag", elem = "void", mana = 0, ignoreAdd = 0.15, icon = "orb", sfx = "zap", color = "#c58bff", desc = "A rapid stream of arcane bolts. Ignores resistance (15%)" },
+  S{ id = "cometbolt", name = "Comet Bolt", art = "ember", tier = 3, slot = "basic", kind = "multi", cd = 0.9, mult = 1.55, side = 0.8, range = 5, unlock = 11, dtype = "mag", elem = "fire", mana = 0, ignite = 0.35, bonus = { boss = 0.3 }, icon = "flame", sfx = "boom", color = "#ffb050", desc = "A basic attack that drops a tiny comet on a 3x3 area. Chance to Ignite, Bosses +30%" },
 }
--- 소환에 나오는 아르카나와 등급 (여기에 없는 아르카나는 보스 · 레이드에서만 얻는다)
+-- 소환에 나오는 아르카나와 등급 (평타는 소환에 없다 — 아래 BASIC 표대로 레벨이 오르면 받는다. 여기에 없는 아르카나는 보스 · 레이드에서만)
+-- 일반 14 · 희귀 13 · 전설 12 · 신화 9 · 사탄 5 (위로 갈수록 적다)
 M.GACHA = {}
-for _, id in ipairs({ "strike", "rapid", "crush", "spark", "smash", "bomb", "lance", "chain", "snipe", "firewall", "sweep", "cry", "rend", "volley", "venom", "iceshard", "shuriken", "p_steel", "ember", "rip", "frostbolt", "voidbolt" }) do M.GACHA[id] = 0 end
-for _, id in ipairs({ "execute", "vamp", "heal", "whirl", "trap", "blizzard" }) do M.GACHA[id] = 1 end
-for _, id in ipairs({ "meteor", "spirit" }) do M.GACHA[id] = 2 end
+for _, id in ipairs({ "smash", "bomb", "lance", "chain", "snipe", "firewall", "sweep", "cry", "rend", "volley", "iceshard", "shuriken", "p_steel", "heal" }) do M.GACHA[id] = 0 end
+for _, id in ipairs({ "execute", "vamp", "whirl", "trap", "blizzard", "spirit" }) do M.GACHA[id] = 1 end
+for _, id in ipairs({ "meteor" }) do M.GACHA[id] = 2 end
 for _, id in ipairs({ "solarflare", "glacierfall", "titanfist", "legion" }) do M.GACHA[id] = 3 end
 for _, id in ipairs({ "skysword", "starfall", "dragonbreath", "angelfall", "verdict" }) do M.GACHA[id] = 4 end
-for _, d in ipairs(M.LIST) do M.GACHA[d.id] = d.tier end
+for _, d in ipairs(M.LIST) do if d.slot ~= "basic" then M.GACHA[d.id] = d.tier end end
+-- 평타 세트: 이 레벨이 되면 받는다 (물리 · 마법 모두). 평타 레벨은 골드로 올린다
+M.BASIC = {
+  { "strike", 1 }, { "rapid", 3 }, { "rip", 6 }, { "crush", 10 }, { "venom", 14 }, { "twinfang", 20 }, { "galeshot", 28 }, { "bloodclaw", 36 }, { "skycleave", 45 }, { "heavensplit", 75 },
+  { "ember", 1 }, { "frostbolt", 3 }, { "spark", 6 }, { "voidbolt", 10 }, { "fireball", 20 }, { "voltlash", 28 }, { "arcbarrage", 45 }, { "cometbolt", 75 },
+}
 return M

@@ -1622,3 +1622,11 @@ Arcana — goes in slots 2–4	아르카나 — 2~4번 칸에 넣습니다
 BASIC ATTACK	평타
 Slot 1 is for basic attacks only	1번 칸은 평타 전용입니다
 Basic attacks go in slot 1	평타는 1번 칸에 넣습니다
+Arcane Barrage	비전 연사
+Comet Bolt	혜성탄
+A rapid stream of arcane bolts. Ignores resistance (15%)	비전 탄을 빠르게 연달아 쏜다. 저항 15% 무시
+A basic attack that drops a tiny comet on a 3x3 area. Chance to Ignite, Bosses +30%	3x3에 작은 혜성을 떨어뜨리는 평타. 일정 확률로 점화, 보스에게 +30%
+New basic attack: %s	새 평타: %s
+Upgrade %sG	강화 %sG
+Level up by summoning the same Arcana again	같은 아르카나를 다시 소환하면 레벨이 오릅니다
+Not enough gold	골드가 부족합니다
