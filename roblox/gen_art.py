@@ -45,6 +45,7 @@ ART = [
     # 지도 아이콘 · 패시브 아이콘 · 무기 종류 · 마법사
     *[('mi_' + os.path.splitext(f)[0], 'mapicon/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'mapicon')))],
     *[('p_' + os.path.splitext(f)[0], 'passive/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'passive')))],
+    *[('card_s_' + os.path.splitext(f)[0], 'cards/skill/' + f, (160, 240)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'cards', 'skill')))],   # 스킬 타로 카드 그림
     ('i_staff', 'icons/staff.png', (96, 96)), ('mage', 'hero/mage.png', (256, 256)),
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]

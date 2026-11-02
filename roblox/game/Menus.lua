@@ -436,6 +436,8 @@ local skSel
 local function skColor(d) return d and (ELEM[d.elem or ""] or hex(d.color)) or M.RAR[1] end
 local ELEM_EMOJI = { fire = "🔥", cold = "❄", light = "⚡", void = "🌀" }
 local function skIcon(d) if not d then return "?" end; return ELEM_EMOJI[d.elem or ""] or (d.slot == "basic" and "👊" or "⚔") end
+local function skArt(id) local k = "card_s_" .. tostring(id); return C.Sprites.art(k) and k or nil end   -- 스킬 타로 카드 그림
+M.skArt = skArt
 function M.skStyle(id) local d = SK_BY[id]; return skColor(d), skIcon(d), d end
 function M.skills()
   C.clear()
@@ -452,7 +454,7 @@ function M.skills()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i = 1, slots do
     local k = inSlot[i]; local d = k and SK_BY[k.id]
-    local t0 = M.tile(row, 86, { order = i, tip = k and { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } } or nil, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), emoji = k and skIcon(d) or tostring(i), dim = not k,
+    local t0 = M.tile(row, 86, { order = i, tip = k and { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } } or nil, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), art = k and skArt(k.id) or nil, emoji = k and skIcon(d) or tostring(i), dim = not k,
       label = k and k.name or "빈 칸", tl = k and ("Lv" .. k.lvl) or nil, selected = k and skSel == k.uid, click = function() if k then skSel = k.uid; M.skills() end end })
     M.drop(t0, function(pl)   -- 보유 스킬을 장착 칸에 놓으면 그 칸에 장착 (다른 칸 스킬을 놓으면 자리 바꿈)
       if pl.kind ~= "skill" then return end
@@ -466,7 +468,7 @@ function M.skills()
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
   for i, k in ipairs(rows) do
     local d = SK_BY[k.id]
-    local t1 = M.tile(g, 76, { order = i, tip = { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } }, color = skColor(d), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
+    local t1 = M.tile(g, 76, { order = i, tip = { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } }, color = skColor(d), art = skArt(k.id), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
     M.drag(t1, { kind = "skill", uid = k.uid })
   end
   -- 오른쪽: 상세
@@ -1110,9 +1112,11 @@ local function revealResults(res)
       local c = mk("Frame", { BackgroundColor3 = Color3.fromRGB(20, 15, 28), LayoutOrder = i, ZIndex = 62 }, g); corner(c, 6)
       local col = M.SK_RCOL[r.rarity + 1]
       local _, icon = M.skStyle(r.id)
-      mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.15, 0, 0.14, 0), Size = UDim2.new(0.7, 0, 0.4, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = col, ZIndex = 63 }, c)
+      local ca = C.Sprites.art("card_s_" .. tostring(r.id))
+      if ca then mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ZIndex = 63 }, c)
+      else mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.15, 0, 0.14, 0), Size = UDim2.new(0.7, 0, 0.4, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = col, ZIndex = 63 }, c) end
       if not img(c, "card_f" .. r.rarity, { Size = UDim2.new(1, 0, 1, 0), ZIndex = 64 }) then stroke(c, col, 2) end
-      local nm = txt(c, r.name, 12, UDim2.new(0, 4, 0.6, 0), UDim2.new(1, -8, 0, 30), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 65
+      local nm = txt(c, r.name, 12, UDim2.new(0, 4, 0.6, 0), UDim2.new(1, -8, 0, 30), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 65; mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
       local rr = txt(c, r.dup and string.format("연마석 +%d", r.dup) or (M.SK_RAR[r.rarity + 1] or ""), 11, UDim2.new(0, 4, 1, -22), UDim2.new(1, -8, 0, 16), r.dup and Color3.fromRGB(150, 230, 170) or col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 65
     end
     phase = "done"
@@ -1148,9 +1152,14 @@ local function revealResults(res)
     local col = M.SK_RCOL[r.rarity + 1]; local scol, icon = M.skStyle(r.id)
     local face = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 26), ZIndex = 63 }, card); corner(face, 12)
     mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.6), Color3.fromRGB(14, 10, 20)), Rotation = 90 }, face)
-    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.18, 0, 0.14, 0), Size = UDim2.new(0.64, 0, 0.42, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol, ZIndex = 64 }, face)
+    local ca = C.Sprites.art("card_s_" .. tostring(r.id))
+    if ca then
+      mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ZIndex = 64 }, face)
+      local band = mk("Frame", { Position = UDim2.new(0.07, 0, 0.58, 0), Size = UDim2.new(0.86, 0, 0.37, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 64 }, face)
+      mk("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.35, 0.35), NumberSequenceKeypoint.new(1, 0.15) }) }, band)
+    else mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.18, 0, 0.14, 0), Size = UDim2.new(0.64, 0, 0.42, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol, ZIndex = 64 }, face) end
     if not img(card, "card_f" .. r.rarity, { Size = UDim2.new(1, 0, 1, 0), ZIndex = 65 }) then stroke(face, col, 4) end
-    local nm = txt(card, r.name, 24, UDim2.new(0, 10, 0.62, 0), UDim2.new(1, -20, 0, 34), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 66
+    local nm = txt(card, r.name, 24, UDim2.new(0, 10, 0.62, 0), UDim2.new(1, -20, 0, 34), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 66; mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, nm)
     local rr = txt(card, M.SK_RAR[r.rarity + 1] or "", 20, UDim2.new(0, 10, 0.74, 0), UDim2.new(1, -20, 0, 26), col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 66
     local tg = txt(card, r.dup and string.format("연마석 +%d", r.dup) or "NEW", 15, UDim2.new(0, 10, 0.86, 0), UDim2.new(1, -20, 0, 20), r.dup and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120), M.FONT, Enum.TextXAlignment.Center); tg.ZIndex = 66
     if not r.dup then tg:SetAttribute("NoTr", true) end
@@ -1232,7 +1241,7 @@ function M.gachalist()
       local lines = { d.desc or "" }
       if locked then lines[#lines + 1] = string.format("레벨 %d부터 소환에 나옵니다", (e.unlock - 1) * 10) end
       if e.own then lines[#lines + 1] = string.format("보유: %s", M.SK_RAR[e.own + 1] or "") end
-      M.tile(g, 84, { order = i, tip = { title = d.name, color = skColor(d), lines = lines }, color = e.own and M.SK_RCOL[e.own + 1] or skColor(d), emoji = skIcon(d), label = d.name, dim = locked,
+      M.tile(g, 84, { order = i, tip = { title = d.name, color = skColor(d), lines = lines }, color = e.own and M.SK_RCOL[e.own + 1] or skColor(d), art = skArt(e.id), emoji = skIcon(d), label = d.name, dim = locked,
         tl = locked and "🔒" or nil, br = e.own and M.SK_RAR[e.own + 1] or nil })
     end
   end

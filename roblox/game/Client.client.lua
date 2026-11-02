@@ -149,7 +149,7 @@ do
   -- 초상화 칸 + 아래 Lv 띠
   local pf = mk("Frame", { Position = UDim2.new(0, 8, 0, 8), Size = UDim2.new(0, 76, 0, 76), BackgroundColor3 = CELL, ClipsDescendants = true, ZIndex = 12 }, statLbl); corner(pf, 6); stroke(pf, EDGE, 1.5)
   local wa = Sprites.art("warrior")
-  if wa then statFace = mk("ImageLabel", { Size = UDim2.new(1.5, 0, 1.5, 0), Position = UDim2.new(-0.22, 0, -0.06, 0), BackgroundTransparency = 1, ImageContent = wa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, pf) end
+  if wa then statFace = mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = wa.content, ImageRectOffset = Vector2.new(wa.w * 0.3, wa.h * 0.14), ImageRectSize = Vector2.new(wa.w * 0.5, wa.h * 0.5), ScaleType = Enum.ScaleType.Stretch, ZIndex = 13 }, pf) end
   statLv = mk("TextLabel", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 20), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.15, Text = "", Font = Theme.FONT, TextSize = 14, TextColor3 = Color3.fromRGB(255, 214, 110), ZIndex = 14 }, pf)
   -- 능력치 5칸: 칸마다 테두리, 이름은 위 가운데, 숫자는 남은 공간 가운데 (길면 자동으로 줄어듦)
   local STATS = { { "hp", "체력", Color3.fromRGB(235, 90, 80) }, { "atk", "공격력", Color3.fromRGB(240, 170, 80) }, { "mag", "주문력", Color3.fromRGB(150, 140, 255) }, { "def", "방어력", Color3.fromRGB(140, 190, 230) }, { "crit", "치명", Color3.fromRGB(255, 220, 110) } }
@@ -1007,7 +1007,7 @@ loadStep("모험 기록을 불러오는 중...", 0.3)
 for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); Lang.set(r.summary.lang or "en"); for k, v in pairs(r.summary.set or {}) do if OPT[k] ~= nil then OPT[k] = v end end; calcK(); applyOpt(); break end; task.wait(0.5) end
 do
   local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))
-  local keys = {}; if okArt then for k in pairs(ARTM.ART) do keys[#keys + 1] = k end end; table.sort(keys)
+  local keys = {}; if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" and k:sub(1, 2) ~= "p_" then keys[#keys + 1] = k end end end; table.sort(keys)   -- 스킬 카드 · 패시브 아이콘은 처음 볼 때 받는다
   for i, k in ipairs(keys) do loadStep(string.format("그림을 불러오는 중... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k) end
 end
 pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
