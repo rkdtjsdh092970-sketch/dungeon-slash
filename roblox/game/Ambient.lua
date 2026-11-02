@@ -55,7 +55,7 @@ function M.attach(parent, o)
   end
   -- 창문 · 랜턴 불빛 (은은하게 깜빡)
   local lights = {}
-  for _, l in ipairs(o.lights or {}) do local g = glow(l[1], l[2], l[3], LIGHT_COLOR); if g then lights[#lights + 1] = { g = g, ph = math.random() * 6.28 } end end
+  for _, l in ipairs(o.lights or {}) do local g = glow(l[1], l[2], l[3], l[4] or LIGHT_COLOR); if g then lights[#lights + 1] = { g = g, ph = math.random() * 6.28, slow = l[4] ~= nil } end end   -- l[4] = 색 (지도의 용암 · 균열 빛: 느리게 숨쉬듯)
   -- 불 (화로 · 횃불): 빛무리 + 타오르는 불꽃 + 튀는 불씨
   local fires, sparks = {}, {}
   for _, f in ipairs(o.fires or {}) do
@@ -100,7 +100,7 @@ function M.attach(parent, o)
       c.f.Position = UDim2.new(c.x, 0, c.y, 0); c.f.Size = UDim2.new(c.f.Size.X.Scale, 0, 0, c.f.AbsoluteSize.X * 160 / 512)
     end
     for _, g in ipairs(fogs) do g.f.Position = UDim2.new(-0.5 + math.sin(t * g.sp * 5) * 0.45, 0, g.y + math.sin(t * 0.3) * 0.01, 0) end
-    for _, l in ipairs(lights) do l.g.ImageTransparency = 0.68 + 0.1 * math.sin(t * 2.3 + l.ph) + 0.05 * math.sin(t * 7.1 + l.ph) end
+    for _, l in ipairs(lights) do l.g.ImageTransparency = l.slow and (0.62 + 0.16 * math.sin(t * 0.9 + l.ph)) or (0.68 + 0.1 * math.sin(t * 2.3 + l.ph) + 0.05 * math.sin(t * 7.1 + l.ph)) end
     for _, f in ipairs(fires) do
       if f.fl then local i = math.floor(t * f.sp + f.ph) % 8; f.fl.ImageRectOffset = Vector2.new(i * f.fl.ImageRectSize.X, 0) end
       if f.g then f.g.ImageTransparency = 0.42 + 0.1 * math.sin(t * 8.3 + f.ph) * math.sin(t * 3.7 + f.ph * 2) end

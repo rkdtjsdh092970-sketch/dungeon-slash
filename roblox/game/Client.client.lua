@@ -1073,6 +1073,11 @@ buildMap = function()
   local world = Sprites.art("bg_world")
   if world then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = world.content, ScaleType = Enum.ScaleType.Stretch, ZIndex = 1 }, mapLayer)
   else mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(70, 110, 70), BorderSizePixel = 0, ZIndex = 1 }, mapLayer) end
+  -- 지도 생동감: 균열 협곡의 보랏빛 · 용암 빛이 숨쉬듯 밝아지고, 불씨가 피어오르고, 구름 · 까마귀가 지나간다
+  local RIFTC, LAVAC = Color3.fromRGB(200, 60, 255), Color3.fromRGB(255, 90, 30)
+  Ambient.attach(mapLayer, { z = 2, clouds = { 0.0, 0.18 }, birds = true, embers = 60,
+    lights = { { 0.50, 0.40, 0.10, RIFTC }, { 0.47, 0.70, 0.09, RIFTC }, { 0.44, 0.20, 0.07, RIFTC }, { 0.56, 0.85, 0.07, RIFTC },
+      { 0.80, 0.30, 0.07, LAVAC }, { 0.92, 0.55, 0.07, LAVAC }, { 0.72, 0.62, 0.06, LAVAC }, { 0.95, 0.12, 0.08, LAVAC }, { 0.66, 0.08, 0.06, LAVAC } } })
   local states = {}
   for _, t in ipairs(NODES) do states[t.id] = nodeState(t) end
   for _, e in ipairs(EDGES) do   -- 길
@@ -1102,6 +1107,10 @@ buildMap = function()
         end
       end
       if t == target then TweenService:Create(ring, TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8 }):Play() end
+      if st ~= "locked" then local ga = Sprites.art("fx_glow")   -- 열린 지점 뒤 빛 (숨쉬기)
+        if ga then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, t.x * ms, 0, t.y * ms), Size = UDim2.new(0, sz * 2.4, 0, sz * 2.4), BackgroundTransparency = 1, ImageContent = ga.content, ImageColor3 = t.col, ImageTransparency = 0.55, ZIndex = 4 }, mapLayer)
+          TweenService:Create(g, TweenInfo.new(1.4 + math.random() * 0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.85, Size = UDim2.new(0, sz * 2.0, 0, sz * 2.0) }):Play() end
+      end
       if st == "done" then local c = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -4, 0, 4), Size = UDim2.new(0, 20 * K, 0, 20 * K), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBlack, TextSize = math.floor(14 * K), ZIndex = 6 }, b); corner(c) end
       local nm = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, t.x * ms, 0, t.y * ms + sz / 2 + 2), Size = UDim2.new(0, 160 * K, 0, 20 * K), BackgroundTransparency = 1, Text = t.name, TextColor3 = st == "locked" and Color3.fromRGB(200, 195, 210) or Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = math.floor(14 * K), ZIndex = 5 }, mapLayer)
       mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(20, 10, 30) }, nm)
