@@ -90,10 +90,10 @@ async function openAuction() {
       const row = (window._ahRows || []).find((x) => x.id === id); if (!(row && isSkillItem(row.item)) && save.inv.length >= invMax(save)) return toast("가방이 가득 찼습니다", "bad");
       const r = await api("/api/ah/buy", { id }); if (r.err) { toast(r.err, "bad"); snd("error"); return rerender(); }
       save.gold -= r.price; r.item.uid = save.nextUid++; delete r.item.lock; if (!isSkillItem(r.item)) clampItem(r.item);
-      if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else { save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1; }
+      if (isSkillItem(r.item)) { delete r.item.slot; receiveSkill(save, r.item); } else { save.inv.push(r.item); if (r.item.uniq) save.uniq[r.item.uniq] = (save.uniq[r.item.uniq] || 0) + 1; }
       snd("coin"); toast(`${isSkillItem(r.item) || r.item.id ? SKILLS.find((x) => x.id === r.item.id).name : itemName(r.item)} 구매 완료 (−${fmtN(r.price)}G)`, "ok"); saveGame(); refreshTop(); srvQueue(); rerender();
     },
-    ahcancel: async (el) => { const r = await api("/api/ah/cancel", { id: +el.dataset.id }); if (r.err) { toast(r.err, "bad"); return rerender(); } r.item.uid = save.nextUid++; if (isSkillItem(r.item)) { delete r.item.slot; save.skills.push(r.item); } else save.inv.push(r.item); toast("물품을 회수했습니다", "ok"); saveGame(); rerender(); },
+    ahcancel: async (el) => { const r = await api("/api/ah/cancel", { id: +el.dataset.id }); if (r.err) { toast(r.err, "bad"); return rerender(); } r.item.uid = save.nextUid++; if (isSkillItem(r.item)) { delete r.item.slot; receiveSkill(save, r.item); } else save.inv.push(r.item); toast("물품을 회수했습니다", "ok"); saveGame(); rerender(); },
     ahclaim: async () => {
       const r = await api("/api/claim", {}); if (r.err) return toast(r.err, "bad"); save.gold += r.gold; saveGame(); refreshTop(); snd("coin");
       Modal.open(`<h2>판매 완료</h2><div class="dim center">판매가 완료되었습니다. 수수료 5%를 뺀 금액이 입금되었습니다.</div><div class="qlist" style="height:220px">${r.sold.map((x) => ahRowHtml({ item: x.item, price: x.price }, `<small class="dim">판매 완료</small>`)).join("")}</div><div class="center pad">입금 합계 <b style="color:#ffe08a">${fmtN(r.gold)}G</b></div><div class="pbtns"><button class="btn pri" data-a="ok2">확인</button></div>`, { cls: "sm", on: { ok2: () => rerender() } });
@@ -285,7 +285,7 @@ function openStash() {
       if (isI) { const it = sv.inv.find((x) => x.uid === u); if (!it) return; if (EQ_SLOTS.some((k) => sv.equipped[k] === it) || (sv.presets || []).some((p) => p && Object.values(p.equip).includes(u))) return toast("착용 중이거나 프리셋에 포함된 장비는 넣을 수 없습니다", "bad"); sv.inv = sv.inv.filter((x) => x !== it); S.items.push(it); } else { const k = sv.skills.find((x) => x.uid === u); if (!k || stashSkillBusy(sv, k)) return; sv.skills = sv.skills.filter((x) => x !== k); S.skills.push(k); }
       snd("click"); done(); },
     wd: (el) => { const u = +el.dataset.u;
-      if (isI) { if (sv.inv.length >= invMax(sv)) return toast("가방이 가득 찼습니다", "bad"); const it = S.items.find((x) => x.uid === u); if (!it) return; S.items = S.items.filter((x) => x !== it); sv.inv.push(it); } else { const k = S.skills.find((x) => x.uid === u); if (!k) return; S.skills = S.skills.filter((x) => x !== k); sv.skills.push(k); }
+      if (isI) { if (sv.inv.length >= invMax(sv)) return toast("가방이 가득 찼습니다", "bad"); const it = S.items.find((x) => x.uid === u); if (!it) return; S.items = S.items.filter((x) => x !== it); sv.inv.push(it); } else { const k = S.skills.find((x) => x.uid === u); if (!k) return; S.skills = S.skills.filter((x) => x !== k); receiveSkill(sv, k); }
       snd("click"); done(); },
   } });
 }

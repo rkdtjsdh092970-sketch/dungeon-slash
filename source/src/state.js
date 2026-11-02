@@ -111,7 +111,7 @@ function clampItem(it) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; unpackStones(sv); dedupeLoadout(sv);
+function clampAll(sv) { let n = 0; unpackStones(sv); migrateSkillTiers(sv); dedupeLoadout(sv);
   for (const st of sv.stones || []) if (st.rev && REMOVED_CH[st.rev.k]) st.rev = { k: "dotDmg", v: 0.16 };   // 상태이상 확률 돌 → 지속 피해 돌
   for (const k of sv.skills || []) if (k.rune === "bleed" || k.rune === "venom" || k.rune === "flame") k.rune = "power";   // 사라진 룬 → 강타의 룬
   for (const r of sv.runes || []) if (r.id === "bleed" || r.id === "venom" || r.id === "flame") r.id = "power";
@@ -128,10 +128,52 @@ function diceItem(sv, it) {
 const diceChance = (kind, node) => ({ titan: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], storm: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], frost: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], poison: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], rift: 0.006 + 0.0004 * (node.tier || 1), hell: 0.012, endless: 0.01 + 0.002 * (node.waves || 0), trial: 0.004, hive: [0.02, 0.03, 0.06, 0.12][(node.vsel || 1) - 1], void: [0.02, 0.04, 0.07, 0.15][(node.vsel || 1) - 1] }[kind] || 0);
 // 전설이 나왔을 때만 아주 낮은 확률로 이터널 → 소버린 → 엔젤릭 순으로 한 단계씩 더 올라간다 (chance는 첫 단계 확률, 이후 단계마다 ×0.4)
 function skillTierUp(r, chance) { let c = chance || 0; while (r >= 2 && r < SKILL_RARITY.length - 1 && Math.random() < c) { r++; c *= 0.4; } return r; }
-function genSkill(sv, id, rarity, tierUp) {
-  const d0 = SKILLS.find((x) => x.id === id);
-  if (d0 && d0.slot === "passive") return { uid: sv.nextUid++, id, rarity: d0.pt };   // 패시브 스킬은 이름마다 등급이 정해져 있다
-  return { uid: sv.nextUid++, id, rarity: tierUp ? skillTierUp(rarity, tierUp) : rarity };
+// 4.52 (로블록스판과 같게): 스킬 등급은 스킬마다 고정. 같은 스킬을 또 얻으면 레벨이 오른다 (다음 레벨까지 현재 레벨만큼 장수)
+const GACHA_TIER = {};
+for (const id of ["smash", "bomb", "lance", "chain", "snipe", "firewall", "sweep", "cry", "rend", "volley", "iceshard", "shuriken", "p_steel", "heal"]) GACHA_TIER[id] = 0;
+for (const id of ["execute", "vamp", "whirl", "trap", "blizzard", "spirit"]) GACHA_TIER[id] = 1;
+GACHA_TIER.meteor = 2;
+for (const id of ["solarflare", "glacierfall", "titanfist", "legion"]) GACHA_TIER[id] = 3;
+for (const id of ["skysword", "starfall", "dragonbreath", "angelfall", "verdict"]) GACHA_TIER[id] = 4;
+function skillTier(d) {
+  if (typeof d === "string") d = SKILLS.find((x) => x.id === d); if (!d) return 0;
+  if (d.tier != null) return d.tier; if (GACHA_TIER[d.id] != null) return GACHA_TIER[d.id];
+  if (d.slot === "passive") return d.pt || 0;
+  const u = d.unlock || 1; return d.mythOnly || u >= 12 ? 4 : d.voidOnly || u >= 11 ? 3 : u >= 6 ? 2 : u >= 4 ? 1 : 0;
+}
+function genSkill(sv, id) { return { uid: sv.nextUid++, id, rarity: skillTier(id) }; }
+// 스킬 얻기: 처음이면 새로, 이미 있으면 레벨 진행 (최대 레벨이면 연마석)
+function grantSkill(sv, id) {
+  const r = skillTier(id), res = { id, rarity: r }, have = sv.skills.find((k) => k.id === id);
+  if (have) {
+    have.rarity = r;
+    if ((have.lvl || 1) < SKILL_MAX_LV) { have.dup = (have.dup || 0) + 1; if (have.dup >= (have.lvl || 1)) { have.dup = 0; have.lvl = (have.lvl || 1) + 1; res.lvlUp = have.lvl; } else res.dupProg = [have.dup, have.lvl || 1]; }
+    else { const h = [1, 3, 8, 20, 45, 100][r] || 1; sv.hone += h; res.dupHone = h; }
+    res.uid = have.uid;
+  } else { const k = genSkill(sv, id); sv.skills.push(k); res.new = true; res.uid = k.uid; }
+  return res;
+}
+// 경매 · 창고에서 스킬 카드를 받을 때: 없으면 그대로, 이미 있으면 그 카드 레벨만큼 장수로 합친다 (룬은 돌려줌)
+function receiveSkill(sv, k) {
+  if (!sv.skills.some((x) => x.id === k.id)) { k.rarity = skillTier(k.id); sv.skills.push(k); return; }
+  for (let i = 0; i < (k.lvl || 1); i++) grantSkill(sv, k.id); if (k.rune) sv.runes.push({ uid: sv.nextUid++, id: k.rune });
+}
+// 예전 세이브: 같은 스킬 여러 장(등급만 다른)을 한 장으로 합친다 (남는 장수만큼 레벨 +, 룬은 돌려줌, 칸 · 프리셋은 남는 장으로)
+function migrateSkillTiers(sv) {
+  if ((sv.skVer || 1) >= 2 || !sv.skills) return;
+  const inLo = new Set((sv.loadout || []).filter(Boolean).map((l) => l.uid)), keep = {}, remap = {}, out = [];
+  for (const k of sv.skills) {
+    const K = keep[k.id]; if (!K) { keep[k.id] = k; out.push(k); continue; }
+    let main = K, other = k; if (inLo.has(k.uid) && !inLo.has(K.uid)) { main = k; other = K; keep[k.id] = k; out[out.indexOf(K)] = k; }
+    main.lvl = Math.min(SKILL_MAX_LV, Math.max(main.lvl || 1, other.lvl || 1) + 1);
+    if (other.rune) { if (main.rune) sv.runes.push({ uid: sv.nextUid++, id: other.rune }); else main.rune = other.rune; }
+    remap[other.uid] = main.uid; if (sv.passive === other.uid) sv.passive = main.uid;
+  }
+  for (const k of out) k.rarity = skillTier(k.id);
+  sv.skills = out;
+  const fix = (lo) => { const seen = new Set(); (lo || []).forEach((l, i) => { if (!l) return; l.uid = remap[l.uid] || l.uid; if (seen.has(l.uid)) lo[i] = null; else seen.add(l.uid); }); };
+  fix(sv.loadout); for (const p of sv.presets || []) if (p) fix(p.loadout);
+  sv.skVer = 2;
 }
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
@@ -670,11 +712,11 @@ const skillAct = (sv) => Math.max(1, Math.min(8, 1 + Math.floor(sv.level / 10)))
 function shopStock(sv, now) {
   // v4.1: 상점은 일반 등급 스킬 전부를 상시 판매한다 (골라서 구매, 수량 제한 없음). 높은 등급은 졸업 후 보스 드랍
   if (!sv.shop) sv.shop = { slot: 0, bought: [] };
-  return SKILLS.filter((d) => !isSpecialSkill(d) && d.id !== "p_none").sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || a.unlock - b.unlock).map((d) => ({ id: d.id, rarity: 0, price: skillPrice(d, 0) }));
+  return SKILLS.filter((d) => !isSpecialSkill(d) && d.id !== "p_none" && skillTier(d) <= 1).sort((a, b) => (a.slot === "basic" ? 0 : 1) - (b.slot === "basic" ? 0 : 1) || skillTier(a) - skillTier(b) || a.unlock - b.unlock).map((d) => ({ id: d.id, rarity: skillTier(d), price: skillPrice(d, skillTier(d)) }));   // 4.52: 등급 고정 — 일반 · 희귀 스킬만 판매
 }
 function buySkill(sv, idx) {
   const stock = shopStock(sv), o = stock[idx]; if (!o || sv.gold < o.price) return false;
-  sv.gold -= o.price; sv.skills.push(genSkill(sv, o.id, o.rarity)); return true;
+  sv.gold -= o.price; return grantSkill(sv, o.id);
 }
 const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 function endlessInfo(sv) {

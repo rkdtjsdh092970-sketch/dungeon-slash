@@ -50,7 +50,8 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
     ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
   const tiles = res.items.slice().sort((x, y) => y.rarity - x.rarity).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
   const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");
-  const sk = res.skills.map((s) => `<div class="rs-sk">${skIcon(s.id, 3)}<div><small>새 스킬</small>${skillTitle(s)}</div></div>`).join("");
+  const skLab = (i) => { const g = res.skillRes && res.skillRes[i]; return !g || g.new ? "새 스킬" : g.lvlUp ? `레벨 업! Lv.${g.lvlUp}` : g.dupProg ? `중복 ${g.dupProg[0]} / ${g.dupProg[1]}` : `최대 레벨 · 연마석 +${g.dupHone}`; };
+  const sk = res.skills.map((s, i) => `<div class="rs-sk">${skIcon(s.id, 3)}<div><small>${skLab(i)}</small>${skillTitle(s)}</div></div>`).join("");
   const notes = res.notes.map((n) => `<div class="note">★ ${n}</div>`).join("") + res.quests.map((q) => `<div class="note">✔ 퀘스트 완료: ${q.title}</div>`).join("");
   const frac0 = Math.min(1, pre.exp / pre.need), fracN = save.level >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / expNeed(save.level));
   return `<div class="rs ${A} ${win ? "win" : "lose"}">
