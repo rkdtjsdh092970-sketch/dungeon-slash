@@ -403,7 +403,8 @@ function powerDetail(s) {
 }
 const POWER_RAW = 6;   // 방어 효과 계산에 쓰는 "실제로 맞는 평균 한 방" 배율 (스테이지 스케일·몹 겹침·정예 포함)
 let POWER_K = 0.25;   // 전투력 눈금 보정: 봇 진행(액트 클리어 시점)에서 예전 눈금과 비슷한 추천 전투력 대비 비율이 나오도록 맞춤
-function playerPower(s) {
+function playerPower(s) { return powerOfStats5(s); }   // 5.0: 로블록스판 전투력 (원전투력)
+function playerPowerV4(s) {
   const d = powerDetail(s);
   let fam = 0, tot = 0; for (const r of d.skills) { fam += r.dps * (CFG.PWR_FAM[r.key] == null ? 1 : CFG.PWR_FAM[r.key]); tot += r.dps; } fam = tot > 0 ? fam / tot : 1;   // 계열별 전투력 보정: 같은 전투력이면 같은 층을 깰 수 있게 맞춘다
   return fam * POWER_K * d.dps * d.ehp * statusPow(s) * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
@@ -639,7 +640,7 @@ function enhance(sv, it) {
 // 장착 레벨: 아이템 레벨이 높을수록 높은 캐릭터 레벨이 필요하다 (액트 진행 속도에 맞춘 표)
 const REQ_LV = [1, 20, 40, 60, 80, 100];   // v4: 아이템 T1~T5 (균열 20층마다)
 const reqLevel = (ilvl) => (ilvl <= 10 ? REQ_LV[Math.max(0, ilvl - 1)] : Math.min(CFG.LEVEL_CAP, 76 + 2 * (ilvl - 10)));
-const canEquip = (sv, it) => sv.level >= reqLevel(it.ilvl);
+const canEquip = (sv, it) => true;   // 5.0 (로블록스판과 같게): 장착 레벨 제한 없음
 const SELL_R = [1, 1.7, 3.2, 6, 9, 15];   // 등급별 판매 배율: 희귀 이상일수록 확실히 비싸다
 const itemValue = (it) => Math.max(1, Math.round(7 * gScale(it.ilvl) * SELL_R[Math.min(5, it.rarity)] * (1 + (it.enh || 0) * 0.5)));
 function dismantleYield(it, sv) { return { gold: Math.round(itemValue(it) * 0.5), ore: Math.max(1, Math.round(((it.rarity + 1) * 0.9 + (it.enh || 0) * 0.6) * (1 + (sv ? charmVal(sv, "ore") : 0)))) }; }
@@ -697,8 +698,8 @@ function autoPassives(sv) {
 }
 function botEquip(sv) {
   for (let pass = 0; pass < 2; pass++) for (const slot of EQ_SLOTS) {
-    let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best, playerPowerOld);
-    for (const it of sv.inv) if (it.slot === slotType(slot) && canEquip(sv, it)) { const p = powerWith(sv, slot, it, playerPowerOld); if (p > bp) { bp = p; best = it; } }
+    let best = sv.equipped[slot] || null, bp = powerWith(sv, slot, best);
+    for (const it of sv.inv) if (it.slot === slotType(slot) && canEquip(sv, it)) { const p = powerWith(sv, slot, it); if (p > bp) { bp = p; best = it; } }
     const cur = sv.equipped[slot] || null;
     if (best && best !== cur) { if (cur) sv.inv.push(cur); sv.inv = sv.inv.filter((x) => x !== best); sv.equipped[slot] = best; }
   }

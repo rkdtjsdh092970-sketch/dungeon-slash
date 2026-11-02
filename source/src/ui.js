@@ -174,7 +174,7 @@ function mapPanel() {
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_NEED[S - 1]; btn = save.rift.best < VOID_NEED[S - 1] ? `균열 ${VOID_NEED[S - 1]}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
-    const my = playerPower(computeStats(save)), ratio = my / rec, tag = ratio >= 1.15 ? ["여유", "#8df08d"] : ratio >= 0.8 ? ["적정", "#ffe08a"] : ratio >= 0.5 ? ["위험", "#ffa060"] : ["매우 위험", "#ff6a6a"];
+    const my = powerScore5(save), ratio = my / recRift5(n.kind === "stage" || n.kind === "boss" ? n.stage : n.need + 2), tag = ratio >= 1.15 ? ["여유", "#8df08d"] : ratio >= 0.8 ? ["적정", "#ffe08a"] : ratio >= 0.5 ? ["위험", "#ffa060"] : ["매우 위험", "#ff6a6a"];
     if (isHell(n)) h += `<div class="pline hellt">🔥 지옥 스테이지 · 난이도 = 균열 ${Math.max(1, save.rift.best)}단계 수준</div><div class="pline dim">보상 대폭 증가 · 구슬/조각 · 열쇠 · 남은 시간 ${fmtTime(worldLeft())}</div>`;
     else h += `<div class="pline">권장 레벨 ${n.level} · 난이도 <b style="color:${tag[1]}">${tag[0]}</b></div>`;
     if (n.kind === "boss") h += `<div class="pline">${BOSSES[ACTS[n.act - 1].boss].desc}</div>`;

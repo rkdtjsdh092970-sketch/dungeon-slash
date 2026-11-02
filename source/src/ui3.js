@@ -45,16 +45,16 @@ function itemDetail(it) {
   const eq = isEquipped(it), prot = isProtected(it), st = null, t = 0;
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
 
-  h += `<div class="dim">T${it.ilvl} ${slotLabel(it)}${it.sat ? ` · <b style="color:${SAT_COLOR}">사탄 등급</b>` : ""}${it.sock ? " · 소켓 " + it.sock.length : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="${canEquip(save, it) ? "dim" : "warn"}">장착 레벨 Lv.${reqLevel(it.ilvl)}${canEquip(save, it) ? "" : " (부족)"}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
+  h += `<div class="dim">T${it.ilvl} ${slotLabel(it)}${it.sat ? ` · <b style="color:${SAT_COLOR}">사탄 등급</b>` : ""}${it.sock ? " · 소켓 " + it.sock.length : ""}${eq ? " · 착용 중" : ""}${it.lock ? " · 🔒 잠금" : ""}${inPreset(it) ? " · 프리셋 포함" : ""}</div><div class="base">${baseText(it)}</div><div class="dim">판매가 ${fmtN(itemValue(it))}G · 분해 ${fmtN(dismantleYield(it).gold)}G + 강화석 ${dismantleYield(it).ore}</div>`;
 
   h += `<div class="affs">` + it.affixes.map((a, i) => `<div class="aff${IB.mode === "forge" ? " fg" : ""}">${IB.mode === "forge" ? `<span class="afft">${affText(a)}${affRangeText(it, a)}</span>` : affText(a) + affRangeText(it, a)}${IB.mode === "forge" ? (rerollLocked(it, i) ? ` <button class="btn xs" disabled title="다른 줄을 이미 재굴림해서 잠겼습니다">🔒</button>` : ` <button class="btn xs" data-a="reroll" data-i="${i}" title="${it.rrIdx == null ? "옵션 재굴림 (한 줄만 굴릴 수 있습니다 — 굴리면 다른 줄은 잠깁니다)" : "옵션 재굴림"}">↻ ${fmtN(rerollCost(it).gold)}G ${rerollCost(it).ore}석</button>`) : ""}</div>`).join("") + `</div>`;
   h += satHtml(it) + socketBlock(it);
 
-  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = p1 / p0 - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
+  if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = Math.pow(p1 / p0, 1 / PW5.FIT_G) - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
   // 장착 버튼: 전투력이 얼마나 오르는지(수치·%)와 어떤 장비를 대체하는지 함께 보여준다. 반지는 1번/2번 칸을 직접 고른다
-  const eqBtn = (k, label) => { const p0 = playerPower(computeStats(save)), p1 = powerWith(save, k, it), cur = save.equipped[k], d = p1 - p0, pc = (p1 / Math.max(1, p0) - 1) * 100;
+  const eqBtn = (k, label) => { const p0 = playerPower(computeStats(save)), p1 = powerWith(save, k, it), cur = save.equipped[k], pc = (Math.pow(p1 / Math.max(1e-9, p0), 1 / PW5.FIT_G) - 1) * 100, d = curPower() * pc / 100;
     return `<button class="btn pri" data-a="equip" data-k="${k}">${label}<br><small style="color:${d >= 0 ? "#8dff9a" : "#ff8a8a"}">전투력 ${d >= 0 ? "▲" : "▼"} ${fmtN(Math.abs(Math.round(d)))} (${d >= 0 ? "+" : "-"}${Math.abs(pc).toFixed(1)}%)</small><small class="dim"> · ${cur ? "교체: " + itemName(cur) : "빈 칸"}</small></button>`; };
   if (IB.mode === "inv") h += eq ? `<button class="btn" data-a="unequip">해제</button>` : it.slot === "ring" ? (canEquip(save, it) ? eqBtn("ring", "반지 1 장착") + eqBtn("ring2", "반지 2 장착") : `<button class="btn" disabled>Lv.${reqLevel(it.ilvl)} 필요</button>`) : (canEquip(save, it) ? eqBtn(it.slot, "장착") : `<button class="btn" disabled>Lv.${reqLevel(it.ilvl)} 필요</button>`);
   if (IB.mode === "forge") {

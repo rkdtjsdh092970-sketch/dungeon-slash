@@ -51,6 +51,7 @@ function pwDetail(s, skl, slots) {
   out.ehp = (s.maxHp * (1 + 20 * (s.regen || 0)) + msh) * mit * (1 / Math.max(CFG.TAKEN_FLOOR, 1 + s.dmgTaken)) / (1 - s.dodge);
   return out;
 }
+function powerOfStats5(s) { const d = pwDetail(s, s.skl || [], save && save.slots || 4); return PW5.K * d.dps * d.ehp * pwStatus(s) * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2); }
 function powerOf5(sv) {   // 원전투력 (봇 · 장비 비교용)
   const s = computeStats(sv), skl = (sv.loadout || []).filter(Boolean).map((l) => sv.skills.find((x) => x.uid === l.uid)).filter(Boolean).map(skillOf), d = pwDetail(s, skl, sv.slots);
   return PW5.K * d.dps * d.ehp * pwStatus(s) * (1 + 0.35 * (s.revive || 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density || 0)) * (1 + s.lifesteal * 2);
