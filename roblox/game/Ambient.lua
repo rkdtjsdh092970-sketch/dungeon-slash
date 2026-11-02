@@ -75,6 +75,17 @@ function M.attach(parent, o)
     if a then patches[#patches + 1] = { f = mk("ImageLabel", { Position = UDim2.new(p.x, 0, p.y, 0), Size = UDim2.new(p.w, 0, p.h, 0), BackgroundTransparency = 1, ImageContent = a.content,
       ImageRectSize = Vector2.new(a.w / 8, a.h), ScaleType = Enum.ScaleType.Stretch, ZIndex = z }, fx), fw = a.w / 8, ph = math.random() * 8, sp = 8 + math.random() * 3 } end
   end
+  -- 피어오르는 안개 (지도 협곡 등): o.mists = { {x0, x1, y0, y1, 색, 개수} } — 큰 빛 덩어리가 영역 안에서 천천히 오르며 옆으로 일렁이고 나타났다 사라진다
+  local mists = {}
+  for _, r in ipairs(o.mists or {}) do
+    for _ = 1, r[6] or 8 do
+      if glowArt then
+        local w = 0.10 + math.random() * 0.10
+        local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(w, 0, w * 0.55, 0), BackgroundTransparency = 1, ImageContent = glowArt.content, ImageColor3 = r[5], ImageTransparency = 1, ZIndex = z }, fx)
+        mists[#mists + 1] = { f = g, r = r, x = r[1] + math.random() * (r[2] - r[1]), y = r[3] + math.random() * (r[4] - r[3]), life = math.random(), sp = 0.05 + math.random() * 0.05, ph = math.random() * 6.28 }
+      end
+    end
+  end
   -- 떠다니는 불씨 (화면 전체)
   local embers = {}
   for i = 1, o.embers or 0 do
@@ -109,6 +120,13 @@ function M.attach(parent, o)
     for _, s in ipairs(sparks) do
       s.life += dt * s.sp; if s.life > 1 then s.life = 0; s.dx = (math.random() - 0.5) * 0.02 end
       s.f.Position = UDim2.new(s.x0 + s.dx * s.life + math.sin(t * 5 + s.x0 * 40) * 0.003, 0, s.y0 - s.h * 1.6 * s.life, 0); s.f.BackgroundTransparency = s.life
+    end
+    for _, m in ipairs(mists) do
+      m.life += dt * m.sp
+      if m.life > 1 then m.life = 0; m.x = m.r[1] + math.random() * (m.r[2] - m.r[1]); m.y = m.r[3] + math.random() * (m.r[4] - m.r[3]) end
+      local yy = m.y - m.life * 0.08   -- 천천히 피어오른다
+      m.f.Position = UDim2.new(m.x + math.sin(t * 0.35 + m.ph) * 0.02, 0, yy, 0)
+      m.f.ImageTransparency = 1 - 0.32 * math.sin(m.life * math.pi)   -- 나타났다 사라진다
     end
     for _, e in ipairs(embers) do
       e.y -= e.sp * dt; if e.y < -0.03 then e.y = 1.03; e.x = math.random() end

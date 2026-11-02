@@ -30,7 +30,7 @@ for i = 1, 48 do   -- 불씨 (네모 도트)
 end
 local loadBox = Instance.new("Frame"); loadBox.BackgroundTransparency = 1; loadBox.AnchorPoint = Vector2.new(0.5, 0.5); loadBox.Position = UDim2.new(0.5, 0, 0.5, 0); loadBox.Size = UDim2.new(0, 560, 0, 300); loadBox.Parent = loadBg
 -- 로고 그림 (오면 글자 로고를 대신한다)
-local loadLogo = Instance.new("ImageLabel"); loadLogo.BackgroundTransparency = 1; loadLogo.ImageTransparency = 1; loadLogo.ScaleType = Enum.ScaleType.Fit; loadLogo.ResampleMode = Enum.ResamplerMode.Pixelated
+local loadLogo = Instance.new("ImageLabel"); loadLogo.BackgroundTransparency = 1; loadLogo.ImageTransparency = 1; loadLogo.ScaleType = Enum.ScaleType.Fit   -- 부드럽게 늘림 (도트 확대는 움직일 때 계단처럼 떨린다)
 loadLogo.AnchorPoint = Vector2.new(0.5, 0); loadLogo.Size = UDim2.new(0, 600, 0, 225); loadLogo.Position = UDim2.new(0.5, 0, 0, -40); loadLogo.ZIndex = 6; loadLogo.Parent = loadBox
 do local sc = Instance.new("UIScale"); sc.Parent = loadBox; local function f() local vp = workspace.CurrentCamera.ViewportSize; sc.Scale = math.clamp(math.min(vp.X / 640, vp.Y / 420), 0.5, 1.6) end; f(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(f) end
 local function logoText(t, y, size, color)
@@ -40,9 +40,12 @@ end
 local logoTxt = { logoText("ARCANA", 10, 64, Color3.fromRGB(255, 214, 90)), logoText("SLAYER", 80, 72, Color3.fromRGB(255, 120, 90)) }; logoText("자동 전투 핵 앤 슬래시", 186, 20, Color3.fromRGB(235, 215, 200))
 local loadBarBg = Instance.new("Frame"); loadBarBg.Size = UDim2.new(0.8, 0, 0, 14); loadBarBg.Position = UDim2.new(0.1, 0, 0, 226); loadBarBg.BackgroundColor3 = Color3.fromRGB(30, 12, 10); loadBarBg.Parent = loadBox
 Instance.new("UICorner", loadBarBg).CornerRadius = UDim.new(1, 0); do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(214, 168, 70); s.Thickness = 2; s.Parent = loadBarBg end
-local loadBar = Instance.new("Frame"); loadBar.Size = UDim2.new(0, 0, 1, 0); loadBar.BackgroundColor3 = Color3.fromRGB(255, 200, 80); loadBar.Parent = loadBarBg; Instance.new("UICorner", loadBar).CornerRadius = UDim.new(1, 0)
+local loadBar = Instance.new("Frame"); loadBar.Size = UDim2.new(0, 0, 1, 0); loadBar.BackgroundColor3 = Color3.new(1, 1, 1); loadBar.BorderSizePixel = 0; loadBar.Parent = loadBarBg; Instance.new("UICorner", loadBar).CornerRadius = UDim.new(1, 0)
+local loadShine = Instance.new("UIGradient"); loadShine.Parent = loadBar   -- 금빛 채움 + 지나가는 반짝임
+loadShine.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(190, 90, 30)), ColorSequenceKeypoint.new(0.42, Color3.fromRGB(255, 190, 80)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 245, 200)), ColorSequenceKeypoint.new(0.58, Color3.fromRGB(255, 190, 80)), ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 90, 30)) })
+local loadTarget, loadShown = 0, 0   -- 막대는 목표값을 매 프레임 부드럽게 따라간다 (단계마다 끊겨 뛰지 않게)
 local loadTxt = logoText("서버에 연결하는 중...", 250, 16, Color3.fromRGB(235, 225, 215)); loadTxt.Font = Enum.Font.GothamMedium
-local function loadStep(text, p) loadTxt.Text = text; TweenService:Create(loadBar, TweenInfo.new(0.25), { Size = UDim2.new(math.clamp(p, 0, 1), 0, 1, 0) }):Play() end
+local function loadStep(text, p) loadTxt.Text = text; loadTarget = math.clamp(p, 0, 1) end
 loadBox.ZIndex = 5
 do   -- 입자 · 그라데이션 흐름 · 배경 그림 천천히 이동
   local t0 = os.clock()
@@ -55,7 +58,9 @@ do   -- 입자 · 그라데이션 흐름 · 배경 그림 천천히 이동
       m.f.Position = UDim2.new(m.x + math.sin(t * 0.8 + m.ph) * 0.015, 0, m.y, 0); m.f.BackgroundTransparency = math.clamp(0.1 + 0.6 * (0.5 + 0.5 * math.sin(t * 3 + m.ph)) + (1 - m.y) * 0.3, 0, 1)   -- 위로 갈수록 사그라든다
     end
     loadArt.Position = UDim2.new(-0.04 + math.sin(t * 0.1) * 0.04, 0, -0.04 + math.cos(t * 0.13) * 0.02, 0)
-    loadLogo.Position = UDim2.new(0.5, 0, 0, -40 + math.sin(t * 1.3) * 4)   -- 로고가 살짝 떠 있다
+    loadLogo.Position = UDim2.new(0.5, 0, 0, -40 + math.sin(t * 1.1) * 3)   -- 로고가 살짝 떠 있다
+    loadShown += (loadTarget - loadShown) * math.min(1, dt * 5); loadBar.Size = UDim2.new(loadShown, 0, 1, 0)
+    loadShine.Offset = Vector2.new(((t * 0.6) % 2) - 1, 0)
   end)
 end
 
@@ -1077,7 +1082,9 @@ buildMap = function()
   local RIFTC, LAVAC = Color3.fromRGB(200, 60, 255), Color3.fromRGB(255, 90, 30)
   Ambient.attach(mapLayer, { z = 2, clouds = { 0.0, 0.18 }, birds = true, embers = 60,
     lights = { { 0.50, 0.40, 0.10, RIFTC }, { 0.47, 0.70, 0.09, RIFTC }, { 0.44, 0.20, 0.07, RIFTC }, { 0.56, 0.85, 0.07, RIFTC },
-      { 0.80, 0.30, 0.07, LAVAC }, { 0.92, 0.55, 0.07, LAVAC }, { 0.72, 0.62, 0.06, LAVAC }, { 0.95, 0.12, 0.08, LAVAC }, { 0.66, 0.08, 0.06, LAVAC } } })
+      { 0.80, 0.30, 0.07, LAVAC }, { 0.92, 0.55, 0.07, LAVAC }, { 0.72, 0.62, 0.06, LAVAC }, { 0.95, 0.12, 0.08, LAVAC }, { 0.66, 0.08, 0.06, LAVAC } },
+    -- 협곡 안개: 보랏빛 · 분홍 안개가 협곡을 따라 피어오른다
+    mists = { { 0.40, 0.56, 0.15, 0.95, Color3.fromRGB(235, 90, 200), 14 }, { 0.42, 0.54, 0.25, 0.9, Color3.fromRGB(170, 70, 255), 10 } } })
   local states = {}
   for _, t in ipairs(NODES) do states[t.id] = nodeState(t) end
   for _, e in ipairs(EDGES) do   -- 길
@@ -1224,7 +1231,7 @@ for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state"
 do
   local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))
   local keys = {}; if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" then keys[#keys + 1] = k end end end; table.sort(keys)   -- 스킬 카드는 처음 볼 때 받는다
-  for i, k in ipairs(keys) do loadStep(string.format("그림을 불러오는 중... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k) end
+  for i, k in ipairs(keys) do loadStep(string.format("그림을 불러오는 중... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k); task.wait() end   -- 한 장마다 한 프레임 쉬어 화면(로고 · 막대)이 멈추지 않게
 end
 pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
 pcall(function() owns4 = rpc:InvokeServer("speedpass").owns == true end)
