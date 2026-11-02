@@ -794,4 +794,20 @@ function M.ranking()
   end
 end
 
+-- ───────── 우편함 ─────────
+local MAIL_NAME = { gold = "골드", ore = "강화석", hone = "연마석", orbC = "혼돈 구슬", orbD = "신성한 구슬", shards = "균열 조각", keys = "공허의 열쇠" }
+function M.mail()
+  C.clear()
+  local r = C.rpc:InvokeServer("mail"); if r.err then C.msg.Text = tostring(r.err); return end
+  if #(r.rows or {}) == 0 then rowCard({ emoji = "✉", title = "우편함", desc = "받은 우편이 없습니다.", color = Color3.fromRGB(150, 140, 190) }); return end
+  for i = #r.rows, 1, -1 do
+    local m = r.rows[i]
+    local rw = {}; for k, v in pairs(m.reward or {}) do rw[#rw + 1] = string.format("%s +%s", MAIL_NAME[k] or k, n(v)) end
+    local has = #rw > 0
+    rowCard({ emoji = m.got and "✓" or "✉", color = (has and not m.got) and M.GOLD or Color3.fromRGB(150, 140, 190), title = tostring(m.title), desc = tostring(m.body or "") .. (has and (string.char(10) .. table.concat(rw, " · ")) or ""), h = has and 86 or nil, ready = has and not m.got, done = m.got,
+      btn = has and (m.got and "받음" or "받기") or nil, btnColor = (has and not m.got) and M.BTN.green or M.BTN.gray,
+      click = (has and not m.got) and function() local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.mail() end or nil })
+  end
+end
+
 return M

@@ -139,6 +139,23 @@ local function rankTop(kind)
 end
 local function rankPush(uid, sv) rankSet("rift", uid, sv.rift and sv.rift.best or 0); rankSet("level", uid, sv.level) end
 
+-- ── 우편함: 게임 주인이 보내는 전체 우편(공지 + 보상). DataStore "DungeonSlashMail" 의 "global" 목록, 받은 우편은 세이브 sv.mailGot ──
+local okMail, mailStore = pcall(function() return DSS:GetDataStore("DungeonSlashMail") end)
+local mailCache, mailT = {}, -1e9
+local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, shards = true, keys = true }
+local function mailList(force)
+  if not force and os.clock() - mailT < 30 then return mailCache end
+  if okMail then local ok, v = pcall(function() return mailStore:GetAsync("global") end); if ok then mailCache = v or {}; mailT = os.clock() end end
+  return mailCache
+end
+local function mailSend(title, body, reward)
+  local list = mailList(true); local id = (list[#list] and list[#list].id or 0) + 1
+  list[#list + 1] = { id = id, t = os.time(), title = title, body = body, reward = reward }
+  while #list > 30 do table.remove(list, 1) end
+  if okMail then pcall(function() mailStore:SetAsync("global", list) end) end
+  mailCache = list; return id
+end
+
 Players.PlayerRemoving:Connect(function(p)
   local s = sessions[p.UserId]; if s then save(p.UserId, s.sv); sessions[p.UserId] = nil end
 end)
@@ -225,6 +242,26 @@ local handle = function(player, action, arg)
     rankPush(player.UserId, sv); if (sv.dummyBest or 0) > 0 then rankSet("dps", player.UserId, sv.dummyBest) end
     local kind = RANKS[arg] and arg or "rift"
     return { kind = kind, rows = rankTop(kind), my = { rift = sv.rift and sv.rift.best or 0, level = sv.level, dps = sv.dummyBest or 0 } }
+  elseif action == "mail" then
+    sv.mailGot = sv.mailGot or {}; local rows = {}
+    for _, m in ipairs(mailList()) do rows[#rows + 1] = { id = m.id, t = m.t, title = m.title, body = m.body, reward = m.reward, got = sv.mailGot[tostring(m.id)] == true } end
+    return { rows = rows }
+  elseif action == "mailclaim" then
+    sv.mailGot = sv.mailGot or {}
+    for _, m in ipairs(mailList()) do
+      if m.id == tonumber(arg) and not sv.mailGot[tostring(m.id)] then
+        sv.mailGot[tostring(m.id)] = true
+        for k, v in pairs(m.reward or {}) do if MAIL_KEYS[k] and type(v) == "number" then sv[k] = (sv[k] or 0) + v end end
+        return { ok = true, summary = Game.summary(sv) }
+      end
+    end
+    return { err = "받을 수 없는 우편입니다" }
+  elseif action == "mailsend" then   -- 게임 주인만
+    if not isOwner(player) then return { err = "owner only" } end
+    if type(arg) ~= "table" then return { err = "잘못된 요청" } end
+    local reward = {}; for k, v in pairs(arg.reward or {}) do if MAIL_KEYS[k] and tonumber(v) and tonumber(v) > 0 then reward[k] = math.floor(tonumber(v)) end end
+    local id = mailSend(tostring(arg.title or ""):sub(1, 60), tostring(arg.body or ""):sub(1, 300), reward)
+    return { ok = true, id = id }
   elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }

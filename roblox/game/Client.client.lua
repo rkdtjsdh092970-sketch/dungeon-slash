@@ -482,6 +482,16 @@ function views.set_beta()
   optRow("베타 입장", nil, { { "초대 전용", function() op("close") end, not v.open, w = 110 }, { "누구나", function() op("open") end, v.open, w = 110 } })
   card(string.format("테스터 %d명", #v.list), { "로블록스 닉네임으로 추가합니다. 게임 주인은 항상 입장할 수 있습니다." }, { { "추가", function() prompt("추가할 테스터의 로블록스 닉네임", "닉네임", function(nm) if nm ~= "" then op("add", nm) end end) end } })
   for _, x in ipairs(v.list) do card(x.name, { "UserId " .. x.id }, { { "삭제", function() op("remove", tostring(x.id)) end } }) end
+  card("전체 우편 보내기", { "모든 플레이어의 우편함에 공지와 보상을 보냅니다. 보상 형식 예: gold=5000, ore=20 (gold · ore · hone · orbC · orbD · shards · keys)" }, { { "보내기", function()
+    prompt("우편 제목", "제목", function(title) if title == "" then return end
+      prompt("내용", "내용", function(body)
+        prompt("보상 (비우면 없음)", "gold=5000, ore=20", function(rw)
+          local reward = {}; for k, val in string.gmatch(rw or "", "(%a+)%s*=%s*(%d+)") do reward[k] = tonumber(val) end
+          local e = rpc:InvokeServer("mailsend", { title = title, body = body, reward = reward }); msg.Text = e.err and tostring(e.err) or "우편을 보냈습니다"
+        end)
+      end)
+    end)
+  end } })
 end
 function views.set_auto()
   clear()
@@ -511,7 +521,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setS
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
-views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking
+views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail
 
 -- ── 전투 시작 → 재생 → 결과 ──
 local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
@@ -629,7 +639,7 @@ local BUILD = {
   { key = "b_skill_shop", name = "스킬 상점", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 구매", "shop" } } },
   { key = "b_guild", name = "길드", icon = "🏰", x = 0.2, row = 2, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
   { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.42, row = 2, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "스탯", "stats" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
-  { key = "b_notice", name = "안내소", icon = "🔔", x = 0.64, row = 2, tabs = { { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
+  { key = "b_notice", name = "안내소", icon = "🔔", x = 0.64, row = 2, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
 }
 local townBuilt, badgeDots = false, {}
 local function updateBadges()
