@@ -208,6 +208,7 @@ function M.passView(sv)
   return { taken = t, left = Econ.passiveLeft(sv), points = Econ.passivePoints(sv) }
 end
 function M.passTake(sv, id) return Econ.addPassivePath(sv, tostring(id)) end
+function M.passDrop(sv, id) return Econ.dropPassive(sv, tostring(id)) end
 function M.atlasView(sv) return Econ.atlasView(sv) end
 -- ---------- 창고 (웹 openStash: 장비 보관, 100칸에서 골드로 10칸씩 최대 500) ----------
 local STASH_MAX, STASH_STEP = 500, 10

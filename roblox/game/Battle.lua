@@ -985,7 +985,7 @@ function M.step(b, dt)
   for _, k in ipairs({ "slow", "freeze", "curse", "poison", "wound" }) do local d = b.debuffs[k]; if d then d.t -= dt; if d.t <= 0 then b.debuffs[k] = nil end end end
   for _, m in ipairs(b.mods) do if m.poison then b.poisonCd -= dt; if b.poisonCd <= 0 then b.debuffs.poison = { t = 5, dps = 0.012 }; b.poisonCd = 14 end end end
   if b.buffs.cry then b.buffs.cry.t -= dt; if b.buffs.cry.t <= 0 then b.buffs.cry = nil end end
-  if b.debuffs.poison then local x = b.maxHp * b.debuffs.poison.dps * dt; b.hp -= x; b.taken += x; if b.hurtBy then b.hurtBy["중독(최대체력 %)"] = (b.hurtBy["중독(최대체력 %)"] or 0) + x end end
+  if b.debuffs.poison then local x = b.maxHp * b.debuffs.poison.dps * dt; b.hp -= x; b.taken += x; if b.hurtBy then b.hurtBy["중독(최대체력 비례)"] = (b.hurtBy["중독(최대체력 비례)"] or 0) + x end end
   for _, ev in ipairs(b.events) do ev.t -= dt end
   local due = filter(b.events, function(ev) return ev.t <= 0 end)
   if #due > 0 then b.events = filter(b.events, function(ev) return ev.t > 0 end); for _, ev in ipairs(due) do ev.fn() end end

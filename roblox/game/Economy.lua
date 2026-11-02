@@ -108,6 +108,20 @@ function M.addPassivePath(sv, id)
   for _, k in ipairs(P.ids) do sv.pass[k] = 1 end; return #P.ids
 end
 function M.resetPassives(sv) sv.pass = {} end
+-- 찍은 노드 하나 빼기 (포인트 돌려받음). 빼도 나머지가 모두 가운데와 이어져 있을 때만 (끝 노드부터)
+function M.dropPassive(sv, id)
+  if not has(sv, id) then return false, "찍지 않은 노드입니다" end
+  sv.pass[id] = nil
+  local seen, todo = {}, {}
+  for k in pairs(sv.pass) do if PASS_BY[k] and table.find(PASS_BY[k].links, "C") then seen[k] = true; todo[#todo + 1] = k end end
+  while #todo > 0 do
+    local k = table.remove(todo)
+    for _, q in ipairs(PASS_BY[k].links) do if q ~= "C" and has(sv, q) and not seen[q] then seen[q] = true; todo[#todo + 1] = q end end
+    for q in pairs(sv.pass) do if not seen[q] and PASS_BY[q] and table.find(PASS_BY[q].links, k) then seen[q] = true; todo[#todo + 1] = q end end
+  end
+  for k in pairs(sv.pass) do if PASS_BY[k] and not seen[k] then sv.pass[id] = 1; return false, "이 노드 뒤로 이어진 노드가 있어 뺄 수 없습니다 (끝 노드부터 빼세요)" end end
+  return true
+end
 -- 자동 배분: 키별 가중치로 점수/비용이 높은 경로를 포인트가 다할 때까지 찍는다 (직접 트리를 고르는 화면이 생기기 전까지의 대체)
 local W = { atkPct = 3, magPct = 3, hpPct = 2, defPct = 1.5, allDmg = 4, physDmg = 2.5, magDmg = 2.5, critChance = 2, critDmg = 2, cdr = 3, lifesteal = 2, atkFlat = 0.02, hpFlat = 0.005, dmgTaken = -3, boss = 1, elite = 1, aoeDmg = 1.5, dodge = 1.5, ignoreDef = 2, ignoreRes = 2, fireDmg = 2, coldDmg = 2, lightDmg = 2, voidDmg = 2, atkMore = 8, magMore = 8, hpMore = 6, manaPct = 1, manaRegen = 0.5 }
 W.spellCrit = 2; W.elemDmg = 2.5; W.penElem = 1.5; W.magMore = 3; W.atkMore = 3; W.hpMore = 2
