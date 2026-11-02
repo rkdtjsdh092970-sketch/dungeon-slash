@@ -42,7 +42,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior" }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
@@ -59,13 +59,13 @@ function M.inventory(sv)
   for i, it in ipairs(sv.inv) do
     local b, a, sat = M.itemDetail(it)
     local up = false; if base then pcall(function() up = M.isUpgrade(sv, it, base) end) end
-    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
+    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
   end
   return out
 end
 function M.equipped(sv)
   local out = {}
-  for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then local b, a, sat = M.itemDetail(it); out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl, sat = it.sat ~= nil } end end
+  for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then local b, a, sat = M.itemDetail(it); out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, wt = it.wt, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl, sat = it.sat ~= nil } end end
   return out
 end
 

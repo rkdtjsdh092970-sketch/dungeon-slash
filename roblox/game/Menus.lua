@@ -26,6 +26,7 @@ M.SAT = Color3.fromRGB(200, 90, 255)
 M.ITEM_RAR = { "일반", "매직", "레어", "전설" }
 M.BTN = Theme.BTN
 local SLOT_ART = { weapon = "i_weapon", helm = "i_helm", armor = "i_armor", gloves = "i_gloves", boots = "i_boots", ring = "i_ring", ring2 = "i_ring", neck = "i_neck" }
+local function artOf(it) if it and it.wt == "staff" and C.Sprites.art("i_staff") then return "i_staff" end; return it and artOf(it) end   -- 무기는 종류별 그림 (지팡이)
 local SLOT_EMOJI = { weapon = "⚔", helm = "⛑", armor = "🛡", gloves = "🧤", boots = "👢", ring = "💍", ring2 = "💍", neck = "📿" }
 local ELEM = { fire = Color3.fromRGB(255, 120, 50), cold = Color3.fromRGB(110, 200, 255), light = Color3.fromRGB(255, 225, 80), void = Color3.fromRGB(170, 100, 255), phys = Color3.fromRGB(210, 210, 220) }
 local SK_BY = {}; for _, d in ipairs(Skills.SKILLS) do SK_BY[d.id] = d end
@@ -282,11 +283,11 @@ invRender = function()
     local head = mk("Frame", { Position = UDim2.new(0.5, -22, 0, 6), Size = UDim2.new(0, 44, 0, 44), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(head) end
   for i, slot in ipairs(Items.EQ_SLOTS) do
     local e = bySlot[slot]; local p = DOLL[slot]
-    local t = M.tile(L, p[3], { h = p[4], order = i, itip = e and { e } or nil, art = SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
+    local t = M.tile(L, p[3], { h = p[4], order = i, itip = e and { e } or nil, art = e and artOf(e) or SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
       tl = e and (e.enh > 0 and ("+" .. e.enh) or nil), label = not e and Items.SLOT_NAME[slot] or nil, selected = e and invSel == e.uid,
       click = function() if e then selectItem(e.uid) end end })
     t.Position = UDim2.new(0, p[1], 0, p[2]); t.ZIndex = 2
-    if e then tiles[e.uid] = t; M.drag(t, { kind = "eq", slot = slot }, SLOT_ART[slot]) end
+    if e then tiles[e.uid] = t; M.drag(t, { kind = "eq", slot = slot }, artOf(e)) end
     M.drop(t, function(pl)
       if pl.kind ~= "bag" then return end
       local r = C.rpc:InvokeServer("equip", { uid = pl.uid, slot = slot }); if r.summary then C.setSummary(r.summary) end
@@ -328,10 +329,10 @@ invRender = function()
   end
   local g = grid(B, UDim2.new(0, 6, 0, 70), UDim2.new(1, -12, 1, -114), 58)
   for i, it in ipairs(shown) do
-    tiles[it.uid] = M.tile(g, 58, { order = i, itip = { it, curOf(it) }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or (it.up and "▲" or nil), br = it.ilvl and ("T" .. it.ilvl) or nil,
+    tiles[it.uid] = M.tile(g, 58, { order = i, itip = { it, curOf(it) }, art = artOf(it), emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or (it.up and "▲" or nil), br = it.ilvl and ("T" .. it.ilvl) or nil,
       selected = (not invMulti and invSel == it.uid) or (invMulti and invPick[it.uid]), check = invMulti and invPick[it.uid] or nil,
       click = function() if invMulti then pickItem(it.uid) else selectItem(it.uid) end end })
-    M.drag(tiles[it.uid], { kind = "bag", uid = it.uid }, SLOT_ART[it.slot])
+    M.drag(tiles[it.uid], { kind = "bag", uid = it.uid }, artOf(it))
   end
   M.drop(B, function(pl)   -- 착용 장비를 가방에 놓으면 해제
     if pl.kind ~= "eq" then return end
@@ -605,7 +606,7 @@ function M.forge()
   for i, it in ipairs(rows) do
     if not forgeSel then forgeSel = it.uid end
     if it.uid == forgeSel then sel = it end
-    M.tile(g, 64, { order = i, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, selected = it.uid == forgeSel, click = function() forgeSel = it.uid; M.forge() end })
+    M.tile(g, 64, { order = i, art = artOf(it), emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, selected = it.uid == forgeSel, click = function() forgeSel = it.uid; M.forge() end })
   end
   sel = sel or rows[1]; forgeSel = sel.uid
   local R = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240, 1, 0))
@@ -908,7 +909,7 @@ function M.stash()
     local B = box(A, UDim2.new(x, x > 0 and 4 or 0, 0, 0), UDim2.new(0.5, -4, 1, 0), title)
     local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, to == "stash" and -36 or -80), 60)
     for i, it in ipairs(list) do
-      local t = M.tile(g, 60, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
+      local t = M.tile(g, 60, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = artOf(it), emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
         click = function() local e = C.rpc:InvokeServer("stashmove", { uid = it.uid, to = to }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end })
       t.MouseEnter:Connect(function() C.msg.Text = it.title .. " · " .. table.concat(it.lines or {}, " · ") end)
     end

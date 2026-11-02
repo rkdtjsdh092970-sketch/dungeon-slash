@@ -23,6 +23,8 @@ M.PAL = {
   { Color3.fromRGB(80, 120, 200), Color3.fromRGB(230, 220, 250), Color3.fromRGB(150, 150, 200), Color3.fromRGB(210, 200, 230), Color3.fromRGB(255, 250, 220) },
   { Color3.fromRGB(40, 8, 24), Color3.fromRGB(140, 30, 60), Color3.fromRGB(36, 10, 26), Color3.fromRGB(70, 20, 40), Color3.fromRGB(255, 120, 120) },
 }
+M.HERO = "warrior"   -- 클라이언트가 정한다: 지팡이를 끼면 "mage"
+function M.heroKey() if M.HERO ~= "warrior" and Sprites.art(M.HERO) then return M.HERO end; return "warrior" end
 function M.create(parent, W, H, replayAct)
   -- 웹 게임 좌표(높이 540)를 화면 높이에 꽉 맞추고, 가로는 화면 비율대로 늘린다 (여백 없음. u = 가상 1픽셀의 실제 크기)
   -- 16:9 에서는 가로 960 으로 웹과 같고, 더 넓거나 좁은 화면은 몬스터 칸 간격(cw)이 늘거나 준다
@@ -69,7 +71,7 @@ function M.create(parent, W, H, replayAct)
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
   S.plX, S.plY = S.ox + 104 * u, S.oy + 336 * u   -- 웹 PLAYER_POS
-  S.pl = Sprites.artLabel(S.layer, "warrior", 104 * u); S.plArt = S.pl ~= nil
+  S.pl = Sprites.artLabel(S.layer, M.heroKey(), 104 * u); S.plArt = S.pl ~= nil
   if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 96 * u) end
   S.pl.Position = UDim2.new(0, S.plX, 0, S.plY); S.pl.ZIndex = 5
   -- 상태 바
@@ -82,7 +84,7 @@ function M.create(parent, W, H, replayAct)
   local L = plate({ Position = UDim2.new(0, 12, 0, TOP + 6 * k), Size = UDim2.new(0, 330 * k, 0, 88 * k), BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.12, ZIndex = 8 })
   local face = mk("Frame", { Position = UDim2.new(0, 8 * k, 0, 8 * k), Size = UDim2.new(0, 72 * k, 0, 72 * k), BackgroundColor3 = Color3.fromRGB(60, 40, 100), ZIndex = 9 }, L)
   mk("UICorner", { CornerRadius = UDim.new(1, 0) }, face); mk("UIStroke", { Color = GOLD, Thickness = 3 }, face)
-  local fa = Sprites.art("warrior")
+  local fa = Sprites.art(M.heroKey())
   if fa then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.4), Position = UDim2.new(0.5, 0, 0.5, 0), ImageContent = fa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 10 }, face) end
   S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 70 * k, 0, 72 * k), Size = UDim2.new(0, 34 * k, 0, 24 * k), BackgroundColor3 = GOLD, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(15 * k), ZIndex = 11 }, L))
   mk("UICorner", { CornerRadius = UDim.new(1, 0) }, S.lvLbl)

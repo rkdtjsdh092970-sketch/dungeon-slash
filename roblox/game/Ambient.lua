@@ -1,6 +1,6 @@
 -- 배경 생동감 (마을 · 전투 공용). 배경 그림은 고정하고, 그 위에서 불 · 빛 · 구름 · 새 · 불씨 · 안개 · 연기가 움직인다.
 -- M.attach(부모, o): 좌표는 부모 기준 비율(0~1), 크기는 부모 높이 비율
---   o.z, o.fires = { {x, y(불꽃 밑), h} }, o.lights = { {x, y, r} }, o.clouds = { y0, y1, n }, o.birds = true, o.embers = n, o.fog = true
+--   o.z, o.patches = { {key, x, y, w, h} } (배경에서 잘라 만든 불 8프레임, 배경과 같은 자리), o.fires = { {x, y(불꽃 밑), h} }, o.lights = { {x, y, r} }, o.clouds = { y0, y1, n }, o.birds = true, o.embers = n, o.fog = true
 -- M.smoke(부모, x, y): 굴뚝 연기
 local RunService = game:GetService("RunService")
 local Sprites = require(script.Parent.Sprites)
@@ -64,6 +64,13 @@ function M.attach(parent, o)
       sparks[#sparks + 1] = { f = s, x0 = f[1], y0 = f[2] - f[3] * 0.6, h = f[3], life = math.random(), sp = 0.6 + math.random() * 0.6, dx = (math.random() - 0.5) * 0.02 }
     end
   end
+  -- 배경 불 패치: 배경에 그려진 불을 그대로 일렁이게 (fire_anim.py)
+  local patches = {}
+  for _, p in ipairs(o.patches or {}) do
+    local a = Sprites.art(p.key)
+    if a then patches[#patches + 1] = { f = mk("ImageLabel", { Position = UDim2.new(p.x, 0, p.y, 0), Size = UDim2.new(p.w, 0, p.h, 0), BackgroundTransparency = 1, ImageContent = a.content,
+      ImageRectSize = Vector2.new(a.w / 8, a.h), ScaleType = Enum.ScaleType.Stretch, ZIndex = z }, fx), fw = a.w / 8, ph = math.random() * 8, sp = 8 + math.random() * 3 } end
+  end
   -- 떠다니는 불씨 (화면 전체)
   local embers = {}
   for i = 1, o.embers or 0 do
@@ -89,11 +96,12 @@ function M.attach(parent, o)
       c.f.Position = UDim2.new(c.x, 0, c.y, 0); c.f.Size = UDim2.new(c.f.Size.X.Scale, 0, 0, c.f.AbsoluteSize.X * 160 / 512)
     end
     for _, g in ipairs(fogs) do g.f.Position = UDim2.new(-0.5 + math.sin(t * g.sp * 5) * 0.45, 0, g.y + math.sin(t * 0.3) * 0.01, 0) end
-    for _, l in ipairs(lights) do l.g.ImageTransparency = 0.55 + 0.12 * math.sin(t * 2.3 + l.ph) + 0.06 * math.sin(t * 7.1 + l.ph) end
+    for _, l in ipairs(lights) do l.g.ImageTransparency = 0.68 + 0.1 * math.sin(t * 2.3 + l.ph) + 0.05 * math.sin(t * 7.1 + l.ph) end
     for _, f in ipairs(fires) do
       if f.fl then local i = math.floor(t * f.sp + f.ph) % 8; f.fl.ImageRectOffset = Vector2.new(i * f.fl.ImageRectSize.X, 0) end
       if f.g then f.g.ImageTransparency = 0.42 + 0.1 * math.sin(t * 8.3 + f.ph) * math.sin(t * 3.7 + f.ph * 2) end
     end
+    for _, p in ipairs(patches) do p.f.ImageRectOffset = Vector2.new((math.floor(t * p.sp + p.ph) % 8) * p.fw, 0) end
     for _, s in ipairs(sparks) do
       s.life += dt * s.sp; if s.life > 1 then s.life = 0; s.dx = (math.random() - 0.5) * 0.02 end
       s.f.Position = UDim2.new(s.x0 + s.dx * s.life + math.sin(t * 5 + s.x0 * 40) * 0.003, 0, s.y0 - s.h * 1.6 * s.life, 0); s.f.BackgroundTransparency = s.life

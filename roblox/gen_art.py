@@ -44,6 +44,12 @@ ART = [
     *[(f'fx_cloud{i}', f'fx/cloud{i}.png', (512, 160)) for i in (1, 2, 3)],
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
+# 배경 불 패치 (fire_anim.py 가 만든 art/fx/<배경>_fires.json): 8프레임 시트, 배경 해상도 그대로
+import json, glob
+PATCHES = {}
+for jf in sorted(glob.glob(os.path.join(HERE, 'art', 'fx', '*_fires.json'))):
+    bgk = os.path.basename(jf)[:-len('_fires.json')]; PATCHES[bgk] = json.load(open(jf))
+    for e in PATCHES[bgk]: ART.append((e['key'], 'fx/' + e['key'][3:] + '.png', (e['pw'] * 8, e['ph'])))
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'
 lines = ['-- 자동 생성 (roblox/gen_art.py). 일러스트 표: 파일은 roblox/sprites/<file> (RGBA 8bit, w × h).',
          '-- id 를 채우면 업로드한 에셋을 우선 사용한다.', 'local M = {}', 'M.ART = {']
@@ -66,5 +72,10 @@ for key, src, size in ART:
     foot = round(bb[3] / im.height, 3) if bb and not key.startswith('bg') else 1
     lines.append(f'  {key} = {{ w = {im.width}, h = {im.height}, foot = {foot}, file = "{f}", id = {idv} }},')
     print(key, im.size)
+lines += ['}', 'M.PATCHES = {']
+for bgk, L in PATCHES.items():
+    lines.append(f'  {bgk} = {{')
+    for e in L: lines.append(f'    {{ key = "{e["key"]}", x = {e["x"]:.5f}, y = {e["y"]:.5f}, w = {e["w"]:.5f}, h = {e["h"]:.5f} }},')
+    lines.append('  },')
 lines += ['}', 'return M']
 open(os.path.join(HERE, 'data', 'ArtMap.lua'), 'w', encoding='utf-8', newline='\n').write('\n'.join(lines) + '\n')

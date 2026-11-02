@@ -142,13 +142,14 @@ local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTranspa
 -- 왼쪽 위 캐릭터 카드 (마을 · 지도에서): 초상화(Lv) | 능력치 5칸 (이름 위 · 숫자 가운데) / 진행도 띠 — 칸을 나눠 배치
 local statLbl = mk("Frame", { Active = true, BackgroundColor3 = Color3.fromRGB(16, 11, 10), BackgroundTransparency = 0.08, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 400, 0, 92), ZIndex = 11 }, hud)
 corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { Scale = K }, statLbl)
-local statVal, statProg, statLv, statGold = {}, nil, nil, nil
+local statVal, statProg, statLv, statGold, statFace = {}, nil, nil, nil, nil
+local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
 do
   local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
   -- 초상화 칸 + 아래 Lv 띠
   local pf = mk("Frame", { Position = UDim2.new(0, 8, 0, 8), Size = UDim2.new(0, 76, 0, 76), BackgroundColor3 = CELL, ClipsDescendants = true, ZIndex = 12 }, statLbl); corner(pf, 6); stroke(pf, EDGE, 1.5)
   local wa = Sprites.art("warrior")
-  if wa then mk("ImageLabel", { Size = UDim2.new(1.5, 0, 1.5, 0), Position = UDim2.new(-0.22, 0, -0.06, 0), BackgroundTransparency = 1, ImageContent = wa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, pf) end
+  if wa then statFace = mk("ImageLabel", { Size = UDim2.new(1.5, 0, 1.5, 0), Position = UDim2.new(-0.22, 0, -0.06, 0), BackgroundTransparency = 1, ImageContent = wa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, pf) end
   statLv = mk("TextLabel", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 20), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.15, Text = "", Font = Theme.FONT, TextSize = 14, TextColor3 = Color3.fromRGB(255, 214, 110), ZIndex = 14 }, pf)
   -- 능력치 5칸: 칸마다 테두리, 이름은 위 가운데, 숫자는 남은 공간 가운데 (길면 자동으로 줄어듦)
   local STATS = { { "hp", "체력", Color3.fromRGB(235, 90, 80) }, { "atk", "공격력", Color3.fromRGB(240, 170, 80) }, { "mag", "주문력", Color3.fromRGB(150, 140, 255) }, { "def", "방어력", Color3.fromRGB(140, 190, 230) }, { "crit", "치명", Color3.fromRGB(255, 220, 110) } }
@@ -217,6 +218,8 @@ local function setSummary(s)
   if not s then return end
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold)
+  local hk = s.hero or "warrior"
+  if hk ~= Stage.HERO then Stage.HERO = hk; local a = Sprites.art(Stage.heroKey()); if statFace and a then statFace.ImageContent = a.content end; if heroChanged then task.defer(heroChanged) end end
   statVal.hp.Text = n(s.maxHp); statVal.atk.Text = n(s.atk); statVal.mag.Text = n(s.mag); statVal.def.Text = n(s.def); statVal.crit.Text = string.format("%.0f%%", s.crit * 100)
   statProg.Text = string.format("스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", s.cleared, s.riftBest, s.best)
 end
@@ -737,12 +740,17 @@ buildTown = function()
       local ox, oy = (bg.w - sw) / 2, bg.h - sh
       local function P(u, v) return (u * bg.w - ox) / sw, (v * bg.h - oy) / sh end
       local function L(u, v, r) local x, y = P(u, v); return { x, y, r * bg.h / sh } end
-      local fires = {}
-      for _, f in ipairs({ { 0.1875, 0.435, 0.05 }, { 0.348, 0.433, 0.05 }, { 0.433, 0.415, 0.045 }, { 0.757, 0.465, 0.045 }, { 0.103, 0.425, 0.03 } }) do fires[#fires + 1] = L(f[1], f[2], f[3]) end
+      -- 불: 배경에 그려진 불을 그대로 일렁이게 하는 패치(ArtMap.PATCHES) + 화로 둘레 은은한 빛 (따로 그린 불꽃은 쓰지 않는다)
+      local patches = {}
+      local okP, AM = pcall(require, RS.Game.Data.ArtMap)
+      for _, pt in ipairs(okP and AM.PATCHES and AM.PATCHES.bg_town or {}) do
+        local x0, y0 = P(pt.x, pt.y); local x1, y1 = P(pt.x + pt.w, pt.y + pt.h)
+        patches[#patches + 1] = { key = pt.key, x = x0, y = y0, w = x1 - x0, h = y1 - y0 }
+      end
       local lights = {}
-      for _, l in ipairs({ { 0.072, 0.155, 0.03 }, { 0.145, 0.185, 0.035 }, { 0.818, 0.32, 0.025 }, { 0.977, 0.255, 0.04 }, { 0.19, 0.62, 0.05 }, { 0.35, 0.62, 0.05 }, { 0.757, 0.62, 0.05 } }) do lights[#lights + 1] = L(l[1], l[2], l[3]) end
+      for _, l in ipairs({ { 0.1875, 0.40, 0.05 }, { 0.348, 0.40, 0.05 }, { 0.433, 0.385, 0.04 }, { 0.757, 0.43, 0.045 }, { 0.103, 0.40, 0.03 }, { 0.072, 0.155, 0.03 }, { 0.145, 0.185, 0.035 }, { 0.818, 0.32, 0.025 }, { 0.977, 0.255, 0.04 } }) do lights[#lights + 1] = L(l[1], l[2], l[3]) end
       local _, cy0 = P(0, 0.0); local _, cy1 = P(0, 0.12)
-      Ambient.attach(townLayer, { z = 2, fires = fires, lights = lights, clouds = { math.max(cy0, 0.01), cy1, 3 }, birds = true, embers = 10 })
+      Ambient.attach(townLayer, { z = 2, patches = patches, lights = lights, clouds = { math.max(cy0, 0.01), cy1, 3 }, birds = true, embers = 10 })
     else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
     for _, b in ipairs(BUILD) do
       local size = (b.row == 1 and 0.30 or 0.25) * H; local fy = (b.row == 1 and 0.95 or 0.67) * H
@@ -762,7 +770,7 @@ buildTown = function()
       plate.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
       if b.badge then badgeDots[b.badge] = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 2), Size = UDim2.new(0, 14, 0, 14), BackgroundColor3 = Color3.fromRGB(255, 70, 70), Visible = false, ZIndex = 7 }, plate); corner(badgeDots[b.badge]); stroke(badgeDots[b.badge], Color3.new(1, 1, 1), 2) end
     end
-    local hero = Sprites.artLabel(townLayer, "warrior", 0.17 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.17 * H)
+    local hero = Sprites.artLabel(townLayer, Stage.heroKey(), 0.17 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.17 * H)
     hero.Position = UDim2.new(0, 0.86 * W, 0, 0.66 * H); hero.ZIndex = 5
     if hero:IsA("ImageLabel") then hero.ImageColor3 = Color3.fromRGB(205, 165, 140) end
     do local hs0 = hero.Size; TweenService:Create(hero, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Size = UDim2.new(hs0.X.Scale, hs0.X.Offset * 0.99, hs0.Y.Scale, hs0.Y.Offset * 1.03) }):Play() end   -- 숨쉬기   -- 마을 밤 조명(횃불)에 맞춰 어둡고 따뜻하게
@@ -968,6 +976,10 @@ topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", 
 topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "우편함", "mail" } }) end)
 topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 
+heroChanged = function()   -- 전투 중이 아니면 마을 · 전투 무대의 영웅을 새 모습으로
+  townBuilt = false; if screen == "town" then buildTown() end
+  if mainStage and not mainStage.conn then makeStage() end
+end
 -- 화면 크기가 바뀌면 다시 배치 (전투 재생 중이면 끝난 뒤 반영)
 local relayPending = false
 relayout = function()

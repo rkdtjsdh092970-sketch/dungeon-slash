@@ -75,5 +75,19 @@ M.ART = {
   i_divine = { w = 96, h = 96, foot = 0.99, file = "art_i_divine.rgba", id = nil },
   i_stone = { w = 96, h = 96, foot = 0.99, file = "art_i_stone.rgba", id = nil },
   i_speed = { w = 96, h = 96, foot = 0.906, file = "art_i_speed.rgba", id = nil },
+  fx_bg_town_fire0 = { w = 288, h = 42, foot = 0.952, file = "art_fx_bg_town_fire0.rgba", id = nil },
+  fx_bg_town_fire1 = { w = 224, h = 33, foot = 1.0, file = "art_fx_bg_town_fire1.rgba", id = nil },
+  fx_bg_town_fire2 = { w = 128, h = 24, foot = 0.917, file = "art_fx_bg_town_fire2.rgba", id = nil },
+  fx_bg_town_fire3 = { w = 248, h = 42, foot = 0.952, file = "art_fx_bg_town_fire3.rgba", id = nil },
+  fx_bg_town_fire4 = { w = 224, h = 41, foot = 0.951, file = "art_fx_bg_town_fire4.rgba", id = nil },
+}
+M.PATCHES = {
+  bg_town = {
+    { key = "fx_bg_town_fire0", x = 0.15937, y = 0.35000, w = 0.05625, h = 0.11667 },
+    { key = "fx_bg_town_fire1", x = 0.31875, y = 0.37500, w = 0.04375, h = 0.09167 },
+    { key = "fx_bg_town_fire2", x = 0.42031, y = 0.36389, w = 0.02500, h = 0.06667 },
+    { key = "fx_bg_town_fire3", x = 0.73594, y = 0.38611, w = 0.04844, h = 0.11667 },
+    { key = "fx_bg_town_fire4", x = 0.07656, y = 0.35000, w = 0.04375, h = 0.11389 },
+  },
 }
 return M
