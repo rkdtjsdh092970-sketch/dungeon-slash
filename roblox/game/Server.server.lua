@@ -127,6 +127,30 @@ local function hasSpeed4(p)
   return ownsSpeed4[p.UserId] == true
 end
 MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought) if id == SPEED4_ID and bought then ownsSpeed4[p.UserId] = true end end)
+-- 개발자 상품 지급 (Monetization.process): 세션에 바로 넣고 곧바로 저장. 세션이 없으면 다음에 다시 (NotProcessedYet)
+local Monet = require(game:GetService("ServerStorage"):WaitForChild("Game"):WaitForChild("Monetization"))
+MPS.ProcessReceipt = function(receipt)
+  local s = sessions[receipt.PlayerId]; if not s or not s.sv then return Enum.ProductPurchaseDecision.NotProcessedYet end
+  local ok, msg = Monet.process(receipt, s.sv)
+  if not ok then if msg == "unknown" or msg == "daily" then warn("receipt refused:", msg, receipt.ProductId) end; return Enum.ProductPurchaseDecision.NotProcessedYet end
+  if not save(receipt.PlayerId, s.sv) then return Enum.ProductPurchaseDecision.NotProcessedYet end
+  local pl = Players:GetPlayerByUserId(receipt.PlayerId); if pl and msg ~= "dup" then notice:FireClient(pl, tostring(msg)) end
+  return Enum.ProductPurchaseDecision.PurchaseGranted
+end
+-- 게임패스 효과 (가방 +100 · 골드 x1.5): 접속 · 구매 때 소유 여부로 세션 표시를 켠다 (ID 0 이면 꺼짐)
+local passOwn = {}
+local function ownsPass(p, id)
+  if id == 0 then return false end
+  local k = p.UserId .. ":" .. id
+  if passOwn[k] == nil then local ok, v = pcall(function() return MPS:UserOwnsGamePassAsync(p.UserId, id) end); if ok then passOwn[k] = v end end
+  return passOwn[k] == true
+end
+local function applyPasses(p, sv) sv.passBag = ownsPass(p, Monet.PASSES.bagPlus.id) or nil; sv.passGold = ownsPass(p, Monet.PASSES.goldPlus.id) or nil end
+MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought)
+  if not bought then return end
+  passOwn[p.UserId .. ":" .. id] = true
+  local s = sessions[p.UserId]; if s and s.sv then applyPasses(p, s.sv) end
+end)
 
 Players.PlayerAdded:Connect(function(p)
   if not betaAllowed(p) then p:Kick("Arcana Slayer is in closed beta (invite only). Thanks for your interest!"); return end
@@ -135,6 +159,7 @@ Players.PlayerAdded:Connect(function(p)
   if okLoad == false then p:Kick("Couldn't load your save data. Please rejoin in a moment. (Your progress is protected.)"); return end
   sv = sv and migrate(sv, p.UserId) or Loot.newSave(Random.new(p.UserId))
   sessions[p.UserId] = { sv = sv, busy = false, last = 0 }
+  task.spawn(applyPasses, p, sv)
   if freshTest() then sv.gold += tonumber(game:GetService("ServerStorage"):GetAttribute("TestGold")) or 0 end   -- Studio 시험 모드 전용: 시험 골드
   task.spawn(function() pcall(function() if gsyncFn then gsyncFn(p.UserId, sv) end end) end)   -- 길드 효과
 end)
@@ -207,7 +232,7 @@ local handle = function(player, action, arg)
   local s = sessions[player.UserId]; if not s then return { err = "Loading save data" } end
   local sv = s.sv
   if action == "state" then return { summary = Game.summary(sv), equipped = Game.equipped(sv) }
-  elseif action == "inv" then return { inv = Game.inventory(sv) }
+  elseif action == "inv" then return { inv = Game.inventory(sv), invMax = Game.invMax(sv) }
   elseif action == "autoequip" then local n = Game.autoEquip(sv); return { n = n, summary = Game.summary(sv) }
   elseif action == "tut" then if sv.tut ~= nil and type(arg) == "number" then sv.tut = math.max(sv.tut, math.floor(arg)) end; return { summary = Game.summary(sv) }
   elseif action == "pickstart" then local ok, e = Game.pickStart(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
@@ -230,6 +255,11 @@ local handle = function(player, action, arg)
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
   elseif action == "levelup" then local ok, e = Game.levelUp(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
+  elseif action == "advice" then return { tips = Game.advice(sv) }
+  elseif action == "robuxshop" then
+    local items = Monet.catalog(sv)
+    for _, it in ipairs(items) do if it.kind == "pass" then it.owned = (it.key == "speed4" and hasSpeed4(player)) or (it.key == "bagPlus" and sv.passBag) or (it.key == "goldPlus" and sv.passGold) or nil end end
+    return { items = items, boostExp = math.max(0, (sv.boostExp or 0) - os.time()), boostLoot = math.max(0, (sv.boostLoot or 0) - os.time()), owns4 = hasSpeed4(player) }
   elseif action == "skilldelta" then local d = Game.skillDelta(sv, tonumber(arg)); local o = {}; for i, v in pairs(d) do o[tostring(i)] = v end; return { delta = o }
   elseif action == "equipskill" then local ok, e = Game.equipSkill(sv, tonumber(arg.slot), tonumber(arg.uid), type(arg.rule) == "string" and arg.rule or nil); return { ok = ok, err = e }
   elseif action == "sellskill" then local ok, e = Game.sellSkill(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }

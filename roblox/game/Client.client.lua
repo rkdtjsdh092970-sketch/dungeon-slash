@@ -766,6 +766,36 @@ showResultPanel = function(x, spec)
     local rows = math.max(1, math.ceil(o / 3))
     resText.Size = UDim2.new(1, -56, 0, rows * 42)
     resBox.Size = UDim2.new(0, 660, 0, math.max(360, 158 + rows * 42 + 110))
+    local old = resBox:FindFirstChild("Advice"); if old then old:Destroy() end
+    if not x.win then   -- 패배: 지금 바로 강해지는 방법 (누르면 그 메뉴로)
+      local top = 158 + rows * 42 + 4
+      local adv = mk("Frame", { Name = "Advice", Position = UDim2.new(0, 28, 0, top), Size = UDim2.new(1, -56, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, ZIndex = 27 }, resBox)
+      mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, adv)
+      local hd = mk("TextLabel", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, Text = "How to get stronger", Font = Theme.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(255, 215, 130), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 28 }, adv)
+      task.spawn(function()
+        local ok, r = pcall(function() return rpc:InvokeServer("advice") end)
+        if not adv.Parent then return end
+        local TIP = {
+          pass = { "✦", "Spend %s unused Passive points", function() openPanel("Passive", { { "Passive", "pass" } }) end },
+          gear = { "🛡", "%s better items in your Bag — equip them", function() openPanel("Gear", { { "Gear", "inv" }, { "Storage", "stash" } }) end },
+          gacha = { "🔮", "Summon new Arcana (%s Shards)", function() openPanel("Arcana Summon", { { "Arcana Summon", "gacha" }, { "Arcana List", "gachalist" } }) end },
+          forge = { "⚒", "Enhance gear at the Smeltery (%s Upgrade Stones)", function() openPanel("Smeltery", { { "Forge", "forge" }, { "Stone", "stones" } }, "forge") end },
+          gate = { "🗝", "Use %s Boss Gate keys for better basic attacks", function() setScreen("map") end },
+        }
+        local tips = (ok and r and r.tips) or {}
+        tips[#tips + 1] = { k = "shop" }
+        TIP.shop = { "💎", "Boosts & packs in the Shop", function() openPanel("Shop", { { "Shop", "robux" } }) end }
+        for i, t in ipairs(tips) do
+          local d = TIP[t.k]; if d then
+            local b = mk("TextButton", { Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = Color3.fromRGB(36, 26, 22), AutoButtonColor = true, Text = "", LayoutOrder = i + 1, ZIndex = 28 }, adv); corner(b, 6); stroke(b, Color3.fromRGB(120, 92, 48), 1)
+            local l = mk("TextLabel", { Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -90, 1, 0), BackgroundTransparency = 1, Text = d[1] .. "  " .. string.format(d[2], t.n and n(t.n) or ""), Font = Theme.FONT, TextSize = 15, TextColor3 = Color3.fromRGB(235, 225, 210), TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 29 }, b)
+            mk("TextLabel", { Position = UDim2.new(1, -80, 0, 0), Size = UDim2.new(0, 72, 1, 0), BackgroundTransparency = 1, Text = "Go ▶", Font = Theme.FONT, TextSize = 15, TextColor3 = Color3.fromRGB(140, 220, 255), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 29 }, b)
+            b.MouseButton1Click:Connect(function() cancelAuto(); d[3]() end)
+          end
+        end
+        resBox.Size = UDim2.new(0, 660, 0, math.max(360, top + 26 + #tips * 34 + 70))
+      end)
+    end
   end
   for _, c in ipairs(resBtns:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   cancelAuto(); resCount.Text = ""
@@ -811,26 +841,7 @@ MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought)
   end
 end)
 -- ── 상점 (로벅스): 마을 왼쪽 [상점] 버튼. 개발자 상품 · 게임패스 ID 를 채우면 판매가 열린다 ──
-local SHOP = {
-  { kind = "pass", id = SPEED4_ID, name = "x4 Speed", desc = "Watch battles at x4 speed (x1–x3 are free). Permanent once bought.", owned = function() return owns4 end },
-  { kind = "product", id = 0, name = "Gem Pack", desc = "Gems used for arcana summons." },
-  { kind = "pass", id = 0, name = "Expand Bag", desc = "Bag & storage +100 slots (permanent)." },
-  { kind = "pass", id = 0, name = "Gold +50%", desc = "Gold from battles x1.5 (permanent)." },
-}
-function views.robux()
-  clear()
-  for _, it in ipairs(SHOP) do
-    local btn
-    if it.owned and it.owned() then btn = { "Owned", function() end }
-    elseif it.id ~= 0 then
-      local price = "Buy"
-      local ok, info = pcall(function() return MPS:GetProductInfo(it.id, it.kind == "pass" and Enum.InfoType.GamePass or Enum.InfoType.Product) end)
-      if ok and info and info.PriceInRobux then price = tostring(info.PriceInRobux) .. " R$" end
-      btn = { price, function() pcall(function() if it.kind == "pass" then MPS:PromptGamePassPurchase(player, it.id) else MPS:PromptProductPurchase(player, it.id) end end) end }
-    else btn = { "Coming Soon", function() toast("Coming soon") end } end
-    card(it.name, { it.desc }, { btn })
-  end
-end
+views.robux = function() Menus.robux() end   -- 로벅스 상점 (ShopUI.lua)
 local function hudInfo(spec)
   local sk = {}
   local ok, r = pcall(function() return rpc:InvokeServer("skills") end)

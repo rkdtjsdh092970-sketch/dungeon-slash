@@ -261,7 +261,7 @@ function M.inv(keep)
   if not keep or not invData then
     local r = C.rpc:InvokeServer("inv"); local st = C.rpc:InvokeServer("state"); if st.summary then C.setSummary(st.summary) end
     if r.err or st.err then C.clear(); C.msg.Text = tostring(r.err or st.err); return end
-    invData = { inv = r.inv or {}, eq = st.equipped or {} }
+    invData = { inv = r.inv or {}, eq = st.equipped or {}, max = r.invMax }
   end
   if invMode == "auto" then autoRender() else invRender() end
 end
@@ -328,7 +328,7 @@ invRender = function()
   end
   -- 가운데: 가방 (전체 · 부위 탭)
   local shown = {}; for _, it in ipairs(inv) do if invTab == "all" or it.slot == invTab or (invTab == "ring" and it.slot == "ring2") then shown[#shown + 1] = it end end
-  local INV_MAX = require(script.Parent.Data.Config).CFG.INV_MAX or 300
+  local INV_MAX = invData.max or 200   -- 서버 가방 한도 (확장 게임패스 포함)
   local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), invTab == "all" and string.format("Bag %d / %d", #inv, INV_MAX) or string.format("Bag %d (total %d / %d)", #shown, #inv, INV_MAX))
   do   -- +0 기준 비교 켜기/끄기 (강화 수치를 빼고 장비 자체만 비교)
     local zb = M.btn(B, M.cmpZero and "+0 Compare: On" or "+0 Compare: Off", UDim2.new(0, 96, 0, 22), M.cmpZero and M.BTN.gold or M.BTN.gray, function() M.cmpZero = not M.cmpZero; tipHide(); M.itemTipHide(); invRender() end)
@@ -1974,8 +1974,9 @@ function M.gachalist()
 end
 
 require(script.Parent.GuildUI)(M, { mk = mk, corner = corner, stroke = stroke, txt = txt, area = area, box = box, pbar = pbar, n = n, C = function() return C end })   -- 길드 화면 (길이 한도 때문에 따로)
+require(script.Parent.ShopUI)(M, { mk = mk, corner = corner, stroke = stroke, txt = txt, area = area, C = function() return C end })   -- 로벅스 상점
 -- 창 함수가 끝나면 Client 에 알려 새 화면을 바로 보이게 한다 (다 그리기 전엔 예전 화면이 그대로 → 깜빡임 없음)
-for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist", "mail", "guild" }) do
+for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist", "mail", "guild", "robux" }) do
   local f = M[k]
   if type(f) == "function" then M[k] = function(...) f(...); if C and C.done then C.done() end end end
 end

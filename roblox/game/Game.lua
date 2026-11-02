@@ -16,6 +16,7 @@ local Extras = require(script.Parent.Extras)
 local M = {}
 local floor = math.floor
 M.INV_MAX = 200
+function M.invMax(sv) return M.INV_MAX + (sv.passBag and 100 or 0) end   -- 가방 확장 게임패스 +100
 
 local AFFIX_BY = {}; for _, a in ipairs(Items.AFFIXES) do AFFIX_BY[a.k] = a end
 local SAT_BY = {}; for _, d in ipairs(Sat) do SAT_BY[d[1]] = d end
@@ -168,6 +169,19 @@ bestWith = function(sv, it)
   return best, bk
 end
 function M.isUpgrade(sv, it, base) base = base or powerOf(sv); return bestWith(sv, it) > base * 1.0005 end
+-- 패배 안내: 지금 바로 강해질 수 있는 것 (남은 패시브 · 가방의 더 좋은 장비 · 소환 · 강화 · 보스 관문 열쇠)
+function M.advice(sv)
+  local out = {}
+  local left = Econ.passiveLeft(sv); if left > 0 then out[#out + 1] = { k = "pass", n = left } end
+  local base, up = powerOf(sv), 0
+  for i, it in ipairs(sv.inv) do if i > 120 then break end; if M.isUpgrade(sv, it, base) then up += 1 end end
+  if up > 0 then out[#out + 1] = { k = "gear", n = up } end
+  if (sv.arcana or 0) >= Econ.GACHA.ARC1 then out[#out + 1] = { k = "gacha", n = sv.arcana } end
+  if (sv.ore or 0) >= 50 then out[#out + 1] = { k = "forge", n = sv.ore } end
+  local keys = 0; for _, k in ipairs({ "keys", "keys2", "keys3", "keys4", "keys5", "keys6" }) do keys += sv[k] or 0 end
+  if keys > 0 then out[#out + 1] = { k = "gate", n = keys } end
+  return out
+end
 -- 자동 장착: 가방에서 전투력이 가장 오르는 장비로 칸마다 바꾼다 (두 번 돌아 반지 · 세트 영향까지)
 function M.autoEquip(sv)
   local changed = 0
@@ -238,7 +252,7 @@ end
 function M.stashMove(sv, uid, toStash)
   local S = stash(sv); local from, to = toStash and sv.inv or S.items, toStash and S.items or sv.inv
   if toStash and #S.items >= S.cap then return false, "Storage is full" end
-  if not toStash and #sv.inv >= M.INV_MAX then return false, "Your bag is full" end
+  if not toStash and #sv.inv >= M.invMax(sv) then return false, "Your bag is full" end
   for i, it in ipairs(from) do if it.uid == uid then table.remove(from, i); to[#to + 1] = it; return true end end
   return false, "Gear not found"
 end
@@ -395,14 +409,14 @@ function M.battle(sv, floorN, seed)
   if b.win then
     local first = floorN > best
     local boss = floorN % 5 == 0
-    res.gold = floor(b.gold); sv.gold += res.gold
+    res.gold = floor(b.gold * (sv.passGold and 1.5 or 1)); sv.gold += res.gold   -- 골드 +50% 게임패스
     sv.stats.kills += b.kills; sv.stats.clears += 1
     Extras.onWin(sv, b.kills, boss, false); Extras.setRate(sv, b.gold, b.time)
     if first then sv.spire.best = floorN; res.first = true; end
     res.arcana = Econ.addArcana(sv, 3 + (boss and 5 or 0) + (first and 10 or 0))
     local drops = Loot.spireDrops(rng, sv, node, boss, first)
     for _, it in ipairs(drops) do
-      if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end
+      if #sv.inv < M.invMax(sv) then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end
     end
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
   return res
@@ -422,7 +436,7 @@ local function winExp(sv, kind, n, first, boss)
   local L0 = n + 1
   local base = (kind == "stage" and 0.12 or 0.12) * M.expNeed(L0) * (boss and 1.5 or 1) * 0.75 ^ math.max(0, sv.level - L0)
   local bonus = first and (kind == "stage" and 0.9 or 0.5) * M.expNeed(L0) or 0
-  return floor((base + bonus) * (1 + math.max(0, Stats.computeStats(sv).expFind or 0)) + 0.5)
+  return floor((base + bonus) * (1 + math.max(0, Stats.computeStats(sv).expFind or 0)) * (((sv.boostExp or 0) > os.time()) and 2 or 1) + 0.5)   -- 경험치 2배 부스트 (상점)
 end
 function M.fight(sv, kind, n, seed)
   n = math.floor(n or 1)
@@ -440,7 +454,7 @@ function M.fight(sv, kind, n, seed)
   local b = Battle.run(sv, node, rng:NextInteger(1, 2 ^ 30), 0.05, 700)
   local res = { win = b.win, time = b.time, kind = kind, n = n, kills = b.kills, items = {}, gold = 0 }
   if b.win then
-    res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
+    res.gold = floor(b.gold * (sv.passGold and 1.5 or 1)); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1   -- 골드 +50% 게임패스
     local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
     Extras.onWin(sv, b.kills, boss, kind == "rift"); Extras.setRate(sv, b.gold, b.time)
     if kind == "stage" then Extras.questEvent(sv, "kill", b.kills); if node.kind == "boss" then Extras.questEvent(sv, "boss", 1) end end
@@ -450,7 +464,11 @@ function M.fight(sv, kind, n, seed)
     if (d.orbC or 0) > 0 then sv.orbC = (sv.orbC or 0) + d.orbC; res.orbC = d.orbC end; if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     d.ore = floor(d.ore + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
-    for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
+    if (sv.boostLoot or 0) > os.time() then   -- 드랍 부스트 (상점): 장비 +50%
+      local extra = Loot.fieldDrops(rng, sv, node, boss, 1).items
+      for i = 1, math.floor(#d.items * 0.5 + rng:NextNumber()) do if extra[i] then d.items[#d.items + 1] = extra[i] end end
+    end
+    for _, it in ipairs(d.items) do if #sv.inv < M.invMax(sv) then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
       if n >= CFG.STAGES then

@@ -158,7 +158,7 @@ function M.create(parent, W, H, replayAct)
   end
   S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 17 }, S.bossB.bg), 1.5)
   -- 오른쪽 위: 건너뛰기 · 배속(누르면 x1~x4 가 아래로 펼쳐짐, x4 는 게임패스)
-  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 292, 0, 40), Visible = false, ZIndex = 30 }, root)
+  S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 164, 0, 40), Visible = false, ZIndex = 30 }, root)
   mk("UIScale", { Scale = k }, S.ctrl)
   local function cbtn(parent, text, pos, size, color)
     local b = mk("TextButton", { Text = text, Position = pos, Size = size, BackgroundColor3 = color, TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = 17, AutoButtonColor = true, ZIndex = 31 }, parent)
@@ -169,10 +169,9 @@ function M.create(parent, W, H, replayAct)
   end
   local pb = cbtn(S.ctrl, "II", UDim2.new(0, 0, 0, 0), UDim2.new(0, 48, 0, 40), Color3.fromRGB(65, 62, 80)); pb:SetAttribute("NoTr", true)
   pb.MouseButton1Click:Connect(function() S:pause(true) end)
-  cbtn(S.ctrl, "Skip ▶▶", UDim2.new(0, 56, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
-  S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 184, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
+  S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 56, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))   -- 건너뛰기 버튼은 없앰 (2026-11-03)
   S.spdBtn:SetAttribute("NoTr", true)
-  S.spdList = mk("Frame", { Position = UDim2.new(0, 184, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
+  S.spdList = mk("Frame", { Position = UDim2.new(0, 56, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, S.spdList)
   S.spdOpts = {}
   for i = 1, 4 do
