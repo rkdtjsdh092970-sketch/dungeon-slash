@@ -14,27 +14,34 @@ local Lang = require(RS:WaitForChild("Game"):WaitForChild("Lang"))   -- 화면 �
 Lang.watch(loadGui)
 local loadBg = Instance.new("Frame"); loadBg.Size = UDim2.new(1, 0, 1, 0); loadBg.BackgroundColor3 = Color3.new(1, 1, 1); loadBg.BorderSizePixel = 0; loadBg.Parent = loadGui
 loadGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-local loadGrad = Instance.new("UIGradient"); loadGrad.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 34, 120)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(26, 14, 56)), ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 30, 70)) }); loadGrad.Rotation = 90; loadGrad.Parent = loadBg
--- 움직이는 배경: 흐르는 그라데이션 + 떠오르는 빛 입자, 전투 배경 그림이 오면 천천히 흐르게 깔린다
-local loadArt = Instance.new("ImageLabel"); loadArt.BackgroundTransparency = 1; loadArt.ImageTransparency = 1; loadArt.ScaleType = Enum.ScaleType.Crop; loadArt.Size = UDim2.new(1.2, 0, 1, 0); loadArt.Position = UDim2.new(0, 0, 0, 0); loadArt.ZIndex = 1; loadArt.Parent = loadBg
-local loadDim = Instance.new("Frame"); loadDim.Size = UDim2.new(1, 0, 1, 0); loadDim.BackgroundColor3 = Color3.fromRGB(16, 8, 34); loadDim.BackgroundTransparency = 1; loadDim.BorderSizePixel = 0; loadDim.ZIndex = 2; loadDim.Parent = loadBg
+local loadGrad = Instance.new("UIGradient"); loadGrad.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 24, 18)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(34, 10, 10)), ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 16, 12)) }); loadGrad.Rotation = 90; loadGrad.Parent = loadBg
+-- 시작화면: 흐르는 그라데이션 + 떠오르는 불씨, 시작 그림(bg_title)이 오면 천천히 흐르게 깔고 위에 로고(ui_logo)
+local loadArt = Instance.new("ImageLabel"); loadArt.BackgroundTransparency = 1; loadArt.ImageTransparency = 1; loadArt.ScaleType = Enum.ScaleType.Crop; loadArt.Size = UDim2.new(1.08, 0, 1.08, 0); loadArt.Position = UDim2.new(0, 0, 0, 0); loadArt.ZIndex = 1; loadArt.Parent = loadBg
+local loadDim = Instance.new("Frame"); loadDim.Size = UDim2.new(1, 0, 1, 0); loadDim.BackgroundColor3 = Color3.fromRGB(8, 2, 2); loadDim.BackgroundTransparency = 1; loadDim.BorderSizePixel = 0; loadDim.ZIndex = 2; loadDim.Parent = loadBg
 local motes = {}
-for i = 1, 36 do
-  local m = Instance.new("Frame"); local s = math.random(3, 7); m.Size = UDim2.new(0, s, 0, s); m.BorderSizePixel = 0; m.ZIndex = 3
-  m.BackgroundColor3 = (i % 3 == 0) and Color3.fromRGB(255, 200, 110) or Color3.fromRGB(200, 170, 255); m.Parent = loadBg; Instance.new("UICorner", m).CornerRadius = UDim.new(1, 0)
+do   -- 아래쪽을 어둡게 (로딩 글자가 잘 보이게)
+  local f = Instance.new("Frame"); f.Size = UDim2.new(1, 0, 0.45, 0); f.Position = UDim2.new(0, 0, 0.55, 0); f.BackgroundColor3 = Color3.new(0, 0, 0); f.BorderSizePixel = 0; f.ZIndex = 2; f.Parent = loadBg
+  local g = Instance.new("UIGradient"); g.Rotation = 90; g.Transparency = NumberSequence.new(1, 0.25); g.Parent = f
+end
+for i = 1, 48 do   -- 불씨 (네모 도트)
+  local m = Instance.new("Frame"); local s = math.random(2, 5); m.Size = UDim2.new(0, s, 0, s); m.BorderSizePixel = 0; m.ZIndex = 3
+  m.BackgroundColor3 = (i % 4 == 0) and Color3.fromRGB(255, 220, 120) or (i % 2 == 0 and Color3.fromRGB(255, 120, 40) or Color3.fromRGB(220, 50, 30)); m.Parent = loadBg
   motes[i] = { f = m, x = math.random(), y = math.random(), sp = 0.03 + math.random() * 0.06, ph = math.random() * 6.28 }
 end
 local loadBox = Instance.new("Frame"); loadBox.BackgroundTransparency = 1; loadBox.AnchorPoint = Vector2.new(0.5, 0.5); loadBox.Position = UDim2.new(0.5, 0, 0.5, 0); loadBox.Size = UDim2.new(0, 560, 0, 300); loadBox.Parent = loadBg
+-- 로고 그림 (오면 글자 로고를 대신한다)
+local loadLogo = Instance.new("ImageLabel"); loadLogo.BackgroundTransparency = 1; loadLogo.ImageTransparency = 1; loadLogo.ScaleType = Enum.ScaleType.Fit; loadLogo.ResampleMode = Enum.ResamplerMode.Pixelated
+loadLogo.AnchorPoint = Vector2.new(0.5, 0); loadLogo.Size = UDim2.new(0, 600, 0, 225); loadLogo.Position = UDim2.new(0.5, 0, 0, -40); loadLogo.ZIndex = 6; loadLogo.Parent = loadBox
 do local sc = Instance.new("UIScale"); sc.Parent = loadBox; local function f() local vp = workspace.CurrentCamera.ViewportSize; sc.Scale = math.clamp(math.min(vp.X / 640, vp.Y / 420), 0.5, 1.6) end; f(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(f) end
 local function logoText(t, y, size, color)
   local l = Instance.new("TextLabel"); l.BackgroundTransparency = 1; l.Size = UDim2.new(1, 0, 0, size + 8); l.Position = UDim2.new(0, 0, 0, y); l.Text = t; l.Font = Enum.Font.GothamBlack; l.TextSize = size; l.TextColor3 = color; l.Parent = loadBox
   local s = Instance.new("UIStroke"); s.Thickness = 3; s.Color = Color3.fromRGB(40, 14, 60); s.Parent = l; return l
 end
-logoText("DUNGEON", 10, 64, Color3.fromRGB(255, 214, 90)); logoText("SLASH", 80, 72, Color3.fromRGB(255, 120, 90)); logoText("자동 전투 핵 앤 슬래시", 166, 20, Color3.fromRGB(220, 210, 255))
-local loadBarBg = Instance.new("Frame"); loadBarBg.Size = UDim2.new(0.8, 0, 0, 14); loadBarBg.Position = UDim2.new(0.1, 0, 0, 226); loadBarBg.BackgroundColor3 = Color3.fromRGB(30, 20, 56); loadBarBg.Parent = loadBox
+local logoTxt = { logoText("ARCANA", 10, 64, Color3.fromRGB(255, 214, 90)), logoText("SLAYER", 80, 72, Color3.fromRGB(255, 120, 90)) }; logoText("자동 전투 핵 앤 슬래시", 186, 20, Color3.fromRGB(235, 215, 200))
+local loadBarBg = Instance.new("Frame"); loadBarBg.Size = UDim2.new(0.8, 0, 0, 14); loadBarBg.Position = UDim2.new(0.1, 0, 0, 226); loadBarBg.BackgroundColor3 = Color3.fromRGB(30, 12, 10); loadBarBg.Parent = loadBox
 Instance.new("UICorner", loadBarBg).CornerRadius = UDim.new(1, 0); do local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(214, 168, 70); s.Thickness = 2; s.Parent = loadBarBg end
 local loadBar = Instance.new("Frame"); loadBar.Size = UDim2.new(0, 0, 1, 0); loadBar.BackgroundColor3 = Color3.fromRGB(255, 200, 80); loadBar.Parent = loadBarBg; Instance.new("UICorner", loadBar).CornerRadius = UDim.new(1, 0)
-local loadTxt = logoText("서버에 연결하는 중...", 250, 16, Color3.fromRGB(230, 225, 250)); loadTxt.Font = Enum.Font.GothamMedium
+local loadTxt = logoText("서버에 연결하는 중...", 250, 16, Color3.fromRGB(235, 225, 215)); loadTxt.Font = Enum.Font.GothamMedium
 local function loadStep(text, p) loadTxt.Text = text; TweenService:Create(loadBar, TweenInfo.new(0.25), { Size = UDim2.new(math.clamp(p, 0, 1), 0, 1, 0) }):Play() end
 loadBox.ZIndex = 5
 do   -- 입자 · 그라데이션 흐름 · 배경 그림 천천히 이동
@@ -45,9 +52,10 @@ do   -- 입자 · 그라데이션 흐름 · 배경 그림 천천히 이동
     loadGrad.Offset = Vector2.new(0, math.sin(t * 0.4) * 0.25); loadGrad.Rotation = 90 + math.sin(t * 0.25) * 20
     for _, m in ipairs(motes) do
       m.y -= m.sp * dt; if m.y < -0.05 then m.y = 1.05; m.x = math.random() end
-      m.f.Position = UDim2.new(m.x + math.sin(t * 0.8 + m.ph) * 0.015, 0, m.y, 0); m.f.BackgroundTransparency = 0.25 + 0.5 * (0.5 + 0.5 * math.sin(t * 2 + m.ph))
+      m.f.Position = UDim2.new(m.x + math.sin(t * 0.8 + m.ph) * 0.015, 0, m.y, 0); m.f.BackgroundTransparency = math.clamp(0.1 + 0.6 * (0.5 + 0.5 * math.sin(t * 3 + m.ph)) + (1 - m.y) * 0.3, 0, 1)   -- 위로 갈수록 사그라든다
     end
-    loadArt.Position = UDim2.new(-0.1 + math.sin(t * 0.12) * 0.1, 0, 0, 0)
+    loadArt.Position = UDim2.new(-0.04 + math.sin(t * 0.1) * 0.04, 0, -0.04 + math.cos(t * 0.13) * 0.02, 0)
+    loadLogo.Position = UDim2.new(0.5, 0, 0, -40 + math.sin(t * 1.3) * 4)   -- 로고가 살짝 떠 있다
   end)
 end
 
@@ -81,10 +89,14 @@ local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)
 local Theme = require(RS.Game.Theme)   -- 글꼴 · 색
 local Menus = require(RS.Game.Menus)   -- 장비 · 스킬 · 패시브 트리 화면
-task.spawn(function()   -- 전투 배경 그림이 오면 로딩 배경으로 서서히 깐다
-  local a = Sprites.art("bg1"); if not a or not loadGui.Parent then return end
+local Skin = require(RS.Game.Skin)   -- UI 키트 그림 (없으면 기존 모양)
+task.spawn(function()   -- 시작 그림 · 로고가 오면 서서히 깐다 (시작 그림이 없으면 전투 배경)
+  local a = Sprites.art("bg_title") or Sprites.art("bg1"); if not a or not loadGui.Parent then return end
   loadArt.ImageContent = a.content
-  TweenService:Create(loadArt, TweenInfo.new(1.2), { ImageTransparency = 0 }):Play(); TweenService:Create(loadDim, TweenInfo.new(1.2), { BackgroundTransparency = 0.45 }):Play()
+  TweenService:Create(loadArt, TweenInfo.new(1.2), { ImageTransparency = 0 }):Play(); TweenService:Create(loadDim, TweenInfo.new(1.2), { BackgroundTransparency = 0.85 }):Play()
+  local l = Sprites.art("ui_logo"); if not l or not loadGui.Parent then return end
+  loadLogo.ImageContent = l.content; for _, t in ipairs(logoTxt) do t.Visible = false end
+  TweenService:Create(loadLogo, TweenInfo.new(0.8), { ImageTransparency = 0 }):Play()
 end)
 
 local gui = Instance.new("ScreenGui"); gui.Name = "DungeonUI"; gui.ResetOnSpawn = false; gui.IgnoreGuiInset = true; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; gui.Parent = PG
@@ -111,7 +123,7 @@ local function button(parent, text, pos, sz, cb, color)
   local g = Instance.new("UIGradient"); g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)); g.Rotation = 90; g.Parent = b
   local s1 = Instance.new("UIStroke"); s1.Color = Color3.fromRGB(20, 10, 30); s1.Thickness = 2; s1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s1.Parent = b
   local s2 = Instance.new("UIStroke"); s2.Color = Color3.fromRGB(20, 10, 30); s2.Thickness = 1.5; s2.Parent = b
-  b.MouseButton1Click:Connect(cb); return b
+  b.MouseButton1Click:Connect(cb); task.defer(Skin.button, b); return b
 end
 local function n(x) x = math.floor(x or 0); if x >= 1e9 then return string.format("%.1fB", x / 1e9) elseif x >= 1e6 then return string.format("%.1fM", x / 1e6) elseif x >= 1e4 then return string.format("%.1fK", x / 1e3) end return tostring(x) end
 
@@ -132,16 +144,30 @@ mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAl
 local PILLS = { { "lv", Color3.fromRGB(240, 200, 70), "Lv", 64 }, { "gold", Color3.fromRGB(240, 190, 60), "골드", 104 }, { "ore", Color3.fromRGB(150, 170, 200), "강화석", 96 }, { "hone", Color3.fromRGB(110, 210, 150), "연마석", 96 }, { "orb", Color3.fromRGB(190, 120, 240), "구슬", 90 }, { "gem", Color3.fromRGB(90, 220, 255), "보석", 90 } }
 local pillLbl = {}
 for i, p in ipairs(PILLS) do
-  local f = mk("Frame", { Size = UDim2.new(0, p[4], 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, LayoutOrder = i, ZIndex = 11 }, pillRow); corner(f); stroke(f, p[2], 1.5)
+  local f = mk("Frame", { Size = UDim2.new(0, p[4], 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, LayoutOrder = i, ZIndex = 11 }, pillRow); corner(f); stroke(f, p[2], 1.5); Skin.frame(f, "ui_pill", 0.3, 0.5)
   local ic = ({ gold = "i_gold", ore = "i_ore", hone = "i_hone", orb = "i_chaos" })[p[1]]   -- 재화 아이콘 (없으면 색 점)
   local ia = ic and Sprites.art(ic)
   if ia then mk("ImageLabel", { Size = UDim2.new(0, 26, 0, 26), Position = UDim2.new(0, 2, 0.5, -13), BackgroundTransparency = 1, ImageContent = ia.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 12 }, f)
   else local dot = mk("Frame", { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(0, 9, 0.5, -6), BackgroundColor3 = p[2], ZIndex = 12 }, f); corner(dot) end
   pillLbl[p[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 26, 0, 0), Size = UDim2.new(1, -30, 1, 0), TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Text = "-", ZIndex = 12 }, f)
 end
--- 왼쪽 위 능력치 (마을 · 지도에서)
-local statLbl = mk("TextLabel", { BackgroundColor3 = DARK, BackgroundTransparency = 0.25, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 330, 0, 44), TextColor3 = Color3.fromRGB(225, 220, 245), Font = Enum.Font.GothamMedium, TextSize = 13, TextWrapped = true, Text = "", ZIndex = 11 }, hud)
-corner(statLbl, 8); local statScale = mk("UIScale", { Scale = K }, statLbl); mk("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, statLbl)
+-- 왼쪽 위 능력치 카드 (마을 · 지도에서): 영웅 초상화 + 능력치 칸 + 진행도
+local statLbl = mk("Frame", { BackgroundColor3 = DARK, BackgroundTransparency = 0.15, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 384, 0, 78), ZIndex = 11 }, hud)
+corner(statLbl, 8); stroke(statLbl, GOLD, 1.5); local statScale = mk("UIScale", { Scale = K }, statLbl); Skin.frame(statLbl, "ui_card", 0.25, 0.5)
+local statVal, statProg = {}, nil
+do
+  local pf = mk("Frame", { Position = UDim2.new(0, 9, 0, 9), Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = Color3.fromRGB(14, 10, 12), ZIndex = 12 }, statLbl); corner(pf, 6); Skin.frame(pf, "ui_slot", 0.3, 0.4)
+  local wa = Sprites.art("warrior")
+  if wa then mk("ImageLabel", { Size = UDim2.new(1.5, 0, 1.5, 0), Position = UDim2.new(-0.25, 0, -0.05, 0), BackgroundTransparency = 1, ImageContent = wa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, mk("Frame", { Size = UDim2.new(1, -8, 1, -8), Position = UDim2.new(0, 4, 0, 4), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 13 }, pf)) end
+  local STATS = { { "hp", "체력", Color3.fromRGB(235, 90, 80) }, { "atk", "공격력", Color3.fromRGB(240, 170, 80) }, { "mag", "주문력", Color3.fromRGB(150, 140, 255) }, { "def", "방어력", Color3.fromRGB(140, 190, 230) }, { "crit", "치명", Color3.fromRGB(255, 220, 110) } }
+  for i, st in ipairs(STATS) do
+    local x = 78 + (i - 1) * 60
+    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 8), Size = UDim2.new(0, 58, 0, 14), Text = st[2], Font = Theme.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(190, 175, 160), ZIndex = 12 }, statLbl)
+    statVal[st[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 22), Size = UDim2.new(0, 58, 0, 22), Text = "", Font = Theme.FONT, TextSize = 19, TextScaled = false, TextColor3 = st[3], ZIndex = 12 }, statLbl)
+    mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, statVal[st[1]])
+  end
+  statProg = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 80, 0, 50), Size = UDim2.new(1, -90, 0, 18), Text = "", Font = Enum.Font.GothamMedium, TextSize = 12, TextColor3 = Color3.fromRGB(215, 205, 195), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 }, statLbl)
+end
 -- 오른쪽 아래 이동 버튼 (모바일 점프 버튼 자리 — 이 게임은 이동 조작을 숨겼으므로 비어 있다)
 local dock = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -12), Size = UDim2.new(0, 4 * 84 + 3 * 8, 0, 72), ZIndex = 11 }, hud)
 local dockScale = mk("UIScale", { Scale = K }, dock)
@@ -166,12 +192,13 @@ local function setSummary(s)
   if not s then return end
   summary = s
   pillLbl.lv.Text = "Lv " .. tostring(s.level); pillLbl.gold.Text = n(s.gold); pillLbl.ore.Text = n(s.ore); pillLbl.hone.Text = n(s.hone); pillLbl.orb.Text = n(s.orbC); pillLbl.gem.Text = n(s.gems)
-  statLbl.Text = string.format("체력 %s · 공격 %s · 주문 %s · 방어 %s · 치명 %.0f%%\n스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", n(s.maxHp), n(s.atk), n(s.mag), n(s.def), s.crit * 100, s.cleared, s.riftBest, s.best)
+  statVal.hp.Text = n(s.maxHp); statVal.atk.Text = n(s.atk); statVal.mag.Text = n(s.mag); statVal.def.Text = n(s.def); statVal.crit.Text = string.format("%.0f%%", s.crit * 100)
+  statProg.Text = string.format("스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", s.cleared, s.riftBest, s.best)
 end
 
 -- ── 가운데 창 (건물 · 장비 · 문지기 등): 제목 + 탭 + 내용 목록 + 메시지 ──
 local root = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, INSET / 2), Size = UDim2.new(0, 880, 0, 540), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 21 }, panelLayer)
-corner(root, 14); stroke(root, GOLD, 2.5)
+corner(root, 14); stroke(root, GOLD, 2.5); Skin.frame(root, "ui_panel", 0.2, 0.6)
 local panelScale = mk("UIScale", { Scale = 1 }, root)
 local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -90, 0, 36), Font = Theme.FONT, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
 local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 50), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
@@ -409,7 +436,7 @@ local function setScreen(name)
 end
 root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
 panelLayer.MouseButton1Click:Connect(closePanel)
-do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20 end
+do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20; b:SetAttribute("SkinClose", true) end
 local function openPanel(title, tabs, first)
   fitPanel(); panelTitle.Text = title; panelLayer.Visible = true; resultLayer.Visible = false; if cancelAutoFn then cancelAutoFn() end
   for _, c in ipairs(tabRow:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
@@ -418,7 +445,7 @@ local function openPanel(title, tabs, first)
     for k, b in pairs(btns) do b.BackgroundColor3 = k == key and Color3.fromRGB(160, 116, 40) or Color3.fromRGB(60, 52, 100) end
     clear(); views[key]()
   end
-  if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 110, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; btns[t[2]] = b end end
+  if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 110, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; b:SetAttribute("SkinTab", true); btns[t[2]] = b end end
   sel(first or tabs[1][2])
 end
 
@@ -726,10 +753,10 @@ end
 infoCard = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14), Size = UDim2.new(0, 560, 0, 214), BackgroundColor3 = Color3.fromRGB(24, 20, 44), Visible = false, ZIndex = 15 }, hud)
 corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); local infoScale = mk("UIScale", { Scale = K }, infoCard)
 local function showInfo(t)
-  infoCard:ClearAllChildren(); corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
+  infoCard:ClearAllChildren(); infoCard:SetAttribute("Skinned", nil); corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); Skin.frame(infoCard, "ui_panel", 0.2, 0.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
   local st, hint, prog = nodeState(t)
   mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 10), Size = UDim2.new(1, -80, 0, 30), Font = Enum.Font.GothamBlack, TextSize = 22, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = t.icon .. "  " .. t.name .. (prog and ("   " .. prog) or ""), ZIndex = 16 }, infoCard)
-  do local b = button(infoCard, "X", UDim2.new(1, -50, 0, 10), UDim2.new(0, 36, 0, 32), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 16 end
+  do local b = button(infoCard, "X", UDim2.new(1, -50, 0, 10), UDim2.new(0, 36, 0, 32), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 16; b:SetAttribute("SkinClose", true) end
   local desc = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 44), Size = UDim2.new(1, -36, 0, 94), Font = Enum.Font.GothamMedium, TextSize = 14, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(225, 220, 245), Text = "", ZIndex = 16 }, infoCard)
   local row = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 1, -58), Size = UDim2.new(1, -32, 0, 44), ZIndex = 16 }, infoCard)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)
@@ -887,6 +914,17 @@ relayout()   -- 로딩 중(그림을 받는 동안) 화면 크기가 바뀌었�
 loadStep("준비 완료!", 1)
 setScreen("town")
 task.wait(0.35)
+do   -- 시작화면: 눌러야 들어간다
+  loadBarBg.Visible = false; loadTxt.Text = "화면을 눌러 시작"; loadTxt.TextSize = 22; loadTxt.Font = Theme.FONT
+  local pressed = false
+  local tw = TweenService:Create(loadTxt, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { TextTransparency = 0.7 }); tw:Play()
+  local hit = Instance.new("TextButton"); hit.Size = UDim2.new(1, 0, 1, 0); hit.BackgroundTransparency = 1; hit.Text = ""; hit.ZIndex = 50; hit.Parent = loadBg
+  hit.MouseButton1Click:Connect(function() pressed = true end)
+  while not pressed do task.wait() end
+  tw:Cancel(); hit:Destroy()
+  local fl = Instance.new("Frame"); fl.Size = UDim2.new(1, 0, 1, 0); fl.BackgroundColor3 = Color3.fromRGB(255, 230, 200); fl.BorderSizePixel = 0; fl.ZIndex = 60; fl.Parent = loadBg   -- 번쩍
+  TweenService:Create(fl, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
+end
 loadBox.Visible = false; for _, m in ipairs(motes) do m.f.Visible = false end
 TweenService:Create(loadArt, TweenInfo.new(0.5), { ImageTransparency = 1 }):Play(); TweenService:Create(loadDim, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
 local fade = TweenService:Create(loadBg, TweenInfo.new(0.5), { BackgroundTransparency = 1 }); fade:Play(); fade.Completed:Connect(function() loadGui:Destroy() end)

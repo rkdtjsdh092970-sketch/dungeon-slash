@@ -7,6 +7,7 @@ local Data = RS.Game.Data
 local Skills = require(Data.Skills)
 local Passives = require(Data.Passives)
 local Items = require(Data.Items)
+local Skin = require(script.Parent.Skin)
 local M = {}
 local C   -- ctx: rpc, list, msg, clear, setSummary, summary(), toast, prompt, Sprites
 
@@ -38,6 +39,7 @@ function M.btn(parent, text, size, color, cb)
   mk("UIGradient", { Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 170, 170)), Rotation = 90 }, b)
   mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(20, 10, 30), ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual }, b)
   if cb then b.MouseButton1Click:Connect(cb) end
+  Skin.button(b)
   return b
 end
 local function txt(parent, text, size, pos, sz, color, font, xa)
@@ -81,6 +83,7 @@ function M.tile(parent, size, o)
   if o.br then local l = txt(b, o.br, 13, UDim2.new(0, 2, 1, -18), UDim2.new(1, -6, 0, 16), Color3.fromRGB(120, 255, 140), M.FONT, Enum.TextXAlignment.Right); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
   if o.check then local c = mk("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = M.FONT, TextSize = 14 }, b); corner(c) end
   b.MouseEnter:Connect(function() st.Thickness = 4 end); b.MouseLeave:Connect(function() st.Thickness = o.selected and 4 or 2.5 end)
+  do local sk = Skin.frame(b, "ui_slot", 0.3, 0.5); if sk then sk.ImageColor3 = Color3.new(1, 1, 1):Lerp(col, 0.55); if o.selected then sk.ImageColor3 = col end end end   -- 슬롯 그림을 등급 색으로 물들임
   if o.click then b.MouseButton1Click:Connect(function() tipHide(); o.click() end) end
   if o.tip then b.MouseEnter:Connect(function() tipShow(o.tip) end); b.MouseLeave:Connect(tipHide); b.AncestryChanged:Connect(function(_, par) if not par then tipHide() end end) end
   return b
@@ -89,6 +92,7 @@ end
 local function area(h) return mk("Frame", { Size = UDim2.new(1, -16, 0, h or 392), BackgroundTransparency = 1 }, C.list) end
 local function box(parent, pos, size, title)
   local f = mk("Frame", { Position = pos, Size = size, BackgroundColor3 = M.PANEL }, parent); corner(f, 10); stroke(f, Color3.fromRGB(80, 66, 130), 1.5)
+  Skin.frame(f, "ui_card", 0.25, 0.5)
   if title then local t = txt(f, title, 15, UDim2.new(0, 10, 0, 6), UDim2.new(1, -20, 0, 20), Color3.fromRGB(255, 220, 120), M.FONT) end
   return f
 end
@@ -327,6 +331,7 @@ end
 -- 한 줄 카드 (아이콘 · 제목 · 설명 · 진행 바 · 오른쪽 버튼)
 local function rowCard(o)
   local f = mk("Frame", { Size = UDim2.new(1, -16, 0, o.h or 74), BackgroundColor3 = o.done and Color3.fromRGB(34, 52, 44) or M.PANEL }, C.list); corner(f, 10); stroke(f, o.ready and M.GOLD or Color3.fromRGB(80, 66, 130), o.ready and 2.5 or 1.5)
+  Skin.frame(f, "ui_card", 0.25, 0.5)
   local x = 12
   if o.emoji or o.art then local t = M.tile(f, 52, { art = o.art, emoji = o.emoji, color = o.color or M.GOLD }); t.Position = UDim2.new(0, 10, 0.5, -26); x = 72 end
   txt(f, o.title, 16, UDim2.new(0, x, 0, 8), UDim2.new(1, -x - 150, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)

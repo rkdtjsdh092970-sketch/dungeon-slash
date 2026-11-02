@@ -111,7 +111,7 @@ end
 MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought) if id == SPEED4_ID and bought then ownsSpeed4[p.UserId] = true end end)
 
 Players.PlayerAdded:Connect(function(p)
-  if not betaAllowed(p) then p:Kick("Dungeon Slash is in closed beta (invite only). Thanks for your interest!"); return end
+  if not betaAllowed(p) then p:Kick("Arcana Slayer is in closed beta (invite only). Thanks for your interest!"); return end
   p.Chatted:Connect(function(text) betaCommand(p, text) end)
   local sv, okLoad = load(p.UserId)
   if okLoad == false then p:Kick("Couldn't load your save data. Please rejoin in a moment. (Your progress is protected.)"); return end

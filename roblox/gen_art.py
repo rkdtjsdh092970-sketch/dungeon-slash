@@ -14,8 +14,10 @@ ART = [
     ('c_brute', 'mobs/brute.png', (256, 256)),
     ('boss0', 'bosses/groom.png', (256, 256)),
     ('bg1', 'bg/act1.jpg', (768, 320)),
+    ('bg8', 'bg/act8.png', (768, 320)),
     # 마을 · 월드맵 (개발용 전달 크기 ~1MB 이내로 줄임. 출시 땐 원본을 업로드해 id 사용)
     ('bg_town', 'bg/town.jpg', (640, 360)),
+    ('bg_title', 'bg/title.jpg', (800, 450)), ('ui_logo', 'ui/logo.png', (512, 192)),   # 시작화면
     ('bg_world', 'map/world.jpg', (640, 392)),
     ('b_skill_hall', 'town/skill_hall.png', (192, 192)),
     ('b_forge', 'town/forge.png', (192, 192)),
@@ -30,6 +32,11 @@ ART = [
     ('card_back', 'cards/back.png', (256, 384)),
     *[(f'card_f{r}', f'cards/frame{r}.png', (256, 384)) for r in range(5)],
     *[(f'card_burst{r}', f'cards/burst{r}.png', (384, 384)) for r in (2, 3, 4)],
+    # UI 키트 (9-slice 로 늘려 씀, game/Skin.lua)
+    ('ui_panel', 'ui/panel.png', (384, 384)), ('ui_title', 'ui/title.png', (384, 96)), ('ui_card', 'ui/card.png', (384, 96)),
+    *[(f'ui_btn_{c}', f'ui/btn_{c}.png', (192, 64)) for c in ('gold', 'red', 'blue', 'gray')],
+    ('ui_tab', 'ui/tab.png', (128, 48)), ('ui_tab_on', 'ui/tab_on.png', (128, 48)), ('ui_close', 'ui/close.png', (64, 64)),
+    ('ui_slot', 'ui/slot.png', (128, 128)), ('ui_pill', 'ui/pill.png', (192, 48)),
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'
