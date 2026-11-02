@@ -548,6 +548,22 @@ function M.forgeList(sv, bag)   -- bag = true 이면 가방 장비 (좋은 것�
   end
   return out
 end
+-- 이 장비에 붙을 수 있는 옵션 목록: 나올 확률 · 수치 범위 (이 티어에서 가장 낮은 티어 최소 ~ 가장 좋은 티어 최대)
+function M.affixList(sv, uid)
+  local it = findItem(sv, uid); if not it then return {} end
+  local probe = { slot = it.slot, affixes = {}, sock = {}, base = it.base, wt = it.wt, ilvl = it.ilvl, rarity = it.rarity }
+  local pool = Loot.affixPool(probe); local tot = 0; for _, a in ipairs(pool) do tot += a.w end
+  local lo, hi = math.max(0, 5 - (it.ilvl or 1)), math.min(5, 8 - (it.ilvl or 1))
+  local MIN = { NextNumber = function() return 0 end, NextInteger = function(_, a) return a end }
+  local MAX = { NextNumber = function() return 1 end, NextInteger = function(_, _, b) return b end }
+  local out = {}
+  for _, a in ipairs(pool) do
+    local x, y = Loot.mkAff(MIN, a, it.ilvl, it.rarity, hi), Loot.mkAff(MAX, a, it.ilvl, it.rarity, lo)
+    out[#out + 1] = { low = M.affixText(x):gsub("%s+%[T%d+%]$", ""), high = M.affixText(y):gsub("%s+%[T%d+%]$", ""), pct = tot > 0 and a.w / tot or 0 }
+  end
+  table.sort(out, function(p, q) return p.pct > q.pct end)
+  return out
+end
 function M.reroll(sv, uid, idx, seed) local it = findItem(sv, uid); if not it then return false, "Gear not found" end return Econ.rerollAffix(sv, it, tonumber(idx), Random.new((seed or os.time()) + uid)) end
 function M.chaos(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "Gear not found" end return Econ.addAffix(sv, it, Random.new((seed or os.time()) + uid)) end
 function M.divine(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "Gear not found" end return Econ.divine(sv, it, Random.new((seed or os.time()) + uid)) end

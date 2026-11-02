@@ -1049,7 +1049,26 @@ function M.forge()
   cost(E, { { "i_gold", sel.enhGold, (s.gold or 0) >= sel.enhGold and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) }, { "i_ore", sel.enhOre, (s.ore or 0) >= sel.enhOre and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) } }, UDim2.new(0, 130, 0, 14))
   local eb = M.btn(E, string.format("Enhance to +%d", sel.enh + 1), UDim2.new(0, 120, 0, 38), M.BTN.green, function() res(C.rpc:InvokeServer("enhance", sel.uid)) end); eb.AnchorPoint = Vector2.new(1, 0.5); eb.Position = UDim2.new(1, -8, 0.5, 0)
   -- 옵션 (티어 표시 · 재굴림)
-  txt(R, "Affixes", 15, UDim2.new(0, 14, 0, 94), UDim2.new(0, 200, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+  txt(R, "Affixes", 15, UDim2.new(0, 14, 0, 94), UDim2.new(0, 80, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+  local anyRR = false; for _, a in ipairs(sel.affixes or {}) do if a.locked then anyRR = true end end
+  -- 한 장비에서 한 줄만: 아직 안 굴렸으면 안내, 굴렸으면 그 줄이 "재굴림 줄"
+  txt(R, anyRR and "Only the gold line can be rerolled on this item" or "Pick ONE line to reroll — after that, only that line can be rerolled on this item", 12, UDim2.new(0, 90, 0, 96), UDim2.new(1, -230, 0, 18), Color3.fromRGB(230, 200, 140))
+  local lb = M.btn(R, "Possible Affixes", UDim2.new(0, 128, 0, 24), M.BTN.gray, function()   -- 이 장비에 나올 수 있는 옵션 정리
+    local e = C.rpc:InvokeServer("affixlist", sel.uid); local list = (e and e.list) or {}
+    local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Text = "", AutoButtonColor = false, ZIndex = 30 }, R)
+    local P = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.94, 0, 0.94, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 11), ZIndex = 31 }, ov); corner(P, 8); stroke(P, M.GOLD, 2)
+    local t = txt(P, string.format("Possible affixes · %s · T%d", Items.SLOT_NAME[sel.slot] or sel.slot, sel.ilvl or 1), 16, UDim2.new(0, 14, 0, 8), UDim2.new(1, -70, 0, 22), Color3.fromRGB(255, 225, 140), M.FONT); t.ZIndex = 32
+    local x = M.btn(P, "X", UDim2.new(0, 34, 0, 30), M.BTN.red, function() ov:Destroy() end); x.Position = UDim2.new(1, -42, 0, 6); x.ZIndex = 32
+    local hd = txt(P, "Chance          Lowest roll  →  Highest roll (at this gear tier)", 12, UDim2.new(0, 14, 0, 34), UDim2.new(1, -28, 0, 16), Color3.fromRGB(170, 160, 140)); hd.ZIndex = 32
+    local lst = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 54), Size = UDim2.new(1, -20, 1, -62), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5, ZIndex = 32 }, P)
+    mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
+    for i, a in ipairs(list) do
+      local r = mk("Frame", { Size = UDim2.new(1, -6, 0, 24), BackgroundColor3 = i % 2 == 0 and Color3.fromRGB(30, 22, 18) or Color3.fromRGB(24, 18, 14), LayoutOrder = i, ZIndex = 32 }, lst); corner(r, 4)
+      local c1 = txt(r, string.format("%.1f%%", a.pct * 100), 13, UDim2.new(0, 8, 0, 3), UDim2.new(0, 60, 0, 18), Color3.fromRGB(150, 220, 255), M.FONT); c1.ZIndex = 33; c1:SetAttribute("NoTr", true)
+      local c2 = txt(r, tostring(a.low) .. "   →   " .. tostring(a.high), 13, UDim2.new(0, 76, 0, 3), UDim2.new(1, -84, 0, 18), Color3.fromRGB(235, 228, 215)); c2.ZIndex = 33
+    end
+  end)
+  lb.Position = UDim2.new(1, -140, 0, 92); lb.TextSize = 12
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 12, 0, 116), Size = UDim2.new(1, -24, 1, -226), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, R)   -- 아래 구슬 줄까지 꽉
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   for i, a in ipairs(sel.affixes or {}) do
@@ -1057,10 +1076,19 @@ function M.forge()
     local tc = a.t and (M.TIER_COL[a.t] or M.TIER_COL[6]) or Color3.fromRGB(90, 90, 90)
     local bd = mk("TextLabel", { Size = UDim2.new(0, 30, 0, 18), Position = UDim2.new(0, 6, 0.5, -9), BackgroundColor3 = tc, Text = a.t and ("T" .. a.t) or "–", TextSize = 12, Font = M.FONT, TextColor3 = Color3.fromRGB(20, 12, 8) }, row); corner(bd, 4)
     txt(row, a.text, 14, UDim2.new(0, 42, 0, 6), UDim2.new(1, -260, 0, 20), Color3.fromRGB(235, 228, 215))
-    if a.locked then txt(row, "🔒 Locked", 14, UDim2.new(1, -100, 0, 6), UDim2.new(0, 92, 0, 20), Color3.fromRGB(170, 165, 150), M.FONT)
-    else
+    if not a.locked then   -- 굴릴 수 있는 줄 (이미 굴린 줄이 있으면 그 줄만): 금빛 테두리
+      if anyRR then stroke(row, M.GOLD, 2); local tg = txt(row, "★ Reroll line", 11, UDim2.new(1, -300, 0, 9), UDim2.new(0, 84, 0, 14), Color3.fromRGB(255, 215, 120), M.FONT); tg.TextXAlignment = Enum.TextXAlignment.Right end
       cost(row, { { "i_gold", sel.rerollGold }, { "i_ore", sel.rerollOre } }, UDim2.new(1, -212, 0, 4))
-      local b = M.btn(row, "Reroll", UDim2.new(0, 80, 0, 26), M.BTN.blue, function() res(C.rpc:InvokeServer("reroll", { uid = sel.uid, idx = i - 1 })) end); b.Position = UDim2.new(1, -84, 0, 3)
+      local b = M.btn(row, "Reroll", UDim2.new(0, 80, 0, 26), M.BTN.blue, function()
+        if anyRR then res(C.rpc:InvokeServer("reroll", { uid = sel.uid, idx = i - 1 })); return end
+        -- 이 장비에서 처음 굴릴 때: 한 줄만 굴릴 수 있다는 것을 확인받는다
+        local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Text = "", AutoButtonColor = false, ZIndex = 30 }, R)
+        local P = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 380, 0, 170), BackgroundColor3 = Color3.fromRGB(18, 13, 11), ZIndex = 31 }, ov); corner(P, 8); stroke(P, M.GOLD, 2)
+        local t = txt(P, "Reroll this line?", 18, UDim2.new(0, 14, 0, 12), UDim2.new(1, -28, 0, 24), Color3.fromRGB(255, 225, 140), M.FONT); t.ZIndex = 32
+        local d = txt(P, "Each item can reroll only ONE line. Once you reroll this line, it becomes this item's reroll line and the other lines stay as they are.\n\n" .. tostring(a.text), 13, UDim2.new(0, 14, 0, 40), UDim2.new(1, -28, 0, 80), Color3.fromRGB(230, 220, 205)); d.TextWrapped = true; d.ZIndex = 32
+        local ok = M.btn(P, "Reroll", UDim2.new(0, 120, 0, 32), M.BTN.blue, function() ov:Destroy(); res(C.rpc:InvokeServer("reroll", { uid = sel.uid, idx = i - 1 })) end); ok.Position = UDim2.new(0.5, -126, 1, -42); ok.ZIndex = 32
+        local no = M.btn(P, "Cancel", UDim2.new(0, 120, 0, 32), M.BTN.gray, function() ov:Destroy() end); no.Position = UDim2.new(0.5, 6, 1, -42); no.ZIndex = 32
+      end); b.Position = UDim2.new(1, -84, 0, 3)
     end
   end
   -- 구슬

@@ -194,9 +194,8 @@ function M.create(parent, W, H, replayAct)
   end
   S.timeLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 50 * k), Size = UDim2.new(0, 120 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, root), 1.5)
   -- 아래 가운데: 장착 스킬 (쓰면 쿨타임 표시)
-  S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12 * k), Size = UDim2.new(0, 0, 0, 82 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.15, Visible = false, ZIndex = 8 }, root)
-  mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar)
-  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8 * k), SortOrder = Enum.SortOrder.LayoutOrder }, S.skillBar)
+  S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16 * k, 1, -10 * k), Size = UDim2.new(0, 0, 0, 122 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Visible = false, ZIndex = 8 }, root)   -- 테두리 상자 없이 카드만 (왼쪽 아래)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Bottom, Padding = UDim.new(0, 8 * k), SortOrder = Enum.SortOrder.LayoutOrder }, S.skillBar)
   mk("UIPadding", { PaddingLeft = UDim.new(0, 8 * k), PaddingRight = UDim.new(0, 8 * k) }, S.skillBar)
   S.skillCells = {}
   S.plAnim = { name = "idle", t = 0 }
@@ -415,7 +414,10 @@ function M:setHud(h)
     local col = sk.color or Color3.fromRGB(200, 200, 220)
     local RCOL = { Color3.fromRGB(170, 170, 180), Color3.fromRGB(80, 150, 255), Color3.fromRGB(255, 150, 40), Color3.fromRGB(190, 90, 255), Color3.fromRGB(230, 40, 50) }
     local rc = RCOL[(sk.rarity or 0) + 1] or col
-    local f = mk("Frame", { Size = UDim2.new(0, 50 * k, 0, 70 * k), BackgroundColor3 = Color3.fromRGB(30, 22, 52), LayoutOrder = i, ZIndex = 9, ClipsDescendants = true }, self.skillBar)   -- 카드 모양 칸
+    local hold = mk("Frame", { Size = UDim2.new(0, 68 * k, 0, 122 * k), BackgroundTransparency = 1, LayoutOrder = i, ZIndex = 9 }, self.skillBar)   -- 카드 + 위 쿨타임 숫자
+    local cdTxt = mk("TextLabel", { Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 22 * k), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextSize = math.floor(20 * k), TextColor3 = Color3.fromRGB(255, 235, 170), ZIndex = 14 }, hold)
+    mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, cdTxt); cdTxt:SetAttribute("NoTr", true)
+    local f = mk("Frame", { Position = UDim2.new(0, 0, 0, 24 * k), Size = UDim2.new(0, 68 * k, 0, 98 * k), BackgroundColor3 = Color3.fromRGB(30, 22, 52), ZIndex = 9, ClipsDescendants = true }, hold)   -- 카드
     mk("UICorner", { CornerRadius = UDim.new(0, 7 * k) }, f); mk("UIStroke", { Color = rc, Thickness = 2.5 }, f)
     mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.5), Color3.fromRGB(22, 16, 36)), Rotation = 90 }, f)
     local ic = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0.6, 0), Text = sk.icon or "✦", TextScaled = true, Font = Theme.FONT, TextColor3 = col, ZIndex = 10 }, f)
@@ -427,7 +429,7 @@ function M:setHud(h)
     local nm = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, -4, 1, 0), Position = UDim2.new(0, 2, 0, 0), Text = sk.name or "", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.new(1, 1, 1), ZIndex = 12 }, band)
     mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
     local ov = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 13 }, f)
-    self.skillCells[sk.id] = { cd = math.max(0.3, sk.cd or 1), left = 0, ov = ov }
+    self.skillCells[sk.id] = { cd = math.max(0.3, sk.cd or 1), left = 0, ov = ov, cdTxt = cdTxt }
   end
 end
 function M:speedMenu(open)
@@ -461,7 +463,8 @@ function M:play(replay, onDone, maxSec, hud)
     local sn = replay.snaps
     while self.idx < #sn and sn[self.idx + 1].t <= self.t do self.idx += 1; self:applySnap(sn[self.idx], lanes) end
     self.timeLbl.Text = string.format("%.0f / %.0fs", math.min(self.t, total), total)
-    for _, cell in pairs(self.skillCells) do if cell.left > 0 then cell.left = math.max(0, cell.left - dt * self.spd * self.userSpd); cell.ov.Size = UDim2.new(1, 0, cell.left / cell.cd, 0) end end
+    for _, cell in pairs(self.skillCells) do if cell.left > 0 then cell.left = math.max(0, cell.left - dt * self.spd * self.userSpd); cell.ov.Size = UDim2.new(1, 0, cell.left / cell.cd, 0)
+      if cell.cdTxt then cell.cdTxt.Text = (cell.left > 0 and cell.cd >= 1.5) and string.format("%.1f", cell.left) or "" end end end   -- 쿨타임 숫자 (짧은 평타는 생략)
     if self.shake and self.shake > 0 then   -- 화면 흔들림 (그래픽 설정의 반짝임 세기를 따른다)
       self.shake -= dt; local m = 7 * self.u * M.OPT.flash * math.clamp(self.shake / 0.3, 0, 1)
       self.layer.Position = UDim2.new(0, (math.random() - 0.5) * m, 0, (math.random() - 0.5) * m)

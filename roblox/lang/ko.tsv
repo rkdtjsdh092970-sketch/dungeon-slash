@@ -1630,3 +1630,11 @@ New basic attack: %s	새 평타: %s
 Upgrade %sG	강화 %sG
 Level up by summoning the same Arcana again	같은 아르카나를 다시 소환하면 레벨이 오릅니다
 Not enough gold	골드가 부족합니다
+Only the gold line can be rerolled on this item	이 장비는 금빛 줄만 다시 굴릴 수 있습니다
+Pick ONE line to reroll — after that, only that line can be rerolled on this item	다시 굴릴 줄을 하나만 고르세요 — 한 번 굴리면 이 장비는 그 줄만 다시 굴릴 수 있습니다
+Possible Affixes	나올 수 있는 옵션
+Possible affixes · %s · T%d	나올 수 있는 옵션 · %s · T%d
+Chance          Lowest roll  →  Highest roll (at this gear tier)	확률          최저  →  최고 (이 장비 티어 기준)
+★ Reroll line	★ 재굴림 줄
+Reroll this line?	이 줄을 다시 굴릴까요?
+Each item can reroll only ONE line. Once you reroll this line, it becomes this item's reroll line and the other lines stay as they are.	장비마다 한 줄만 다시 굴릴 수 있습니다. 이 줄을 굴리면 이 장비의 재굴림 줄이 되고, 나머지 줄은 그대로 고정됩니다.
