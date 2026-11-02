@@ -31,3 +31,14 @@ HttpService:GetAsync 로 raw.githubusercontent 의 커밋 SHA 고정 URL(`/<sha>
 ## 일하는 방법
 - 변경 후 반드시 커밋/푸시.
 - `data/*.lua` 는 자동 생성물이므로 직접 고치지 말고 생성 스크립트를 고친다.
+
+## 2026-11-02 오후 진행 (Claude)
+- 제목 **Arcana Slayer** (화면 표시만; 내부 식별자 · DataStore 이름은 그대로). 시작화면 = 샘플 배경 + 로고, "눌러서 시작".
+- UI: Skin.lua(9-slice UI 키트), 글꼴 Balthazar(Theme.watch 로 FontFace 일괄), 마을 HUD(왼쪽 위 캐릭터 카드 · 골드 · 상점, 오른쪽 위 메뉴 아이콘 8, 오른쪽 아래 지도⇄마을), 창 바깥 클릭으로 닫히지 않음.
+- 장비 창: 전체/부위 탭, 옵션 티어(T1~) 색 카드, 나란히 비교 툴팁, 클릭 시 재렌더 없음, 끌어다 놓기, 세트 탭(장비·스킬·패시브 1~3), 웹식 자동 분해(Game.autoRules/autoClean, 서버 저장 sv.autoR), 자동 장착.
+- 생동감(Ambient.lua): 배경 고정 + 배경 자체 불 픽셀 8프레임 패치(fire_anim.py → ArtMap.PATCHES), 창문 빛, 구름 두 겹, 까마귀, 굴뚝 연기, 전투 안개.
+- **전투력**(Power.lua): 웹 powerDetail 이식 + 스킬 83종 배율 실측(data/SkillTM.lua, sim/measure_tm.lua) + 사탄 조건 기대값. 보정 sim/calibrate_power.lua (균열 보스층, 112빌드, R²0.96 · 평균 오차 4층). 표시 = 100·(P로 깨는 난이도)/D(1). 탑은 실측 못 함(엔드게임 빌드도 1층 불가) → 난이도 공식 외삽.
+- **아르카나 조각**(sv.arcana): 소환 전용, 1회 10 / 10회 90, 전투·보스·첫 클리어·탑·관문·일일(+10)·퀘스트(+5). 골드 소환 폐지. 스킬 판매 → 분해(연마석).
+- **패시브 v2**(gen_passives.py → data/Passives.lua, 200노드, 한/영 데이터): 접속 시 예전 패시브 초기화(sv.passVer=2) + 안내 토스트.
+- 지팡이 끼면 마법사 모습(hero/mage.png, summary.hero). 지도 아이콘 15, 패시브 아이콘 21 연결.
+- 남은 것: 스킬 카드 48장(83 중 35만 있음, Codex 토큰 아끼는 중) · UI/글씨 통일(옛 보라 화면들) · 스킬 등급 차분 · 탑 전투력 검증.
