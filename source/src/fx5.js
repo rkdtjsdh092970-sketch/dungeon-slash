@@ -182,6 +182,20 @@ const FX5 = (() => {
     each(S, X, 3, 0.15, (h) => M.proj(S, S.plX, S.plY - 50 * u, h.tx, hy(h), X.col, 0.2, "orb", () => M.burst(S, h.tx, hy(h), 30 * u, X.col))); };
   SIG.riftsplit = (S, X) => { const u = X.u; S.heroPose("cast", true); const g = gy(X); M.sigil(S, X.tx, g, 140 * u, X.col, 1); for (let k = 1; k <= 4; k++) S.delay(k * 0.06, () => M.bolt(S, X.tx + rnd(-80, 80) * u, g, X.tx + rnd(-80, 80) * u, g - rnd(10, 40) * u, X.col, 0.3)); each(S, X, 9, 0.04, (h) => M.erupt(S, h.tx, h.ty, X.col, "bubble", 110)); };
   SIG.eternalwinter = (S, X) => { const u = X.u; S.heroPose("cast", true); M.screen(S, C3(220, 240, 255), 0.6, 0.8); M.skyCircle(S, X.tx, 60 * u, 180 * u, X.col, 1.2); each(S, X, 9, 0.06, (h) => { M.erupt(S, h.tx, h.ty, X.col, "ice", 150); M.fall(S, h.tx, hy(h), W5, "shard"); }); };
+  // 5.24: 설명과 연출이 어긋나던 아르카나
+  const novaFx = (S, X, light) => { const u = X.u; S.heroPose("cast", true); M.ring(S, S.plX, S.plY, 380 * u, X.col, 0.55); M.ring(S, S.plX, S.plY, 250 * u, W5, 0.45); M.glow(S, S.plX, S.plY - 50 * u, 160 * u, X.col, 0.5, 0.2); if (light) M.screen(S, W5, 0.7, 0.25);
+    each(S, X, 10, 0.03, (h) => { M.burst(S, h.tx, hy(h), 46 * u, X.col); M.sparks(S, h.tx, hy(h), X.col, 3, 30); }); };
+  SIG.arcnova = (S, X) => novaFx(S, X, false);
+  SIG.angelfall = (S, X) => { novaFx(S, X, true); const u = X.u; for (const s of [-1, 1]) { const w = img(S, "fx_beam", { x: S.plX, y: S.plY - 70 * u, ax: 0, w: 10, h: 40 * u, rot: s > 0 ? -25 : 205, col: W5, z: 15 }); tw(S, w, 0.25, { w: 260 * u }, null, false).Completed.Connect(() => tw(S, w, 0.4, { tr: 1 })); } };
+  SIG.trap = (S, X) => { const u = X.u; S.heroPose("throw"); M.proj(S, S.plX + 30 * u, S.plY - 50 * u, X.tx, X.tg ? X.tg.ty : X.ty, X.col, 0.25, "orb", () => { M.sigil(S, X.tx, X.tg ? X.tg.ty : X.ty, 60 * u, X.col, 0.5); M.sparks(S, X.tx, X.tg ? X.tg.ty : X.ty, X.col, 4, 24); }); };
+  const shuriFx = (S, X, n, big) => { const u = X.u; S.heroPose("throw"); X.list.slice(0, n).forEach((h, i) => S.delay(i * 0.06, () => { const o = img(S, "fx_xslash", { x: S.plX + 30 * u, y: S.plY - 50 * u, w: (big ? 110 : 44) * u, h: (big ? 110 : 44) * u, col: C3(220, 230, 255), z: 16 });
+    tw(S, o, big ? 0.3 : 0.16, { x: h.tx, y: hy(h), rot: 720 }, "Linear", false).Completed.Connect(() => { if (o) o.dead = true; M.slash(S, h.tx, hy(h), (big ? 120 : 70) * u, X.col, rnd(-40, 40)); M.sparks(S, h.tx, hy(h), W5, 3, 30); }); })); };
+  SIG.shuriken = (S, X) => shuriFx(S, X, 6, false);
+  SIG.bigshuriken = (S, X) => shuriFx(S, X, 1, true);
+  SIG.skysword = (S, X) => SIG.skypierce(S, X);
+  SIG.venomrain = (S, X) => { const u = X.u; S.heroPose("throw"); each(S, X, 9, 0.06, (h) => M.fall(S, h.tx, hy(h), X.col, "shard", () => { M.erupt(S, h.tx, h.ty, X.col, "bubble", 80); M.sparks(S, h.tx, hy(h), X.col, 2, 24); })); };
+  SIG.volley = (S, X) => { const u = X.u; S.heroPose("throw"); X.list.slice(0, 10).forEach((h, i) => S.delay(i * 0.035, () => M.proj(S, S.plX + 30 * u, S.plY - 60 * u, h.tx, hy(h), X.col, 0.16, "shard", () => M.sparks(S, h.tx, hy(h), X.col, 2, 20)))); };
+  SIG.venom = SIG.volley;
   // ---- 스킬 시전 연출 (BattleFx.cast 와 같은 분기) ----
   function cast(b, sk, hits) {
     const S = stage(b), d = sk.def || sk, col = sk.color || "#ffffff", elem = sk.elem, kind = sk.kind, tier = typeof skillTier === "function" ? skillTier(d) : 0, u = S.u * (1 + 0.12 * tier);

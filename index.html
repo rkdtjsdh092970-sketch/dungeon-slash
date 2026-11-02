@@ -4417,6 +4417,20 @@ const FX5 = (() => {
     each(S, X, 3, 0.15, (h) => M.proj(S, S.plX, S.plY - 50 * u, h.tx, hy(h), X.col, 0.2, "orb", () => M.burst(S, h.tx, hy(h), 30 * u, X.col))); };
   SIG.riftsplit = (S, X) => { const u = X.u; S.heroPose("cast", true); const g = gy(X); M.sigil(S, X.tx, g, 140 * u, X.col, 1); for (let k = 1; k <= 4; k++) S.delay(k * 0.06, () => M.bolt(S, X.tx + rnd(-80, 80) * u, g, X.tx + rnd(-80, 80) * u, g - rnd(10, 40) * u, X.col, 0.3)); each(S, X, 9, 0.04, (h) => M.erupt(S, h.tx, h.ty, X.col, "bubble", 110)); };
   SIG.eternalwinter = (S, X) => { const u = X.u; S.heroPose("cast", true); M.screen(S, C3(220, 240, 255), 0.6, 0.8); M.skyCircle(S, X.tx, 60 * u, 180 * u, X.col, 1.2); each(S, X, 9, 0.06, (h) => { M.erupt(S, h.tx, h.ty, X.col, "ice", 150); M.fall(S, h.tx, hy(h), W5, "shard"); }); };
+  // 5.24: 설명과 연출이 어긋나던 아르카나
+  const novaFx = (S, X, light) => { const u = X.u; S.heroPose("cast", true); M.ring(S, S.plX, S.plY, 380 * u, X.col, 0.55); M.ring(S, S.plX, S.plY, 250 * u, W5, 0.45); M.glow(S, S.plX, S.plY - 50 * u, 160 * u, X.col, 0.5, 0.2); if (light) M.screen(S, W5, 0.7, 0.25);
+    each(S, X, 10, 0.03, (h) => { M.burst(S, h.tx, hy(h), 46 * u, X.col); M.sparks(S, h.tx, hy(h), X.col, 3, 30); }); };
+  SIG.arcnova = (S, X) => novaFx(S, X, false);
+  SIG.angelfall = (S, X) => { novaFx(S, X, true); const u = X.u; for (const s of [-1, 1]) { const w = img(S, "fx_beam", { x: S.plX, y: S.plY - 70 * u, ax: 0, w: 10, h: 40 * u, rot: s > 0 ? -25 : 205, col: W5, z: 15 }); tw(S, w, 0.25, { w: 260 * u }, null, false).Completed.Connect(() => tw(S, w, 0.4, { tr: 1 })); } };
+  SIG.trap = (S, X) => { const u = X.u; S.heroPose("throw"); M.proj(S, S.plX + 30 * u, S.plY - 50 * u, X.tx, X.tg ? X.tg.ty : X.ty, X.col, 0.25, "orb", () => { M.sigil(S, X.tx, X.tg ? X.tg.ty : X.ty, 60 * u, X.col, 0.5); M.sparks(S, X.tx, X.tg ? X.tg.ty : X.ty, X.col, 4, 24); }); };
+  const shuriFx = (S, X, n, big) => { const u = X.u; S.heroPose("throw"); X.list.slice(0, n).forEach((h, i) => S.delay(i * 0.06, () => { const o = img(S, "fx_xslash", { x: S.plX + 30 * u, y: S.plY - 50 * u, w: (big ? 110 : 44) * u, h: (big ? 110 : 44) * u, col: C3(220, 230, 255), z: 16 });
+    tw(S, o, big ? 0.3 : 0.16, { x: h.tx, y: hy(h), rot: 720 }, "Linear", false).Completed.Connect(() => { if (o) o.dead = true; M.slash(S, h.tx, hy(h), (big ? 120 : 70) * u, X.col, rnd(-40, 40)); M.sparks(S, h.tx, hy(h), W5, 3, 30); }); })); };
+  SIG.shuriken = (S, X) => shuriFx(S, X, 6, false);
+  SIG.bigshuriken = (S, X) => shuriFx(S, X, 1, true);
+  SIG.skysword = (S, X) => SIG.skypierce(S, X);
+  SIG.venomrain = (S, X) => { const u = X.u; S.heroPose("throw"); each(S, X, 9, 0.06, (h) => M.fall(S, h.tx, hy(h), X.col, "shard", () => { M.erupt(S, h.tx, h.ty, X.col, "bubble", 80); M.sparks(S, h.tx, hy(h), X.col, 2, 24); })); };
+  SIG.volley = (S, X) => { const u = X.u; S.heroPose("throw"); X.list.slice(0, 10).forEach((h, i) => S.delay(i * 0.035, () => M.proj(S, S.plX + 30 * u, S.plY - 60 * u, h.tx, hy(h), X.col, 0.16, "shard", () => M.sparks(S, h.tx, hy(h), X.col, 2, 20)))); };
+  SIG.venom = SIG.volley;
   // ---- 스킬 시전 연출 (BattleFx.cast 와 같은 분기) ----
   function cast(b, sk, hits) {
     const S = stage(b), d = sk.def || sk, col = sk.color || "#ffffff", elem = sk.elem, kind = sk.kind, tier = typeof skillTier === "function" ? skillTier(d) : 0, u = S.u * (1 + 0.12 * tier);
@@ -5355,6 +5369,74 @@ function drawChestBoss(ctx, e, x, y, time, alpha) {
   ctx.fillStyle = dark; ctx.fillRect(-W / 2 + 14, -open - 30, W - 28, 7); ctx.fillStyle = gold; ctx.fillRect(-W / 2 + 14 + 16, -open - 30, 14, open + 30); ctx.fillRect(W / 2 - 14 - 30, -open - 30, 14, open + 30); ctx.restore();
   ctx.restore();
 }
+
+// =========================================================
+// 5.24 지속형 아르카나 연출 (장판 · 회전 구체 · 칼날 회오리 · 소환 · 지뢰 · 심연 · 대형 수리검 · 비구름)
+//  예전에 코드로 그린 도트 연출 대신 BattleFx 그림(webart/fx_*)을 아르카나 색으로 물들여 그린다.
+//  render.js 의 drawZone / drawPersist 를 대신한다 (같은 이름, 나중에 읽혀서 덮어씀). 신화 전용 큰 글자 연출(drawGrand)은 없앤다
+// =========================================================
+const FXP_TINT = {};
+function fxpImg(key, col) {   // 그림을 색으로 물들인 캔버스 (밝기는 남기고 색만 입힘)
+  const im = artGet(key); if (!im || !im.width) return null; if (!col) return im;
+  const k = key + col; if (FXP_TINT[k]) return FXP_TINT[k];
+  const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const g = c.getContext("2d");
+  g.filter = "grayscale(1) brightness(1.25)"; g.drawImage(im, 0, 0); g.filter = "none";   // 원래 색은 빼고 밝기만 남긴 뒤 아르카나 색을 입힌다
+  g.globalCompositeOperation = "multiply"; g.fillStyle = col; g.fillRect(0, 0, c.width, c.height); g.globalCompositeOperation = "destination-in"; g.drawImage(im, 0, 0);
+  return (FXP_TINT[k] = c);
+}
+function fxpDraw(ctx, key, col, x, y, w, h, rot, alpha, add) {
+  const im = fxpImg(key, col); if (!im) return false;
+  ctx.save(); ctx.globalAlpha *= alpha == null ? 1 : alpha; if (add) ctx.globalCompositeOperation = "lighter"; ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore(); return true;
+}
+const fxpCol = (sk) => (sk && (sk.color || (sk.def && sk.def.color))) || "#ffffff";
+const fxpElem = (sk) => (sk && (sk.elem || (sk.def && sk.def.elem))) || "";
+function drawZone(ctx, b, z, time) {
+  const c = cellXY(b, z.lane, z.col), lh = laneH(b), y = c.y + lh * 0.34, col = fxpCol(z.sk), el = fxpElem(z.sk);
+  const fade = Math.max(0.15, Math.min(1, z.t / 0.6, z.life ? (z.life - z.t) / 0.25 + 0.3 : 1)), sd = z.col * 31 + z.lane * 7;
+  ctx.save(); ctx.globalAlpha = fade;
+  fxpDraw(ctx, "fx_glow", col, c.x, y - 8, 140, 46, 0, 0.55, true);   // 바닥 빛
+  if (z.fxk === "snow" || el === "cold") {   // 얼음 가시가 솟았다 가라앉고, 위에서 얼음 조각이 떨어진다
+    for (let i = 0; i < 3; i++) { const k = (time * 1.4 + i / 3 + sd * 0.01) % 1, h = 60 * Math.sin(k * Math.PI); fxpDraw(ctx, "fx_icespike", col, c.x - 36 + i * 36, y - h / 2, 30, Math.max(4, h), 0, 0.9); }
+    for (let i = 0; i < 4; i++) { const k = (time * 0.9 + i * 0.27 + sd * 0.013) % 1; fxpDraw(ctx, "fx_shard", col, c.x - 45 + i * 30, y - 90 + k * 80, 12, 22, 0.4, 1 - k); }
+  } else if (z.fxk === "cloud" || el === "void" || !el) {   // 독 · 공허 기운이 바닥에서 피어오른다
+    for (let i = 0; i < 3; i++) { const ox = Math.sin(time * 1.2 + i * 1.7 + z.col) * 12, k = (time * 0.5 + i / 3) % 1; fxpDraw(ctx, ["fx_cloud1", "fx_cloud2", "fx_cloud3"][i], col, c.x - 34 + i * 34 + ox, y - 26 - k * 20, 74, 46, 0, 0.75 * Math.sin(k * Math.PI) + 0.2); }
+  } else {   // 화염: 불꽃이 너울거린다
+    for (let i = 0; i < 4; i++) { const h = 54 + Math.sin(time * 9 + i * 1.7 + z.col) * 14; fxpDraw(ctx, "fx_fire", el === "light" ? col : null, c.x - 42 + i * 28, y - h / 2, 34, h, 0, 0.95, true); }
+  }
+  ctx.restore();
+}
+function drawPersist(ctx, b, time) {
+  const lh = laneH(b);
+  for (const p of b.persist) {
+    const col = fxpCol(p.sk), id = p.sk && (p.sk.id || (p.sk.def && p.sk.def.id)); ctx.save();
+    if (p.kind === "blades") {   // 칼날 회오리: 앞줄 레인마다 칼날이 빙글 돈다
+      for (let l = 0; l < b.lanes; l++) { const cc = cellXY(b, l, 1), cy = cc.y + lh * 0.3 - 30, cx = LAY.x0 + 50;
+        for (let i = 0; i < 3; i++) fxpDraw(ctx, "fx_slash", col, cx, cy, 120, 60, p.rot * 9 + i * 2.094, 0.85, true); fxpDraw(ctx, "fx_glow", col, cx, cy, 120, 120, 0, 0.35, true); }
+    } else if (p.kind === "orbs") {   // 구체 3개가 영웅 둘레를 돈다
+      for (let i = 0; i < 3; i++) { const a = p.rot * 4.5 + i * 2.094, x = PLAYER_POS.x + 40 + Math.cos(a) * 66, y = PLAYER_POS.y - 60 + Math.sin(a) * 30;
+        fxpDraw(ctx, "fx_glow", col, x, y, 54, 54, 0, 0.9, true); fxpDraw(ctx, "fx_spark", "#ffffff", x, y, 22, 22, time * 3, 0.9, true); }
+    } else if (p.kind === "spirit") {   // 소환: 앞줄 적 머리 위로 소환수(또는 마법진)가 떠서 연달아 할퀸다
+      const t = pickPrimaryLoose(b), tx = t ? t.vx || cellXY(b, t.lane, t.col).x : PLAYER_POS.x + 160, ty = t ? (t.vy || cellXY(b, t.lane, t.col).y) - 40 : PLAYER_POS.y - 60;
+      const sx = PLAYER_POS.x + 110 + Math.sin(time * 3) * 8, sy = ty - 30 + Math.sin(time * 4) * 6;
+      if (id === "hydra") fxpDraw(ctx, "fx_hydra", null, sx + 30, sy, 110, 110, 0, 0.95);
+      else { fxpDraw(ctx, "fx_mc_sigil", col, sx, sy, 70, 70, time * 2, 0.9, true); fxpDraw(ctx, "fx_glow", col, sx, sy, 90, 90, 0, 0.6, true); }
+      const k = (time * 3.3) % 1; if (k < 0.35) fxpDraw(ctx, "fx_claw", col, tx, ty, 80, 80, 0, 1 - k / 0.35, true);
+    } else if (p.kind === "mine") {   // 지뢰: 땅에 박힌 문양이 깜빡인다
+      const cc = cellXY(b, p.lane, p.col), x = cc.x, y = cc.y + lh * 0.32; fxpDraw(ctx, "fx_mc_sigil", col, x, y - 4, 64, 22, 0, 0.9, true);
+      fxpDraw(ctx, "fx_glow", "#ff5a30", x, y - 8, 30, 30, 0, 0.5 + 0.5 * Math.sin(time * 10), true);
+    } else if (p.kind === "hole") {   // 공허의 심연: 바닥 마법진이 돌며 빨아들인다
+      const cc = cellXY(b, p.lane, p.col), x = cc.x, y = cc.y + lh * 0.22;
+      fxpDraw(ctx, "fx_mc_void", null, x, y, 200, 80, time * 1.8, 0.95, true); fxpDraw(ctx, "fx_mc_inner", col, x, y, 110, 44, -time * 3, 0.9, true); fxpDraw(ctx, "fx_glow", "#200030", x, y - 6, 120, 50, 0, 0.8);
+    } else if (p.kind === "shuri") {   // 대형 수리검: 한 구간 가운데에서 크게 돈다
+      const cx = cellXY(b, 0, p.col).x, cy = (cellXY(b, 0, p.col).y + cellXY(b, b.lanes - 1, p.col).y) / 2;
+      fxpDraw(ctx, "fx_xslash", "#dfe8ff", cx, cy, 170, 170, p.rot * 8, 0.95, true); fxpDraw(ctx, "fx_xslash", "#ffffff", cx, cy, 120, 120, p.rot * 8 + 0.78, 0.8, true);
+    } else if (p.kind === "rain") {   // 비구름: 위쪽에 아르카나 색 구름이 드리운다
+      for (let i = 0; i < 6; i++) { const x = 120 + i * 150 + Math.sin(time + i) * 10, y = 78 + (i % 2) * 14; for (let k = 0; k < 2; k++) fxpDraw(ctx, ["fx_cloud1", "fx_cloud2", "fx_cloud3"][(i + k) % 3], "#4a4e70", x + k * 30, y + k * 8, 230, 84, 0, 1); fxpDraw(ctx, "fx_glow", col, x, y + 10, 120, 40, 0, 0.25 + 0.25 * Math.max(0, Math.sin(time * 7 + i * 2)), true); }
+    }
+    ctx.restore();
+  }
+}
+function drawGrand() {}   // 로블록스판에 없는 신화 전용 큰 글자 연출은 없앤다 (신화 이상은 BattleFx flourish 로)
 
 // =========================================================
 // 마을 건물: 2px 도트 단위로 벽돌/기와/판자/창문을 그리고 명암(왼쪽 빛, 오른쪽 그늘)을 넣는다.
@@ -7100,7 +7182,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-075351";
+const BUILD_ID = "20261103-075728";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -8062,6 +8144,11 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.24", date: "11/3", title: "아르카나 연출 정리", items: [
+    "오래 남는 아르카나(화염 · 눈보라 · 독 장판, 회전 구체, 칼날 회오리, 소환, 지뢰, 공허의 심연, 대형 수리검, 뇌우 구름)가 예전 도트 그림 대신 새 연출 그림으로 나옵니다. 아르카나마다 제 색으로 물듭니다.",
+    "설명과 어긋나던 연출 고침: 비전 파동 · 천사의 강림(영웅 둘레로 퍼지는 파동), 폭발 지뢰(던져서 묻기), 수리검 · 대형 수리검(도는 수리검), 천공검(하늘에서 내리꽂는 검), 독 가시 비(마법진 없이 가시가 떨어짐), 화살 비 · 독침 난사(화살 · 가시).",
+    "신화 이상 아르카나를 쓸 때 화면 가운데 뜨던 큰 글자 연출을 없앴습니다 (로블록스판과 같게).",
+  ] },
   { ver: "5.23", date: "11/3", title: "음소거 유지", items: [
     "고침: 설정에서 음소거를 켜도 업데이트 · 새로고침을 하면 다시 소리가 나던 것. 음소거는 이 기기에 저장되어 계속 유지됩니다.",
   ] },
