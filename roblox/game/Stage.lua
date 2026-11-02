@@ -5,7 +5,36 @@ local Sprites = require(script.Parent.Sprites)
 local Theme = require(script.Parent.Theme)
 local Ambient = require(script.Parent.Ambient)   -- 불씨 · 안개 · 일렁이는 빛 · 배경 흔들림
 local Fx = require(script.Parent.BattleFx)
-local Skin = require(script.Parent.Skin)   -- 버튼 · 판 그림 (마을 · 창과 같은 질감)   -- 스킬 · 타격 이펙트
+local Skin = require(script.Parent.Skin)
+-- 체력 · 마나 막대 (깔끔하게): 어두운 홈 + 금속 테두리, 3단 그라데이션, 위쪽 광택, 피해 잔상, 눈금
+local function fancyBar(parent, pos, size, cTop, cMid, cBot, z, ticks, rad)
+  local bg = Instance.new("Frame"); bg.Position = pos; bg.Size = size; bg.BackgroundColor3 = Color3.fromRGB(8, 5, 6); bg.BorderSizePixel = 0; bg.ZIndex = z; bg.Parent = parent
+  local c = Instance.new("UICorner", bg); c.CornerRadius = UDim.new(0, rad or 3)
+  local st = Instance.new("UIStroke", bg); st.Color = Color3.fromRGB(150, 115, 60); st.Thickness = 1.5; st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+  local inner = Instance.new("Frame"); inner.Position = UDim2.new(0, 1, 0, 1); inner.Size = UDim2.new(1, -2, 1, -2); inner.BackgroundTransparency = 1; inner.ClipsDescendants = true; inner.ZIndex = z; inner.Parent = bg
+  local trail = Instance.new("Frame"); trail.Size = UDim2.new(1, 0, 1, 0); trail.BackgroundColor3 = Color3.fromRGB(255, 240, 220); trail.BorderSizePixel = 0; trail.ZIndex = z + 1; trail.Parent = inner
+  local fill = Instance.new("Frame"); fill.Size = UDim2.new(1, 0, 1, 0); fill.BackgroundColor3 = Color3.new(1, 1, 1); fill.BorderSizePixel = 0; fill.ZIndex = z + 2; fill.Parent = inner
+  local g = Instance.new("UIGradient", fill); g.Rotation = 90
+  g.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, cTop), ColorSequenceKeypoint.new(0.45, cMid), ColorSequenceKeypoint.new(1, cBot) })
+  local gloss = Instance.new("Frame"); gloss.Size = UDim2.new(1, 0, 0.42, 0); gloss.BackgroundColor3 = Color3.new(1, 1, 1); gloss.BackgroundTransparency = 0.78; gloss.BorderSizePixel = 0; gloss.ZIndex = z + 3; gloss.Parent = fill
+  local gg = Instance.new("UIGradient", gloss); gg.Rotation = 90; gg.Transparency = NumberSequence.new(0.2, 1)
+  for i = 1, (ticks or 0) - 1 do   -- 눈금 (10% 단위 등)
+    local t = Instance.new("Frame"); t.AnchorPoint = Vector2.new(0.5, 0); t.Position = UDim2.new(i / ticks, 0, 0, 0); t.Size = UDim2.new(0, 1, 1, 0); t.BackgroundColor3 = Color3.new(0, 0, 0); t.BackgroundTransparency = 0.55; t.BorderSizePixel = 0; t.ZIndex = z + 4; t.Parent = inner
+  end
+  return { bg = bg, fill = fill, trail = trail, z = z, v = 1, tv = 1, hold = 0 }
+end
+-- 값 바꾸기: 막대는 바로, 잔상은 잠깐 머문 뒤 따라 줄어든다 (매 프레임 barTick)
+local function setBar(B, v)
+  v = math.clamp(v or 0, 0, 1)
+  if v < B.v then B.hold = 0.35 end
+  B.v = v; B.fill.Size = UDim2.new(v, 0, 1, 0)
+  if v > B.tv then B.tv = v; B.trail.Size = UDim2.new(v, 0, 1, 0) end
+end
+local function barTick(B, dt)
+  if B.tv <= B.v then return end
+  if B.hold > 0 then B.hold -= dt; return end
+  B.tv = math.max(B.v, B.tv - dt * 1.2); B.trail.Size = UDim2.new(B.tv, 0, 1, 0)
+end   -- 버튼 · 판 그림 (마을 · 창과 같은 질감)   -- 스킬 · 타격 이펙트
 local M = {}
 
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
@@ -89,26 +118,25 @@ function M.create(parent, W, H, replayAct)
   if fa then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.4), Position = UDim2.new(0.5, 0, 0.5, 0), ImageContent = fa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 10 }, face) end
   S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 70 * k, 0, 72 * k), Size = UDim2.new(0, 34 * k, 0, 24 * k), BackgroundColor3 = GOLD, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(15 * k), ZIndex = 11 }, L))
   mk("UICorner", { CornerRadius = UDim.new(1, 0) }, S.lvLbl)
-  local function bar(y, h, c1, c2)
-    local bg = mk("Frame", { Position = UDim2.new(0, 90 * k, 0, y * k), Size = UDim2.new(0, 228 * k, 0, h * k), BackgroundColor3 = Color3.fromRGB(10, 6, 20), ZIndex = 9 }, L)
-    mk("UICorner", { CornerRadius = UDim.new(0, 6 * k) }, bg); mk("UIStroke", { Color = EDGE, Thickness = 2 }, bg)
-    local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 10 }, bg); mk("UICorner", { CornerRadius = UDim.new(0, 6 * k) }, f)
-    mk("UIGradient", { Color = ColorSequence.new(c1, c2), Rotation = 90 }, f)
-    local t = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(h * 0.78 * k), ZIndex = 11 }, bg), 1.5)
-    return f, t
+  local function bar(y, h, c1, c2, c3, ticks)
+    local B = fancyBar(L, UDim2.new(0, 90 * k, 0, y * k), UDim2.new(0, 228 * k, 0, h * k), c1, c2, c3, 9, ticks, 4)
+    local t = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(h * 0.72 * k), ZIndex = 15 }, B.bg), 1.5)
+    return B, t
   end
-  S.hpBar, S.hpTxt = bar(12, 24, Color3.fromRGB(255, 110, 110), Color3.fromRGB(190, 40, 50))
-  S.mpBar, S.mpTxt = bar(42, 16, Color3.fromRGB(120, 180, 255), Color3.fromRGB(50, 90, 200))
+  S.hpB, S.hpTxt = bar(12, 24, Color3.fromRGB(255, 140, 120), Color3.fromRGB(215, 45, 45), Color3.fromRGB(120, 15, 25), 10)
+  S.mpB, S.mpTxt = bar(42, 14, Color3.fromRGB(150, 200, 255), Color3.fromRGB(60, 110, 230), Color3.fromRGB(25, 40, 120), 0)
   S.killLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 92 * k, 0, 62 * k), Size = UDim2.new(0, 226 * k, 0, 20 * k), Text = "", TextColor3 = Color3.fromRGB(255, 230, 160), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10 }, L), 1.5)
   -- 위 가운데: 단계 이름 + 보스 체력
   S.titleLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 4 * k), Size = UDim2.new(0, 520 * k, 0, 30 * k), Text = "", TextColor3 = Color3.fromRGB(255, 225, 140), Font = FONT, TextSize = math.floor(24 * k), ZIndex = 9 }, root), 3)
   S.boss = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 38 * k), Size = UDim2.new(0, 460 * k, 0, 48 * k), BackgroundTransparency = 1, Visible = false, ZIndex = 9 }, root)
   S.bossName = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20 * k), Text = "", TextColor3 = Color3.fromRGB(255, 160, 150), Font = FONT, TextSize = math.floor(17 * k), ZIndex = 10 }, S.boss), 2)
-  local bb = mk("Frame", { Position = UDim2.new(0, 0, 0, 22 * k), Size = UDim2.new(1, 0, 0, 20 * k), BackgroundColor3 = Color3.fromRGB(14, 4, 8), ZIndex = 10 }, S.boss)
-  mk("UICorner", { CornerRadius = UDim.new(0, 8 * k) }, bb); mk("UIStroke", { Color = Color3.fromRGB(150, 50, 50), Thickness = 3 }, bb)
-  S.bossFill = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 11 }, bb); mk("UICorner", { CornerRadius = UDim.new(0, 8 * k) }, S.bossFill)
-  mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(255, 100, 80), Color3.fromRGB(170, 20, 30)), Rotation = 90 }, S.bossFill)
-  S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 12 }, bb), 1.5)
+  S.bossB = fancyBar(S.boss, UDim2.new(0, 0, 0, 22 * k), UDim2.new(1, 0, 0, 20 * k), Color3.fromRGB(255, 130, 90), Color3.fromRGB(200, 30, 30), Color3.fromRGB(90, 8, 14), 10, 10, 3)
+  S.bossB.bg:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(200, 150, 70); S.bossB.bg:FindFirstChildOfClass("UIStroke").Thickness = 2
+  for _, side in ipairs({ 0, 1 }) do   -- 양 끝 보석 장식
+    local gem = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(side, 0, 0.5, 0), Size = UDim2.new(0, 12 * k, 0, 12 * k), Rotation = 45, BackgroundColor3 = Color3.fromRGB(200, 30, 40), ZIndex = 16 }, S.bossB.bg)
+    mk("UIStroke", { Color = Color3.fromRGB(230, 180, 90), Thickness = 1.5 }, gem)
+  end
+  S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 16 }, S.bossB.bg), 1.5)
   -- 오른쪽 위: 건너뛰기 · 배속(누르면 x1~x4 가 아래로 펼쳐짐, x4 는 게임패스)
   S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 236, 0, 40), Visible = false, ZIndex = 30 }, root)
   mk("UIScale", { Scale = k }, S.ctrl)
@@ -275,21 +303,26 @@ local function unitFor(S, e, lanes)
   lab.ZIndex = 5 + (e.l or 0) * 2
   local shadow = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, size * 0.55, 0, size * 0.13), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 4 + (e.l or 0) * 2 }, S.layer)
   mk("UICorner", { CornerRadius = UDim.new(1, 0) }, shadow)
-  local bar = mk("Frame", { Size = UDim2.new(0, size * 0.7, 0, math.max(4, 5 * S.u)), AnchorPoint = Vector2.new(0.5, 1), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 15 }, S.layer)
-  local fill = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = boss and Color3.fromRGB(230, 90, 60) or (e.tier == "elite" and Color3.fromRGB(240, 190, 60) or Color3.fromRGB(110, 210, 110)), ZIndex = 16 }, bar)
-  u = { lab = lab, info = info, art = art, shadow = shadow, bar = bar, fill = fill, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
+  local cT, cM, cB
+  if boss then cT, cM, cB = Color3.fromRGB(255, 140, 100), Color3.fromRGB(210, 50, 40), Color3.fromRGB(110, 15, 15)
+  elseif e.tier == "elite" then cT, cM, cB = Color3.fromRGB(255, 230, 130), Color3.fromRGB(230, 160, 40), Color3.fromRGB(130, 70, 10)
+  else cT, cM, cB = Color3.fromRGB(255, 130, 110), Color3.fromRGB(200, 50, 45), Color3.fromRGB(100, 15, 15) end
+  local MB = fancyBar(S.layer, UDim2.new(), UDim2.new(0, size * (e.tier == "normal" and 0.55 or 0.75), 0, math.max(5, (e.tier == "normal" and 5 or 7) * S.u)), cT, cM, cB, 15, e.tier == "normal" and 0 or 5, 2)
+  MB.bg.AnchorPoint = Vector2.new(0.5, 1); MB.bg.Visible = e.tier ~= "normal"   -- 일반 몹은 맞은 뒤부터 보인다
+  local bar = MB.bg
+  u = { lab = lab, info = info, art = art, shadow = shadow, bar = bar, MB = MB, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
   S.units[e.id] = u; return u
 end
 
 function M:applySnap(s, lanes)
-  self.hpBar.Size = UDim2.new(math.clamp(s.hp, 0, 1), 0, 1, 0); self.mpBar.Size = UDim2.new(math.clamp(s.mp or 0, 0, 1), 0, 1, 0)
+  setBar(self.hpB, s.hp); setBar(self.mpB, s.mp or 0)
   local H = self.hud or {}
   self.hpTxt.Text = H.maxHp and (fmt(math.max(0, s.hp) * H.maxHp) .. " / " .. fmt(H.maxHp)) or (math.floor(s.hp * 100) .. "%")
   self.mpTxt.Text = math.floor(math.clamp(s.mp or 0, 0, 1) * 100) .. "%"
   local boss
   for _, e in ipairs(s.e) do if e.tier == "boss" and not e.dead then boss = e end end
   self.boss.Visible = boss ~= nil
-  if boss then self.bossName.Text = "☠ " .. tostring(boss.n or ""); self.bossFill.Size = UDim2.new(math.clamp(boss.hp, 0, 1), 0, 1, 0); self.bossPct.Text = math.floor(boss.hp * 100) .. "%" end
+  if boss then self.bossName.Text = "☠ " .. tostring(boss.n or ""); setBar(self.bossB, boss.hp); self.bossPct.Text = math.floor(boss.hp * 100) .. "%" end
   if s.c then for _, c in ipairs(s.c) do local cell = self.skillCells[c[1]]; if cell then cell.left = cell.cd end end end
   local seen = {}
   local py = self.plY
@@ -365,6 +398,7 @@ function M:play(replay, onDone, maxSec, hud)
   local lanes = replay.lanes or 2
   self.conn = RunService.RenderStepped:Connect(function(dt)
     if not self.alive then return end
+    barTick(self.hpB, dt); barTick(self.mpB, dt); barTick(self.bossB, dt)
     local slow = 1; if self.hitstop and self.hitstop > 0 then self.hitstop -= dt; slow = 0.12 end   -- 히트스톱: 큰 타격 순간 잠깐 멈칫
     self.t += dt * self.spd * self.userSpd * slow; self.idleT = (self.idleT or 0) + dt
     local sn = replay.snaps
@@ -382,7 +416,7 @@ function M:play(replay, onDone, maxSec, hud)
       if u.tx then local dx = (u.tx - u.x) * k; local cap = 420 * self.u * dt * self.spd * (self.userSpd or 1); u.x += math.clamp(dx, -cap, cap); u.y += (u.ty - u.y) * k end   -- 걷는 속도 상한
       u.lab.Position = UDim2.new(0, u.x, 0, u.y)
       u.shadow.Position = UDim2.new(0, u.x, 0, u.y); u.shadow.BackgroundTransparency = u.dying and math.min(1, 0.55 + u.dying) or 0.55
-      u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); u.fill.Size = UDim2.new(math.clamp(u.hp or 1, 0, 1), 0, 1, 0)
+      u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); setBar(u.MB, u.hp or 1); barTick(u.MB, dt); if (u.hp or 1) < 0.999 and not u.dying then u.bar.Visible = true end
       if u.art then   -- 일러스트: 걸을 때 발걸음마다 들썩 · 서 있을 땐 숨쉬기 · 공격 직전 움츠렸다 확 덤벼듦 · 맞으면 크게 밀려남 · 쓰러질 땐 날아가며 넘어짐
         local ox, oy, rot = 0, 0, 0
         local uu = self.u
