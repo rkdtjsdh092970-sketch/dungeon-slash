@@ -529,6 +529,7 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .dpst5>b{display:block;color:#ffd78c;font-size:13px;margin-bottom:4px}.dpst5 div{display:flex;justify-content:space-between;gap:8px;font-size:11px;line-height:17px;color:#e8dcc8;border-bottom:1px solid #2a2018}.dpst5 em{font-style:normal;font-weight:700;color:#8cdcff;white-space:nowrap}.dpst5 small{display:block;margin-top:4px;font-size:10px;color:#a89c8a;line-height:1.35}
 .bar5 .btn{position:relative}
 .ag5 .dpst5 div{flex-direction:row!important;align-items:center;border-bottom:1px solid #2a2018}.ag5 .dpst5 div span{flex:1;color:#e8dcc8;font-size:11px}.ag5 .dpst5 em{font-size:12px}.bar5 .tri{position:static!important;margin-left:4px;color:#7dff8a}
+.ag5 .dpst5{display:none!important}.ag5 .dpsw5:hover .dpst5{display:block!important}
 /* ---- 5.0 제련소 ---- */
 .fpw5{font-size:13px;margin:-2px 0 6px;color:#d8ccb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
@@ -5668,7 +5669,7 @@ const Modal = {
     const m = $("#modal"), box = $("#mbox"), keep = !m.classList.contains("hidden") ? this.scrollSnap(box) : null;   // 같은 창을 다시 그릴 때 스크롤 위치 유지
     const pool = {}; if (keep) for (const im of box.querySelectorAll("img[src]")) (pool[im.getAttribute("src")] = pool[im.getAttribute("src")] || []).push(im);   // 같은 창을 다시 그릴 때 이미 그려진 그림을 다시 쓴다 (깜빡임 방지)
     m.classList.remove("hidden"); box.className = o.cls || ""; box.innerHTML = (o.noClose ? "" : `<button class="x" data-a="__close">✕</button>`) + html;
-    for (const im of box.querySelectorAll("img[src]")) { const q = keep && pool[im.getAttribute("src")]; if (q && q.length) { const old = q.pop(); old.className = im.className; old.setAttribute("style", im.getAttribute("style") || ""); old.alt = im.alt; im.replaceWith(old); } else im.decoding = "sync"; }   // 새 그림은 그려질 때 바로 (빈 칸 한 프레임 없이)
+    for (const im of box.querySelectorAll("img[src]")) { const q = keep && pool[im.getAttribute("src")]; if (q && q.length) { const old = q.pop(); for (const a of [...old.attributes]) if (a.name !== "src") old.removeAttribute(a.name); for (const a of im.attributes) if (a.name !== "src") old.setAttribute(a.name, a.value); im.replaceWith(old); /* 속성(크기 · 클래스 등)은 새 것과 똑같이 */ } else im.decoding = "sync"; }   // 새 그림은 그려질 때 바로 (빈 칸 한 프레임 없이)
     if (keep && keep.h2 === (box.querySelector("h2") || {}).textContent) this.scrollRestore(box, keep.list);
     if (typeof grpBar === "function" && G.grp && (!G.grp.h2 || G.grp.h2 === (box.querySelector("h2") || {}).textContent)) grpBar();   // 같은 틱에 탭 줄을 붙인다 (한 프레임 늦게 붙으면 화면이 출렁임)
     if (!this.was) snd("open"); this.was = true;
@@ -7194,7 +7195,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-082814";
+const BUILD_ID = "20261103-083143";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -8191,6 +8192,10 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.30", date: "11/3", title: "고침", items: [
+    "고침: 아르카나 정보의 초당 피해 풀이가 마우스를 올리지 않아도 늘 떠 있던 것.",
+    "고침: 장비 창에서 장비를 누를 때 장비 그림이 커지던 것 (5.28 깜빡임 수정 때 생긴 문제).",
+  ] },
   { ver: "5.29", date: "11/3", title: "아르카나 창 전투력 표시 정리 · 초당 피해 풀이", items: [
     "아르카나 창에서 칸마다 보이던 '장착하면 전투력' 숫자를 없앴습니다 (실제 전투와 잘 맞지 않았음). 대신 칸 버튼에 무엇과 바뀌는지(교체: ○○ / 빈 칸) 나옵니다.",
     "아르카나 정보의 [초당 피해 ⓘ]에 마우스를 올리면 어떤 값들이 곱해져 그 피해가 나오는지 보여 줍니다 (공격력 · 1회 피해 배율 · 피해 증가 · 방어력 · 치명타 · 추가 피해 · 쿨타임).",

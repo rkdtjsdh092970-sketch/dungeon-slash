@@ -23,7 +23,7 @@ const Modal = {
     const m = $("#modal"), box = $("#mbox"), keep = !m.classList.contains("hidden") ? this.scrollSnap(box) : null;   // 같은 창을 다시 그릴 때 스크롤 위치 유지
     const pool = {}; if (keep) for (const im of box.querySelectorAll("img[src]")) (pool[im.getAttribute("src")] = pool[im.getAttribute("src")] || []).push(im);   // 같은 창을 다시 그릴 때 이미 그려진 그림을 다시 쓴다 (깜빡임 방지)
     m.classList.remove("hidden"); box.className = o.cls || ""; box.innerHTML = (o.noClose ? "" : `<button class="x" data-a="__close">✕</button>`) + html;
-    for (const im of box.querySelectorAll("img[src]")) { const q = keep && pool[im.getAttribute("src")]; if (q && q.length) { const old = q.pop(); old.className = im.className; old.setAttribute("style", im.getAttribute("style") || ""); old.alt = im.alt; im.replaceWith(old); } else im.decoding = "sync"; }   // 새 그림은 그려질 때 바로 (빈 칸 한 프레임 없이)
+    for (const im of box.querySelectorAll("img[src]")) { const q = keep && pool[im.getAttribute("src")]; if (q && q.length) { const old = q.pop(); for (const a of [...old.attributes]) if (a.name !== "src") old.removeAttribute(a.name); for (const a of im.attributes) if (a.name !== "src") old.setAttribute(a.name, a.value); im.replaceWith(old); /* 속성(크기 · 클래스 등)은 새 것과 똑같이 */ } else im.decoding = "sync"; }   // 새 그림은 그려질 때 바로 (빈 칸 한 프레임 없이)
     if (keep && keep.h2 === (box.querySelector("h2") || {}).textContent) this.scrollRestore(box, keep.list);
     if (typeof grpBar === "function" && G.grp && (!G.grp.h2 || G.grp.h2 === (box.querySelector("h2") || {}).textContent)) grpBar();   // 같은 틱에 탭 줄을 붙인다 (한 프레임 늦게 붙으면 화면이 출렁임)
     if (!this.was) snd("open"); this.was = true;
