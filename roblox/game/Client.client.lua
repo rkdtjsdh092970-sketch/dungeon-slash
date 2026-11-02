@@ -801,7 +801,7 @@ buildTown = function()
       if b.smoke then Ambient.smoke(hit, b.smoke[1], b.smoke[2]) end   -- 대장간 굴뚝 연기
       -- 알림: 이름 옆 작은 붉은 불씨
       if b.badge then
-        local d = mk("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(1, 2, 0.5, 0), Size = UDim2.new(0, 10, 0, 10), BackgroundColor3 = Color3.fromRGB(255, 80, 60), Visible = false, ZIndex = 7 }, nm); corner(d)
+        local d = mk("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(1, 8, 0.5, 0), Size = UDim2.new(0, 10, 0, 10), BackgroundColor3 = Color3.fromRGB(255, 80, 60), Visible = false, ZIndex = 7 }, nm); corner(d)
         mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(60, 10, 6) }, d)
         badgeDots[b.badge] = d
         nm.Size = UDim2.new(0, 0, 0, 28); nm.AutomaticSize = Enum.AutomaticSize.X
