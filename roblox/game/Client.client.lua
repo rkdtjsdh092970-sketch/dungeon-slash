@@ -558,7 +558,7 @@ function views.set_auto()
   optRow("장비 자동 분해", nil, { { "설정 열기", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }); Menus.openAuto() end, false, w = 110 } })
   for i, nm in ipairs({ "일반", "희귀", "전설" }) do
     local k = "sr" .. i
-    optRow(string.format("%s 스킬", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 } })
+    optRow(string.format("%s 스킬", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "분해", function() pick(k, 1) end, OPT[k] == 1 } })
   end
   optRow("같은 스킬 가장 좋은 1개는 유지", nil, { { "켜기", function() pick("sbest", true) end, OPT.sbest }, { "끄기", function() pick("sbest", false) end, not OPT.sbest } })
   card("자동 정리", { "장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 스킬은 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
@@ -594,6 +594,7 @@ local function resultLines(x)
   if x.levelUps then ex[#ex + 1] = "레벨 +" .. x.levelUps end
   if x.items and #x.items > 0 then ex[#ex + 1] = "장비 " .. #x.items .. "개" end
   if type(x.ore) == "number" and x.ore > 0 then ex[#ex + 1] = "강화석 +" .. x.ore end
+  if type(x.arcana) == "number" and x.arcana > 0 then ex[#ex + 1] = "아르카나 조각 +" .. x.arcana end
   if x.skills and #x.skills > 0 then ex[#ex + 1] = "스킬 " .. #x.skills .. "개" end
   if x.charms and #x.charms > 0 then ex[#ex + 1] = "참 " .. #x.charms .. "개" end
   if x.stones and x.stones > 0 then ex[#ex + 1] = "돌 " .. x.stones end
@@ -638,7 +639,7 @@ showResultPanel = function(x, spec)
       autoJob = nil
       if OPT.sr1 + OPT.sr2 + OPT.sr3 > 0 then
         local ok, e = pcall(function() return rpc:InvokeServer("skillclean", { rules = { OPT.sr1, OPT.sr2, OPT.sr3 }, best = OPT.sbest }) end)
-        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 판매 · 골드 +%s", e.res.sold, n(e.res.gold))) end
+        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 분해 · 연마석 +%s", e.res.sold, n(e.res.hone or 0))) end
       end
       launch(target)
     end)

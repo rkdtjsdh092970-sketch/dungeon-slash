@@ -44,7 +44,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)) }   -- hero: 지팡이를 끼면 마법사 모습
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)) }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
@@ -319,10 +319,10 @@ function M.skillClean(sv, rules, keepBest)
   for i = #sv.skills, 1, -1 do
     local k = sv.skills[i]; local r = (k.rarity or 0)
     if r <= 2 and tonumber(rules and rules[r + 1]) == 1 and not busy[k.uid] and not k.rune and (k.lvl or 1) <= 1 and best[k.id] ~= k then
-      local ok, v = Econ.sellSkill(sv, k.uid); if ok then sold += 1; gold += v end
+      local ok, v = Econ.sellSkill(sv, k.uid); if ok then sold += 1; gold += v end   -- (분해: v = 연마석)
     end
   end
-  return { sold = sold, gold = gold }
+  return { sold = sold, gold = 0, hone = gold }
 end
 -- 세공의 인장 (웹 rerollSockets): 소켓이 있는 전설 장비의 소켓 수를 1~3개로 다시 정한다 (끼운 돌은 사라짐) · 소켓 돌 삭제
 local function findAny(sv, uid) for _, s in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[s]; if it and it.uid == uid then return it end end for _, it in ipairs(sv.inv) do if it.uid == uid then return it end end end
@@ -365,6 +365,7 @@ function M.battle(sv, floorN, seed)
     sv.stats.kills += b.kills; sv.stats.clears += 1
     Extras.onWin(sv, b.kills, boss, false); Extras.setRate(sv, b.gold, b.time)
     if first then sv.spire.best = floorN; res.first = true; end
+    res.arcana = Econ.addArcana(sv, 3 + (boss and 5 or 0) + (first and 10 or 0))
     local drops = Loot.spireDrops(rng, sv, node, boss, first)
     for _, it in ipairs(drops) do
       if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil } else res.full = true end
@@ -411,6 +412,8 @@ function M.fight(sv, kind, n, seed)
         sv.lanesBase = CFG.ENDGAME_LANES; res.note = (res.note or "") .. " 스테이지 클리어! 영구 3레인과 '심연의 균열'이 열립니다."
       end
     end
+    do local first = (kind == "stage" and res.first) or (kind == "rift" and n > sv.rift.best)
+      res.arcana = Econ.addArcana(sv, (kind == "rift" and 1 + floor(n / 20) or 1) + (boss and 3 or 0) + (first and 5 or 0)) end
     if kind == "rift" and n > sv.rift.best then
       local gain = math.max(0, math.min(CFG.LEVEL_CAP, 1 + n) - sv.level); sv.rift.best = n; res.first = true
       if gain > 0 then sv.level += gain; res.levelUps = gain end

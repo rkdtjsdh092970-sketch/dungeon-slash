@@ -142,7 +142,7 @@ local function rankPush(uid, sv) rankSet("rift", uid, sv.rift and sv.rift.best o
 -- ── 우편함: 게임 주인이 보내는 전체 우편(공지 + 보상). DataStore "DungeonSlashMail" 의 "global" 목록, 받은 우편은 세이브 sv.mailGot ──
 local okMail, mailStore = pcall(function() return DSS:GetDataStore("DungeonSlashMail") end)
 local mailCache, mailT = {}, -1e9
-local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, shards = true, keys = true, gems = true }
+local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, shards = true, keys = true, gems = true, arcana = true }
 local function mailList(force)
   if not force and os.clock() - mailT < 30 then return mailCache end
   if okMail then local ok, v = pcall(function() return mailStore:GetAsync("global") end); if ok then mailCache = v or {}; mailT = os.clock() end end

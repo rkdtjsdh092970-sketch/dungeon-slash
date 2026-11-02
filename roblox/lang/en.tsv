@@ -1882,3 +1882,11 @@ x4 배속	x4 Speed
 전투력 %s	Power %s
 전투력 %s%s	Power %s%s
 지금이 가장 강한 조합입니다	Already your strongest setup
+분해 · 연마석을 얻었습니다	Salvaged · gained Honing Stones
+스킬 정리: %d개 분해 · 연마석 +%s	Skill cleanup: %d salvaged · Honing +%s
+아르카나 조각	Arcana Shards
+아르카나 조각 %s · 보석 %s	Arcana Shards %s · Gems %s
+아르카나 조각 +	Arcana Shards +
+아르카나 조각은 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트로 얻습니다. 보석은 일일 과제와 상점으로.	Arcana Shards come from victories, bosses, first clears, daily tasks and quests. Gems come from daily tasks and the shop.
+아르카나 조각이 부족합니다	Not enough Arcana Shards
+조각	Shards

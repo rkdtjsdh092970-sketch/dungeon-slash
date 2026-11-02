@@ -57,12 +57,15 @@ function M.equipSkill(sv, slotIdx, uid, rule)
   sv.loadout[slotIdx] = { uid = uid, rule = rule or "front" }; return true
 end
 function M.unequipSkill(sv, slotIdx) sv.loadout[slotIdx] = false; return true end
+M.SKILL_DIS_HONE = { 1, 3, 8, 20, 60 }   -- 스킬 분해 연마석: 일반 · 희귀 · 전설 · 신화 · 사탄 (레벨마다 +25%)
+-- 아르카나 조각 (스킬 소환 전용): 전투 · 과제 보상으로 준다
+function M.addArcana(sv, n) n = math.max(0, math.floor(n or 0)); sv.arcana = (sv.arcana or 0) + n; return n end
 function M.sellSkill(sv, uid)
   local k = findSkill(sv, uid); if not k then return false, "없는 스킬" end
   if sv.passive == uid then return false, "장착 중입니다" end
   for _, l in ipairs(sv.loadout) do if l and l.uid == uid then return false, "장착 중입니다" end end
-  local d = SKILL_BY[k.id]; local v = math.max(5, floor(skillPrice(d, k.rarity or 0) * 0.4 * (1 + 0.25 * ((k.lvl or 1) - 1)) + 0.5))
-  sv.gold += v; table.remove(sv.skills, table.find(sv.skills, k)); return true, v
+  local v = floor(M.SKILL_DIS_HONE[math.min(5, (k.rarity or 0) + 1)] * (1 + 0.25 * ((k.lvl or 1) - 1)) + 0.5)   -- 분해: 연마석
+  sv.hone = (sv.hone or 0) + v; table.remove(sv.skills, table.find(sv.skills, k)); return true, v
 end
 function M.skillList(sv)
   local rows = {}
@@ -233,6 +236,7 @@ M.GACHA = {
   PITY10 = 1,                        -- 10연차: 희귀(1) 이상 1개 보장
   PITY_HARD = 80, PITY_HARD_R = 2,   -- 80회 안에 전설(2) 이상 보장 (카운터는 전설 이상이 나오면 초기화)
   GEM1 = 30, GEM10 = 270,            -- 보석 가격
+  ARC1 = 10, ARC10 = 90,             -- 아르카나 조각 가격 (소환 전용 재화, 레벨과 관계없이 고정)
   DUP_HONE = { 2, 5, 15, 50, 150 },  -- 이미 같거나 더 높은 등급을 가진 스킬이 나오면 연마석으로 바꿈
 }
 function M.gachaGold(sv) return floor(300 * 1.55 ^ (M.skillAct(sv) - 1) + 0.5) end
@@ -253,13 +257,13 @@ function M.gachaView(sv)
   local best = {}; for _, k in ipairs(sv.skills) do best[k.id] = math.max(best[k.id] or -1, k.rarity or 0) end
   local list = {}
   for _, d in ipairs(Skills.SKILLS) do if not isSpecial(d) and d.id ~= "p_none" then list[#list + 1] = { id = d.id, unlock = d.unlock or 1, own = best[d.id] } end end
-  return { gold = M.gachaGold(sv), gold10 = M.gachaGold(sv) * 9, gem1 = G.GEM1, gem10 = G.GEM10, rates = G.RATES, pity = sv.gachaPity or 0, pityMax = G.PITY_HARD, gems = sv.gems or 0, pool = #gachaPool(sv), act = M.skillAct(sv), list = list }
+  return { arc1 = G.ARC1, arc10 = G.ARC10, arcana = sv.arcana or 0, gem1 = G.GEM1, gem10 = G.GEM10, rates = G.RATES, pity = sv.gachaPity or 0, pityMax = G.PITY_HARD, gems = sv.gems or 0, pool = #gachaPool(sv), act = M.skillAct(sv), list = list }
 end
 -- n = 1 | 10, pay = "gold" | "gem"
 function M.gachaPull(sv, n, pay, rng)
   local G = M.GACHA; n = (n == 10) and 10 or 1
   if pay == "gem" then local c = n == 10 and G.GEM10 or G.GEM1; if (sv.gems or 0) < c then return nil, "보석이 부족합니다" end; sv.gems -= c
-  else local c = M.gachaGold(sv) * (n == 10 and 9 or 1); if sv.gold < c then return nil, "골드가 부족합니다" end; sv.gold -= c end
+  else local c = n == 10 and G.ARC10 or G.ARC1; if (sv.arcana or 0) < c then return nil, "아르카나 조각이 부족합니다" end; sv.arcana -= c end
   local pool = gachaPool(sv); if #pool == 0 then return nil, "뽑을 스킬이 없습니다" end
   local out, gotHigh = {}, false
   for i = 1, n do

@@ -301,7 +301,7 @@ invRender = function()
     local cg = mk("Frame", { Position = UDim2.new(0, 10, 1, -54), Size = UDim2.new(1, -20, 0, 52), BackgroundTransparency = 1 }, L)
     mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 16), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
     for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_hone", "연마석", s.hone, Color3.fromRGB(110, 210, 150) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80) },
-      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120) }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_shard", "균열 조각", s.shards, Color3.fromRGB(190, 120, 240) } }) do
+      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120) }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220) } }) do
       local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, cg)
       local a = C.Sprites.art(c[1])
       if a then mk("ImageLabel", { Size = UDim2.new(0, 16, 0, 16), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
@@ -494,7 +494,7 @@ function M.skills()
   local function res(e) if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.err and tostring(e.err) or ""; M.skills() end
   if k.honeCost then M.btn(ab, "레벨업\n" .. k.honeCost, UDim2.new(), M.BTN.green, function() res(C.rpc:InvokeServer("levelup", k.uid)) end).LayoutOrder = 1 end
   for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("%d번 칸에", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
-  if k.slot == 0 then M.btn(ab, "판매", UDim2.new(), M.BTN.red, function() skSel = nil; res(C.rpc:InvokeServer("sellskill", k.uid)) end).LayoutOrder = 20 end
+  if k.slot == 0 then M.btn(ab, "분해", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "분해 · 연마석을 얻었습니다" end end).LayoutOrder = 20 end
   -- 대상 규칙 (장착 중인 공격 스킬): 누를 때마다 다음 규칙으로 (웹 RULES)
   if k.slot > 0 and d.slot ~= "passive" then
     local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
@@ -575,7 +575,7 @@ local function cost(parent, items, pos)   -- items = { {"i_gold", 120}, {"i_ore"
   for i, c in ipairs(items) do
     local a = C.Sprites.art(c[1])
     if a then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, LayoutOrder = i * 2 }, f) end
-    local l = mk("TextLabel", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = n(c[2]), TextColor3 = c[3] or Color3.new(1, 1, 1), Font = M.FONT, TextSize = 16, LayoutOrder = i * 2 + 1 }, f)
+    local l = mk("TextLabel", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = (not a and c[4]) and (c[4] .. " " .. n(c[2])) or n(c[2]), TextColor3 = c[3] or Color3.new(1, 1, 1), Font = M.FONT, TextSize = 16, LayoutOrder = i * 2 + 1 }, f)
     mk("UIPadding", { PaddingRight = UDim.new(0, 8) }, l)
   end
   return f
@@ -1210,7 +1210,7 @@ function M.gacha()
   txt(L, string.format("전설 이상 보장까지 %d / %d회", v.pity, v.pityMax), 14, UDim2.new(0, 14, 1, -66), UDim2.new(1, -28, 0, 20), Color3.fromRGB(255, 200, 120), M.FONT)
   pbar(L, UDim2.new(0, 14, 1, -40), UDim2.new(1, -28, 0, 14), v.pity / v.pityMax, Color3.fromRGB(255, 150, 40))
   txt(L, "10회 소환은 희귀 이상 1개 보장", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
-  local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0), string.format("보유 보석 %s · 골드 %s", n(v.gems), n(s.gold)))
+  local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0), string.format("아르카나 조각 %s · 보석 %s", n(v.arcana), n(v.gems)))
   local function pull(nn, pay)
     if pulling then return end; pulling = true
     local e = C.rpc:InvokeServer("gachapull", { n = nn, pay = pay }); pulling = false
@@ -1218,17 +1218,17 @@ function M.gacha()
     if e.err or not e.res then C.msg.Text = tostring(e.err); return end
     M.gacha(); revealResults(e.res)
   end
-  local function costRow(parent, art, val) return M.cost(parent, { { art, val } }, UDim2.new(0.58, 0, 0, 22)) end
+  local function costRow(parent, art, val) return M.cost(parent, { { art, val, nil, art == "i_arcana" and "조각" or nil } }, UDim2.new(0.58, 0, 0, 22)) end
   local function bb(y, title, art, val, col, cb)
     local b = M.btn(R, "", UDim2.new(1, -28, 0, 66), col, cb); b.Position = UDim2.new(0, 14, 0, y)
     txt(b, title, 22, UDim2.new(0, 18, 0, 18), UDim2.new(0.55, 0, 0, 30), Color3.new(1, 1, 1), M.FONT)
     costRow(b, art, val)
   end
-  bb(40, "1회 소환", "i_gold", v.gold, M.BTN.blue, function() pull(1, "gold") end)
-  bb(114, "10회 소환", "i_gold", v.gold10, M.BTN.gold, function() pull(10, "gold") end)
+  bb(40, "1회 소환", "i_arcana", v.arc1, M.BTN.blue, function() pull(1, "arcana") end)   -- 아르카나 조각 (전투 · 과제 보상)
+  bb(114, "10회 소환", "i_arcana", v.arc10, M.BTN.gold, function() pull(10, "arcana") end)
   bb(198, "1회 소환", "i_divine", v.gem1, M.BTN.purple, function() pull(1, "gem") end)
   bb(272, "10회 소환", "i_divine", v.gem10, M.BTN.red, function() pull(10, "gem") end)
-  txt(R, "보석은 일일 과제(+10)와 우편으로 얻습니다.", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
+  txt(R, "아르카나 조각은 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트로 얻습니다. 보석은 일일 과제와 상점으로.", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
 end
 -- 소환 목록: 뽑을 수 있는 스킬 전체 (아직 잠긴 것은 흐리게, 가진 것은 최고 등급 표시)
 function M.gachalist()

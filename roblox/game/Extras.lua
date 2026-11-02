@@ -32,6 +32,7 @@ function M.dailyClaim(sv, id)
       if D.claimed[id] or (D[t.key] or 0) < t.n then return false, "아직 받을 수 없습니다" end
       D.claimed[id] = true
       for k, v in pairs(t.reward) do sv[k] = (sv[k] or 0) + v end
+      sv.arcana = (sv.arcana or 0) + 10   -- 일일 과제: 아르카나 조각 +10
       return true
     end
   end
@@ -149,6 +150,7 @@ end
 function M.questClaim(sv, id)
   local st = sv.q and sv.q[id]; if not st or st.state ~= "done" then return false, "아직 받을 수 없습니다" end
   for _, d in ipairs(M.QUESTS) do if d.id == id then for k, v in pairs(d.reward) do sv[k] = (sv[k] or 0) + v end end end
+  sv.arcana = (sv.arcana or 0) + 5   -- 퀘스트: 아르카나 조각 +5
   st.state = "claimed"; return true
 end
 return M

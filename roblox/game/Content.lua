@@ -138,6 +138,7 @@ function M.play(sv, spec, seed)
   local function keyGain(field, n) if n and n > 0 then sv[field] = (sv[field] or 0) + n; res[field] = n end end
   keyGain("keys", b.keys); keyGain("keys2", b.keys2); keyGain("keys3", b.keys3); keyGain("keys4", b.keys4); keyGain("keys5", b.keys5); keyGain("keys6", b.keys6)
   if not win then return res end
+  res.arcana = Econ.addArcana(sv, spec.upper and 10 or 5)   -- 보스 관문 · 레이드 등: 아르카나 조각
   sv.stats.clears += 1
   if endless then
     local E = sv.endless; if b.time > E.best then E.best = floor(b.time) end; if b.kills > E.bestKills then E.bestKills = b.kills end
