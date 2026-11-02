@@ -115,7 +115,7 @@ function createBattle(sv, node) {
   const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
   const floorKind = !!node.tier || RIFTLIKE[node.kind], scAct = floorKind ? 1 : act;   // 균열류는 몬스터 외형만 지역(act)을 따르고, 강도는 층 배율이 정한다
   if (node.kind === "raid") { PLAYER_POS.x = 480; PLAYER_POS.y = 478; } else { PLAYER_POS.x = 104; PLAYER_POS.y = LAY.cy + 44; }
-  let riftMul = node.kind === "raid" ? floorMult(CFG.RIFT_END) : node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
+  let riftMul = node.kind === "raid" ? floorMult(node.tier || CFG.RAID.TIER || CFG.RIFT_END) : node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
   if (node.kind === "spire" && node.floor % 5 === 0 && node.floor % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;
   if (node.kind === "rift" && node.tier % 5 === 0 && node.tier % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;   // 5층마다 나오는 중간 보스 층은 몬스터 강도를 조금 낮춰 갑작스러운 벽이 되지 않게 한다 (20층 단위 보스는 그대로)
   const b = { node, act, stage, kind: node.kind, tier: node.tier || 0, mods, stats: st, time: 0, over: false, win: false, enemies: [], fx: [], texts: [], zones: [], persist: [], dmgBy: {}, events: [], corpses: [], sfxq: [], nextId: 1,
@@ -228,7 +228,8 @@ function spawnCells(b, D, w, h) {
   }
   return out;
 }
-const VOID_TIER = [100, 108, 126, 138], VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
+const VOID_TIER = [100, 100, 100, 100],   // 5.0: 단계별 강함은 노드 tier(GATE_TIERS)로
+  VOID_HP = VOID_TIER.map((t) => bossRiftMult(t) / bossRiftMult(100)), VOID_ATK = VOID_HP;   // 단계별 난이도 = 균열 30/40/55/75단계 수준 (4단계는 막바지 세팅이 있어야 잡힘)
 function makeEnemy(b, type, lane, col) {
   const isBoss = type === "boss", va = b.kind === "temple" ? 10 : b.kind === "spire" || b.kind === "craid" || b.kind === "warden" ? 11 : isEB(b.kind) ? 6 : RIFTLIKE[b.kind] && b.kind !== "hell" ? rint(6, 9) : Math.min(10, b.act) - 1;
   const D = isBoss ? b.bossDef : type === "spec" ? specDef(Math.min(va, 9)) : WARPS[type] || ENEMIES[type];
@@ -650,6 +651,7 @@ function finishBattle(sv, b) {
       res.hone = d.hone; res.runes = d.runes; res.items = d.items; res.skills = d.skills; res.stones = d.stones || 0; res.stonesHi = d.stonesHi || 0; res.sockTix = d.sockTix || 0; res.ore = d.ore; res.shards = d.shards; res.orbC = d.orbC; res.orbD = d.orbD; res.uniques = d.uniques;
       if (d.charms && d.charms.length) { sv.charmInv = sv.charmInv || []; sv.charmInv.push(...d.charms); res.charms = d.charms; }
       sv.inv.push(...d.items); res.skillRes = d.skills.map((s) => grantSkill(sv, s.id)); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
+      const stageFirst = (node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage;
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
         sv.cleared[node.act - 1] = node.stage;
         if (node.stage >= 3 && sv.slots < 3) { sv.slots = 3; res.notes.push("3번 스킬 칸이 열렸습니다!"); }
@@ -662,7 +664,13 @@ function finishBattle(sv, b) {
       if (node.kind === "warden") { const Wd = (sv.warden = sv.warden || { clears: 0, best: 0, pops: 0 }); Wd.clears++; Wd.pops += b.wPop || 0; if (!Wd.best || b.time < Wd.best) Wd.best = Math.round(b.time); res.warden = { time: b.time, best: Wd.best, pop: b.wPop || 0, boom: b.wBoom || 0 }; res.notes.push(`문지기 처치! ${Math.round(b.time)}초 (구슬 ${b.wPop || 0}개 처치, 폭발 ${b.wBoom || 0}회)`); }
       if (node.kind === "craid" && !node.charm) { const d = node.diff | 0, first = !(sv.craid && sv.craid[d]); sv.craid = sv.craid || [0, 0, 0, 0]; if (first) { sv.craid[d] = 1; sv.cbook = sv.cbook || [0, 0, 0, 0]; sv.cbook[d]++; res.notes.push(`📜 ${d}차 전직의 서를 얻었습니다! (레이드 ${CFG.CRAID.NAMES[d]} 최초 클리어)`); } res.craid = { diff: d, first }; }
       if (node.kind === "spire") { const pk = node.tw === 2 ? "spire2" : "spire", P = (sv[pk] = sv[pk] || { best: 0 }); if (node.floor > P.best) { P.best = node.floor; res.notes.push(node.floor % CFG.SPIRE.WALL === 0 ? `🗼 ${node.tw === 2 ? "심층 " : ""}탑 ${node.floor}층 — 벽을 넘었습니다!` : `${node.tw === 2 ? "심층 " : ""}탑 ${node.floor}층 최초 클리어`); } res.spire = { floor: node.floor, best: P.best }; }
-      if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { const gain = Math.max(0, Math.min(CFG.LEVEL_CAP, 1 + node.tier) - sv.level); sv.rift.best = node.tier; if (gain > 0) { sv.level += gain; res.levelUps = gain; } if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
+      if (node.kind === "rift") { if (node.tier > sv.rift.best && node.tier <= CFG.RIFT_END) { sv.rift.best = node.tier; res.riftFirst = true; if (sv.rift.best >= CFG.RIFT_END && !sv.graduated) { sv.graduated = 1; res.notes.push("🎓 균열 100층 졸업! 공허의 군주와 속성 보스에서 높은 등급의 스킬을 얻을 수 있습니다."); } } qd.push(...questEvent(sv, { type: "rift" })); }
+      // 5.0: 경험치 (스테이지 · 균열) + 아르카나 조각 (로블록스판과 같게)
+      if (node.kind === "stage" || node.kind === "boss" || node.kind === "rift") {
+        const isRift = node.kind === "rift", n = isRift ? node.tier : node.stage, first = isRift ? !!res.riftFirst : !!stageFirst, boss = node.kind === "boss" || (isRift && n % 5 === 0);
+        res.exp = winExp(sv, isRift ? "rift" : "stage", n, first, boss); const ups = grantExp(sv, res.exp); if (ups > 0) res.levelUps = ups;
+        const arc = (isRift ? 1 + Math.floor(n / 20) : 1) + (boss ? 3 : 0) + (first ? 5 : 0); sv.hone += arc; res.hone = (res.hone || 0) + arc;
+      }
       if (endless) { const E = sv.endless; if (b.time > E.best) E.best = Math.round(b.time); if (b.kills > E.bestKills) E.bestKills = b.kills; res.notes.push(`무한 균열: ${Math.round(b.time)}초 생존, ${b.kills}마리 처치 (${waves}웨이브)`); }
     }
     while (sv.inv.length > invMax(sv)) { let wi = 0, ws = 1e9; sv.inv.forEach((it, i) => { const sc = protectedItem(sv, it) ? 1e12 : it.rarity * 1000 + it.ilvl * 10 + (it.enh || 0) + i * 0.001; if (sc < ws) { ws = sc; wi = i; } }); sv.inv.splice(wi, 1); }

@@ -130,7 +130,7 @@ function openRaid() {
   <div class="pline">· 결계석을 모두 부수면 문지기가 잠시 무방비가 됩니다. 제한 시간은 <b>${Math.round(CFG.RAID.LIMIT / 60)}분</b>.</div>
   <div class="pline">내 전투력 <b style="color:#ffe08a">${pw}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>
   <div class="pbtns">${ok ? `<button class="btn pri" data-a="rstart">도전하기</button>` : `<button class="btn" disabled>균열 100층 클리어 후 도전 가능</button>`}<button class="btn" data-a="rclose">닫기</button></div>`, { cls: "wide", on: {
-    rstart: () => { startBattle({ kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(R.cleared > 0) }, { raid: 1 }); }, rclose: () => Modal.close(),
+    rstart: () => { startBattle({ kind: "raid", act: 10, tier: CFG.RAID.TIER, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(R.cleared > 0) }, { raid: 1 }); }, rclose: () => Modal.close(),
   } });
 }
 

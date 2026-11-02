@@ -350,7 +350,7 @@ function openTower() {
    <div style="width:270px" class="col"><div class="dname">${tier}층</div><div class="pline">${mfText(tier)} <span class="dim">(층이 오를수록 증가, 20층마다 대폭 증가)</span></div>
     <div class="mods">${mods.map((m) => `<span class="mod" title="${m.text}">${m.name}</span>`).join("")}</div>${mods.map((m) => `<div class="dim">${m.name}: ${m.text}</div>`).join("")}
     <div class="pline dim">5층마다 보스 · 구슬 · 원초의 돌 · 왜곡체(열쇠)</div><div class="pline" style="color:#9ad8ff">드랍 장비 T${floorTier(tier)} · 원초의 돌 · 이 층에서는 스킬이 나오지 않습니다</div><div class="pline dim">20층마다 난이도가 한 단계 뛰고 장비 T가 오릅니다. 15~19층에서 장비를 갖춰야 다음 보스를 넘길 수 있어요.</div><div class="pline dim">드랍 아이템 레벨 ${10 + Math.floor((Math.max(1, tier) - 1) / CFG.ILVL_RIFT_STEP)}</div><div class="pline dim">🗼 유물의 탑 — 균열 60층 이후 해금 · 추후 패치 예정</div>
-    <div class="pbtns"><button class="btn" data-a="tdn">▼</button><button class="btn pri" data-a="tgo">도전</button><button class="btn" data-a="tup">▲</button></div><div class="pbtns"><button class="btn" data-a="tatlas">심연 각인</button></div></div></div>`, { cls: "wide", on: {
+    <div class="pbtns"><button class="btn" data-a="tdn">▼</button><button class="btn pri" data-a="tgo">도전</button><button class="btn" data-a="tup">▲</button></div></div></div>`, { cls: "wide", on: {
     floor: (el) => { const n = +el.dataset.n; if (n > max) return; G.riftTier = n; openTower(); },
     tup: () => { G.riftTier = Math.min(max, tier + 1); openTower(); }, tdn: () => { G.riftTier = Math.max(1, tier - 1); openTower(); },
     tgo: () => { Modal.close(true); const n = MAP.byId["R"]; MapView.sel = n; mapGo(); }, tatlas: () => openAtlas(),

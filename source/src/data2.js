@@ -105,7 +105,7 @@ const ATLAS = [
   { id: "endless", name: "무한의 인장", max: 2, per: 1, unit: "회", text: "무한 균열 하루 입장 +1", cost: 60, grow: 2.5 },
 ];
 const atlasCost = (n, rank) => Math.round(n.cost * 1.6 * (1 + rank * (n.grow || 0.6)));   // 조각 수급을 줄이고 단가를 올려 천천히 올린다
-const atlasVal = (sv, id) => { const n = ATLAS.find((x) => x.id === id); return n ? ((sv.atlas && sv.atlas[id]) || 0) * n.per : 0; };
+const atlasVal = (sv, id) => 0;   // 5.0: 심연 각인 폐지 (로블록스판과 같게) — 새긴 조각은 clampAll 에서 돌려준다
 
 // ---------------------------------------------------------------
 // 월드 버프 (엔드게임: 일정 시간마다 무작위로 바뀐다) + 지옥 스테이지

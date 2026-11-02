@@ -50,6 +50,7 @@ function openSummon(res) {
 
 // ---------- 심연 각인 (엔드게임 재화 트리) ----------
 function openAtlas() {
+  toast("심연 각인은 폐지되었습니다 (새긴 균열 조각은 모두 돌려드렸습니다)", "info"); return;   // 5.0
   const rows = ATLAS.map((n) => {
     const r = (save.atlas[n.id] || 0), cost = r < n.max ? atlasCost(n, r) : 0;
     return `<div class="arow"><div class="ai"><b>${n.name}</b> <span class="dim">${r}/${n.max}</span><div class="dim">${n.text} · 현재 +${Math.round(r * n.per * (n.unit === "%" ? 100 : 1))}${n.unit}</div><div class="bar"><i style="width:${(r / n.max) * 100}%"></i></div></div>

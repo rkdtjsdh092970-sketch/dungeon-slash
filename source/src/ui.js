@@ -99,10 +99,10 @@ const isHell = (n) => GRADUATED(save) && n.kind === "stage" && hellNodes(Date.no
 function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
-  if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
+  if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RAID.TIER, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
-  if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
+  if (n.kind === "void") return { kind: "void", act: 10, tier: GATE_TIERS[(G.voidStage || 1) - 1], vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "craid") { const d = n.sub === "charm" ? 5 : n.sub === "warden" ? 4 : Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 5) return { kind: "craid", act: 10, diff: 3, charm: 1, tier: CFG.CRAID.TIERS[3], name: "참 던전", level: 100 }; if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
   if (n.kind === "tower2") { const P = save.spire2 || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END2, Math.min(P.best + 1, G.spire2Floor || P.best + 1))); return { kind: "spire", tw: 2, act: 10, floor: f, tier: spireTier(f, 2), first: f > P.best, name: `심층 첨탑 ${f}층`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
