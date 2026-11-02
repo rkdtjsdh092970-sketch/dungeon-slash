@@ -246,7 +246,7 @@ function ptDraw() {
     const T = pv.T; g.globalAlpha = 1; const fs = Math.round(17 / PT.sc); g.font = `bold ${fs}px sans-serif`; g.textAlign = "center"; g.lineWidth = fs / 5; g.strokeStyle = "#000"; const lab = `${pv.P.cost}점`, ly = T.y - 40 - fs * 0.6; g.strokeText(lab, T.x, ly); g.fillStyle = lc; g.fillText(lab, T.x, ly); g.restore();
   } else if (PT.hover && passiveHas(save, PT.hover.id) && canRemovePassive(save, PT.hover.id)) { const q = PT.hover; g.save(); g.strokeStyle = "#ff6a6a"; g.lineWidth = 5 / PT.sc * 0.9; g.setLineDash([8, 6]); g.beginPath(); g.arc(q.x, q.y, 36, 0, 7); g.stroke(); g.restore(); }
   g.fillStyle = "#ffd24a"; g.beginPath(); g.arc(0, 0, 34, 0, 7); g.fill(); g.fillStyle = "#3a2a08"; g.font = "bold 26px sans-serif"; g.textAlign = "center"; g.fillText("시작", 0, 9);
-  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 3000, Math.sin(ang) * 3000 + 8); g.globalAlpha = 1; }
+  for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_t10"] || PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = "bold 22px sans-serif"; g.fillText(A.name, Math.cos(ang) * 5700, Math.sin(ang) * 5700 + 8); g.globalAlpha = 1; }
   for (const p of PASSIVES) {
     const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 10 : 17, c = col(p);
     g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);

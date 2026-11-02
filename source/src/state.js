@@ -10,7 +10,7 @@ function newSave() {
   const s = { v: 3, level: 1, exp: 0, gold: 0, ore: 5, shards: 0, inv: [], equipped: {}, skills: [], loadout: [null, null, null, null], passive: null, stash: { items: [], skills: [], cap: 100 }, slots: 1,
     cleared: Array(CFG.ACTS).fill(0), tut: { step: 0, done: false }, q: {}, guild: {}, rift: { best: 0 }, lanesBase: CFG.BASE_LANES, endgame: false,
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
-    charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 6, rangeRev: 1, stones: [], sockTix: 0, hone: 100, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
+    charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 7, rangeRev: 1, stones: [], sockTix: 0, hone: 100, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
   const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
   return s;
@@ -24,7 +24,7 @@ function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) re
     purgeClearedQuests(s); clampAll(s);
     if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;
-    if (s.passRev !== 6) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passRev = 6; }   // 패시브 트리 개편: 기존 포인트는 전부 환급
+    if (s.passRev !== 7) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passPresets = [null, null, null]; s.passRev = 7; }   // 5.0 패시브 v2: 기존 포인트는 전부 환급   // 패시브 트리 개편: 기존 포인트는 전부 환급
     return s; } catch (e) { return null; } }
 
 // ---- 장비/스킬 생성 ----
@@ -111,7 +111,7 @@ function clampItem(it) {
 }
 // 장착 스킬의 물리/마법 비중: 이전 버전의 무기에 종류가 없을 때, 쓰던 스킬에 맞는 종류(검/지팡이/낫/마도서)를 고르는 데 쓴다
 function physFrac(sv) { let p = 0, m = 0; for (const l of sv.loadout || []) { if (!l) continue; const inst = (sv.skills || []).find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); if (k.dtype === "buff" || k.dtype === "heal") continue; const w = k.mult / k.cd; if (k.dtype === "mag") m += w; else p += w; } return p + m > 0 ? p / (p + m) : 0.5; }
-function clampAll(sv) { let n = 0; unpackStones(sv); migrateSkillTiers(sv); dedupeLoadout(sv);
+function clampAll(sv) { let n = 0; unpackStones(sv); migrateSkillTiers(sv); if (sv.passRev !== 7) { if (Object.keys(sv.pass || {}).length) sv.passReset = true; sv.pass = {}; sv.passPresets = [null, null, null]; sv.passRev = 7; } dedupeLoadout(sv);
   for (const st of sv.stones || []) if (st.rev && REMOVED_CH[st.rev.k]) st.rev = { k: "dotDmg", v: 0.16 };   // 상태이상 확률 돌 → 지속 피해 돌
   for (const k of sv.skills || []) if (k.rune === "bleed" || k.rune === "venom" || k.rune === "flame") k.rune = "power";   // 사라진 룬 → 강타의 룬
   for (const r of sv.runes || []) if (r.id === "bleed" || r.id === "venom" || r.id === "flame") r.id = "power";
@@ -197,7 +197,7 @@ function migrateSkillTiers(sv) {
 function skillOf(inst) {
   const d = SKILLS.find((x) => x.id === inst.id), R = SKILL_RARITY[inst.rarity], lvl = inst.lvl || 1, rn = inst.rune ? RUNES[inst.rune] : null;
   const bonus = {}; for (const k in d.bonus) bonus[k] = d.bonus[k] * R.bonusMul;
-  const o = Object.assign({}, d, { def: d, inst, mult: d.mult * R.mult * (1 + 0.05 * (lvl - 1)), cd: d.cd * R.cdMul, side: d.side || 1, bonus, rarity: inst.rarity, lvl, rune: rn, mana: (d.mana || 0) * (1 + 0.02 * (lvl - 1)), power: d.power ? d.power * (1 + (R.mult - 1) * 0.6) : 0 });
+  const o = Object.assign({}, d, { def: d, inst, mult: d.mult * R.mult * (1 + 0.05 * (lvl - 1)) * (SKILL_BAL[d.id] || 1), cd: d.cd * R.cdMul, side: d.side || 1, bonus, rarity: inst.rarity, lvl, rune: rn, mana: (d.mana || 0) * (1 + 0.02 * (lvl - 1)), power: d.power ? d.power * (1 + (R.mult - 1) * 0.6) : 0 });
   if (d.kind === "bounce") o.count = d.count + Math.floor((inst.rarity | 0) / 2);   // 등급이 오를수록 튕기는 횟수가 조금씩 늘어난다 (희귀·전설 +0~1, 사탄·종말 +2)
   if (d.kind === "single" && d.dtype !== "buff" && d.dtype !== "heal") { const h = SINGLE_HITS[inst.rarity] || 1; o.hits = h; o.hitMul = (SINGLE_HIT_BONUS[inst.rarity] || 1) / h; if (h > 1) o.desc = d.desc + ` (${h}연타)`; }
   if (rn) {
