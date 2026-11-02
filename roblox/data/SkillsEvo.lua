@@ -46,6 +46,10 @@ M.LIST = {
   -- ── 마법 6: 체인 라이트닝 ──
   S{ id = "arcchain", name = "Arc Chain", evo = "chain", art = "chain", tier = 1, slot = "active", kind = "chain", cd = 5.5, mult = 3, jumps = 7, decay = 0.9, range = 6, unlock = 4, dtype = "mag", elem = "light", mana = 18, lifesteal = 0.03, icon = "bolt", sfx = "zap", color = "#9ad8ff", desc = "Lightning arcs between enemies 7 times" },
   S{ id = "stormspear", name = "Thunder Spear", evo = "chain", art = "chain", tier = 2, slot = "active", kind = "pierce", cd = 7, mult = 3.6, range = 7, unlock = 6, dtype = "mag", elem = "light", mana = 22, shock = 0.4, icon = "spear", sfx = "zap", color = "#fff08a", desc = "A lightning spear pierces a row and shocks enemies" },
+  -- ── 무속성 마법 (마법사 시작 세트): 원소 저항을 받지 않아 저점이 높고, 원소 피해 보너스를 받지 않아 고점은 낮다 ──
+  S{ id = "arcbolt", name = "Arcane Bolt", art = "voidbolt", tier = 0, slot = "basic", kind = "single", cd = 0.85, mult = 1.05, range = 4, unlock = 1, dtype = "mag", mana = 0, icon = "orb", sfx = "zap", color = "#d8c8ff", desc = "A plain magic bolt. No element: never resisted, but gains no elemental bonuses" },
+  S{ id = "arcmissiles", name = "Arcane Missiles", art = "orbs", tier = 0, slot = "active", kind = "spray", cd = 5.5, mult = 0.65, count = 6, range = 6, unlock = 1, dtype = "mag", mana = 14, shape = "spray", icon = "orb", sfx = "zap", color = "#d8c8ff", desc = "Fires 6 arcane missiles at random enemies. No element" },
+  S{ id = "arcburst", name = "Arcane Burst", art = "orbs", tier = 0, slot = "active", kind = "multi", cd = 5, mult = 2, side = 0.8, range = 5, unlock = 1, dtype = "mag", mana = 14, icon = "orb", sfx = "boom", color = "#e0d0ff", desc = "An arcane explosion around the target (3x3). No element" },
   -- ── 마법 평타 상위 (평타 세트의 전설 · 신화 자리) ──
   S{ id = "arcbarrage", name = "Arcane Barrage", art = "voidbolt", tier = 2, slot = "basic", kind = "single", cd = 0.6, mult = 0.95, range = 5, unlock = 6, dtype = "mag", elem = "void", mana = 0, ignoreAdd = 0.15, icon = "orb", sfx = "zap", color = "#c58bff", desc = "A rapid stream of arcane bolts. Ignores resistance (15%)" },
   S{ id = "cometbolt", name = "Comet Bolt", art = "ember", tier = 3, slot = "basic", kind = "multi", cd = 0.9, mult = 1.55, side = 0.8, range = 5, unlock = 11, dtype = "mag", elem = "fire", mana = 0, ignite = 0.35, bonus = { boss = 0.3 }, icon = "flame", sfx = "boom", color = "#ffb050", desc = "A basic attack that drops a tiny comet on a 3x3 area. Chance to Ignite, Bosses +30%" },
@@ -53,17 +57,17 @@ M.LIST = {
 -- 소환에 나오는 아르카나와 등급 (평타는 소환에 없다 — 아래 BASIC 표대로 레벨이 오르면 받는다. 여기에 없는 아르카나는 보스 · 레이드에서만)
 -- 일반 14 · 희귀 13 · 전설 12 · 신화 9 · 사탄 5 (위로 갈수록 적다)
 M.GACHA = {}
-for _, id in ipairs({ "smash", "bomb", "lance", "chain", "snipe", "firewall", "sweep", "cry", "rend", "volley", "iceshard", "shuriken", "p_steel", "heal" }) do M.GACHA[id] = 0 end
+for _, id in ipairs({ "smash", "bomb", "lance", "chain", "snipe", "firewall", "sweep", "cry", "rend", "volley", "iceshard", "shuriken", "p_steel", "heal", "arcmissiles", "arcburst" }) do M.GACHA[id] = 0 end
 for _, id in ipairs({ "execute", "vamp", "whirl", "trap", "blizzard", "spirit" }) do M.GACHA[id] = 1 end
 for _, id in ipairs({ "meteor" }) do M.GACHA[id] = 2 end
 for _, id in ipairs({ "solarflare", "glacierfall", "titanfist", "legion" }) do M.GACHA[id] = 3 end
 for _, id in ipairs({ "skysword", "starfall", "dragonbreath", "angelfall", "verdict" }) do M.GACHA[id] = 4 end
 for _, d in ipairs(M.LIST) do if d.slot ~= "basic" then M.GACHA[d.id] = d.tier end end
 -- 평타 세트: 이 레벨이 되면 받는다 (물리 · 마법 모두). 평타 레벨은 골드로 올린다
-M.BASIC = { { "strike", 1 }, { "ember", 1 } }   -- 시작 평타 (나머지 평타는 모두 보스 관문에서)
+M.BASIC = { { "strike", 1 }, { "arcbolt", 1 } }   -- 시작 평타 (나머지 평타는 모두 보스 관문에서)
 -- 평타는 열쇠 보스(보스 관문)가 떨어뜨린다: 보스 원소에 맞는 것, 관문 단계가 높을수록 높은 등급까지 (1 = 일반, 2 = 희귀까지, 3 = 전설까지, 4 = 신화까지)
 M.GATE_BASIC = {
   titan = { "rapid", "crush", "twinfang", "skycleave", "heavensplit" }, storm = { "spark", "galeshot", "voltlash" }, poison = { "venom", "rip", "bloodclaw" },
-  hive = { "fireball", "cometbolt" }, void = { "voidbolt", "arcbarrage" }, frost = { "frostbolt", "voltlash" },
+  hive = { "ember", "fireball", "cometbolt" }, void = { "voidbolt", "arcbarrage" }, frost = { "frostbolt", "voltlash" },
 }
 return M

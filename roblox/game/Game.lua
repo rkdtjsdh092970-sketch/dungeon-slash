@@ -95,7 +95,7 @@ end
 -- 시작 직업: 전사(검) / 마법사(지팡이) — 무기 · 기본 공격 · 범위 · 단일(보조) 스킬 3개 + 시작 아르카나 조각
 M.START_KITS = {
   warrior = { wt = "sword", skills = { "strike", "rend", "smash" } },
-  mage = { wt = "staff", skills = { "ember", "chain", "bomb" } },
+  mage = { wt = "staff", skills = { "arcbolt", "arcmissiles", "arcburst" } },   -- 무속성 마법 시작 세트 (2026-11-03)
 }
 M.START_ARCANA = 90   -- 시작 무료 10연차 1번. 시뮬레이션(sim/progress.lua): 스타터 세트만으로 초반 100% 클리어 → 시작 소환은 진행이 아니라 첫 뽑기 경험용
 function M.pickStart(sv, cls)

@@ -1541,7 +1541,7 @@ showStartPick = function()
   mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, t)
   local sub = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.12, 0), Size = UDim2.new(0.8, 0, 0.04, 0), BackgroundTransparency = 1, Text = "This sets your first weapon and 3 arcana. You can switch paths later by changing weapons.", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(200, 185, 165), ZIndex = 42 }, ov)
   for i, c in ipairs({ { "warrior", "warrior", "Warrior", "A sword-wielding melee fighter", "Sturdy health and strong physical attacks", "Arcana: Strike · Rend (area) · Smash", Color3.fromRGB(235, 110, 80) },
-                       { "mage", "mage", "Mage", "A staff-wielding elemental mage", "Magic that sweeps the screen from afar", "Arcana: Ember · Chain Lightning · Firebomb", Color3.fromRGB(150, 130, 255) } }) do
+                       { "mage", "mage", "Mage", "A staff-wielding mage", "Steady arcane magic from afar", "Arcana: Arcane Bolt · Arcane Missiles · Arcane Burst", Color3.fromRGB(150, 130, 255) } }) do
     local card = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(i == 1 and 0.28 or 0.72, 0, 0.19, 0), Size = UDim2.new(0.38, 0, 0.74, 0), BackgroundColor3 = Color3.fromRGB(22, 15, 13), Text = "", AutoButtonColor = false, ZIndex = 42 }, ov)
     corner(card, 12); local cs = mk("UIStroke", { Color = Color3.fromRGB(120, 92, 48), Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
     Skin.frame(card, "ui_panel", 0.2, 0.5)

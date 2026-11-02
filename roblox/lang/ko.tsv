@@ -1654,3 +1654,12 @@ Drops — Basic attacks (30–50%%): %s	드랍 — 평타 (30~50%%): %s
 Duplicate · %d/%d to next Lv	중복 · 다음 레벨까지 %d/%d
 %s · Lv %d / %d  (duplicates %d/%d)	%s · Lv %d / %d  (중복 %d/%d)
 Level up by getting the same Arcana again	같은 아르카나를 다시 얻으면 레벨이 오릅니다
+Arcane Bolt	비전 탄
+Arcane Missiles	비전 미사일
+Arcane Burst	비전 폭발
+A plain magic bolt. No element: never resisted, but gains no elemental bonuses	기본 마법탄. 무속성: 저항을 받지 않지만 원소 보너스도 받지 않는다
+Fires 6 arcane missiles at random enemies. No element	비전 미사일 6발을 무작위 적에게 쏜다. 무속성
+An arcane explosion around the target (3x3). No element	대상 주변 3x3 비전 폭발. 무속성
+A staff-wielding mage	지팡이를 든 마법사
+Steady arcane magic from afar	멀리서 안정적인 비전 마법
+Arcana: Arcane Bolt · Arcane Missiles · Arcane Burst	아르카나: 비전 탄 · 비전 미사일 · 비전 폭발
