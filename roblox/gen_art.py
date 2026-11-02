@@ -44,7 +44,10 @@ ART = [
     ('fx_slash', 'fx/slash.png', (256, 128)), ('fx_ring', 'fx/ring.png', (128, 128)), ('fx_burst', 'fx/burst.png', (1024, 128)), ('fx_bolt', 'fx/bolt.png', (384, 256)),
     ('fx_spark', 'fx/spark.png', (32, 32)), ('fx_shard', 'fx/shard.png', (32, 64)), ('fx_circle', 'fx/circle.png', (256, 256)), ('fx_beam', 'fx/beam.png', (256, 32)), ('fx_claw', 'fx/claw.png', (128, 128)),
     *[(f'fx_cloud{i}', f'fx/cloud{i}.png', (512, 160)) for i in (1, 2, 3)],
-    *[(f'fx_mc_{k}', f'fx/mc_{k}.png', (256, 256)) for k in ('main', 'runes', 'inner', 'sigil')],   # 마법진 (Codex, 흰빛으로 바꿔 색을 입힘)
+    *[(f'fx_mc_{k}', f'fx/mc_{k}.png', (256, 256)) for k in ('main', 'runes', 'inner', 'sigil')],
+    ('fx_phoenix', 'fx/phoenix.png', (384, 192)), ('fx_spear', 'fx/spear.png', (96, 384)), ('fx_voideye', 'fx/voideye.png', (384, 192)), ('fx_sun', 'fx/sun.png', (192, 192)),
+    ('fx_rockspike', 'fx/rockspike.png', (96, 192)), ('fx_icespike', 'fx/icespike.png', (96, 192)), ('fx_xslash', 'fx/xslash.png', (192, 192)), ('fx_vslash', 'fx/vslash.png', (96, 384)),
+    ('fx_windblade', 'fx/windblade.png', (192, 96)), ('fx_hydra', 'fx/hydra.png', (192, 192)), ('fx_comet', 'fx/comet.png', (192, 192)), ('fx_moon', 'fx/moon.png', (192, 192)),   # 아르카나 전용 연출 (Codex)   # 마법진 (Codex, 흰빛으로 바꿔 색을 입힘)
     # 지도 아이콘 · 패시브 아이콘 · 무기 종류 · 마법사
     *[('mi_' + os.path.splitext(f)[0], 'mapicon/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'mapicon')))],
     *[('p_' + os.path.splitext(f)[0], 'passive/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'passive')))],
