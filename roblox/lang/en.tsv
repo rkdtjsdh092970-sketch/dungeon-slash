@@ -2118,3 +2118,9 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 회피 시 다음 스킬 피해 +30%	After a Dodge, Next Arcana Damage +30%
 회피 시 다음 스킬 피해 +{v}	Next Arcana Damage +{v} after a Dodge
 비어 있음	Empty
+기본 위력	Base Power
+마법 계열	Magic
+물리 계열	Physical
+아르카나 도감  %d / %d	Arcana Codex  %d / %d
+아직 없음 · [아르카나 소환]에서 얻을 수 있습니다	Not owned · obtain from [Arcana Summon]
+카드를 누르면 능력을 볼 수 있습니다. 흑백 카드는 아직 갖지 못한 아르카나입니다.	Tap a card to see its abilities. Gray cards are Arcana you do not own yet.

@@ -32,6 +32,7 @@ local loadBox = Instance.new("Frame"); loadBox.BackgroundTransparency = 1; loadB
 -- 로고 그림 (오면 글자 로고를 대신한다)
 local loadLogo = Instance.new("ImageLabel"); loadLogo.BackgroundTransparency = 1; loadLogo.ImageTransparency = 1; loadLogo.ScaleType = Enum.ScaleType.Fit   -- 부드럽게 늘림 (도트 확대는 움직일 때 계단처럼 떨린다)
 loadLogo.AnchorPoint = Vector2.new(0.5, 0); loadLogo.Size = UDim2.new(0, 600, 0, 225); loadLogo.Position = UDim2.new(0.5, 0, 0, -40); loadLogo.ZIndex = 6; loadLogo.Parent = loadBox
+local logoGlow   -- 로고 뒤 붉은 빛 (숨쉬기, 로고 그림이 오면 만든다)
 do local sc = Instance.new("UIScale"); sc.Parent = loadBox; local function f() local vp = workspace.CurrentCamera.ViewportSize; sc.Scale = math.clamp(math.min(vp.X / 640, vp.Y / 420), 0.5, 1.6) end; f(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(f) end
 local function logoText(t, y, size, color)
   local l = Instance.new("TextLabel"); l.BackgroundTransparency = 1; l.Size = UDim2.new(1, 0, 0, size + 8); l.Position = UDim2.new(0, 0, 0, y); l.Text = t; l.Font = Enum.Font.GothamBlack; l.TextSize = size; l.TextColor3 = color; l.Parent = loadBox
@@ -57,8 +58,9 @@ do   -- 입자 · 그라데이션 흐름 · 배경 그림 천천히 이동
       m.y -= m.sp * dt; if m.y < -0.05 then m.y = 1.05; m.x = math.random() end
       m.f.Position = UDim2.new(m.x + math.sin(t * 0.8 + m.ph) * 0.015, 0, m.y, 0); m.f.BackgroundTransparency = math.clamp(0.1 + 0.6 * (0.5 + 0.5 * math.sin(t * 3 + m.ph)) + (1 - m.y) * 0.3, 0, 1)   -- 위로 갈수록 사그라든다
     end
-    loadArt.Position = UDim2.new(-0.04 + math.sin(t * 0.1) * 0.04, 0, -0.04 + math.cos(t * 0.13) * 0.02, 0)
-    loadLogo.Position = UDim2.new(0.5, 0, 0, -40 + math.sin(t * 1.1) * 3)   -- 로고가 살짝 떠 있다
+    loadArt.Position = UDim2.new(-0.04, 0, -0.04, 0)   -- 배경도 고정 (느린 이동은 1픽셀씩 끊겨 보인다)
+    -- 로고는 움직이지 않는다 (픽셀 단위로 움직이면 계단처럼 끊겨 렉처럼 보임). 대신 뒤의 빛이 숨쉬듯 밝아진다
+    if logoGlow then logoGlow.ImageTransparency = 0.55 + 0.2 * math.sin(t * 1.6) end
     loadShown += (loadTarget - loadShown) * math.min(1, dt * 5); loadBar.Size = UDim2.new(loadShown, 0, 1, 0)
     loadShine.Offset = Vector2.new(((t * 0.6) % 2) - 1, 0)
   end)
@@ -103,6 +105,9 @@ task.spawn(function()   -- 시작 그림 · 로고가 오면 서서히 깐다 (�
   TweenService:Create(loadArt, TweenInfo.new(1.2), { ImageTransparency = 0 }):Play(); TweenService:Create(loadDim, TweenInfo.new(1.2), { BackgroundTransparency = 0.85 }):Play()
   local l = Sprites.art("ui_logo"); if not l or not loadGui.Parent then return end
   loadLogo.ImageContent = l.content; for _, t in ipairs(logoTxt) do t.Visible = false end
+  local ga = Sprites.art("fx_glow")
+  if ga and not logoGlow then logoGlow = Instance.new("ImageLabel"); logoGlow.BackgroundTransparency = 1; logoGlow.ImageContent = ga.content; logoGlow.ImageColor3 = Color3.fromRGB(255, 70, 40)
+    logoGlow.AnchorPoint = Vector2.new(0.5, 0.5); logoGlow.Position = UDim2.new(0.5, 0, 0, 72); logoGlow.Size = UDim2.new(0, 720, 0, 300); logoGlow.ImageTransparency = 0.6; logoGlow.ZIndex = 5; logoGlow.Parent = loadBox end
   TweenService:Create(loadLogo, TweenInfo.new(0.8), { ImageTransparency = 0 }):Play()
 end)
 

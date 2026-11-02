@@ -459,21 +459,22 @@ local function arcCard(parent, k, w, h, o)
   local rcol = M.SK_RCOL[(k.rarity or 0) + 1] or M.SK_RCOL[1]
   local b = mk("TextButton", { Size = UDim2.new(0, w, 0, h), BackgroundColor3 = Color3.fromRGB(14, 9, 22), Text = "", AutoButtonColor = false, LayoutOrder = o.order or 0 }, parent); corner(b, 8)
   local glow = mk("UIStroke", { Color = o.sel and Color3.fromRGB(255, 225, 140) or rcol, Thickness = o.sel and 3 or 1.5, Transparency = o.sel and 0 or 0.4 }, b)
-  local ca = C.Sprites.art("card_s_" .. tostring(k.id))
+  local ca = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_s_" .. tostring(k.id))
   if ca then mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ImageTransparency = o.dim and 0.5 or 0 }, b)
   else
-    local scol, icon = M.skStyle(k.id)
+    local scol, icon = M.skStyle(k.id); if o.gray then scol = Color3.fromRGB(120, 120, 120) end
     local bg = mk("Frame", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundColor3 = scol:Lerp(Color3.new(0, 0, 0), 0.6) }, b)
     mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(scol:Lerp(Color3.new(0, 0, 0), 0.45), Color3.fromRGB(12, 8, 18)) }, bg)
     mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.15, 0, 0.12, 0), Size = UDim2.new(0.7, 0, 0.45, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol }, b)
   end
-  local fr = C.Sprites.art("card_f" .. math.min(4, k.rarity or 0))
+  local fr = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_f" .. math.min(4, k.rarity or 0))
   if fr then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = fr.content, ScaleType = Enum.ScaleType.Stretch }, b) end
   local band = mk("Frame", { Position = UDim2.new(0.07, 0, 0.66, 0), Size = UDim2.new(0.86, 0, 0.29, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0 }, b)
   mk("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.4, 0.3), NumberSequenceKeypoint.new(1, 0.1) }) }, band)
   local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.08, 0, 0.72, 0), Size = UDim2.new(0.84, 0, 0.16, 0), Text = k.name, TextScaled = true, Font = M.FONT, TextColor3 = Color3.new(1, 1, 1) }, b)
   mk("UITextSizeConstraint", { MaxTextSize = math.floor(w / 6.5), MinTextSize = 8 }, nm); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-  local lv = mk("TextLabel", { Position = UDim2.new(0, 3, 0, 3), Size = UDim2.new(0, math.max(26, w * 0.34), 0, math.max(14, h * 0.11)), BackgroundColor3 = Color3.fromRGB(20, 12, 8), BackgroundTransparency = 0.15, Text = "Lv" .. (k.lvl or 1), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(255, 225, 150) }, b); corner(lv, 4)
+  if not o.noLv then local lv = mk("TextLabel", { Position = UDim2.new(0, 3, 0, 3), Size = UDim2.new(0, math.max(26, w * 0.34), 0, math.max(14, h * 0.11)), BackgroundColor3 = Color3.fromRGB(20, 12, 8), BackgroundTransparency = 0.15, Text = "Lv" .. (k.lvl or 1), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(255, 225, 150) }, b); corner(lv, 4) end
+  if o.gray then nm.TextColor3 = Color3.fromRGB(170, 170, 170) end
   if o.slot and o.slot > 0 then local sb = mk("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, math.max(16, h * 0.12), 0, math.max(16, h * 0.12)), BackgroundColor3 = Color3.fromRGB(200, 150, 60), Text = tostring(o.slot), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(20, 12, 8) }, b); corner(sb) end
   b.MouseEnter:Connect(function() if not b:GetAttribute("Sel") then glow.Transparency = 0; glow.Thickness = 2.5 end; b.Position -= UDim2.new(0, 0, 0, 3) end)
   b.MouseLeave:Connect(function() if not b:GetAttribute("Sel") then glow.Transparency = 0.4; glow.Thickness = 1.5 end; b.Position += UDim2.new(0, 0, 0, 3) end)
@@ -533,7 +534,7 @@ function M.skills()
   -- 분류 탭 (전체 · 물리 · 마법 · 장착 중 · 기본 공격) + 정렬 (등급 / 초당 피해 / 레벨)
   local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 420, 0, 24), BackgroundTransparency = 1 }, table0)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
-  for i, f in ipairs({ { "all", "전체" }, { "phys", "물리" }, { "mag", "마법" }, { "eq", "장착 중" }, { "basic", "기본" } }) do
+  for i, f in ipairs({ { "all", "전체" }, { "phys", "물리 계열" }, { "mag", "마법 계열" }, { "eq", "장착 중" }, { "basic", "기본" } }) do
     local b = M.btn(ft, f[2], UDim2.new(0, 58, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i; b.TextSize = 12
   end
   local SORT_NAME = { rar = "등급순", dps = "피해순", lvl = "레벨순" }
@@ -1319,30 +1320,58 @@ end
 
 -- ───────── 도감: 모든 스킬 (보유 여부 · 설명) ─────────
 local codexFilter = "all"
+-- 아르카나 도감: 모든 아르카나를 카드로 (아직 없는 것은 흑백), 누르면 오른쪽에 능력 · 설명
+local codexSel
 function M.codex()
   C.clear()
   local r = C.rpc:InvokeServer("records"); local owned = (r.view and r.view.owned) or {}
   local A = area(392)
-  local bar = mk("Frame", { Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1 }, A)
-  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-  local F = { { "all", "전체" }, { "basic", "기본 공격" }, { "fire", "화염" }, { "cold", "냉기" }, { "light", "번개" }, { "void", "공허" }, { "phys", "물리" } }
-  for i, f in ipairs(F) do local b = M.btn(bar, f[2], UDim2.new(0, 96, 1, 0), codexFilter == f[1] and M.BTN.gold or M.BTN.purple, function() codexFilter = f[1]; M.codex() end); b.LayoutOrder = i end
-  local list, have = {}, 0
+  local bar = mk("Frame", { Size = UDim2.new(1, -300, 0, 30), BackgroundTransparency = 1 }, A)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+  local F = { { "all", "전체" }, { "have", "보유" }, { "basic", "기본 공격" }, { "phys", "물리" }, { "fire", "화염" }, { "cold", "냉기" }, { "light", "번개" }, { "void", "공허" } }
+  for i, f in ipairs(F) do local b = M.btn(bar, f[2], UDim2.new(0, 64, 1, 0), codexFilter == f[1] and M.BTN.gold or M.BTN.gray, function() codexFilter = f[1]; M.codex() end); b.LayoutOrder = i; b.TextSize = 12 end
+  local list, have, total = {}, 0, 0
   for _, d in ipairs(Skills.SKILLS) do
-    if d.id ~= "p_none" then
-      local ok = codexFilter == "all" or (codexFilter == "basic" and d.slot == "basic") or (codexFilter == "phys" and d.slot ~= "basic" and not d.elem) or d.elem == codexFilter
-      if ok then list[#list + 1] = d; if owned[d.id] then have += 1 end end
+    if d.id ~= "p_none" and d.slot ~= "passive" then
+      total += 1; if owned[d.id] then have += 1 end
+      local ok = codexFilter == "all" or (codexFilter == "have" and owned[d.id]) or (codexFilter == "basic" and d.slot == "basic") or (codexFilter == "phys" and d.dtype == "phys") or d.elem == codexFilter
+      if ok then list[#list + 1] = d end
     end
   end
-  local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), string.format("아르카나 %d / %d 보유", have, #list))
-  local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
-  for i, d in ipairs(list) do
-    local col, icon = M.skStyle(d.id)
-    local info = { d.desc or "" }
-    if d.cd then info[#info + 1] = string.format("쿨타임 %.1f초", d.cd) end
-    info[#info + 1] = owned[d.id] and "보유 중" or "미보유"
-    M.tile(g, 76, { order = i, color = col, emoji = icon, label = d.name, dim = not owned[d.id], check = owned[d.id] or nil, tip = { title = d.name, color = col, lines = info } })
+  table.sort(list, function(x, y) if (owned[x.id] and 1 or 0) ~= (owned[y.id] and 1 or 0) then return owned[x.id] ~= nil end; return (x.unlock or 0) < (y.unlock or 0) end)
+  local T = mk("Frame", { Position = UDim2.new(0, 0, 0, 36), Size = UDim2.new(1, -300, 1, -36), BackgroundColor3 = Color3.fromRGB(20, 10, 30) }, A); corner(T, 8)
+  mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(40, 20, 56), Color3.fromRGB(14, 8, 20)) }, T)
+  mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.3 }, T)
+  local hd = txt(T, string.format("아르카나 도감  %d / %d", have, total), 15, UDim2.new(0, 12, 0, 6), UDim2.new(1, -24, 0, 20), Color3.fromRGB(225, 195, 255), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, hd)
+  local g = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, T)
+  mk("UIGridLayout", { CellSize = UDim2.new(0, 60, 0, 88), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, g)
+  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0))
+  local cards = {}
+  local function fill()
+    for _, ch in ipairs(D:GetChildren()) do if not ch:IsA("UICorner") and not ch:IsA("UIStroke") then ch:Destroy() end end
+    local d = codexSel and SK_BY[codexSel]
+    if not d then txt(D, "카드를 누르면 능력을 볼 수 있습니다. 흑백 카드는 아직 갖지 못한 아르카나입니다.", 13, UDim2.new(0, 12, 0, 14), UDim2.new(1, -24, 0, 60), Color3.fromRGB(200, 190, 220)).TextWrapped = true; return end
+    local own = owned[d.id] ~= nil
+    local big = arcCard(D, { id = d.id, name = d.name, rarity = 0 }, 92, 136, { gray = not own, noLv = true }); big.Position = UDim2.new(0, 12, 0, 12)
+    local nm = txt(D, d.name, 20, UDim2.new(0, 114, 0, 12), UDim2.new(1, -124, 0, 26), Color3.new(1, 1, 1), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
+    txt(D, own and "보유 중" or "아직 없음 · [아르카나 소환]에서 얻을 수 있습니다", 13, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 34), own and Color3.fromRGB(140, 235, 140) or Color3.fromRGB(200, 170, 150)).TextWrapped = true
+    local tags = { d.slot == "basic" and "기본 공격" or "주문", d.dtype == "mag" and "마법" or (d.dtype == "phys" and "물리" or "보조") }
+    if d.elem and ELEM_NAME[d.elem] then tags[#tags + 1] = ELEM_NAME[d.elem] end
+    txt(D, table.concat(tags, " · "), 13, UDim2.new(0, 114, 0, 76), UDim2.new(1, -124, 0, 18), Color3.fromRGB(190, 175, 210))
+    local G2 = mk("Frame", { Position = UDim2.new(0, 12, 0, 156), Size = UDim2.new(1, -24, 0, 46), BackgroundTransparency = 1 }, D)
+    mk("UIGridLayout", { CellSize = UDim2.new(0.333, -4, 0, 20), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, G2)
+    local function stat(i, label, val) local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, G2); txt(f, label, 11, UDim2.new(), UDim2.new(1, 0, 0, 10), Color3.fromRGB(160, 145, 180)); txt(f, val, 13, UDim2.new(0, 0, 0, 9), UDim2.new(1, 0, 0, 12), Color3.new(1, 1, 1), M.FONT) end
+    stat(1, "기본 위력", d.mult and string.format("%d%%", math.floor(d.mult * 100 + 0.5)) or "–"); stat(2, "쿨타임", d.cd and string.format("%.1f초", d.cd) or "–"); stat(3, "사거리", d.range and string.format("%d칸", d.range) or "–")
+    stat(4, "마나", (d.mana or 0) > 0 and tostring(d.mana) or "없음")
+    local dbox = mk("Frame", { Position = UDim2.new(0, 12, 0, 208), Size = UDim2.new(1, -24, 1, -220), BackgroundColor3 = Color3.fromRGB(24, 14, 32) }, D); corner(dbox, 6)
+    local ds = txt(dbox, d.desc or "", 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
   end
+  for i, d in ipairs(list) do
+    local c = arcCard(g, { id = d.id, name = d.name, rarity = 0 }, 60, 88, { order = i, gray = not owned[d.id], noLv = true, sel = codexSel == d.id, click = function()
+      if cards[codexSel] then cards[codexSel]:SetAttribute("Sel", false) end; codexSel = d.id; if cards[d.id] then cards[d.id]:SetAttribute("Sel", true) end; fill() end })
+    cards[d.id] = c
+  end
+  fill()
 end
 
 -- ───────── 허수아비: 60초 딜 측정 ─────────

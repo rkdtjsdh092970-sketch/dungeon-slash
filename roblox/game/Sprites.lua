@@ -92,6 +92,24 @@ function M.art(key)
   end
   artCache[key] = info; return info
 end
+-- 흑백 그림 (도감의 아직 없는 아르카나 등): 원본 픽셀을 읽어 밝기만 남긴다. 실패하면 원본
+local grayCache = {}
+function M.artGray(key)
+  if grayCache[key] ~= nil then return grayCache[key] or M.art(key) end
+  local info = M.art(key); if not info or not info.img then grayCache[key] = false; return info end
+  local ok, out = pcall(function()
+    local w, h = info.w, info.h
+    local buf = info.img:ReadPixelsBuffer(Vector2.zero, Vector2.new(w, h))
+    for o = 0, w * h * 4 - 4, 4 do
+      local l = math.floor((buffer.readu8(buf, o) * 0.3 + buffer.readu8(buf, o + 1) * 0.59 + buffer.readu8(buf, o + 2) * 0.11) * 0.8)
+      buffer.writeu8(buf, o, l); buffer.writeu8(buf, o + 1, l); buffer.writeu8(buf, o + 2, l)
+    end
+    local img = M.editable(w, h, buf); if not img then return nil end
+    return { w = w, h = h, foot = info.foot, content = Content.fromObject(img), img = img }
+  end)
+  grayCache[key] = (ok and out) or false
+  return (ok and out) or info
+end
 -- 일러스트 ImageLabel. 발밑(ArtMap.foot, 그림마다 측정)이 Position 에 오도록 기준점을 잡는다.
 function M.artLabel(parent, key, size)
   local info = M.art(key); if not info then return nil end
