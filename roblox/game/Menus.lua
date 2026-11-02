@@ -619,7 +619,8 @@ function M.skills()
     local rcol = M.SK_RCOL[(k.rarity or 0) + 1] or M.SK_RCOL[1]
     local big = arcCard(D, k, 92, 136, {}); big.Position = UDim2.new(0, 12, 0, 12)
     local nm = txt(D, k.name, 20, UDim2.new(0, 114, 0, 12), UDim2.new(1, -124, 0, 26), Color3.new(1, 1, 1), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-    txt(D, string.format("%s · Lv %d / %d", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20), 14, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 18), rcol, M.FONT)
+    txt(D, (d.slot ~= "basic" and (k.lvl or 1) < (k.maxLv or 20)) and string.format("%s · Lv %d / %d  (duplicates %d/%d)", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20, k.dup or 0, k.lvl or 1)
+      or string.format("%s · Lv %d / %d", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20), 14, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 18), rcol, M.FONT)
     local tags = { k.basic and "Basic Attack" or "Spell", d.dtype == "mag" and "Arcana" or (d.dtype == "phys" and "Physical" or "Support") }
     if k.elem and ELEM_NAME[k.elem] then tags[#tags + 1] = ELEM_NAME[k.elem] end
     txt(D, table.concat(tags, " · "), 13, UDim2.new(0, 114, 0, 60), UDim2.new(1, -124, 0, 18), Color3.fromRGB(190, 175, 210))
@@ -1694,8 +1695,8 @@ local function cardFace(card, r)
   end
   lab(r.name, 0.62, 0.1, Color3.new(1, 1, 1))
   lab(M.SK_RAR[r.rarity + 1] or "", 0.73, 0.08, col)
-  local tg = lab(r.lvlUp and string.format("Duplicate · Lv %d", r.lvlUp) or (r.dupArc and string.format("Max level · Shards +%d", r.dupArc)) or "NEW", 0.84, 0.07, (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120))
-  if not (r.lvlUp or r.dupArc) then tg:SetAttribute("NoTr", true) end
+  local tg = lab(r.lvlUp and string.format("Duplicate · Lv %d", r.lvlUp) or (r.dupProg and string.format("Duplicate · %d/%d to next Lv", r.dupProg[1], r.dupProg[2])) or (r.dupArc and string.format("Max level · Shards +%d", r.dupArc)) or "NEW", 0.84, 0.07, (r.lvlUp or r.dupArc or r.dupProg) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120))
+  if not (r.lvlUp or r.dupArc or r.dupProg) then tg:SetAttribute("NoTr", true) end
 end
 -- 높은 등급 공개 연출 조각들 (그림 한 장 대신 빛줄기 · 충격파 · 불티 · 광택을 겹친다)
 local function zBump(g, d) g.ZIndex += d; for _, c in ipairs(g:GetDescendants()) do if c:IsA("GuiObject") then c.ZIndex += d end end end

@@ -1651,3 +1651,5 @@ Stage 2	2단계
 Stage 3	3단계
 Stage 4	4단계
 Drops — Basic attacks (30–50%%): %s	드랍 — 평타 (30~50%%): %s
+Duplicate · %d/%d to next Lv	중복 · 다음 레벨까지 %d/%d
+%s · Lv %d / %d  (duplicates %d/%d)	%s · Lv %d / %d  (중복 %d/%d)
