@@ -524,11 +524,11 @@ function skSources(d) {
 }
 function skCodexRow(d) {
   const got = (save.skdex || {})[d.id] || save.skills.some((x) => x.id === d.id);
-  return `<div class="dexrow ${CX.sel === d.id ? "found" : ""}" data-a="cxpick" data-id="${d.id}" style="cursor:pointer;${got ? "" : "opacity:.6"}">${iconImg(d.icon, 1)} <b>${d.name}</b> <small class="dim">${d.slot === "basic" ? "기본" : d.slot === "passive" ? "패시브" : d.mythOnly ? "신화 전용" : "액티브"} · ${got ? "보유 이력 ✓" : "미획득"}</small>${skBuildTags(d).slice(0, 2).map((t) => ` <small style="color:${t[1]}">${t[0]}</small>`).join("")}</div>`;
+  return `<div class="dexrow ${CX.sel === d.id ? "found" : ""}" data-a="cxpick" data-id="${d.id}" style="cursor:pointer;${got ? "" : "opacity:.6"}">${skillImg(d, 1)} <b>${d.name}</b> <small class="dim">${d.slot === "basic" ? "기본" : d.slot === "passive" ? "패시브" : d.mythOnly ? "신화 전용" : "액티브"} · ${got ? "보유 이력 ✓" : "미획득"}</small>${skBuildTags(d).slice(0, 2).map((t) => ` <small style="color:${t[1]}">${t[0]}</small>`).join("")}</div>`;
 }
 function skCodexDetail(d) {
   const sk = skillOf({ uid: 0, id: d.id, rarity: 0, lvl: 1 }), st = computeStats(save);
-  return `<div class="dname">${iconImg(d.icon, 3)} <b>${d.name}</b></div><div>${skTags(sk, st)} ${skBuildTags(d).map((t) => `<span class="chip" style="background:${t[1]}33;color:${t[1]}">${t[0]}</span>`).join("")}</div>
+  return `<div class="dname">${skillImg(d, 3)} <b>${d.name}</b></div><div>${skTags(sk, st)} ${skBuildTags(d).map((t) => `<span class="chip" style="background:${t[1]}33;color:${t[1]}">${t[0]}</span>`).join("")}</div>
    <div class="dd" style="margin-top:6px">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc || ""}${Object.keys(d.bonus || {}).length ? " · " + Object.keys(d.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(d.bonus[k] * 100)}%`).join(", ") : ""}</div></div>
    <h3>획득처</h3>${skSources(d).map((x) => `<div class="aff">${x}</div>`).join("")}<div class="dim">스킬 등급: 일반(상점) → 희귀 → 전설 → 신화 → 사탄 → 종말 (희귀 이상은 균열 100층 졸업 후 4대 보스에서만 — 보스마다 얻는 스킬이 정해져 있습니다). 전설부터는 단일 스킬이 연타가 되고, 신화 이상에서만 나오는 전용 스킬도 있습니다. 등급이 오를수록 피해·보너스가 커지고 쿨타임이 줄어듭니다. 룬과 연마석으로 추가 강화할 수 있습니다.</div>`;
 }
@@ -672,7 +672,7 @@ function itemTipHtml(it) {
 }
 function skillTipHtml(d) {
   const sk = skillOf({ uid: 0, id: d.id, rarity: 0, lvl: 1 }), st = computeStats(save);
-  return `<div class="tt">${iconImg(d.icon, 2)} <b>${d.name}</b></div><div>${skBuildTags(d).map((t) => `<span style="color:${t[1]}">${t[0]}</span>`).join(" · ")}</div><div class="tl">${skillDescFull(sk, st)}</div><div class="dim">${d.desc || ""}</div><div class="tsrc"><b>획득처</b><br>${skSources(d).join("<br>")}</div>`;
+  return `<div class="tt">${skillImg(d, 2)} <b>${d.name}</b></div><div>${skBuildTags(d).map((t) => `<span style="color:${t[1]}">${t[0]}</span>`).join(" · ")}</div><div class="tl">${skillDescFull(sk, st)}</div><div class="dim">${d.desc || ""}</div><div class="tsrc"><b>획득처</b><br>${skSources(d).join("<br>")}</div>`;
 }
 const TipUI = { el: null, key: "" };
 function tipFind(t) {

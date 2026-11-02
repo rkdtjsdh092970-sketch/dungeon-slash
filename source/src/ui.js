@@ -9,7 +9,7 @@ const RCLS = (it) => (it.sat ? "rsat" : ITEM_RARITY[it.rarity].cls);
 const setOf = (it) => (it.setId ? SETS.find((s) => s.id === it.setId) : null);
 const itemColor = (it) => (it.setId ? setOf(it).color : null);
 const skillTitle = (inst) => { const d = SKILLS.find((x) => x.id === inst.id); return `<span class="${SKILL_RARITY[inst.rarity].cls}">${d.slot === "passive" ? "" : SKILL_RARITY[inst.rarity].name + " "}${d.name}</span>`; };
-const skIcon = (id, sc) => iconImg(SKILLS.find((x) => x.id === id).icon, sc || 2);
+const skIcon = (id, sc) => skillImg(SKILLS.find((x) => x.id === id), sc || 2);
 const fmtTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 // ---------- 토스트 ----------

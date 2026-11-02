@@ -195,6 +195,17 @@ const MapView = {
   },
   nodeIcon(g, n, st, time, hot) {
     const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1 + 0.12 * Math.sin(time * 3 + n.x);
+    {   // 일러스트 지도 아이콘 (로블록스판과 같은 그림)
+      const MI = { stage: "mi_stage", boss: "mi_boss", town: "mi_town", rift: "mi_rift", endless: "mi_endless", bosshub: "mi_bossgate", bosshub2: "mi_bossgate", temple: "mi_temple", raid: "mi_abyssdoor", craid: n.sub === "warden" ? "mi_warden" : n.sub === "charm" ? "mi_truedungeon" : "mi_raid", vault: "mi_vault", tower2: "mi_newtower", tower: this.rise >= 1 ? "mi_tower" : null };
+      const k = st === "locked" && n.kind !== "tower" ? "mi_lock" : st === "hell" ? null : MI[n.kind], im = artGet(k);
+      if (im) {
+        const big = n.kind !== "stage" && st !== "locked", sz = (big ? 50 : st === "locked" ? 30 : 38) * (st === "open" || big ? pulse : 1);
+        if (st !== "locked" && (st === "open" || big)) { g.save(); g.globalAlpha = 0.35 + 0.15 * Math.sin(time * 3 + n.x); const gl = g.createRadialGradient(x, y, 2, x, y, sz * 0.8); gl.addColorStop(0, "rgba(255,220,140,.8)"); gl.addColorStop(1, "rgba(255,220,140,0)"); g.fillStyle = gl; g.beginPath(); g.arc(x, y, sz * 0.8, 0, 7); g.fill(); g.restore(); }
+        g.save(); g.imageSmoothingEnabled = true; if (st === "cleared") g.globalAlpha = 0.85; g.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); g.restore();
+        if (st === "cleared") { g.fillStyle = "#7dff9a"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("✓", x + sz * 0.38, y - sz * 0.25); }
+        return;
+      }
+    }
     const orb = (col, hi, rad) => { g.fillStyle = "rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(x, y + rad * 0.7, rad, rad * 0.4, 0, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill(); g.fillStyle = hi; g.beginPath(); g.arc(x - rad * 0.3, y - rad * 0.3, rad * 0.4, 0, 7); g.fill(); };
     if (n.kind === "raid" && st !== "locked") { orb("#5a1008", "#ff6a28", 14 * pulse); g.fillStyle = "#1a0a10"; g.fillRect(x - 8, y - 9, 16, 16); g.fillStyle = "#ff8a28"; g.fillRect(x - 5, y - 6, 10, 13); g.fillStyle = "#ffe0a0"; g.fillRect(x - 2, y - 3, 4, 10); g.fillStyle = "#d8c8a0"; g.fillRect(x - 10, y - 12, 4, 7); g.fillRect(x + 6, y - 12, 4, 7); return; }
     if (n.kind === "tower") { this.drawTower(g, x, y, time); return; }
@@ -235,6 +246,7 @@ const MapView = {
   },
   draw(sv, time, dt) {
     this.build(); const g = this.g; g.imageSmoothingEnabled = false; this.t = time;
+    { const wa = artGet("bg_world"); if (wa && !this.worldArt) { const w = document.createElement("canvas"); w.width = MAP_W; w.height = MAP_H; const wg = w.getContext("2d"); wg.imageSmoothingEnabled = true; wg.drawImage(wa, 0, 0, MAP_W, MAP_H); this.world = w; this.worldArt = true; } }   // 일러스트 지도 (로블록스판과 같은 그림)
     // 연출: 문지기를 쓰러뜨린 뒤 먼 곳에서 탑이 솟아오른다 (카메라가 이동하고 화면이 흔들린다)
     const C = this.cine; let shx = 0, shy = 0; this.rise = 1;
     if (C) {
@@ -303,10 +315,19 @@ const TOWN_SPOTS = [
   { id: "trainer",   name: "훈련소",     x: 572, y: 340, w: 82, h: 136, need: 1, desc: "패시브 트리", back: true },
   { id: "dummy",     name: "허수아비",   x: 462, y: 366, w: 28, h: 76, need: 1, desc: "1분 동안 피해를 재서 DPS 랭킹에 도전", back: true },
 ];
+// 일러스트 마을(bg_town)에 그려진 건물 위치. code = 그림에 없는 건물이라 예전처럼 코드로 그림
+const TOWN_ART_POS = { skill: [190, 455, 125, 160], forge: [425, 460, 100, 170], board: [873, 340, 80, 125], shop: [670, 468, 125, 135], skillshop: [522, 262, 85, 255],
+  guild: [307, 250, 105, 160], notice: [710, 265, 60, 155], trainer: [62, 295, 60, 95], dummy: [160, 295, 40, 95], auction: [880, 462, 50, 80, 0.8], mail: [606, 300, 14, 42, 0.55] };
+function townSpots() {
+  if (!artGet("bg_town")) return TOWN_SPOTS;
+  return TOWN_SPOTS.map((s) => { const p = TOWN_ART_POS[s.id]; return p ? Object.assign({}, s, { x: p[0], y: p[1], w: p[2], h: p[3], code: p[4] || 0 }) : s; });
+}
 const TownView = {
   cv: null, g: null, hover: null, act: 1,
   draw(sv, time) {
-    const g = this.g; g.imageSmoothingEnabled = false; g.drawImage(makeBackground(this.act), 0, 0);
+    const g = this.g; g.imageSmoothingEnabled = false; const tim = artGet("bg_town");
+    if (tim) return this.drawArt(sv, time, tim);
+    g.drawImage(makeBackground(this.act), 0, 0);
     const A = ACTS[this.act - 1]; g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(0, 380, CW, 160);
     g.fillStyle = hexA("#d8c8a0", 0.16); g.fillRect(0, 466, CW, 12);
     const theme = ["#4a8a3a", "#2f6a4a", "#7a5a3a", "#c8884a", "#3a6a5a", "#6a8ab8", "#a8402a", "#6a4aa8", "#c8b86a", "#a82a3a"][this.act - 1];
@@ -323,7 +344,21 @@ const TownView = {
     const af = animFrame("warrior", "idle", time); drawSprite(g, getSheet("warrior", 0), af.row, af.frame, 468, 530, 3, false, 1);
     g.fillStyle = "#fff"; g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
   },
-  pick(mx, my) { for (const s of TOWN_SPOTS.slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return s; return null; },
+  drawArt(sv, time, tim) {   // 일러스트 마을: 건물은 그림에 있으니 이름표 · 강조만 (경매소 · 우편함은 코드로)
+    const g = this.g, A = ACTS[this.act - 1]; drawCover(g, tim, CW, CH);
+    const theme = ["#4a8a3a", "#2f6a4a", "#7a5a3a", "#c8884a", "#3a6a5a", "#6a8ab8", "#a8402a", "#6a4aa8", "#c8b86a", "#a82a3a"][this.act - 1];
+    for (const s of townSpots().slice().sort((p, q) => p.y - q.y)) {
+      const open = this.act >= s.need && !s.soon, hot = this.hover && this.hover.id === s.id && open;
+      if (s.code) { g.save(); if (!open) g.globalAlpha = 0.45; g.imageSmoothingEnabled = false; g.translate(s.x, s.y); g.scale(s.code, s.code); drawBuilding(g, s.id, 0, 0, theme, hot); g.restore(); }
+      if (hot) { g.save(); g.fillStyle = "rgba(255,240,170,.10)"; g.fillRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.strokeStyle = "#fff6b0"; g.lineWidth = 3; g.setLineDash([6, 4]); g.strokeRect(s.x - s.w, s.y - s.h, s.w * 2, s.h + 6); g.restore(); }
+      g.font = "bold 14px sans-serif"; g.textAlign = "center"; const tw = g.measureText(s.name).width + 14;
+      g.fillStyle = "rgba(10,6,12,.72)"; rrect(g, s.x - tw / 2, s.y + 6, tw, 22, 6); g.fill(); g.strokeStyle = hot ? "#fff6b0" : "rgba(214,168,70,.7)"; g.lineWidth = 1.5; rrect(g, s.x - tw / 2, s.y + 6, tw, 22, 6); g.stroke();
+      g.fillStyle = open ? (hot ? "#fff6b0" : "#f4e8d0") : "#a09ab0"; g.fillText(s.name, s.x, s.y + 22);
+      if (!open) { g.font = "11px sans-serif"; g.fillStyle = "#c8c0d8"; g.fillText(s.soon ? "준비 중" : `액트 ${s.need}에서 개방`, s.x, s.y + 40); }
+    }
+    g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
+  },
+  pick(mx, my) { for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
 };
 
 // =========================================================

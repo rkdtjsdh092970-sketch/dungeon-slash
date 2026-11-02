@@ -151,8 +151,13 @@ function iconCanvas(name, sc) {
   const p = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x * sc, y * sc, w * sc, h * sc); };
   (ICON_FN[name] || ICON_FN.sword)(p); ICON_CACHE[k] = c; return c;
 }
-function iconURL(name, sc) { return iconCanvas(name, sc).toDataURL(); }
-function iconImg(name, sc, cls) { return `<img class="ico ${cls || ""}" src="${iconURL(name, sc || 2)}" width="${16 * (sc || 2)}" height="${16 * (sc || 2)}">`; }
+// 일러스트 아이콘이 있는 것 (webart/i_*.webp). 없으면 코드로 그린 도트 아이콘
+const ICON_ART = { gold: "i_gold", ore: "i_ore", shard: "i_shard", orb: "i_chaos", helm: "i_helm", armor: "i_armor", gloves: "i_gloves", boots: "i_boots", ring: "i_ring", neck: "i_neck", weapon: "i_weapon", w_sword: "i_weapon", sword: "i_weapon", w_staff: "i_staff" };
+function artURL(k) { return typeof ART_SET !== "undefined" && ART_SET.has(k) ? ART_BASE + k + ".webp?v=" + BUILD_ID : null; }
+function iconURL(name, sc) { return artURL(ICON_ART[name]) || iconCanvas(name, sc).toDataURL(); }
+function iconImg(name, sc, cls) { const a = artURL(ICON_ART[name]); return `<img class="ico ${cls || ""}" src="${a || iconURL(name, sc || 2)}" width="${16 * (sc || 2)}" height="${16 * (sc || 2)}"${a ? ' style="object-fit:contain;image-rendering:auto"' : ""}>`; }
+// 스킬 아이콘 = 아르카나 카드 그림 (가운데를 정사각형으로 잘라 보여 줌)
+function skillImg(d, sc, cls) { const a = d && artURL("card_s_" + d.id); if (!a) return iconImg(d.icon, sc, cls); const s = 16 * (sc || 2); return `<img class="ico ${cls || ""}" src="${a}" width="${s}" height="${s}" style="object-fit:cover;object-position:50% 40%;border-radius:${Math.max(3, s / 8)}px;image-rendering:auto">`; }
 
 // ---------------- 배경 (액트별 절차 생성, 240x135를 4배 확대) ----------------
 const BG_CACHE = {};
