@@ -12,6 +12,13 @@ function artGet(k) {
   return im.ok ? im : null;
 }
 function artPreload(keys) { for (const k of keys) artGet(k); }
+// 시작할 때: 전투 · 마을 · 지도 그림을 모두 받은 뒤 시작 (최대 15초, 받는 중 진행률 표시). 카드 · 아이콘은 뒤에서 이어서 받는다
+function artWaitAll(done) {
+  const keys = [...ART_SET].filter((k) => !k.startsWith("card_s_") && !k.startsWith("p_")), t0 = Date.now(); artPreload(keys);
+  const tick = () => { const ok = keys.filter((k) => ART[k] && (ART[k].ok || !ART_SET.has(k))).length, el = document.getElementById("loading"); if (el) el.textContent = `그림 불러오는 중... ${ok} / ${keys.length}`;
+    if (ok >= keys.length || Date.now() - t0 > 15000) { setTimeout(() => artPreload([...ART_SET]), 500); done(); } else setTimeout(tick, 100); };
+  tick();
+}
 const _artTint = document.createElement("canvas"), _artTintG = _artTint.getContext("2d");
 // (x, y) = 발밑 가운데. h = 화면 높이. opt: alpha, tint(색), sx · sy(늘이기), rot(라디안), flip
 function drawArt(ctx, im, x, y, h, opt) {
@@ -40,6 +47,7 @@ function mobArtKey(b, e) {
 }
 // 보스 그림 (공격 준비 중이면 공격 자세)
 function bossArtImg(idx, atk) { return (atk && artGet("boss" + idx + "_atk")) || artGet("boss" + idx); }
+const artPending = (k) => !!k && ART_SET.has(k) && !(ART[k] && ART[k].ok);   // 그림이 있는데 아직 받는 중
 // 전투 배경 그림이 있는 지역
 function battleBgArt(b) {
   if (b.raid) return null;

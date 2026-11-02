@@ -136,7 +136,8 @@ function refundAtlas(sv) {   // 5.0: 심연 각인 폐지 — 새긴 단계에 �
   const A = sv.atlas || {}; let sum = 0; for (const id in A) { const n = ATLAS.find((x) => x.id === id), rk = A[id] | 0; if (n) for (let r = 0; r < rk; r++) sum += atlasCost(n, r); }
   if (sum > 0) { sv.shards = (sv.shards || 0) + sum; sv.atlasRefund = sum; } sv.atlas = {};
 }
-function clampAll(sv) { let n = 0; if (sv.atlas && Object.keys(sv.atlas).length) refundAtlas(sv); for (const k in sv.equipped || {}) defUp(sv.equipped[k]); for (const it of sv.inv || []) defUp(it); for (const it of (sv.stash && sv.stash.items) || []) defUp(it); unpackStones(sv); migrateSkillTiers(sv); if (sv.passRev !== 7) { if (Object.keys(sv.pass || {}).length) sv.passReset = true; sv.pass = {}; sv.passPresets = [null, null, null]; sv.passRev = 7; } dedupeLoadout(sv);
+function clampAll(sv) { let n = 0; if (sv.shards) { sv.hone = (sv.hone || 0) + Math.floor(sv.shards / 2); sv.shards = 0; }   // 5.0: 균열 조각 폐지 — 남은 조각은 절반을 아르카나 조각으로
+ if (sv.atlas && Object.keys(sv.atlas).length) refundAtlas(sv); for (const k in sv.equipped || {}) defUp(sv.equipped[k]); for (const it of sv.inv || []) defUp(it); for (const it of (sv.stash && sv.stash.items) || []) defUp(it); unpackStones(sv); migrateSkillTiers(sv); if (sv.passRev !== 7) { if (Object.keys(sv.pass || {}).length) sv.passReset = true; sv.pass = {}; sv.passPresets = [null, null, null]; sv.passRev = 7; } dedupeLoadout(sv);
   for (const st of sv.stones || []) if (st.rev && REMOVED_CH[st.rev.k]) st.rev = { k: "dotDmg", v: 0.16 };   // 상태이상 확률 돌 → 지속 피해 돌
   for (const k of sv.skills || []) if (k.rune === "bleed" || k.rune === "venom" || k.rune === "flame") k.rune = "power";   // 사라진 룬 → 강타의 룬
   for (const r of sv.runes || []) if (r.id === "bleed" || r.id === "venom" || r.id === "flame") r.id = "power";
@@ -486,7 +487,8 @@ function bossOfSkill(d) {
 const BOSS_SKILL_RW = [[12, 42, 42, 4, 0, 0], [8, 28, 55, 9, 0, 0], [6, 18, 67, 9, 0, 0], [5, 12, 70, 13, 0, 0]];   // 단계(1~4)별 스킬 등급 가중치 (일반·희귀·전설·신화·사탄·종말)
 const BOSS_SKILL_CH = [0.12, 0.18, 0.28, 0.45];
 const UP_SKILL_RW = [[0, 0, 0, 0, 90, 10], [0, 0, 0, 0, 80, 20], [0, 0, 0, 0, 68, 32], [0, 0, 0, 0, 55, 45]], UP_SKILL_CH = [0.15, 0.22, 0.32, 0.50];   // 상위 보스관문: 사탄 · 종말 스킬만 나온다
-const UP_TIERS = [196, 203, 210, 217], UP_KEYS = 5;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
+const UP_TIERS = [184.7, 190.7, 196.7, 202.6], UP_KEYS = 5;   // 5.0: 로블록스판과 같게 (탑 100층 비례)
+const _UP_OLD = 0;   // 상위 보스관문 1~4단계 난이도(균열 환산)와 입장에 드는 열쇠 개수
 // 4.54 (로블록스판과 같게): 보스 관문은 그 보스 속성의 평타를 떨어뜨린다. 단계 1 = 일반, 2 = 희귀까지, 3 = 희귀~전설, 4 = 전설~신화 (확률 30 · 35 · 40 · 50%)
 const GATE_BASIC = { titan: ["rapid", "crush", "twinfang", "skycleave", "heavensplit"], storm: ["spark", "galeshot", "voltlash"], poison: ["venom", "rip", "bloodclaw"], hive: ["ember", "fireball", "cometbolt"], void: ["voidbolt", "arcbarrage"], frost: ["frostbolt", "voltlash"] };
 function rollGateBasic(sv, kind, K) {
@@ -564,7 +566,7 @@ function rollDrops(sv, node, boss, B) {
   if ((kind === "void" || isEB(kind)) && !node.upper) { const gb = rollGateBasic(sv, kind, node.vsel || 1); if (gb) out.skills.push(gb); }
   out.ore = Math.round((rint(1, 2) + (boss ? 4 : 0) + (kind === "treasure" ? 8 : 0) + (kind === "elite" ? 3 : 0) + Math.floor((node.tier || 0) / 3) + endlessWaves * 2) * B.ore);
   if (kind === "rift") { out.hone = Math.max(1, Math.round((1 + (node.tier || 1) / 8) * B.ore * (boss ? 2 : 1))); if (boss && Math.random() < 0.2) out.runes.push(pick(RUNE_IDS)); }   // 스킬 레벨업 재료: 균열에서
-  if (late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
+  if (false && late) out.shards = Math.round((1 + Math.floor((node.tier || 1) / 6) + (boss ? 3 : 0) + endlessWaves * 1 + (kind === "void" ? 2 * (node.vsel || 1) : 0)) * B.shard * (kind === "hell" ? B.hell : 1));
   // 구슬: 장비에 옵션을 더하는 재화
   const oc = { warden: 8, spire: 1 + (node.floor || 1) / 40, craid: 3 + 2 * (node.diff || 1), raid: 6, vault: 0.15, hive: 1.5 * (node.vsel || 1), titan: 1.5 * (node.vsel || 1), storm: 1.5 * (node.vsel || 1), frost: 1.5 * (node.vsel || 1), poison: 1.5 * (node.vsel || 1), stage: 0.03, treasure: 0.25, elite: 0.18, boss: 0.4, rift: 0.4 + (node.tier || 1) / 30, hell: 1 + (node.tier || 1) / 15, endless: 3 + endlessWaves * 1.4, void: 1.5 * (node.vsel || 1) }[kind] || 0.03;
   const ocE = (boss && kind === "stage" ? 0.4 : oc) * B.orb;
@@ -607,7 +609,7 @@ function questEvent(sv, ev) {
 function claimQuest(sv, id, notes) {
   const st = sv.q[id]; if (!st || st.state !== "done") return null;
   const d = getQDef(id), r = d.reward; st.state = "claimed";
-  if (r.gold) sv.gold += r.gold; if (r.ore) sv.ore += r.ore; if (r.shards) sv.shards += r.shards;
+  if (r.gold) sv.gold += r.gold; if (r.ore) sv.ore += r.ore; sv.hone = (sv.hone || 0) + 5;   /* 5.0: 퀘스트마다 아르카나 조각 +5 (균열 조각 폐지) */
   if (r.exp) addExp(sv, r.exp);
   let item = null; if (r.item) { item = genItem(sv, Math.max(1, Math.min(10, d.act || maxActUnlocked(sv))), 2); sv.inv.push(item); }
   return { reward: r, item };
@@ -819,7 +821,8 @@ function dailyState(sv) { const d = localDay(); if (!sv.daily || sv.daily.day !=
 function dailyAdd(sv, key, n) { const D = dailyState(sv); D[key] = (D[key] || 0) + (n || 1); }
 function dailyClaim(sv, id) {
   const D = dailyState(sv), t = DAILY_TASKS.find((x) => x.id === id); if (!t || D.claimed[id] || D[t.key] < t.n) return null;
-  D.claimed[id] = 1; const r = t.reward; if (r.hone) sv.hone += r.hone; if (r.gold) sv.gold += r.gold; if (r.ore) sv.ore += r.ore; if (r.orbC) sv.orbC += r.orbC; if (r.orbD) sv.orbD += r.orbD; if (r.shards) sv.shards += r.shards; return r;
+  D.claimed[id] = 1; const r = t.reward; sv.hone = (sv.hone || 0) + 10;   // 5.0: 일일 과제마다 아르카나 조각 +10
+  if (r.hone) sv.hone += r.hone; if (r.gold) sv.gold += r.gold; if (r.ore) sv.ore += r.ore; if (r.orbC) sv.orbC += r.orbC; if (r.orbD) sv.orbD += r.orbD; if (r.shards) sv.shards += r.shards; return r;
 }
 function offlineReward(sv) {
   if (!sv.tut.done || !sv.lastSeen) return null; const away = (Date.now() - sv.lastSeen) / 60000; if (away < 10) return null;
