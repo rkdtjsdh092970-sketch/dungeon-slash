@@ -190,7 +190,7 @@ end
 local skSel
 local function skColor(d) return d and (ELEM[d.elem or ""] or hex(d.color)) or M.RAR[1] end
 local ELEM_EMOJI = { fire = "🔥", cold = "❄", light = "⚡", void = "🌀" }
-local function skIcon(d) if not d then return "?" end; if d.slot == "basic" then return "👊" end; return ELEM_EMOJI[d.elem or ""] or "⚔" end
+local function skIcon(d) if not d then return "?" end; return ELEM_EMOJI[d.elem or ""] or (d.slot == "basic" and "👊" or "⚔") end
 function M.skStyle(id) local d = SK_BY[id]; return skColor(d), skIcon(d), d end
 function M.skills()
   C.clear()
