@@ -90,6 +90,57 @@ function M.passView(sv)
 end
 function M.passTake(sv, id) return Econ.addPassivePath(sv, tostring(id)) end
 function M.atlasView(sv) return Econ.atlasView(sv) end
+-- ---------- 창고 (웹 openStash: 장비 보관, 100칸에서 골드로 10칸씩 최대 500) ----------
+local STASH_MAX, STASH_STEP = 500, 10
+local function stash(sv) sv.stash = sv.stash or { items = {}, cap = 100 }; sv.stash.items = sv.stash.items or {}; sv.stash.cap = sv.stash.cap or 100; return sv.stash end
+local function stashExpandCost(S) return S.cap >= STASH_MAX and nil or math.floor(300000 * 1.12 ^ ((S.cap - 100) / STASH_STEP) + 0.5) end
+local function itemRow(it) return { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl } end
+function M.stashView(sv)
+  local S = stash(sv); local items = {}
+  for i, it in ipairs(S.items) do items[i] = itemRow(it) end
+  return { items = items, cap = S.cap, expandCost = stashExpandCost(S), inv = M.inventory(sv) }
+end
+function M.stashMove(sv, uid, toStash)
+  local S = stash(sv); local from, to = toStash and sv.inv or S.items, toStash and S.items or sv.inv
+  if toStash and #S.items >= S.cap then return false, "창고가 가득 찼습니다" end
+  if not toStash and #sv.inv >= M.INV_MAX then return false, "가방이 가득 찼습니다" end
+  for i, it in ipairs(from) do if it.uid == uid then table.remove(from, i); to[#to + 1] = it; return true end end
+  return false, "없는 장비"
+end
+function M.stashExpand(sv)
+  local S = stash(sv); local c = stashExpandCost(S)
+  if not c then return false, "최대 크기입니다" end
+  if sv.gold < c then return false, "골드가 부족합니다" end
+  sv.gold -= c; S.cap += STASH_STEP; return true
+end
+-- ---------- 장비 프리셋 3칸 (웹 savePreset / loadPreset: 착용 장비 + 스킬 칸) ----------
+function M.presetView(sv)
+  local out = {}
+  for i = 1, 3 do local p = sv.presets and sv.presets[i]; local n = 0; if p then for _ in pairs(p.equip) do n += 1 end end; out[i] = p and { items = n } or false end
+  return out
+end
+function M.presetSave(sv, i)
+  if i < 1 or i > 3 then return false end
+  sv.presets = sv.presets or { false, false, false }
+  local eq = {}; for _, s in ipairs(Items.EQ_SLOTS) do if sv.equipped[s] then eq[s] = sv.equipped[s].uid end end
+  local lo = {}; for k = 1, 4 do local l = sv.loadout[k]; lo[k] = l and { uid = l.uid, rule = l.rule } or false end
+  sv.presets[i] = { equip = eq, loadout = lo }; return true
+end
+function M.presetLoad(sv, i)
+  local p = sv.presets and sv.presets[i]; if not p then return false, "빈 프리셋입니다" end
+  for _, s in ipairs(Items.EQ_SLOTS) do if sv.equipped[s] then sv.inv[#sv.inv + 1] = sv.equipped[s]; sv.equipped[s] = nil end end
+  for _, s in ipairs(Items.EQ_SLOTS) do
+    local u = p.equip[s]
+    if u then for j, it in ipairs(sv.inv) do if it.uid == u then table.remove(sv.inv, j); sv.equipped[s] = it; break end end end
+  end
+  local has = {}; for _, k in ipairs(sv.skills) do has[k.uid] = k.id end
+  local seen = {}
+  for k = 1, 4 do
+    local l = p.loadout[k]
+    if l and has[l.uid] and not seen[has[l.uid]] and k <= sv.slots then sv.loadout[k] = { uid = l.uid, rule = l.rule or "front" }; seen[has[l.uid]] = true else sv.loadout[k] = false end
+  end
+  return true
+end
 -- 스탯 화면 (웹 openStats 의 묶음): { {제목, { {이름, 값 문자열}, ... }}, ... }
 function M.statsView(sv)
   local s = Stats.computeStats(sv)

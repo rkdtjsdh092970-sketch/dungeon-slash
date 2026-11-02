@@ -181,6 +181,12 @@ local handle = function(player, action, arg)
     return { msg = m, view = betaView() }
   elseif action == "isowner" then return { owner = isOwner(player) }
   elseif action == "stats" then return { groups = Game.statsView(sv), summary = Game.summary(sv) }
+  elseif action == "stash" then return { view = Game.stashView(sv), summary = Game.summary(sv) }
+  elseif action == "stashmove" then local ok, e = Game.stashMove(sv, tonumber(arg.uid), arg.to == "stash"); return { ok = ok, err = (not ok) and e or nil, view = Game.stashView(sv), summary = Game.summary(sv) }
+  elseif action == "stashexpand" then local ok, e = Game.stashExpand(sv); return { ok = ok, err = (not ok) and e or nil, view = Game.stashView(sv), summary = Game.summary(sv) }
+  elseif action == "presets" then return { rows = Game.presetView(sv) }
+  elseif action == "presetsave" then local ok = Game.presetSave(sv, tonumber(arg)); return { ok = ok, rows = Game.presetView(sv) }
+  elseif action == "presetload" then local ok, e = Game.presetLoad(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.presetView(sv), summary = Game.summary(sv) }
   elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }

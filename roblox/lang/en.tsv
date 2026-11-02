@@ -1707,3 +1707,17 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 황금의 인장	Sigil of Gold
 획득	Gains
 흡혈	Lifesteal
+가방 %d개 → 창고로	Bag (%d) → to Storage
+가방이 가득 찼습니다	Your bag is full
+빈 프리셋입니다	This preset is empty
+빈 프리셋입니다. [저장]을 눌러 현재 구성을 저장하세요.	This preset is empty. Press [Save] to store your current setup.
+저장	Save
+창고	Storage
+창고 %d / %d → 가방으로	Storage %d / %d → to Bag
+창고 +10칸 (골드 %s)	Storage +10 Slots (Gold %s)
+창고가 가득 찼습니다	Storage is full
+최대 크기입니다	Already at max size
+프리셋	Presets
+프리셋 %d 불러옴	Loaded preset %d
+프리셋 %d 저장	Saved preset %d
+현재 장비와 스킬 구성을 몇 번에 저장할까요? (1~3, 기본 %d)	Save your current gear and skills to which preset? (1-3, default %d)

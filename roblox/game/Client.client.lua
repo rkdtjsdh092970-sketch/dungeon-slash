@@ -505,7 +505,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setS
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
-views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats
+views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash
 
 -- ── 전투 시작 → 재생 → 결과 ──
 local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
@@ -614,7 +614,7 @@ local function playSpec(title, arg) return { title = title, call = function() re
 local BUILD = {
   { key = "b_skill_hall", name = "스킬 정비소", icon = "📘", x = 0.08, row = 1, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
   { key = "b_forge", name = "제련소", icon = "🔨", x = 0.22, row = 1, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
-  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.36, row = 1, tabs = { { "장비", "inv" } } },
+  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.36, row = 1, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
   { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.50, row = 1, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
   { key = "b_skill_shop", name = "스킬 상점", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 구매", "shop" } } },
   { key = "b_guild", name = "길드", icon = "🏰", x = 0.2, row = 2, tabs = { { "길드", "guild" } } },

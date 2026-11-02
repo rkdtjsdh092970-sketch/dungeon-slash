@@ -110,6 +110,7 @@ function M.inv()
       tl = e and (e.enh > 0 and ("+" .. e.enh) or nil), label = not e and Items.SLOT_NAME[slot] or nil, selected = e and invSel == e.uid,
       click = function() if e then invSel = e.uid; M.inv() end end })
   end
+  M.presetBar(L, UDim2.new(0, 10, 1, -88), UDim2.new(1, -20, 0, 32))
   local s = C.summary()
   if s then txt(L, string.format("체력 %s · 공격 %s · 주문 %s\n방어 %s · 치명 %.0f%%", n(s.maxHp), n(s.atk), n(s.mag), n(s.def), (s.crit or 0) * 100), 12, UDim2.new(0, 10, 1, -48), UDim2.new(1, -20, 0, 44), Color3.fromRGB(220, 215, 240)) end
   -- 가운데: 가방
@@ -602,6 +603,57 @@ function M.stats()
       local v = txt(f, row[2], 12, UDim2.new(0.6, 0, 0, 0), UDim2.new(0.4, 0, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); v:SetAttribute("NoTr", true)
     end
   end
+end
+
+
+-- ───────── 창고 (가방 ⇄ 창고: 누르면 옮김) ─────────
+function M.stash()
+  C.clear()
+  local r = C.rpc:InvokeServer("stash"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local v = r.view
+  local A = area(392)
+  local function side(x, title, list, to)
+    local B = box(A, UDim2.new(x, x > 0 and 4 or 0, 0, 0), UDim2.new(0.5, -4, 1, 0), title)
+    local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, to == "stash" and -36 or -80), 60)
+    for i, it in ipairs(list) do
+      local t = M.tile(g, 60, { order = i, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
+        click = function() local e = C.rpc:InvokeServer("stashmove", { uid = it.uid, to = to }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end })
+      t.MouseEnter:Connect(function() C.msg.Text = it.title .. " · " .. table.concat(it.lines or {}, " · ") end)
+    end
+    return B
+  end
+  side(0, string.format("가방 %d개 → 창고로", #v.inv), v.inv, "stash")
+  local S = side(0.5, string.format("창고 %d / %d → 가방으로", #v.items, v.cap), v.items, "inv")
+  if v.expandCost then
+    local b = M.btn(S, string.format("창고 +10칸 (골드 %s)", n(v.expandCost)), UDim2.new(1, -12, 0, 38), M.BTN.gold, function()
+      local e = C.rpc:InvokeServer("stashexpand"); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end)
+    b.Position = UDim2.new(0, 6, 1, -44)
+  end
+end
+
+-- 장비 화면 위쪽에 붙는 프리셋 줄 (불러오기 / 현재 구성 저장)
+function M.presetBar(parent, pos, size)
+  local f = mk("Frame", { Position = pos, Size = size, BackgroundTransparency = 1 }, parent)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, f)
+  local r = C.rpc:InvokeServer("presets"); local rows = r.rows or {}
+  local l = txt(f, "프리셋", 13, UDim2.new(), UDim2.new(0, 46, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT); l.TextYAlignment = Enum.TextYAlignment.Center; l.LayoutOrder = 0
+  for i = 1, 3 do
+    local has = rows[i]
+    local b = M.btn(f, tostring(i), UDim2.new(0, 30, 0, 28), has and M.BTN.blue or M.BTN.gray, function()
+      if not has then C.msg.Text = "빈 프리셋입니다. [저장]을 눌러 현재 구성을 저장하세요."; return end
+      local e = C.rpc:InvokeServer("presetload", i); if e.summary then C.setSummary(e.summary) end; C.toast(string.format("프리셋 %d 불러옴", i)); M.inv()
+    end); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
+  end
+  local sv = M.btn(f, "저장", UDim2.new(0, 48, 0, 28), M.BTN.green, function()
+    -- 저장할 칸 고르기: 비어 있는 첫 칸, 없으면 1번
+    local slot = 1; for i = 1, 3 do if not rows[i] then slot = i; break end end
+    C.prompt(string.format("현재 장비와 스킬 구성을 몇 번에 저장할까요? (1~3, 기본 %d)", slot), tostring(slot), function(v)
+      local k = tonumber(v) or slot; if k < 1 or k > 3 then return end
+      C.rpc:InvokeServer("presetsave", k); C.toast(string.format("프리셋 %d 저장", k)); M.inv()
+    end)
+  end); sv.LayoutOrder = 9
+  return f
 end
 
 return M
