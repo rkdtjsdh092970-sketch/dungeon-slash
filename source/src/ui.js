@@ -125,6 +125,7 @@ function nodeToBattle(n) {
   if (n.kind === "elite" || n.kind === "treasure") return Object.assign({}, n, { stage: n.need + (n.kind === "elite" ? 1 : 3) });
   return n;
 }
+function recLineHtml(rec) { if (!rec) return ""; const my = curPower(), ok = my >= rec; return `<div class="pline">권장 전투력 <b style="color:#ffe08a">${fmtN(rec)}</b> · 내 전투력 <b style="color:${ok ? "#8dff9a" : "#ff8a6a"}">${fmtN(my)}</b></div>`; }
 function mapPanel() {
   const n = MapView.sel, p = $("#mappanel"); if (!n) { p.innerHTML = `<div class="hint">노드를 선택하세요 · 드래그로 지도를 움직입니다</div>`; return; }
   let h = `<div class="ptitle">${n.name}</div>`;
@@ -133,14 +134,17 @@ function mapPanel() {
   else if (n.kind === "rift") {
     const mx = Math.min(CFG.RIFT_END, Math.max(1, save.rift.best + 1)); if (G.riftBestSeen !== save.rift.best) { G.riftBestSeen = save.rift.best; G.riftTier = mx; }   // 새 층을 깨면 다음 층으로 자동 이동
     const tier = G.riftTier = clamp(G.riftTier || mx, 1, mx), mods = riftMods(tier);
-    h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층만 레벨이 오릅니다.</div>`;
+    h += `<div class="pline">현재 <b style="font-size:18px;color:#8dff9a">${save.rift.best}층</b> 클리어 · 도전할 층 <b style="font-size:20px;color:#ffe08a">${tier}층</b> <span class="dim">(${tier % 20 === 0 ? "구간 보스 층 · " : tier % 5 === 0 ? "중간 보스 층 · " : ""}장비 T${floorTier(tier)})</span></div>${mods.length ? `<div class="pline dim">변이: ${mods.map((m) => m.name).join(" · ")}</div>` : ""}<div class="pline dim">▼ ▲ 로 층을 고릅니다. 처음 깬 층은 경험치를 더 줍니다.</div>`;
+    h += recLineHtml(recRift5(tier));
     pre = `<button class="btn" data-p="tm" ${tier <= 1 ? "disabled" : ""}>▼</button>`; post = `<button class="btn" data-p="tp" ${tier >= mx ? "disabled" : ""}>▲</button>`;
-    extra = `<button class="btn" data-p="tower">탑 열기</button><button class="btn" data-p="atlas" style="background:linear-gradient(#8a3ae0,#5a1fa8);border-color:#e0b8ff;color:#fff;box-shadow:0 0 10px rgba(190,120,255,.6)">✦ 심연 각인</button>`; btnOk = un; btn = `도전 ${tier}층`;
+    extra = `<button class="btn" data-p="tower">탑 열기</button>`; btnOk = un; btn = `도전 ${tier}층`;
   } else if (n.kind === "raid") {
     const R = save.raid || { cleared: 0, best: 0 };
     h += `<div class="pline">균열 100층을 정복하고 장비·스킬·패시브를 끝까지 갖춘 뒤 도전하는 <b>최종 보스급</b> 상대입니다.</div><div class="pline dim">체력 75% · 50% · 25%마다 결계가 펼쳐집니다. 결계석을 부수지 못하면 문지기의 체력이 되살아납니다. 제한 시간 ${Math.round(CFG.RAID.LIMIT / 60)}분.</div><div class="pline">내 전투력 <b style="color:#ffe08a">${fmtPow(curPower())}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>`; btn = "도전";
+    h += recLineHtml(recTier5(CFG.RAID.TIER));
   } else if (n.kind === "temple") {
     h += `<div class="pline">돌이 잠든 신전입니다. 신관들을 쓰러뜨리면 낮은 확률로 <b>계시의 돌</b>과 <b>세공의 인장</b>이 나옵니다.</div><div class="pline dim">심연의 문지기 모르가스를 쓰러뜨린 뒤 입장할 수 있습니다. 4레인으로 전투합니다.</div>`; btnOk = un; btn = "돌의 신전 열기";
+    h += recLineHtml(recTier5(CFG.TEMPLE.TIERS[Math.max(0, Math.min(3, (G.templeStage || 1) - 1))], true));
   } else if (n.kind === "bosshub2") {
     h += `<div class="pline">여섯 보스의 상위 단계입니다. 노말 레이드를 클리어하면 열립니다.</div><div class="pline dim">입장에는 해당 보스 열쇠 ${UP_KEYS}개가 듭니다. 사탄 · 종말 등급 스킬이 나옵니다.</div>`; btnOk = un; btn = "상위 보스 관문 열기";
   } else if (n.kind === "bosshub") {
@@ -155,6 +159,7 @@ function mapPanel() {
     h += `<div class="pline">새 문지기를 넘고 최종 전직을 마친 자에게 열리는 더 깊은 탑입니다.</div><div class="pline dim">20층까지 이어집니다 (이후 층은 새 장비와 함께 추가). T6 사탄 장비를 모두 갖춘 스펙이 기준입니다.</div><div class="pline dim">최고 기록 ${(save.spire2 && save.spire2.best) || 0}층</div>`; btnOk = un; btn = "심층 첨탑 열기";
   } else if (n.kind === "tower") {
     h += `<div class="pline">문지기가 쓰러지자 먼 곳에서 솟아오른 정체불명의 탑입니다.</div><div class="pline dim">100층까지 이어지며 20층마다 벽이 있습니다. 4레인으로 전투하고, 사탄 장비가 나옵니다.</div><div class="pline dim">최고 기록 ${(save.spire && save.spire.best) || 0}층</div>`; btnOk = un; btn = "탑 열기";
+    h += recLineHtml(recTier5(CFG.SPIRE.TAB[Math.min(CFG.SPIRE.END, ((save.spire && save.spire.best) || 0) + 1) - 1], true));
   } else if (n.kind === "endless") {
     const E = endlessInfo(save);
     h += `<div class="pline">몹이 끝없이 몰려옵니다. 시간이 지날수록 강해지고, 빨리 잡을수록 위험도 시계가 더 빠르게 흘러 보상이 커집니다.</div><div class="pline">오늘 남은 횟수 <b>${E.left}</b> / ${E.max}</div><div class="pline dim">최고 기록 ${save.endless.best}초 · ${save.endless.bestKills}마리</div><div class="pline dim">보상: 장비·고유·구슬·조각 (웨이브당 증가)</div>`;
@@ -166,6 +171,7 @@ function mapPanel() {
     const feat = { hive: "화염 빌드용", titan: "물리·출혈·중독 빌드용", storm: "번개 빌드용", frost: "냉기·빙결 빌드용", poison: "독·중독 빌드용" }[n.kind], eye = { hive: "주황색", titan: "회백색", storm: "노란색", frost: "하늘색", poison: "연두색" }[n.kind];
     h += `<div class="pline">${E.keyName} <b>${have}</b>개 보유 (1개 소모)</div><div class="pline tier"><button class="btn xs" data-p="${E.sm}">−</button> <b style="font-size:18px">${S}단계</b> <button class="btn xs" data-p="${E.sp}">+</button> <span class="dim">몬스터 강도 균열 100층 대비 ×${(bossRiftMult(E.tiers[S - 1]) / bossRiftMult(100)).toFixed(1)}</span></div>
     <div class="pline">${E.boss.desc}</div><div class="pline">입장 조건: 심연의 균열 최고 <b>${need}</b>단계 이상 (현재 ${save.rift.best}단계)</div><div class="pline dim">${feat} 전설 장비 · 원초의 돌 · 높은 등급 스킬 ${[12, 18, 28, 45][S - 1]}% · 공허의 주사위 ${[2, 3, 6, 12][S - 1]}% — 단계가 높을수록 보상이 커집니다</div><div class="pline dim">열쇠: 심연의 균열·지옥 스테이지에서 확률로 나오는 ${E.keyName}(${eye} 눈알)를 잡으면 얻습니다 (공허의 열쇠와 같은 확률)</div>`;
+    h += recLineHtml(recTier5(EB[n.kind].tiers[S - 1]));
     btnOk = un && have > 0 && ok; btn = !ok ? `균열 ${need}단계 필요` : have > 0 ? "도전" : "열쇠 필요";
   } else if (n.kind === "void") {
     const S = G.voidStage = Math.max(1, Math.min(4, G.voidStage || 1));
