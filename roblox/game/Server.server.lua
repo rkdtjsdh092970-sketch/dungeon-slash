@@ -15,7 +15,10 @@ local rpc = RS:FindFirstChild("Rpc") or Instance.new("RemoteFunction"); rpc.Name
 local okDS, store = pcall(function() return DSS:GetDataStore("DungeonSlashV1") end)
 local sessions = {}   -- userId -> { sv = 세이브, busy = bool }
 
+-- Studio 시험용 "새 계정" 모드: ServerStorage 의 FreshTest 속성을 켜면 세이브를 불러오지도 저장하지도 않는다 (실서버에서는 동작하지 않음)
+local function freshTest() return game:GetService("RunService"):IsStudio() and game:GetService("ServerStorage"):GetAttribute("FreshTest") == true end
 local function load(uid)
+  if freshTest() then return nil end
   if not okDS then return nil end
   for _ = 1, 4 do
     local ok, v = pcall(function() return store:GetAsync("p" .. uid) end)
@@ -27,6 +30,7 @@ local function load(uid)
   return nil, false   -- 불러오기 실패: 새 세이브로 덮어쓰지 않도록 호출자가 구분한다
 end
 local function save(uid, sv)
+  if freshTest() then return true end
   if not okDS then return true end
   for _ = 1, 3 do
     local ok = pcall(function() store:UpdateAsync("p" .. uid, function() return sv end) end)
