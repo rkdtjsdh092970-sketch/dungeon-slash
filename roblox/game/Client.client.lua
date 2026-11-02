@@ -810,7 +810,10 @@ launch = function(spec)
   if r.err then toast(r.err, Color3.fromRGB(255, 160, 160)); return end
   closePanel(); setScreen("battle")
   local x = r.result
-  local function done() setSummary(r.summary); showResultPanel(x, spec) end
+  local function done()
+    if x.kills and mainStage.killLbl then mainStage.killLbl.Text = string.format("☠  처치 %d", x.kills) end   -- 화면에 나오기 전에 죽은 몹까지 서버 수치로 맞춘다
+    setSummary(r.summary); showResultPanel(x, spec)
+  end
   if x.replay and x.replay.snaps and #x.replay.snaps > 0 then mainStage:play(x.replay, done, 40, hudInfo(spec)) else done() end
 end
 showResult = function(r) launch({ call = function() return r end, noRetry = true }) end
