@@ -54,7 +54,7 @@ function M.genItem(rng, sv, ilvl, rarity, slot)
   slot = slot or Items.SLOTS[rng:NextInteger(1, #Items.SLOTS)]
   ilvl = max(1, min(6, ilvl)); rarity = max(0, min(3, rarity))
   local R = Items.ITEM_RARITY[rarity + 1]
-  local it = { uid = sv.nextUid, slot = slot, ilvl = ilvl, rarity = rarity, base = {}, affixes = {}, enh = 0, gv = 4 }; sv.nextUid += 1
+  local it = { uid = sv.nextUid, slot = slot, ilvl = ilvl, rarity = rarity, base = {}, affixes = {}, enh = 0, gv = 5 }; sv.nextUid += 1
   local f = gScale(ilvl) * rarMul(rarity)
   local function jit() return 0.9 + 0.2 * rng:NextNumber() end
   if slot == "weapon" then
@@ -63,7 +63,7 @@ function M.genItem(rng, sv, ilvl, rarity, slot)
     local T = Items.WTYPES[it.wt]; if T.atk and T.atk > 0 then it.base.atk = T.atk * f * jit() end; if T.mag and T.mag > 0 then it.base.mag = T.mag * f * jit() end
   end
   local keys = {}; for k in pairs(Items.SLOT_BASE[slot] or {}) do keys[#keys + 1] = k end; table.sort(keys)
-  for _, k in ipairs(keys) do it.base[k] = Items.SLOT_BASE[slot][k] * f * jit() end
+  for _, k in ipairs(keys) do it.base[k] = Items.SLOT_BASE[slot][k] * f * jit() * ((k == "hp" or k == "def") and gScale(ilvl) or 1) end   -- 체력 · 방어는 티어 배율을 한 번 더 (몹 공격력 성장을 따라가도록, 2026-11-03)
   for _ = 1, R.affixes do
     local cand = M.affixPool(it); if #cand == 0 then break end
     local a = wpick(rng, cand, function(x) return x.w end); it.affixes[#it.affixes + 1] = M.mkAff(rng, a, ilvl, rarity)
@@ -72,6 +72,14 @@ function M.genItem(rng, sv, ilvl, rarity, slot)
   elseif rarity == 2 then it.sock = {}; for _ = 1, wpick(rng, { 1, 2 }, function(x) return x == 1 and 60 or 40 end) do it.sock[#it.sock + 1] = false end
   elseif rarity == 1 then it.sock = { false } end
   return it
+end
+-- 예전 장비(gv < 5)의 체력 · 방어 수치를 새 기준(티어 배율 한 번 더)으로 올린다
+function M.defUp(it)
+  if type(it) ~= "table" or (it.gv or 0) >= 5 or not it.ilvl then return end
+  local f = gScale(it.ilvl); local b = it.base or {}
+  if b.hp then b.hp *= f end; if b.def then b.def *= f end
+  if not it.uniq then for _, a in ipairs(it.affixes or {}) do if a.k == "hpFlat" or a.k == "defFlat" then a.v *= f end end end
+  it.gv = 5
 end
 function M.rollSatan(rng, slot)
   local pool = {}; for _, d in ipairs(Sat) do if d[2] == slot then pool[#pool + 1] = d[1] end end
