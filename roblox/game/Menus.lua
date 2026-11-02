@@ -510,7 +510,8 @@ local ARM = { phys = Color3.fromRGB(235, 95, 75), mag = Color3.fromRGB(140, 125,
   elem = Color3.fromRGB(255, 180, 70), mana = Color3.fromRGB(90, 200, 230), skill = Color3.fromRGB(220, 130, 255), util = Color3.fromRGB(230, 230, 150), pierce = Color3.fromRGB(255, 120, 190), bridge = Color3.fromRGB(180, 180, 190) }
 local ARM_NAME = { phys = "물리", mag = "마법", wealth = "재화", def = "방어" }
 local SIZE = { small = 18, bridge = 16, filler = 14, notable = 36, key = 54 }
-local passSel, passCanvas, passFind, passFlow = nil, nil, "", nil
+local passSel, passFind, passFlow = nil, "", nil
+local passPos, passZoom = nil, 1   -- 트리 보기 위치 · 확대 (다시 그려도 유지)
 local PLang = require(script.Parent.Lang)
 local function NM(d) return (PLang.lang == "en" and d.name_en) or d.name end   -- 노드 이름 · 효과 글 (데이터에 영어가 함께 있다)
 local function TX(d) return (PLang.lang == "en" and d.text_en) or d.text or "" end
@@ -558,12 +559,44 @@ function M.pass()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6) }, hb)
   M.btn(hb, "자동 배분", UDim2.new(0, 110, 1, 0), M.BTN.green, function() local e = C.rpc:InvokeServer("autopass"); C.setSummary(e.summary); M.pass() end)
   M.btn(hb, "초기화", UDim2.new(0, 100, 1, 0), M.BTN.red, function() local e = C.rpc:InvokeServer("resetpass"); C.setSummary(e.summary); passSel = nil; M.pass() end)
-  -- 가운데: 트리 (끌어서 이동)
+  -- 가운데: 트리 — 끌어서 이동 · 마우스 휠로 확대/축소 (스크롤 막대 없음)
   local frame = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, -238, 1, -44)); frame.ClipsDescendants = true
   local S, PAD, HALF = 0.16, 60, 6300
-  local sf = mk("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, HALF * 2 * S + PAD * 2, 0, HALF * 2 * S + PAD * 2), ScrollingDirection = Enum.ScrollingDirection.XY, ScrollBarThickness = 4 }, frame)
-  local moved = M.dragScroll(sf)
+  local WORLD = HALF * 2 * S + PAD * 2
+  local view = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Active = true, ClipsDescendants = true }, frame)
+  local sf = mk("Frame", { Size = UDim2.new(0, WORLD, 0, WORLD), BackgroundTransparency = 1 }, view)
+  local zs = mk("UIScale", { Scale = passZoom }, sf)
   local function P(x, y) return HALF * S + PAD + x * S, HALF * S + PAD + y * S end
+  local cx, cy = P(0, 0)
+  if not passPos then local vs = frame.AbsoluteSize; passPos = Vector2.new(vs.X / 2 - cx * passZoom, vs.Y / 2 - cy * passZoom) end
+  local function place() sf.Position = UDim2.new(0, passPos.X, 0, passPos.Y); zs.Scale = passZoom end
+  place()
+  local dragging, dragFrom, posFrom, dragMoved = false, nil, nil, false
+  view.InputBegan:Connect(function(io)
+    if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then
+      dragging = true; dragMoved = false; dragFrom = Vector2.new(io.Position.X, io.Position.Y); posFrom = passPos
+    end
+  end)
+  local c1, c2
+  c1 = UIS.InputChanged:Connect(function(io)
+    if not view.Parent then c1:Disconnect(); return end
+    if dragging and (io.UserInputType == Enum.UserInputType.MouseMovement or io.UserInputType == Enum.UserInputType.Touch) then
+      local d = Vector2.new(io.Position.X, io.Position.Y) - dragFrom
+      if d.Magnitude > 6 then dragMoved = true end
+      passPos = posFrom + d; place()
+    end
+  end)
+  c2 = UIS.InputEnded:Connect(function(io)
+    if not view.Parent then c2:Disconnect(); return end
+    if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dragging = false end
+  end)
+  view.InputChanged:Connect(function(io)   -- 휠: 마우스가 가리키는 곳을 중심으로 확대/축소
+    if io.UserInputType ~= Enum.UserInputType.MouseWheel then return end
+    local old = passZoom; local nz = math.clamp(old * (io.Position.Z > 0 and 1.15 or 1 / 1.15), 0.35, 2.2)
+    local m = Vector2.new(io.Position.X, io.Position.Y) - view.AbsolutePosition
+    passPos = m - (m - passPos) * (nz / old); passZoom = nz; place()
+  end)
+  local function moved() return dragMoved end
   local function avail(d) if taken[d.id] then return false end; for _, l in ipairs(d.links or {}) do if l == "C" or taken[l] then return true end end; return false end
   local find = (passFind or ""):lower()
   local function hit(d) if find == "" then return false end; for _, t in ipairs({ d.name, d.text, d.name_en, d.text_en }) do if t and t:lower():find(find, 1, true) then return true end end; return false end
@@ -571,6 +604,9 @@ function M.pass()
   local path, pathCost
   if sel and not taken[sel.id] then path, pathCost = cheapestPath(BY, taken, sel.id) end
   local onPath = {}; for _, id in ipairs(path or {}) do onPath[id] = true end
+  local glowArt = C.Sprites.art("fx_glow")
+  local function glow(x, y, size, col, tr) if not glowArt then return nil end
+    return mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, size, 0, size), BackgroundTransparency = 1, ImageContent = glowArt.content, ImageColor3 = col, ImageTransparency = tr or 0.4, ZIndex = 3 }, sf) end
   -- 연결선
   local drawn = {}
   for _, d in ipairs(Passives.PASSIVES) do
@@ -587,50 +623,55 @@ function M.pass()
       end
     end
   end
-  -- 가운데
-  local cx, cy = P(0, 0)
+  -- 가운데 문양 · 갈래 이름
   do local ca = C.Sprites.art("p_center")
     if ca then mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, cx, 0, cy), Size = UDim2.new(0, 70, 0, 70), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 4 }, sf)
     else local c0 = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, cx, 0, cy), Size = UDim2.new(0, 34, 0, 34), BackgroundColor3 = M.GOLD, ZIndex = 4 }, sf); corner(c0) end
-    for arm, ang in pairs({ phys = -90, mag = 0, wealth = 90, def = 180 }) do   -- 갈래 이름
+    for arm, ang in pairs({ phys = -90, def = 0, mag = 90, wealth = 180 }) do
       local a = math.rad(ang); local l = noTr(txt(sf, PLang.lang == "en" and ({ phys = "Might", mag = "Arcana", wealth = "Fortune", def = "Bulwark" })[arm] or ARM_NAME[arm], 16, UDim2.new(0, cx + math.cos(a) * 140 - 40, 0, cy + math.sin(a) * 140 - 10), UDim2.new(0, 80, 0, 20), ARM[arm], M.FONT, Enum.TextXAlignment.Center)); l.ZIndex = 6
       mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, l)
     end
   end
+  -- 노드: 작은 노드 = 금속 테두리 안 보석(마름모), 주요 · 핵심 = 아이콘. 선택 · 찍을 수 있음 · 검색은 동그라미 대신 빛
   local nodeUI = {}
   for _, d in ipairs(Passives.PASSIVES) do
     local x, y = P(d.x, d.y); local sz = SIZE[d.kind] or 16
     local col = ARM[d.arm] or Color3.new(1, 1, 1)
-    local isT, isA = taken[d.id], avail(d)
-    local b = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, sz, 0, sz), BackgroundColor3 = isT and col or col:Lerp(Color3.new(0, 0, 0), isA and 0.35 or 0.72),
-      Text = "", AutoButtonColor = false, ZIndex = 5 }, sf)
-    corner(b)
-    local st = stroke(b, passSel == d.id and Color3.new(1, 1, 1) or (isT and M.GOLD or (onPath[d.id] and Color3.fromRGB(255, 230, 150) or Color3.fromRGB(20, 12, 10))), (passSel == d.id or onPath[d.id]) and 3 or (isT and 2 or 1.5))
-    -- 아이콘 (주요 · 핵심 · 갈래 문양) — 안 찍은 곳은 어둡게, 그래도 보인다
-    if d.icon then local ia = C.Sprites.art(d.icon)
-      if ia then b.BackgroundTransparency = 1; mk("ImageLabel", { Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), BackgroundTransparency = 1, ImageContent = ia.content,
-        ScaleType = Enum.ScaleType.Fit, ImageColor3 = isT and Color3.new(1, 1, 1) or (isA and Color3.fromRGB(210, 200, 190) or Color3.fromRGB(105, 95, 90)), ZIndex = 6 }, b) end end
+    local isT, isA, isSel = taken[d.id], avail(d), passSel == d.id
+    if isSel then sz = math.floor(sz * 1.3) end
+    if isSel or onPath[d.id] then glow(x, y, sz * 3, isSel and col or Color3.fromRGB(255, 230, 150), isSel and 0.25 or 0.55) end
+    if isA and not isSel then local g = glow(x, y, sz * 2.6, col, 0.5); if g then TweenService:Create(g, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.85 }):Play() end end
+    if hit(d) then local g = glow(x, y, sz * 3.2, Color3.fromRGB(120, 230, 255), 0.2); if g then TweenService:Create(g, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.7 }):Play() end end
+    local b = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, sz, 0, sz), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 5 }, sf)
+    local ia = d.icon and C.Sprites.art(d.icon)
+    if ia then
+      mk("ImageLabel", { Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), BackgroundTransparency = 1, ImageContent = ia.content,
+        ScaleType = Enum.ScaleType.Fit, ImageColor3 = isT and Color3.new(1, 1, 1) or (isA and Color3.fromRGB(210, 200, 190) or Color3.fromRGB(105, 95, 90)), ZIndex = 6 }, b)
+    else   -- 보석 마름모: 바깥 금속 테두리 + 안쪽 보석 (찍으면 밝게, 못 찍는 곳은 어둡게)
+      local outer = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.74, 0, 0.74, 0), Rotation = 45,
+        BackgroundColor3 = isT and Color3.fromRGB(196, 158, 82) or Color3.fromRGB(58, 48, 40), BorderSizePixel = 0, ZIndex = 6 }, b)
+      mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(14, 10, 8) }, outer)
+      local inner = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.62, 0, 0.62, 0), BorderSizePixel = 0, ZIndex = 7,
+        BackgroundColor3 = isT and col or col:Lerp(Color3.new(0, 0, 0), isA and 0.3 or 0.7) }, outer)
+      mk("UIGradient", { Rotation = -45, Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(150, 150, 150)) }, inner)   -- 보석 윤기
+    end
     if d.kind == "notable" or d.kind == "key" then   -- 이름이 늘 보인다
       local l = noTr(txt(sf, NM(d), d.kind == "key" and 15 or 12, UDim2.new(0, x - 70, 0, y + sz / 2 + 2), UDim2.new(0, 140, 0, 18), isT and col or col:Lerp(Color3.fromRGB(200, 190, 180), 0.4), M.FONT, Enum.TextXAlignment.Center))
       l.ZIndex = 6; mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, l)
     end
-    if isA then TweenService:Create(st, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Color = col }):Play() end   -- 찍을 수 있는 곳은 빛난다
-    if hit(d) then local ring = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, sz + 14, 0, sz + 14), BackgroundTransparency = 1, ZIndex = 4 }, sf); corner(ring)
-      local rs = stroke(ring, Color3.fromRGB(120, 230, 255), 3); TweenService:Create(rs, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.8 }):Play() end
     b.MouseEnter:Connect(function() tipShow({ title = string.format("%s  (%d점)", NM(d), d.cost or 1), color = col, lines = { TX(d) } }) end); b.MouseLeave:Connect(tipHide)
-    b.MouseButton1Click:Connect(function() if moved() then return end; tipHide(); passSel = d.id; passCanvas = sf.CanvasPosition; M.pass() end)
+    b.MouseButton1Click:Connect(function() if moved() then return end; tipHide(); passSel = d.id; M.pass() end)
     nodeUI[d.id] = b
   end
-  if passCanvas then sf.CanvasPosition = passCanvas else sf.CanvasPosition = Vector2.new(cx - 300, cy - 160) end
-  -- 찍은 직후: 길을 따라 빛이 흐른다 (가운데 쪽부터 차례로 번쩍)
+  -- 찍은 직후: 길을 따라 빛이 흐른다 (가운데 쪽부터 차례로)
   if passFlow then
     local flow = passFlow; passFlow = nil
     task.spawn(function()
       for i, id in ipairs(flow) do
         local b = nodeUI[id]; if not b or not b.Parent then return end
-        local g = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = b.Position, Size = UDim2.new(0, b.Size.X.Offset, 0, b.Size.Y.Offset), BackgroundColor3 = Color3.fromRGB(255, 240, 190), BackgroundTransparency = 0.1, ZIndex = 7 }, sf); corner(g)
-        TweenService:Create(g, TweenInfo.new(0.45, Enum.EasingStyle.Quad), { Size = UDim2.new(0, b.Size.X.Offset * 2.6, 0, b.Size.Y.Offset * 2.6), BackgroundTransparency = 1 }):Play()
-        task.delay(0.5, function() g:Destroy() end)
+        local g = glow(b.Position.X.Offset, b.Position.Y.Offset, b.Size.X.Offset * 1.5, Color3.fromRGB(255, 240, 190), 0); if g then g.ZIndex = 7
+          TweenService:Create(g, TweenInfo.new(0.45, Enum.EasingStyle.Quad), { Size = UDim2.new(0, b.Size.X.Offset * 4, 0, b.Size.X.Offset * 4), ImageTransparency = 1 }):Play()
+          task.delay(0.5, function() g:Destroy() end) end
         task.wait(0.07)
       end
     end)
@@ -662,7 +703,7 @@ function M.pass()
   local can = pathCost <= v.left
   local b = M.btn(I, string.format("찍기 · %d칸 %d점", #path, pathCost), UDim2.new(1, 0, 0, 34), can and M.BTN.green or M.BTN.gray, function()
     if not can then C.toast("포인트가 부족합니다"); return end
-    local e = C.rpc:InvokeServer("passtake", sel.id); C.setSummary(e.summary); passCanvas = sf.CanvasPosition
+    local e = C.rpc:InvokeServer("passtake", sel.id); C.setSummary(e.summary)
     if (e.n or 0) > 0 then passFlow = path; C.toast(string.format("노드 %d개를 찍었습니다", e.n)) else C.toast("포인트가 부족하거나 이어진 길이 없습니다") end
     M.pass()
   end); b.Position = UDim2.new(0, 0, 1, -36)
