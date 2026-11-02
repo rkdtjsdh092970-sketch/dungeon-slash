@@ -16,17 +16,9 @@ ART = [
     ('bg1', 'bg/act1.jpg', (768, 320)),
     ('bg8', 'bg/act8.png', (768, 320)),
     # 마을 · 월드맵 (개발용 전달 크기 ~1MB 이내로 줄임. 출시 땐 원본을 업로드해 id 사용)
-    ('bg_town', 'bg/town.jpg', (640, 360)),
+    ('bg_town', 'bg/town.jpg', (800, 450)),   # 건물이 함께 그려진 마을 (2026-11-02, 건물 그림 따로 안 씀)
     ('bg_title', 'bg/title.jpg', (800, 450)), ('ui_logo', 'ui/logo.png', (512, 192)),   # 시작화면
     ('bg_world', 'map/world.jpg', (640, 392)),
-    ('b_skill_hall', 'town/skill_hall.png', (192, 192)),
-    ('b_forge', 'town/forge.png', (192, 192)),
-    ('b_shop', 'town/shop.png', (192, 192)),
-    ('b_quest_board', 'town/quest_board.png', (192, 192)),
-    ('b_skill_shop', 'town/skill_shop.png', (192, 192)),
-    ('b_guild', 'town/guild.png', (192, 192)),
-    ('b_trainer', 'town/trainer.png', (192, 192)),
-    ('b_notice', 'town/notice.png', (192, 192)),
     # 아이콘 (장비 슬롯 · 재화 · 배속 패스)
     # 스킬 소환 카드: 뒷면 · 등급별 타로 테두리(0 일반 ~ 4 사탄) · 공개 빛 폭발(2 전설 ~ 4 사탄)
     ('card_back', 'cards/back.png', (256, 384)),

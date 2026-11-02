@@ -733,15 +733,15 @@ towerSpec = function(f) return { title = "솟아난 탑 " .. f .. "층", call = 
 local function playSpec(title, arg) return { title = title, call = function() return rpc:InvokeServer("play", arg) end } end
 
 -- ── 마을 (웹 초원 마을: 건물을 눌러 기능을 연다. 비슷한 기능은 한 건물에 탭으로 묶었다) ──
-local BUILD = {   -- x · y = 건물 발 위치(화면 비율), s = 크기(화면 높이 비율). 광장을 둘러싼 반원: 뒤쪽은 작게, 앞쪽은 크게
-  { key = "b_guild", name = "길드", icon = "🏰", x = 0.30, y = 0.60, s = 0.22, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
-  { key = "b_skill_shop", name = "스킬 소환", icon = "🔮", x = 0.50, y = 0.58, s = 0.26, tabs = { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } } },
-  { key = "b_notice", name = "안내소", icon = "🔔", x = 0.70, y = 0.60, s = 0.22, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
-  { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.13, y = 0.75, s = 0.25, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
-  { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.87, y = 0.75, s = 0.22, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
-  { key = "b_skill_hall", name = "스킬 정비소", icon = "📘", x = 0.17, y = 0.97, s = 0.30, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
-  { key = "b_forge", name = "제련소", icon = "🔨", x = 0.39, y = 0.98, s = 0.30, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
-  { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.61, y = 0.97, s = 0.30, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
+local BUILD = {   -- 건물은 배경 그림(bg/town.jpg)에 함께 그려져 있다. box = 그림 기준 영역(x0, y0, x1, y1), 이름은 영역 아래쪽에
+  { key = "b_guild", name = "길드", box = { 0.206, 0.17, 0.434, 0.47 }, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
+  { key = "b_skill_shop", name = "스킬 소환", box = { 0.455, 0.06, 0.635, 0.50 }, tabs = { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } } },
+  { key = "b_notice", name = "안내소", box = { 0.67, 0.20, 0.815, 0.51 }, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
+  { key = "b_trainer", name = "훈련소", box = { 0.0, 0.38, 0.25, 0.59 }, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
+  { key = "b_quest_board", name = "퀘스트 게시판", box = { 0.83, 0.38, 0.99, 0.65 }, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
+  { key = "b_skill_hall", name = "스킬 정비소", box = { 0.06, 0.53, 0.335, 0.85 }, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
+  { key = "b_forge", name = "제련소", box = { 0.338, 0.53, 0.553, 0.87 }, smoke = { 0.375, 0.0 }, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
+  { key = "b_shop", name = "장비 상점", box = { 0.565, 0.60, 0.837, 0.885 }, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
 }
 local townBuilt, badgeDots = false, {}
 local function updateBadges()
@@ -773,31 +773,39 @@ buildTown = function()
         patches[#patches + 1] = { key = pt.key, x = x0, y = y0, w = x1 - x0, h = y1 - y0 }
       end
       local lights = {}
-      for _, l in ipairs({ { 0.1875, 0.40, 0.05 }, { 0.348, 0.40, 0.05 }, { 0.433, 0.385, 0.04 }, { 0.757, 0.43, 0.045 }, { 0.103, 0.40, 0.03 }, { 0.072, 0.155, 0.03 }, { 0.145, 0.185, 0.035 }, { 0.818, 0.32, 0.025 }, { 0.977, 0.255, 0.04 } }) do lights[#lights + 1] = L(l[1], l[2], l[3]) end
+      for _, l in ipairs({ { 0.027, 0.73, 0.05 }, { 0.051, 0.50, 0.035 }, { 0.323, 0.37, 0.035 }, { 0.628, 0.385, 0.035 }, { 0.212, 0.44, 0.03 }, { 0.419, 0.77, 0.06 }, { 0.057, 0.38, 0.03 }, { 0.877, 0.375, 0.03 }, { 0.53, 0.33, 0.06 } }) do lights[#lights + 1] = L(l[1], l[2], l[3]) end
       local _, cy0 = P(0, 0.0); local _, cy1 = P(0, 0.12)
       Ambient.attach(townLayer, { z = 2, patches = patches, lights = lights, clouds = { math.max(cy0, 0.01), cy1, 3 }, birds = true, embers = 10 })
     else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
+    -- 건물: 배경 속 건물 위에 보이지 않는 누름 영역. 마우스를 올리면 그 건물에 은은한 빛, 이름 글씨가 또렷해진다 (상자 · 테두리 없음)
+    local sw, sh = bg and bg.w or W, bg and bg.h or H
+    if bg then if bg.w / bg.h > W / H then sw = bg.h * W / H else sh = bg.w * H / W end end
+    local ox, oy = bg and (bg.w - sw) / 2 or 0, bg and (bg.h - sh) or 0
+    local function SP(u, v) if not bg then return u * W, v * H end; return (u * bg.w - ox) / sw * W, (v * bg.h - oy) / sh * H end
+    local glowArt = Sprites.art("fx_glow")
     for _, b in ipairs(BUILD) do
-      local size = b.s * H; local fy = b.y * H
-      local zb = b.y > 0.9 and 4 or 3
-      -- 발밑 그림자: 건물이 바닥에 붙어 있게 (그림을 붙여 놓은 느낌 줄이기)
-      local gsh = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, b.x * W, 0, fy - size * 0.03), Size = UDim2.new(0, size * 0.85, 0, size * 0.12), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, ZIndex = zb }, townLayer); corner(gsh)
-      local holder = mk("TextButton", { BackgroundTransparency = 1, Text = "", AutoButtonColor = false, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, b.x * W, 0, fy), Size = UDim2.new(0, size, 0, size), ZIndex = zb }, townLayer)
-      local a = Sprites.art(b.key)
-      -- 밤 조명에 맞춰 살짝 어둡고 따뜻하게 (뒤쪽 건물은 더 어둡게 = 원근)
-      if a then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), ScaleType = Enum.ScaleType.Fit, ImageContent = a.content, ImageColor3 = b.y > 0.9 and Color3.fromRGB(235, 215, 200) or (b.y > 0.7 and Color3.fromRGB(215, 190, 175) or Color3.fromRGB(190, 165, 155)), ZIndex = holder.ZIndex }, holder)
-      else local f = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(0.8, 0, 0.8, 0), BackgroundColor3 = Color3.fromRGB(150, 110, 80), ZIndex = holder.ZIndex }, holder); corner(f, 12); stroke(f, Color3.fromRGB(60, 30, 50), 3)
-        mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = b.icon, TextScaled = true, Font = Enum.Font.GothamBold, ZIndex = holder.ZIndex }, f) end
-      local hs = mk("UIScale", { Scale = 1 }, holder)
-      holder.MouseEnter:Connect(function() TweenService:Create(hs, TweenInfo.new(0.12), { Scale = 1.06 }):Play() end)
-      holder.MouseLeave:Connect(function() TweenService:Create(hs, TweenInfo.new(0.12), { Scale = 1 }):Play() end)
-      holder.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
-      if b.key == "b_forge" and a then Ambient.smoke(holder, 0.66, 0.14) end   -- 대장간 굴뚝 연기
-      -- 이름표는 건물 묶음 밖(위층)에 둔다: 앞줄 건물 그림에 뒷줄 이름표가 가려지지 않게
-      local plate = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, b.x * W, 0, fy - 4), Size = UDim2.new(0, 140, 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.08, AutoButtonColor = false, Text = b.name, TextColor3 = Color3.new(1, 1, 1), Font = Theme.FONT, TextSize = 16, ZIndex = 6 }, townLayer)
-      corner(plate); stroke(plate, GOLD, 1.5); mk("UIScale", { Scale = K }, plate); Skin.button(plate)
-      plate.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
-      if b.badge then badgeDots[b.badge] = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 2), Size = UDim2.new(0, 14, 0, 14), BackgroundColor3 = Color3.fromRGB(255, 70, 70), Visible = false, ZIndex = 7 }, plate); corner(badgeDots[b.badge]); stroke(badgeDots[b.badge], Color3.new(1, 1, 1), 2) end
+      local x0, y0 = SP(b.box[1], b.box[2]); local x1, y1 = SP(b.box[3], b.box[4])
+      local bw, bh = x1 - x0, y1 - y0
+      local glow = glowArt and mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, (x0 + x1) / 2, 0, (y0 + y1) / 2), Size = UDim2.new(0, bw * 1.25, 0, bh * 1.15), BackgroundTransparency = 1,
+        ImageContent = glowArt.content, ImageColor3 = Color3.fromRGB(255, 200, 140), ImageTransparency = 1, ZIndex = 3 }, townLayer)
+      local hit = mk("TextButton", { Position = UDim2.new(0, x0, 0, y0), Size = UDim2.new(0, bw, 0, bh), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 4 }, townLayer)
+      local nm = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, (x0 + x1) / 2, 0, y1 - 6), Size = UDim2.new(0, 220, 0, 28), BackgroundTransparency = 1, Text = b.name,
+        Font = Theme.FONT, TextSize = 20, TextColor3 = Color3.fromRGB(240, 222, 196), TextTransparency = 0.15, ZIndex = 6 }, townLayer)
+      local ns = mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(12, 6, 4), Transparency = 0.1 }, nm); mk("UIScale", { Scale = K }, nm)
+      local function hover(on)
+        if glow then TweenService:Create(glow, TweenInfo.new(0.18), { ImageTransparency = on and 0.72 or 1 }):Play() end
+        TweenService:Create(nm, TweenInfo.new(0.18), { TextTransparency = on and 0 or 0.15, TextColor3 = on and Color3.fromRGB(255, 236, 190) or Color3.fromRGB(240, 222, 196), TextSize = on and 23 or 20 }):Play()
+      end
+      hit.MouseEnter:Connect(function() hover(true) end); hit.MouseLeave:Connect(function() hover(false) end)
+      hit.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
+      if b.smoke then Ambient.smoke(hit, b.smoke[1], b.smoke[2]) end   -- 대장간 굴뚝 연기
+      -- 알림: 이름 옆 작은 붉은 불씨
+      if b.badge then
+        local d = mk("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(1, 2, 0.5, 0), Size = UDim2.new(0, 10, 0, 10), BackgroundColor3 = Color3.fromRGB(255, 80, 60), Visible = false, ZIndex = 7 }, nm); corner(d)
+        mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(60, 10, 6) }, d)
+        badgeDots[b.badge] = d
+        nm.Size = UDim2.new(0, 0, 0, 28); nm.AutomaticSize = Enum.AutomaticSize.X
+      end
     end
   end
   updateBadges()
