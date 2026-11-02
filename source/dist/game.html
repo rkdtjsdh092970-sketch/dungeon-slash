@@ -457,6 +457,29 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .rwbk5{position:absolute;left:84px;bottom:6px;display:flex;gap:6px}.rwbk5 .btn{height:34px;font-size:12px!important;width:130px}.rw5:has(.rwbk5){min-height:112px;align-items:flex-start}
 .bm .bh5{gap:6px}.bfull5{font-size:11px;color:#ff826e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .det5 .dbtns{grid-template-columns:repeat(3,minmax(0,1fr))!important}.det5 .dbtns .btn{min-height:30px!important;font-size:11px!important}.det5 .dbtns .btn small{font-size:10px}
+/* ---- 5.13 전투 HUD 를 로블록스판 Stage.lua 좌표로 (720 -> 540 = x0.75) ---- */
+#battlehud .h5L{left:10px;top:3px;width:264px;height:83px}
+.h5L .h5plate{left:16.5px;top:4.5px;width:247.5px;height:75px}
+.h5L .h5face{left:11.3px;top:15px;width:55.4px;height:55.4px}
+.h5L .h5ring{left:-3px;top:-0.75px;width:84px;height:84px}
+.h5L .h5gem{left:30px;top:66px;width:18px;height:18px;border-radius:3px}.h5L .h5gem b{font-size:11px}
+.h5L .h5hp{left:78px;top:1.5px;width:184.5px;height:42px}
+.h5L .h5hp .hpbar2 span{font-size:11px;line-height:12px}
+.h5L .h5mp{left:99.2px;top:43.5px;width:149.4px;height:6.75px!important;margin:0!important;border:0!important;background:#0b1430!important}
+.h5L .h5kill{left:99.2px;top:55.5px;width:90px;height:16.5px;padding:0 6px;box-sizing:border-box;font-size:10px;line-height:15px}
+.h5L #status{left:196px;top:57px}
+.h5T{top:3px!important;width:460px!important}.h5T #bh-name{font-size:18px;line-height:22px}
+.h5T #bossbar{width:345px!important;height:36px!important;margin:4px auto 0!important}
+.h5T #bossbar .bn{height:15px;margin:0;font-size:13px}.h5T #bossbar .bb{top:16.5px!important;height:16.5px!important;border-radius:4px}
+.h5T #bossbar img{left:-47.5px!important;top:3.2px!important;width:440px!important;height:75.3px!important}
+#battlehud #skillbar{left:12px!important;bottom:7.5px!important;gap:6px!important}
+.h5card{width:51px!important;height:91.5px!important}
+.h5card .cds{top:0!important;bottom:auto!important;height:16.5px!important;font-size:15px!important;inset:auto 0 auto 0}
+.h5card .h5c{top:18px!important;width:51px!important;height:73.5px!important;border-width:2px!important}
+.h5card .h5n{height:30%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65)!important;font-size:9px!important;padding:0 1px!important;box-sizing:border-box}
+.h5card .cdm{background:rgba(0,0,0,.65)!important}
+.h5card .rl{right:auto!important;bottom:auto!important;left:2px!important;top:2px!important;font-size:8px!important;padding:0 2px!important;background:rgba(0,0,0,.6)!important}
+.h5card .mc{display:none!important}
 /* ---- 5.0 제련소 ---- */
 .fpw5{font-size:13px;margin:-2px 0 6px;color:#d8ccb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
@@ -5764,7 +5787,7 @@ function finishFlow(b) {
   saveGame();
   const uniq = res.items.filter((i) => i.uniq);
   const next = () => afterBattle(res, b);
-  b.resultAt = ( endWin(b) && (node.kind === "boss" || node.kind === "void" || isEB(node.kind)) ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
+  b.resultAt = 0.7;   // 종료 연출이 끝난 뒤 결과창
   b.next = () => { if (uniq.length && !document.hidden) showUniqueFx(uniq, next); else next(); };
 }
 // 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
@@ -7018,7 +7041,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-071634";
+const BUILD_ID = "20261103-072408";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7800,7 +7823,7 @@ function hud5Build() {
 // 카드형 스킬 칸 (로블록스판: 카드 그림 · 등급 테두리 · 아래 이름 띠 · 위 쿨타임 숫자)
 function hud5Skills(b) {
   const RC = ["#aaaab4", "#5096ff", "#ff9628", "#be5aff", "#e62832"];
-  $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot h5card" data-i="${i}" title="클릭: 타겟 규칙 바꾸기"><span class="cds"></span><div class="h5c" style="border-color:${RC[sk.rarity] || RC[0]}"><img src="${artURL("card_s_" + sk.id) || ""}" alt=""><div class="cdm"></div><div class="h5n">${sk.name}</div><span class="rl"></span><span class="mc"></span></div><span class="kn">${i + 1}</span></div>` : `<div class="bslot h5empty"></div>`).join("");
+  $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot h5card" data-i="${i}" title="클릭: 타겟 규칙 바꾸기"><span class="cds"></span><div class="h5c" style="border-color:${RC[sk.rarity] || RC[0]}"><img src="${artURL("card_s_" + sk.id) || ""}" alt=""><div class="cdm"></div><div class="h5n">${sk.name}</div><span class="rl"></span><span class="mc"></span></div></div>` : `<div class="bslot h5empty"></div>`).join("");
   $$("#skillbar .bslot[data-i]").forEach((el) => el.addEventListener("click", () => { const i = +el.dataset.i, sk = G.battle.skills[i]; if (!sk) return; const n = RULE_ORDER[(RULE_ORDER.indexOf(sk.rule) + 1) % RULE_ORDER.length]; sk.rule = n; if (save.loadout[i]) save.loadout[i].rule = n; snd("click"); toast(`${sk.name}: ${RULES[n]}`); }));
 }
 function hud5Tick(b) {
@@ -7929,6 +7952,11 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.13", date: "11/3", title: "전투 화면을 로블록스판 배치로", items: [
+    "전투 HUD 크기 · 위치를 로블록스판과 같게 맞췄습니다: 왼쪽 위 상태판(초상화 · 체력 · 마나 · 처치), 위 가운데 보스 체력바(장식 틀 안에 딱 맞게), 왼쪽 아래 아르카나 카드.",
+    "고침: 아르카나 카드가 어둡게 보이던 것 (대상 표시 칸이 카드 전체를 덮고 있었음).",
+    "전투가 끝날 때 느려지는 연출과 '스테이지 클리어!' 문구를 없애고 바로 결과 창이 열립니다 (로블록스판과 같게).",
+  ] },
   { ver: "5.12", date: "11/3", title: "가방 기능 보강", items: [
     "가방 위 [+0 비교] 켜기/끄기: 켜면 새 장비와 착용 장비를 둘 다 강화 없이 비교합니다 (▲ 표시와 전투력 비교 모두). 장비 자체가 더 좋은지 볼 때 쓰세요.",
     "가방 장비를 착용 칸으로 끌어다 놓으면 장착, 착용 장비를 가방으로 끌어다 놓으면 해제됩니다.",
@@ -8626,9 +8654,9 @@ function frame(ms) {
       if (b.hitstop > 0) b.hitstop -= rawDt; else { const steps = G.speed; for (let i = 0; i < steps; i++) stepBattle(b, rawDt); }   // 5.0: 타격감 (짧게 멈춤)
     }
     for (const n of b.sfxq) AU.sfx(n); b.sfxq.length = 0;
-    if (b.over) { if (b.endT == null) initEndFx(b); fxTick(b, rawDt * (b.endT < 0.8 ? 0.4 : 1)); b.endT += rawDt; }
+    if (b.over) { if (b.endT == null) initEndFx(b); fxTick(b, rawDt); b.endT += rawDt; }
     if (!G.paused && $("#modal").classList.contains("hidden")) FX5.update(b, rawDt * Math.min(2, G.speed));
-    G.dt = rawDt; drawBattle(g, b, rawDt, gtime); if (b.over) drawEndOverlay(g, b); battleHud(b);
+    G.dt = rawDt; drawBattle(g, b, rawDt, gtime); battleHud(b);   // 5.13: 끝날 때 느려지는 연출 · 클리어 문구 없음 (로블록스판과 같게)
     if (b.next && b.endT >= b.resultAt) { const nx = b.next; b.next = null; nx(); }
     if (b.over && b.fin && !b.next && G.pending && $("#modal").classList.contains("hidden") && $("#unique").classList.contains("hidden")) showResult(G.pending[0], G.pending[1], true);
     if (b.over && !b.fin) { b.fin = true; finishFlow(b); }

@@ -35,7 +35,7 @@ function hud5Build() {
 // 카드형 스킬 칸 (로블록스판: 카드 그림 · 등급 테두리 · 아래 이름 띠 · 위 쿨타임 숫자)
 function hud5Skills(b) {
   const RC = ["#aaaab4", "#5096ff", "#ff9628", "#be5aff", "#e62832"];
-  $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot h5card" data-i="${i}" title="클릭: 타겟 규칙 바꾸기"><span class="cds"></span><div class="h5c" style="border-color:${RC[sk.rarity] || RC[0]}"><img src="${artURL("card_s_" + sk.id) || ""}" alt=""><div class="cdm"></div><div class="h5n">${sk.name}</div><span class="rl"></span><span class="mc"></span></div><span class="kn">${i + 1}</span></div>` : `<div class="bslot h5empty"></div>`).join("");
+  $("#skillbar").innerHTML = b.skills.map((sk, i) => sk ? `<div class="bslot h5card" data-i="${i}" title="클릭: 타겟 규칙 바꾸기"><span class="cds"></span><div class="h5c" style="border-color:${RC[sk.rarity] || RC[0]}"><img src="${artURL("card_s_" + sk.id) || ""}" alt=""><div class="cdm"></div><div class="h5n">${sk.name}</div><span class="rl"></span><span class="mc"></span></div></div>` : `<div class="bslot h5empty"></div>`).join("");
   $$("#skillbar .bslot[data-i]").forEach((el) => el.addEventListener("click", () => { const i = +el.dataset.i, sk = G.battle.skills[i]; if (!sk) return; const n = RULE_ORDER[(RULE_ORDER.indexOf(sk.rule) + 1) % RULE_ORDER.length]; sk.rule = n; if (save.loadout[i]) save.loadout[i].rule = n; snd("click"); toast(`${sk.name}: ${RULES[n]}`); }));
 }
 function hud5Tick(b) {

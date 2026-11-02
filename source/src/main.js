@@ -96,9 +96,9 @@ function frame(ms) {
       if (b.hitstop > 0) b.hitstop -= rawDt; else { const steps = G.speed; for (let i = 0; i < steps; i++) stepBattle(b, rawDt); }   // 5.0: 타격감 (짧게 멈춤)
     }
     for (const n of b.sfxq) AU.sfx(n); b.sfxq.length = 0;
-    if (b.over) { if (b.endT == null) initEndFx(b); fxTick(b, rawDt * (b.endT < 0.8 ? 0.4 : 1)); b.endT += rawDt; }
+    if (b.over) { if (b.endT == null) initEndFx(b); fxTick(b, rawDt); b.endT += rawDt; }
     if (!G.paused && $("#modal").classList.contains("hidden")) FX5.update(b, rawDt * Math.min(2, G.speed));
-    G.dt = rawDt; drawBattle(g, b, rawDt, gtime); if (b.over) drawEndOverlay(g, b); battleHud(b);
+    G.dt = rawDt; drawBattle(g, b, rawDt, gtime); battleHud(b);   // 5.13: 끝날 때 느려지는 연출 · 클리어 문구 없음 (로블록스판과 같게)
     if (b.next && b.endT >= b.resultAt) { const nx = b.next; b.next = null; nx(); }
     if (b.over && b.fin && !b.next && G.pending && $("#modal").classList.contains("hidden") && $("#unique").classList.contains("hidden")) showResult(G.pending[0], G.pending[1], true);
     if (b.over && !b.fin) { b.fin = true; finishFlow(b); }
