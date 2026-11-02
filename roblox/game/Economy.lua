@@ -110,14 +110,18 @@ end
 function M.resetPassives(sv) sv.pass = {} end
 -- 자동 배분: 키별 가중치로 점수/비용이 높은 경로를 포인트가 다할 때까지 찍는다 (직접 트리를 고르는 화면이 생기기 전까지의 대체)
 local W = { atkPct = 3, magPct = 3, hpPct = 2, defPct = 1.5, allDmg = 4, physDmg = 2.5, magDmg = 2.5, critChance = 2, critDmg = 2, cdr = 3, lifesteal = 2, atkFlat = 0.02, hpFlat = 0.005, dmgTaken = -3, boss = 1, elite = 1, aoeDmg = 1.5, dodge = 1.5, ignoreDef = 2, ignoreRes = 2, fireDmg = 2, coldDmg = 2, lightDmg = 2, voidDmg = 2, atkMore = 8, magMore = 8, hpMore = 6, manaPct = 1, manaRegen = 0.5 }
-local function nodeScore(p) local s = 0; for k, v in pairs(p.per) do s += (W[k] or 0.2) * (v > 0 and v or -v) * (k:sub(-4) == "More" and 1 or 1) end return s end
+W.spellCrit = 2; W.elemDmg = 2.5; W.penElem = 1.5; W.magMore = 3; W.atkMore = 3; W.hpMore = 2
+-- 계열에 맞는 노드만 (검 = 물리, 지팡이 = 마법): 다른 계열 공격 노드는 점수 0
+local OFF = { phys = { magPct = 1, magDmg = 1, spellCrit = 1, elemDmg = 1, penElem = 1, magMore = 1, magFlat = 1 }, mag = { atkPct = 1, physDmg = 1, critChance = 1, atkMore = 1, atkFlat = 1, ignoreDef = 1, shredDef = 1, bleedChance = 1 } }
+local function nodeScore(p, fam) local s = 0; for k, v in pairs(p.per) do if not (fam and OFF[fam][k]) then local m = k:sub(-4) == "More" and (v - 1) * 10 or (v > 0 and v or -v); s += (W[k] or 0.2) * m end end return s end
 function M.autoPassives(sv)
+  local w = sv.equipped and sv.equipped.weapon; local fam = (w and w.wt == "staff") and "mag" or "phys"
   local added = 0
   for _ = 1, 200 do
     local left = M.passiveLeft(sv); if left <= 0 then break end
     local bestId, bestR
     for _, p in ipairs(Passives) do
-      if not has(sv, p.id) and linked(sv, p) and p.cost <= left then local r = nodeScore(p) / p.cost; if bestR == nil or r > bestR then bestR = r; bestId = p.id end end
+      if not has(sv, p.id) and linked(sv, p) and p.cost <= left then local r = nodeScore(p, fam) / p.cost; if bestR == nil or r > bestR then bestR = r; bestId = p.id end end
     end
     if not bestId then break end
     sv.pass[bestId] = 1; added += 1
