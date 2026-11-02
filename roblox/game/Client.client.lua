@@ -1535,8 +1535,19 @@ loadStep("Loading adventure records...", 0.3)
 for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); Lang.set(r.summary.lang or "en"); for k, v in pairs(r.summary.set or {}) do if OPT[k] ~= nil then OPT[k] = v end end; calcK(); applyOpt(); break end; task.wait(0.5) end
 do
   local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))
-  local keys = {}; if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" then keys[#keys + 1] = k end end end; table.sort(keys)   -- 스킬 카드는 처음 볼 때 받는다
-  for i, k in ipairs(keys) do loadStep(string.format("Loading images... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k); task.wait() end   -- 한 장마다 한 프레임 쉬어 화면(로고 · 막대)이 멈추지 않게
+  -- 시작에 꼭 필요한 그림(마을 · 화면 장식 · 아이콘 · 영웅 · 소환)만 먼저, 4장씩 동시에. 몬스터 · 보스 · 이펙트 · 전투 배경은 들어간 뒤 뒤에서 받는다 (스킬 카드는 처음 볼 때)
+  local now, later = {}, {}
+  local function deferred(k) return k:match("^a%d") or k:match("^boss") or k:match("^fx_") or k:match("^bg%d") or k:match("^card_burst") end
+  if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" then if deferred(k) then later[#later + 1] = k else now[#now + 1] = k end end end end
+  table.sort(now); table.sort(later)
+  local done, run = 0, 0
+  for _, k in ipairs(now) do
+    while run >= 4 do task.wait() end
+    run += 1; task.spawn(function() Sprites.art(k); run -= 1; done += 1 end)
+    loadStep(string.format("Loading images... (%d/%d)", done, #now), 0.35 + 0.6 * done / #now)
+  end
+  while run > 0 do loadStep(string.format("Loading images... (%d/%d)", done, #now), 0.35 + 0.6 * done / #now); task.wait() end
+  task.spawn(function() for _, k in ipairs(later) do Sprites.art(k); task.wait() end end)   -- 나머지는 뒤에서 (전투에서 먼저 필요해지면 그때 바로 받는다)   -- 한 장마다 한 프레임 쉬어 화면(로고 · 막대)이 멈추지 않게
 end
 pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
 pcall(function() owns4 = rpc:InvokeServer("speedpass").owns == true end)

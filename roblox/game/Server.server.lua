@@ -194,6 +194,15 @@ local function sheetAction(arg)
   if not sheetCache[arg] then return { err = "Could not fetch sheet (check HttpService)" } end
   return { buf = sheetCache[arg], w = M.w, h = M.h, cell = M.cell }
 end
+-- 서버가 켜지자마자 그림을 GitHub 에서 미리 받아 둔다 (첫 입장 대기 줄이기). 6개씩 동시에
+task.spawn(function()
+  local list = {}; for k in pairs(ART) do if k:sub(1, 7) ~= "card_s_" then list[#list + 1] = "art/" .. k end end
+  local running = 0
+  for _, a in ipairs(list) do
+    while running >= 6 do task.wait() end
+    running += 1; task.spawn(function() pcall(sheetAction, a); running -= 1 end)
+  end
+end)
 local handle = function(player, action, arg)
   local s = sessions[player.UserId]; if not s then return { err = "Loading save data" } end
   local sv = s.sv
