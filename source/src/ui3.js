@@ -267,12 +267,14 @@ function ptDraw() {
   for (const A of P_ARMS) { const p = PASSIVE_BY_ID[A.id + "_t10"] || PASSIVE_BY_ID[A.id + "_s6"], ang = Math.atan2(p.y, p.x), fs = Math.round(26 / PT.sc); g.fillStyle = A.color; g.globalAlpha = 0.9; g.font = `bold ${fs}px sans-serif`; g.fillText(A.name + "의 길", Math.cos(ang) * 1700 + (Math.abs(Math.cos(ang)) < 0.5 ? fs * 2.4 : 0), Math.sin(ang) * 1700 + (Math.abs(Math.sin(ang)) < 0.5 ? -fs * 1.1 : 0)); g.globalAlpha = 1; }
   for (const p of PASSIVES) {
     const on = passiveHas(save, p.id), can = !on && canAddPassive(save, p.id), r = (p.kind === "key" ? 34 : p.kind === "notable" ? 25 : p.kind === "filler" ? 10 : 17) * 2.6,   /* 5.0 트리는 노드 간격이 넓어 크게 */ c = col(p);
-    g.beginPath(); if (p.kind === "key") { g.moveTo(p.x, p.y - r); g.lineTo(p.x + r, p.y); g.lineTo(p.x, p.y + r); g.lineTo(p.x - r, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);
+    g.beginPath(); if (p.kind !== "notable") { const rr = p.kind === "key" ? r : r * 0.95; g.moveTo(p.x, p.y - rr); g.lineTo(p.x + rr, p.y); g.lineTo(p.x, p.y + rr); g.lineTo(p.x - rr, p.y); g.closePath(); } else g.arc(p.x, p.y, r, 0, 7);   // 로블록스판: 작은 노드 = 보석 마름모
     g.fillStyle = on ? c : "#14102a"; g.fill(); g.lineWidth = (p.kind === "small" ? 2 : 3) / PT.sc * 0.9; g.strokeStyle = on ? "#fff" : can ? `rgba(255,255,255,${0.55 + 0.4 * Math.sin(t * 5)})` : c + "88"; g.stroke();
     if (p.kind === "notable") { g.beginPath(); g.arc(p.x, p.y, r - 4, 0, 7); g.strokeStyle = on ? "#0008" : c + "66"; g.stroke(); }
     if (p.icon && (p.kind === "notable" || p.kind === "key")) { const im = artGet(p.icon); if (im) { const z = r * 1.5; g.save(); g.globalAlpha = on ? 1 : 0.55; g.drawImage(im, p.x - z / 2, p.y - z / 2, z, z); g.restore(); } }
     if (PT.sel === p) { g.strokeStyle = "#fff"; g.lineWidth = 3; g.setLineDash([5, 4]); g.beginPath(); g.arc(p.x, p.y, r + 9, 0, 7); g.stroke(); g.setLineDash([]); }
     if (PT.hover === p) { g.strokeStyle = "#ffd24a"; g.lineWidth = 3; g.beginPath(); g.arc(p.x, p.y, r + 6, 0, 7); g.stroke(); }
+    if (PT.find && ((p.name || "") + (p.text || "")).toLowerCase().includes(PT.find)) { g.strokeStyle = `rgba(255,230,120,${0.6 + 0.4 * Math.sin(t * 6)})`; g.lineWidth = 6 / PT.sc; g.beginPath(); g.arc(p.x, p.y, r + 14 / PT.sc, 0, 7); g.stroke(); }
+    if ((p.kind === "notable" || p.kind === "key") && PT.sc > 0.07) { const fs = Math.round(12 / PT.sc); g.font = `bold ${fs}px sans-serif`; g.textAlign = "center"; g.lineWidth = fs / 4; g.strokeStyle = "#000"; g.strokeText(p.name, p.x, p.y + r + fs * 1.1); g.fillStyle = on ? "#fff" : c; g.fillText(p.name, p.x, p.y + r + fs * 1.1); }
   }
   g.restore();
   PT.raf = requestAnimationFrame(ptDraw);
@@ -302,6 +304,8 @@ function ptInfo() {
   const el = $("#ptinfo"); if (!el) return; const p = PT.hover || PT.sel;
   { const a = $("#ptact"), q = PT.sel; if (a) a.innerHTML = q ? `<span>선택: <b style="color:${q.arm === "bridge" ? "#ccc" : P_ARMS.find((x) => x.id === q.arm).color}">${q.name}</b> <span class="dim">(${q.cost}점)</span></span>${(() => { const P = passivePath(save, q.id), free = passivePoints(save) - passiveSpent(save); if (!P) return `<button class="btn pri" data-a="ptadd" disabled>찍기</button>`; return `<button class="btn pri" data-a="ptadd" ${P.cost <= free ? "" : "disabled"}>${P.ids.length > 1 ? `경로 찍기 (${P.ids.length}개 · ${P.cost}점)` : "찍기"}</button>`; })()}<button class="btn" data-a="ptrm" ${canRemovePassive(save, q.id) ? "" : "disabled"}>회수</button>` : `<span class="dim">노드에 마우스를 올리면 경로가 미리보기로 표시되고, 클릭하면 경로째 찍힙니다 (우클릭: 회수)</span>`; }
   const sp = passivePoints(save) - passiveSpent(save); $("#ptpts").textContent = `${sp} / ${passivePoints(save)}`;
+  { const sm = $("#pa5sum"); if (sm) { const tot = {}; for (const id in save.pass || {}) { const q = PASSIVE_BY_ID[id]; if (!q) continue; for (const k in q.per) tot[k] = (tot[k] || 0) + (k.endsWith("More") ? q.per[k] - 1 : q.per[k]); }
+    const ks = Object.keys(tot); sm.innerHTML = ks.length ? ks.map((k) => { const L = PASS_LABEL5[k] || (MOD_LABEL[k] && MOD_LABEL[k][0]) || k, v = tot[k], pc = Math.abs(v) < 5; return `<div><span>${L}</span><b>${v >= 0 ? "+" : ""}${pc ? (v * 100).toFixed(Math.abs(v) < 0.1 ? 1 : 0) + "%" : fmtN(v)}</b></div>`; }).join("") : `<div class="dim">아직 찍은 노드가 없습니다</div>`; } }
   if (!p) { el.innerHTML = `<span class="dim">노드를 클릭하거나 마우스를 올려 효과를 확인하세요 · 드래그: 이동 · 휠: 확대 · <b>클릭: 경로째 찍기</b> · <b>우클릭: 회수</b> (터치: 탭해서 미리보기, 한 번 더 탭하면 찍기)</span>`; return; }
   const on = passiveHas(save, p.id), kind = { small: "", notable: "★ 주요 ", key: "◆ 핵심 ", bridge: "" }[p.kind];
   el.innerHTML = `<b style="color:${p.arm === "bridge" ? "#ccc" : P_ARMS.find((a) => a.id === p.arm).color}">${kind}${p.name}</b> <span class="dim">(${p.cost}점)</span> — ${p.text} ${on ? `<span style="color:#8dff9a">활성</span>` : canAddPassive(save, p.id) ? `<span style="color:#ffe08a">찍을 수 있음</span>` : `<span class="dim">${(() => { const P = passivePath(save, p.id), free = passivePoints(save) - passiveSpent(save); return !P ? "찍을 수 없음" : P.cost > free ? `경로 ${P.cost}점 필요 (포인트 부족)` : `경로 ${P.ids.length}개 · ${P.cost}점으로 찍을 수 있음 — 클릭하면 경로째 찍힘`; })()}</span>`}`;
@@ -331,8 +335,9 @@ function openPassPreset(i) {
   } });
 }
 const charmBar = () => `<div class="charmbar" data-a="charms" title="참 열기">${[0, 1, 2, 3].map((i) => { const it = (save.charms || [])[i]; return `<div class="cmslot ${it ? "on" : ""}" style="${it ? "--c:" + charmColor(it) : ""}" title="${it ? charmLines(it).join(" / ") : "빈 칸"}">${it ? "◈" : "·"}</div>`; }).join("")}<span class="dim">참</span></div>`;
-function openPassives() {
-  Modal.open(`<h2>훈련소 · 패시브</h2><div class="ppts">남은 포인트 <b id="ptpts"></b> <button class="btn xs pri" data-a="pauto">자동 배분</button> <button class="btn xs" data-a="preset">전부 초기화</button> <button class="btn xs" data-a="clsopen">전직 ${(save.cls | 0) ? save.cls + "차" : ""}</button> &nbsp;프리셋 ${[0, 1, 2].map((i) => `<button class="btn xs pbtn ${(save.passPresets || [])[i] ? "has" : ""}" data-a="ppick" data-n="${i}" title="${(save.passPresets || [])[i] ? "눌러서 구성을 확인하고 적용" : "비어 있음 · 눌러서 현재 구성을 저장"}">${i + 1}</button>`).join("")}</div><canvas id="ptree" width="860" height="296"></canvas><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
+function openPassives() {   // 5.0: 로블록스판 M.pass 배치 (위: 포인트 · 세트 · 검색 · 자동 배분 · 초기화 / 왼쪽 트리 / 오른쪽 효과 합계 · 고른 노드)
+  Modal.open(`<h2>패시브</h2><div class="pa5h"><b class="pa5p">남은 포인트 <span id="ptpts"></span></b>${setTabs5("pass", openPassives)}<input class="pa5s" id="pa5find" placeholder="검색 (예: 치명)" value="${(PT.find || "").replace(/"/g, "")}"><span style="margin-left:auto;display:flex;gap:6px"><button class="btn green" data-a="pauto">자동 배분</button><button class="btn pri" data-a="preset">초기화</button></span></div>
+    <div class="pa5b"><div class="box5 pa5t"><canvas id="ptree" width="622" height="344"></canvas></div><div class="box5 pa5r"><div class="bh5">찍은 효과 합계</div><div class="pa5sum" id="pa5sum"></div><div class="pa5i"><div class="ptip" id="ptinfo"></div><div class="ptact" id="ptact"></div></div></div></div>`, { cls: "wide", onClose: () => { cancelAnimationFrame(PT.raf); PT.cv = null; }, on: {
     ppick: (el) => openPassPreset(+el.dataset.n),
     clsopen: () => openClass(() => openPassives()),
     pauto: () => { const n = autoPassives(save); if (n) { snd("equip"); toast(`패시브 ${n}개를 자동으로 찍었습니다`, "ok"); } else snd("error"); saveGame(); refreshTop(); ptInfo(); if (typeof tutEvent === "function") tutEvent("power"); },
@@ -354,8 +359,10 @@ function openPassives() {
   cv.addEventListener("click", act);
   cv.addEventListener("contextmenu", (ev) => { ev.preventDefault(); const [x, y] = pos(ev), p = ptPick(x, y); if (!p || !passiveHas(save, p.id)) return; if (removePassive(save, p.id)) { snd("click"); _pvKey = ""; saveGame(); refreshTop(); ptInfo(); } else { toast("이 노드를 빼면 뒤쪽 노드가 끊깁니다 — 끝쪽 노드부터 회수하세요", "bad"); snd("error"); } });
   cv.addEventListener("mouseleave", () => { PT.hover = null; ptInfo(); });
+  const fi = $("#pa5find"); if (fi) fi.addEventListener("input", () => { PT.find = fi.value.trim().toLowerCase(); });
   ptInfo(); ptDraw();
 }
+const PASS_LABEL5 = { atkPct: "공격력", physDmg: "물리 피해", critChance: "치명타 확률", critDmg: "치명타 피해", ignoreDef: "방어 무시", shredDef: "대상 방어력 감소", bleedChance: "출혈 확률", dotDmg: "지속 피해", boss: "보스 추가 피해", elite: "정예 추가 피해", magPct: "주문력", magDmg: "마법 피해", elemDmg: "원소 피해", penElem: "원소 저항 관통", spellCrit: "주문 치명타", manaPct: "최대 마나", manaRegen: "마나 재생", cdr: "쿨타임 감소", manaShield: "마나 보호막", manaCostRed: "마나 소모 감소", goldFind: "골드 획득", mf: "아이템 발견", expFind: "경험치", density: "몬스터 밀도", normal: "일반 몹 추가 피해", hpPct: "체력", defPct: "방어력", dmgTaken: "받는 피해", dodge: "회피", lifesteal: "흡혈", regen: "초당 체력 회복", allDmg: "주는 피해", aoeDmg: "광역 피해", atkMore: "공격력 (곱)", magMore: "주문력 (곱)", hpMore: "체력 (곱)", revive: "부활" };
 
 // ---------- 균열 탑 ----------
 function mfText(tier) { const v = towerMf(tier); return `MF +${Math.round(v * 100)}%`; }
