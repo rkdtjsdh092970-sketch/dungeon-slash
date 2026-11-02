@@ -26,6 +26,10 @@ ART = [
     ('b_trainer', 'town/trainer.png', (192, 192)),
     ('b_notice', 'town/notice.png', (192, 192)),
     # 아이콘 (장비 슬롯 · 재화 · 배속 패스)
+    # 스킬 소환 카드: 뒷면 · 등급별 타로 테두리(0 일반 ~ 4 사탄) · 공개 빛 폭발(2 전설 ~ 4 사탄)
+    ('card_back', 'cards/back.png', (256, 384)),
+    *[(f'card_f{r}', f'cards/frame{r}.png', (256, 384)) for r in range(5)],
+    *[(f'card_burst{r}', f'cards/burst{r}.png', (384, 384)) for r in (2, 3, 4)],
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'
