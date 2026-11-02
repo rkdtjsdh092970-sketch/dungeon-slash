@@ -13,6 +13,7 @@ local floor, max, min, sqrt, pow = math.floor, math.max, math.min, math.sqrt, ma
 
 local damagePlayer, raidTick, killEnemy, castSkillRaw, applyDamage
 local SKILL_BY = {}; for _, d in ipairs(SK.SKILLS) do SKILL_BY[d.id] = d end
+local SKILL_BAL = require(script.Parent.Data.SkillBalance)   -- 역할별 기준선 보정 (약한 스킬만 올림)
 local PLAYER_NEAR = 1
 
 -- ---------- 난수 ----------
@@ -70,7 +71,7 @@ function M.skillOf(inst)
   local d = SKILL_BY[inst.id]; local R = SK.SKILL_RARITY[(inst.rarity or 0) + 1]; local lvl = inst.lvl or 1
   local rn = inst.rune and SK.RUNES[inst.rune] or nil
   local o = table.clone(d)
-  o.def = d; o.inst = inst; o.mult = d.mult * R.mult * (1 + 0.05 * (lvl - 1)); o.cd = d.cd * R.cdMul; o.side = d.side or 1
+  o.def = d; o.inst = inst; o.mult = d.mult * R.mult * (1 + 0.05 * (lvl - 1)) * (SKILL_BAL[d.id] or 1); o.cd = d.cd * R.cdMul; o.side = d.side or 1
   o.bonus = {}; for k, v in pairs(d.bonus or {}) do o.bonus[k] = v * R.bonusMul end
   o.rarity = inst.rarity or 0; o.lvl = lvl; o.rune = rn; o.mana = (d.mana or 0) * (1 + 0.02 * (lvl - 1))
   o.power = d.power and d.power * (1 + (R.mult - 1) * 0.6) or 0
