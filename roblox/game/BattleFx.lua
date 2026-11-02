@@ -88,6 +88,12 @@ function M.beam(S, x1, y, x2, h, col)   -- 한 줄을 꿰뚫는 광선
   if o then tw(o, 0.12, { Size = sz(x2 - x1, h) }, nil, false).Completed:Connect(function() tw(o, 0.25, { Size = sz(x2 - x1, h * 0.1), ImageTransparency = 1 }) end) end
   if c then tw(c, 0.12, { Size = sz(x2 - x1, h * 0.4) }, nil, false).Completed:Connect(function() tw(c, 0.2, { ImageTransparency = 1 }) end) end
 end
+-- 원소별 컬러 마법진 그림 (색조로 고름). 없으면 nil → 흰 그림에 색을 입히던 방식
+local function colorCircle(col)
+  local h, s = col:ToHSV()
+  local k = s < 0.25 and "arcane" or (h < 0.11 or h > 0.93) and "fire" or h < 0.2 and "light" or h < 0.6 and "cold" or h < 0.68 and "arcane" or "void"
+  return Sprites.art("fx_mc_" .. k) and ("fx_mc_" .. k) or nil
+end
 function M.circle(S, x, y, r, col, t)   -- 바닥 마법진: 펼쳐지며 돈다
   local o = img(S, "fx_circle", { Position = at(x, y), Size = sz(r * 0.3, r * 0.3 * 0.38), ImageColor3 = col, ImageTransparency = 0.1, ZIndex = 4 })
   if not o then return end
@@ -97,10 +103,11 @@ end
 -- 세로로 선 마법진 (영웅 뒤 · 지팡이 앞): 겹친 고리가 서로 반대로 돌며 펼쳐졌다 사라진다. 그림은 art/fx/mc_*.png (Codex)
 function M.magicCircle(S, x, y, r, col, t, z)
   z = z or 4; t = t or 0.6
-  local layers = { { "fx_mc_main", 1, 40 }, { "fx_mc_runes", 1.18, -70 }, { "fx_mc_inner", 0.45, 120 } }
+  local cc = colorCircle(col)
+  local layers = cc and { { cc, 1, 40, true }, { "fx_mc_runes", 1.12, -70 } } or { { "fx_mc_main", 1, 40 }, { "fx_mc_runes", 1.18, -70 }, { "fx_mc_inner", 0.45, 120 } }   -- 컬러 그림이 있으면 그것 + 바깥 룬 고리만 반대로 돈다
   local any = false
   for i, L in ipairs(layers) do
-    local o = img(S, L[1], { Position = at(x, y), Size = sz(r * 0.4 * L[2]), ImageColor3 = i == 3 and WHITE:Lerp(col, 0.4) or col, ImageTransparency = z >= 10 and 0.05 or 0.35, Rotation = math.random(0, 360), ZIndex = z })
+    local o = img(S, L[1], { Position = at(x, y), Size = sz(r * 0.4 * L[2]), ImageColor3 = L[4] and WHITE or ((i == 3 or cc) and WHITE:Lerp(col, 0.4) or col), ImageTransparency = (L[4] and (z >= 10 and 0 or 0.15)) or (cc and 0.55) or (z >= 10 and 0.05 or 0.35), Rotation = math.random(0, 360), ZIndex = z })
     if o then
       any = true
       tw(o, 0.2, { Size = sz(r * 2 * L[2]) }, Enum.EasingStyle.Back, false)
@@ -114,7 +121,8 @@ function M.magicCircle(S, x, y, r, col, t, z)
 end
 -- 바닥에 새겨지는 문장 (납작하게 눕힘, 돌지 않고 빛이 차올랐다 꺼진다)
 function M.sigil(S, x, y, r, col, t)
-  local o = img(S, "fx_mc_sigil", { Position = at(x, y), Size = sz(r * 2, r * 2 * 0.36), ImageColor3 = col, ImageTransparency = 1, ZIndex = 4 })
+  local cc = colorCircle(col)
+  local o = img(S, cc or "fx_mc_sigil", { Position = at(x, y), Size = sz(r * 2, r * 2 * 0.36), ImageColor3 = cc and WHITE or col, ImageTransparency = 1, ZIndex = 4 })
   if not o then M.circle(S, x, y, r, col, t); return end
   tw(o, 0.15, { ImageTransparency = 0.05 }, nil, false)
   task.delay(t or 0.5, function() if o.Parent then tw(o, 0.3, { ImageTransparency = 1, Size = sz(r * 2.3, r * 2.3 * 0.36) }) end end)
@@ -155,8 +163,9 @@ end
 -- 적 머리 위 하늘에 열리는 큰 마법진 (살짝 눕힘): 여기서 마법이 쏟아진다. 돌아오는 값 = 마법진 중심
 function M.skyCircle(S, x, y, r, col, t)
   t = t or 0.9
-  for i, L in ipairs({ { "fx_mc_main", 1, 30 }, { "fx_mc_runes", 1.15, -50 } }) do
-    local o = img(S, L[1], { Position = at(x, y), Size = sz(r * 0.3 * L[2], r * 0.3 * L[2] * 0.42), ImageColor3 = col, ImageTransparency = 0.05, ZIndex = 12 })
+  local cc = colorCircle(col)
+  for i, L in ipairs({ { cc or "fx_mc_main", 1, 30 }, { "fx_mc_runes", 1.15, -50 } }) do
+    local o = img(S, L[1], { Position = at(x, y), Size = sz(r * 0.3 * L[2], r * 0.3 * L[2] * 0.42), ImageColor3 = (cc and i == 1) and WHITE or (cc and WHITE:Lerp(col, 0.4) or col), ImageTransparency = (cc and i == 2) and 0.5 or 0.05, ZIndex = 12 })
     if o then
       tw(o, 0.22, { Size = sz(r * 2 * L[2], r * 2 * L[2] * 0.42) }, Enum.EasingStyle.Back, false)
       task.delay(t, function() if o.Parent then tw(o, 0.3, { ImageTransparency = 1 }) end end)
