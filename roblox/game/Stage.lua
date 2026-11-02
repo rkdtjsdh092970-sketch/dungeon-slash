@@ -4,10 +4,10 @@ local TweenService = game:GetService("TweenService")
 local Sprites = require(script.Parent.Sprites)
 local Theme = require(script.Parent.Theme)
 local Ambient = require(script.Parent.Ambient)   -- 불씨 · 안개 · 일렁이는 빛 · 배경 흔들림
+local Fx = require(script.Parent.BattleFx)   -- 스킬 · 타격 이펙트
 local M = {}
 
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
-local function hex(h) local ok, c = pcall(Color3.fromHex, h or "#ffffff"); return ok and c or Color3.new(1, 1, 1) end
 local function fmt(n) n = math.floor(n); if n >= 1e9 then return string.format("%.1fB", n / 1e9) elseif n >= 1e6 then return string.format("%.1fM", n / 1e6) elseif n >= 1e4 then return string.format("%.1fK", n / 1e3) end return tostring(n) end
 
 -- 지역별 팔레트: { 하늘 위, 하늘 아래, 실루엣, 바닥, 달/창문 }
@@ -138,23 +138,61 @@ function M.create(parent, W, H, replayAct)
   S.skillCells = {}
   S.plAnim = { name = "idle", t = 0 }
   S.idleConn = RunService.RenderStepped:Connect(function(dt) if S.conn or not S.alive then return end
-    S.plAnim.t += dt; if S.plArt then M.artPose(S) end
+    S.plAnim.t += dt; S.idleT = (S.idleT or 0) + dt; if S.plArt then M.artPose(S) end
     local row, frame, done = Sprites.anim("warrior", "idle", S.plAnim.t); if S.plInfo then Sprites.setFrame(S.pl, S.plInfo, row, frame) end end)
   return setmetatable(S, { __index = M })
 end
 
 -- 일러스트 영웅의 코드 애니메이션: 숨쉬기 / 공격 돌진 / 피격 붉은 번쩍임
-function M.artPose(S)   -- 묵직한 모션: 숨쉬기 없음 · 짧게 뒤로 당겼다가 강하게 내지르기 · 피격 시 흔들리며 뒤로 밀림
-  local a = S.plAnim; local dx, dy, rot = 0, 0, 0; local u = S.u
-  if a.name == "attack" then
-    local t = a.t
-    if t < 0.08 then local k = t / 0.08; dx = -6 * u * k; rot = -3 * k              -- 힘 모으기
-    elseif t < 0.16 then local k = (t - 0.08) / 0.08; dx = -6 * u + 30 * u * k; rot = -3 + 9 * k   -- 내지르기
-    elseif t < 0.40 then local k = (t - 0.16) / 0.24; dx = 24 * u * (1 - k) ^ 2; rot = 6 * (1 - k) -- 천천히 복귀
+-- 영웅 동작을 정한다 (BattleFx 가 스킬마다 부른다): lunge = 대상 쪽으로 힘껏 돌진, slam = 뛰어올라 내려찍기, cast = 지팡이를 치켜드는 시전, throw = 짧게 던지기
+function M:heroPose(name, arg)
+  local tx = type(arg) == "number" and arg or nil
+  local reach = tx and math.clamp((tx - self.plX) * 0.42, 40 * self.u, 230 * self.u) or 60 * self.u
+  self.plAnim = { name = name, t = 0, reach = reach, big = arg == true }
+  if (name == "lunge" or name == "slam") and self.plArt then   -- 잔상: 돌진 길에 흐릿한 그림자가 남는다
+    for i = 1, 3 do
+      task.delay(0.06 + i * 0.025, function()
+        if not self.pl.Parent then return end
+        local g = self.pl:Clone(); g.ZIndex = self.pl.ZIndex - 1; g.ImageTransparency = 0.45 + i * 0.1; g.ImageColor3 = Color3.fromRGB(255, 200, 160); g.Parent = self.layer
+        for _, ch in ipairs(g:GetChildren()) do ch:Destroy() end
+        local t = TweenService:Create(g, TweenInfo.new(0.22), { ImageTransparency = 1 }); t:Play(); t.Completed:Connect(function() g:Destroy() end)
+      end)
+    end
+  end
+end
+-- 일러스트 영웅의 코드 애니메이션 (묵직하게: 짧게 모았다가 강하게 내지르고 천천히 돌아온다)
+function M.artPose(S)
+  local a = S.plAnim; local dx, dy, rot = 0, 0, 0; local u = S.u; local t = a.t
+  local R = a.reach or 60 * u
+  if a.name == "attack" or a.name == "throw" then
+    if t < 0.08 then local k = t / 0.08; dx = -8 * u * k; rot = -4 * k
+    elseif t < 0.15 then local k = (t - 0.08) / 0.07; dx = -8 * u + 34 * u * k; rot = -4 + 12 * k
+    elseif t < 0.40 then local k = (t - 0.15) / 0.25; dx = 26 * u * (1 - k) ^ 2; rot = 8 * (1 - k)
+    else S.plAnim = { name = "idle", t = 0 } end
+  elseif a.name == "lunge" then   -- 움츠렸다 → 대상 쪽으로 번개처럼 돌진 → 베고 → 무겁게 돌아옴
+    if t < 0.07 then local k = t / 0.07; dx = -14 * u * k; dy = 3 * u * k; rot = -8 * k
+    elseif t < 0.13 then local k = (t - 0.07) / 0.06; dx = -14 * u + (R + 14 * u) * k; dy = 3 * u * (1 - k); rot = -8 + 22 * k
+    elseif t < 0.22 then dx = R; rot = 14 - 6 * (t - 0.13) / 0.09
+    elseif t < 0.50 then local k = (t - 0.22) / 0.28; dx = R * (1 - k) ^ 2; rot = 8 * (1 - k)
+    else S.plAnim = { name = "idle", t = 0 } end
+  elseif a.name == "slam" then   -- 뛰어올라 대상 앞으로 → 내려찍기 → 착지 반동
+    if t < 0.08 then local k = t / 0.08; dy = 6 * u * k; rot = -6 * k   -- 웅크림
+    elseif t < 0.17 then local k = (t - 0.08) / 0.09; dx = R * k; dy = 6 * u - (70 * u) * math.sin(k * math.pi * 0.5); rot = -6 - 14 * k
+    elseif t < 0.22 then local k = (t - 0.17) / 0.05; dx = R; dy = -64 * u + 70 * u * k; rot = -20 + 45 * k
+    elseif t < 0.32 then dx = R; dy = 6 * u * (1 - (t - 0.22) / 0.1); rot = 25 - 10 * (t - 0.22) / 0.1
+    elseif t < 0.62 then local k = (t - 0.32) / 0.3; dx = R * (1 - k) ^ 2; rot = 15 * (1 - k)
+    else S.plAnim = { name = "idle", t = 0 } end
+  elseif a.name == "cast" then   -- 지팡이를 치켜들며 몸을 뒤로 젖혔다가, 주문을 내뿜으며 앞으로
+    local hold = a.big and 0.22 or 0.12
+    if t < hold then local k = t / hold; dx = -6 * u * k; dy = -(a.big and 10 or 5) * u * k; rot = -7 * k
+    elseif t < hold + 0.08 then local k = (t - hold) / 0.08; dx = -6 * u + 18 * u * k; dy = -(a.big and 10 or 5) * u * (1 - k); rot = -7 + 13 * k
+    elseif t < hold + 0.4 then local k = (t - hold - 0.08) / 0.32; dx = 12 * u * (1 - k) ^ 2; rot = 6 * (1 - k)
     else S.plAnim = { name = "idle", t = 0 } end
   elseif a.name == "hurt" then
-    local k = math.clamp(a.t / 0.22, 0, 1); dx = -10 * u * (1 - k); dy = math.sin(a.t * 70) * 2 * u * (1 - k)
-    if a.t > 0.22 then S.plAnim = { name = "idle", t = 0 } end
+    local k = math.clamp(t / 0.22, 0, 1); dx = -12 * u * (1 - k); dy = math.sin(t * 70) * 2 * u * (1 - k); rot = -4 * (1 - k)
+    if t > 0.22 then S.plAnim = { name = "idle", t = 0 } end
+  else   -- 서 있을 때: 아주 느리게 숨쉬듯 (몸이 살짝 오르내림)
+    dy = math.sin((S.idleT or 0) * 2.2) * 1.2 * u
   end
   S.pl.Position = UDim2.new(0, S.plX + dx, 0, S.plY + dy); S.pl.Rotation = rot
   S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 1 - 0.55 * M.OPT.flash, 1 - 0.55 * M.OPT.flash) or Color3.new(1, 1, 1)
@@ -199,12 +237,6 @@ function M:floatText(text, x, y, color, size)
   local st = mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 10, 30) }, t)
   local tw = TweenService:Create(t, TweenInfo.new(0.7), { Position = UDim2.new(0, x, 0, y - 40 * self.u), TextTransparency = 1 }); tw:Play(); TweenService:Create(st, TweenInfo.new(0.7), { Transparency = 1 }):Play(); tw.Completed:Connect(function() t:Destroy() end)
 end
-function M:flash(color, x1, y1, x2, y2)
-  local len = math.max(8, math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)); local ang = math.deg(math.atan2(y2 - y1, x2 - x1))
-  local f = mk("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, x1, 0, y1), Size = UDim2.new(0, len, 0, 5), Rotation = ang, BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 12 }, self.layer)
-  mk("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0) }) }, f)
-  local tw = TweenService:Create(f, TweenInfo.new(0.22), { BackgroundTransparency = 1, Size = UDim2.new(0, len, 0, 1) }); tw:Play(); tw.Completed:Connect(function() f:Destroy() end)
-end
 
 local function unitFor(S, e, lanes)
   local dep = e.bs and 1 or S:depth(e.l, lanes)
@@ -240,6 +272,7 @@ function M:applySnap(s, lanes)
   if s.c then for _, c in ipairs(s.c) do local cell = self.skillCells[c[1]]; if cell then cell.left = cell.cd end end end
   local seen = {}
   local py = self.plY
+  local hits = {}
   for _, e in ipairs(s.e) do
     seen[e.id] = true
     local u = unitFor(self, e, lanes)
@@ -248,22 +281,18 @@ function M:applySnap(s, lanes)
     if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
     if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
     u.tx, u.ty = x, y; u.hp = e.hp
-    if e.dead and not u.dying then u.dying = 0; if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
-    if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.12 end
+    if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
+    if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.16; hits[#hits + 1] = u; if #hits <= 6 then Fx.hit(self, u) end end
+    if u.wind and not e.wind and not e.dead then u.atk = 0; Fx.enemyHit(self, u, e.ranged) end   -- 모았던 공격을 내지른다
     u.wind = e.wind
   end
-  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end end
+  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end end
   if s.ph and s.ph > 0 then self.shake = math.max(self.shake or 0, 0.18) end
   if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); self.plAnim = { name = "hurt", t = 0 } end
-  if s.c then
+  if s.c then   -- 스킬 연출 (계열 · 원소 · 종류별, BattleFx)
     local tgt; for _, u in pairs(self.units) do if not u.dying and u.tx and (not tgt or u.tx < tgt.tx) then tgt = u end end
-    for _, c in ipairs(s.c) do
-      local u = self.u; local sx, sy = self.plX + 30 * u, py - 50 * u   -- 영웅 칼끝에서 나간다
-      local col = hex(c[2]); local x2, y2 = (tgt and tgt.tx or self.W - 80 * u), (tgt and tgt.ty - 30 * u or sy)
-      self:flash(col, sx, sy, x2, y2)
-      if c[4] ~= "single" then self:flash(col, sx, sy, x2 + 20 * u, y2 + 24 * u); self:flash(col, sx, sy, x2 + 20 * u, y2 - 24 * u) end
-    end
-    self.plAnim = { name = "attack", t = 0 }
+    table.sort(hits, function(a, b) return (a.tx or 0) < (b.tx or 0) end)
+    for i, c in ipairs(s.c) do if i <= 3 then Fx.cast(self, c, hits, tgt) end end
   end
 end
 
@@ -315,7 +344,8 @@ function M:play(replay, onDone, maxSec, hud)
   local lanes = replay.lanes or 2
   self.conn = RunService.RenderStepped:Connect(function(dt)
     if not self.alive then return end
-    self.t += dt * self.spd * self.userSpd
+    local slow = 1; if self.hitstop and self.hitstop > 0 then self.hitstop -= dt; slow = 0.12 end   -- 히트스톱: 큰 타격 순간 잠깐 멈칫
+    self.t += dt * self.spd * self.userSpd * slow; self.idleT = (self.idleT or 0) + dt
     local sn = replay.snaps
     while self.idx < #sn and sn[self.idx + 1].t <= self.t do self.idx += 1; self:applySnap(sn[self.idx], lanes) end
     self.timeLbl.Text = string.format("%.0f / %.0f초", math.min(self.t, total), total)
@@ -332,15 +362,25 @@ function M:play(replay, onDone, maxSec, hud)
       u.lab.Position = UDim2.new(0, u.x, 0, u.y)
       u.shadow.Position = UDim2.new(0, u.x, 0, u.y); u.shadow.BackgroundTransparency = u.dying and math.min(1, 0.55 + u.dying) or 0.55
       u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); u.fill.Size = UDim2.new(math.clamp(u.hp or 1, 0, 1), 0, 1, 0)
-      if u.art then   -- 일러스트 (묵직하게): 이동은 미끄러지듯 · 공격 직전 움츠렸다 돌진 · 피격 시 뒤로 밀리며 떨림 · 사망 시 어두워지며 쓰러짐
+      if u.art then   -- 일러스트: 걸을 때 발걸음마다 들썩 · 서 있을 땐 숨쉬기 · 공격 직전 움츠렸다 확 덤벼듦 · 맞으면 크게 밀려남 · 쓰러질 땐 날아가며 넘어짐
         local ox, oy, rot = 0, 0, 0
+        local uu = self.u
         if u.dying then
           local k = math.clamp(u.dying / 0.6, 0, 1)
-          rot = 75 * k * k; oy = 6 * self.u * k
+          ox = (u.boss and 10 or 34) * uu * (1 - (1 - k) ^ 2); oy = -18 * uu * math.sin(k * math.pi) + 8 * uu * k
+          rot = (u.boss and 25 or 85) * k * k
           local c = 1 - 0.75 * k; u.lab.ImageColor3 = Color3.new(c, c * 0.9, c * 0.9); u.lab.ImageTransparency = math.clamp((u.dying - 0.6) / 0.5, 0, 1)
-        elseif u.wind then local k = (u.t * 2.5) % 1; ox = (k < 0.7 and 6 * self.u * (k / 0.7) or -22 * self.u * ((k - 0.7) / 0.3))
+        else
+          local walking = u.tx and math.abs(u.tx - u.x) > 3
+          if walking then local ph = u.t * 9 + (u.lab.LayoutOrder or 0); oy = -math.abs(math.sin(ph)) * 7 * uu; rot = math.sin(ph) * 4
+          else oy = math.sin(u.t * 2.4) * 1.5 * uu end
+          if u.wind then local k = math.min(1, u.t % 0.6 / 0.6); ox = 10 * uu * k; rot = 6 * k; oy -= 3 * uu * k end   -- 힘을 모은다 (뒤로 젖힘)
+          if u.atk then   -- 덤벼든다
+            u.atk += dt; local k = u.atk
+            if k < 0.08 then ox = -38 * uu * (k / 0.08); rot = -10 elseif k < 0.3 then ox = -38 * uu * (1 - (k - 0.08) / 0.22); rot = -10 * (1 - (k - 0.08) / 0.22) else u.atk = nil end
+          end
         end
-        if u.hit and u.hit > 0 and not u.dying then ox += 8 * self.u * u.hit / 0.12 + math.sin(u.t * 80) * 2 * self.u end
+        if u.hit and u.hit > 0 and not u.dying then ox += (u.boss and 6 or 16) * uu * u.hit / 0.16 + math.sin(u.t * 80) * 2.5 * uu; rot += (u.boss and 2 or 7) * u.hit / 0.16 end
         u.lab.Rotation = rot; u.lab.Position = UDim2.new(0, u.x + ox, 0, u.y + oy)
       elseif not u.boss and u.info then
         local anim = "idle"; if u.dying then anim = "death" elseif u.wind then anim = "attack" elseif math.abs((u.tx or u.x) - u.x) > 3 then anim = "walk" end
@@ -349,7 +389,7 @@ function M:play(replay, onDone, maxSec, hud)
       if u.hit and u.hit > 0 then u.hit -= dt; if not u.dying then u.lab.ImageColor3 = Color3.new(1, 1 - 0.5 * M.OPT.flash, 1 - 0.5 * M.OPT.flash) end elseif not u.dying then u.lab.ImageColor3 = Color3.new(1, 1, 1) end
       if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); u.shadow:Destroy(); self.units[id] = nil end end
     end
-    if self.plArt then self.plAnim.t += dt; M.artPose(self)
+    if self.plArt then self.plAnim.t += dt * slow; M.artPose(self)
     elseif self.plInfo then
       local a = self.plAnim; a.t += dt
       local row, frame, done = Sprites.anim("warrior", a.name, a.t); if done then self.plAnim = { name = "idle", t = 0 } end

@@ -33,6 +33,9 @@ ART = [
     *[('m_' + k, f'menu/{k}.png', (128, 128)) for k in ('bag', 'skill', 'passive', 'stats', 'shop', 'quest', 'mail', 'gacha', 'settings', 'map', 'town')],
     # 배경 생동감 (game/Ambient.lua): 불꽃 8프레임 · 빛무리 · 구름 3 · 까마귀 4프레임
     ('fx_fire', 'fx/fire.png', (512, 96)), ('fx_glow', 'fx/glow.png', (64, 64)), ('fx_crow', 'fx/crow.png', (256, 48)),
+    # 전투 이펙트 (gen_fx.py 로 그림: 흰 바탕 + 알파, 게임에서 색을 입힌다)
+    ('fx_slash', 'fx/slash.png', (256, 128)), ('fx_ring', 'fx/ring.png', (128, 128)), ('fx_burst', 'fx/burst.png', (1024, 128)), ('fx_bolt', 'fx/bolt.png', (384, 256)),
+    ('fx_spark', 'fx/spark.png', (32, 32)), ('fx_shard', 'fx/shard.png', (32, 64)), ('fx_circle', 'fx/circle.png', (256, 256)), ('fx_beam', 'fx/beam.png', (256, 32)), ('fx_claw', 'fx/claw.png', (128, 128)),
     *[(f'fx_cloud{i}', f'fx/cloud{i}.png', (512, 160)) for i in (1, 2, 3)],
     # 지도 아이콘 · 패시브 아이콘 · 무기 종류 · 마법사
     *[('mi_' + os.path.splitext(f)[0], 'mapicon/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'mapicon')))],
