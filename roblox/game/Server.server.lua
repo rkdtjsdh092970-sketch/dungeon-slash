@@ -99,7 +99,7 @@ local function betaCommand(p, text)
 end
 -- 설정(언어 · 그래픽 · 소리)으로 저장할 수 있는 값
 local OPT_KEYS = { ui = "number", dmg = "boolean", flash = "number", master = "number", music = "number", sfx = "number", mute = "boolean",
-  speed = "number", auto = "number", ar1 = "number", ar2 = "number", ar3 = "number", ar4 = "number" }   -- 배속 · 자동 반복(0 끔 1 같은 단계 2 다음 단계) · 등급별 자동 정리
+  speed = "number", auto = "number", ar1 = "number", ar2 = "number", ar3 = "number", ar4 = "number", sr1 = "number", sr2 = "number", sr3 = "number", sbest = "boolean" }   -- 배속 · 자동 반복(0 끔 1 같은 단계 2 다음 단계) · 등급별 자동 정리
 -- x4 배속 게임패스 (한 번 사면 영구). ID 는 Monetization.lua PASSES.speed4 와 같게 유지
 local SPEED4_ID = 2063961736
 local MPS = game:GetService("MarketplaceService")
@@ -157,7 +157,7 @@ local handle = function(player, action, arg)
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
   elseif action == "levelup" then local ok, e = Game.levelUp(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
-  elseif action == "equipskill" then local ok, e = Game.equipSkill(sv, tonumber(arg.slot), tonumber(arg.uid)); return { ok = ok, err = e }
+  elseif action == "equipskill" then local ok, e = Game.equipSkill(sv, tonumber(arg.slot), tonumber(arg.uid), type(arg.rule) == "string" and arg.rule or nil); return { ok = ok, err = e }
   elseif action == "sellskill" then local ok, e = Game.sellSkill(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "passives" then return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }
   elseif action == "autopass" then local n = Game.autoPassives(sv); return { added = n, info = Game.passiveInfo(sv), summary = Game.summary(sv) }
@@ -187,6 +187,9 @@ local handle = function(player, action, arg)
   elseif action == "presets" then return { rows = Game.presetView(sv) }
   elseif action == "presetsave" then local ok = Game.presetSave(sv, tonumber(arg)); return { ok = ok, rows = Game.presetView(sv) }
   elseif action == "presetload" then local ok, e = Game.presetLoad(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.presetView(sv), summary = Game.summary(sv) }
+  elseif action == "sockroll" then local ok, m = Game.sockRoll(sv, tonumber(arg)); return { ok = ok, msg = m, rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "sockdel" then local ok, m = Game.sockDel(sv, tonumber(arg.uid), tonumber(arg.idx)); return { ok = ok, msg = m, rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "skillclean" then return { res = Game.skillClean(sv, type(arg) == "table" and arg.rules or {}, type(arg) == "table" and arg.best ~= false), summary = Game.summary(sv) }
   elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }

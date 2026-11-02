@@ -210,6 +210,13 @@ function M.skills()
   if k.honeCost then M.btn(ab, "레벨업\n" .. k.honeCost, UDim2.new(), M.BTN.green, function() res(C.rpc:InvokeServer("levelup", k.uid)) end).LayoutOrder = 1 end
   for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("%d번 칸에", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
   if k.slot == 0 then M.btn(ab, "판매", UDim2.new(), M.BTN.red, function() skSel = nil; res(C.rpc:InvokeServer("sellskill", k.uid)) end).LayoutOrder = 20 end
+  -- 대상 규칙 (장착 중인 공격 스킬): 누를 때마다 다음 규칙으로 (웹 RULES)
+  if k.slot > 0 and d.slot ~= "passive" then
+    local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
+    local RULE_NAME = { front = "앞열", auto = "오토", boss = "보스 우선", ranged = "원거리 우선", elite = "정예 우선", normal = "일반 우선" }
+    local cur = k.rule or "front"; local nxt = RULE[(table.find(RULE, cur) or 1) % #RULE + 1]
+    local rb = M.btn(ab, string.format("대상: %s", RULE_NAME[cur] or cur), UDim2.new(), M.BTN.gold, function() res(C.rpc:InvokeServer("equipskill", { slot = k.slot, uid = k.uid, rule = nxt })) end); rb.LayoutOrder = 30
+  end
 end
 
 -- ───────── 패시브 트리 ─────────
@@ -353,10 +360,16 @@ function M.forge()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, So)
   local sl = txt(So, string.format("소켓 %d개", #(sel.sockets or {})), 15, UDim2.new(), UDim2.new(0, 80, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT); sl.LayoutOrder = 0
   for i, sk in ipairs(sel.sockets or {}) do
-    local t = M.tile(So, 40, { order = i, art = sk and "i_stone" or nil, emoji = sk and nil or "◇", color = sk and Color3.fromRGB(160, 220, 255) or Color3.fromRGB(80, 74, 100), dim = not sk })
+    local t = M.tile(So, 40, { order = i, art = sk and "i_stone" or nil, emoji = sk and nil or "◇", color = sk and Color3.fromRGB(160, 220, 255) or Color3.fromRGB(80, 74, 100), dim = not sk,
+      click = sk and function() C.prompt(string.format("%d번 소켓의 돌(%s)을 삭제할까요? 회수할 수 없습니다. 삭제하려면 '삭제'라고 입력하세요.", i, tostring(sk)), "삭제", function(v) if v == "삭제" or v:lower() == "delete" then res(C.rpc:InvokeServer("sockdel", { uid = sel.uid, idx = i })) end end) end or nil })
     if sk then t.MouseEnter:Connect(function() C.msg.Text = tostring(sk) end) end
   end
   local gb = M.btn(So, "돌 끼우기", UDim2.new(0, 110, 0, 38), M.BTN.blue, function() C.openTab("stones") end); gb.LayoutOrder = 99
+  if (sel.rarity or 0) >= 3 then
+    local tb = M.btn(So, string.format("세공의 인장 (%d)", s.sockTix or 0), UDim2.new(0, 170, 0, 38), M.BTN.purple, function()
+      C.prompt("소켓 수를 1~3개 중 무작위로 다시 정합니다. 끼운 돌은 사라집니다. 진행하려면 '사용'이라고 입력하세요.", "사용", function(v) if v == "사용" or v:lower() == "use" then res(C.rpc:InvokeServer("sockroll", sel.uid)) end end)
+    end); tb.LayoutOrder = 100
+  end
 end
 
 -- ───────── 돌 (확인 · 소켓에 끼우기) ─────────

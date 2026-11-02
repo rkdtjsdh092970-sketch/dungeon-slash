@@ -42,7 +42,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
 end
 function M.inventory(sv)
   local out = {}
@@ -159,6 +159,36 @@ function M.statsView(sv)
   return G
 end
 function M.atlasBuy(sv, id) return Econ.atlasBuy(sv, id) end
+function M.skillClean(sv, rules, keepBest)
+  local busy = {}
+  if sv.passive then busy[sv.passive] = true end
+  for _, l in ipairs(sv.loadout) do if l then busy[l.uid] = true end end
+  for _, p in ipairs(sv.presets or {}) do if p then for _, l in ipairs(p.loadout or {}) do if l then busy[l.uid] = true end end end end
+  local best = {}
+  if keepBest then for _, k in ipairs(sv.skills) do local b = best[k.id]; if not b or (k.rarity or 0) > (b.rarity or 0) or ((k.rarity or 0) == (b.rarity or 0) and (k.lvl or 1) > (b.lvl or 1)) then best[k.id] = k end end end
+  local sold, gold = 0, 0
+  for i = #sv.skills, 1, -1 do
+    local k = sv.skills[i]; local r = (k.rarity or 0)
+    if r <= 2 and tonumber(rules and rules[r + 1]) == 1 and not busy[k.uid] and not k.rune and (k.lvl or 1) <= 1 and best[k.id] ~= k then
+      local ok, v = Econ.sellSkill(sv, k.uid); if ok then sold += 1; gold += v end
+    end
+  end
+  return { sold = sold, gold = gold }
+end
+-- 세공의 인장 (웹 rerollSockets): 소켓이 있는 전설 장비의 소켓 수를 1~3개로 다시 정한다 (끼운 돌은 사라짐) · 소켓 돌 삭제
+local function findAny(sv, uid) for _, s in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[s]; if it and it.uid == uid then return it end end for _, it in ipairs(sv.inv) do if it.uid == uid then return it end end end
+function M.sockRoll(sv, uid, rng)
+  local it = findAny(sv, uid)
+  if not it or not it.sock or (it.rarity or 0) < 3 then return false, "소켓이 있는 전설 장비에만 쓸 수 있습니다" end
+  if (sv.sockTix or 0) < 1 then return false, "세공의 인장이 없습니다" end
+  local nn = (rng or Random.new()):NextInteger(1, 3); local old = #it.sock
+  sv.sockTix -= 1; it.sock = {}; for i = 1, nn do it.sock[i] = false end
+  return true, string.format("소켓 %d개 → %d개", old, nn)
+end
+function M.sockDel(sv, uid, idx)
+  local it = findAny(sv, uid); if not it or not it.sock or not it.sock[idx] then return false, "빈 소켓입니다" end
+  it.sock[idx] = false; return true, "소켓의 돌을 삭제했습니다"
+end
 function M.sell(sv, uid) return Extras.sell(sv, uid) end
 function M.bulk(sv, r, mode) return Extras.bulk(sv, tonumber(r) or 0, mode == "sell" and "sell" or "dismantle") end
 function M.daily(sv) return Extras.dailyView(sv) end
@@ -245,7 +275,7 @@ function M.shop(sv) return Econ.shopStock(sv) end
 function M.buySkill(sv, id) return Econ.buySkill(sv, id) end
 function M.skills(sv) return Econ.skillList(sv) end
 function M.levelUp(sv, uid) return Econ.levelUpSkill(sv, uid) end
-function M.equipSkill(sv, slot, uid) return Econ.equipSkill(sv, slot, uid) end
+function M.equipSkill(sv, slot, uid, rule) return Econ.equipSkill(sv, slot, uid, rule) end
 function M.sellSkill(sv, uid) return Econ.sellSkill(sv, uid) end
 function M.autoPassives(sv) return Econ.autoPassives(sv) end
 function M.resetPassives(sv) Econ.resetPassives(sv); return true end

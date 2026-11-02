@@ -93,7 +93,7 @@ local INSET = math.max(36, GuiService:GetGuiInset().Y)   -- 로블록스 상단 
 local function vp() return workspace.CurrentCamera.ViewportSize end
 local K = 1   -- HUD 배율 (화면 높이 720 기준)
 -- 설정 (서버에 저장): UI 크기 · 피해 숫자 · 피격 반짝임 · 볼륨(전체/배경음악/효과음) · 음소거
-local OPT = { ui = 1, dmg = true, flash = 1, master = 0.8, music = 0.5, sfx = 0.8, mute = false, speed = 1, auto = 0, ar1 = 0, ar2 = 0, ar3 = 0, ar4 = 0 }
+local OPT = { ui = 1, dmg = true, flash = 1, master = 0.8, music = 0.5, sfx = 0.8, mute = false, speed = 1, auto = 0, ar1 = 0, ar2 = 0, ar3 = 0, ar4 = 0, sr1 = 0, sr2 = 0, sr3 = 0, sbest = true }
 local function calcK() K = math.clamp(vp().Y / 720, 0.6, 1.4) * OPT.ui; Stage.TOP = INSET; Stage.HUD = K end
 calcK()
 
@@ -490,7 +490,12 @@ function views.set_auto()
     local k = "ar" .. i
     optRow(string.format("%s 장비", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 }, { "분해", function() pick(k, 2) end, OPT[k] == 2 } })
   end
-  card("자동 정리", { "자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방을 정리합니다. 강화한 장비와 사탄 장비는 건드리지 않습니다." }, {})
+  for i, nm in ipairs({ "일반", "희귀", "전설" }) do
+    local k = "sr" .. i
+    optRow(string.format("%s 스킬", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 } })
+  end
+  optRow("같은 스킬 가장 좋은 1개는 유지", nil, { { "켜기", function() pick("sbest", true) end, OPT.sbest }, { "끄기", function() pick("sbest", false) end, not OPT.sbest } })
+  card("자동 정리", { "자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방과 스킬을 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
 end
 local function openSettings()
   local tabs = { { "언어", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
@@ -561,6 +566,10 @@ showResultPanel = function(x, spec)
       if OPT.ar1 + OPT.ar2 + OPT.ar3 + OPT.ar4 > 0 then
         local ok, e = pcall(function() return rpc:InvokeServer("autoclean", { OPT.ar1, OPT.ar2, OPT.ar3, OPT.ar4 }) end)
         if ok and e.res and e.res.n > 0 then setSummary(e.summary); toast(string.format("자동 정리: 장비 %d개 · 골드 +%s · 강화석 +%s", e.res.n, n(e.res.gold), n(e.res.ore))) end
+      end
+      if OPT.sr1 + OPT.sr2 + OPT.sr3 > 0 then
+        local ok, e = pcall(function() return rpc:InvokeServer("skillclean", { rules = { OPT.sr1, OPT.sr2, OPT.sr3 }, best = OPT.sbest }) end)
+        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 판매 · 골드 +%s", e.res.sold, n(e.res.gold))) end
       end
       launch(target)
     end)
