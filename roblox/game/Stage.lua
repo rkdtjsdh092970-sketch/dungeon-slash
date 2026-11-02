@@ -65,7 +65,7 @@ function M.create(parent, W, H, replayAct)
   end
   S.buildBg = function(act) if S.act ~= act then S.act = act; buildBg(act) end end
   S.buildBg(replayAct or 1)
-  Ambient.attach(root, { z = 2, embers = 36, sway = function() return bg:FindFirstChildOfClass("ImageLabel") end })
+  Ambient.attach(root, { z = 2, embers = 24, fog = true, clouds = { 0.03, 0.16, 3 }, birds = true })
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
   S.plX, S.plY = S.ox + 104 * u, S.oy + 336 * u   -- 웹 PLAYER_POS

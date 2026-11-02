@@ -1023,5 +1023,27 @@ function M.gacha()
   bb(272, "10회 소환", "i_divine", v.gem10, M.BTN.red, function() pull(10, "gem") end)
   txt(R, "보석은 일일 과제(+10)와 우편으로 얻습니다.", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
 end
+-- 소환 목록: 뽑을 수 있는 스킬 전체 (아직 잠긴 것은 흐리게, 가진 것은 최고 등급 표시)
+function M.gachalist()
+  C.clear()
+  local r = C.rpc:InvokeServer("gacha"); if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local v = r.view; local list = v.list or {}
+  table.sort(list, function(a, b) if a.unlock ~= b.unlock then return a.unlock < b.unlock end; return a.id < b.id end)
+  local A = area(392)
+  local own = 0; for _, e in ipairs(list) do if e.own then own += 1 end end
+  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), string.format("소환 가능한 스킬 %d종 · 보유 %d종", #list, own))
+  local g = grid(B, UDim2.new(0, 6, 0, 34), UDim2.new(1, -12, 1, -40), 84)
+  for i, e in ipairs(list) do
+    local d = SK_BY[e.id]
+    if d then
+      local locked = e.unlock > (v.act or 1)
+      local lines = { d.desc or "" }
+      if locked then lines[#lines + 1] = string.format("레벨 %d부터 소환에 나옵니다", (e.unlock - 1) * 10) end
+      if e.own then lines[#lines + 1] = string.format("보유: %s", M.SK_RAR[e.own + 1] or "") end
+      M.tile(g, 84, { order = i, tip = { title = d.name, color = skColor(d), lines = lines }, color = e.own and M.SK_RCOL[e.own + 1] or skColor(d), emoji = skIcon(d), label = d.name, dim = locked,
+        tl = locked and "🔒" or nil, br = e.own and M.SK_RAR[e.own + 1] or nil })
+    end
+  end
+end
 
 return M

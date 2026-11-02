@@ -88,6 +88,7 @@ loadStep("게임 데이터를 준비하는 중...", 0.15)
 local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)
 local Theme = require(RS.Game.Theme)   -- 글꼴 · 색
+Theme.watch(loadGui)
 local Menus = require(RS.Game.Menus)   -- 장비 · 스킬 · 패시브 트리 화면
 local Ambient = require(RS.Game.Ambient)   -- 배경 움직임 (불씨 · 안개 · 빛)
 local Skin = require(RS.Game.Skin)   -- UI 키트 그림 (없으면 기존 모양)
@@ -101,7 +102,7 @@ task.spawn(function()   -- 시작 그림 · 로고가 오면 서서히 깐다 (�
 end)
 
 local gui = Instance.new("ScreenGui"); gui.Name = "DungeonUI"; gui.ResetOnSpawn = false; gui.IgnoreGuiInset = true; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; gui.Parent = PG
-Lang.watch(gui)
+Lang.watch(gui); Theme.watch(gui)
 local INSET = math.max(36, GuiService:GetGuiInset().Y)   -- 로블록스 상단 버튼 줄 높이
 local function vp() return workspace.CurrentCamera.ViewportSize end
 local K = 1   -- HUD 배율 (화면 높이 720 기준)
@@ -223,8 +224,8 @@ corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIP
 local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 34)); msg.ZIndex = 22; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
 local function clear() msg.Text = ""; for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end end
 local function card(title, lines, btns)
-  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(44, 36, 78); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
-  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10); stroke(f, Color3.fromRGB(90, 76, 140), 1.5)
+  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(20, 15, 15); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
+  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6); stroke(f, Color3.fromRGB(120, 92, 48), 1.5)
   local bw = math.max(1, #(btns or {})) * 72 + 10
   local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 10, 0, 6); tb.Size = UDim2.new(1, -bw - 14, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
   local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0, 2); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = tb
@@ -438,6 +439,7 @@ end
 
 -- ── 화면 전환 ──
 local screen = "town"
+local shopBtn   -- 왼쪽 상점 버튼 (아래에서 만든다)
 local buildTown, buildMap
 local infoCard
 local function fitPanel() local v = vp(); panelScale.Scale = math.clamp(math.min((v.X - 24) / 880, (v.Y - INSET - 16) / 540), 0.45, 1.3) end
@@ -445,7 +447,7 @@ local function closePanel() panelLayer.Visible = false; clear(); if screen == "b
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
-  dock.Visible = name ~= "battle"; topBar.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
+  dock.Visible = name ~= "battle"; topBar.Visible = name ~= "battle"; if shopBtn then shopBtn.Visible = name ~= "battle" end; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
   dockSet(name ~= "map")
   if name == "town" then buildTown() elseif name == "map" then buildMap() end
 end
@@ -563,7 +565,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setS
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
-views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.shop = Menus.gacha
+views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
 
 -- ── 전투 시작 → 재생 → 결과 ──
 local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
@@ -642,6 +644,27 @@ MPS.PromptGamePassPurchaseFinished:Connect(function(p, id, bought)
     if mainStage and mainStage.hud then mainStage.hud.owns4 = true; mainStage.spdOpts[4].Text = "x4" end
   end
 end)
+-- ── 상점 (로벅스): 마을 왼쪽 [상점] 버튼. 개발자 상품 · 게임패스 ID 를 채우면 판매가 열린다 ──
+local SHOP = {
+  { kind = "pass", id = SPEED4_ID, name = "x4 배속", desc = "전투 재생을 x4 배속으로 볼 수 있습니다 (x1~x3 은 무료). 한 번 사면 영구.", owned = function() return owns4 end },
+  { kind = "product", id = 0, name = "보석 꾸러미", desc = "스킬 소환에 쓰는 보석." },
+  { kind = "pass", id = 0, name = "가방 확장", desc = "가방 · 창고 +100칸 (영구)." },
+  { kind = "pass", id = 0, name = "골드 +50%", desc = "전투에서 얻는 골드 1.5배 (영구)." },
+}
+function views.robux()
+  clear()
+  for _, it in ipairs(SHOP) do
+    local btn
+    if it.owned and it.owned() then btn = { "보유 중", function() end }
+    elseif it.id ~= 0 then
+      local price = "구매"
+      local ok, info = pcall(function() return MPS:GetProductInfo(it.id, it.kind == "pass" and Enum.InfoType.GamePass or Enum.InfoType.Product) end)
+      if ok and info and info.PriceInRobux then price = tostring(info.PriceInRobux) .. " R$" end
+      btn = { price, function() pcall(function() if it.kind == "pass" then MPS:PromptGamePassPurchase(player, it.id) else MPS:PromptProductPurchase(player, it.id) end end) end }
+    else btn = { "준비 중", function() toast("곧 판매할 예정입니다") end } end
+    card(it.name, { it.desc }, { btn })
+  end
+end
 local function hudInfo(spec)
   local sk = {}
   local ok, r = pcall(function() return rpc:InvokeServer("skills") end)
@@ -681,9 +704,9 @@ local BUILD = {
   { key = "b_forge", name = "제련소", icon = "🔨", x = 0.22, row = 1, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
   { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.36, row = 1, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
   { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.50, row = 1, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
-  { key = "b_skill_shop", name = "스킬 소환", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 소환", "gacha" } } },
+  { key = "b_skill_shop", name = "스킬 소환", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } } },
   { key = "b_guild", name = "길드", icon = "🏰", x = 0.2, row = 2, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
-  { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.42, row = 2, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "스탯", "stats" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
+  { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.42, row = 2, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
   { key = "b_notice", name = "안내소", icon = "🔔", x = 0.64, row = 2, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
 }
 local townBuilt, badgeDots = false, {}
@@ -702,8 +725,19 @@ buildTown = function()
     townBuilt = true; townLayer:ClearAllChildren(); badgeDots = {}
     local v = vp(); local W, H = v.X, v.Y
     local bg = Sprites.art("bg_town")
-    local townArt = bg and cover(townLayer, bg, W, H, 1)
-    if bg then Ambient.attach(townLayer, { z = 2, embers = 30, sway = function() return townArt end }) else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
+    if bg then cover(townLayer, bg, W, H, 1) end
+    if bg then   -- 마을 생동감: 그림 속 화로 · 횃불 · 창문 자리(그림 기준 비율)를 화면 좌표로 옮겨 불 · 빛을 얹는다
+      local sw, sh = bg.w, bg.h; if bg.w / bg.h > W / H then sw = bg.h * W / H else sh = bg.w * H / W end
+      local ox, oy = (bg.w - sw) / 2, bg.h - sh
+      local function P(u, v) return (u * bg.w - ox) / sw, (v * bg.h - oy) / sh end
+      local function L(u, v, r) local x, y = P(u, v); return { x, y, r * bg.h / sh } end
+      local fires = {}
+      for _, f in ipairs({ { 0.1875, 0.435, 0.05 }, { 0.348, 0.433, 0.05 }, { 0.433, 0.415, 0.045 }, { 0.757, 0.465, 0.045 }, { 0.103, 0.425, 0.03 } }) do fires[#fires + 1] = L(f[1], f[2], f[3]) end
+      local lights = {}
+      for _, l in ipairs({ { 0.072, 0.155, 0.03 }, { 0.145, 0.185, 0.035 }, { 0.818, 0.32, 0.025 }, { 0.977, 0.255, 0.04 }, { 0.19, 0.62, 0.05 }, { 0.35, 0.62, 0.05 }, { 0.757, 0.62, 0.05 } }) do lights[#lights + 1] = L(l[1], l[2], l[3]) end
+      local _, cy0 = P(0, 0.0); local _, cy1 = P(0, 0.12)
+      Ambient.attach(townLayer, { z = 2, fires = fires, lights = lights, clouds = { math.max(cy0, 0.01), cy1, 3 }, birds = true, embers = 10 })
+    else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
     for _, b in ipairs(BUILD) do
       local size = (b.row == 1 and 0.30 or 0.25) * H; local fy = (b.row == 1 and 0.95 or 0.67) * H
       local holder = mk("TextButton", { BackgroundTransparency = 1, Text = "", AutoButtonColor = false, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, b.x * W, 0, fy), Size = UDim2.new(0, size, 0, size), ZIndex = b.row == 1 and 4 or 3 }, townLayer)
@@ -715,6 +749,7 @@ buildTown = function()
       holder.MouseEnter:Connect(function() TweenService:Create(hs, TweenInfo.new(0.12), { Scale = 1.06 }):Play() end)
       holder.MouseLeave:Connect(function() TweenService:Create(hs, TweenInfo.new(0.12), { Scale = 1 }):Play() end)
       holder.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
+      if b.key == "b_forge" and a then Ambient.smoke(holder, 0.66, 0.14) end   -- 대장간 굴뚝 연기
       -- 이름표는 건물 묶음 밖(위층)에 둔다: 앞줄 건물 그림에 뒷줄 이름표가 가려지지 않게
       local plate = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, b.x * W, 0, fy - 4), Size = UDim2.new(0, 140, 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.08, AutoButtonColor = false, Text = b.name, TextColor3 = Color3.new(1, 1, 1), Font = Theme.FONT, TextSize = 16, ZIndex = 6 }, townLayer)
       corner(plate); stroke(plate, GOLD, 1.5); mk("UIScale", { Scale = K }, plate); Skin.button(plate)
@@ -911,9 +946,19 @@ topButton(1, "m_bag", "🎒", "가방", function() openPanel("장비", { { "장�
 topButton(2, "m_skill", "📘", "스킬", function() openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } }) end)
 topButton(3, "m_passive", "✦", "패시브", function() openPanel("패시브", { { "패시브", "pass" } }) end)
 topButton(3.5, "m_stats", "📊", "스탯", function() openPanel("스탯", { { "스탯", "stats" } }) end)
+shopBtn = mk("TextButton", { Name = "ShopBtn", Position = UDim2.new(0, 12, 0, INSET + 8 + 136 * K), Size = UDim2.new(0, 150, 0, 60), BackgroundColor3 = Color3.fromRGB(150, 50, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
+corner(shopBtn, 10); stroke(shopBtn, GOLD, 2); local shopScale = mk("UIScale", { Scale = K }, shopBtn); Skin.frame(shopBtn, "ui_btn_red", 0.3, 0.5)
+do
+  local a = Sprites.art("m_shop")
+  if a then mk("ImageLabel", { Position = UDim2.new(0, 6, 0.5, -26), Size = UDim2.new(0, 52, 0, 52), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, shopBtn)
+  else mk("TextLabel", { Position = UDim2.new(0, 6, 0, 0), Size = UDim2.new(0, 52, 1, 0), BackgroundTransparency = 1, Text = "💎", TextSize = 30, ZIndex = 13 }, shopBtn) end
+  local l = mk("TextLabel", { Position = UDim2.new(0, 60, 0, 0), Size = UDim2.new(1, -66, 1, 0), BackgroundTransparency = 1, Text = "상점", TextSize = 26, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 235, 200), ZIndex = 13 }, shopBtn)
+  mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(20, 6, 6) }, l)
+end
+shopBtn.MouseButton1Click:Connect(function() openPanel("상점", { { "상점", "robux" } }) end)
 statLbl.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then openPanel("스탯", { { "스탯", "stats" } }) end end)
 topButton(4, "m_quest", "📜", "퀘스트", function() openPanel("퀘스트", { { "퀘스트", "quests" }, { "일일", "daily" } }) end)
-topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", { { "스킬 소환", "gacha" } }) end)
+topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } }) end)
 topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "우편함", "mail" } }) end)
 topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 
@@ -922,6 +967,7 @@ local relayPending = false
 relayout = function()
   relayPending = false; calcK()
   topScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
+  if shopBtn then shopBtn.Position = UDim2.new(0, 12, 0, INSET + 8 + 136 * K); shopBtn:FindFirstChildOfClass("UIScale").Scale = K end
   if mainStage and not mainStage.conn then makeStage() end
   townBuilt = false
   if screen == "town" then buildTown() elseif screen == "map" then buildMap() end
@@ -966,7 +1012,7 @@ gui:GetAttributeChangedSignal("Debug"):Connect(function()
   if v == "fight" then launch(stageSpec(1))
   elseif v == "map" or v == "town" then setScreen(v)
   elseif v == "gachafx" then   -- 소환 연출 시험 (가짜 결과, 재화 소모 없음)
-    openPanel("스킬 소환", { { "스킬 소환", "gacha" } })
+    openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } })
     local R = {}; for i, r in ipairs({ 0, 1, 0, 2, 0, 1, 3, 0, 1, 4 }) do R[i] = { id = i % 2 == 0 and "rapid" or "strike", name = i % 2 == 0 and "연사" or "일격", rarity = r, dup = (r == 0) and 2 or nil, new = r > 0 or nil } end
     Menus.revealResults(R)
   elseif views[v] then openPanel(v, { { v, v } }) end

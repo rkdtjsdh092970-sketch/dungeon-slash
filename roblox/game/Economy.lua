@@ -250,7 +250,10 @@ local function rollRarity(rng, minR)
 end
 function M.gachaView(sv)
   local G = M.GACHA
-  return { gold = M.gachaGold(sv), gold10 = M.gachaGold(sv) * 9, gem1 = G.GEM1, gem10 = G.GEM10, rates = G.RATES, pity = sv.gachaPity or 0, pityMax = G.PITY_HARD, gems = sv.gems or 0, pool = #gachaPool(sv) }
+  local best = {}; for _, k in ipairs(sv.skills) do best[k.id] = math.max(best[k.id] or -1, k.rarity or 0) end
+  local list = {}
+  for _, d in ipairs(Skills.SKILLS) do if not isSpecial(d) and d.id ~= "p_none" then list[#list + 1] = { id = d.id, unlock = d.unlock or 1, own = best[d.id] } end end
+  return { gold = M.gachaGold(sv), gold10 = M.gachaGold(sv) * 9, gem1 = G.GEM1, gem10 = G.GEM10, rates = G.RATES, pity = sv.gachaPity or 0, pityMax = G.PITY_HARD, gems = sv.gems or 0, pool = #gachaPool(sv), act = M.skillAct(sv), list = list }
 end
 -- n = 1 | 10, pay = "gold" | "gem"
 function M.gachaPull(sv, n, pay, rng)

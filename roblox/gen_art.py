@@ -38,7 +38,10 @@ ART = [
     ('ui_tab', 'ui/tab.png', (128, 48)), ('ui_tab_on', 'ui/tab_on.png', (128, 48)), ('ui_close', 'ui/close.png', (64, 64)),
     ('ui_slot', 'ui/slot.png', (128, 128)), ('ui_pill', 'ui/pill.png', (192, 48)),
     # 메뉴 아이콘 (오른쪽 위 줄 · 오른쪽 아래 지도/마을 버튼)
-    *[('m_' + k, f'menu/{k}.png', (128, 128)) for k in ('bag', 'skill', 'passive', 'stats', 'quest', 'mail', 'gacha', 'settings', 'map', 'town')],
+    *[('m_' + k, f'menu/{k}.png', (128, 128)) for k in ('bag', 'skill', 'passive', 'stats', 'shop', 'quest', 'mail', 'gacha', 'settings', 'map', 'town')],
+    # 배경 생동감 (game/Ambient.lua): 불꽃 8프레임 · 빛무리 · 구름 3 · 까마귀 4프레임
+    ('fx_fire', 'fx/fire.png', (512, 96)), ('fx_glow', 'fx/glow.png', (64, 64)), ('fx_crow', 'fx/crow.png', (256, 48)),
+    *[(f'fx_cloud{i}', f'fx/cloud{i}.png', (512, 160)) for i in (1, 2, 3)],
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'

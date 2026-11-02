@@ -1836,3 +1836,16 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 전투가 끝날 때마다 위 장비 규칙으로 가방을 정리하고, 자동 반복 중에는 스킬도 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다.	After every battle your bag is cleaned with the gear rules above; during auto-repeat skills are cleaned too. Enhanced or Satan gear and equipped, preset, runed or leveled skills are never touched.
 정렬: %s	Sort: %s
 지금 분해	Salvage Now
+스킬 목록	Skill List
+소환 가능한 스킬 %d종 · 보유 %d종	%d summonable skills · %d owned
+레벨 %d부터 소환에 나옵니다	Appears in summons from Lv %d
+보유: %s	Owned: %s
+x4 배속	x4 Speed
+가방 · 창고 +100칸 (영구).	Bag & storage +100 slots (permanent).
+곧 판매할 예정입니다	Coming soon
+보석 꾸러미	Gem Pack
+상점	Shop
+스킬 소환에 쓰는 보석.	Gems used for skill summons.
+전투 재생을 x4 배속으로 볼 수 있습니다 (x1~x3 은 무료). 한 번 사면 영구.	Watch battles at x4 speed (x1–x3 are free). Permanent once bought.
+전투에서 얻는 골드 1.5배 (영구).	Gold from battles x1.5 (permanent).
+준비 중	Coming Soon
