@@ -25,7 +25,7 @@ local function load(uid)
     local ok, v = pcall(function() return store:GetAsync("p" .. uid) end)
     if ok then return v, true end
     -- 게시된 장소를 Studio 에서 API 접근 없이 열면 항상 실패한다: 이때만 메모리 저장(실서버에서는 그대로 보호)
-    if game:GetService("RunService"):IsStudio() then okDS = false; warn("Studio: DataStore 불러오기 실패 → 메모리 저장", v); return nil end
+    if game:GetService("RunService"):IsStudio() then okDS = false; warn("Studio: DataStore load failed → Saving in memory", v); return nil end
     task.wait(1.5)
   end
   return nil, false   -- 불러오기 실패: 새 세이브로 덮어쓰지 않도록 호출자가 구분한다
@@ -38,7 +38,7 @@ local function save(uid, sv)
     if ok then return true end
     task.wait(1)
   end
-  warn("저장 실패:", uid); return false
+  warn("Save failed:", uid); return false
 end
 -- 오래된/불완전한 세이브에 기본값을 채운다
 local function migrate(sv, uid)
@@ -185,17 +185,17 @@ task.spawn(function() while true do task.wait(120); for uid, s in pairs(sessions
 
 local sheetCache = {}
 local function sheetAction(arg)
-  local M = type(arg) == "string" and (string.sub(arg, 1, 4) == "art/" and ART[string.sub(arg, 5)] or SPM.SHEETS[arg]); if not M then return { err = "없는 시트" } end
+  local M = type(arg) == "string" and (string.sub(arg, 1, 4) == "art/" and ART[string.sub(arg, 5)] or SPM.SHEETS[arg]); if not M then return { err = "Sheet not found" } end
   if M.id then return { id = M.id, w = M.w, h = M.h, cell = M.cell } end
   if not sheetCache[arg] then
     local ok, body = pcall(function() return HttpService:GetAsync(SPM.BASE .. M.file, true) end)
-    if ok and #body == M.w * M.h * 4 then sheetCache[arg] = buffer.fromstring(body) else warn("시트 로드 실패", arg, ok and #body or body) end
+    if ok and #body == M.w * M.h * 4 then sheetCache[arg] = buffer.fromstring(body) else warn("Sheet load failed", arg, ok and #body or body) end
   end
-  if not sheetCache[arg] then return { err = "시트를 받지 못했습니다 (HttpService 확인)" } end
+  if not sheetCache[arg] then return { err = "Could not fetch sheet (check HttpService)" } end
   return { buf = sheetCache[arg], w = M.w, h = M.h, cell = M.cell }
 end
 local handle = function(player, action, arg)
-  local s = sessions[player.UserId]; if not s then return { err = "세이브를 불러오는 중입니다" } end
+  local s = sessions[player.UserId]; if not s then return { err = "Loading save data" } end
   local sv = s.sv
   if action == "state" then return { summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "inv" then return { inv = Game.inventory(sv) }
@@ -258,7 +258,7 @@ local handle = function(player, action, arg)
   elseif action == "skillclean" then return { res = Game.skillClean(sv, type(arg) == "table" and arg.rules or {}, type(arg) == "table" and arg.best ~= false), summary = Game.summary(sv) }
   elseif action == "records" then return { view = Game.records(sv), summary = Game.summary(sv) }
   elseif action == "dummy" then   -- 허수아비: 60초 동안 순수 딜 측정 (30초에 한 번)
-    if s.dummyT and os.clock() - s.dummyT < 30 then return { err = string.format("%d초 뒤에 다시 측정할 수 있습니다", math.ceil(30 - (os.clock() - s.dummyT))) } end
+    if s.dummyT and os.clock() - s.dummyT < 30 then return { err = string.format("You can measure again in %ds", math.ceil(30 - (os.clock() - s.dummyT))) } end
     s.dummyT = os.clock()
     local dmg, by = Battle.dummyDamage(sv, 60, os.time() + player.UserId)
     local dps = math.floor(dmg / 60); local best = sv.dummyBest or 0; local nb = dps > best
@@ -283,10 +283,10 @@ local handle = function(player, action, arg)
         return { ok = true, summary = Game.summary(sv) }
       end
     end
-    return { err = "받을 수 없는 우편입니다" }
+    return { err = "This mail cannot be claimed" }
   elseif action == "mailsend" then   -- 게임 주인만
     if not isOwner(player) then return { err = "owner only" } end
-    if type(arg) ~= "table" then return { err = "잘못된 요청" } end
+    if type(arg) ~= "table" then return { err = "Invalid request" } end
     local reward = {}; for k, v in pairs(arg.reward or {}) do if MAIL_KEYS[k] and tonumber(v) and tonumber(v) > 0 then reward[k] = math.floor(tonumber(v)) end end
     local id = mailSend(tostring(arg.title or ""):sub(1, 60), tostring(arg.body or ""):sub(1, 300), reward)
     return { ok = true, id = id }
@@ -300,7 +300,7 @@ local handle = function(player, action, arg)
   elseif action == "passdrop" then local ok, err = Game.passDrop(sv, arg); return { ok = ok, err = err, view = Game.passView(sv), summary = Game.summary(sv) }
   elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }
   elseif action == "play" then
-    if s.busy then return { err = "전투 중입니다" } end
+    if s.busy then return { err = "In battle" } end
     s.busy = true; local res, e = Game.play(sv, arg); s.busy = false
     if not res then return { err = e } end
     return { result = res, summary = Game.summary(sv) }
@@ -319,23 +319,23 @@ local handle = function(player, action, arg)
   elseif action == "wpop" then return { ok = Game.wardenPop(player.UserId, tonumber(arg)) }
   elseif action == "wfinish" then local res, e = Game.wardenFinish(sv, player.UserId); if not res then return { err = e } end return { result = res, summary = Game.summary(sv) }
   elseif action == "fight" then
-    if s.busy then return { err = "전투 중입니다" } end
+    if s.busy then return { err = "In battle" } end
     s.busy = true; local res, e = Game.fight(sv, arg.kind, arg.n); s.busy = false
     if not res then return { err = e } end
     return { result = res, summary = Game.summary(sv) }
   elseif action == "battle" then
-    if s.busy then return { err = "전투 중입니다" } end
+    if s.busy then return { err = "In battle" } end
     s.busy = true; local res, e = Game.battle(sv, tonumber(arg)); s.busy = false
     if not res then return { err = e } end
     return { result = res, summary = Game.summary(sv) }
   end
-  return { err = "알 수 없는 요청" }
+  return { err = "Unknown request" }
 end
 
 -- ---------- 길드 ----------
 local okG, gds = pcall(function() return DSS:GetDataStore("DungeonSlashGuilds") end)
 local gstore = (freshTest() and Guild.memoryStore()) or (okG and Guild.datastoreStore(gds)) or Guild.memoryStore()   -- Studio 시험 모드에서는 실제 길드 저장소를 건드리지 않는다
-if not okG then warn("길드: DataStore 사용 불가 → 메모리 저장소") end
+if not okG then warn("Guild: DataStore unavailable → In-memory storage") end
 -- 길드 효과를 세이브에 싣는다 (길드 레벨 패시브 · 연구 → Stats). 접속 · 길드 요청마다
 local function gsync(uid, sv) local g = Guild.guildOf(gstore, uid); local b = Guild.buffOf(g); sv.guildLv = b and b.lv or 0; sv.gbuff = b and b.per or nil; return g end
 gsyncFn = function(uid, sv) return gsync(uid, sv) end
@@ -365,32 +365,32 @@ local function guildAction(player, sv, action, arg)
     local opt = type(arg) == "table" and arg or { name = arg }
     local g, e, cost = Guild.create(gstore, uid, name, tostring(opt.name or ""), sv.gold, nil, opt); if not g then return { err = e } end
     sv.gold -= cost; return { view = gview(player, sv), summary = Game.summary(sv) }
-  elseif action == "g_join" then local g, e = Guild.apply(gstore, uid, name, tostring(arg), sv.level, Game.summary(sv).power); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv), msg = g.applied and "가입 신청을 보냈습니다" or "가입했습니다!" }
+  elseif action == "g_join" then local g, e = Guild.apply(gstore, uid, name, tostring(arg), sv.level, Game.summary(sv).power); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv), msg = g.applied and "Application sent" or "Joined!" }
   elseif action == "g_search" then local a = type(arg) == "table" and arg or {}; return { list = Guild.search(gstore, a.q, a.sort) }
   elseif action == "g_set" then local g, e = Guild.setSettings(gstore, uid, arg); if not g then return { err = e } end return { view = gview(player, sv) }
   elseif action == "g_app" then local g, e = Guild.answerApp(gstore, uid, tonumber(arg and arg.uid), arg and arg.ok); if not g then return { err = e } end return { view = gview(player, sv) }
   elseif action == "g_inv" then local g, e = Guild.answerInvite(gstore, uid, name, tostring(arg and arg.id), arg and arg.ok); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_invite" then
     local ok, tid = pcall(function() return Players:GetUserIdFromNameAsync(tostring(arg)) end)
-    if not ok or not tid then return { err = "그 이름의 플레이어를 찾지 못했습니다" } end
-    local g, e = Guild.invite(gstore, uid, tid); if not g then return { err = e } end return { view = gview(player, sv), msg = tostring(arg) .. " 님을 초대했습니다" }
+    if not ok or not tid then return { err = "No player found with that name" } end
+    local g, e = Guild.invite(gstore, uid, tid); if not g then return { err = e } end return { view = gview(player, sv), msg = tostring(arg) .. " has been invited" }
   elseif action == "g_role" then local g, e = Guild.setRole(gstore, uid, tonumber(arg and arg.uid), arg and arg.role); if not g then return { err = e } end return { view = gview(player, sv) }
   elseif action == "g_research" then local g, e = Guild.upgradeResearch(gstore, uid, tostring(arg)); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_leave" then local g, e = Guild.leave(gstore, uid); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_motd" then local g, e = Guild.setMotd(gstore, uid, arg); if not g then return { err = e } end return { view = gview(player, sv) }
   elseif action == "g_donate" then
-    local amt = math.floor(tonumber(arg) or 0); if amt > sv.gold then return { err = "골드가 부족합니다" } end
+    local amt = math.floor(tonumber(arg) or 0); if amt > sv.gold then return { err = "Not enough Gold" } end
     local g, e, cost = Guild.donate(gstore, uid, amt); if not g then return { err = e } end
     sv.gold -= cost; return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_claim" then
     local r, e = Guild.claimGoals(gstore, uid); if not r then return { err = e } end
-    grant(sv, r); return { view = gview(player, sv), summary = Game.summary(sv), msg = "강화석 " .. r.ore }
+    grant(sv, r); return { view = gview(player, sv), summary = Game.summary(sv), msg = "Upgrade Stone " .. r.ore }
   elseif action == "g_bossclaim" then
     local r, e, rank = Guild.claimPrevBoss(gstore, uid); if not r then return { err = e } end
-    grant(sv, r); return { view = gview(player, sv), summary = Game.summary(sv), msg = rank .. "위 보상" }
+    grant(sv, r); return { view = gview(player, sv), summary = Game.summary(sv), msg = rank .. "Rank Rewards" }
   elseif action == "g_boss" then
-    local g = Guild.guildOf(gstore, uid); if not g then return { err = "길드가 없습니다" } end
-    if Guild.bossTriesLeft(g, uid) <= 0 then return { err = "이번 주 도전 횟수를 다 썼습니다" } end
+    local g = Guild.guildOf(gstore, uid); if not g then return { err = "No Guild" } end
+    if Guild.bossTriesLeft(g, uid) <= 0 then return { err = "No challenge attempts left this week" } end
     local dmg = Battle.dummyDamage(sv, Guild.CFG.BOSS_SECONDS, os.time() + uid)
     Guild.bossSubmit(gstore, uid, dmg); return { dmg = dmg, view = gview(player, sv) }
   elseif action == "g_buy" then
@@ -404,17 +404,17 @@ rpc.OnServerInvoke = function(player, action, arg)
   local s = sessions[player.UserId]
   if s and type(action) == "string" and action:sub(1, 2) == "g_" then
     local ok, r = pcall(guildAction, player, s.sv, action, arg)
-    if not ok then warn("guild:", r); return { err = "길드 서버 오류" } end
-    return r or { err = "알 수 없는 요청" }
+    if not ok then warn("guild:", r); return { err = "Guild server error" } end
+    return r or { err = "Unknown request" }
   end
-  if not s then return { err = "세이브를 불러오는 중입니다" } end
-  if type(action) ~= "string" then return { err = "잘못된 요청" } end
+  if not s then return { err = "Loading save data" } end
+  if type(action) ~= "string" then return { err = "Invalid request" } end
   local now = os.clock()
   if action ~= "wstate" and action ~= "wpop" and action ~= "sheet" then
-    if now - (s.last or 0) < 0.08 then return { err = "너무 빠른 요청입니다" } end
+    if now - (s.last or 0) < 0.08 then return { err = "Too many requests" } end
     s.last = now
   end
-  if arg ~= nil and type(arg) ~= "table" and type(arg) ~= "string" and type(arg) ~= "number" then return { err = "잘못된 요청" } end
+  if arg ~= nil and type(arg) ~= "table" and type(arg) ~= "string" and type(arg) ~= "number" then return { err = "Invalid request" } end
   local sv = s.sv
   local k0, c0, b0 = 0, 0, 0
   if sv then k0, c0 = sv.stats.kills, sv.stats.clears; b0 = (sv.daily and sv.daily.bosses) or 0 end
@@ -423,7 +423,7 @@ rpc.OnServerInvoke = function(player, action, arg)
   local okH, res = pcall(handle, player, action, arg)
   Battle.recording = false
   if wantRec and okH and type(res) == "table" and res.result and Battle.lastRec then res.result.replay = Battle.lastRec; Battle.lastRec = nil end
-  if not okH then warn("rpc 오류:", action, res); s.busy = false; return { err = "요청 처리 중 오류가 났습니다" } end
+  if not okH then warn("rpc error:", action, res); s.busy = false; return { err = "Error processing request" } end
   if sv and (sv.stats.kills > k0 or sv.stats.clears > c0) then
     local g = Guild.guildOf(gstore, player.UserId)
     if g then

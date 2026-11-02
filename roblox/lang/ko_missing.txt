@@ -1,0 +1,49 @@
+  (at +0)
+  (me)
+%s  Lv %d
+%s  Lv %d / %d
+%s Lv%d%s
+%s · Lv %d / %d
+Ambient
+Art
+BackgroundColor3
+Beta is now OPEN to everyone
+Beta is now invite only
+Beta tester %s: %s (%d total)
+Beta: OPEN to everyone
+Beta: invite only
+Bulwark
+Chance
+Check
+DPS %s
+Debug
+Desc
+Dmg
+Dragging
+DungeonSlashV1
+English
+Frame
+Game
+Hud
+Key
+Lang
+Lv
+Lv 
+Lv %d  %s
+Might
+More
+Player not found: 
+Players
+Rank_Dps
+Rank_Level
+Rank_Rift
+Rpc
+Sel
+Skin
+Skinned
+Smoke
+Text
+UserId 
+gold=5000, ore=20
+no testers yet
+owner only

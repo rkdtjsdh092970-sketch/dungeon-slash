@@ -50,7 +50,7 @@ function M.editable(w, h, buf)
   if editableOff then return nil end
   local ok, img = pcall(function() local i = AssetService:CreateEditableImage({ Size = Vector2.new(w, h) }); i:WritePixelsBuffer(Vector2.zero, Vector2.new(w, h), buf); return i end)
   if ok then return img end
-  editableOff = true; warn("EditableImage 사용 불가 → 그림 없이 진행:", img); return nil
+  editableOff = true; warn("EditableImage unavailable → Continuing without images:", img); return nil
 end
 -- 반환: { content, w, h, cell } 또는 nil
 function M.get(key, hue, flip)

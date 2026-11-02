@@ -23,7 +23,7 @@ M.GOLD, M.DARK, M.PANEL = Theme.GOLD, Theme.DARK, Theme.PANEL
 -- 등급 색: 일반 · 매직 · 레어 · 전설 (사탄 장비는 보라)
 M.RAR = { Color3.fromRGB(205, 205, 215), Color3.fromRGB(90, 150, 255), Color3.fromRGB(255, 214, 70), Color3.fromRGB(255, 140, 40) }
 M.SAT = Color3.fromRGB(200, 90, 255)
-M.ITEM_RAR = { "일반", "매직", "레어", "전설" }
+M.ITEM_RAR = { "Common", "Magic", "Rare", "Legendary" }
 M.BTN = Theme.BTN
 local SLOT_ART = { weapon = "i_weapon", helm = "i_helm", armor = "i_armor", gloves = "i_gloves", boots = "i_boots", ring = "i_ring", ring2 = "i_ring", neck = "i_neck" }
 local function artOf(it) if it and it.wt == "staff" and C.Sprites.art("i_staff") then return "i_staff" end; return it and SLOT_ART[it.slot] end   -- 무기는 종류별 그림 (지팡이)
@@ -91,8 +91,8 @@ function M.itemCard(parent, it, order, head)
   local t = line(it.title or "", 18, col, 1, M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, t)
   local dp, up, z0 = it.dp, it.up, ""
   if M.cmpZero and it.dp0 ~= nil then dp, up, z0 = it.dp0, it.up0, (PLangTop.lang == "en") and "  (at +0)" or "  (+0 기준)" end   -- 장비 창의 "+0 기준 비교"
-  if dp and dp ~= 0 then line(string.format("전투력 %s%s%s", dp > 0 and "+" or "", n(dp), z0), 14, dp > 0 and Color3.fromRGB(120, 255, 140) or Color3.fromRGB(255, 120, 110), 2, M.FONT)
-  elseif up then line("▲ 지금보다 강해집니다" .. z0, 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
+  if dp and dp ~= 0 then line(string.format("Power %s%s%s", dp > 0 and "+" or "", n(dp), z0), 14, dp > 0 and Color3.fromRGB(120, 255, 140) or Color3.fromRGB(255, 120, 110), 2, M.FONT)
+  elseif up then line("▲ Stronger than current" .. z0, 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
   rule(3)
   for i, b in ipairs(it.base or {}) do line(b, 15, Color3.fromRGB(245, 240, 230), 3 + i, M.FONT) end
   if it.aff and #it.aff > 0 then
@@ -124,7 +124,7 @@ function M.itemTip(it, cur)
   for _, c in ipairs(itBox:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
   local function col(x, o, head) local h = mk("Frame", { Size = UDim2.new(0, 290, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = o, ZIndex = 60 }, itBox); mk("UIListLayout", {}, h); M.itemCard(h, x, 0, head) end
   col(it, 1, nil)
-  if cur and cur ~= it then col(cur, 2, "착용 중") end
+  if cur and cur ~= it then col(cur, 2, "Equipped") end
   itBox.Visible = true
   if itConn then itConn:Disconnect() end
   itConn = game:GetService("RunService").RenderStepped:Connect(function()
@@ -240,8 +240,8 @@ local INV_TABS = { "all", "weapon", "helm", "armor", "gloves", "boots", "ring", 
 local SLOT_ORDER = {}; for i, s in ipairs(Items.EQ_SLOTS) do SLOT_ORDER[s] = i end
 local function itemColor(it) return it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1] end
 local CUR_DESC = {   -- 재화 설명 (마우스를 올리면)
-  i_ore = "장비 강화 · 옵션 재굴림에 씁니다. 장비를 분해하면 얻습니다.", i_chaos = "장비 옵션의 수치를 (같은 옵션 · 티어 안에서) 다시 굴립니다 (대장간). 귀하게 나옵니다.",
-  i_gem = "아르카나 소환에 쓰는 보석입니다.", i_arcana = "아르카나 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 아르카나 분해로 얻습니다.",
+  i_ore = "Used to enhance gear and reroll affixes. Earned by dismantling gear.", i_chaos = "Rerolls gear affix values (same affix and tier) at the Forge. Rare drop.",
+  i_gem = "Gems used for arcana summons.", i_arcana = "Used for arcana summons (10 for 1 · 90 for 10). Earned from battles, quests and dismantling arcana.",
 }
 M.cmpZero = false   -- 장비 비교를 강화 없이(+0) 할지
 local function upOf(it) if M.cmpZero and it.up0 ~= nil then return it.up0 == true end return it.up == true end
@@ -293,7 +293,7 @@ invRender = function()
   end
   local A = area(392)
   -- 왼쪽: 착용 중 (사람 모양) + 프리셋 + 재화
-  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0, 232, 1, 0), "착용 중")
+  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0, 232, 1, 0), "Equipped")
   do local sil = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 70, 0, 26), Size = UDim2.new(0, 92, 0, 262) }, L)
     local body = mk("Frame", { Position = UDim2.new(0.5, -30, 0, 70), Size = UDim2.new(0, 60, 0, 150), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
     local head = mk("Frame", { Position = UDim2.new(0.5, -22, 0, 6), Size = UDim2.new(0, 44, 0, 44), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(head) end
@@ -310,13 +310,13 @@ invRender = function()
       if r.err then C.msg.Text = tostring(r.err) end; M.inv()
     end)
   end
-  M.setTabs(L, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "gear", "세트", function() invData = nil; M.inv() end)
+  M.setTabs(L, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "gear", "Set", function() invData = nil; M.inv() end)
   local s = C.summary()
   if s then   -- 재화 (강화석 · 혼돈 구슬 · 보석 · 아르카나 조각)
     local cg = mk("Frame", { Position = UDim2.new(0, 8, 1, -78), Size = UDim2.new(1, -16, 0, 74), BackgroundTransparency = 1 }, L)
     mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 22), CellPadding = UDim2.new(0, 6, 0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
-    for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80), "혼돈" },
-      { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220), "아르카나" } }) do
+    for i, c in ipairs({ { "i_ore", "Upgrade Stone", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_chaos", "Chaos Orb", s.orbC, Color3.fromRGB(230, 90, 80), "Chaos" },
+      { "i_gem", "Gems", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "Arcana Shards", s.arcana, Color3.fromRGB(255, 160, 220), "Arcana" } }) do
       local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i, Active = true }, cg)   -- 칸 전체(아이콘 포함)에 마우스를 올리면 설명
       local a = C.Sprites.art(c[1])
       if a then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
@@ -328,18 +328,18 @@ invRender = function()
   -- 가운데: 가방 (전체 · 부위 탭)
   local shown = {}; for _, it in ipairs(inv) do if invTab == "all" or it.slot == invTab or (invTab == "ring" and it.slot == "ring2") then shown[#shown + 1] = it end end
   local INV_MAX = require(script.Parent.Data.Config).CFG.INV_MAX or 300
-  local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), invTab == "all" and string.format("가방 %d / %d칸", #inv, INV_MAX) or string.format("가방 %d개 (전체 %d / %d칸)", #shown, #inv, INV_MAX))
+  local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), invTab == "all" and string.format("Bag %d / %d", #inv, INV_MAX) or string.format("Bag %d (total %d / %d)", #shown, #inv, INV_MAX))
   do   -- +0 기준 비교 켜기/끄기 (강화 수치를 빼고 장비 자체만 비교)
-    local zb = M.btn(B, M.cmpZero and "+0 비교 켬" or "+0 비교 끔", UDim2.new(0, 96, 0, 22), M.cmpZero and M.BTN.gold or M.BTN.gray, function() M.cmpZero = not M.cmpZero; tipHide(); M.itemTipHide(); invRender() end)
+    local zb = M.btn(B, M.cmpZero and "+0 Compare: On" or "+0 Compare: Off", UDim2.new(0, 96, 0, 22), M.cmpZero and M.BTN.gold or M.BTN.gray, function() M.cmpZero = not M.cmpZero; tipHide(); M.itemTipHide(); invRender() end)
     zb.AnchorPoint = Vector2.new(1, 0); zb.Position = UDim2.new(1, -8, 0, 4)
-    zb.MouseEnter:Connect(function() tipShow({ title = "+0 기준 비교", lines = { "켜면 새 장비와 낀 장비를 모두 강화 없이(+0) 놓고 비교합니다.", "강화는 바꾼 뒤 다시 하면 되므로 장비 자체가 더 좋은지 볼 때 씁니다." } }) end); zb.MouseLeave:Connect(tipHide)
+    zb.MouseEnter:Connect(function() tipShow({ title = "Compare at +0", lines = { "When on, compares the new item and your equipped item both without enhancement (+0).", "You can re-enhance after swapping, so use this to see whether the item itself is better." } }) end); zb.MouseLeave:Connect(tipHide)
   end
-  if #inv >= INV_MAX * 0.9 then local w = txt(B, "가방이 거의 찼습니다 · 자동 분해를 켜 두세요", 11, UDim2.new(0, 150, 0, 6), UDim2.new(1, -260, 0, 16), Color3.fromRGB(255, 130, 110), M.FONT, Enum.TextXAlignment.Right); w.TextTruncate = Enum.TextTruncate.AtEnd end
+  if #inv >= INV_MAX * 0.9 then local w = txt(B, "Bag almost full · turn on Auto Salvage", 11, UDim2.new(0, 150, 0, 6), UDim2.new(1, -260, 0, 16), Color3.fromRGB(255, 130, 110), M.FONT, Enum.TextXAlignment.Right); w.TextTruncate = Enum.TextTruncate.AtEnd end
   local tabs = mk("Frame", { Position = UDim2.new(0, 6, 0, 32), Size = UDim2.new(1, -12, 0, 34), BackgroundTransparency = 1 }, B)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
   for i, k in ipairs(INV_TABS) do
     local on = invTab == k
-    local tb = mk("TextButton", { Size = UDim2.new(k == "all" and 0.16 or 0.12, -3, 1, 0), BackgroundColor3 = on and Color3.fromRGB(120, 40, 36) or Color3.fromRGB(30, 24, 22), Text = k == "all" and "전체" or "", TextSize = 13, Font = M.FONT,
+    local tb = mk("TextButton", { Size = UDim2.new(k == "all" and 0.16 or 0.12, -3, 1, 0), BackgroundColor3 = on and Color3.fromRGB(120, 40, 36) or Color3.fromRGB(30, 24, 22), Text = k == "all" and "All" or "", TextSize = 13, Font = M.FONT,
       TextColor3 = Color3.fromRGB(255, 235, 200), AutoButtonColor = false, LayoutOrder = i }, tabs)
     corner(tb, 5); stroke(tb, on and M.GOLD or Color3.fromRGB(90, 70, 40), on and 2 or 1)
     if k ~= "all" then
@@ -365,48 +365,48 @@ invRender = function()
   local function bulkDo(mode)
     local cnt = 0
     for uid in pairs(invPick) do local e = C.rpc:InvokeServer(mode, uid); if e.summary then C.setSummary(e.summary) end; if e.ok ~= false then cnt += 1 end end
-    invPick = {}; invMulti = false; M.inv(); C.msg.Text = mode == "sell" and string.format("%d개 판매", cnt) or string.format("%d개 분해", cnt)
+    invPick = {}; invMulti = false; M.inv(); C.msg.Text = mode == "sell" and string.format("Sold %d items", cnt) or string.format("Dismantled %d items", cnt)
   end
   buildBar = function()
     bar:ClearAllChildren()
     mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
     if invMulti then
       local k = 0; for _ in pairs(invPick) do k += 1 end
-      M.btn(bar, string.format("판매 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.gold, function() bulkDo("sell") end).LayoutOrder = 1
-      M.btn(bar, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
-      M.btn(bar, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
+      M.btn(bar, string.format("Sell %d", k), UDim2.new(0, 84, 1, 0), M.BTN.gold, function() bulkDo("sell") end).LayoutOrder = 1
+      M.btn(bar, string.format("Dismantle %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
+      M.btn(bar, "Cancel", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
     else
-      local mb = M.btn(bar, "골라 정리", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end); mb.LayoutOrder = 1; mb.TextSize = 13
-      M.btn(bar, "자동 분해", UDim2.new(0.333, -4, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
-      M.btn(bar, "자동 장착", UDim2.new(0.333, -4, 1, 0), M.BTN.green, function()
+      local mb = M.btn(bar, "Select & Clear", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end); mb.LayoutOrder = 1; mb.TextSize = 13
+      M.btn(bar, "Auto Salvage", UDim2.new(0.333, -4, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
+      M.btn(bar, "Auto Equip", UDim2.new(0.333, -4, 1, 0), M.BTN.green, function()
         local e = C.rpc:InvokeServer("autoequip"); if e and e.summary then C.setSummary(e.summary) end
-        C.msg.Text = (e and e.n or 0) > 0 and string.format("%d칸을 더 강한 장비로 바꿨습니다 · 전투력 %s", e.n, n(e.summary and e.summary.power or 0)) or "지금이 가장 강한 조합입니다"
+        C.msg.Text = (e and e.n or 0) > 0 and string.format("Upgraded %d slots · Power %s", e.n, n(e.summary and e.summary.power or 0)) or "Already your strongest setup"
         invData = nil; M.inv()
       end).LayoutOrder = 3
     end
   end
   buildBar()
   -- 오른쪽: 선택한 장비 상세 (티어 표시) + 착용 중인 같은 부위
-  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "장비 정보")
+  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "Item Info")
   local Dc = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 }, D)
   fillDetail = function()
   Dc:ClearAllChildren()
   local it = invSel and byUid[invSel]
-  if not it then txt(Dc, "가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.\n마우스를 올리면 착용 중인 장비와 나란히 비교합니다.", 14, UDim2.new(0, 12, 0, 38), UDim2.new(1, -24, 0, 80), Color3.fromRGB(200, 190, 180)); return end
+  if not it then txt(Dc, "Tap gear in your bag or an equipped slot to see details here.\nHover to compare side by side with what you wear.", 14, UDim2.new(0, 12, 0, 38), UDim2.new(1, -24, 0, 80), Color3.fromRGB(200, 190, 180)); return end
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 34), Size = UDim2.new(1, -16, 1, -84), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, Dc)
   mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
-  M.itemCard(sc, it, 1, it.equipped and "착용 중" or nil)
-  local cur = curOf(it); if cur then M.itemCard(sc, cur, 2, "착용 중 (비교)") end
+  M.itemCard(sc, it, 1, it.equipped and "Equipped" or nil)
+  local cur = curOf(it); if cur then M.itemCard(sc, cur, 2, "Equipped (compare)") end
   local ab = mk("Frame", { Position = UDim2.new(0, 8, 1, -46), Size = UDim2.new(1, -16, 0, 38), BackgroundTransparency = 1 }, Dc)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
   local function act(name) local e = C.rpc:InvokeServer(name, it.uid); if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.err and tostring(e.err) or ""; if name ~= "equip" then invSel = nil end; M.inv() end
   if not it.equipped then
-    M.btn(ab, "장착", UDim2.new(0.25, -5, 1, 0), M.BTN.green, function() act("equip") end).LayoutOrder = 1
-    M.btn(ab, "강화", UDim2.new(0.25, -5, 1, 0), M.BTN.blue, function() M.forgeOpen(it.uid, true); C.openTab("forge") end).LayoutOrder = 2   -- 이 장비를 고른 채 대장간으로
-    M.btn(ab, "판매", UDim2.new(0.25, -5, 1, 0), M.BTN.gold, function() act("sell") end).LayoutOrder = 3
-    M.btn(ab, "분해", UDim2.new(0.25, -5, 1, 0), M.BTN.red, function() act("dismantle") end).LayoutOrder = 4
+    M.btn(ab, "Equip", UDim2.new(0.25, -5, 1, 0), M.BTN.green, function() act("equip") end).LayoutOrder = 1
+    M.btn(ab, "Upgrade", UDim2.new(0.25, -5, 1, 0), M.BTN.blue, function() M.forgeOpen(it.uid, true); C.openTab("forge") end).LayoutOrder = 2   -- 이 장비를 고른 채 대장간으로
+    M.btn(ab, "Sell", UDim2.new(0.25, -5, 1, 0), M.BTN.gold, function() act("sell") end).LayoutOrder = 3
+    M.btn(ab, "Dismantle", UDim2.new(0.25, -5, 1, 0), M.BTN.red, function() act("dismantle") end).LayoutOrder = 4
   else
-    M.btn(ab, "강화하러 가기 (대장간)", UDim2.new(1, 0, 1, 0), M.BTN.blue, function() M.forgeOpen(it.uid, false); C.openTab("forge") end).LayoutOrder = 1
+    M.btn(ab, "Go Enhance (Forge)", UDim2.new(1, 0, 1, 0), M.BTN.blue, function() M.forgeOpen(it.uid, false); C.openTab("forge") end).LayoutOrder = 1
   end
   end
   fillDetail()
@@ -415,10 +415,10 @@ function M.openAuto() invMode = "auto"; M.inv(true) end
 -- 자동 분해 설정 (웹 openAutoDis): 등급별 유지/판매/분해 · 사탄 · ▲ 보호 · 옵션 티어 기준 · 아이템 레벨 상한 · 모든 전투 후 적용
 autoRender = function()
   C.clear(); M.itemTipHide()
-  local r = C.rpc:InvokeServer("autoget"); local v = r and r.view; if not v then C.msg.Text = "자동 분해 설정을 불러오지 못했습니다"; return end
+  local r = C.rpc:InvokeServer("autoget"); local v = r and r.view; if not v then C.msg.Text = "Could not load auto salvage settings"; return end
   local A = area(392)
-  local P = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), "자동 분해 설정")
-  txt(P, "전투가 끝날 때마다 아래 규칙으로 가방의 장비를 정리합니다. 고유 · 프리셋 · 착용 중 장비는 항상 유지됩니다.", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 20), Color3.fromRGB(200, 190, 180))
+  local P = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), "Auto Salvage Settings")
+  txt(P, "After every battle your bag is cleaned with these rules. Unique, preset and equipped gear is always kept.", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 20), Color3.fromRGB(200, 190, 180))
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 56), Size = UDim2.new(1, -20, 1, -110), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, P)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   local function set(k, val) local e = C.rpc:InvokeServer("autoset", { k = k, v = val }); if e and e.view then autoRender() end end
@@ -431,33 +431,33 @@ autoRender = function()
     mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), HorizontalAlignment = Enum.HorizontalAlignment.Right, SortOrder = Enum.SortOrder.LayoutOrder }, bx)
     for i, o in ipairs(opts) do local b = M.btn(bx, o[1], UDim2.new(0, o.w or 70, 1, 0), o[2] and M.BTN.gold or M.BTN.gray, o[3]); b.LayoutOrder = i; b.TextSize = 14 end
   end
-  local RN = { keep = "유지", sell = "판매", dis = "분해" }
+  local RN = { keep = "Keep", sell = "Sell", dis = "Dismantle" }
   local function ruleOpts(cur, cb) local t = {}; for _, k in ipairs({ "keep", "sell", "dis" }) do t[#t + 1] = { RN[k], cur == k, function() cb(k) end } end; return t end
-  row("모든 전투 후 자동 정리", nil, { { "켜기", v.always, function() set("always", true) end }, { "끄기", not v.always, function() set("always", false) end } })
-  for r0 = 0, 3 do row(string.format("%s 장비", M.ITEM_RAR[r0 + 1]), M.RAR[r0 + 1], ruleOpts(v.rules[r0 + 1], function(k) set("rule", { r = r0, v = k }) end)) end
-  row("사탄 장비", M.SAT, ruleOpts(v.satRule, function(k) set("satRule", k) end))
-  row("▲ 전투력이 오르는 장비는 처리 안 함", Color3.fromRGB(120, 255, 140), { { "켜기", v.keepUp, function() set("keepUp", true) end }, { "끄기", not v.keepUp, function() set("keepUp", false) end } })
+  row("Clean after every battle", nil, { { "On", v.always, function() set("always", true) end }, { "Off", not v.always, function() set("always", false) end } })
+  for r0 = 0, 3 do row(string.format("%s Gear", M.ITEM_RAR[r0 + 1]), M.RAR[r0 + 1], ruleOpts(v.rules[r0 + 1], function(k) set("rule", { r = r0, v = k }) end)) end
+  row("Satan Gear", M.SAT, ruleOpts(v.satRule, function(k) set("satRule", k) end))
+  row("▲ Keep gear that raises power", Color3.fromRGB(120, 255, 140), { { "On", v.keepUp, function() set("keepUp", true) end }, { "Off", not v.keepUp, function() set("keepUp", false) end } })
   local function tierRows(title, color, kx, kn, X, N)
-    local t = { { "없음", X == 0, function() set(kx, 0) end, w = 52 } }
+    local t = { { "None", X == 0, function() set(kx, 0) end, w = 52 } }
     for x = 1, 5 do t[#t + 1] = { x == 1 and "T1" or ("T" .. x .. "↑"), X == x, function() set(kx, x) end, w = 46 } end
     row(title, color, t)
-    if X > 0 then local c = {}; for k = 1, 5 do c[#c + 1] = { string.format("%d개", k), N == k, function() set(kn, k) end, w = 50 } end; row("   … 이 옵션이 몇 개 미만이면 처리", nil, c) end
+    if X > 0 then local c = {}; for k = 1, 5 do c[#c + 1] = { string.format("%d", k), N == k, function() set(kn, k) end, w = 50 } end; row("   … process if fewer than this many", nil, c) end
   end
-  tierRows("전설 옵션 티어 기준", M.RAR[4], "tierX", "tierN", v.tierX, v.tierN)
-  tierRows("사탄 옵션 티어 기준", M.SAT, "sTierX", "sTierN", v.sTierX, v.sTierN)
-  do local t = { { "없음", v.maxIlvl == 0, function() set("maxIlvl", 0) end, w = 52 } }; for x = 1, 6 do t[#t + 1] = { "T" .. x, v.maxIlvl == x, function() set("maxIlvl", x) end, w = 40 } end
-    row("아이템 레벨 상한 (이하만 처리)", nil, t) end
+  tierRows("Legendary affix tier rule", M.RAR[4], "tierX", "tierN", v.tierX, v.tierN)
+  tierRows("Satan affix tier rule", M.SAT, "sTierX", "sTierN", v.sTierX, v.sTierN)
+  do local t = { { "None", v.maxIlvl == 0, function() set("maxIlvl", 0) end, w = 52 } }; for x = 1, 6 do t[#t + 1] = { "T" .. x, v.maxIlvl == x, function() set("maxIlvl", x) end, w = 40 } end
+    row("Item tier cap (process at or below)", nil, t) end
   local foot = mk("Frame", { Position = UDim2.new(0, 10, 1, -48), Size = UDim2.new(1, -20, 0, 40), BackgroundTransparency = 1 }, P)
-  txt(foot, string.format("지금 가방에서 처리될 장비 %d개", v.now), 16, UDim2.new(0, 4, 0, 10), UDim2.new(0.5, 0, 0, 22), Color3.fromRGB(255, 210, 110), M.FONT)
+  txt(foot, string.format("Gear to process now: %d", v.now), 16, UDim2.new(0, 4, 0, 10), UDim2.new(0.5, 0, 0, 22), Color3.fromRGB(255, 210, 110), M.FONT)
   local fb = mk("Frame", { Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.new(0.5, 0, 1, 0), BackgroundTransparency = 1 }, foot)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Right, SortOrder = Enum.SortOrder.LayoutOrder }, fb)
-  M.btn(fb, "지금 정리하기", UDim2.new(0, 140, 1, 0), v.now > 0 and M.BTN.red or M.BTN.gray, function()
+  M.btn(fb, "Clean Now", UDim2.new(0, 140, 1, 0), v.now > 0 and M.BTN.red or M.BTN.gray, function()
     if v.now == 0 then return end
     local e = C.rpc:InvokeServer("autoclean", {}); if e.summary then C.setSummary(e.summary) end
-    C.msg.Text = e.res and string.format("정리 완료: %d개 판매 · %d개 분해 · 골드 +%s · 강화석 +%s", e.res.sold or 0, e.res.dis or 0, n(e.res.gold), n(e.res.ore)) or tostring(e.err or "")
+    C.msg.Text = e.res and string.format("Done: %d sold · %d salvaged · Gold +%s · Ore +%s", e.res.sold or 0, e.res.dis or 0, n(e.res.gold), n(e.res.ore)) or tostring(e.err or "")
     invData = nil; autoRender()
   end).LayoutOrder = 1
-  M.btn(fb, "가방으로", UDim2.new(0, 100, 1, 0), M.BTN.blue, function() invMode = "bag"; M.inv() end).LayoutOrder = 2
+  M.btn(fb, "Back to Bag", UDim2.new(0, 100, 1, 0), M.BTN.blue, function() invMode = "bag"; M.inv() end).LayoutOrder = 2
 end
 
 -- ───────── 스킬 ─────────
@@ -503,7 +503,7 @@ local function arcCard(parent, k, w, h, o)
   if o.click then b.MouseButton1Click:Connect(function() if b:GetAttribute("Dragging") then return end; o.click() end) end
   return b
 end
-local ELEM_NAME = { fire = "화염", cold = "냉기", light = "번개", void = "공허" }
+local ELEM_NAME = { fire = "Fire", cold = "Cold", light = "Lightning", void = "Void" }
 -- 천상의 빛: 카드 뒤로 빛줄기가 천천히 돌고(rays), 별빛이 여기저기서 반짝인다(stars) — 타로 카드와 어울리게 (마법진 대신)
 local function celestial(parent, cx, cy, size, rays, stars, col)
   col = col or Color3.fromRGB(255, 220, 170)
@@ -543,8 +543,8 @@ function M.skills()
   local function head(parent, text, y)
     local l = txt(parent, text, 15, UDim2.new(0, 14, 0, y), UDim2.new(0.6, 0, 0, 20), Color3.fromRGB(225, 195, 255), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l); return l
   end
-  head(table0, string.format("장착한 아르카나 (%d칸)", slots), 6)
-  M.setTabs(table0, UDim2.new(1, -150, 0, 4), UDim2.new(0, 142, 0, 24), "skill", "세트", function() M.skills() end)
+  head(table0, string.format("Equipped Arcana (%d slots)", slots), 6)
+  M.setTabs(table0, UDim2.new(1, -150, 0, 4), UDim2.new(0, 142, 0, 24), "skill", "Set", function() M.skills() end)
   local cards = {}   -- uid → 카드 (선택 표시만 바꾼다)
   local fillDetail
   local function select(uid) if cards[skSel] then for _, c in ipairs(cards[skSel]) do c:SetAttribute("Sel", false) end end; skSel = uid; for _, c in ipairs(cards[uid] or {}) do c:SetAttribute("Sel", true) end; fillDetail() end
@@ -559,7 +559,7 @@ function M.skills()
       c = mk("Frame", { Size = UDim2.new(0, 88, 0, 130), BackgroundColor3 = Color3.fromRGB(16, 10, 24), LayoutOrder = i }, row); corner(c, 8)
       local bk = C.Sprites.art("card_back"); if bk then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = bk.content, ImageTransparency = 0.75 }, c) end
       mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.5 }, c)
-      txt(c, string.format("%d번 칸\n비어 있음\n(끌어다 놓기)", i), 12, UDim2.new(0, 4, 0.3, 0), UDim2.new(1, -8, 0.4, 0), Color3.fromRGB(190, 170, 220), M.FONT, Enum.TextXAlignment.Center).TextWrapped = true
+      txt(c, string.format("Slot %d\nEmpty\n(drag here)", i), 12, UDim2.new(0, 4, 0.3, 0), UDim2.new(1, -8, 0.4, 0), Color3.fromRGB(190, 170, 220), M.FONT, Enum.TextXAlignment.Center).TextWrapped = true
     end
     M.drop(c, function(pl)
       if pl.kind ~= "skill" then return end
@@ -568,17 +568,17 @@ function M.skills()
     end)
   end
   -- 보유 아르카나 (작은 카드)
-  head(table0, string.format("보유 %d장", #rows), 168)
+  head(table0, string.format("Owned %d", #rows), 168)
   local g = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 192), Size = UDim2.new(1, -20, 1, -198), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5, ScrollBarImageColor3 = Color3.fromRGB(150, 100, 210) }, table0)
   mk("UIGridLayout", { CellSize = UDim2.new(0, 60, 0, 88), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, g)
   -- 분류 탭 (전체 · 물리 · 마법 · 장착 중 · 기본 공격) + 정렬 (등급 / 초당 피해 / 레벨)
   local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 384, 0, 24), BackgroundTransparency = 1 }, table0)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
-  for i, f in ipairs({ { "all", "전체" }, { "phys", "물리 계열" }, { "mag", "마법 계열" }, { "eq", "장착 중" }, { "basic", "기본" } }) do
+  for i, f in ipairs({ { "all", "All" }, { "phys", "Physical" }, { "mag", "Magic" }, { "eq", "Equipped" }, { "basic", "Basic" } }) do
     local b = M.btn(ft, f[2], UDim2.new(0, 54, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i + 1; b.TextSize = 12
   end
-  local SORT_NAME = { rar = "등급순", dps = "피해순", lvl = "레벨순" }
-  local sb = mk("TextButton", { Size = UDim2.new(0, 96, 1, 0), BackgroundColor3 = Color3.fromRGB(12, 8, 18), AutoButtonColor = false, Text = "⇅ 정렬: " .. (SORT_NAME[arcSort] or "등급순"), Font = M.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(220, 200, 255), LayoutOrder = 0 }, ft)
+  local SORT_NAME = { rar = "Rarity", dps = "By DPS", lvl = "Level" }
+  local sb = mk("TextButton", { Size = UDim2.new(0, 96, 1, 0), BackgroundColor3 = Color3.fromRGB(12, 8, 18), AutoButtonColor = false, Text = "⇅ Sort: " .. (SORT_NAME[arcSort] or "Rarity"), Font = M.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(220, 200, 255), LayoutOrder = 0 }, ft)
   corner(sb, 12); mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, sb)   -- 탭(분류)과 다르게: 둥근 어두운 상자 = 정렬
   sb.MouseButton1Click:Connect(function() arcSort = ({ rar = "dps", dps = "lvl", lvl = "rar" })[arcSort] or "rar"; M.skills() end)
   local order = {}
@@ -592,7 +592,7 @@ function M.skills()
     if arcSort == "lvl" and (x.lvl or 1) ~= (y.lvl or 1) then return (x.lvl or 1) > (y.lvl or 1) end
     if x.rarity ~= y.rarity then return x.rarity > y.rarity end; return (x.lvl or 1) > (y.lvl or 1)
   end)
-  if #order == 0 then txt(g, "이 분류에 해당하는 아르카나가 없습니다.", 13, UDim2.new(), UDim2.new(0, 300, 0, 20), Color3.fromRGB(190, 170, 220)) end
+  if #order == 0 then txt(g, "No Arcana in this category.", 13, UDim2.new(), UDim2.new(0, 300, 0, 20), Color3.fromRGB(190, 170, 220)) end
   for i, k in ipairs(order) do
     local c = arcCard(g, k, 60, 88, { order = i, sel = skSel == k.uid, slot = k.slot, click = function() select(k.uid) end }); reg(k.uid, c)
     M.drag(c, { kind = "skill", uid = k.uid })
@@ -603,50 +603,50 @@ function M.skills()
   fillDetail = function()
     for _, ch in ipairs(D:GetChildren()) do if not ch:IsA("UICorner") and not ch:IsA("UIStroke") and not ch:GetAttribute("Skin") and ch.Name ~= "SkinImg" then ch:Destroy() end end
     local k = skSel and byUid[skSel]
-    if not k then txt(D, "아르카나 카드를 누르면 위력 · 쿨타임 · 사거리 · 범위와 설명이 나옵니다.\n카드를 위의 칸으로 끌어다 놓으면 장착됩니다.\n새 아르카나는 마을의 [아르카나 소환]에서 뽑습니다.", 13, UDim2.new(0, 12, 0, 14), UDim2.new(1, -24, 0, 120), Color3.fromRGB(200, 190, 220)).TextWrapped = true; return end
+    if not k then txt(D, "Tap an Arcana card to see its power, cooldown, range, area and description.\nDrag a card onto a slot above to equip it.\nSummon new Arcana at the village [Arcana Summon].", 13, UDim2.new(0, 12, 0, 14), UDim2.new(1, -24, 0, 120), Color3.fromRGB(200, 190, 220)).TextWrapped = true; return end
     local d = SK_BY[k.id] or {}
     local rcol = M.SK_RCOL[(k.rarity or 0) + 1] or M.SK_RCOL[1]
     local big = arcCard(D, k, 92, 136, {}); big.Position = UDim2.new(0, 12, 0, 12)
     local nm = txt(D, k.name, 20, UDim2.new(0, 114, 0, 12), UDim2.new(1, -124, 0, 26), Color3.new(1, 1, 1), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
     txt(D, string.format("%s · Lv %d / %d", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20), 14, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 18), rcol, M.FONT)
-    local tags = { k.basic and "기본 공격" or "주문", d.dtype == "mag" and "마법" or (d.dtype == "phys" and "물리" or "보조") }
+    local tags = { k.basic and "Basic Attack" or "Spell", d.dtype == "mag" and "Arcana" or (d.dtype == "phys" and "Physical" or "Support") }
     if k.elem and ELEM_NAME[k.elem] then tags[#tags + 1] = ELEM_NAME[k.elem] end
     txt(D, table.concat(tags, " · "), 13, UDim2.new(0, 114, 0, 60), UDim2.new(1, -124, 0, 18), Color3.fromRGB(190, 175, 210))
     -- 수치 (2열)
     local G2 = mk("Frame", { Position = UDim2.new(0, 114, 0, 82), Size = UDim2.new(1, -124, 0, 66), BackgroundTransparency = 1 }, D)
     mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 20), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, G2)
     local function stat(i, label, val, col) local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, G2); txt(f, label, 11, UDim2.new(), UDim2.new(1, 0, 0, 10), Color3.fromRGB(160, 145, 180)); txt(f, val, 13, UDim2.new(0, 0, 0, 9), UDim2.new(1, 0, 0, 12), col or Color3.new(1, 1, 1), M.FONT) end
-    stat(1, "초당 피해", k.dps and n(k.dps) or "–", Color3.fromRGB(255, 200, 110))
-    stat(2, "1회 위력", k.mult and string.format("%d%%", math.floor(k.mult * 100 + 0.5)) or "–")
-    stat(3, "쿨타임", k.cd and string.format("%.1f초", k.cd) or "–")
-    stat(4, "사거리", k.range and string.format("%d칸", k.range) or "–")
-    stat(5, "범위", k.area or "–")
-    stat(6, "마나", (k.mana or 0) > 0 and tostring(k.mana) or "없음")
+    stat(1, "DPS", k.dps and n(k.dps) or "–", Color3.fromRGB(255, 200, 110))
+    stat(2, "Power per cast", k.mult and string.format("%d%%", math.floor(k.mult * 100 + 0.5)) or "–")
+    stat(3, "Cooldown", k.cd and string.format("%.1fs", k.cd) or "–")
+    stat(4, "Range", k.range and string.format("%d tiles", k.range) or "–")
+    stat(5, "Area", k.area or "–")
+    stat(6, "Mana", (k.mana or 0) > 0 and tostring(k.mana) or "None")
     -- 설명
     local dbox = mk("Frame", { Position = UDim2.new(0, 12, 0, 156), Size = UDim2.new(1, -24, 0, 120), BackgroundColor3 = Color3.fromRGB(24, 14, 32) }, D); corner(dbox, 6); mk("UIStroke", { Color = Color3.fromRGB(110, 80, 150), Thickness = 1, Transparency = 0.3 }, dbox)
     local fx = {}
-    local BN = { boss = "보스에게", elite = "정예에게", ranged = "원거리 몹에게", normal = "일반 몹에게" }
-    for key, v in pairs(k.bonus or {}) do if BN[key] and v ~= 0 then fx[#fx + 1] = string.format("%s 피해 +%d%%", BN[key], math.floor(v * 100 + 0.5)) end end
-    if (k.hits or 1) > 1 then fx[#fx + 1] = string.format("%d번 연속 타격", k.hits) end
-    if k.count then fx[#fx + 1] = string.format("%d발", k.count) end
-    if k.jumps then fx[#fx + 1] = string.format("%d번 튐", k.jumps) end
-    if k.dur then fx[#fx + 1] = string.format("%.1f초 지속", k.dur) end
-    if (k.lifesteal or 0) > 0 then fx[#fx + 1] = string.format("생명력 흡수 %d%%", math.floor(k.lifesteal * 100 + 0.5)) end
-    for _, st in ipairs({ { "bleed", "출혈" }, { "poison", "중독" }, { "ignite", "점화" } }) do if (k[st[1]] or 0) > 0 then fx[#fx + 1] = string.format("%s 확률 %d%%", st[2], math.floor(math.min(1, k[st[1]]) * 100 + 0.5)) end end
-    if (k.chill or 0) > 0 then fx[#fx + 1] = string.format("둔화 %.1f초", k.chill) end
-    if (k.power or 0) > 0 then fx[#fx + 1] = string.format("효과 %d%%", math.floor(k.power * 100 + 0.5)) end
-    local body = (d.desc or "") .. (#fx > 0 and ("\n\n• " .. table.concat(fx, "\n• ")) or "") .. (k.rune and ("\n\n룬: " .. tostring(k.rune)) or "")
+    local BN = { boss = "vs Bosses", elite = "vs Elites", ranged = "vs Ranged", normal = "vs Normal" }
+    for key, v in pairs(k.bonus or {}) do if BN[key] and v ~= 0 then fx[#fx + 1] = string.format("%s +%d%% damage", BN[key], math.floor(v * 100 + 0.5)) end end
+    if (k.hits or 1) > 1 then fx[#fx + 1] = string.format("%d consecutive hits", k.hits) end
+    if k.count then fx[#fx + 1] = string.format("%d shots", k.count) end
+    if k.jumps then fx[#fx + 1] = string.format("Jumps %d times", k.jumps) end
+    if k.dur then fx[#fx + 1] = string.format("Lasts %.1fs", k.dur) end
+    if (k.lifesteal or 0) > 0 then fx[#fx + 1] = string.format("Life steal %d%%", math.floor(k.lifesteal * 100 + 0.5)) end
+    for _, st in ipairs({ { "bleed", "Bleed" }, { "poison", "Poison" }, { "ignite", "Ignite" } }) do if (k[st[1]] or 0) > 0 then fx[#fx + 1] = string.format("%s chance %d%%", st[2], math.floor(math.min(1, k[st[1]]) * 100 + 0.5)) end end
+    if (k.chill or 0) > 0 then fx[#fx + 1] = string.format("Slow %.1fs", k.chill) end
+    if (k.power or 0) > 0 then fx[#fx + 1] = string.format("Effect %d%%", math.floor(k.power * 100 + 0.5)) end
+    local body = (d.desc or "") .. (#fx > 0 and ("\n\n• " .. table.concat(fx, "\n• ")) or "") .. (k.rune and ("\n\nRune: " .. tostring(k.rune)) or "")
     local ds = txt(dbox, body, 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
     -- 버튼
     local ab = mk("Frame", { Position = UDim2.new(0, 10, 1, -96), Size = UDim2.new(1, -20, 0, 46), BackgroundTransparency = 1 }, D)
     mk("UIGridLayout", { CellSize = UDim2.new(0, 84, 0, 40), CellPadding = UDim2.new(0, 6, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
-    for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("%d번 칸에", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
-    if k.slot == 0 then M.btn(ab, "분해", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "분해 · 아르카나 조각을 얻었습니다" end end).LayoutOrder = 20 end
+    for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("To Slot %d", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
+    if k.slot == 0 then M.btn(ab, "Dismantle", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "Salvaged · gained Arcana Shards" end end).LayoutOrder = 20 end
     if k.slot > 0 and d.slot ~= "passive" then   -- 대상 규칙: 누를 때마다 다음 규칙
       local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
-      local RULE_NAME = { front = "앞열", auto = "오토", boss = "보스 우선", ranged = "원거리 우선", elite = "정예 우선", normal = "일반 우선" }
+      local RULE_NAME = { front = "Front Row", auto = "Auto", boss = "Boss First", ranged = "Ranged First", elite = "Elite First", normal = "Normal First" }
       local cur = k.rule or "front"; local nxt = RULE[(table.find(RULE, cur) or 1) % #RULE + 1]
-      local rb = M.btn(D, string.format("공격 대상: %s  (눌러서 바꾸기)", RULE_NAME[cur] or cur), UDim2.new(1, -20, 0, 34), M.BTN.gold, function()
+      local rb = M.btn(D, string.format("Target: %s  (tap to change)", RULE_NAME[cur] or cur), UDim2.new(1, -20, 0, 34), M.BTN.gold, function()
         local e = C.rpc:InvokeServer("equipskill", { slot = k.slot, uid = k.uid, rule = nxt }); if e.summary then C.setSummary(e.summary) end
         if e.err then C.msg.Text = tostring(e.err) else k.rule = nxt; fillDetail() end   -- 창 전체를 다시 그리지 않고 이 칸만 (깜빡임 없음)
       end)
@@ -660,7 +660,7 @@ end
 -- 전체 노드가 처음부터 보인다 (안 열린 곳은 어둡게) · 주요/핵심은 아이콘과 이름이 늘 보임 · 찍을 수 있는 곳은 빛남 · 검색 · 길 미리보기 · 효과 합계
 local ARM = { phys = Color3.fromRGB(235, 95, 75), mag = Color3.fromRGB(140, 125, 255), wealth = Color3.fromRGB(240, 190, 60), def = Color3.fromRGB(110, 205, 125),
   elem = Color3.fromRGB(255, 180, 70), mana = Color3.fromRGB(90, 200, 230), skill = Color3.fromRGB(220, 130, 255), util = Color3.fromRGB(230, 230, 150), pierce = Color3.fromRGB(255, 120, 190), bridge = Color3.fromRGB(180, 180, 190) }
-local ARM_NAME = { phys = "물리", mag = "마법", wealth = "재화", def = "방어" }
+local ARM_NAME = { phys = "Physical", mag = "Arcana", wealth = "Fortune", def = "DEF" }
 local SIZE = { small = 18, bridge = 16, filler = 14, notable = 36, key = 54 }
 local passSel, passFind, passFlow = nil, "", nil
 local passPos, passZoom = nil, 1   -- 트리 보기 위치 · 확대 (다시 그려도 유지)
@@ -718,14 +718,14 @@ function M.pass()
   -- 위: 포인트 · 세트 · 검색 · 자동 배분 · 초기화
   local head = mk("Frame", { Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1 }, A)
   local ptL = txt(head, "", 18, UDim2.new(0, 4, 0, 8), UDim2.new(0, 200, 0, 26), Color3.fromRGB(255, 220, 120), M.FONT)
-  M.setTabs(head, UDim2.new(0, 200, 0, 6), UDim2.new(0, 142, 0, 28), "pass", "세트", function() M.pass() end)
-  local sb = mk("TextBox", { Position = UDim2.new(0, 352, 0, 6), Size = UDim2.new(0, 170, 0, 28), BackgroundColor3 = Color3.fromRGB(24, 18, 16), Text = passFind, PlaceholderText = "검색 (예: 치명)", ClearTextOnFocus = false,
+  M.setTabs(head, UDim2.new(0, 200, 0, 6), UDim2.new(0, 142, 0, 28), "pass", "Set", function() M.pass() end)
+  local sb = mk("TextBox", { Position = UDim2.new(0, 352, 0, 6), Size = UDim2.new(0, 170, 0, 28), BackgroundColor3 = Color3.fromRGB(24, 18, 16), Text = passFind, PlaceholderText = "Search (e.g. crit)", ClearTextOnFocus = false,
     TextColor3 = Color3.new(1, 1, 1), PlaceholderColor3 = Color3.fromRGB(140, 130, 120), Font = M.FONT, TextSize = 14 }, head); corner(sb, 6); stroke(sb, Color3.fromRGB(120, 92, 48), 1.5)
   sb.FocusLost:Connect(function() passFind = sb.Text; refresh() end)
   local hb = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 4), Size = UDim2.new(0, 230, 0, 32), BackgroundTransparency = 1 }, head)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6) }, hb)
-  M.btn(hb, "자동 배분", UDim2.new(0, 110, 1, 0), M.BTN.green, function() call("autopass", nil, function() local e = C.rpc:InvokeServer("passview"); if e.view then setView(e.view) end end) end)
-  M.btn(hb, "초기화", UDim2.new(0, 100, 1, 0), M.BTN.red, function() call("resetpass", nil, function() passSel = nil; setView({ taken = {}, left = v.points, points = v.points }) end) end)
+  M.btn(hb, "Auto Allocate", UDim2.new(0, 110, 1, 0), M.BTN.green, function() call("autopass", nil, function() local e = C.rpc:InvokeServer("passview"); if e.view then setView(e.view) end end) end)
+  M.btn(hb, "Reset", UDim2.new(0, 100, 1, 0), M.BTN.red, function() call("resetpass", nil, function() passSel = nil; setView({ taken = {}, left = v.points, points = v.points }) end) end)
   -- 가운데: 트리 — 끌어서 이동 · 마우스 휠로 확대/축소 (스크롤 막대 없음)
   local frame = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, -238, 1, -44)); frame.ClipsDescendants = true
   local S, PAD, HALF = 0.16, 60, 6300
@@ -799,12 +799,12 @@ function M.pass()
   local nodeUI = {}
   local function take(d)
     local path, cost = cheapestPath(BY, taken, d.id)
-    if not path then C.toast("이어진 길이 없습니다"); return end
-    if cost > v.left then C.toast("포인트가 부족합니다"); return end
-    call("passtake", d.id, function(e) if (e.n or 0) > 0 then passFlow = path; C.toast(string.format("노드 %d개를 찍었습니다", e.n)) else C.toast("포인트가 부족하거나 이어진 길이 없습니다") end end)
+    if not path then C.toast("No connected path"); return end
+    if cost > v.left then C.toast("Not enough points"); return end
+    call("passtake", d.id, function(e) if (e.n or 0) > 0 then passFlow = path; C.toast(string.format("Allocated %d nodes", e.n)) else C.toast("Not enough points, or no connected path") end end)
   end
   local function drop(d)
-    call("passdrop", d.id, function(e) if e.ok then C.toast(string.format("%s 노드를 뺐습니다 (%d점 돌려받음)", NM(d), d.cost or 1)) else C.toast(e.err or "뺄 수 없습니다", Color3.fromRGB(255, 140, 120)) end end)
+    call("passdrop", d.id, function(e) if e.ok then C.toast(string.format("Removed %s (%d pt refunded)", NM(d), d.cost or 1)) else C.toast(e.err or "Cannot remove", Color3.fromRGB(255, 140, 120)) end end)
   end
   for _, d in ipairs(Passives.PASSIVES) do
     local x, y = P(d.x, d.y); local sz = SIZE[d.kind] or 16
@@ -825,7 +825,7 @@ function M.pass()
       n.label.ZIndex = 6; mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, n.label)
     end
     b.InputBegan:Connect(dragStart)
-    b.MouseEnter:Connect(function() tipShow({ title = string.format("%s  (%d점)", NM(d), d.cost or 1), color = col, lines = { TX(d), taken[d.id] and "찍음 · 클릭(또는 우클릭)하면 뺍니다" or (passSel == d.id and "한 번 더 누르면 찍습니다" or nil) } }) end)
+    b.MouseEnter:Connect(function() tipShow({ title = string.format("%s  (%d pt)", NM(d), d.cost or 1), color = col, lines = { TX(d), taken[d.id] and "Allocated · click (or right-click) to remove" or (passSel == d.id and "Click again to allocate" or nil) } }) end)
     b.MouseLeave:Connect(tipHide)
     b.MouseButton1Click:Connect(function()
       if dragMoved then return end; tipHide()
@@ -837,7 +837,7 @@ function M.pass()
     nodeUI[d.id] = n
   end
   -- 오른쪽: 효과 합계 · 고른 노드 정보 (refresh 때 내용만 다시 채움)
-  local R = box(A, UDim2.new(1, -230, 0, 44), UDim2.new(0, 230, 1, -44), "찍은 효과 합계")
+  local R = box(A, UDim2.new(1, -230, 0, 44), UDim2.new(0, 230, 1, -44), "Allocated Total")
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 34), Size = UDim2.new(1, -16, 1, -196), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 4 }, R)
   local I = mk("Frame", { Position = UDim2.new(0, 8, 1, -158), Size = UDim2.new(1, -16, 0, 150), BackgroundTransparency = 1 }, R)
   local function sumPanel()
@@ -849,7 +849,7 @@ function M.pass()
       rows[#rows + 1] = { LB(k), k:sub(-4) == "More" and string.format("+%g%%", math.floor((val - 1) * 1000 + 0.5) / 10) or (math.abs(val) < 5 and string.format("%s%g%%", val >= 0 and "+" or "", math.floor(val * 1000 + 0.5) / 10) or string.format("+%g", val)) }
     end
     table.sort(rows, function(a, b) return a[1] < b[1] end)
-    if #rows == 0 then txt(sc, "아직 찍은 노드가 없습니다", 13, UDim2.new(), UDim2.new(1, 0, 0, 20), Color3.fromRGB(170, 160, 150)) end
+    if #rows == 0 then txt(sc, "No nodes allocated yet", 13, UDim2.new(), UDim2.new(1, 0, 0, 20), Color3.fromRGB(170, 160, 150)) end
     for i, L in ipairs(rows) do
       local f = mk("Frame", { Size = UDim2.new(1, -4, 0, 18), BackgroundTransparency = 1, LayoutOrder = i }, sc)
       noTr(txt(f, L[1], 13, UDim2.new(), UDim2.new(0.65, 0, 1, 0), Color3.fromRGB(220, 210, 200)))
@@ -858,13 +858,13 @@ function M.pass()
   end
   local function infoPanel(sel, path, pathCost)
     for _, ch in ipairs(I:GetChildren()) do ch:Destroy() end
-    if not sel then txt(I, "노드를 누르면 효과와 가는 길(필요한 점수)이 나옵니다. 한 번 더 누르면 찍고, 찍은 노드를 누르면(우클릭도) 뺍니다.", 12, UDim2.new(), UDim2.new(1, 0, 1, 0), Color3.fromRGB(180, 170, 160)); return end
+    if not sel then txt(I, "Click a node to see its effect and path cost. Click again to allocate; click (or right-click) an allocated node to remove it.", 12, UDim2.new(), UDim2.new(1, 0, 1, 0), Color3.fromRGB(180, 170, 160)); return end
     noTr(txt(I, string.format(PLang.lang == "en" and "%s  (%d pt)" or "%s  (%d점)", NM(sel), sel.cost or 1), 15, UDim2.new(), UDim2.new(1, 0, 0, 20), ARM[sel.arm] or Color3.new(1, 1, 1), M.FONT))
     noTr(txt(I, TX(sel), 12, UDim2.new(0, 0, 0, 20), UDim2.new(1, 0, 0, 34), Color3.fromRGB(230, 225, 215)))
-    if taken[sel.id] then local b = M.btn(I, "빼기 · 포인트 돌려받기", UDim2.new(1, 0, 0, 34), M.BTN.red, function() drop(sel) end); b.Position = UDim2.new(0, 0, 1, -36); return end
-    if not path then txt(I, "이어진 길이 없습니다", 13, UDim2.new(0, 0, 1, -30), UDim2.new(1, 0, 0, 26), Color3.fromRGB(255, 130, 120)); return end
+    if taken[sel.id] then local b = M.btn(I, "Remove · Refund point", UDim2.new(1, 0, 0, 34), M.BTN.red, function() drop(sel) end); b.Position = UDim2.new(0, 0, 1, -36); return end
+    if not path then txt(I, "No connected path", 13, UDim2.new(0, 0, 1, -30), UDim2.new(1, 0, 0, 26), Color3.fromRGB(255, 130, 120)); return end
     local can = pathCost <= v.left
-    local b = M.btn(I, string.format("찍기 · %d칸 %d점", #path, pathCost), UDim2.new(1, 0, 0, 34), can and M.BTN.green or M.BTN.gray, function() take(sel) end); b.Position = UDim2.new(0, 0, 1, -36)
+    local b = M.btn(I, string.format("Allocate · %d nodes %d pts", #path, pathCost), UDim2.new(1, 0, 0, 34), can and M.BTN.green or M.BTN.gray, function() take(sel) end); b.Position = UDim2.new(0, 0, 1, -36)
     -- 길 전체를 찍으면: 능력치 합계 (여러 칸이면 모두 더해서) + 예상 전투력 변화
     if #path > 1 then
       local gain = {}
@@ -872,19 +872,19 @@ function M.pass()
       local parts = {}
       for k, val in pairs(gain) do parts[#parts + 1] = LB(k) .. " " .. (k:sub(-4) == "More" and string.format("+%g%%", math.floor((val - 1) * 1000 + 0.5) / 10) or (math.abs(val) < 5 and string.format("%s%g%%", val >= 0 and "+" or "", math.floor(val * 1000 + 0.5) / 10) or string.format("+%g", val))) end
       table.sort(parts)
-      noTr(txt(I, string.format("길 %d칸 합계: %s", #path, table.concat(parts, " · ")), 11, UDim2.new(0, 0, 0, 54), UDim2.new(1, 0, 0, 30), Color3.fromRGB(150, 230, 160))).TextWrapped = true
+      noTr(txt(I, string.format("Path of %d nodes total: %s", #path, table.concat(parts, " · ")), 11, UDim2.new(0, 0, 0, 54), UDim2.new(1, 0, 0, 30), Color3.fromRGB(150, 230, 160))).TextWrapped = true
     end
-    local pl = txt(I, "예상 전투력 계산 중…", 12, UDim2.new(0, 0, 0, 88), UDim2.new(1, 0, 0, 18), Color3.fromRGB(255, 210, 120), M.FONT)
+    local pl = txt(I, "Calculating power…", 12, UDim2.new(0, 0, 0, 88), UDim2.new(1, 0, 0, 18), Color3.fromRGB(255, 210, 120), M.FONT)
     task.spawn(function()
       local ok, e = pcall(function() return C.rpc:InvokeServer("passpreview", sel.id) end)
       if not pl.Parent then return end
-      if ok and e and e.pv then local d = e.pv.after - e.pv.before; pl.Text = string.format("찍으면 전투력 %s → %s  (%s%s)", n(e.pv.before), n(e.pv.after), d >= 0 and "+" or "", n(d)); pl:SetAttribute("NoTr", nil)
+      if ok and e and e.pv then local d = e.pv.after - e.pv.before; pl.Text = string.format("Power after: %s → %s  (%s%s)", n(e.pv.before), n(e.pv.after), d >= 0 and "+" or "", n(d)); pl:SetAttribute("NoTr", nil)
       else pl.Text = "" end
     end)
   end
   refresh = function()
     if not sf.Parent then return end
-    ptL.Text = string.format("남은 포인트 %d / %d", v.left, v.points)
+    ptL.Text = string.format("Points Left %d / %d", v.left, v.points)
     local sel = passSel and BY[passSel]
     local path, pathCost
     if sel and not taken[sel.id] then path, pathCost = cheapestPath(BY, taken, sel.id) end
@@ -960,7 +960,7 @@ local function rowCard(o)
   if o.emoji or o.art then local t = M.tile(f, 52, { art = o.art, emoji = o.emoji, color = o.color or M.GOLD }); t.Position = UDim2.new(0, 16, 0.5, -26); x = 80 end
   local tl = txt(f, o.title, 16, UDim2.new(0, x, 0, 20), UDim2.new(1, -x - 160, 0, 20), o.done and Color3.fromRGB(170, 160, 140) or Color3.fromRGB(255, 225, 140), M.FONT); tl.TextTruncate = Enum.TextTruncate.AtEnd
   if o.desc then local d = txt(f, o.desc, 13, UDim2.new(0, x, 0, 42), UDim2.new(1, -x - 160, 0, 18), Color3.fromRGB(215, 210, 225)); d.TextTruncate = Enum.TextTruncate.AtEnd end
-  if o.reward then local rw = txt(f, "보상  " .. o.reward, 13, UDim2.new(0, x, 0, 60), UDim2.new(1, -x - 160, 0, 16), Color3.fromRGB(240, 200, 120), M.FONT); rw.TextTruncate = Enum.TextTruncate.AtEnd end
+  if o.reward then local rw = txt(f, "Reward  " .. o.reward, 13, UDim2.new(0, x, 0, 60), UDim2.new(1, -x - 160, 0, 16), Color3.fromRGB(240, 200, 120), M.FONT); rw.TextTruncate = Enum.TextTruncate.AtEnd end
   if o.frac then pbar(f, UDim2.new(0, x, 1, -22), UDim2.new(1, -x - 170, 0, 9), o.frac, o.done and Color3.fromRGB(110, 110, 120) or (o.ready and Color3.fromRGB(240, 190, 70) or Color3.fromRGB(90, 200, 110))) end
   if o.btn then local b = M.btn(f, o.btn, UDim2.new(0, 128, 0, 40), o.btnColor or M.BTN.green, o.click); b.AnchorPoint = Vector2.new(1, 0.5); b.Position = UDim2.new(1, -12, 0.5, 0); b.Active = o.click ~= nil; b.AutoButtonColor = o.click ~= nil end
   return f
@@ -977,15 +977,15 @@ function M.forge()
   local A = area(392)
   -- 위: 보유 재화 (강화 · 재굴림 · 구슬 · 인장에 쓰는 것)
   local top = mk("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = Color3.fromRGB(16, 12, 12), BackgroundTransparency = 0.1 }, A); corner(top, 6); stroke(top, Color3.fromRGB(120, 92, 48), 1.5)
-  txt(top, "보유", 13, UDim2.new(0, 10, 0, 0), UDim2.new(0, 40, 1, 0), Color3.fromRGB(190, 170, 140), M.FONT).TextYAlignment = Enum.TextYAlignment.Center
-  cost(top, { { "i_gold", s.gold or 0, Color3.fromRGB(255, 220, 120), "골드" }, { "i_ore", s.ore or 0, Color3.fromRGB(200, 220, 255), "강화석" }, { "i_chaos", s.orbC or 0, Color3.fromRGB(220, 170, 255), "혼돈" },
-    { "i_seal", s.sockTix or 0, Color3.fromRGB(190, 160, 255), "인장" }, { "i_stone", s.stones or 0, Color3.fromRGB(160, 220, 255), "돌" } }, UDim2.new(0, 46, 0, 3))
+  txt(top, "Owned", 13, UDim2.new(0, 10, 0, 0), UDim2.new(0, 40, 1, 0), Color3.fromRGB(190, 170, 140), M.FONT).TextYAlignment = Enum.TextYAlignment.Center
+  cost(top, { { "i_gold", s.gold or 0, Color3.fromRGB(255, 220, 120), "Gold" }, { "i_ore", s.ore or 0, Color3.fromRGB(200, 220, 255), "Upgrade Stone" }, { "i_chaos", s.orbC or 0, Color3.fromRGB(220, 170, 255), "Chaos" },
+    { "i_seal", s.sockTix or 0, Color3.fromRGB(190, 160, 255), "Seals" }, { "i_stone", s.stones or 0, Color3.fromRGB(160, 220, 255), "Stone" } }, UDim2.new(0, 46, 0, 3))
   -- 왼쪽: 착용 장비 목록 (칸마다 부위 · 티어 · 강화 · 이름)
   local L = box(A, UDim2.new(0, 0, 0, 36), UDim2.new(0, 250, 1, -36))
   -- 착용 / 가방 전환 (가방 장비도 바로 강화)
   local sw = mk("Frame", { Position = UDim2.new(0, 6, 0, 4), Size = UDim2.new(1, -12, 0, 26), BackgroundTransparency = 1 }, L)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sw)
-  for i, t in ipairs({ { false, "착용 장비" }, { true, "가방 장비" } }) do local b = M.btn(sw, t[2], UDim2.new(0.5, -2, 1, 0), (forgeBag == t[1]) and M.BTN.gold or M.BTN.gray, function() forgeBag = t[1]; forgeScroll = 0; M.forge() end); b.LayoutOrder = i; b.TextSize = 13 end
+  for i, t in ipairs({ { false, "Equipped Gear" }, { true, "Bag Gear" } }) do local b = M.btn(sw, t[2], UDim2.new(0.5, -2, 1, 0), (forgeBag == t[1]) and M.BTN.gold or M.BTN.gray, function() forgeBag = t[1]; forgeScroll = 0; M.forge() end); b.LayoutOrder = i; b.TextSize = 13 end
   local sc0 = mk("ScrollingFrame", { Position = UDim2.new(0, 6, 0, 34), Size = UDim2.new(1, -12, 1, -40), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 4 }, L)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc0)
   -- 스크롤 위치 유지 (장비를 눌러도 맨 위로 튀지 않게)
@@ -995,7 +995,7 @@ function M.forge()
     for _ = 1, 60 do if not sc0.Parent then return end; if sc0.AbsoluteCanvasSize.Y > want + 10 and sc0.Visible and sc0.AbsoluteSize.Y > 0 then break end; game:GetService("RunService").Heartbeat:Wait() end
     if sc0.Parent then sc0.CanvasPosition = Vector2.new(0, want) end; restored = true
   end)
-  if #rows == 0 then txt(L, forgeBag and "가방에 장비가 없습니다." or "착용한 장비가 없습니다. 먼저 [장비]에서 장착하세요.", 13, UDim2.new(0, 10, 0, 40), UDim2.new(1, -20, 0, 60), Color3.fromRGB(190, 185, 210)).TextWrapped = true; return end
+  if #rows == 0 then txt(L, forgeBag and "No gear in your bag." or "You have no gear equipped. Equip some in [Gear] first.", 13, UDim2.new(0, 10, 0, 40), UDim2.new(1, -20, 0, 60), Color3.fromRGB(190, 185, 210)).TextWrapped = true; return end
   local sel
   for _, it in ipairs(rows) do if it.uid == forgeSel then sel = it end end
   sel = sel or rows[1]; forgeSel = sel.uid
@@ -1014,11 +1014,11 @@ function M.forge()
   local function res(e) if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.msg or e.err or ""); M.forge() end
   -- 강화
   local E = mk("Frame", { Position = UDim2.new(0, 12, 0, 36), Size = UDim2.new(1, -24, 0, 52), BackgroundColor3 = Color3.fromRGB(28, 20, 16) }, R); corner(E, 8)
-  txt(E, string.format("강화 +%d", sel.enh), 22, UDim2.new(0, 12, 0, 12), UDim2.new(0, 120, 0, 28), Color3.fromRGB(255, 220, 120), M.FONT)
+  txt(E, string.format("Enhance +%d", sel.enh), 22, UDim2.new(0, 12, 0, 12), UDim2.new(0, 120, 0, 28), Color3.fromRGB(255, 220, 120), M.FONT)
   cost(E, { { "i_gold", sel.enhGold, (s.gold or 0) >= sel.enhGold and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) }, { "i_ore", sel.enhOre, (s.ore or 0) >= sel.enhOre and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) } }, UDim2.new(0, 130, 0, 14))
-  local eb = M.btn(E, string.format("+%d 강화", sel.enh + 1), UDim2.new(0, 120, 0, 38), M.BTN.green, function() res(C.rpc:InvokeServer("enhance", sel.uid)) end); eb.AnchorPoint = Vector2.new(1, 0.5); eb.Position = UDim2.new(1, -8, 0.5, 0)
+  local eb = M.btn(E, string.format("Enhance to +%d", sel.enh + 1), UDim2.new(0, 120, 0, 38), M.BTN.green, function() res(C.rpc:InvokeServer("enhance", sel.uid)) end); eb.AnchorPoint = Vector2.new(1, 0.5); eb.Position = UDim2.new(1, -8, 0.5, 0)
   -- 옵션 (티어 표시 · 재굴림)
-  txt(R, "옵션", 15, UDim2.new(0, 14, 0, 94), UDim2.new(0, 200, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+  txt(R, "Affixes", 15, UDim2.new(0, 14, 0, 94), UDim2.new(0, 200, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 12, 0, 116), Size = UDim2.new(1, -24, 1, -226), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, R)   -- 아래 구슬 줄까지 꽉
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   for i, a in ipairs(sel.affixes or {}) do
@@ -1026,24 +1026,24 @@ function M.forge()
     local tc = a.t and (M.TIER_COL[a.t] or M.TIER_COL[6]) or Color3.fromRGB(90, 90, 90)
     local bd = mk("TextLabel", { Size = UDim2.new(0, 30, 0, 18), Position = UDim2.new(0, 6, 0.5, -9), BackgroundColor3 = tc, Text = a.t and ("T" .. a.t) or "–", TextSize = 12, Font = M.FONT, TextColor3 = Color3.fromRGB(20, 12, 8) }, row); corner(bd, 4)
     txt(row, a.text, 14, UDim2.new(0, 42, 0, 6), UDim2.new(1, -260, 0, 20), Color3.fromRGB(235, 228, 215))
-    if a.locked then txt(row, "🔒 잠김", 14, UDim2.new(1, -100, 0, 6), UDim2.new(0, 92, 0, 20), Color3.fromRGB(170, 165, 150), M.FONT)
+    if a.locked then txt(row, "🔒 Locked", 14, UDim2.new(1, -100, 0, 6), UDim2.new(0, 92, 0, 20), Color3.fromRGB(170, 165, 150), M.FONT)
     else
       cost(row, { { "i_gold", sel.rerollGold }, { "i_ore", sel.rerollOre } }, UDim2.new(1, -212, 0, 4))
-      local b = M.btn(row, "재굴림", UDim2.new(0, 80, 0, 26), M.BTN.blue, function() res(C.rpc:InvokeServer("reroll", { uid = sel.uid, idx = i - 1 })) end); b.Position = UDim2.new(1, -84, 0, 3)
+      local b = M.btn(row, "Reroll", UDim2.new(0, 80, 0, 26), M.BTN.blue, function() res(C.rpc:InvokeServer("reroll", { uid = sel.uid, idx = i - 1 })) end); b.Position = UDim2.new(1, -84, 0, 3)
     end
   end
   -- 구슬
   local O = mk("Frame", { Position = UDim2.new(0, 12, 1, -100), Size = UDim2.new(1, -24, 0, 40), BackgroundTransparency = 1 }, R)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, O)
-  local b1 = M.btn(O, string.format("혼돈 구슬 (%d) · 옵션 수치 다시 굴리기", s.orbC or 0), UDim2.new(0, 320, 0, 38), M.BTN.purple, function() res(C.rpc:InvokeServer("chaos", sel.uid)) end); b1.LayoutOrder = 1
+  local b1 = M.btn(O, string.format("Chaos Orb (%d) · Reroll affix values", s.orbC or 0), UDim2.new(0, 320, 0, 38), M.BTN.purple, function() res(C.rpc:InvokeServer("chaos", sel.uid)) end); b1.LayoutOrder = 1
   -- 소켓: 빈 칸 · [돌 끼우기]를 누르면 돌 목록만 뜬다 (이 장비 · 그 칸에 바로 끼움)
   local So = mk("Frame", { Position = UDim2.new(0, 12, 1, -52), Size = UDim2.new(1, -24, 0, 44), BackgroundTransparency = 1 }, R)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, So)
-  local sl = txt(So, string.format("소켓 %d칸", #(sel.sockets or {})), 15, UDim2.new(), UDim2.new(0, 72, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT); sl.LayoutOrder = 0
+  local sl = txt(So, string.format("Sockets: %d", #(sel.sockets or {})), 15, UDim2.new(), UDim2.new(0, 72, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT); sl.LayoutOrder = 0
   local function pickStone(idx)   -- 돌 고르기 창 (이 장비의 idx 번 소켓)
     local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Text = "", AutoButtonColor = false, ZIndex = 30 }, R)
     local P = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.9, 0, 0.9, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 11), ZIndex = 31 }, ov); corner(P, 8); stroke(P, M.GOLD, 2)
-    local t = txt(P, string.format("%s · %d번 소켓에 끼울 돌", Items.SLOT_NAME[sel.slot] or sel.slot, idx), 16, UDim2.new(0, 14, 0, 8), UDim2.new(1, -70, 0, 22), Color3.fromRGB(255, 225, 140), M.FONT); t.ZIndex = 32
+    local t = txt(P, string.format("Stone for %s · socket %d", Items.SLOT_NAME[sel.slot] or sel.slot, idx), 16, UDim2.new(0, 14, 0, 8), UDim2.new(1, -70, 0, 22), Color3.fromRGB(255, 225, 140), M.FONT); t.ZIndex = 32
     local x = M.btn(P, "X", UDim2.new(0, 34, 0, 30), M.BTN.red, function() ov:Destroy() end); x.Position = UDim2.new(1, -42, 0, 6); x.ZIndex = 32
     local lst = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 42), Size = UDim2.new(1, -20, 1, -50), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5, ZIndex = 32 }, P)
     mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
@@ -1058,9 +1058,9 @@ function M.forge()
           end); b.LayoutOrder = st.hi == 1 and 0 or 1; b.ZIndex = 33; b.TextSize = 15
         else unknown += 1 end
       end
-      if n == 0 then local l = txt(lst, "끼울 수 있는 돌이 없습니다.", 14, UDim2.new(), UDim2.new(1, -8, 0, 30), Color3.fromRGB(200, 190, 175)); l.ZIndex = 33; l.LayoutOrder = 5 end
+      if n == 0 then local l = txt(lst, "No stones to socket.", 14, UDim2.new(), UDim2.new(1, -8, 0, 30), Color3.fromRGB(200, 190, 175)); l.ZIndex = 33; l.LayoutOrder = 5 end
       if unknown > 0 then
-        local b = M.btn(lst, string.format("확인하지 않은 돌 %d개 → [돌] 탭에서 확인", unknown), UDim2.new(1, -8, 0, 32), M.BTN.gray, function() ov:Destroy(); C.openTab("stones") end); b.LayoutOrder = 9; b.ZIndex = 33; b.TextSize = 13
+        local b = M.btn(lst, string.format("%d unrevealed stones → reveal in the [Stones] tab", unknown), UDim2.new(1, -8, 0, 32), M.BTN.gray, function() ov:Destroy(); C.openTab("stones") end); b.LayoutOrder = 9; b.ZIndex = 33; b.TextSize = 13
       end
     end)
   end
@@ -1068,14 +1068,14 @@ function M.forge()
   for i, sk in ipairs(sel.sockets or {}) do
     if not sk and not firstEmpty then firstEmpty = i end
     local t = M.tile(So, 40, { order = i, art = sk and "i_stone" or nil, emoji = sk and nil or "＋", color = sk and Color3.fromRGB(160, 220, 255) or Color3.fromRGB(110, 96, 80), dim = not sk,
-      tip = { title = sk and tostring(sk) or "빈 소켓 · 눌러서 돌 끼우기", lines = sk and { "누르면 이 돌을 삭제할 수 있습니다 (회수 불가)" } or {} },
-      click = sk and function() C.prompt(string.format("%d번 소켓의 돌(%s)을 삭제할까요? 회수할 수 없습니다. 삭제하려면 '삭제'라고 입력하세요.", i, tostring(sk)), "삭제", function(v) if v == "삭제" or v:lower() == "delete" then res(C.rpc:InvokeServer("sockdel", { uid = sel.uid, idx = i })) end end) end
+      tip = { title = sk and tostring(sk) or "Empty socket · click to insert a stone", lines = sk and { "Click to destroy this stone (cannot be recovered)" } or {} },
+      click = sk and function() C.prompt(string.format("Delete the stone in socket %d (%s)? It cannot be recovered. Type 'delete' to confirm.", i, tostring(sk)), "Remove", function(v) if v == "Remove" or v:lower() == "delete" then res(C.rpc:InvokeServer("sockdel", { uid = sel.uid, idx = i })) end end) end
         or function() pickStone(i) end })
   end
-  if firstEmpty then local gb = M.btn(So, "돌 끼우기", UDim2.new(0, 110, 0, 38), M.BTN.blue, function() pickStone(firstEmpty) end); gb.LayoutOrder = 99 end
+  if firstEmpty then local gb = M.btn(So, "Socket a Stone", UDim2.new(0, 110, 0, 38), M.BTN.blue, function() pickStone(firstEmpty) end); gb.LayoutOrder = 99 end
   if (sel.rarity or 0) >= 3 then
-    local tb = M.btn(So, string.format("세공의 인장 (%d)", s.sockTix or 0), UDim2.new(0, 170, 0, 38), M.BTN.purple, function()
-      C.prompt("소켓 수를 1~3개 중 무작위로 다시 정합니다. 끼운 돌은 사라집니다. 진행하려면 '사용'이라고 입력하세요.", "사용", function(v) if v == "사용" or v:lower() == "use" then res(C.rpc:InvokeServer("sockroll", sel.uid)) end end)
+    local tb = M.btn(So, string.format("Artisan's Seal (%d)", s.sockTix or 0), UDim2.new(0, 170, 0, 38), M.BTN.purple, function()
+      C.prompt("Rerolls the socket count to 1-3 at random. Socketed stones are lost. Type 'use' to continue.", "Use", function(v) if v == "Use" or v:lower() == "use" then res(C.rpc:InvokeServer("sockroll", sel.uid)) end end)
     end); tb.LayoutOrder = 100
   end
 end
@@ -1088,7 +1088,7 @@ function M.stones()
   if r.err then C.msg.Text = tostring(r.err); return end
   local rows, items = r.rows or {}, r.items or {}
   local A = area(392)
-  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, -300, 1, 0), string.format("돌 보관함 %d개", #rows))
+  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, -300, 1, 0), string.format("Stone Storage (%d)", #rows))
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 64)
   local sel
   for i, st in ipairs(rows) do
@@ -1096,16 +1096,16 @@ function M.stones()
     M.tile(g, 64, { order = i, art = "i_stone", color = st.rev and Color3.fromRGB(160, 220, 255) or (st.hi == 1 and Color3.fromRGB(255, 200, 90) or Color3.fromRGB(150, 150, 170)), tl = st.rev and nil or "?", dim = not st.rev,
       selected = st.uid == stoneSel, click = function() stoneSel = st.uid; M.stones() end })
   end
-  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "돌 정보")
-  if not sel then txt(D, "돌을 누르세요. 확인하지 않은 돌(?)은 먼저 확인해야 옵션이 정해지고, 확인된 돌은 장비의 빈 소켓에 끼울 수 있습니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 90), Color3.fromRGB(190, 185, 210)); return end
+  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "Stone Info")
+  if not sel then txt(D, "Tap a stone. Unrevealed stones (?) must be revealed first to get their stat; revealed stones can be placed into empty sockets on your gear.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 90), Color3.fromRGB(190, 185, 210)); return end
   local function res(e) if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stones() end
   if not sel.rev then
-    txt(D, sel.hi == 1 and "계시의 돌 (확인 전)" or "미확인의 돌", 17, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 24), Color3.fromRGB(255, 225, 140), M.FONT)
-    local b = M.btn(D, "확인하기", UDim2.new(0, 150, 0, 42), M.BTN.green, function() local e = C.rpc:InvokeServer("reveal", sel.uid); if e.ok then C.toast("확인: " .. tostring(e.label)) end; res(e) end); b.Position = UDim2.new(0, 12, 0, 74)
+    txt(D, sel.hi == 1 and "Stone of Revelation (unrevealed)" or "Unidentified Stone", 17, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 24), Color3.fromRGB(255, 225, 140), M.FONT)
+    local b = M.btn(D, "Reveal", UDim2.new(0, 150, 0, 42), M.BTN.green, function() local e = C.rpc:InvokeServer("reveal", sel.uid); if e.ok then C.toast("Confirm: " .. tostring(e.label)) end; res(e) end); b.Position = UDim2.new(0, 12, 0, 74)
     return
   end
-  txt(D, tostring(sel.label or "확인된 돌"), 17, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 44), Color3.fromRGB(160, 220, 255), M.FONT)
-  txt(D, "끼울 장비의 빈 소켓:", 14, UDim2.new(0, 12, 0, 86), UDim2.new(1, -24, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+  txt(D, tostring(sel.label or "Identified Stone"), 17, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 44), Color3.fromRGB(160, 220, 255), M.FONT)
+  txt(D, "Empty sockets on equipped gear:", 14, UDim2.new(0, 12, 0, 86), UDim2.new(1, -24, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 110), Size = UDim2.new(1, -20, 1, -118), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, D)
   mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   local any = false
@@ -1113,11 +1113,11 @@ function M.stones()
     for si, sk in ipairs(it.sockets or {}) do
       if not sk then
         any = true
-        local b = M.btn(sc, string.format("%s · 소켓 %d", Items.SLOT_NAME[it.slot] or it.slot, si), UDim2.new(1, -8, 0, 36), M.BTN.blue, function() res(C.rpc:InvokeServer("socket", { item = it.uid, stone = sel.uid, idx = si })); stoneSel = nil end)
+        local b = M.btn(sc, string.format("%s · Socket %d", Items.SLOT_NAME[it.slot] or it.slot, si), UDim2.new(1, -8, 0, 36), M.BTN.blue, function() res(C.rpc:InvokeServer("socket", { item = it.uid, stone = sel.uid, idx = si })); stoneSel = nil end)
       end
     end
   end
-  if not any then txt(sc, "빈 소켓이 있는 착용 장비가 없습니다.", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
+  if not any then txt(sc, "None of your equipped gear has an empty socket.", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
 end
 
 -- ───────── 스킬 상점 ─────────
@@ -1128,27 +1128,27 @@ function M.shop()
   if r.err then C.msg.Text = tostring(r.err); return end
   local rows = r.rows or {}; local s = C.summary() or {}
   local A = area(392)
-  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, -300, 1, 0), string.format("판매 중인 아르카나 %d개", #rows))
+  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, -300, 1, 0), string.format("Arcana for Sale (%d)", #rows))
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 84)
   local sel
   for i, row in ipairs(rows) do
     if row.id == shopSel then sel = row end
     local col, icon = M.skStyle(row.id)
-    M.tile(g, 84, { order = i, tip = { title = row.name, color = col, lines = { row.desc or "", string.format("가격 %s 골드", n(row.price)) } }, color = col, emoji = icon, label = row.name, br = n(row.price), selected = row.id == shopSel, click = function() shopSel = row.id; M.shop() end })
+    M.tile(g, 84, { order = i, tip = { title = row.name, color = col, lines = { row.desc or "", string.format("Price %s Gold", n(row.price)) } }, color = col, emoji = icon, label = row.name, br = n(row.price), selected = row.id == shopSel, click = function() shopSel = row.id; M.shop() end })
   end
-  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "아르카나 정보")
-  if not sel then txt(D, "아르카나를 눌러 설명을 보고 골드로 구매하세요. 산 아르카나는 [아르카나 정비소]에서 장착합니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 80), Color3.fromRGB(190, 185, 210)); return end
+  local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "Arcana Info")
+  if not sel then txt(D, "Tap a arcana to read about it and buy it with gold. Equip bought arcana at the [Arcana Workshop].", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 80), Color3.fromRGB(190, 185, 210)); return end
   local col = M.skStyle(sel.id); local d = SK_BY[sel.id] or {}
   txt(D, sel.name, 19, UDim2.new(0, 12, 0, 34), UDim2.new(1, -24, 0, 26), col, M.FONT)
   local info = {}
-  if sel.slot == "basic" then info[#info + 1] = "기본 공격" end
-  if d.cd then info[#info + 1] = string.format("쿨타임 %.1f초", d.cd) end
+  if sel.slot == "basic" then info[#info + 1] = "Basic Attack" end
+  if d.cd then info[#info + 1] = string.format("Cooldown %.1fs", d.cd) end
   txt(D, table.concat(info, " · "), 13, UDim2.new(0, 12, 0, 62), UDim2.new(1, -24, 0, 18), Color3.fromRGB(200, 195, 225))
   txt(D, sel.desc or "", 14, UDim2.new(0, 12, 0, 86), UDim2.new(1, -24, 0, 160), Color3.fromRGB(235, 230, 250))
   cost(D, { { "i_gold", sel.price, (s.gold or 0) >= sel.price and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) } }, UDim2.new(0, 12, 1, -92))
-  local b = M.btn(D, "구매", UDim2.new(1, -24, 0, 44), M.BTN.blue, function()
+  local b = M.btn(D, "Buy", UDim2.new(1, -24, 0, 44), M.BTN.blue, function()
     local e = C.rpc:InvokeServer("buy", sel.id); if e.summary then C.setSummary(e.summary) end
-    if e.ok then C.toast(string.format("%s 구매!", sel.name)) else C.msg.Text = tostring(e.err) end; M.shop()
+    if e.ok then C.toast(string.format("Bought %s!", sel.name)) else C.msg.Text = tostring(e.err) end; M.shop()
   end); b.Position = UDim2.new(0, 12, 1, -56)
 end
 
@@ -1162,7 +1162,7 @@ function M.quests()
   local readyN = 0; for _, q in ipairs(rows) do if q.state == "done" then readyN += 1 end end
   if readyN > 1 then   -- 모두 받기
     local f = mk("Frame", { Size = UDim2.new(1, -16, 0, 44), BackgroundTransparency = 1, LayoutOrder = -1 }, C.list)
-    local b = M.btn(f, string.format("보상 모두 받기 (%d)", readyN), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
+    local b = M.btn(f, string.format("Claim All (%d)", readyN), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
       for _, q in ipairs(rows) do if q.state == "done" then local e = C.rpc:InvokeServer("questclaim", q.id); if e.summary then C.setSummary(e.summary) end end end
       M.quests()
     end); b.AnchorPoint = Vector2.new(0.5, 0); b.Position = UDim2.new(0.5, 0, 0, 2)
@@ -1170,14 +1170,14 @@ function M.quests()
   for i, q in ipairs(rows) do
     local ready, done = q.state == "done", q.state == "claimed"
     rowCard({ order = i, reward = q.reward, emoji = done and "✓" or "📜", color = ready and M.GOLD or (done and Color3.fromRGB(110, 200, 130) or Color3.fromRGB(150, 140, 190)), title = string.format("%s (%d/%d)", q.title, math.min(q.p, q.n), q.n), desc = q.desc, frac = q.n > 0 and q.p / q.n or 0, ready = ready, done = done,
-      btn = done and "완료" or (ready and "보상 받기" or "진행 중"), btnColor = ready and M.BTN.green or M.BTN.gray,
+      btn = done and "Complete" or (ready and "Claim Reward" or "In Progress"), btnColor = ready and M.BTN.green or M.BTN.gray,
       click = ready and function() local e = C.rpc:InvokeServer("questclaim", q.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.quests() end or nil })
   end
 end
 function M.daily()
   C.clear()
   local o = C.rpc:InvokeServer("offline"); if o.summary then C.setSummary(o.summary) end
-  if o.r then rowCard({ emoji = "💤", title = "오프라인 보상", desc = string.format("%d분 동안 자리를 비웠습니다: 골드 %s · 강화석 %s", o.r.mins, n(o.r.gold), n(o.r.ore)), color = Color3.fromRGB(140, 200, 255), done = true }) end
+  if o.r then rowCard({ emoji = "💤", title = "Offline Rewards", desc = string.format("You were away for %d min: Gold %s · Upgrade Stone %s", o.r.mins, n(o.r.gold), n(o.r.ore)), color = Color3.fromRGB(140, 200, 255), done = true }) end
   local r = C.rpc:InvokeServer("daily"); if r.err then C.msg.Text = tostring(r.err); return end
   local drows = r.rows or {}
   local function st(t) return (t.p >= t.n and not t.claimed) and 0 or (t.claimed and 2 or 1) end
@@ -1185,7 +1185,7 @@ function M.daily()
   local readyN = 0; for _, t in ipairs(drows) do if st(t) == 0 then readyN += 1 end end
   if readyN > 1 then
     local f = mk("Frame", { Size = UDim2.new(1, -16, 0, 44), BackgroundTransparency = 1, LayoutOrder = -1 }, C.list)
-    local b = M.btn(f, string.format("보상 모두 받기 (%d)", readyN), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
+    local b = M.btn(f, string.format("Claim All (%d)", readyN), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
       for _, t in ipairs(drows) do if st(t) == 0 then local e = C.rpc:InvokeServer("dailyclaim", t.id); if e.summary then C.setSummary(e.summary) end end end
       M.daily()
     end); b.AnchorPoint = Vector2.new(0.5, 0); b.Position = UDim2.new(0.5, 0, 0, 2)
@@ -1193,17 +1193,17 @@ function M.daily()
   for i, t in ipairs(drows) do
     local ready = t.p >= t.n and not t.claimed
     rowCard({ emoji = t.claimed and "✓" or "📅", color = ready and M.GOLD or Color3.fromRGB(150, 140, 190), order = i, title = string.format("%s (%d/%d)", t.name, math.min(t.p, t.n), t.n), reward = tostring(t.text), frac = t.n > 0 and t.p / t.n or 0, ready = ready, done = t.claimed,
-      btn = t.claimed and "수령 완료" or (ready and "받기" or "진행 중"), btnColor = ready and M.BTN.green or M.BTN.gray,
+      btn = t.claimed and "Claimed" or (ready and "Claim" or "In Progress"), btnColor = ready and M.BTN.green or M.BTN.gray,
       click = ready and function() local e = C.rpc:InvokeServer("dailyclaim", t.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.daily() end or nil })
   end
   -- 일괄 정리 (강화·사탄 장비 제외)
-  local f = rowCard({ order = 999, emoji = "🧹", title = "장비 일괄 정리", desc = "강화했거나 사탄 장비는 건드리지 않습니다.", color = Color3.fromRGB(150, 140, 190), h = 112 })
+  local f = rowCard({ order = 999, emoji = "🧹", title = "Bulk Gear Cleanup", desc = "Enhanced and Satan gear are never touched.", color = Color3.fromRGB(150, 140, 190), h = 112 })
   local bar = mk("Frame", { Position = UDim2.new(0, 72, 1, -48), Size = UDim2.new(1, -84, 0, 40), BackgroundTransparency = 1 }, f)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-  local function bulk(rr, mode) local e = C.rpc:InvokeServer("bulk", { r = rr, mode = mode }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.res and (mode == "sell" and string.format("%d개 판매", e.res.n) or string.format("%d개 분해", e.res.n)) or tostring(e.err); M.daily() end
-  M.btn(bar, "일반 분해", UDim2.new(0, 120, 1, 0), M.BTN.red, function() bulk(0, "dismantle") end).LayoutOrder = 1
-  M.btn(bar, "매직까지 분해", UDim2.new(0, 140, 1, 0), M.BTN.red, function() bulk(1, "dismantle") end).LayoutOrder = 2
-  M.btn(bar, "매직까지 판매", UDim2.new(0, 140, 1, 0), M.BTN.gold, function() bulk(1, "sell") end).LayoutOrder = 3
+  local function bulk(rr, mode) local e = C.rpc:InvokeServer("bulk", { r = rr, mode = mode }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.res and (mode == "sell" and string.format("Sold %d items", e.res.n) or string.format("Dismantled %d items", e.res.n)) or tostring(e.err); M.daily() end
+  M.btn(bar, "Dismantle Common", UDim2.new(0, 120, 1, 0), M.BTN.red, function() bulk(0, "dismantle") end).LayoutOrder = 1
+  M.btn(bar, "Dismantle up to Magic", UDim2.new(0, 140, 1, 0), M.BTN.red, function() bulk(1, "dismantle") end).LayoutOrder = 2
+  M.btn(bar, "Sell up to Magic", UDim2.new(0, 140, 1, 0), M.BTN.gold, function() bulk(1, "sell") end).LayoutOrder = 3
 end
 
 
@@ -1214,9 +1214,9 @@ function M.runes()
   local r = C.rpc:InvokeServer("runes"); if r.err then C.msg.Text = tostring(r.err); return end
   local runes, skills = r.runes or {}, r.skills or {}
   local A = area(392)
-  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.5, -4, 1, 0), "아르카나 고르기")
+  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.5, -4, 1, 0), "Choose a Arcana")
   local g = grid(L, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
-  if #skills == 0 then txt(L, "아직 아르카나가 없습니다. 마을의 [아르카나 소환]에서 뽑으세요.", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 40), Color3.fromRGB(200, 185, 165)).TextWrapped = true end
+  if #skills == 0 then txt(L, "You have no arcana yet. Summon some at the village [Arcana Summon].", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 40), Color3.fromRGB(200, 185, 165)).TextWrapped = true end
   local sel
   for i, k in ipairs(skills) do
     if not runeSkill then runeSkill = k.uid end
@@ -1224,23 +1224,23 @@ function M.runes()
     local col, icon = M.skStyle(k.id)
     M.tile(g, 76, { order = i, color = col, emoji = icon, label = tostring(k.name or k.id), tl = k.rune and "◆" or nil, selected = k.uid == runeSkill, click = function() runeSkill = k.uid; M.runes() end })
   end
-  local R = box(A, UDim2.new(0.5, 4, 0, 0), UDim2.new(0.5, -4, 1, 0), string.format("보유 룬 %d개", #runes))
+  local R = box(A, UDim2.new(0.5, 4, 0, 0), UDim2.new(0.5, -4, 1, 0), string.format("My Runes (%d)", #runes))
   if not sel then
-    local t = txt(R, "룬은 아르카나 한 장에 하나씩 끼워 성질을 바꿉니다 (쿨타임 · 위력 · 범위 · 출혈 · 점화 등).\n\n룬은 균열 · 보스 전투에서 나옵니다. 아르카나를 먼저 얻은 뒤 왼쪽에서 고르세요.", 14, UDim2.new(0, 14, 0, 40), UDim2.new(1, -28, 0, 140), Color3.fromRGB(215, 200, 180))
+    local t = txt(R, "Each arcana can hold one rune that changes how it works (cooldown, power, area, bleed, ignite, ...).\n\nRunes drop in the Rift and boss fights. Get an arcana first, then pick it on the left.", 14, UDim2.new(0, 14, 0, 40), UDim2.new(1, -28, 0, 140), Color3.fromRGB(215, 200, 180))
     t.TextWrapped = true; t.TextYAlignment = Enum.TextYAlignment.Top; return
   end
   local function res(e) C.msg.Text = tostring(e.err or ""); M.runes() end
   local head = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 0, 44), BackgroundColor3 = Color3.fromRGB(28, 22, 50) }, R); corner(head, 8)
-  txt(head, sel.rune and string.format("%s · 룬: %s", tostring(sel.name), tostring(sel.rune)) or string.format("%s · 룬 없음", tostring(sel.name)), 14, UDim2.new(0, 10, 0, 12), UDim2.new(1, -110, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
-  if sel.rune then local b = M.btn(head, "룬 해제", UDim2.new(0, 92, 0, 34), M.BTN.red, function() res(C.rpc:InvokeServer("runeremove", sel.uid)) end); b.Position = UDim2.new(1, -98, 0, 5) end
+  txt(head, sel.rune and string.format("%s · Rune: %s", tostring(sel.name), tostring(sel.rune)) or string.format("%s · No Rune", tostring(sel.name)), 14, UDim2.new(0, 10, 0, 12), UDim2.new(1, -110, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+  if sel.rune then local b = M.btn(head, "Unequip Rune", UDim2.new(0, 92, 0, 34), M.BTN.red, function() res(C.rpc:InvokeServer("runeremove", sel.uid)) end); b.Position = UDim2.new(1, -98, 0, 5) end
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 82), Size = UDim2.new(1, -20, 1, -90), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, R)
   mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
-  if #runes == 0 then txt(sc, "룬이 없습니다. 전투에서 얻을 수 있습니다.", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
+  if #runes == 0 then txt(sc, "No runes yet. You can get them from battles.", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
   for i, ru in ipairs(runes) do
     local f = mk("Frame", { Size = UDim2.new(1, -8, 0, 58), BackgroundColor3 = M.PANEL, LayoutOrder = i }, sc); corner(f, 8); stroke(f, Color3.fromRGB(120, 100, 190), 1.5)
     txt(f, "◆ " .. tostring(ru.name), 15, UDim2.new(0, 10, 0, 6), UDim2.new(1, -110, 0, 20), Color3.fromRGB(190, 160, 255), M.FONT)
     txt(f, tostring(ru.text or ""), 12, UDim2.new(0, 10, 0, 28), UDim2.new(1, -110, 0, 26), Color3.fromRGB(215, 210, 235))
-    local b = M.btn(f, "끼우기", UDim2.new(0, 88, 0, 36), M.BTN.purple, function() res(C.rpc:InvokeServer("runeequip", { skill = sel.uid, rune = ru.uid })) end); b.Position = UDim2.new(1, -96, 0, 11)
+    local b = M.btn(f, "Insert", UDim2.new(0, 88, 0, 36), M.BTN.purple, function() res(C.rpc:InvokeServer("runeequip", { skill = sel.uid, rune = ru.uid })) end); b.Position = UDim2.new(1, -96, 0, 11)
   end
 end
 
@@ -1253,12 +1253,12 @@ function M.class()
   local v = r.view
   local A = area(392)
   local head = mk("Frame", { Size = UDim2.new(1, 0, 0, 44), BackgroundTransparency = 1 }, A)
-  txt(head, string.format("전직 %d차 · 남은 포인트 %d / %d", v.cls, v.left, v.points), 18, UDim2.new(0, 4, 0, 4), UDim2.new(0.55, 0, 0, 22), Color3.fromRGB(255, 220, 120), M.FONT)
-  txt(head, string.format("전직의 서  %d · %d · %d", v.books[1] or 0, v.books[2] or 0, v.books[3] or 0), 13, UDim2.new(0, 4, 0, 26), UDim2.new(0.55, 0, 0, 18), Color3.fromRGB(200, 195, 225))
+  txt(head, string.format("Advancement Tier %d · Points Left %d / %d", v.cls, v.left, v.points), 18, UDim2.new(0, 4, 0, 4), UDim2.new(0.55, 0, 0, 22), Color3.fromRGB(255, 220, 120), M.FONT)
+  txt(head, string.format("Tomes of Advancement  %d · %d · %d", v.books[1] or 0, v.books[2] or 0, v.books[3] or 0), 13, UDim2.new(0, 4, 0, 26), UDim2.new(0.55, 0, 0, 18), Color3.fromRGB(200, 195, 225))
   local hb = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 2), Size = UDim2.new(0, 240, 0, 38), BackgroundTransparency = 1 }, head)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6) }, hb)
-  M.btn(hb, "전직하기", UDim2.new(0, 120, 1, 0), M.BTN.gold, function() local e = C.rpc:InvokeServer("classadvance"); C.msg.Text = tostring(e.msg or ""); M.class() end)
-  M.btn(hb, "초기화", UDim2.new(0, 90, 1, 0), M.BTN.red, function() C.rpc:InvokeServer("classreset"); M.class() end)
+  M.btn(hb, "Advance", UDim2.new(0, 120, 1, 0), M.BTN.gold, function() local e = C.rpc:InvokeServer("classadvance"); C.msg.Text = tostring(e.msg or ""); M.class() end)
+  M.btn(hb, "Reset", UDim2.new(0, 90, 1, 0), M.BTN.red, function() C.rpc:InvokeServer("classreset"); M.class() end)
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 0, 0, 50), Size = UDim2.new(1, 0, 1, -50), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.X, ScrollingDirection = Enum.ScrollingDirection.X, ScrollBarThickness = 6 }, A)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   for ti, T in ipairs(v.trees or {}) do
@@ -1274,7 +1274,7 @@ function M.class()
       l.TextYAlignment = Enum.TextYAlignment.Center
       b.MouseEnter:Connect(function() C.msg.Text = string.format("%s — %s", nd.name, nd.desc or "") end)
       b.MouseButton1Click:Connect(function()
-        if nd.has then C.rpc:InvokeServer("classdrop", nd.id) elseif nd.can then C.rpc:InvokeServer("classtake", nd.id) else C.msg.Text = "아직 찍을 수 없습니다 (앞 노드 · 포인트 · 전직 단계 확인)"; return end
+        if nd.has then C.rpc:InvokeServer("classdrop", nd.id) elseif nd.can then C.rpc:InvokeServer("classtake", nd.id) else C.msg.Text = "Can't take this yet (check previous node · points · advancement tier)"; return end
         M.class()
       end)
     end
@@ -1287,9 +1287,9 @@ function M.charm()
   local r = C.rpc:InvokeServer("charms"); if r.summary then C.setSummary(r.summary) end
   if r.err or not r.view then C.msg.Text = tostring(r.err); return end
   local v = r.view
-  if not v.unlocked then rowCard({ emoji = "🔒", title = "참", desc = "3차 전직 후에 장착할 수 있습니다.", color = Color3.fromRGB(120, 110, 150) }); return end
+  if not v.unlocked then rowCard({ emoji = "🔒", title = "Charm", desc = "Can be equipped after Class Advancement 3.", color = Color3.fromRGB(120, 110, 150) }); return end
   local A = area(392)
-  local T = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 168), "장착 중")
+  local T = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 168), "Equipped")
   local row = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 0, 130), BackgroundTransparency = 1 }, T)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i = 1, 4 do
@@ -1297,10 +1297,10 @@ function M.charm()
     local f = mk("Frame", { Size = UDim2.new(0.25, -6, 1, 0), BackgroundColor3 = c and Color3.fromRGB(44, 30, 70) or Color3.fromRGB(28, 24, 40), LayoutOrder = i }, row); corner(f, 8); stroke(f, c and Color3.fromRGB(200, 140, 255) or Color3.fromRGB(70, 66, 90), 2)
     if c then
       txt(f, table.concat(c.lines or {}, "\n"), 12, UDim2.new(0, 8, 0, 6), UDim2.new(1, -16, 1, -48), Color3.fromRGB(230, 220, 250))
-      local b = M.btn(f, "해제", UDim2.new(1, -16, 0, 32), M.BTN.red, function() C.rpc:InvokeServer("charmoff", i); M.charm() end); b.Position = UDim2.new(0, 8, 1, -38)
-    else txt(f, string.format("빈 칸 %d", i), 14, UDim2.new(0, 0, 0.4, 0), UDim2.new(1, 0, 0, 20), Color3.fromRGB(130, 125, 150), M.FONT, Enum.TextXAlignment.Center) end
+      local b = M.btn(f, "Unequip", UDim2.new(1, -16, 0, 32), M.BTN.red, function() C.rpc:InvokeServer("charmoff", i); M.charm() end); b.Position = UDim2.new(0, 8, 1, -38)
+    else txt(f, string.format("Empty Slot %d", i), 14, UDim2.new(0, 0, 0.4, 0), UDim2.new(1, 0, 0, 20), Color3.fromRGB(130, 125, 150), M.FONT, Enum.TextXAlignment.Center) end
   end
-  local B = box(A, UDim2.new(0, 0, 0, 176), UDim2.new(1, 0, 1, -176), string.format("보관함 %d개", #(v.inv or {})))
+  local B = box(A, UDim2.new(0, 0, 0, 176), UDim2.new(1, 0, 1, -176), string.format("Storage (%d)", #(v.inv or {})))
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 30), Size = UDim2.new(1, -16, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, B)
   mk("UIGridLayout", { CellSize = UDim2.new(0.25, -6, 0, 120), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   for i, c in ipairs(v.inv or {}) do
@@ -1308,8 +1308,8 @@ function M.charm()
     txt(f, table.concat(c.lines or {}, "\n"), 12, UDim2.new(0, 8, 0, 6), UDim2.new(1, -16, 1, -46), Color3.fromRGB(230, 220, 250))
     local bar = mk("Frame", { Position = UDim2.new(0, 6, 1, -38), Size = UDim2.new(1, -12, 0, 32), BackgroundTransparency = 1 }, f)
     mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4) }, bar)
-    M.btn(bar, "장착", UDim2.new(0.5, -2, 1, 0), M.BTN.green, function() local e = C.rpc:InvokeServer("charmequip", { uid = c.uid }); C.msg.Text = tostring(e.err or ""); M.charm() end)
-    M.btn(bar, "버리기", UDim2.new(0.5, -2, 1, 0), M.BTN.red, function() C.rpc:InvokeServer("charmdrop", c.uid); M.charm() end)
+    M.btn(bar, "Equip", UDim2.new(0.5, -2, 1, 0), M.BTN.green, function() local e = C.rpc:InvokeServer("charmequip", { uid = c.uid }); C.msg.Text = tostring(e.err or ""); M.charm() end)
+    M.btn(bar, "Discard", UDim2.new(0.5, -2, 1, 0), M.BTN.red, function() C.rpc:InvokeServer("charmdrop", c.uid); M.charm() end)
   end
 end
 
@@ -1327,8 +1327,8 @@ function M.stats()
   mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(60, 34, 18), Color3.fromRGB(22, 14, 10)) }, top); mk("UIStroke", { Color = Color3.fromRGB(150, 110, 50), Thickness = 1.5 }, top)
   local tl = mk("Frame", { Size = UDim2.new(1, -16, 1, 0), Position = UDim2.new(0, 8, 0, 0), BackgroundTransparency = 1 }, top)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tl)
-  for i, kv in ipairs({ { "전투력", n(s.power or 0), Color3.fromRGB(255, 205, 90) }, { "레벨", tostring(s.level or 1), Color3.fromRGB(255, 225, 150) }, { "체력", n(s.maxHp or 0), Color3.fromRGB(235, 90, 80) },
-      { "공격력", n(s.atk or 0), Color3.fromRGB(240, 170, 80) }, { "주문력", n(s.mag or 0), Color3.fromRGB(150, 140, 255) }, { "방어력", n(s.def or 0), Color3.fromRGB(140, 190, 230) }, { "치명타", string.format("%.0f%%", (s.crit or 0) * 100), Color3.fromRGB(255, 220, 110) } }) do
+  for i, kv in ipairs({ { "Power", n(s.power or 0), Color3.fromRGB(255, 205, 90) }, { "Level", tostring(s.level or 1), Color3.fromRGB(255, 225, 150) }, { "HP", n(s.maxHp or 0), Color3.fromRGB(235, 90, 80) },
+      { "ATK", n(s.atk or 0), Color3.fromRGB(240, 170, 80) }, { "SPL", n(s.mag or 0), Color3.fromRGB(150, 140, 255) }, { "DEF", n(s.def or 0), Color3.fromRGB(140, 190, 230) }, { "Crit", string.format("%.0f%%", (s.crit or 0) * 100), Color3.fromRGB(255, 220, 110) } }) do
     local c = mk("Frame", { Size = UDim2.new(0, 104, 0, 44), BackgroundColor3 = Color3.fromRGB(14, 9, 7), BackgroundTransparency = 0.2, LayoutOrder = i }, tl); corner(c, 6)
     txt(c, kv[1], 11, UDim2.new(0, 0, 0, 3), UDim2.new(1, 0, 0, 14), Color3.fromRGB(190, 170, 140), M.FONT, Enum.TextXAlignment.Center)
     local v = txt(c, kv[2], 18, UDim2.new(0, 0, 0, 18), UDim2.new(1, 0, 0, 22), kv[3], M.FONT, Enum.TextXAlignment.Center); v:SetAttribute("NoTr", true); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, v)
@@ -1365,25 +1365,25 @@ function M.stash()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, tb)
   for i, k in ipairs(INV_TABS) do
     local on = stashTab == k
-    local b = M.btn(tb, k == "all" and "전체" or (Items.SLOT_NAME[k] or k), UDim2.new(0, 74, 1, 0), on and M.BTN.gold or M.BTN.gray, function() stashTab = k; M.stash() end); b.LayoutOrder = i; b.TextSize = 13
+    local b = M.btn(tb, k == "all" and "All" or (Items.SLOT_NAME[k] or k), UDim2.new(0, 74, 1, 0), on and M.BTN.gold or M.BTN.gray, function() stashTab = k; M.stash() end); b.LayoutOrder = i; b.TextSize = 13
   end
   local function keep(it) return stashTab == "all" or it.slot == stashTab or (stashTab == "ring" and it.slot == "ring2") end
   local function side(x, title, list0, to)
     local list = {}; for _, it in ipairs(list0) do if keep(it) then list[#list + 1] = it end end
     local B = box(A, UDim2.new(x, x > 0 and 4 or 0, 0, 36), UDim2.new(0.5, -4, 1, -36), title)
     local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, to == "stash" and -36 or -80), 60)
-    if #list == 0 then txt(B, "이 분류의 장비가 없습니다.", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 20), Color3.fromRGB(190, 175, 160)) end
+    if #list == 0 then txt(B, "No gear in this category.", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 20), Color3.fromRGB(190, 175, 160)) end
     for i, it in ipairs(list) do
       local t = M.tile(g, 60, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = artOf(it), emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
         click = function() local e = C.rpc:InvokeServer("stashmove", { uid = it.uid, to = to }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end })
     end
     return B
   end
-  side(0, string.format("가방 %d개  ·  누르면 창고로", #v.inv), v.inv, "stash")
-  local S = side(0.5, string.format("창고 %d / %d칸  ·  누르면 가방으로", #v.items, v.cap), v.items, "inv")
+  side(0, string.format("Bag %d  ·  tap to store", #v.inv), v.inv, "stash")
+  local S = side(0.5, string.format("Storage %d / %d  ·  tap to move to bag", #v.items, v.cap), v.items, "inv")
   pbar(S, UDim2.new(0, 8, 0, 24), UDim2.new(1, -16, 0, 4), #v.items / math.max(1, v.cap), #v.items >= v.cap and Color3.fromRGB(230, 90, 80) or Color3.fromRGB(200, 160, 70))   -- 창고가 얼마나 찼는지
   if v.expandCost then
-    local b = M.btn(S, string.format("창고 +10칸 (골드 %s)", n(v.expandCost)), UDim2.new(1, -12, 0, 38), M.BTN.gold, function()
+    local b = M.btn(S, string.format("Storage +10 Slots (Gold %s)", n(v.expandCost)), UDim2.new(1, -12, 0, 38), M.BTN.gold, function()
       local e = C.rpc:InvokeServer("stashexpand"); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end)
     b.Position = UDim2.new(0, 6, 1, -44)
   end
@@ -1395,12 +1395,12 @@ function M.setTabs(parent, pos, size, kind, label, after)
   local f = mk("Frame", { Position = pos, Size = size, BackgroundTransparency = 1 }, parent)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center, HorizontalAlignment = Enum.HorizontalAlignment.Right }, f)
   local r = C.rpc:InvokeServer("sets"); local cur = r and r.sets and r.sets[kind] or 1
-  local l = txt(f, label or "세트", 13, UDim2.new(), UDim2.new(0, 40, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT, Enum.TextXAlignment.Right); l.TextYAlignment = Enum.TextYAlignment.Center; l.LayoutOrder = 0
+  local l = txt(f, label or "Set", 13, UDim2.new(), UDim2.new(0, 40, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT, Enum.TextXAlignment.Right); l.TextYAlignment = Enum.TextYAlignment.Center; l.LayoutOrder = 0
   for i = 1, 3 do
     local b = M.btn(f, tostring(i), UDim2.new(0, 30, 1, 0), i == cur and M.BTN.gold or M.BTN.gray, function()
       if i == cur then return end
       local e = C.rpc:InvokeServer("setswitch", { kind = kind, i = i }); if e and e.summary then C.setSummary(e.summary) end
-      C.toast(string.format("세트 %d", i)); after()
+      C.toast(string.format("Set %d", i)); after()
     end); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
   end
   return f
@@ -1409,20 +1409,20 @@ function M.presetBar(parent, pos, size)
   local f = mk("Frame", { Position = pos, Size = size, BackgroundTransparency = 1 }, parent)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, f)
   local r = C.rpc:InvokeServer("presets"); local rows = r.rows or {}
-  local l = txt(f, "프리셋", 13, UDim2.new(), UDim2.new(0, 46, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT); l.TextYAlignment = Enum.TextYAlignment.Center; l.LayoutOrder = 0
+  local l = txt(f, "Presets", 13, UDim2.new(), UDim2.new(0, 46, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT); l.TextYAlignment = Enum.TextYAlignment.Center; l.LayoutOrder = 0
   for i = 1, 3 do
     local has = rows[i]
     local b = M.btn(f, tostring(i), UDim2.new(0, 30, 0, 28), has and M.BTN.blue or M.BTN.gray, function()
-      if not has then C.msg.Text = "빈 프리셋입니다. [저장]을 눌러 현재 구성을 저장하세요."; return end
-      local e = C.rpc:InvokeServer("presetload", i); if e.summary then C.setSummary(e.summary) end; C.toast(string.format("프리셋 %d 불러옴", i)); M.inv()
+      if not has then C.msg.Text = "This preset is empty. Press [Save] to store your current setup."; return end
+      local e = C.rpc:InvokeServer("presetload", i); if e.summary then C.setSummary(e.summary) end; C.toast(string.format("Loaded preset %d", i)); M.inv()
     end); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
   end
-  local sv = M.btn(f, "저장", UDim2.new(0, 48, 0, 28), M.BTN.green, function()
+  local sv = M.btn(f, "Save", UDim2.new(0, 48, 0, 28), M.BTN.green, function()
     -- 저장할 칸 고르기: 비어 있는 첫 칸, 없으면 1번
     local slot = 1; for i = 1, 3 do if not rows[i] then slot = i; break end end
-    C.prompt(string.format("현재 장비와 아르카나 구성을 몇 번에 저장할까요? (1~3, 기본 %d)", slot), tostring(slot), function(v)
+    C.prompt(string.format("Save your current gear and arcana to which preset? (1-3, default %d)", slot), tostring(slot), function(v)
       local k = tonumber(v) or slot; if k < 1 or k > 3 then return end
-      C.rpc:InvokeServer("presetsave", k); C.toast(string.format("프리셋 %d 저장", k)); M.inv()
+      C.rpc:InvokeServer("presetsave", k); C.toast(string.format("Saved preset %d", k)); M.inv()
     end)
   end); sv.LayoutOrder = 9
   return f
@@ -1433,7 +1433,7 @@ function M.records()
   C.clear()
   local r = C.rpc:InvokeServer("records"); if r.err or not r.view then C.msg.Text = tostring(r.err); return end
   local A = area(392)
-  local B = box(A, UDim2.new(0.2, 0, 0, 0), UDim2.new(0.6, 0, 1, 0), "기록")
+  local B = box(A, UDim2.new(0.2, 0, 0, 0), UDim2.new(0.6, 0, 1, 0), "Records")
   local lst = mk("Frame", { Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -32, 1, -44), BackgroundTransparency = 1 }, B)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
   for i, row in ipairs(r.view.rows) do
@@ -1453,7 +1453,7 @@ function M.codex()
   local A = area(392)
   local bar = mk("Frame", { Size = UDim2.new(1, -300, 0, 30), BackgroundTransparency = 1 }, A)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-  local F = { { "all", "전체" }, { "have", "보유" }, { "basic", "기본 공격" }, { "phys", "물리" }, { "fire", "화염" }, { "cold", "냉기" }, { "light", "번개" }, { "void", "공허" } }
+  local F = { { "all", "All" }, { "have", "Owned" }, { "basic", "Basic Attack" }, { "phys", "Physical" }, { "fire", "Fire" }, { "cold", "Cold" }, { "light", "Lightning" }, { "void", "Void" } }
   for i, f in ipairs(F) do local b = M.btn(bar, f[2], UDim2.new(0, 64, 1, 0), codexFilter == f[1] and M.BTN.gold or M.BTN.gray, function() codexFilter = f[1]; M.codex() end); b.LayoutOrder = i; b.TextSize = 12 end
   local list, have, total = {}, 0, 0
   for _, d in ipairs(Skills.SKILLS) do
@@ -1467,7 +1467,7 @@ function M.codex()
   local T = mk("Frame", { Position = UDim2.new(0, 0, 0, 36), Size = UDim2.new(1, -300, 1, -36), BackgroundColor3 = Color3.fromRGB(20, 10, 30) }, A); corner(T, 8)
   mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(40, 20, 56), Color3.fromRGB(14, 8, 20)) }, T)
   mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.3 }, T)
-  local hd = txt(T, string.format("아르카나 도감  %d / %d", have, total), 15, UDim2.new(0, 12, 0, 6), UDim2.new(1, -24, 0, 20), Color3.fromRGB(225, 195, 255), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, hd)
+  local hd = txt(T, string.format("Arcana Codex  %d / %d", have, total), 15, UDim2.new(0, 12, 0, 6), UDim2.new(1, -24, 0, 20), Color3.fromRGB(225, 195, 255), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, hd)
   local g = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, T)
   mk("UIGridLayout", { CellSize = UDim2.new(0, 60, 0, 88), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, g)
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0))
@@ -1475,19 +1475,19 @@ function M.codex()
   local function fill()
     for _, ch in ipairs(D:GetChildren()) do if not ch:IsA("UICorner") and not ch:IsA("UIStroke") then ch:Destroy() end end
     local d = codexSel and SK_BY[codexSel]
-    if not d then txt(D, "카드를 누르면 능력을 볼 수 있습니다. 흑백 카드는 아직 갖지 못한 아르카나입니다.", 13, UDim2.new(0, 12, 0, 14), UDim2.new(1, -24, 0, 60), Color3.fromRGB(200, 190, 220)).TextWrapped = true; return end
+    if not d then txt(D, "Tap a card to see its abilities. Gray cards are Arcana you do not own yet.", 13, UDim2.new(0, 12, 0, 14), UDim2.new(1, -24, 0, 60), Color3.fromRGB(200, 190, 220)).TextWrapped = true; return end
     local own = owned[d.id] ~= nil
     local big = arcCard(D, { id = d.id, name = d.name, rarity = owned[d.id] or 0 }, 92, 136, { gray = not own, noLv = true }); big.Position = UDim2.new(0, 12, 0, 12)
     local nm = txt(D, d.name, 20, UDim2.new(0, 114, 0, 12), UDim2.new(1, -124, 0, 26), Color3.new(1, 1, 1), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-    txt(D, own and string.format("보유 중 · 최고 등급 %s", M.SK_RAR[(owned[d.id] or 0) + 1] or "") or "아직 없음 · [아르카나 소환]에서 얻을 수 있습니다", 13, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 34), own and Color3.fromRGB(140, 235, 140) or Color3.fromRGB(200, 170, 150)).TextWrapped = true
-    local tags = { d.slot == "basic" and "기본 공격" or "주문", d.dtype == "mag" and "마법" or (d.dtype == "phys" and "물리" or "보조") }
+    txt(D, own and string.format("Owned · best rarity %s", M.SK_RAR[(owned[d.id] or 0) + 1] or "") or "Not owned · obtain from [Arcana Summon]", 13, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 34), own and Color3.fromRGB(140, 235, 140) or Color3.fromRGB(200, 170, 150)).TextWrapped = true
+    local tags = { d.slot == "basic" and "Basic Attack" or "Spell", d.dtype == "mag" and "Arcana" or (d.dtype == "phys" and "Physical" or "Support") }
     if d.elem and ELEM_NAME[d.elem] then tags[#tags + 1] = ELEM_NAME[d.elem] end
     txt(D, table.concat(tags, " · "), 13, UDim2.new(0, 114, 0, 76), UDim2.new(1, -124, 0, 18), Color3.fromRGB(190, 175, 210))
     local G2 = mk("Frame", { Position = UDim2.new(0, 12, 0, 156), Size = UDim2.new(1, -24, 0, 46), BackgroundTransparency = 1 }, D)
     mk("UIGridLayout", { CellSize = UDim2.new(0.333, -4, 0, 20), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, G2)
     local function stat(i, label, val) local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, G2); txt(f, label, 11, UDim2.new(), UDim2.new(1, 0, 0, 10), Color3.fromRGB(160, 145, 180)); txt(f, val, 13, UDim2.new(0, 0, 0, 9), UDim2.new(1, 0, 0, 12), Color3.new(1, 1, 1), M.FONT) end
-    stat(1, "기본 위력", d.mult and string.format("%d%%", math.floor(d.mult * 100 + 0.5)) or "–"); stat(2, "쿨타임", d.cd and string.format("%.1f초", d.cd) or "–"); stat(3, "사거리", d.range and string.format("%d칸", d.range) or "–")
-    stat(4, "마나", (d.mana or 0) > 0 and tostring(d.mana) or "없음")
+    stat(1, "Base Power", d.mult and string.format("%d%%", math.floor(d.mult * 100 + 0.5)) or "–"); stat(2, "Cooldown", d.cd and string.format("%.1fs", d.cd) or "–"); stat(3, "Range", d.range and string.format("%d tiles", d.range) or "–")
+    stat(4, "Mana", (d.mana or 0) > 0 and tostring(d.mana) or "None")
     local dbox = mk("Frame", { Position = UDim2.new(0, 12, 0, 208), Size = UDim2.new(1, -24, 1, -220), BackgroundColor3 = Color3.fromRGB(24, 14, 32) }, D); corner(dbox, 6)
     local ds = txt(dbox, d.desc or "", 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
   end
@@ -1504,12 +1504,12 @@ local lastDummy
 function M.dummy()
   C.clear()
   local A = area(392)
-  local B = box(A, UDim2.new(0.15, 0, 0, 0), UDim2.new(0.7, 0, 1, 0), "허수아비")
-  txt(B, "60초 동안 공격만 해서 초당 피해(DPS)를 잽니다. 최고 기록은 랭킹에 올라갑니다. (30초에 한 번)", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
+  local B = box(A, UDim2.new(0.15, 0, 0, 0), UDim2.new(0.7, 0, 1, 0), "Training Dummy")
+  txt(B, "Attack for 60 seconds to measure your damage per second (DPS). Your best goes on the ranking. (Once every 30s)", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
   if lastDummy then
     local r = lastDummy
     txt(B, string.format("DPS %s", n(r.dps)), 30, UDim2.new(0, 14, 0, 74), UDim2.new(1, -28, 0, 36), r.newBest and M.GOLD or Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center)
-    txt(B, string.format("총 피해 %s · 최고 %s%s", n(r.total), n(r.best), r.newBest and " · 신기록!" or ""), 14, UDim2.new(0, 14, 0, 114), UDim2.new(1, -28, 0, 20), Color3.fromRGB(220, 215, 240), nil, Enum.TextXAlignment.Center)
+    txt(B, string.format("Total %s · Best %s%s", n(r.total), n(r.best), r.newBest and " · New record!" or ""), 14, UDim2.new(0, 14, 0, 114), UDim2.new(1, -28, 0, 20), Color3.fromRGB(220, 215, 240), nil, Enum.TextXAlignment.Center)
     local lst = mk("Frame", { Position = UDim2.new(0, 30, 0, 142), Size = UDim2.new(1, -60, 0, 170), BackgroundTransparency = 1 }, B)
     mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
     for i, p in ipairs(r.parts or {}) do
@@ -1522,8 +1522,8 @@ function M.dummy()
       txt(f, string.format("%d%%", math.floor(frac * 100 + 0.5)), 13, UDim2.new(0.86, 0, 0, 3), UDim2.new(0.14, 0, 1, 0), Color3.fromRGB(220, 215, 240), M.FONT, Enum.TextXAlignment.Right)
     end
   end
-  local b = M.btn(B, "측정 시작", UDim2.new(0, 200, 0, 46), M.BTN.green, function()
-    C.msg.Text = "측정 중..."
+  local b = M.btn(B, "Start", UDim2.new(0, 200, 0, 46), M.BTN.green, function()
+    C.msg.Text = "Measuring..."
     local r = C.rpc:InvokeServer("dummy"); if r.err then C.msg.Text = tostring(r.err); return end
     lastDummy = r; C.msg.Text = ""; M.dummy()
   end)
@@ -1537,15 +1537,15 @@ function M.ranking()
   local A = area(392)
   local bar = mk("Frame", { Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1 }, A)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-  for i, k in ipairs({ { "rift", "균열 최고층" }, { "level", "레벨" }, { "dps", "허수아비 DPS" }, { "glv", "길드 레벨" }, { "gpw", "길드 전투력" } }) do
+  for i, k in ipairs({ { "rift", "Best Rift Floor" }, { "level", "Level" }, { "dps", "Dummy DPS" }, { "glv", "Guild Level" }, { "gpw", "Guild Power" } }) do
     local b = M.btn(bar, k[2], UDim2.new(0, 136, 1, 0), rankKind == k[1] and M.BTN.gold or M.BTN.gray, function() rankKind = k[1]; M.ranking() end); b.LayoutOrder = i; b.TextSize = 14
   end
   if rankKind == "glv" or rankKind == "gpw" then   -- 길드 순위: 문양 · 이름 · 레벨 · 인원 · 길드 전투력
     local list = C.rpc:InvokeServer("g_search", { sort = rankKind == "gpw" and "power" or "lv" }).list or {}
-    local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), rankKind == "gpw" and "길드 전투력 순위 (길드원 전투력 합)" or "길드 레벨 순위 (길드 기여도)")
+    local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), rankKind == "gpw" and "Guild Power Ranking (sum of members)" or "Guild Level Ranking (contribution)")
     local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 36), Size = UDim2.new(1, -20, 1, -44), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, B)
     mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
-    if #list == 0 then txt(sc, "아직 길드가 없습니다.", 14, UDim2.new(), UDim2.new(1, 0, 0, 24), Color3.fromRGB(200, 185, 165)) end
+    if #list == 0 then txt(sc, "No guilds yet.", 14, UDim2.new(), UDim2.new(1, 0, 0, 24), Color3.fromRGB(200, 185, 165)) end
     for i, g in ipairs(list) do
       if i > 50 then break end
       local medal = ({ M.GOLD, Color3.fromRGB(200, 200, 215), Color3.fromRGB(190, 120, 70) })[i]
@@ -1553,18 +1553,18 @@ function M.ranking()
       local rk = txt(f, tostring(i), 18, UDim2.new(0, 8, 0, 0), UDim2.new(0, 36, 1, 0), medal or Color3.new(1, 1, 1), M.FONT); rk.TextYAlignment = Enum.TextYAlignment.Center; rk:SetAttribute("NoTr", true)
       local em = M.emblem(f, g.emblem, 30); em.Position = UDim2.new(0, 48, 0.5, -15)
       local nm = txt(f, g.name, 15, UDim2.new(0, 88, 0, 0), UDim2.new(0.4, 0, 1, 0), Color3.new(1, 1, 1), M.FONT); nm.TextYAlignment = Enum.TextYAlignment.Center; nm:SetAttribute("NoTr", true)
-      local inf = txt(f, string.format("Lv %d  ·  %d명", g.lv, g.members), 13, UDim2.new(0.45, 0, 0, 0), UDim2.new(0.25, 0, 1, 0), Color3.fromRGB(200, 190, 175)); inf.TextYAlignment = Enum.TextYAlignment.Center
-      local val = txt(f, rankKind == "gpw" and n(g.power) or string.format("기여도 %s", n(g.exp)), 15, UDim2.new(0.7, 0, 0, 0), UDim2.new(0.3, -12, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT, Enum.TextXAlignment.Right); val.TextYAlignment = Enum.TextYAlignment.Center
+      local inf = txt(f, string.format("Lv %d  ·  %d members", g.lv, g.members), 13, UDim2.new(0.45, 0, 0, 0), UDim2.new(0.25, 0, 1, 0), Color3.fromRGB(200, 190, 175)); inf.TextYAlignment = Enum.TextYAlignment.Center
+      local val = txt(f, rankKind == "gpw" and n(g.power) or string.format("Contribution %s", n(g.exp)), 15, UDim2.new(0.7, 0, 0, 0), UDim2.new(0.3, -12, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT, Enum.TextXAlignment.Right); val.TextYAlignment = Enum.TextYAlignment.Center
     end
     return
   end
   local r = C.rpc:InvokeServer("ranking", rankKind); if r.err then C.msg.Text = tostring(r.err); return end
   local my = r.my or {}
   local mine = rankKind == "dps" and n(my.dps) or tostring(my[rankKind] or 0)
-  local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), string.format("상위 50명 · 내 기록 %s", mine))
+  local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), string.format("Top 50 · My record %s", mine))
   local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 32), Size = UDim2.new(1, -20, 1, -40), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6 }, B)
   mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
-  if #(r.rows or {}) == 0 then txt(sc, "아직 기록이 없거나, 지금 서버에서 랭킹을 불러올 수 없습니다. (Studio 에서는 저장소 접근이 막혀 있으면 비어 보입니다)", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
+  if #(r.rows or {}) == 0 then txt(sc, "No records yet, or the ranking cannot be loaded right now.", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
   local me = game:GetService("Players").LocalPlayer.UserId
   for i, row in ipairs(r.rows or {}) do
     local medal = ({ M.GOLD, Color3.fromRGB(200, 200, 215), Color3.fromRGB(190, 120, 70) })[row.rank]
@@ -1576,12 +1576,12 @@ function M.ranking()
 end
 
 -- ───────── 우편함 ─────────
-local MAIL_NAME = { gold = "골드", ore = "강화석", hone = "아르카나 조각", arcana = "아르카나 조각", orbC = "혼돈 구슬", orbD = "혼돈 구슬", keys = "공허의 열쇠", gems = "보석" }
+local MAIL_NAME = { gold = "Gold", ore = "Upgrade Stone", hone = "Arcana Shards", arcana = "Arcana Shards", orbC = "Chaos Orb", orbD = "Chaos Orb", keys = "Void Key", gems = "Gems" }
 function M.mail()
   C.clear()
   local r = C.rpc:InvokeServer("mail"); if r.err then C.msg.Text = tostring(r.err); return end
   local rows = r.rows or {}
-  if #rows == 0 then rowCard({ emoji = "✉", title = "우편함이 비어 있습니다", desc = "공지 · 보상 우편이 오면 여기에 쌓입니다.", color = Color3.fromRGB(150, 140, 190) }); return end
+  if #rows == 0 then rowCard({ emoji = "✉", title = "Your mailbox is empty", desc = "Notices and reward mail will appear here.", color = Color3.fromRGB(150, 140, 190) }); return end
   -- 받을 것 먼저 (최근 순), 받은 것은 아래
   local order = {}; for i = #rows, 1, -1 do order[#order + 1] = rows[i] end
   local function has(m) return next(m.reward or {}) ~= nil end
@@ -1589,7 +1589,7 @@ function M.mail()
   local ready = 0; for _, m in ipairs(order) do if has(m) and not m.got then ready += 1 end end
   if ready > 1 then
     local f = mk("Frame", { Size = UDim2.new(1, -16, 0, 44), BackgroundTransparency = 1, LayoutOrder = -1 }, C.list)
-    local b = M.btn(f, string.format("우편 모두 받기 (%d)", ready), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
+    local b = M.btn(f, string.format("Claim All Mail (%d)", ready), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
       for _, m in ipairs(order) do if has(m) and not m.got then local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end end end
       M.mail()
     end); b.AnchorPoint = Vector2.new(0.5, 0); b.Position = UDim2.new(0.5, 0, 0, 2)
@@ -1599,13 +1599,13 @@ function M.mail()
     local hs = #rw > 0
     rowCard({ order = i, emoji = m.got and "✓" or "✉", color = (hs and not m.got) and M.GOLD or Color3.fromRGB(150, 140, 190), title = tostring(m.title), desc = tostring(m.body or ""), reward = hs and table.concat(rw, " · ") or nil,
       ready = hs and not m.got, done = m.got or nil,
-      btn = hs and (m.got and "받음" or "받기") or nil, btnColor = (hs and not m.got) and M.BTN.green or M.BTN.gray,
+      btn = hs and (m.got and "Claimed" or "Claim") or nil, btnColor = (hs and not m.got) and M.BTN.green or M.BTN.gray,
       click = (hs and not m.got) and function() local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.mail() end or nil })
   end
 end
 
 -- ───────── 스킬 뽑기 (스킬 상점 대체) ─────────
-M.SK_RAR = { "일반", "희귀", "전설", "신화", "사탄" }
+M.SK_RAR = { "Common", "Rare", "Legendary", "Mythic", "Satan" }
 M.SK_RCOL = { Color3.fromRGB(170, 170, 180), Color3.fromRGB(80, 150, 255), Color3.fromRGB(255, 150, 40), Color3.fromRGB(190, 90, 255), Color3.fromRGB(230, 40, 50) }
 local pulling = false
 local function art(key) return C.Sprites.art(key) end
@@ -1635,7 +1635,7 @@ local function cardFace(card, r)
   end
   lab(r.name, 0.62, 0.1, Color3.new(1, 1, 1))
   lab(M.SK_RAR[r.rarity + 1] or "", 0.73, 0.08, col)
-  local tg = lab(r.lvlUp and string.format("중복 · Lv %d", r.lvlUp) or (r.dupArc and string.format("최대 레벨 · 조각 +%d", r.dupArc)) or "NEW", 0.84, 0.07, (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120))
+  local tg = lab(r.lvlUp and string.format("Duplicate · Lv %d", r.lvlUp) or (r.dupArc and string.format("Max level · Shards +%d", r.dupArc)) or "NEW", 0.84, 0.07, (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120))
   if not (r.lvlUp or r.dupArc) then tg:SetAttribute("NoTr", true) end
 end
 -- 높은 등급 공개 연출 조각들 (그림 한 장 대신 빛줄기 · 충격파 · 불티 · 광택을 겹친다)
@@ -1695,7 +1695,7 @@ local function revealResults(res, from)
   if from then sx, sy = from.X, from.Y elseif deckRef and deckRef.Parent then local p = deckRef.AbsolutePosition + deckRef.AbsoluteSize / 2; sx, sy = p.X, p.Y end
   local cards = {}
   local revealed, done, skip = 0, false, false
-  local hint = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.new(0, 400, 0, 24), BackgroundTransparency = 1, Text = "화면을 누르면 한꺼번에 공개", Font = M.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(200, 190, 220), ZIndex = 90 }, ov)
+  local hint = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.new(0, 400, 0, 24), BackgroundTransparency = 1, Text = "Tap to reveal all at once", Font = M.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(200, 190, 220), ZIndex = 90 }, ov)
   local function flip(i)
     local card, r = cards[i], res[i]; if not card or card:GetAttribute("Open") then return end
     card:SetAttribute("Open", true)
@@ -1741,7 +1741,7 @@ local function revealResults(res, from)
         for k = 1, nn do if not card.Parent then return end; local f = 1 - k / nn; card.Position = p0 + UDim2.new(0, math.random(-amp, amp) * f, 0, math.random(-amp, amp) * f); task.wait(0.03) end
         card.Position = p0
       end)
-      C.toast(string.format("%s 등급! %s", M.SK_RAR[r.rarity + 1], r.name))
+      C.toast(string.format("%s! %s", M.SK_RAR[r.rarity + 1], r.name))
       -- 보여 주기 (화면을 누르면 바로 넘어감)
       local t0 = os.clock(); while os.clock() - t0 < (satan and 2.2 or 1.7) and not skip and ov.Parent do task.wait(0.05) end
       if not ov.Parent then return end
@@ -1759,7 +1759,7 @@ local function revealResults(res, from)
   end
   local function finish()
     if done then return end; done = true
-    hint.Text = "누르면 닫힙니다"
+    hint.Text = "Tap to close"
   end
   task.spawn(function()
     -- 1) 덱에서 날아나온다 (스스스슥)
@@ -1810,7 +1810,7 @@ function M.gacha()
     TweenService:Create(d, TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Position = UDim2.new(0.5, 0, deckY, -5) }):Play()   -- 살짝 떠 있다
     deckRef = d
   end
-  local hd = txt(L, "아르카나 덱", 18, UDim2.new(0, 12, 0, 8), UDim2.new(1, -24, 0, 22), Color3.fromRGB(255, 220, 160), M.FONT); mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, hd)
+  local hd = txt(L, "Arcana Deck", 18, UDim2.new(0, 12, 0, 8), UDim2.new(1, -24, 0, 22), Color3.fromRGB(255, 220, 160), M.FONT); mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, hd)
   local rb = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -8), Size = UDim2.new(1, -20, 0, 168), BackgroundColor3 = Color3.fromRGB(8, 4, 6), BackgroundTransparency = 0.2 }, L); corner(rb, 8)
   mk("UIStroke", { Color = Color3.fromRGB(150, 110, 50), Thickness = 1, Transparency = 0.3 }, rb)
   local rl = mk("Frame", { Position = UDim2.new(0, 10, 0, 6), Size = UDim2.new(1, -20, 0, 108), BackgroundTransparency = 1 }, rb)
@@ -1821,7 +1821,7 @@ function M.gacha()
     txt(f, M.SK_RAR[i], 14, UDim2.new(0, 22, 0, 0), UDim2.new(0.5, 0, 1, 0), M.SK_RCOL[i], M.FONT).TextYAlignment = Enum.TextYAlignment.Center
     local pv = txt(f, string.format("%g%%", pct), 14, UDim2.new(0.5, 0, 0, 0), UDim2.new(0.5, -4, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); pv:SetAttribute("NoTr", true); pv.TextYAlignment = Enum.TextYAlignment.Center
   end
-  txt(rb, string.format("전설 이상 보장까지 %d / %d회", v.pity, v.pityMax), 13, UDim2.new(0, 10, 1, -44), UDim2.new(1, -20, 0, 18), Color3.fromRGB(255, 200, 120), M.FONT)
+  txt(rb, string.format("Legendary+ guarantee %d / %d", v.pity, v.pityMax), 13, UDim2.new(0, 10, 1, -44), UDim2.new(1, -20, 0, 18), Color3.fromRGB(255, 200, 120), M.FONT)
   pbar(rb, UDim2.new(0, 10, 1, -22), UDim2.new(1, -20, 0, 12), v.pity / v.pityMax, Color3.fromRGB(255, 150, 40))
   -- 오른쪽: 계열 고르기 · 조각/보석으로 1회 · 10회 (모자라면 흐리게, 가진 양 표시)
   local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0))
@@ -1834,19 +1834,19 @@ function M.gacha()
     M.gacha(); revealResults(e.res, dp)
   end
   if not gachaFam then local hs = C.summary(); gachaFam = hs and (hs.hero == "mage" and "mag" or "phys") or "all" end
-  txt(R, "어떤 아르카나를 부를까요?", 14, UDim2.new(0, 14, 0, 10), UDim2.new(1, -28, 0, 18), Color3.fromRGB(210, 195, 230), M.FONT)
+  txt(R, "Which Arcana will you summon?", 14, UDim2.new(0, 14, 0, 10), UDim2.new(1, -28, 0, 18), Color3.fromRGB(210, 195, 230), M.FONT)
   local ft = mk("Frame", { Position = UDim2.new(0, 14, 0, 32), Size = UDim2.new(1, -28, 0, 30), BackgroundTransparency = 1 }, R)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
-  for i, f in ipairs({ { "phys", "물리 계열" }, { "mag", "마법 계열" }, { "all", "전체" } }) do
+  for i, f in ipairs({ { "phys", "Physical" }, { "mag", "Magic" }, { "all", "All" } }) do
     local b = M.btn(ft, f[2], UDim2.new(0.333, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14
   end
   local function group(y, title, art, have, c1, c10, pay, col1, col10)
     local hdr = mk("Frame", { Position = UDim2.new(0, 14, 0, y), Size = UDim2.new(1, -28, 0, 22), BackgroundTransparency = 1 }, R)
     local ia = C.Sprites.art(art); if ia then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = ia.content, ScaleType = Enum.ScaleType.Fit }, hdr) end
-    txt(hdr, string.format("%s  ·  보유 %s", title, n(have)), 14, UDim2.new(0, 28, 0, 0), UDim2.new(1, -28, 1, 0), Color3.fromRGB(240, 200, 255), M.FONT).TextYAlignment = Enum.TextYAlignment.Center
-    for i, o in ipairs({ { 1, c1, col1, "1회 소환", nil }, { 10, c10, col10, "10회 소환", "희귀 이상 1장 보장" } }) do
+    txt(hdr, string.format("%s  ·  Owned %s", title, n(have)), 14, UDim2.new(0, 28, 0, 0), UDim2.new(1, -28, 1, 0), Color3.fromRGB(240, 200, 255), M.FONT).TextYAlignment = Enum.TextYAlignment.Center
+    for i, o in ipairs({ { 1, c1, col1, "Summon x1", nil }, { 10, c10, col10, "Summon x10", "1 Rare or better guaranteed" } }) do
       local ok = have >= o[2]
-      local b = M.btn(R, "", UDim2.new(0.5, -18, 0, 70), ok and o[3] or M.BTN.gray, function() if ok then pull(o[1], pay) else C.msg.Text = string.format("%s 부족", title) end end)
+      local b = M.btn(R, "", UDim2.new(0.5, -18, 0, 70), ok and o[3] or M.BTN.gray, function() if ok then pull(o[1], pay) else C.msg.Text = string.format("Not enough %s", title) end end)
       b.Position = UDim2.new((i - 1) * 0.5, i == 1 and 14 or 4, 0, y + 26)
       txt(b, o[4], 20, UDim2.new(0, 0, 0, 8), UDim2.new(1, 0, 0, 24), ok and Color3.new(1, 1, 1) or Color3.fromRGB(170, 160, 160), M.FONT, Enum.TextXAlignment.Center)
       local cr = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 34), Size = UDim2.new(0, 0, 0, 20), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1 }, b)
@@ -1856,9 +1856,9 @@ function M.gacha()
       if o[5] then txt(b, o[5], 11, UDim2.new(0, 0, 1, -16), UDim2.new(1, 0, 0, 14), Color3.fromRGB(255, 230, 160), M.FONT, Enum.TextXAlignment.Center) end
     end
   end
-  group(74, "아르카나 조각", "i_arcana", v.arcana or 0, v.arc1, v.arc10, "arcana", M.BTN.blue, M.BTN.gold)
-  group(182, "보석", "i_gem", v.gems or 0, v.gem1, v.gem10, "gem", M.BTN.purple, M.BTN.red)
-  local ft2 = txt(R, "아르카나 조각: 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트 · 아르카나 분해\n보석: 일일 과제 · 상점", 12, UDim2.new(0, 14, 1, -40), UDim2.new(1, -28, 0, 34), Color3.fromRGB(180, 170, 200)); ft2.TextWrapped = true
+  group(74, "Arcana Shards", "i_arcana", v.arcana or 0, v.arc1, v.arc10, "arcana", M.BTN.blue, M.BTN.gold)
+  group(182, "Gems", "i_gem", v.gems or 0, v.gem1, v.gem10, "gem", M.BTN.purple, M.BTN.red)
+  local ft2 = txt(R, "Arcana Shards: victories · bosses · first clears · daily tasks · quests · dismantling Arcana\nGems: daily tasks · shop", 12, UDim2.new(0, 14, 1, -40), UDim2.new(1, -28, 0, 34), Color3.fromRGB(180, 170, 200)); ft2.TextWrapped = true
 end
 -- 소환 목록: 뽑을 수 있는 스킬 전체 (아직 잠긴 것은 흐리게, 가진 것은 최고 등급 표시)
 function M.gachalist()
@@ -1868,14 +1868,14 @@ function M.gachalist()
   table.sort(list, function(a, b) if (a.tier or 0) ~= (b.tier or 0) then return (a.tier or 0) < (b.tier or 0) end; if a.unlock ~= b.unlock then return a.unlock < b.unlock end; return a.id < b.id end)
   local A = area(392)
   local own = 0; for _, e in ipairs(list) do if e.own then own += 1 end end
-  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), string.format("소환 가능한 아르카나 %d종 · 보유 %d종", #list, own))
+  local B = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), string.format("%d summonable arcana · %d owned", #list, own))
   local g = grid(B, UDim2.new(0, 6, 0, 34), UDim2.new(1, -12, 1, -40), 84)
   for i, e in ipairs(list) do
     local d = SK_BY[e.id]
     if d then
       local t = e.tier or 0
-      local lines = { string.format("%s 등급", M.SK_RAR[t + 1] or ""), d.desc or "" }
-      if e.own then lines[#lines + 1] = string.format("보유: Lv %d", e.lvl or 1) else lines[#lines + 1] = "아직 없음" end
+      local lines = { string.format("%s Grade", M.SK_RAR[t + 1] or ""), d.desc or "" }
+      if e.own then lines[#lines + 1] = string.format("Owned: Lv %d", e.lvl or 1) else lines[#lines + 1] = "Not owned yet" end
       M.tile(g, 84, { order = i, tip = { title = d.name, color = M.SK_RCOL[t + 1], lines = lines }, color = M.SK_RCOL[t + 1], art = skArt(e.id), emoji = skIcon(d), label = d.name, dim = not e.own,
         tl = M.SK_RAR[t + 1], br = e.own and ("Lv" .. (e.lvl or 1)) or nil })
     end

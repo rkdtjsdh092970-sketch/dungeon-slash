@@ -30,12 +30,12 @@ function M.affixText(a)
 end
 function M.itemTitle(it)
   local kind = it.slot == "weapon" and Items.WTYPES[it.wt] and Items.WTYPES[it.wt].name or SLOT_KO[it.slot]
-  local rar = it.sat and "사탄" or Items.ITEM_RARITY[math.min(3, it.rarity) + 1].name
+  local rar = it.sat and "Satan" or Items.ITEM_RARITY[math.min(3, it.rarity) + 1].name
   return string.format("%s %s%s  (T%d)", rar, kind, (it.enh or 0) > 0 and (" +" .. it.enh) or "", it.ilvl)
 end
 function M.itemLines(it)
   local L = {}
-  for k, v in pairs(it.base or {}) do L[#L + 1] = string.format("%s %s", ({ atk = "공격력", mag = "주문력", hp = "체력", def = "방어력" })[k] or k, fmtNum(v)) end
+  for k, v in pairs(it.base or {}) do L[#L + 1] = string.format("%s %s", ({ atk = "ATK", mag = "SPL", hp = "HP", def = "DEF" })[k] or k, fmtNum(v)) end
   table.sort(L)
   for _, a in ipairs(it.affixes or {}) do L[#L + 1] = M.affixText(a) end
   if it.sat and SAT_BY[it.sat] then L[#L + 1] = "✦ " .. SAT_BY[it.sat][4] end
@@ -50,7 +50,7 @@ end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
   local base = {}
-  for k, v in pairs(it.base or {}) do base[#base + 1] = string.format("%s %s", ({ atk = "공격력", mag = "주문력", hp = "체력", def = "방어력" })[k] or k, fmtNum(v)) end
+  for k, v in pairs(it.base or {}) do base[#base + 1] = string.format("%s %s", ({ atk = "ATK", mag = "SPL", hp = "HP", def = "DEF" })[k] or k, fmtNum(v)) end
   table.sort(base)
   local aff = {}
   for _, a in ipairs(it.affixes or {}) do local t = M.affixText(a):gsub("%s+%[T%d+%]$", ""); aff[#aff + 1] = { s = t, t = a.t and (a.t + 1) or nil } end
@@ -84,13 +84,13 @@ function M.equip(sv, uid, toSlot)   -- toSlot: 끌어다 놓은 칸 (반지는 r
     if it.uid == uid then
       local slot = it.slot
       if slot == "ring" and sv.equipped.ring and not sv.equipped.ring2 then slot = "ring2" end
-      if toSlot then if toSlot == it.slot or (it.slot == "ring" and toSlot == "ring2") then slot = toSlot else return false, "그 칸에는 낄 수 없습니다" end end
+      if toSlot then if toSlot == it.slot or (it.slot == "ring" and toSlot == "ring2") then slot = toSlot else return false, "Can't equip in that slot" end end
       local old = sv.equipped[slot]; sv.equipped[slot] = it; table.remove(sv.inv, i)
       if old then sv.inv[#sv.inv + 1] = old end
       return true
     end
   end
-  return false, "없는 장비"
+  return false, "Gear not found"
 end
 -- 시작 직업: 전사(검) / 마법사(지팡이) — 무기 · 기본 공격 · 범위 · 단일(보조) 스킬 3개 + 시작 아르카나 조각
 M.START_KITS = {
@@ -99,8 +99,8 @@ M.START_KITS = {
 }
 M.START_ARCANA = 90   -- 시작 무료 10연차 1번. 시뮬레이션(sim/progress.lua): 스타터 세트만으로 초반 100% 클리어 → 시작 소환은 진행이 아니라 첫 뽑기 경험용
 function M.pickStart(sv, cls)
-  if not sv.needStart then return false, "이미 시작했습니다" end
-  local K = M.START_KITS[cls]; if not K then return false, "없는 직업" end
+  if not sv.needStart then return false, "Already started" end
+  local K = M.START_KITS[cls]; if not K then return false, "Unknown class" end
   local rng = Random.new(sv.nextUid + 77)
   local w = Loot.genItem(rng, sv, 1, 0, "weapon"); local T = Items.WTYPES[K.wt]
   w.wt = K.wt; w.base = {}; if (T.atk or 0) > 0 then w.base.atk = T.atk end; if (T.mag or 0) > 0 then w.base.mag = T.mag end
@@ -236,15 +236,15 @@ function M.stashView(sv)
 end
 function M.stashMove(sv, uid, toStash)
   local S = stash(sv); local from, to = toStash and sv.inv or S.items, toStash and S.items or sv.inv
-  if toStash and #S.items >= S.cap then return false, "창고가 가득 찼습니다" end
-  if not toStash and #sv.inv >= M.INV_MAX then return false, "가방이 가득 찼습니다" end
+  if toStash and #S.items >= S.cap then return false, "Storage is full" end
+  if not toStash and #sv.inv >= M.INV_MAX then return false, "Your bag is full" end
   for i, it in ipairs(from) do if it.uid == uid then table.remove(from, i); to[#to + 1] = it; return true end end
-  return false, "없는 장비"
+  return false, "Gear not found"
 end
 function M.stashExpand(sv)
   local S = stash(sv); local c = stashExpandCost(S)
-  if not c then return false, "최대 크기입니다" end
-  if sv.gold < c then return false, "골드가 부족합니다" end
+  if not c then return false, "Already at max size" end
+  if sv.gold < c then return false, "Not enough Gold" end
   sv.gold -= c; S.cap += STASH_STEP; return true
 end
 -- ---------- 장비 프리셋 3칸 (웹 savePreset / loadPreset: 착용 장비 + 스킬 칸) ----------
@@ -261,7 +261,7 @@ function M.presetSave(sv, i)
   sv.presets[i] = { equip = eq, loadout = lo }; return true
 end
 function M.presetLoad(sv, i)
-  local p = sv.presets and sv.presets[i]; if not p then return false, "빈 프리셋입니다" end
+  local p = sv.presets and sv.presets[i]; if not p then return false, "This preset is empty" end
   for _, s in ipairs(Items.EQ_SLOTS) do if sv.equipped[s] then sv.inv[#sv.inv + 1] = sv.equipped[s]; sv.equipped[s] = nil end end
   for _, s in ipairs(Items.EQ_SLOTS) do
     local u = p.equip[s]
@@ -317,15 +317,15 @@ function M.statsView(sv)
   local function P(v, dg) return string.format("%." .. (dg or 0) .. "f%%", (v or 0) * 100) end
   local function N(v) v = math.floor(v or 0); if v >= 1e6 then return string.format("%.1fM", v / 1e6) elseif v >= 1e4 then return string.format("%.1fK", v / 1e3) end return tostring(v) end
   local G = {}
-  G[#G + 1] = { "공격", { { "물리 공격력", N(s.atk) }, { "주문력", N(s.mag) }, { "물리 피해", P(s.physDmg) }, { "마법 피해", P(s.magDmg) }, { "주는 피해", P(s.allDmg) },
-    { "물리 치명타", P(s.critChance, 1) .. " / +" .. P(s.critDmg) }, { "주문 치명타", P(s.spellCrit, 1) .. " / +" .. P(s.spellCritDmg or s.critDmg) }, { "쿨타임 감소", P(s.cdr) }, { "흡혈", P(s.lifesteal, 1) } } }
-  G[#G + 1] = { "방어", { { "체력", N(s.maxHp) }, { "방어력", N(s.def) }, { "회피", P(s.dodge, 1) }, { "받는 피해", P(s.dmgTaken) }, { "초당 회복", P(s.regen, 1) } } }
-  G[#G + 1] = { "마나", { { "최대 마나", N(s.maxMana) }, { "초당 재생", P(s.manaRate, 1) } } }
-  local el = {}; for _, e in ipairs(Items.ELEMS or { "fire", "cold", "light", "void" }) do el[#el + 1] = { string.format("%s 피해", (Items.ELEM_NAME or {})[e] or e), P(s[e .. "Dmg"]) } end
-  el[#el + 1] = { "원소 피해", P(s.elemDmg) }; el[#el + 1] = { "속성 저항 관통", P(s.penElem) }; el[#el + 1] = { "방어 무시", P(s.ignoreDef) }; el[#el + 1] = { "지속 피해", P(s.dotDmg) }
-  G[#G + 1] = { "속성 · 관통", el }
-  G[#G + 1] = { "추가 피해", { { "보스", P(s.add.boss) }, { "정예", P(s.add.elite) }, { "원거리", P(s.add.ranged) }, { "일반", P(s.add.normal) }, { "광역 피해", P(s.aoeDmg) }, { "레인", tostring(s.lanes) } } }
-  G[#G + 1] = { "획득", { { "MF", P(s.mf) }, { "골드 획득", P(s.goldFind) } } }
+  G[#G + 1] = { "Offense", { { "Physical ATK", N(s.atk) }, { "SPL", N(s.mag) }, { "Physical Damage", P(s.physDmg) }, { "Magic Damage", P(s.magDmg) }, { "Damage Dealt", P(s.allDmg) },
+    { "Physical Crit", P(s.critChance, 1) .. " / +" .. P(s.critDmg) }, { "Spell Crit", P(s.spellCrit, 1) .. " / +" .. P(s.spellCritDmg or s.critDmg) }, { "Cooldown Reduction", P(s.cdr) }, { "Lifesteal", P(s.lifesteal, 1) } } }
+  G[#G + 1] = { "DEF", { { "HP", N(s.maxHp) }, { "DEF", N(s.def) }, { "Dodge", P(s.dodge, 1) }, { "Damage Taken", P(s.dmgTaken) }, { "Heal per Second", P(s.regen, 1) } } }
+  G[#G + 1] = { "Mana", { { "Max Mana", N(s.maxMana) }, { "Regen per Second", P(s.manaRate, 1) } } }
+  local el = {}; for _, e in ipairs(Items.ELEMS or { "fire", "cold", "light", "void" }) do el[#el + 1] = { string.format("%s Damage", (Items.ELEM_NAME or {})[e] or e), P(s[e .. "Dmg"]) } end
+  el[#el + 1] = { "Elemental Damage", P(s.elemDmg) }; el[#el + 1] = { "Elemental Resistance Penetration", P(s.penElem) }; el[#el + 1] = { "Ignore DEF", P(s.ignoreDef) }; el[#el + 1] = { "Damage over Time", P(s.dotDmg) }
+  G[#G + 1] = { "Elements · Penetration", el }
+  G[#G + 1] = { "Bonus Damage", { { "Boss", P(s.add.boss) }, { "Elite", P(s.add.elite) }, { "Ranged", P(s.add.ranged) }, { "Common", P(s.add.normal) }, { "AoE Damage", P(s.aoeDmg) }, { "Lanes", tostring(s.lanes) } } }
+  G[#G + 1] = { "Gains", { { "MF", P(s.mf) }, { "Gold Gain", P(s.goldFind) } } }
   return G
 end
 function M.gachaView(sv) return Econ.gachaView(sv) end
@@ -335,11 +335,11 @@ function M.records(sv)
   local st = sv.stats or {}
   local owned = {}; for _, k in ipairs(sv.skills) do owned[k.id] = math.max(owned[k.id] or 0, k.rarity or 0) end   -- 가진 것 중 가장 높은 등급 (도감 테두리)
   return { rows = {
-    { "레벨", tostring(sv.level) }, { "처치한 몬스터", tostring(st.kills or 0) }, { "클리어한 전투", tostring(st.clears or 0) },
-    { "스테이지", string.format("%d/5", sv.cleared or 0) }, { "균열 최고층", string.format("%d층", sv.rift and sv.rift.best or 0) },
-    { "솟아난 탑 최고층", string.format("%d층", sv.spire and sv.spire.best or 0) }, { "무한 균열 최고 웨이브", tostring(sv.endless and sv.endless.best or 0) },
-    { "문지기 처치", (sv.raid and (sv.raid.cleared or 0) > 0) and "예" or "아니오" }, { "전직", string.format("%d차", sv.cls or 0) },
-    { "보유 장비", tostring(#sv.inv) }, { "보유 아르카나", tostring(#sv.skills) } }, owned = owned }
+    { "Level", tostring(sv.level) }, { "Monsters Slain", tostring(st.kills or 0) }, { "Battles Cleared", tostring(st.clears or 0) },
+    { "Stage", string.format("%d/5", sv.cleared or 0) }, { "Best Rift Floor", string.format("Floor %d", sv.rift and sv.rift.best or 0) },
+    { "Best Risen Tower Floor", string.format("Floor %d", sv.spire and sv.spire.best or 0) }, { "Best Endless Rift Wave", tostring(sv.endless and sv.endless.best or 0) },
+    { "Warden Defeated", (sv.raid and (sv.raid.cleared or 0) > 0) and "Yes" or "No" }, { "Class Advancement", string.format("Tier %d", sv.cls or 0) },
+    { "Gear Owned", tostring(#sv.inv) }, { "Arcana Owned", tostring(#sv.skills) } }, owned = owned }
 end
 function M.skillClean(sv, rules, keepBest)
   local busy = {}
@@ -361,15 +361,15 @@ end
 local function findAny(sv, uid) for _, s in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[s]; if it and it.uid == uid then return it end end for _, it in ipairs(sv.inv) do if it.uid == uid then return it end end end
 function M.sockRoll(sv, uid, rng)
   local it = findAny(sv, uid)
-  if not it or not it.sock or (it.rarity or 0) < 3 then return false, "소켓이 있는 전설 장비에만 쓸 수 있습니다" end
-  if (sv.sockTix or 0) < 1 then return false, "세공의 인장이 없습니다" end
+  if not it or not it.sock or (it.rarity or 0) < 3 then return false, "Only usable on Legendary gear with sockets" end
+  if (sv.sockTix or 0) < 1 then return false, "You have no Artisan's Seal" end
   local nn = (rng or Random.new()):NextInteger(1, 3); local old = #it.sock
   sv.sockTix -= 1; it.sock = {}; for i = 1, nn do it.sock[i] = false end
-  return true, string.format("소켓 %d개 → %d개", old, nn)
+  return true, string.format("Sockets %d → %d", old, nn)
 end
 function M.sockDel(sv, uid, idx)
-  local it = findAny(sv, uid); if not it or not it.sock or not it.sock[idx] then return false, "빈 소켓입니다" end
-  it.sock[idx] = false; return true, "소켓의 돌을 삭제했습니다"
+  local it = findAny(sv, uid); if not it or not it.sock or not it.sock[idx] then return false, "That socket is empty" end
+  it.sock[idx] = false; return true, "Removed the socketed stone"
 end
 function M.sell(sv, uid) return Extras.sell(sv, uid) end
 function M.bulk(sv, r, mode) return Extras.bulk(sv, tonumber(r) or 0, mode == "sell" and "sell" or "dismantle") end
@@ -386,7 +386,7 @@ function M.questClaim(sv, id) return Extras.questClaim(sv, id) end
 function M.battle(sv, floorN, seed)
   floorN = math.floor(floorN or 1)
   local best = sv.spire.best
-  if floorN < 1 or floorN > CFG.SPIRE.END or floorN > best + 1 then return nil, "도전할 수 없는 층입니다" end
+  if floorN < 1 or floorN > CFG.SPIRE.END or floorN > best + 1 then return nil, "Cannot challenge this Floor" end
   local node = { act = 10, floor = floorN, tier = Battle.spireTier(floorN), tw = 1 }
   local rng = Random.new((seed or os.time()) + sv.nextUid)
   local b = Battle.run(sv, node, rng:NextInteger(1, 2 ^ 30), 0.05, 700)
@@ -412,12 +412,12 @@ function M.fight(sv, kind, n, seed)
   n = math.floor(n or 1)
   local node
   if kind == "stage" then
-    if n < 1 or n > CFG.STAGES or n > (sv.cleared or 0) + 1 then return nil, "도전할 수 없는 스테이지입니다" end
+    if n < 1 or n > CFG.STAGES or n > (sv.cleared or 0) + 1 then return nil, "Cannot challenge this Stage" end
     node = n == CFG.STAGES and { kind = "boss", act = 1, stage = n } or { kind = "stage", act = 1, stage = n }
   elseif kind == "rift" then
-    if (sv.cleared or 0) < CFG.STAGES then return nil, "스테이지 5를 먼저 클리어해야 합니다" end
+    if (sv.cleared or 0) < CFG.STAGES then return nil, "Clear Stage 5 first" end
     local best = sv.rift.best
-    if n < 1 or n > CFG.RIFT_END or n > best + 1 then return nil, "도전할 수 없는 층입니다" end
+    if n < 1 or n > CFG.RIFT_END or n > best + 1 then return nil, "Cannot challenge this Floor" end
     node = { kind = "rift", act = math.max(1, math.min(10, math.ceil(n / 10))), tier = n, mods = Battle.riftMods(n) }
   else return M.battle(sv, n, seed) end
   local rng = Random.new((seed or os.time()) + sv.nextUid)
@@ -438,7 +438,7 @@ function M.fight(sv, kind, n, seed)
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
       if n >= CFG.STAGES then
-        sv.lanesBase = CFG.ENDGAME_LANES; res.note = (res.note or "") .. " 스테이지 클리어! 영구 3레인과 '심연의 균열'이 열립니다."
+        sv.lanesBase = CFG.ENDGAME_LANES; res.note = (res.note or "") .. " Stage clear! Permanent 3 lanes and 'Abyssal Rift' unlocked."
       end
     end
     do local first = (kind == "stage" and res.first) or (kind == "rift" and n > sv.rift.best)
@@ -456,8 +456,8 @@ end
 function M.shop(sv) return Econ.shopStock(sv) end
 function M.buySkill(sv, id) return Econ.buySkill(sv, id) end
 -- 아르카나(스킬) 목록 + 실제 수치: 쿨타임(쿨감 적용) · 사거리 · 마나 · 1회 위력 · 초당 피해(내 능력치로 계산) · 범위 모양
-local AREA = { single = "단일", multi = "3x3 범위", cone = "앞 부채꼴", pierce = "한 줄 관통", chain = "연쇄", nova = "사거리 안 전체", meteor = "무작위 낙하", zone = "한 줄 3칸 지속", zone2 = "구역 지속",
-  spray = "여러 발 난사", orbit = "주위를 도는 구체", aura = "앞줄 지속", trap = "지뢰 3x3", rain = "무작위 낙뢰", summon = "소환수", hole = "끌어당기는 구역", bounce = "튕기며 여러 번", shuri = "구간 지속", boomer = "줄 관통 왕복", buff = "강화", heal = "회복" }
+local AREA = { single = "Single target", multi = "3x3 area", cone = "Frontal cone", pierce = "Pierces a row", chain = "Chain", nova = "All in range", meteor = "Random impacts", zone = "3 tiles in a row, lasting", zone2 = "Area, lasting",
+  spray = "Multi-shot barrage", orbit = "Orbiting orbs", aura = "Front row, lasting", trap = "Mine 3x3", rain = "Random lightning", summon = "Summon", hole = "Pulling vortex", bounce = "Bounces, multiple hits", shuri = "Section, lasting", boomer = "Row pierce, returns", buff = "Upgrade", heal = "Heal" }
 function M.skills(sv)
   local rows = Econ.skillList(sv)
   local s = Stats.computeStats(sv)
@@ -484,7 +484,7 @@ function M.enhance(sv, uid, seed)
   local it = sv.equipped.weapon and nil
   for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == uid then it = sv.equipped[slot] end end
   if not it then for _, x in ipairs(sv.inv) do if x.uid == uid then it = x end end end
-  if not it then return false, "없는 장비" end
+  if not it then return false, "Gear not found" end
   local ok, msg = Econ.enhance(sv, it, Random.new((seed or os.time()) + uid))
   if ok then Extras.questEvent(sv, "enhance", 1) end
   return ok, msg
@@ -515,9 +515,9 @@ function M.forgeList(sv, bag)   -- bag = true 이면 가방 장비 (좋은 것�
   end
   return out
 end
-function M.reroll(sv, uid, idx, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.rerollAffix(sv, it, tonumber(idx), Random.new((seed or os.time()) + uid)) end
-function M.chaos(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.addAffix(sv, it, Random.new((seed or os.time()) + uid)) end
-function M.divine(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "없는 장비" end return Econ.divine(sv, it, Random.new((seed or os.time()) + uid)) end
+function M.reroll(sv, uid, idx, seed) local it = findItem(sv, uid); if not it then return false, "Gear not found" end return Econ.rerollAffix(sv, it, tonumber(idx), Random.new((seed or os.time()) + uid)) end
+function M.chaos(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "Gear not found" end return Econ.addAffix(sv, it, Random.new((seed or os.time()) + uid)) end
+function M.divine(sv, uid, seed) local it = findItem(sv, uid); if not it then return false, "Gear not found" end return Econ.divine(sv, it, Random.new((seed or os.time()) + uid)) end
 function M.stones(sv) return Econ.stoneList(sv) end
 function M.reveal(sv, uid, seed) local a, b = Econ.revealStone(sv, uid, Random.new((seed or os.time()) + uid)); if a then Extras.questEvent(sv, "stone", 1) end; return a, b end
 function M.socket(sv, itemUid, stoneUid, idx) return Econ.socketStone(sv, itemUid, stoneUid, idx) end

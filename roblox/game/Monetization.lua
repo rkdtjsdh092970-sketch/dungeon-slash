@@ -2,20 +2,20 @@
 local M = {}
 
 M.PASSES = {   -- 게임패스 (영구)
-  autoPack   = { id = 0, name = "자동 전투 팩" },
-  bagPlus    = { id = 0, name = "가방 확장", bag = 100, stash = 100, stoneCap = 50 },
-  goldPlus   = { id = 0, name = "골드 +50%", gold = 0.5 },
-  presetPlus = { id = 0, name = "프리셋 확장", presets = 3 },
-  statsView  = { id = 0, name = "전투 통계" },
+  autoPack   = { id = 0, name = "Auto-Battle Pack" },
+  bagPlus    = { id = 0, name = "Expand Bag", bag = 100, stash = 100, stoneCap = 50 },
+  goldPlus   = { id = 0, name = "Gold +50%", gold = 0.5 },
+  presetPlus = { id = 0, name = "Expand Presets", presets = 3 },
+  statsView  = { id = 0, name = "Battle Stats" },
   speed4     = { id = 2063961736, name = "4x Speed" },   -- 전투 재생 x4 배속 (x1~x3 무료). 2026-11-02 사용자가 생성
 }
 
 M.PRODUCTS = {   -- 개발자 상품 (소모성). daily = 하루 구매 한도
-  ore       = { id = 0, name = "강화석 꾸러미", daily = 5,  grant = { ore = 2000 } },
-  rerollSafe= { id = 0, name = "재굴림 보호권", daily = 10, grant = { rerollSafe = 1 } },
-  keys      = { id = 0, name = "입장 열쇠 묶음", daily = 3,  grant = { upKeys = 5 } },
-  offline2x = { id = 0, name = "오프라인 보상 x2", daily = 3, grant = { offline2x = 1 } },
-  lockOne   = { id = 0, name = "소원의 구슬", daily = 3,  grant = { lockOne = 1 } },
+  ore       = { id = 0, name = "Upgrade Stone Bundle", daily = 5,  grant = { ore = 2000 } },
+  rerollSafe= { id = 0, name = "Reroll Protection Ticket", daily = 10, grant = { rerollSafe = 1 } },
+  keys      = { id = 0, name = "Entry Key Bundle", daily = 3,  grant = { upKeys = 5 } },
+  offline2x = { id = 0, name = "Offline Rewards x2", daily = 3, grant = { offline2x = 1 } },
+  lockOne   = { id = 0, name = "Orb of Wishes", daily = 3,  grant = { lockOne = 1 } },
 }
 
 M.FORBIDDEN = { "cbook", "satan", "charm", "mythic", "stone", "spireFloor", "power" }   -- 판매 금지 항목 (지급 함수가 이 키를 거부한다)

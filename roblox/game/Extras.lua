@@ -5,10 +5,10 @@ local floor, max, min = math.floor, math.max, math.min
 local SELL_R = { 1, 1.7, 3.2, 6, 9, 15 }
 
 M.DAILY_TASKS = {
-  { id = "kill", name = "몬스터 처치", n = 300, key = "kills", reward = { arcana = 5, gold = 800 }, text = "아르카나 조각 5 · 800G" },
-  { id = "clear", name = "스테이지 클리어", n = 8, key = "clears", reward = { ore = 12 }, text = "강화석 12" },
-  { id = "boss", name = "보스 처치", n = 3, key = "bosses", reward = { orbC = 1 }, text = "혼돈 구슬 1" },
-  { id = "rift", name = "균열 클리어 (엔드게임)", n = 3, key = "rifts", reward = { orbC = 1 }, text = "혼돈 구슬 1", endgame = true },
+  { id = "kill", name = "Monster Kills", n = 300, key = "kills", reward = { arcana = 5, gold = 800 }, text = "Arcana Shards 5 · 800G" },
+  { id = "clear", name = "Stage Clear", n = 8, key = "clears", reward = { ore = 12 }, text = "Upgrade Stone 12" },
+  { id = "boss", name = "Boss Kills", n = 3, key = "bosses", reward = { orbC = 1 }, text = "Chaos Orb 1" },
+  { id = "rift", name = "Clear Rift (Endgame)", n = 3, key = "rifts", reward = { orbC = 1 }, text = "Chaos Orb 1", endgame = true },
 }
 local function today() return floor(os.time() / 86400) end
 function M.dailyState(sv)
@@ -29,14 +29,14 @@ function M.dailyClaim(sv, id)
   local D = M.dailyState(sv)
   for _, t in ipairs(M.DAILY_TASKS) do
     if t.id == id then
-      if D.claimed[id] or (D[t.key] or 0) < t.n then return false, "아직 받을 수 없습니다" end
+      if D.claimed[id] or (D[t.key] or 0) < t.n then return false, "Cannot claim yet" end
       D.claimed[id] = true
       for k, v in pairs(t.reward) do k = k == "hone" and "arcana" or k; sv[k] = (sv[k] or 0) + v end
       sv.arcana = (sv.arcana or 0) + 10   -- 일일 과제: 아르카나 조각 +10
       return true
     end
   end
-  return false, "없는 목표"
+  return false, "Goal not found"
 end
 -- 전투 결과를 일일 카운터에 반영
 function M.onWin(sv, kills, boss, rift)
@@ -74,11 +74,11 @@ local function take(sv, uid)
   for i, it in ipairs(sv.inv) do if it.uid == uid then table.remove(sv.inv, i); return it end end
 end
 function M.sell(sv, uid)
-  local it = take(sv, uid); if not it then return false, "없는 장비" end
+  local it = take(sv, uid); if not it then return false, "Gear not found" end
   local v = M.itemValue(it); sv.gold += v; return true, v
 end
 function M.dismantle(sv, uid)
-  local it = take(sv, uid); if not it then return false, "없는 장비" end
+  local it = take(sv, uid); if not it then return false, "Gear not found" end
   local y = M.dismantleYield(it); sv.gold += y.gold; sv.ore += y.ore; return true, y
 end
 -- 일괄 정리: 등급 이하(희귀도 0~maxRarity, 위성/강화 제외)를 판매 또는 분해
@@ -107,7 +107,7 @@ function M.runeView(sv)
 end
 local function findSkill(sv, uid) for _, k in ipairs(sv.skills) do if k.uid == uid then return k end end end
 function M.runeEquip(sv, skillUid, runeUid)
-  local k = findSkill(sv, skillUid); if not k then return false, "없는 아르카나" end
+  local k = findSkill(sv, skillUid); if not k then return false, "Arcana not found" end
   for i, r in ipairs(sv.runes or {}) do
     if r.uid == runeUid then
       table.remove(sv.runes, i)
@@ -115,20 +115,20 @@ function M.runeEquip(sv, skillUid, runeUid)
       k.rune = r.id; return true
     end
   end
-  return false, "없는 룬"
+  return false, "Rune not found"
 end
 function M.runeRemove(sv, skillUid)
-  local k = findSkill(sv, skillUid); if not k or not k.rune then return false, "룬이 없습니다" end
+  local k = findSkill(sv, skillUid); if not k or not k.rune then return false, "No Runes" end
   M.addRune(sv, k.rune); k.rune = nil; return true
 end
 
 -- ---- 퀘스트 (1막) ----
 M.QUESTS = {
-  { id = "k1", title = "소탕", desc = "적 150마리 처치", type = "kill", n = 150, reward = { gold = 40, ore = 2 } },
-  { id = "m1", title = "첫 군주", desc = "스테이지 보스 처치", type = "boss", n = 1, reward = { gold = 60, ore = 4 } },
-  { id = "f1", title = "대장장이의 부탁", desc = "장비 2번 강화", type = "enhance", n = 2, reward = { gold = 80, ore = 4 } },
-  { id = "f2", title = "소켓의 비밀", desc = "원초의 돌 1개 확인", type = "stone", n = 1, reward = { gold = 400, ore = 6 } },
-  { id = "r1", title = "균열의 도전자", desc = "균열 3층 클리어", type = "rift", n = 3, reward = { gold = 300, ore = 10 } },
+  { id = "k1", title = "Sweep", desc = "Defeat 150 enemies", type = "kill", n = 150, reward = { gold = 40, ore = 2 } },
+  { id = "m1", title = "First Lord", desc = "Stage Boss Kills", type = "boss", n = 1, reward = { gold = 60, ore = 4 } },
+  { id = "f1", title = "Blacksmith's Request", desc = "Enhance Gear 2 times", type = "enhance", n = 2, reward = { gold = 80, ore = 4 } },
+  { id = "f2", title = "Secrets of the Socket", desc = "Identify 1 Primordial Stone", type = "stone", n = 1, reward = { gold = 400, ore = 6 } },
+  { id = "r1", title = "Rift Challenger", desc = "Clear Rift Floor 3", type = "rift", n = 3, reward = { gold = 300, ore = 10 } },
 }
 function M.questEvent(sv, typ, n)
   sv.q = sv.q or {}
@@ -143,14 +143,14 @@ function M.questView(sv)
   sv.q = sv.q or {}; local out = {}
   for _, d in ipairs(M.QUESTS) do
     local st = sv.q[d.id] or { p = 0, state = "active" }
-    local RN = { gold = "골드", ore = "강화석", orbC = "혼돈 구슬", arcana = "아르카나 조각", hone = "아르카나 조각", keys = "공허의 열쇠", gems = "보석" }
-    local rw = {}; for k, v in pairs(d.reward or {}) do rw[#rw + 1] = string.format("%s %s", RN[k] or k, tostring(v)) end; table.sort(rw); rw[#rw + 1] = "아르카나 조각 5"
+    local RN = { gold = "Gold", ore = "Upgrade Stone", orbC = "Chaos Orb", arcana = "Arcana Shards", hone = "Arcana Shards", keys = "Void Key", gems = "Gems" }
+    local rw = {}; for k, v in pairs(d.reward or {}) do rw[#rw + 1] = string.format("%s %s", RN[k] or k, tostring(v)) end; table.sort(rw); rw[#rw + 1] = "Arcana Shards 5"
     out[#out + 1] = { id = d.id, title = d.title, desc = d.desc, n = d.n, p = st.p, state = st.state, reward = table.concat(rw, " · ") }
   end
   return out
 end
 function M.questClaim(sv, id)
-  local st = sv.q and sv.q[id]; if not st or st.state ~= "done" then return false, "아직 받을 수 없습니다" end
+  local st = sv.q and sv.q[id]; if not st or st.state ~= "done" then return false, "Cannot claim yet" end
   for _, d in ipairs(M.QUESTS) do if d.id == id then for k, v in pairs(d.reward) do k = k == "hone" and "arcana" or k; sv[k] = (sv[k] or 0) + v end end end
   sv.arcana = (sv.arcana or 0) + 5   -- 퀘스트: 아르카나 조각 +5
   st.state = "claimed"; return true

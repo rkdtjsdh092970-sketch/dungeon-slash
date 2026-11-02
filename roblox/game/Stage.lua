@@ -165,7 +165,7 @@ function M.create(parent, W, H, replayAct)
     task.defer(function() if b.Parent then Skin.button(b) end end)   -- 질감 있는 버튼 그림
     return b
   end
-  cbtn(S.ctrl, "건너뛰기 ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
+  cbtn(S.ctrl, "Skip ▶▶", UDim2.new(0, 0, 0, 0), UDim2.new(0, 120, 0, 40), Color3.fromRGB(65, 62, 80)).MouseButton1Click:Connect(function() S:skip() end)
   S.spdBtn = cbtn(S.ctrl, "x1 ▼", UDim2.new(0, 128, 0, 0), UDim2.new(0, 108, 0, 40), Color3.fromRGB(200, 140, 40))
   S.spdBtn:SetAttribute("NoTr", true)
   S.spdList = mk("Frame", { Position = UDim2.new(0, 128, 0, 44), Size = UDim2.new(0, 108, 0, 0), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 31 }, S.ctrl)
@@ -369,13 +369,13 @@ function M:applySnap(s, lanes)
     end
     if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
     u.tx, u.ty = x, y; u.hp = e.hp
-    if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("☠  처치 %d", self.kills) end
+    if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("☠  Kills %d", self.kills) end
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.16; hits[#hits + 1] = u; if #hits <= 6 then Fx.hit(self, u) end end
     if u.wind and not e.wind and not e.dead then u.atk = 0; Fx.enemyHit(self, u, e.ranged) end   -- 모았던 공격을 내지른다
     u.wind = e.wind
     if u.atkArt then local pose = (e.wind or u.atk) and "atk" or "idle"; if pose ~= u.pose then u.pose = pose; u.lab.ImageContent = (pose == "atk" and u.atkArt or u.idleArt).content end end   -- 공격을 모으거나 내지를 때 공격 자세
   end
-  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("☠  처치 %d", self.kills) end end
+  for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("☠  Kills %d", self.kills) end end
   if s.ph and s.ph > 0 then self.shake = math.max(self.shake or 0, 0.18) end
   if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); local an = self.plAnim and self.plAnim.name; if an == "idle" or an == "hurt" or an == nil then self.plAnim = { name = "hurt", t = 0 } else self.plHurt = 0.2 end end   -- 공격 동작 중에 맞으면 동작은 끝까지, 붉은 번쩍임만
   if s.c then   -- 스킬 연출 (계열 · 원소 · 종류별, BattleFx)
@@ -425,7 +425,7 @@ function M:play(replay, onDone, maxSec, hud)
   for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy(); if u.shadow then u.shadow:Destroy() end end; self.units = {}
   self.buildBg(replay.act or 1); self:buildLanes(replay.lanes or 2)
   if hud then self:setHud(hud) end
-  self.kills = 0; self.killLbl.Text = string.format("☠  처치 %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
+  self.kills = 0; self.killLbl.Text = string.format("☠  Kills %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
   self.replay = replay; self.t = 0; self.idx = 0; self.onDone = onDone; self.ctrl.Visible = true
   local total = (replay.snaps[#replay.snaps] or { t = 1 }).t
   self.spd = math.max(1, total / (maxSec or 40)); self.userSpd = self.userSpd or 1
@@ -438,7 +438,7 @@ function M:play(replay, onDone, maxSec, hud)
     self.t += dt * self.spd * self.userSpd * slow; self.idleT = (self.idleT or 0) + dt
     local sn = replay.snaps
     while self.idx < #sn and sn[self.idx + 1].t <= self.t do self.idx += 1; self:applySnap(sn[self.idx], lanes) end
-    self.timeLbl.Text = string.format("%.0f / %.0f초", math.min(self.t, total), total)
+    self.timeLbl.Text = string.format("%.0f / %.0fs", math.min(self.t, total), total)
     for _, cell in pairs(self.skillCells) do if cell.left > 0 then cell.left = math.max(0, cell.left - dt * self.spd * self.userSpd); cell.ov.Size = UDim2.new(1, 0, cell.left / cell.cd, 0) end end
     if self.shake and self.shake > 0 then   -- 화면 흔들림 (그래픽 설정의 반짝임 세기를 따른다)
       self.shake -= dt; local m = 7 * self.u * M.OPT.flash * math.clamp(self.shake / 0.3, 0, 1)

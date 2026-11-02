@@ -4,7 +4,7 @@ local Class = require(Data.Class)
 local M = {}
 local floor = math.floor
 
-M.NAMES = { "", "각성자", "초월자", "지배자" }
+M.NAMES = { "", "Awakened", "Transcendent", "Dominator" }
 local C_KEYS = { "r", "a1", "a2", "b1", "b2", "c0", "ca", "cb" }
 local C_FROM = { r = false, a1 = "r", a2 = "a1", b1 = "r", b2 = "b1", c0 = "r", ca = "a2", cb = "b2" }
 M.KEYS = C_KEYS
@@ -35,9 +35,9 @@ end
 function M.reset(sv) sv.cpass = {} end
 function M.advance(sv)
   local n = (sv.cls or 0) + 1
-  if n > 3 then return false, "이미 최종 전직입니다" end
-  if not sv.cbook or (sv.cbook[n] or 0) <= 0 then return false, n .. "차 전직의 서가 없습니다" end
-  sv.cbook[n] -= 1; sv.cls = n; return true, n .. "차 전직 — " .. M.NAMES[n + 1] .. "! 전직 포인트 2점을 얻었습니다"
+  if n > 3 then return false, "Already at final Class Advancement" end
+  if not sv.cbook or (sv.cbook[n] or 0) <= 0 then return false, n .. " Tome of Advancement missing" end
+  sv.cbook[n] -= 1; sv.cls = n; return true, n .. " Class Advancement — " .. M.NAMES[n + 1] .. "! Gained 2 Class Advancement points"
 end
 function M.view(sv)
   local trees = {}
@@ -81,10 +81,10 @@ local function fmtVal(R)
 end
 function M.lines(it) local o = {}; for _, R in ipairs(rows(it)) do o[#o + 1] = string.gsub(R.txt, "{v}", fmtVal(R)) end return o end
 function M.equip(sv, uid, slot)
-  if not M.charmUnlocked(sv) then return false, "3차 전직 후에 쓸 수 있습니다" end
+  if not M.charmUnlocked(sv) then return false, "Requires Class Advancement 3" end
   sv.charms = sv.charms or { false, false, false, false }
   local it, idx; for i, x in ipairs(sv.charmInv or {}) do if x.uid == uid then it = x; idx = i end end
-  if not it then return false, "없는 참" end
+  if not it then return false, "Charm not found" end
   local s = slot; if not s then for i = 1, 4 do if not sv.charms[i] then s = i; break end end end
   s = s or 1
   local old = sv.charms[s]; sv.charms[s] = it; table.remove(sv.charmInv, idx); if old then sv.charmInv[#sv.charmInv + 1] = old end

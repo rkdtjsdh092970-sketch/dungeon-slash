@@ -34,24 +34,24 @@ function M.shopStock(sv)
   return rows
 end
 function M.buySkill(sv, id)
-  local d = SKILL_BY[id]; if not d or isSpecial(d) then return false, "살 수 없는 아르카나" end
-  if (d.unlock or 1) > M.skillAct(sv) then return false, "아직 해금되지 않았습니다" end
-  local price = skillPrice(d, 0); if sv.gold < price then return false, "골드가 부족합니다" end
+  local d = SKILL_BY[id]; if not d or isSpecial(d) then return false, "Arcana unavailable for purchase" end
+  if (d.unlock or 1) > M.skillAct(sv) then return false, "Not unlocked yet" end
+  local price = skillPrice(d, 0); if sv.gold < price then return false, "Not enough Gold" end
   sv.gold -= price; local g = M.grantSkill(sv, id); local inst; for _, k in ipairs(sv.skills) do if k.uid == g.uid then inst = k end end
   return true, inst
 end
 local function findSkill(sv, uid) for _, k in ipairs(sv.skills) do if k.uid == uid then return k end end end
 function M.honeCost(lvl, rarity) return floor((3 + 2 * lvl) * (HONE_RMUL[(rarity or 0) + 1] or 1) + 0.5) end
 function M.levelUpSkill(sv, uid)
-  local k = findSkill(sv, uid); if not k then return false, "없는 아르카나" end
-  local lvl = k.lvl or 1; if lvl >= M.SKILL_MAX_LV then return false, "최대 레벨입니다" end
-  local c = M.honeCost(lvl, k.rarity); if (sv.hone or 0) < c then return false, "연마석이 부족합니다" end
+  local k = findSkill(sv, uid); if not k then return false, "Arcana not found" end
+  local lvl = k.lvl or 1; if lvl >= M.SKILL_MAX_LV then return false, "Max level reached" end
+  local c = M.honeCost(lvl, k.rarity); if (sv.hone or 0) < c then return false, "Not enough Honing Stones" end
   sv.hone -= c; k.lvl = lvl + 1; return true
 end
 -- 장착: slotIdx 는 1~sv.slots. 이미 다른 칸에 있으면 그 칸을 비운다
 function M.equipSkill(sv, slotIdx, uid, rule)
-  if slotIdx < 1 or slotIdx > sv.slots then return false, "열리지 않은 칸입니다" end
-  local k = findSkill(sv, uid); if not k then return false, "없는 아르카나" end
+  if slotIdx < 1 or slotIdx > sv.slots then return false, "Slot locked" end
+  local k = findSkill(sv, uid); if not k then return false, "Arcana not found" end
   local d = SKILL_BY[k.id]; if d.slot == "passive" then sv.passive = uid; return true end
   for i, l in ipairs(sv.loadout) do if l and l.uid == uid then sv.loadout[i] = false end end
   sv.loadout[slotIdx] = { uid = uid, rule = rule or "front" }; return true
@@ -61,9 +61,9 @@ M.SKILL_DIS_ARC = { 1, 2, 5, 15, 40 }   -- 스킬 분해 → 아르카나 조각
 -- 아르카나 조각 (스킬 소환 전용): 전투 · 과제 보상으로 준다
 function M.addArcana(sv, n) n = math.max(0, math.floor(n or 0)); sv.arcana = (sv.arcana or 0) + n; return n end
 function M.sellSkill(sv, uid)
-  local k = findSkill(sv, uid); if not k then return false, "없는 아르카나" end
-  if sv.passive == uid then return false, "장착 중입니다" end
-  for _, l in ipairs(sv.loadout) do if l and l.uid == uid then return false, "장착 중입니다" end end
+  local k = findSkill(sv, uid); if not k then return false, "Arcana not found" end
+  if sv.passive == uid then return false, "Equipped" end
+  for _, l in ipairs(sv.loadout) do if l and l.uid == uid then return false, "Equipped" end end
   local v = floor(M.SKILL_DIS_ARC[math.min(5, (k.rarity or 0) + 1)] * (1 + 0.25 * ((k.lvl or 1) - 1)) + 0.5)   -- 분해: 아르카나 조각
   sv.arcana = (sv.arcana or 0) + v; table.remove(sv.skills, table.find(sv.skills, k)); return true, v
 end
@@ -110,7 +110,7 @@ end
 function M.resetPassives(sv) sv.pass = {} end
 -- 찍은 노드 하나 빼기 (포인트 돌려받음). 빼도 나머지가 모두 가운데와 이어져 있을 때만 (끝 노드부터)
 function M.dropPassive(sv, id)
-  if not has(sv, id) then return false, "찍지 않은 노드입니다" end
+  if not has(sv, id) then return false, "Node not allocated" end
   sv.pass[id] = nil
   local seen, todo = {}, {}
   for k in pairs(sv.pass) do if PASS_BY[k] and table.find(PASS_BY[k].links, "C") then seen[k] = true; todo[#todo + 1] = k end end
@@ -119,7 +119,7 @@ function M.dropPassive(sv, id)
     for _, q in ipairs(PASS_BY[k].links) do if q ~= "C" and has(sv, q) and not seen[q] then seen[q] = true; todo[#todo + 1] = q end end
     for q in pairs(sv.pass) do if not seen[q] and PASS_BY[q] and table.find(PASS_BY[q].links, k) then seen[q] = true; todo[#todo + 1] = q end end
   end
-  for k in pairs(sv.pass) do if PASS_BY[k] and not seen[k] then sv.pass[id] = 1; return false, "이 노드 뒤로 이어진 노드가 있어 뺄 수 없습니다 (끝 노드부터 빼세요)" end end
+  for k in pairs(sv.pass) do if PASS_BY[k] and not seen[k] then sv.pass[id] = 1; return false, "Other nodes depend on this one (remove end nodes first)" end end
   return true
 end
 -- 자동 배분: 키별 가중치로 점수/비용이 높은 경로를 포인트가 다할 때까지 찍는다 (직접 트리를 고르는 화면이 생기기 전까지의 대체)
@@ -147,13 +147,13 @@ end
 local function gGold(ilvl) return Items.TIER_SCALE[math.max(1, math.min(6, ilvl))] ^ 0.8 end
 function M.enhCost(it) return { gold = floor(40 * gGold(it.ilvl) * (1 + (it.enh or 0) * 0.6) + 0.5), ore = 2 + (it.enh or 0) } end
 function M.enhance(sv, it, rng)
-  if (it.enh or 0) >= 10 then return false, "최대 강화입니다" end
-  local c = M.enhCost(it); if sv.gold < c.gold or sv.ore < c.ore then return false, "재료가 부족합니다" end
+  if (it.enh or 0) >= 10 then return false, "Max Enhance reached" end
+  local c = M.enhCost(it); if sv.gold < c.gold or sv.ore < c.ore then return false, "Not enough materials" end
   sv.gold -= c.gold; local rate = ENH_RATE[(it.enh or 0) + 1]
-  if rng:NextNumber() < rate then sv.ore -= c.ore; it.enh = (it.enh or 0) + 1; return true, "+" .. it.enh .. " 강화 성공!" end
+  if rng:NextNumber() < rate then sv.ore -= c.ore; it.enh = (it.enh or 0) + 1; return true, "+" .. it.enh .. " Enhance successful!" end
   sv.ore -= math.ceil(c.ore / 2)
-  if (it.enh or 0) > 0 and rng:NextNumber() < ENH_DROP[(it.enh or 0) + 1] then it.enh -= 1; return true, "강화 실패 — +" .. (it.enh + 1) .. "에서 +" .. it.enh .. "로 하락" end
-  return true, "강화 실패 (강화석 일부만 소모)"
+  if (it.enh or 0) > 0 and rng:NextNumber() < ENH_DROP[(it.enh or 0) + 1] then it.enh -= 1; return true, "Enhance failed — +" .. (it.enh + 1) .. " from +" .. it.enh .. " drops to" end
+  return true, "Enhance failed (only some Upgrade Stones consumed)"
 end
 
 
@@ -163,16 +163,16 @@ function M.rerollCost(it) local c = REROLL_COST[math.max(1, math.min(6, it.ilvl 
 function M.rerollLocked(it, idx) return it.rrIdx ~= nil and it.rrIdx ~= idx end
 local function wpickAff(rng, pool) local t = 0; for _, a in ipairs(pool) do t += a.w end; local r = rng:NextNumber() * t; for _, a in ipairs(pool) do r -= a.w; if r <= 0 then return a end end return pool[#pool] end
 function M.rerollAffix(sv, it, idx, rng)   -- idx 는 0부터 (JS 와 같다)
-  if M.rerollLocked(it, idx) then return false, "다른 줄을 이미 굴렸습니다 (한 장비에서 한 줄만 굴릴 수 있습니다)" end
-  local c = M.rerollCost(it); if sv.gold < c.gold or sv.ore < c.ore then return false, "재료가 부족합니다" end
-  local old = it.affixes[idx + 1]; if not old then return false, "없는 줄" end
-  local pool = Loot.affixPool(it, idx); if #pool == 0 then return false, "붙일 수 있는 옵션이 없습니다" end
+  if M.rerollLocked(it, idx) then return false, "Another Affix has already been rerolled (only one Affix per Gear item can be rerolled)" end
+  local c = M.rerollCost(it); if sv.gold < c.gold or sv.ore < c.ore then return false, "Not enough materials" end
+  local old = it.affixes[idx + 1]; if not old then return false, "Affix not found" end
+  local pool = Loot.affixPool(it, idx); if #pool == 0 then return false, "No Affixes available to add" end
   it.affixes[idx + 1] = Loot.mkAff(rng, wpickAff(rng, pool), it.ilvl, it.rarity); it.rr = (it.rr or 0) + 1; it.rrIdx = idx
   sv.gold -= c.gold; sv.ore -= c.ore; return true
 end
 -- 혼돈 구슬: 장비 옵션의 수치를 (같은 옵션 · 같은 티어 안에서) 다시 굴린다. 예전 신성 구슬 효과 — 신성 구슬은 폐지 (2026-11-02)
 function M.addAffix(sv, it, rng)
-  if it.uniq or #it.affixes == 0 or (sv.orbC or 0) < 1 then return false, (sv.orbC or 0) < 1 and "혼돈 구슬이 없습니다" or "옵션이 없는 장비입니다" end
+  if it.uniq or #it.affixes == 0 or (sv.orbC or 0) < 1 then return false, (sv.orbC or 0) < 1 and "No Chaos Orbs" or "This gear has no affixes" end
   local by = {}; for _, a in ipairs(Items.AFFIXES) do by[a.k] = a end
   for i, a in ipairs(it.affixes) do it.affixes[i] = Loot.mkAff(rng, by[a.k], it.ilvl, it.rarity, a.t) end
   sv.orbC -= 1; return true
@@ -192,8 +192,8 @@ function M.addStone(sv, hi)
 end
 function M.revealStone(sv, uid, rng)
   local st; for _, x in ipairs(sv.stones or {}) do if x.uid == uid then st = x end end
-  if not st or st.rev then return false, "확인할 수 없는 돌" end
-  local c = M.stoneRevealCost(sv); if sv.gold < c then return false, "골드가 부족합니다" end
+  if not st or st.rev then return false, "Cannot identify this Stone" end
+  local c = M.stoneRevealCost(sv); if sv.gold < c then return false, "Not enough Gold" end
   sv.gold -= c; local p = Items.STONE_POOL[rng:NextInteger(1, #Items.STONE_POOL)]
   st.rev = { k = p.k, v = p.v >= 1 and floor(p.v + 0.5) or tonumber(string.format("%.4f", p.v)) }; return true, st.rev
 end
@@ -207,10 +207,10 @@ function M.socketStone(sv, itemUid, stoneUid, idx)   -- idx 는 1부터
   for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == itemUid then it = sv.equipped[slot] end end
   if not it then for _, x in ipairs(sv.inv) do if x.uid == itemUid then it = x end end end
   local st, si; for i, x in ipairs(sv.stones or {}) do if x.uid == stoneUid then st = x; si = i end end
-  if not it or not it.sock or not st or not st.rev then return false, "끼울 수 없습니다" end
-  if idx < 1 or idx > #it.sock then return false, "소켓이 없습니다" end
+  if not it or not it.sock or not st or not st.rev then return false, "Cannot Socket this" end
+  if idx < 1 or idx > #it.sock then return false, "No Sockets" end
   local cur = it.sock[idx]
-  if not M.socketUsable(it, st.rev.k) and not (cur and cur.k == st.rev.k) then return false, "이미 같은 옵션이 있어 끼울 수 없습니다" end
+  if not M.socketUsable(it, st.rev.k) and not (cur and cur.k == st.rev.k) then return false, "Cannot Socket: this Affix already exists" end
   it.sock[idx] = st.rev.hi and { k = st.rev.k, v = st.rev.v, hi = 1 } or { k = st.rev.k, v = st.rev.v }; table.remove(sv.stones, si); return true
 end
 function M.stoneList(sv)
@@ -308,9 +308,9 @@ end
 function M.gachaPull(sv, n, pay, rng, fam)
   if fam ~= "phys" and fam ~= "mag" then fam = nil end
   local G = M.GACHA; n = (n == 10) and 10 or 1
-  if pay == "gem" then local c = n == 10 and G.GEM10 or G.GEM1; if (sv.gems or 0) < c then return nil, "보석이 부족합니다" end; sv.gems -= c
-  else local c = n == 10 and G.ARC10 or G.ARC1; if (sv.arcana or 0) < c then return nil, "아르카나 조각이 부족합니다" end; sv.arcana -= c end
-  local pool = gachaPool(sv, fam); if #pool == 0 then return nil, "뽑을 아르카나가 없습니다" end
+  if pay == "gem" then local c = n == 10 and G.GEM10 or G.GEM1; if (sv.gems or 0) < c then return nil, "Not enough gems" end; sv.gems -= c
+  else local c = n == 10 and G.ARC10 or G.ARC1; if (sv.arcana or 0) < c then return nil, "Not enough Arcana Shards" end; sv.arcana -= c end
+  local pool = gachaPool(sv, fam); if #pool == 0 then return nil, "No arcana to summon" end
   local out, gotHigh = {}, false
   for i = 1, n do
     sv.gachaPity = (sv.gachaPity or 0) + 1

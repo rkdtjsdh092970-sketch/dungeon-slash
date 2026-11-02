@@ -13,22 +13,22 @@ M.CFG = {
   BOSS_REWARD = { [1] = { ore = 40, orbC = 3 }, [2] = { ore = 25, orbC = 2 }, [3] = { ore = 15, orbC = 1 }, default = { ore = 8 } },
 }
 M.SHOP = {   -- 길드 코인 상점 (주간 한도, 길드 레벨이 되어야 열림). 판매 금지 항목은 Monetization.FORBIDDEN 과 같다.
-  { id = "ore",    name = "강화석 꾸러미", cost = 60,  weekly = 5, grant = { ore = 300 }, lv = 1, icon = "i_ore" },
-  { id = "hone",   name = "아르카나 조각 20개", cost = 70,  weekly = 4, grant = { arcana = 20 }, lv = 1, icon = "i_arcana" },
-  { id = "gold",   name = "골드 주머니", cost = 50,  weekly = 5, grant = { gold = 30000 }, lv = 2, icon = "i_gold" },
-  { id = "orbC",   name = "혼돈 구슬 3개", cost = 90,  weekly = 3, grant = { orbC = 3 }, lv = 3, icon = "i_chaos" },
-  { id = "keys",   name = "입장 열쇠 1개", cost = 120, weekly = 2, grant = { upKeys = 1 }, lv = 5, icon = "i_stone" },
+  { id = "ore",    name = "Upgrade Stone Bundle", cost = 60,  weekly = 5, grant = { ore = 300 }, lv = 1, icon = "i_ore" },
+  { id = "hone",   name = "20 Arcana Shards", cost = 70,  weekly = 4, grant = { arcana = 20 }, lv = 1, icon = "i_arcana" },
+  { id = "gold",   name = "Gold Pouch", cost = 50,  weekly = 5, grant = { gold = 30000 }, lv = 2, icon = "i_gold" },
+  { id = "orbC",   name = "Chaos Orb 3", cost = 90,  weekly = 3, grant = { orbC = 3 }, lv = 3, icon = "i_chaos" },
+  { id = "keys",   name = "Entry Key 1", cost = 120, weekly = 2, grant = { upKeys = 1 }, lv = 5, icon = "i_stone" },
 }
 -- 길드 연구 (길드 패시브): 길드장 · 부길드장이 길드 코인으로 올린다. 단계 상한 = 길드 레벨. 길드원 모두에게 적용
 M.RESEARCH = {
-  { id = "atk",  name = "전투 연구", text = "공격력 · 주문력 +%d%%", per = 1, stat = { "atkPct", "magPct" }, k = 0.01 },
-  { id = "hp",   name = "수호 연구", text = "체력 +%d%%", per = 2, stat = { "hpPct" }, k = 0.02 },
-  { id = "gold", name = "재물 연구", text = "골드 획득 +%d%%", per = 3, stat = { "goldFind" }, k = 0.03 },
-  { id = "mf",   name = "탐색 연구", text = "아이템 발견 +%d%%", per = 2, stat = { "mf" }, k = 0.02 },
+  { id = "atk",  name = "Combat Research", text = "ATK · SPL +%d%%", per = 1, stat = { "atkPct", "magPct" }, k = 0.01 },
+  { id = "hp",   name = "Guard Research", text = "HP +%d%%", per = 2, stat = { "hpPct" }, k = 0.02 },
+  { id = "gold", name = "Wealth Research", text = "Gold Gain +%d%%", per = 3, stat = { "goldFind" }, k = 0.03 },
+  { id = "mf",   name = "Exploration Research", text = "Item Find +%d%%", per = 2, stat = { "mf" }, k = 0.02 },
 }
 function M.researchCost(lv) return math.floor(80 * (lv + 1) ^ 1.5) end
 M.EMBLEM_N, M.EMBLEM_C = 8, 8   -- 문양 8종 × 색 8종
-M.JOIN = { open = "바로 가입", apply = "신청 후 승인", closed = "초대만" }
+M.JOIN = { open = "Open", apply = "Apply", closed = "Invite Only" }
 
 local loadG
 local function level(exp) return math.min(10, 1 + math.floor(math.sqrt(exp / 50000))) end
@@ -93,10 +93,10 @@ local function cleanOpts(o)
     desc = string.sub(tostring(o.desc or ""), 1, 180), join = M.JOIN[o.join] and o.join or "open", minLv = math.clamp(math.floor(tonumber(o.minLv) or 1), 1, 100) }
 end
 function M.create(store, uid, uname, name, gold, now, opts)
-  if store:get("m:" .. uid) then return nil, "이미 길드에 가입해 있습니다" end
-  if not validName(name) then return nil, "길드 이름은 2~12자 (한글 · 영문 · 숫자 · _)" end
-  if (gold or 0) < M.CFG.CREATE_COST then return nil, "골드가 부족합니다" end
-  if store:get("n:" .. string.lower(name)) then return nil, "이미 있는 이름입니다" end
+  if store:get("m:" .. uid) then return nil, "Already in a Guild" end
+  if not validName(name) then return nil, "Guild name must be 2~12 characters (Korean · English · Numbers · _)" end
+  if (gold or 0) < M.CFG.CREATE_COST then return nil, "Not enough Gold" end
+  if store:get("n:" .. string.lower(name)) then return nil, "Name already taken" end
   local id = tostring((store:get("seq") or 0) + 1); store:set("seq", tonumber(id))
   local o = cleanOpts(opts)
   local g = { id = id, name = name, leader = uid, exp = 0, coins = 0, motd = "", created = now or os.time(), members = { [uid] = { name = uname, joined = now or os.time(), power = 0, donated = 0, dayKey = 0, dayDonate = 0 } },
@@ -105,15 +105,15 @@ function M.create(store, uid, uname, name, gold, now, opts)
   return g, nil, M.CFG.CREATE_COST   -- 세 번째 값 = 차감할 골드
 end
 function M.join(store, uid, uname, id, force)
-  if store:get("m:" .. uid) then return nil, "이미 길드에 가입해 있습니다" end
-  local g = loadG(store, id); if not g then return nil, "없는 길드" end
-  if not force and (g.join or "open") ~= "open" then return nil, "바로 가입할 수 없는 길드입니다" end
-  if members(g) >= M.CFG.MAX_MEMBERS then return nil, "길드가 가득 찼습니다(" .. M.CFG.MAX_MEMBERS .. "명)" end
+  if store:get("m:" .. uid) then return nil, "Already in a Guild" end
+  local g = loadG(store, id); if not g then return nil, "Guild not found" end
+  if not force and (g.join or "open") ~= "open" then return nil, "This guild is not open to join directly" end
+  if members(g) >= M.CFG.MAX_MEMBERS then return nil, "Guild is full (" .. M.CFG.MAX_MEMBERS .. "members)" end
   g.members[uid] = { name = uname, joined = os.time(), power = 0, donated = 0, dayKey = 0, dayDonate = 0 }; if g.apps then g.apps[uid] = nil end
   saveG(store, g); store:set("m:" .. uid, id); store:set("inv:" .. uid, nil); return g
 end
 function M.leave(store, uid)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
   g.members[uid] = nil; store:set("m:" .. uid, nil)
   if members(g) == 0 then store:set("n:" .. string.lower(g.name), nil); store:set("g:" .. g.id, nil); local ix = store:get("idx") or {}; ix[g.id] = nil; store:set("idx", ix); return { disbanded = true } end
   if g.officers then g.officers[uid] = nil end
@@ -123,15 +123,15 @@ function M.leave(store, uid)
   saveG(store, g); return g
 end
 function M.setMotd(store, uid, text)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  if g.leader ~= uid then return nil, "길드장만 가능합니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  if g.leader ~= uid then return nil, "Guild Leader only" end
   g.motd = string.sub(tostring(text or ""), 1, M.CFG.MOTD_MAX * 3); saveG(store, g); return g
 end
 function M.donate(store, uid, gold, now)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  gold = math.floor(gold or 0); if gold < M.CFG.DONATE_MIN then return nil, "최소 " .. M.CFG.DONATE_MIN .. "G" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  gold = math.floor(gold or 0); if gold < M.CFG.DONATE_MIN then return nil, "Minimum " .. M.CFG.DONATE_MIN .. "G" end
   local m = g.members[uid]; local dk = M.dayKey(now); if m.dayKey ~= dk then m.dayKey = dk; m.dayDonate = 0 end
-  if m.dayDonate + gold > M.CFG.DONATE_DAILY_MAX then return nil, "하루 기부 한도를 넘었습니다" end
+  if m.dayDonate + gold > M.CFG.DONATE_DAILY_MAX then return nil, "Daily donation limit exceeded" end
   m.dayDonate += gold; m.donated += gold; g.coins += math.floor(gold / 1000)
   local c = math.floor(gold / 50); g.exp += c; m.contrib = (m.contrib or 0) + c; saveG(store, g)   -- 기부: 하루 한도 안에서 길드 기여도(= 길드 경험치) + 길드 코인
   return g, nil, gold   -- 세 번째 값 = 차감할 골드
@@ -142,32 +142,32 @@ function M.updatePower(store, uid, power) local g = M.guildOf(store, uid); if g 
 local function canManage(g, uid) return g.leader == uid or (g.officers and g.officers[uid]) == true end
 M.canManage = canManage
 function M.setSettings(store, uid, opts)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  if g.leader ~= uid then return nil, "길드장만 가능합니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  if g.leader ~= uid then return nil, "Guild Leader only" end
   local o = cleanOpts(opts); g.emblem, g.desc, g.join, g.minLv = o.emblem, o.desc, o.join, o.minLv; saveG(store, g); return g
 end
 function M.apply(store, uid, uname, id, lvl, power)
-  if store:get("m:" .. uid) then return nil, "이미 길드에 가입해 있습니다" end
-  local g = loadG(store, id); if not g then return nil, "없는 길드" end
-  if (lvl or 1) < (g.minLv or 1) then return nil, string.format("레벨 %d 이상만 가입할 수 있습니다", g.minLv) end
-  if members(g) >= M.CFG.MAX_MEMBERS then return nil, "길드가 가득 찼습니다" end
+  if store:get("m:" .. uid) then return nil, "Already in a Guild" end
+  local g = loadG(store, id); if not g then return nil, "Guild not found" end
+  if (lvl or 1) < (g.minLv or 1) then return nil, string.format("Level %d or higher required", g.minLv) end
+  if members(g) >= M.CFG.MAX_MEMBERS then return nil, "The guild is full" end
   local j = g.join or "open"
   if j == "open" then return M.join(store, uid, uname, id, true) end
-  if j == "closed" then return nil, "초대로만 들어갈 수 있는 길드입니다" end
+  if j == "closed" then return nil, "Invite only" end
   g.apps = g.apps or {}; g.apps[uid] = { name = uname, lv = lvl, power = power, t = os.time() }; saveG(store, g); return { applied = true }
 end
 function M.answerApp(store, uid, target, ok)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  if not canManage(g, uid) then return nil, "길드장 · 부길드장만 가능합니다" end
-  local a = g.apps and g.apps[target]; if not a then return nil, "없는 신청" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  if not canManage(g, uid) then return nil, "Leader and officers only" end
+  local a = g.apps and g.apps[target]; if not a then return nil, "No such application" end
   g.apps[target] = nil; saveG(store, g)
   if ok then return M.join(store, target, a.name, g.id, true) end
   return g
 end
 function M.invite(store, uid, target)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  if not canManage(g, uid) then return nil, "길드장 · 부길드장만 초대할 수 있습니다" end
-  if store:get("m:" .. target) then return nil, "이미 다른 길드에 있는 사람입니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  if not canManage(g, uid) then return nil, "Only the leader and officers can invite" end
+  if store:get("m:" .. target) then return nil, "That player is already in a guild" end
   local inv = store:get("inv:" .. target) or {}; inv[g.id] = { from = g.members[uid].name, t = os.time() }; store:set("inv:" .. target, inv); return g
 end
 function M.invites(store, uid)
@@ -176,30 +176,30 @@ function M.invites(store, uid)
   return out
 end
 function M.answerInvite(store, uid, uname, id, ok)
-  local inv = store:get("inv:" .. uid) or {}; if not inv[id] then return nil, "없는 초대" end
+  local inv = store:get("inv:" .. uid) or {}; if not inv[id] then return nil, "No such invite" end
   inv[id] = nil; store:set("inv:" .. uid, inv)
   if ok then return M.join(store, uid, uname, id, true) end
   return { declined = true }
 end
 function M.setRole(store, uid, target, role)   -- role: officer · member · kick · leader
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  if g.leader ~= uid then return nil, "길드장만 가능합니다" end
-  if target == uid or not g.members[target] then return nil, "대상이 없습니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  if g.leader ~= uid then return nil, "Guild Leader only" end
+  if target == uid or not g.members[target] then return nil, "No such member" end
   g.officers = g.officers or {}
   if role == "officer" then g.officers[target] = true
   elseif role == "member" then g.officers[target] = nil
   elseif role == "leader" then g.leader = target; g.officers[target] = nil; g.officers[uid] = true
   elseif role == "kick" then g.members[target] = nil; g.officers[target] = nil; store:set("m:" .. target, nil)
-  else return nil, "알 수 없는 역할" end
+  else return nil, "Unknown role" end
   saveG(store, g); return g
 end
 function M.upgradeResearch(store, uid, key)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  if not canManage(g, uid) then return nil, "길드장 · 부길드장만 연구할 수 있습니다" end
-  local def; for _, r in ipairs(M.RESEARCH) do if r.id == key then def = r end end; if not def then return nil, "없는 연구" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  if not canManage(g, uid) then return nil, "Only the leader and officers can research" end
+  local def; for _, r in ipairs(M.RESEARCH) do if r.id == key then def = r end end; if not def then return nil, "No such research" end
   g.research = g.research or {}; local lv = g.research[key] or 0
-  if lv >= level(g.exp) then return nil, "길드 레벨이 더 높아야 합니다" end
-  local c = M.researchCost(lv); if g.coins < c then return nil, "길드 코인이 부족합니다" end
+  if lv >= level(g.exp) then return nil, "Guild level is too low" end
+  local c = M.researchCost(lv); if g.coins < c then return nil, "Not enough Guild Coins" end
   g.coins -= c; g.research[key] = lv + 1; saveG(store, g); return g
 end
 function M.buffOf(g)   -- 길드원에게 적용할 효과 (서버가 세이브에 실어 Stats 가 읽는다)
@@ -240,18 +240,18 @@ function M.record(store, uid, kind, amount, now)   -- 전투 결과에서 호출
   saveG(store, g)
 end
 function M.claimGoals(store, uid, now)   -- 달성한 목표 수만큼 보상 (주 1회, 길드원 각자)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  local w = weekOf(g, now); if w.claimed[uid] then return nil, "이번 주 보상을 이미 받았습니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  local w = weekOf(g, now); if w.claimed[uid] then return nil, "Weekly rewards already claimed" end
   local n = 0; for _, goal in ipairs(M.goals(g, now)) do if goal.done then n += 1 end end
-  if n == 0 then return nil, "달성한 목표가 없습니다" end
+  if n == 0 then return nil, "No goals achieved" end
   w.claimed[uid] = true; saveG(store, g); return { ore = M.CFG.GOAL_REWARD.ore * n * (1 + level(g.exp) * 0.1) // 1 }
 end
 
 -- ---------- 길드 보스 (딜 대결) ----------
 function M.bossTriesLeft(g, uid, now) local w = weekOf(g, now); return M.CFG.BOSS_ATTEMPTS - (w.bossTries[uid] or 0) end
 function M.bossSubmit(store, uid, damage, now)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  local w = weekOf(g, now); if (w.bossTries[uid] or 0) >= M.CFG.BOSS_ATTEMPTS then return nil, "이번 주 도전 횟수를 다 썼습니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  local w = weekOf(g, now); if (w.bossTries[uid] or 0) >= M.CFG.BOSS_ATTEMPTS then return nil, "No challenge attempts left this week" end
   w.bossTries[uid] = (w.bossTries[uid] or 0) + 1; if damage > (w.boss[uid] or 0) then w.boss[uid] = damage end
   g.exp += M.EXP.gboss; local m = g.members[uid]; if m then m.contrib = (m.contrib or 0) + M.EXP.gboss end
   saveG(store, g); return g
@@ -265,9 +265,9 @@ function M.bossTotal(g, now) local t = 0; for _, d in pairs(weekOf(g, now).boss)
 function M.bossReward(rank) return M.CFG.BOSS_REWARD[rank] or M.CFG.BOSS_REWARD.default end   -- 주가 끝난 뒤 순위대로 수령 (수령 처리는 서버가 지난 주 데이터로 한다)
 
 function M.claimPrevBoss(store, uid, now)   -- 지난주 길드 보스 순위 보상
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  weekOf(g, now); local pv = g.prev; if not pv or not pv.boss or not pv.boss[uid] then return nil, "받을 보상이 없습니다" end
-  pv.bossClaimed = pv.bossClaimed or {}; if pv.bossClaimed[uid] then return nil, "이미 받았습니다" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  weekOf(g, now); local pv = g.prev; if not pv or not pv.boss or not pv.boss[uid] then return nil, "No rewards to claim" end
+  pv.bossClaimed = pv.bossClaimed or {}; if pv.bossClaimed[uid] then return nil, "Already claimed" end
   local rows = {}; for u, d in pairs(pv.boss) do rows[#rows + 1] = { u = u, d = d } end; table.sort(rows, function(a, b) return a.d > b.d end)
   local rank = 0; for i, r in ipairs(rows) do if r.u == uid then rank = i end end
   pv.bossClaimed[uid] = true; saveG(store, g); return M.bossReward(rank), nil, rank
@@ -275,12 +275,12 @@ end
 
 -- ---------- 길드 상점 ----------
 function M.buy(store, uid, itemId, now)
-  local g = M.guildOf(store, uid); if not g then return nil, "길드가 없습니다" end
-  local item; for _, it in ipairs(M.SHOP) do if it.id == itemId then item = it end end; if not item then return nil, "없는 상품" end
+  local g = M.guildOf(store, uid); if not g then return nil, "No Guild" end
+  local item; for _, it in ipairs(M.SHOP) do if it.id == itemId then item = it end end; if not item then return nil, "Product not found" end
   local w = weekOf(g, now); w.shop[uid] = w.shop[uid] or {}; local bought = w.shop[uid][itemId] or 0
-  if bought >= item.weekly then return nil, "이번 주 구매 한도입니다" end
-  if level(g.exp) < (item.lv or 1) then return nil, string.format("길드 레벨 %d 에 열립니다", item.lv) end
-  if g.coins < item.cost then return nil, "길드 코인이 부족합니다" end
+  if bought >= item.weekly then return nil, "Weekly purchase limit reached" end
+  if level(g.exp) < (item.lv or 1) then return nil, string.format("Unlocks at Guild Lv %d", item.lv) end
+  if g.coins < item.cost then return nil, "Not enough Guild Coins" end
   g.coins -= item.cost; w.shop[uid][itemId] = bought + 1; saveG(store, g); return item.grant
 end
 

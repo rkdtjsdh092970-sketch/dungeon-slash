@@ -94,39 +94,39 @@ function M.play(sv, spec, seed)
   local node
   local keyField, cost = nil, 0
   if kind == "void" or EBk then
-    if not graduated(sv) then return nil, "균열 100층을 졸업해야 합니다" end
+    if not graduated(sv) then return nil, "Requires clearing Rift Floor 100" end
     local vs = max(1, min(4, spec.vsel or 1))
-    if spec.upper and not (sv.craid and sv.craid[2]) then return nil, "상위 관문은 노말 레이드 클리어 후 열립니다" end
+    if spec.upper and not (sv.craid and sv.craid[2]) then return nil, "Higher Gates unlock after clearing the Normal Raid" end
     keyField = kind == "void" and "keys" or EBk.key; cost = spec.upper and UP_KEYS or 1
-    if (sv[keyField] or 0) < cost then return nil, "열쇠가 부족합니다 (" .. cost .. "개 필요)" end
+    if (sv[keyField] or 0) < cost then return nil, "Not enough Keys (" .. cost .. "required)" end
     node = { kind = kind, act = 10, tier = spec.upper and UP_TIERS[vs] or GATE_TIERS[vs], vsel = vs, upper = spec.upper and 1 or nil }
   elseif kind == "raid" then
-    if not graduated(sv) then return nil, "균열 100층을 졸업해야 합니다" end
+    if not graduated(sv) then return nil, "Requires clearing Rift Floor 100" end
     node = { kind = "raid", act = 10, tier = CFG.RIFT_END }
   elseif kind == "temple" then
-    if not (sv.raid and sv.raid.cleared > 0) then return nil, "심연의 문지기를 먼저 쓰러뜨려야 합니다" end
+    if not (sv.raid and sv.raid.cleared > 0) then return nil, "Defeat the Abyssal Warden first" end
     local open = 0; for _, need in ipairs(CFG.TEMPLE.NEED) do if need == 0 or ((sv.spire and sv.spire.best or 0) >= need) then open += 1 end end
     local vs = max(1, min(open, spec.vsel or 1)); node = { kind = "temple", act = 10, tier = CFG.TEMPLE.TIERS[vs], vsel = vs }
   elseif kind == "vault" then
-    if not graduated(sv) then return nil, "균열 100층을 졸업해야 합니다" end
+    if not graduated(sv) then return nil, "Requires clearing Rift Floor 100" end
     node = { kind = "vault", act = 10 }
   elseif kind == "endless" then
-    if not graduated(sv) then return nil, "균열 100층을 졸업해야 합니다" end
+    if not graduated(sv) then return nil, "Requires clearing Rift Floor 100" end
     sv.endless = sv.endless or { day = 0, used = 0, best = 0, bestKills = 0 }
     if sv.endless.day ~= dayKey() then sv.endless.day = dayKey(); sv.endless.used = 0 end
-    if sv.endless.used >= CFG.ENDLESS_DAILY then return nil, "오늘의 무한 균열 입장 횟수를 모두 썼습니다" end
+    if sv.endless.used >= CFG.ENDLESS_DAILY then return nil, "No Endless Rift entries left today" end
     sv.endless.used += 1
     node = { kind = "endless", act = 10, tier = max(1, sv.rift.best - 2) }
   elseif kind == "craid" then
-    if not (sv.raid and sv.raid.tower) then return nil, "탑이 솟은 뒤에 열립니다" end
+    if not (sv.raid and sv.raid.tower) then return nil, "Unlocks after the Tower rises" end
     local open = 1 + ((sv.craid and sv.craid[1] == 1) and 1 or 0) + ((sv.craid and sv.craid[1] == 1 and sv.craid[2] == 1) and 1 or 0)
     local d = max(1, min(open, spec.diff or 1))
     if spec.charm then
-      if not (sv.craid and sv.craid[3] == 1 and (sv.cls or 0) >= 3) then return nil, "하드 레이드 클리어 + 3차 전직 후에 열립니다" end
+      if not (sv.craid and sv.craid[3] == 1 and (sv.cls or 0) >= 3) then return nil, "Unlocks after clearing Hard Raid + Class Advancement 3" end
       d = 3
     end
     node = { kind = "craid", act = 10, diff = d, tier = CFG.CRAID.TIERS[d + 1], charm = spec.charm }
-  else return nil, "알 수 없는 콘텐츠" end
+  else return nil, "Unknown content" end
 
   if keyField then sv[keyField] -= cost end
   local rng = Random.new((seed or os.time()) + (sv.nextUid or 1))
@@ -144,17 +144,17 @@ function M.play(sv, spec, seed)
   sv.stats.clears += 1
   if endless then
     local E = sv.endless; if b.time > E.best then E.best = floor(b.time) end; if b.kills > E.bestKills then E.bestKills = b.kills end
-    res.waves = waves; res.notes[#res.notes + 1] = string.format("무한 균열: %d초 생존, %d마리 처치 (%d웨이브)", floor(b.time), b.kills, waves)
+    res.waves = waves; res.notes[#res.notes + 1] = string.format("Endless Rift: Survived %ds, %d Kills (%d waves)", floor(b.time), b.kills, waves)
   end
   if kind == "raid" then
     sv.raid = sv.raid or { cleared = 0, best = 0 }; local first = (sv.raid.cleared or 0) == 0; sv.raid.cleared += 1
     if sv.raid.best == 0 or b.time < sv.raid.best then sv.raid.best = floor(b.time) end
-    if first then sv.raid.tower = 1; res.notes[#res.notes + 1] = "🏆 심연의 문지기를 처음으로 쓰러뜨렸습니다! 붉은 탑이 솟아오릅니다." end
+    if first then sv.raid.tower = 1; res.notes[#res.notes + 1] = "🏆 Defeated the Abyssal Warden for the first time! A Red Tower rises." end
     res.first = first
   end
   if kind == "craid" and not spec.charm then
     sv.craid = sv.craid or { 0, 0, 0, 0 }; sv.cbook = sv.cbook or { 0, 0, 0, 0 }
-    if sv.craid[node.diff] ~= 1 then sv.craid[node.diff] = 1; sv.cbook[node.diff] += 1; res.first = true; res.notes[#res.notes + 1] = "📜 " .. node.diff .. "차 전직의 서를 얻었습니다! (레이드 " .. CFG.CRAID.NAMES[node.diff + 1] .. " 최초 클리어)" end
+    if sv.craid[node.diff] ~= 1 then sv.craid[node.diff] = 1; sv.cbook[node.diff] += 1; res.first = true; res.notes[#res.notes + 1] = "📜 " .. node.diff .. " Tome of Advancement obtained! (Raid " .. CFG.CRAID.NAMES[node.diff + 1] .. " First Clear)" end
   end
   -- 드랍
   if kind == "craid" and spec.charm then
@@ -165,7 +165,7 @@ function M.play(sv, spec, seed)
   end
   if kind ~= "vault" then
     local boss = true
-    for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
+    for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "Satan Gear" or "Gear", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   end
   if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do Econ.grantSkill(sv, k.id); res.skills[#res.skills + 1] = k.id end end
   if kind == "raid" then
@@ -199,8 +199,8 @@ end
 local sessions = {}
 function M.wardenOpen(sv) return sv.spire ~= nil and sv.spire.best >= 100 end
 function M.wardenStart(sv, uid, seed)
-  if not M.wardenOpen(sv) then return nil, "탑 100층을 클리어해야 합니다" end
-  if sessions[uid] then return nil, "이미 도전 중입니다" end
+  if not M.wardenOpen(sv) then return nil, "Requires clearing Tower Floor 100" end
+  if sessions[uid] then return nil, "Challenge already in progress" end
   local node = { kind = "warden", act = 10, tier = CFG.WARDEN.TIER }
   local b = Battle.new(sv, node, (seed or os.time()) + (sv.nextUid or 1))
   sessions[uid] = { b = b, sv = sv, t = os.clock() }
@@ -216,7 +216,7 @@ function M.wardenTickAll(dt)   -- 서버가 주기적으로 호출 (0.05초)
   for uid, S in pairs(sessions) do if not S.b.over then Battle.step(S.b, dt) end end
 end
 function M.wardenFinish(sv, uid, seed)
-  local S = sessions[uid]; if not S or not S.b.over then return nil, "아직 진행 중입니다" end
+  local S = sessions[uid]; if not S or not S.b.over then return nil, "Still in progress" end
   local b = S.b; sessions[uid] = nil
   local res = { win = b.win, time = b.time, kills = b.kills, items = {}, notes = {}, pop = b.wPop, boom = b.wBoom, gold = 0 }
   res.gold = floor(b.gold * (b.win and 1 or 0.5)); sv.gold += res.gold
@@ -224,13 +224,13 @@ function M.wardenFinish(sv, uid, seed)
   sv.warden = sv.warden or { clears = 0, best = 0, pops = 0 }
   sv.warden.clears += 1; sv.warden.pops += b.wPop
   if sv.warden.best == 0 or b.time < sv.warden.best then sv.warden.best = floor(b.time) end
-  res.notes[#res.notes + 1] = string.format("문지기 처치! %d초 (구슬 %d개 처치, 폭발 %d회)", floor(b.time), b.wPop, b.wBoom)
+  res.notes[#res.notes + 1] = string.format("Warden defeated! %ds (Orbs destroyed %d, Explosions %d)", floor(b.time), b.wPop, b.wBoom)
   local rng = Random.new((seed or os.time()) + (sv.nextUid or 1))
   for _ = 1, 10 do
     local it
     if rng:NextNumber() < 0.30 then it = Loot.genSatan(rng, sv, 6)
     else it = Loot.genItem(rng, sv, 6, wpick(rng, { 0, 1, 2, 3 }, function(x) return ({ 0, 10, 40, 50 })[x + 1] end)) end
-    if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end
+    if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "Satan Gear" or "Gear", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end
   end
   sv.ore += 8; sv.orbC = (sv.orbC or 0) + 8; res.orbC = 8
   return res
@@ -240,10 +240,10 @@ function M.wardenAbort(uid) sessions[uid] = nil end
 -- ---------- 새 탑 (T6 사탄 · 20층) ----------
 function M.tower2Open(sv) return sv.warden ~= nil and sv.warden.best > 0 and (sv.cls or 0) >= 3 end
 function M.tower2(sv, floorN, seed)
-  if not M.tower2Open(sv) then return nil, "새 탑은 문지기를 넘고 최종 전직을 마친 뒤에 열립니다" end
+  if not M.tower2Open(sv) then return nil, "New Tower unlocks after defeating the Warden and completing final Class Advancement" end
   sv.spire2 = sv.spire2 or { best = 0 }
   floorN = floor(floorN or 1)
-  if floorN < 1 or floorN > CFG.SPIRE.END2 or floorN > sv.spire2.best + 1 then return nil, "도전할 수 없는 층입니다" end
+  if floorN < 1 or floorN > CFG.SPIRE.END2 or floorN > sv.spire2.best + 1 then return nil, "Cannot challenge this Floor" end
   local node = { kind = "spire", act = 10, floor = floorN, tier = Battle.spireTier(floorN, 2), tw = 2 }
   local rng = Random.new((seed or os.time()) + (sv.nextUid or 1))
   local b = Battle.run(sv, node, rng:NextInteger(1, 2 ^ 30), 0.05, 700)
@@ -251,7 +251,7 @@ function M.tower2(sv, floorN, seed)
   if b.win then
     res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills
     local first = floorN > sv.spire2.best; if first then sv.spire2.best = floorN; res.first = true end
-    for _, it in ipairs(Loot.spireDrops(rng, sv, node, floorN % 5 == 0, first)) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
+    for _, it in ipairs(Loot.spireDrops(rng, sv, node, floorN % 5 == 0, first)) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "Satan Gear" or "Gear", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
   return res
 end
