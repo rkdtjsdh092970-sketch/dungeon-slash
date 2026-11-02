@@ -897,6 +897,10 @@ gui:GetAttributeChangedSignal("Debug"):Connect(function()
   local v = gui:GetAttribute("Debug")
   if v == "fight" then launch(stageSpec(1))
   elseif v == "map" or v == "town" then setScreen(v)
+  elseif v == "gachafx" then   -- 소환 연출 시험 (가짜 결과, 재화 소모 없음)
+    openPanel("스킬 소환", { { "스킬 소환", "gacha" } })
+    local R = {}; for i, r in ipairs({ 0, 1, 0, 2, 0, 1, 3, 0, 1, 4 }) do R[i] = { id = i % 2 == 0 and "rapid" or "strike", name = i % 2 == 0 and "연사" or "일격", rarity = r, dup = (r == 0) and 2 or nil, new = r > 0 or nil } end
+    Menus.revealResults(R)
   elseif views[v] then openPanel(v, { { v, v } }) end
 end)
 
