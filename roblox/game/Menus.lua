@@ -532,17 +532,17 @@ function M.skills()
     end)
   end
   -- 보유 아르카나 (작은 카드)
-  head(table0, string.format("보유한 아르카나 %d장", #rows), 168)
+  head(table0, string.format("보유 %d장", #rows), 168)
   local g = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 192), Size = UDim2.new(1, -20, 1, -198), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5, ScrollBarImageColor3 = Color3.fromRGB(150, 100, 210) }, table0)
   mk("UIGridLayout", { CellSize = UDim2.new(0, 60, 0, 88), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, g)
   -- 분류 탭 (전체 · 물리 · 마법 · 장착 중 · 기본 공격) + 정렬 (등급 / 초당 피해 / 레벨)
-  local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 440, 0, 24), BackgroundTransparency = 1 }, table0)
+  local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 384, 0, 24), BackgroundTransparency = 1 }, table0)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
   for i, f in ipairs({ { "all", "전체" }, { "phys", "물리 계열" }, { "mag", "마법 계열" }, { "eq", "장착 중" }, { "basic", "기본" } }) do
-    local b = M.btn(ft, f[2], UDim2.new(0, 58, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i + 1; b.TextSize = 12
+    local b = M.btn(ft, f[2], UDim2.new(0, 54, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i + 1; b.TextSize = 12
   end
   local SORT_NAME = { rar = "등급순", dps = "피해순", lvl = "레벨순" }
-  local sb = mk("TextButton", { Size = UDim2.new(0, 104, 1, 0), BackgroundColor3 = Color3.fromRGB(12, 8, 18), AutoButtonColor = false, Text = "⇅ 정렬: " .. (SORT_NAME[arcSort] or "등급순"), Font = M.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(220, 200, 255), LayoutOrder = 0 }, ft)
+  local sb = mk("TextButton", { Size = UDim2.new(0, 96, 1, 0), BackgroundColor3 = Color3.fromRGB(12, 8, 18), AutoButtonColor = false, Text = "⇅ 정렬: " .. (SORT_NAME[arcSort] or "등급순"), Font = M.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(220, 200, 255), LayoutOrder = 0 }, ft)
   corner(sb, 12); mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, sb)   -- 탭(분류)과 다르게: 둥근 어두운 상자 = 정렬
   sb.MouseButton1Click:Connect(function() arcSort = ({ rar = "dps", dps = "lvl", lvl = "rar" })[arcSort] or "rar"; M.skills() end)
   local order = {}
@@ -602,7 +602,7 @@ function M.skills()
     local body = (d.desc or "") .. (#fx > 0 and ("\n\n• " .. table.concat(fx, "\n• ")) or "") .. (k.rune and ("\n\n룬: " .. tostring(k.rune)) or "")
     local ds = txt(dbox, body, 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
     -- 버튼
-    local ab = mk("Frame", { Position = UDim2.new(0, 10, 1, -104), Size = UDim2.new(1, -20, 0, 96), BackgroundTransparency = 1 }, D)
+    local ab = mk("Frame", { Position = UDim2.new(0, 10, 1, -96), Size = UDim2.new(1, -20, 0, 46), BackgroundTransparency = 1 }, D)
     mk("UIGridLayout", { CellSize = UDim2.new(0, 84, 0, 40), CellPadding = UDim2.new(0, 6, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
     for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("%d번 칸에", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
     if k.slot == 0 then M.btn(ab, "분해", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "분해 · 아르카나 조각을 얻었습니다" end end).LayoutOrder = 20 end
@@ -610,7 +610,8 @@ function M.skills()
       local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
       local RULE_NAME = { front = "앞열", auto = "오토", boss = "보스 우선", ranged = "원거리 우선", elite = "정예 우선", normal = "일반 우선" }
       local cur = k.rule or "front"; local nxt = RULE[(table.find(RULE, cur) or 1) % #RULE + 1]
-      local rb = M.btn(ab, string.format("대상: %s", RULE_NAME[cur] or cur), UDim2.new(), M.BTN.gold, function() res(C.rpc:InvokeServer("equipskill", { slot = k.slot, uid = k.uid, rule = nxt })) end); rb.LayoutOrder = 30
+      local rb = M.btn(D, string.format("공격 대상: %s  (눌러서 바꾸기)", RULE_NAME[cur] or cur), UDim2.new(1, -20, 0, 34), M.BTN.gold, function() res(C.rpc:InvokeServer("equipskill", { slot = k.slot, uid = k.uid, rule = nxt })) end)
+      rb.Position = UDim2.new(0, 10, 1, -44); rb.TextSize = 14   -- 한 줄 전체 (글자가 접히지 않게)
     end
   end
   fillDetail()

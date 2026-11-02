@@ -2141,3 +2141,5 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 중독	Poison
 출혈	Bleed
 효과 %d%%	Effect %d%%
+보유 %d장	Owned %d
+공격 대상: %s  (눌러서 바꾸기)	Target: %s  (tap to change)
