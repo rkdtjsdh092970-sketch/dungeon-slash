@@ -130,8 +130,7 @@ function M.newSave(rng)
   local s = { v = 3, level = 1, gold = 0, ore = 5, inv = {}, equipped = {}, skills = {}, loadout = { false, false, false, false }, slots = 1, nextUid = 1,
     lanesBase = CFG.BASE_LANES, cls = 0, cpass = {}, pass = {}, charms = {}, spire = { best = 0 }, rift = { best = 0 }, cleared = 0, hone = 0, orbC = 0, orbD = 0, stones = {}, stats = { kills = 0, clears = 0 }, guildLv = 0, passVer = 2 }
   for _, slot in ipairs({ "weapon", "helm", "armor" }) do s.equipped[slot] = M.genItem(rng, s, 1, 0, slot) end
-  local sk = { uid = s.nextUid, id = "strike", rarity = 0 }; s.nextUid += 1; s.skills[1] = sk; s.loadout[1] = { uid = sk.uid, rule = "front" }
-  local sm = { uid = s.nextUid, id = "smash", rarity = 0 }; s.nextUid += 1; s.skills[2] = sm; s.loadout[2] = { uid = sm.uid, rule = "front" }; s.slots = 2   -- 튜토리얼을 건너뛰고 강타까지 지급
+  s.needStart = true; s.slots = 3   -- 시작 직업(전사/마법사)을 고르면 무기 · 스타터 스킬 3개를 받는다 (Game.pickStart)
   return s
 end
 

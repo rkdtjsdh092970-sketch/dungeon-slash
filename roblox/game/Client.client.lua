@@ -145,6 +145,7 @@ corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { 
 local statVal, statProg, statLv, statGold, statFace, statPow = {}, nil, nil, nil, nil, nil
 local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
 local passNoticed = false
+local startShown, showStartPick = false, nil   -- 새 계정: 시작 직업 고르기 창 (아래에서 정함)
 do
   local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
   -- 초상화 칸 + 아래 Lv 띠
@@ -221,6 +222,7 @@ local function setSummary(s)
   if not s then return end
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold)
+  if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end
   if s.passNotice and not passNoticed then passNoticed = true; task.delay(2, function() toast("패시브 트리가 새로 바뀌었습니다! 찍었던 포인트를 모두 돌려드렸어요.", Color3.fromRGB(255, 220, 120)) end) end
   local hk = s.hero or "warrior"
   if hk ~= Stage.HERO then Stage.HERO = hk; local a = Sprites.art(Stage.heroKey()); if statFace and a then statFace.ImageContent = a.content end; if heroChanged then task.defer(heroChanged) end end
@@ -238,7 +240,16 @@ mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UD
 local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(12, 9, 9), BackgroundTransparency = 0.35, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
 corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6) }, list)
 local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 34)); msg.ZIndex = 22; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
-local function clear() msg.Text = ""; for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end end
+-- 창 내용 지우기: 옛 내용은 바로 지우지 않고, 새 내용이 들어오는 순간 바꿔치기한다 (서버 응답을 기다리는 동안 화면이 비어 깜빡이지 않게)
+local pendingOld = {}
+local function clear(hard)
+  msg.Text = ""
+  for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then if hard then c:Destroy() else pendingOld[c] = true end end end
+  if hard then pendingOld = {} end
+end
+list.ChildAdded:Connect(function(c)
+  if c:IsA("Frame") and not pendingOld[c] and next(pendingOld) then for o in pairs(pendingOld) do o:Destroy() end; pendingOld = {} end
+end)
 local function card(title, lines, btns)
   local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(20, 15, 15); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
   Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6); stroke(f, Color3.fromRGB(120, 92, 48), 1.5)
@@ -459,7 +470,7 @@ local shopBtn   -- 왼쪽 상점 버튼 (아래에서 만든다)
 local buildTown, buildMap
 local infoCard
 local function fitPanel() local v = vp(); panelScale.Scale = math.clamp(math.min((v.X - 24) / 880, (v.Y - INSET - 16) / 540), 0.45, 1.3) end
-local function closePanel() panelLayer.Visible = false; clear(); if screen == "battle" and mainStage and not mainStage.conn then resultLayer.Visible = true end end
+local function closePanel() panelLayer.Visible = false; clear(true); if screen == "battle" and mainStage and not mainStage.conn then resultLayer.Visible = true end end
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
@@ -641,7 +652,7 @@ showResultPanel = function(x, spec)
       autoJob = nil
       if OPT.sr1 + OPT.sr2 + OPT.sr3 > 0 then
         local ok, e = pcall(function() return rpc:InvokeServer("skillclean", { rules = { OPT.sr1, OPT.sr2, OPT.sr3 }, best = OPT.sbest }) end)
-        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 분해 · 연마석 +%s", e.res.sold, n(e.res.hone or 0))) end
+        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 분해 · 아르카나 조각 +%s", e.res.sold, n(e.res.arcana or 0))) end
       end
       launch(target)
     end)
@@ -995,6 +1006,27 @@ topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", 
 topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "우편함", "mail" } }) end)
 topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 
+-- 시작 직업 고르기 (새 계정 첫 접속): 전사(검) / 마법사(지팡이) → 무기 · 스타터 스킬 3개 · 아르카나 조각
+showStartPick = function()
+  local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.25, Text = "", AutoButtonColor = false, ZIndex = 40 }, gui)
+  local box = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 640, 0, 420), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 41 }, ov)
+  corner(box, 10); stroke(box, GOLD, 2.5); mk("UIScale", { Scale = K }, box); Skin.frame(box, "ui_panel", 0.2, 0.5)
+  local t = mk("TextLabel", { Position = UDim2.new(0, 0, 0, 26), Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, Text = "길을 고르세요", TextSize = 30, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), ZIndex = 42 }, box)
+  mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, t)
+  for i, c in ipairs({ { "warrior", "warrior", "전사", "검 · 물리 피해\n일격 · 찢기(범위) · 강타" }, { "mage", "mage", "마법사", "지팡이 · 마법 피해\n불씨 · 체인 라이트닝 · 폭열탄" } }) do
+    local card = mk("TextButton", { Position = UDim2.new(0, 40 + (i - 1) * 290, 0, 80), Size = UDim2.new(0, 270, 0, 300), BackgroundColor3 = Color3.fromRGB(26, 18, 15), Text = "", AutoButtonColor = false, ZIndex = 42 }, box)
+    corner(card, 8); local cs = stroke(card, Color3.fromRGB(120, 92, 48), 2)
+    local a = Sprites.art(c[2]); if a then mk("ImageLabel", { Position = UDim2.new(0.5, -90, 0, 10), Size = UDim2.new(0, 180, 0, 180), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 43 }, card) end
+    local nm = mk("TextLabel", { Position = UDim2.new(0, 0, 0, 192), Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Text = c[3], TextSize = 28, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 235, 200), ZIndex = 43 }, card)
+    mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, nm)
+    mk("TextLabel", { Position = UDim2.new(0, 10, 0, 228), Size = UDim2.new(1, -20, 0, 60), BackgroundTransparency = 1, Text = c[4], TextSize = 15, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(210, 200, 190), ZIndex = 43 }, card)
+    card.MouseEnter:Connect(function() cs.Color = GOLD end); card.MouseLeave:Connect(function() cs.Color = Color3.fromRGB(120, 92, 48) end)
+    card.MouseButton1Click:Connect(function()
+      local e = rpc:InvokeServer("pickstart", c[1]); if e and e.summary then setSummary(e.summary) end
+      if e and e.ok then ov:Destroy(); toast("아르카나 조각을 받았습니다! 마을의 [스킬 소환]에서 스킬을 뽑아 보세요.", Color3.fromRGB(255, 220, 140)) end
+    end)
+  end
+end
 heroChanged = function()   -- 전투 중이 아니면 마을 · 전투 무대의 영웅을 새 모습으로
   townBuilt = false; if screen == "town" then buildTown() end
   if mainStage and not mainStage.conn then makeStage() end

@@ -16,7 +16,7 @@ M.SHOP = {   -- 길드 코인 상점 (주간 한도). 판매 금지 항목은 Mo
   { id = "ore",     name = "강화석 꾸러미", cost = 60,  weekly = 5, grant = { ore = 300 } },
   { id = "orbC",    name = "혼돈 구슬 3개", cost = 90,  weekly = 3, grant = { orbC = 3 } },
   { id = "keys",    name = "입장 열쇠 1개", cost = 120, weekly = 2, grant = { upKeys = 1 } },
-  { id = "hone",    name = "연마석 20개",   cost = 70,  weekly = 4, grant = { hone = 20 } },
+  { id = "hone",    name = "아르카나 조각 20개", cost = 70,  weekly = 4, grant = { arcana = 20 } },
 }
 
 local loadG

@@ -45,6 +45,8 @@ local function migrate(sv, uid)
     if next(sv.pass or {}) then sv.passNotice = true end
     sv.pass = {}; sv.passSets = nil; sv.passVer = 2
   end
+  if (sv.hone or 0) > 0 then sv.arcana = (sv.arcana or 0) + sv.hone; sv.hone = 0 end   -- 연마석 폐지 → 아르카나 조각 1:1
+  if sv.needStart == nil then sv.needStart = false end   -- 예전 계정은 직업 선택 없이 그대로
   return sv
 end
 
@@ -184,6 +186,7 @@ local handle = function(player, action, arg)
   if action == "state" then return { summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "inv" then return { inv = Game.inventory(sv) }
   elseif action == "autoequip" then local n = Game.autoEquip(sv); return { n = n, summary = Game.summary(sv) }
+  elseif action == "pickstart" then local ok, e = Game.pickStart(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "unequip" then local ok = type(arg) == "string" and Game.unequip(sv, arg); return { ok = ok, summary = Game.summary(sv) }
   elseif action == "equip" then local ok, e; if type(arg) == "table" then ok, e = Game.equip(sv, tonumber(arg.uid), type(arg.slot) == "string" and arg.slot or nil) else ok, e = Game.equip(sv, tonumber(arg)) end; return { ok = ok, err = e, summary = Game.summary(sv), equipped = Game.equipped(sv) }
   elseif action == "dismantle" then local ok, e = Game.dismantle(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
@@ -199,7 +202,7 @@ local handle = function(player, action, arg)
   elseif action == "questclaim" then local ok, e = Game.questClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.quests(sv), summary = Game.summary(sv) }
   elseif action == "shop" then return { rows = Game.shop(sv), summary = Game.summary(sv) }
   elseif action == "gacha" then return { view = Game.gachaView(sv), summary = Game.summary(sv) }
-  elseif action == "gachapull" then local r, e = Game.gachaPull(sv, type(arg) == "table" and tonumber(arg.n) or 1, type(arg) == "table" and arg.pay or "gold"); return { res = r, err = (not r) and e or nil, view = Game.gachaView(sv), summary = Game.summary(sv) }
+  elseif action == "gachapull" then local r, e = Game.gachaPull(sv, type(arg) == "table" and tonumber(arg.n) or 1, type(arg) == "table" and arg.pay or "arcana", type(arg) == "table" and arg.fam or nil); return { res = r, err = (not r) and e or nil, view = Game.gachaView(sv), summary = Game.summary(sv) }
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
   elseif action == "levelup" then local ok, e = Game.levelUp(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
@@ -261,7 +264,7 @@ local handle = function(player, action, arg)
     for _, m in ipairs(mailList()) do
       if m.id == tonumber(arg) and not sv.mailGot[tostring(m.id)] then
         sv.mailGot[tostring(m.id)] = true
-        for k, v in pairs(m.reward or {}) do if MAIL_KEYS[k] and type(v) == "number" then sv[k] = (sv[k] or 0) + v end end
+        for k, v in pairs(m.reward or {}) do if MAIL_KEYS[k] and type(v) == "number" then k = k == "hone" and "arcana" or k; sv[k] = (sv[k] or 0) + v end end
         return { ok = true, summary = Game.summary(sv) }
       end
     end

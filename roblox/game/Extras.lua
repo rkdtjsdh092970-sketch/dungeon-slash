@@ -5,7 +5,7 @@ local floor, max, min = math.floor, math.max, math.min
 local SELL_R = { 1, 1.7, 3.2, 6, 9, 15 }
 
 M.DAILY_TASKS = {
-  { id = "kill", name = "몬스터 처치", n = 300, key = "kills", reward = { hone = 5, gold = 800 }, text = "연마석 5 · 800G" },
+  { id = "kill", name = "몬스터 처치", n = 300, key = "kills", reward = { arcana = 5, gold = 800 }, text = "아르카나 조각 5 · 800G" },
   { id = "clear", name = "스테이지 클리어", n = 8, key = "clears", reward = { ore = 12 }, text = "강화석 12" },
   { id = "boss", name = "보스 처치", n = 3, key = "bosses", reward = { orbC = 1 }, text = "혼돈 구슬 1" },
   { id = "rift", name = "균열 클리어 (엔드게임)", n = 3, key = "rifts", reward = { orbD = 1, shards = 5 }, text = "신성한 구슬 1 · 균열 조각 5", endgame = true },
@@ -31,7 +31,7 @@ function M.dailyClaim(sv, id)
     if t.id == id then
       if D.claimed[id] or (D[t.key] or 0) < t.n then return false, "아직 받을 수 없습니다" end
       D.claimed[id] = true
-      for k, v in pairs(t.reward) do sv[k] = (sv[k] or 0) + v end
+      for k, v in pairs(t.reward) do k = k == "hone" and "arcana" or k; sv[k] = (sv[k] or 0) + v end
       sv.arcana = (sv.arcana or 0) + 10   -- 일일 과제: 아르카나 조각 +10
       return true
     end
@@ -149,7 +149,7 @@ function M.questView(sv)
 end
 function M.questClaim(sv, id)
   local st = sv.q and sv.q[id]; if not st or st.state ~= "done" then return false, "아직 받을 수 없습니다" end
-  for _, d in ipairs(M.QUESTS) do if d.id == id then for k, v in pairs(d.reward) do sv[k] = (sv[k] or 0) + v end end end
+  for _, d in ipairs(M.QUESTS) do if d.id == id then for k, v in pairs(d.reward) do k = k == "hone" and "arcana" or k; sv[k] = (sv[k] or 0) + v end end end
   sv.arcana = (sv.arcana or 0) + 5   -- 퀘스트: 아르카나 조각 +5
   st.state = "claimed"; return true
 end

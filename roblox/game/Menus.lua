@@ -297,11 +297,11 @@ invRender = function()
   end
   M.setTabs(L, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "gear", "세트", function() invData = nil; M.inv() end)
   local s = C.summary()
-  if s then   -- 재화 (강화석 · 연마석 · 혼돈/신성 구슬 · 보석 · 균열 조각)
+  if s then   -- 재화 (강화석 · 혼돈/신성 구슬 · 보석 · 아르카나 조각 · 균열 조각)
     local cg = mk("Frame", { Position = UDim2.new(0, 10, 1, -54), Size = UDim2.new(1, -20, 0, 52), BackgroundTransparency = 1 }, L)
     mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 16), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
-    for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_hone", "연마석", s.hone, Color3.fromRGB(110, 210, 150) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80) },
-      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120) }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220) } }) do
+    for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80) },
+      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120) }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220) }, { "i_shard", "균열 조각", s.shards, Color3.fromRGB(190, 120, 240) } }) do
       local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, cg)
       local a = C.Sprites.art(c[1])
       if a then mk("ImageLabel", { Size = UDim2.new(0, 16, 0, 16), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
@@ -494,7 +494,7 @@ function M.skills()
   local function res(e) if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.err and tostring(e.err) or ""; M.skills() end
   if k.honeCost then M.btn(ab, "레벨업\n" .. k.honeCost, UDim2.new(), M.BTN.green, function() res(C.rpc:InvokeServer("levelup", k.uid)) end).LayoutOrder = 1 end
   for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("%d번 칸에", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
-  if k.slot == 0 then M.btn(ab, "분해", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "분해 · 연마석을 얻었습니다" end end).LayoutOrder = 20 end
+  if k.slot == 0 then M.btn(ab, "분해", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "분해 · 아르카나 조각을 얻었습니다" end end).LayoutOrder = 20 end
   -- 대상 규칙 (장착 중인 공격 스킬): 누를 때마다 다음 규칙으로 (웹 RULES)
   if k.slot > 0 and d.slot ~= "passive" then
     local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
@@ -1264,7 +1264,7 @@ local function revealResults(res)
       else mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.15, 0, 0.14, 0), Size = UDim2.new(0.7, 0, 0.4, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = col, ZIndex = 63 }, c) end
       if not img(c, "card_f" .. r.rarity, { Size = UDim2.new(1, 0, 1, 0), ZIndex = 64 }) then stroke(c, col, 2) end
       local nm = txt(c, r.name, 12, UDim2.new(0, 4, 0.6, 0), UDim2.new(1, -8, 0, 30), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 65; mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-      local rr = txt(c, r.dup and string.format("연마석 +%d", r.dup) or (M.SK_RAR[r.rarity + 1] or ""), 11, UDim2.new(0, 4, 1, -22), UDim2.new(1, -8, 0, 16), r.dup and Color3.fromRGB(150, 230, 170) or col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 65
+      local rr = txt(c, r.lvlUp and string.format("Lv %d", r.lvlUp) or (r.dupArc and string.format("조각 +%d", r.dupArc)) or (M.SK_RAR[r.rarity + 1] or ""), 11, UDim2.new(0, 4, 1, -22), UDim2.new(1, -8, 0, 16), (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 65
     end
     phase = "done"
   end
@@ -1308,8 +1308,8 @@ local function revealResults(res)
     if not img(card, "card_f" .. r.rarity, { Size = UDim2.new(1, 0, 1, 0), ZIndex = 65 }) then stroke(face, col, 4) end
     local nm = txt(card, r.name, 24, UDim2.new(0, 10, 0.62, 0), UDim2.new(1, -20, 0, 34), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 66; mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, nm)
     local rr = txt(card, M.SK_RAR[r.rarity + 1] or "", 20, UDim2.new(0, 10, 0.74, 0), UDim2.new(1, -20, 0, 26), col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 66
-    local tg = txt(card, r.dup and string.format("연마석 +%d", r.dup) or "NEW", 15, UDim2.new(0, 10, 0.86, 0), UDim2.new(1, -20, 0, 20), r.dup and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120), M.FONT, Enum.TextXAlignment.Center); tg.ZIndex = 66
-    if not r.dup then tg:SetAttribute("NoTr", true) end
+    local tg = txt(card, r.lvlUp and string.format("중복 · Lv %d", r.lvlUp) or (r.dupArc and string.format("최대 레벨 · 조각 +%d", r.dupArc)) or "NEW", 15, UDim2.new(0, 10, 0.86, 0), UDim2.new(1, -20, 0, 20), (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120), M.FONT, Enum.TextXAlignment.Center); tg.ZIndex = 66
+    if not (r.lvlUp or r.dupArc) then tg:SetAttribute("NoTr", true) end
     local t2 = TweenService:Create(card, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0), Rotation = 0 }); t2:Play()
     -- 공개 순간: 빛 폭발 그림 (등급이 높을수록 크고 오래) · 신화 이상 화면 번쩍임 · 사탄 흔들림
     if r.rarity >= 2 then
@@ -1333,6 +1333,7 @@ local function revealResults(res)
   showBack()
 end
 M.revealResults = revealResults   -- (시험용: 가짜 결과로 연출 확인)
+local gachaFam   -- 소환 계열 (처음엔 내 무기 계열)
 function M.gacha()
   C.clear()
   local r = C.rpc:InvokeServer("gacha"); if r.summary then C.setSummary(r.summary) end
@@ -1340,7 +1341,7 @@ function M.gacha()
   local v = r.view; local s = C.summary() or {}
   local A = area(392)
   local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.42, -4, 1, 0), "스킬 소환")
-  txt(L, "스킬은 소환으로만 얻습니다. 이미 같거나 더 높은 등급을 가진 스킬이 나오면 연마석으로 바뀝니다.", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
+  txt(L, "스킬은 소환으로만 얻습니다. 가진 스킬이 또 나오면 그 스킬 레벨이 1 오릅니다 (최대 레벨이면 아르카나 조각).", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
   local rl = mk("Frame", { Position = UDim2.new(0, 14, 0, 76), Size = UDim2.new(1, -28, 0, 140), BackgroundTransparency = 1 }, L)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, rl)
   for i, pct in ipairs(v.rates) do
@@ -1354,20 +1355,27 @@ function M.gacha()
   local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0), string.format("아르카나 조각 %s · 보석 %s", n(v.arcana), n(v.gems)))
   local function pull(nn, pay)
     if pulling then return end; pulling = true
-    local e = C.rpc:InvokeServer("gachapull", { n = nn, pay = pay }); pulling = false
+    local e = C.rpc:InvokeServer("gachapull", { n = nn, pay = pay, fam = gachaFam ~= "all" and gachaFam or nil }); pulling = false
     if e.summary then C.setSummary(e.summary) end
     if e.err or not e.res then C.msg.Text = tostring(e.err); return end
     M.gacha(); revealResults(e.res)
   end
   local function costRow(parent, art, val) return M.cost(parent, { { art, val, nil, art == "i_arcana" and "조각" or nil } }, UDim2.new(0.58, 0, 0, 22)) end
   local function bb(y, title, art, val, col, cb)
-    local b = M.btn(R, "", UDim2.new(1, -28, 0, 66), col, cb); b.Position = UDim2.new(0, 14, 0, y)
-    txt(b, title, 22, UDim2.new(0, 18, 0, 18), UDim2.new(0.55, 0, 0, 30), Color3.new(1, 1, 1), M.FONT)
+    local b = M.btn(R, "", UDim2.new(1, -28, 0, 58), col, cb); b.Position = UDim2.new(0, 14, 0, y)
+    txt(b, title, 22, UDim2.new(0, 18, 0, 14), UDim2.new(0.55, 0, 0, 30), Color3.new(1, 1, 1), M.FONT)
     costRow(b, art, val)
   end
-  bb(40, "1회 소환", "i_arcana", v.arc1, M.BTN.blue, function() pull(1, "arcana") end)   -- 아르카나 조각 (전투 · 과제 보상)
-  bb(114, "10회 소환", "i_arcana", v.arc10, M.BTN.gold, function() pull(10, "arcana") end)
-  bb(198, "1회 소환", "i_divine", v.gem1, M.BTN.purple, function() pull(1, "gem") end)
+  -- 소환 계열: 물리 / 마법 / 전체 (천장은 함께 센다)
+  if not gachaFam then local hs = C.summary(); gachaFam = hs and (hs.hero == "mage" and "mag" or "phys") or "all" end
+  local ft = mk("Frame", { Position = UDim2.new(0, 14, 0, 34), Size = UDim2.new(1, -28, 0, 30), BackgroundTransparency = 1 }, R)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
+  for i, f in ipairs({ { "phys", "물리 소환" }, { "mag", "마법 소환" }, { "all", "전체 소환" } }) do
+    local b = M.btn(ft, f[2], UDim2.new(0.333, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14
+  end
+  bb(72, "1회 소환", "i_arcana", v.arc1, M.BTN.blue, function() pull(1, "arcana") end)   -- 아르카나 조각 (전투 · 과제 보상)
+  bb(136, "10회 소환", "i_arcana", v.arc10, M.BTN.gold, function() pull(10, "arcana") end)
+  bb(208, "1회 소환", "i_divine", v.gem1, M.BTN.purple, function() pull(1, "gem") end)
   bb(272, "10회 소환", "i_divine", v.gem10, M.BTN.red, function() pull(10, "gem") end)
   txt(R, "아르카나 조각은 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트로 얻습니다. 보석은 일일 과제와 상점으로.", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
 end

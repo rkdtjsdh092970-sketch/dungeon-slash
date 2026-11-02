@@ -1900,3 +1900,22 @@ x4 배속	x4 Speed
 찍은 효과 합계	Allocated Total
 패시브 트리가 새로 바뀌었습니다! 찍었던 포인트를 모두 돌려드렸어요.	The passive tree has been remade! All your points were refunded.
 포인트가 부족합니다	Not enough points
+길을 고르세요	Choose Your Path
+마법 소환	Magic
+마법사	Mage
+물리 소환	Physical
+분해 · 아르카나 조각을 얻었습니다	Salvaged · gained Arcana Shards
+스킬 정리: %d개 분해 · 아르카나 조각 +%s	Skill cleanup: %d salvaged · Arcana +%s
+스킬은 소환으로만 얻습니다. 가진 스킬이 또 나오면 그 스킬 레벨이 1 오릅니다 (최대 레벨이면 아르카나 조각).	Skills come only from summons. A duplicate raises that skill by 1 level (Arcana Shards at max level).
+아르카나 조각 20개	20 Arcana Shards
+아르카나 조각 5 · 800G	Arcana Shards 5 · 800G
+아르카나 조각을 받았습니다! 마을의 [스킬 소환]에서 스킬을 뽑아 보세요.	You received Arcana Shards! Summon skills at [Skill Summon] in town.
+없는 직업	Unknown class
+이미 시작했습니다	Already started
+전사	Warrior
+전체 소환	All
+조각 +%d	Shards +%d
+중복 · Lv %d	Duplicate · Lv %d
+최대 레벨 · 조각 +%d	Max level · Shards +%d
+검 · 물리 피해\n일격 · 찢기(범위) · 강타	Sword · Physical damage\nStrike · Rend (area) · Smash
+지팡이 · 마법 피해\n불씨 · 체인 라이트닝 · 폭열탄	Staff · Magic damage\nEmber · Chain Lightning · Firebomb

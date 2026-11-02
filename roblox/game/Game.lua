@@ -45,7 +45,7 @@ end
 function M.summary(sv)
   if sv.passNotice then task.delay(5, function() sv.passNotice = nil end) end   -- 안내는 한 번만 (접속 직후 요약들에 실어 보낸 뒤 지운다)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice }   -- hero: 지팡이를 끼면 마법사 모습
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice, needStart = sv.needStart or nil }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
@@ -85,6 +85,24 @@ function M.equip(sv, uid, toSlot)   -- toSlot: 끌어다 놓은 칸 (반지는 r
     end
   end
   return false, "없는 장비"
+end
+-- 시작 직업: 전사(검) / 마법사(지팡이) — 무기 · 기본 공격 · 범위 · 단일(보조) 스킬 3개 + 시작 아르카나 조각
+M.START_KITS = {
+  warrior = { wt = "sword", skills = { "strike", "rend", "smash" } },
+  mage = { wt = "staff", skills = { "ember", "chain", "bomb" } },
+}
+M.START_ARCANA = 50   -- 시작 무료 소환 (시뮬레이션으로 정함: roblox/sim)
+function M.pickStart(sv, cls)
+  if not sv.needStart then return false, "이미 시작했습니다" end
+  local K = M.START_KITS[cls]; if not K then return false, "없는 직업" end
+  local rng = Random.new(sv.nextUid + 77)
+  local w = Loot.genItem(rng, sv, 1, 0, "weapon"); local T = Items.WTYPES[K.wt]
+  w.wt = K.wt; w.base = {}; if (T.atk or 0) > 0 then w.base.atk = T.atk end; if (T.mag or 0) > 0 then w.base.mag = T.mag end
+  sv.equipped.weapon = w
+  sv.skills = {}; sv.loadout = { false, false, false, false }; sv.slots = math.max(sv.slots or 3, 3)
+  for i, id in ipairs(K.skills) do local k = { uid = sv.nextUid, id = id, rarity = 0, lvl = 1 }; sv.nextUid += 1; sv.skills[i] = k; sv.loadout[i] = { uid = k.uid, rule = "front" } end
+  sv.arcana = (sv.arcana or 0) + M.START_ARCANA; sv.startClass = cls; sv.needStart = false
+  return true
 end
 function M.unequip(sv, slot)   -- 착용 칸 → 가방
   local it = sv.equipped[slot]; if not it then return false end
@@ -297,7 +315,7 @@ function M.statsView(sv)
 end
 function M.atlasBuy(sv, id) return Econ.atlasBuy(sv, id) end
 function M.gachaView(sv) return Econ.gachaView(sv) end
-function M.gachaPull(sv, n, pay) return Econ.gachaPull(sv, n, pay, Random.new(os.clock() * 1e6 + sv.nextUid)) end
+function M.gachaPull(sv, n, pay, fam) return Econ.gachaPull(sv, n, pay, Random.new(os.clock() * 1e6 + sv.nextUid), fam) end
 -- 기록 (웹 openRecords)
 function M.records(sv)
   local st = sv.stats or {}
@@ -323,7 +341,7 @@ function M.skillClean(sv, rules, keepBest)
       local ok, v = Econ.sellSkill(sv, k.uid); if ok then sold += 1; gold += v end   -- (분해: v = 연마석)
     end
   end
-  return { sold = sold, gold = 0, hone = gold }
+  return { sold = sold, gold = 0, arcana = gold }
 end
 -- 세공의 인장 (웹 rerollSockets): 소켓이 있는 전설 장비의 소켓 수를 1~3개로 다시 정한다 (끼운 돌은 사라짐) · 소켓 돌 삭제
 local function findAny(sv, uid) for _, s in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[s]; if it and it.uid == uid then return it end end for _, it in ipairs(sv.inv) do if it.uid == uid then return it end end end
@@ -402,7 +420,7 @@ function M.fight(sv, kind, n, seed)
     do local om = 1 + Econ.atlasVal(sv, "orb"); local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0); d.orbD = roll(d.orbD or 0) end   -- 혼돈의 인장
     sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     d.ore = floor(d.ore * (1 + Econ.atlasVal(sv, "ore")) + 0.5)
-    sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.hone += d.hone; res.hone = d.hone end; if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
+    sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
     if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it) } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
