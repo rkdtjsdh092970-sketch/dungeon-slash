@@ -9,7 +9,7 @@ local function builds(spec)
   local out = {}
   for _, fam in ipairs({ "phys", "mag" }) do
     for b = 1, C.BUILDS do
-      local s = table.clone(spec); s.fam = fam; s.level = 100; s.ilvl = 5; s.late = true; s.skL = s.skL or 3; s.seed = b * 101
+      local s = table.clone(spec); s.fam = fam; s.level = 100; s.ilvl = 5; s.late = true; s.skL = s.skL or 3; s.enh = 10; s.nstones = s.nstones or 16; s.seed = b * 101
       out[#out + 1] = REF.build(s)
     end
   end
@@ -29,15 +29,16 @@ local function maxTier(spec, nodeOf, lo, hi)
   return a
 end
 C.maxTier = maxTier
-C.TOWER = { { 21, { 1, 1, 1, 2, 2 }, 0 }, { 39, { 1, 1, 2, 2, 2 }, 1 }, { 59, { 1, 1, 2, 2, 2 }, 2 }, { 79, { 1, 1, 2, 2, 2 }, 3 }, { 99, { 1, 1, 2, 2, 2 }, 4 }, { 100, { 1, 1, 1, 2, 2 }, 5 } }
+-- 2026-11-03: 실제 성장 반영 — 장비 +10 강화 · 일반 돌 16개(시뮬 봇 720판 상태), 전직은 탑을 오르며 레이드를 같이 깬다고 보고 0 → 2차
+C.TOWER = { { 21, { 1, 1, 1, 2, 2 }, 0, 0 }, { 39, { 1, 1, 2, 2, 2 }, 1, 1 }, { 59, { 1, 1, 2, 2, 2 }, 2, 1 }, { 79, { 1, 1, 2, 2, 2 }, 3, 2 }, { 99, { 1, 1, 2, 2, 2 }, 4, 2 }, { 100, { 1, 1, 1, 2, 2 }, 5, 2 } }
 C.GATE = { { 1, 2, 2, 3, 3 }, { 1, 2, 2, 2, 3 }, { 1, 1, 2, 2, 2 }, { 1, 1, 1, 2, 2 } }
 C.RAID = { { { 1, 1, 2, 2, 2 }, 1, 6 }, { { 1, 1, 2, 2, 2 }, 3, 12 }, { { 1, 1, 1, 2, 2 }, 5, 18 } }
 -- 결과는 ServerStorage 속성(Calib_*)에 쌓아 둔다 (MCP 시간 초과로 끊겨도 남게)
 function C.runAll()
   local SS = game.ServerStorage
-  for _, t in ipairs(C.TOWER) do SS:SetAttribute("Calib_tower" .. t[1], maxTier({ tiers = t[2], sat = t[3] }, function(x) return { act = 10, floor = t[1], tier = x, tw = 1 } end, 60, 220)) end
-  for i, tiers in ipairs(C.GATE) do SS:SetAttribute("Calib_gate" .. i, maxTier({ tiers = tiers }, function(x) return { kind = "void", act = 10, tier = x, vsel = i } end, 60, 220)) end
-  for d, r in ipairs(C.RAID) do SS:SetAttribute("Calib_raid" .. d, maxTier({ tiers = r[1], sat = r[2], stones = r[3] }, function(x) return { kind = "craid", act = 10, diff = d, tier = x } end, 60, 240)) end
+  for _, t in ipairs(C.TOWER) do SS:SetAttribute("Calib_tower" .. t[1], maxTier({ tiers = t[2], sat = t[3], cls = t[4] }, function(x) return { act = 10, floor = t[1], tier = x, tw = 1 } end, 60, 220)) end
+  -- 보스 관문: 1~3단계는 균열 층 수준(성장 시뮬로 맞춤), 4단계는 탑 약 40층 → 따로 재지 않는다
+  for d, r in ipairs(C.RAID) do SS:SetAttribute("Calib_raid" .. d, maxTier({ tiers = r[1], sat = r[2], stones = r[3], nstones = math.max(0, 16 - r[3]), cls = d - 1 }, function(x) return { kind = "craid", act = 10, diff = d, tier = x } end, 60, 240)) end
   -- 모르가스(심연의 문): 기준표 T5 1등급3 · 2등급2 + 전설 2 · 신화 2 (결계석은 자동 공격으로 부순다)
   SS:SetAttribute("Calib_morgath", maxTier({ tiers = { 1, 1, 1, 2, 2 } }, function(x) return { kind = "raid", act = 10, tier = x } end, 60, 160))
   SS:SetAttribute("Calib_done", true)
