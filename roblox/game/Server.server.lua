@@ -267,7 +267,9 @@ local handle = function(player, action, arg)
   elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }
-  elseif action == "autoclean" then return { res = Game.autoClean(sv, type(arg) == "table" and arg or {}), summary = Game.summary(sv) }
+  elseif action == "autoclean" then return { res = Game.autoClean(sv, type(arg) == "table" and arg.after == true), summary = Game.summary(sv) }   -- after = 전투 후 자동 (always 일 때만)
+  elseif action == "autoget" then return { view = Game.autoView(sv) }
+  elseif action == "autoset" then if type(arg) == "table" and type(arg.k) == "string" then Game.autoSet(sv, arg.k, arg.v) end; return { view = Game.autoView(sv) }
   elseif action == "passview" then return { view = Game.passView(sv), summary = Game.summary(sv) }
   elseif action == "passtake" then local n = Game.passTake(sv, arg); return { n = n, view = Game.passView(sv), summary = Game.summary(sv) }
   elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }

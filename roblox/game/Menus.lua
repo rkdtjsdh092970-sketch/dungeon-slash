@@ -23,6 +23,7 @@ M.GOLD, M.DARK, M.PANEL = Theme.GOLD, Theme.DARK, Theme.PANEL
 -- 등급 색: 일반 · 매직 · 레어 · 전설 (사탄 장비는 보라)
 M.RAR = { Color3.fromRGB(205, 205, 215), Color3.fromRGB(90, 150, 255), Color3.fromRGB(255, 214, 70), Color3.fromRGB(255, 140, 40) }
 M.SAT = Color3.fromRGB(200, 90, 255)
+M.ITEM_RAR = { "일반", "매직", "레어", "전설" }
 M.BTN = Theme.BTN
 local SLOT_ART = { weapon = "i_weapon", helm = "i_helm", armor = "i_armor", gloves = "i_gloves", boots = "i_boots", ring = "i_ring", ring2 = "i_ring", neck = "i_neck" }
 local SLOT_EMOJI = { weapon = "⚔", helm = "⛑", armor = "🛡", gloves = "🧤", boots = "👢", ring = "💍", ring2 = "💍", neck = "📿" }
@@ -52,7 +53,7 @@ local function tipShow(t)
   local Players = game:GetService("Players")
   if not tipGui then
     tipGui = mk("ScreenGui", { Name = "DungeonTip", DisplayOrder = 60, IgnoreGuiInset = true, ResetOnSpawn = false }, Players.LocalPlayer.PlayerGui)
-    pcall(function() require(script.Parent.Lang).watch(tipGui) end)
+    pcall(function() require(script.Parent.Lang).watch(tipGui) end); pcall(function() require(script.Parent.Theme).watch(tipGui) end)
     tipBox = mk("Frame", { Size = UDim2.new(0, 300, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(14, 11, 20), BackgroundTransparency = 0.04, Visible = false, ZIndex = 50 }, tipGui)
     corner(tipBox, 8); stroke(tipBox, M.GOLD, 1.5)
     mk("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, tipBox)
@@ -70,6 +71,64 @@ local function tipShow(t)
 end
 local function tipHide() if tipBox then tipBox.Visible = false end; if tipConn then tipConn:Disconnect(); tipConn = nil end end
 M.tipShow, M.tipHide = tipShow, tipHide
+-- 장비 카드 (상세 창 · 툴팁 공용): 이름 · 부위/티어 · 기본 능력치 · 옵션(티어 표시) · 사탄 효과
+M.TIER_COL = { Color3.fromRGB(255, 150, 40), Color3.fromRGB(215, 95, 255), Color3.fromRGB(80, 160, 255), Color3.fromRGB(90, 205, 120), Color3.fromRGB(190, 190, 190), Color3.fromRGB(120, 120, 120) }
+function M.itemCard(parent, it, order, head)
+  local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(14, 10, 10), BackgroundTransparency = 0.1, LayoutOrder = order or 0, ZIndex = parent.ZIndex }, parent)
+  corner(f, 6); stroke(f, (it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1]):Lerp(Color3.new(0, 0, 0), 0.35), 1.5)
+  mk("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, f)
+  mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, f)
+  local z = f.ZIndex
+  local function line(text, size, color, o, font)
+    local l = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextWrapped = true, Text = text, TextSize = size, TextColor3 = color, Font = font or M.BODY,
+      TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = o, ZIndex = z }, f)
+    return l
+  end
+  local function rule(o) mk("Frame", { Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(120, 92, 48), BorderSizePixel = 0, LayoutOrder = o, ZIndex = z }, f) end
+  local col = it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1]
+  if head then line(head, 12, Color3.fromRGB(170, 160, 150), 0) end
+  local t = line(it.title or "", 18, col, 1, M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, t)
+  if it.up then line("▲ 지금보다 강해집니다", 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
+  rule(3)
+  for i, b in ipairs(it.base or {}) do line(b, 15, Color3.fromRGB(245, 240, 230), 3 + i, M.FONT) end
+  if it.aff and #it.aff > 0 then
+    rule(20)
+    for i, a in ipairs(it.aff) do
+      local row = mk("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, LayoutOrder = 20 + i, ZIndex = z }, f)
+      local tc = a.t and (M.TIER_COL[a.t] or M.TIER_COL[6]) or Color3.fromRGB(90, 90, 90)
+      local bd = mk("TextLabel", { Size = UDim2.new(0, 28, 0, 17), Position = UDim2.new(0, 0, 0, 1), BackgroundColor3 = tc, Text = a.t and ("T" .. a.t) or "–", TextSize = 12, Font = M.FONT, TextColor3 = Color3.fromRGB(20, 12, 8), ZIndex = z }, row)
+      bd:SetAttribute("NoTr", true); corner(bd, 4)
+      mk("TextLabel", { Position = UDim2.new(0, 34, 0, 0), Size = UDim2.new(1, -34, 1, 0), BackgroundTransparency = 1, Text = a.s, TextSize = 14, TextColor3 = tc:Lerp(Color3.new(1, 1, 1), 0.55), Font = M.BODY,
+        TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = z }, row)
+    end
+  elseif not it.base then   -- 예전 형식 (lines 만 있음)
+    line(table.concat(it.lines or {}, "\n"), 14, Color3.fromRGB(230, 225, 245), 21)
+  end
+  if it.satText then rule(60); line("✦ " .. it.satText, 14, M.SAT, 61) end
+  return f
+end
+-- 장비 툴팁: 마우스 옆에 바로, 착용 중인 같은 부위와 나란히 비교
+local itGui, itBox, itConn
+function M.itemTip(it, cur)
+  if not itGui then
+    itGui = mk("ScreenGui", { Name = "DungeonItemTip", DisplayOrder = 61, IgnoreGuiInset = true, ResetOnSpawn = false }, game:GetService("Players").LocalPlayer.PlayerGui)
+    pcall(function() require(script.Parent.Lang).watch(itGui) end); pcall(function() require(script.Parent.Theme).watch(itGui) end)
+    itBox = mk("Frame", { Size = UDim2.new(0, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1, Visible = false, ZIndex = 60 }, itGui)
+    mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), VerticalAlignment = Enum.VerticalAlignment.Top, SortOrder = Enum.SortOrder.LayoutOrder }, itBox)
+  end
+  for _, c in ipairs(itBox:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+  local function col(x, o, head) local h = mk("Frame", { Size = UDim2.new(0, 290, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = o, ZIndex = 60 }, itBox); mk("UIListLayout", {}, h); M.itemCard(h, x, 0, head) end
+  col(it, 1, nil)
+  if cur and cur ~= it then col(cur, 2, "착용 중") end
+  itBox.Visible = true
+  if itConn then itConn:Disconnect() end
+  itConn = game:GetService("RunService").RenderStepped:Connect(function()
+    local m = UIS:GetMouseLocation(); local vp = workspace.CurrentCamera.ViewportSize; local sz = itBox.AbsoluteSize
+    local x = m.X + 20; if x + sz.X > vp.X - 8 then x = m.X - sz.X - 16 end
+    itBox.Position = UDim2.new(0, math.max(8, x), 0, math.clamp(m.Y - 20, 8, math.max(8, vp.Y - sz.Y - 8)))
+  end)
+end
+function M.itemTipHide() if itBox then itBox.Visible = false end; if itConn then itConn:Disconnect(); itConn = nil end end
 function M.tile(parent, size, o)
   local col = o.color or M.RAR[(o.rarity or 0) + 1] or M.RAR[1]
   local b = mk("TextButton", { Size = UDim2.new(0, size, 0, o.h or size), BackgroundColor3 = Color3.fromRGB(26, 20, 44), Text = "", AutoButtonColor = false, LayoutOrder = o.order or 0 }, parent)
@@ -81,10 +140,19 @@ function M.tile(parent, size, o)
   if o.label then local l = txt(b, o.label, 11, UDim2.new(0, 2, 1, -28), UDim2.new(1, -4, 0, 26), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); l.TextYAlignment = Enum.TextYAlignment.Bottom; mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
   if o.tl then local l = txt(b, o.tl, 12, UDim2.new(0, 5, 0, 3), UDim2.new(1, -8, 0, 16), Color3.fromRGB(255, 240, 200), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
   if o.br then local l = txt(b, o.br, 13, UDim2.new(0, 2, 1, -18), UDim2.new(1, -6, 0, 16), Color3.fromRGB(120, 255, 140), M.FONT, Enum.TextXAlignment.Right); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
-  if o.check then local c = mk("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = M.FONT, TextSize = 14 }, b); corner(c) end
-  b.MouseEnter:Connect(function() st.Thickness = 4 end); b.MouseLeave:Connect(function() st.Thickness = o.selected and 4 or 2.5 end)
-  do local sk = Skin.frame(b, "ui_slot", 0.3, 0.5); if sk then sk.ImageColor3 = Color3.new(1, 1, 1):Lerp(col, 0.55); if o.selected then sk.ImageColor3 = col end end end   -- 슬롯 그림을 등급 색으로 물들임
-  if o.click then b.MouseButton1Click:Connect(function() tipHide(); o.click() end) end
+  if o.check then local c = mk("TextLabel", { Name = "Check", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = M.FONT, TextSize = 14 }, b); corner(c) end
+  b:SetAttribute("Sel", o.selected and true or false)
+  b.MouseEnter:Connect(function() st.Thickness = 4 end); b.MouseLeave:Connect(function() st.Thickness = b:GetAttribute("Sel") and 4 or 2.5 end)
+  do local sk = Skin.frame(b, "ui_slot", 0.3, 0.5); if sk then sk.ImageColor3 = Color3.new(1, 1, 1):Lerp(col, 0.55); if o.selected then sk.ImageColor3 = col end end   -- 슬롯 그림을 등급 색으로 물들임
+    -- 선택 · 체크 표시를 다시 그리지 않고 바꾼다 (속성 Sel / Check)
+    b:GetAttributeChangedSignal("Sel"):Connect(function() local on = b:GetAttribute("Sel"); st.Thickness = on and 4 or 2.5; if sk then sk.ImageColor3 = on and col or Color3.new(1, 1, 1):Lerp(col, 0.55) end end)
+    b:GetAttributeChangedSignal("Check"):Connect(function()
+      local c = b:FindFirstChild("Check") or mk("TextLabel", { Name = "Check", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = M.FONT, TextSize = 14, ZIndex = 3 }, b)
+      if not c:FindFirstChildOfClass("UICorner") then corner(c) end
+      c.Visible = b:GetAttribute("Check") == true
+    end) end
+  if o.click then b.MouseButton1Click:Connect(function() tipHide(); M.itemTipHide(); o.click() end) end
+  if o.itip then b.MouseEnter:Connect(function() M.itemTip(o.itip[1], o.itip[2]) end); b.MouseLeave:Connect(M.itemTipHide); b.AncestryChanged:Connect(function(_, par) if not par then M.itemTipHide() end end) end
   if o.tip then b.MouseEnter:Connect(function() tipShow(o.tip) end); b.MouseLeave:Connect(tipHide); b.AncestryChanged:Connect(function(_, par) if not par then tipHide() end end) end
   return b
 end
@@ -121,36 +189,28 @@ end
 -- ───────── 장비 ─────────
 local invSel, invMulti, invPick = nil, false, {}
 local invData   -- 서버에서 받은 가방 · 착용 (클릭할 때는 다시 받지 않고 화면만 다시 그린다 → 깜빡임 없음)
-local invSort = "rarity"
-local SORTS = { "rarity", "slot", "ilvl" }
-local SORT_NAME = { rarity = "등급순", slot = "부위순", ilvl = "레벨순" }
+local invTab = "all"   -- 가방 탭: 전체 / 부위
+local invMode = "bag"   -- bag | auto (자동 분해 설정)
+local INV_TABS = { "all", "weapon", "helm", "armor", "gloves", "boots", "ring", "neck" }
 local SLOT_ORDER = {}; for i, s in ipairs(Items.EQ_SLOTS) do SLOT_ORDER[s] = i end
--- 자동 분해 단계: 0 끔 · 1 일반 · 2 매직까지 · 3 레어까지 (설정의 ar1~ar3 = 2(분해))
-local AUTO_NAME = { [0] = "자동 분해: 끔", "자동 분해: 일반", "자동 분해: 매직까지", "자동 분해: 레어까지" }
-local function autoLevel()
-  local o = C.opt and C.opt() or {}
-  local lv = 0; for i = 1, 3 do if (o["ar" .. i] or 0) == 2 then lv = i else break end end
-  return lv
-end
 local function itemColor(it) return it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1] end
-local function sortInv(inv)
+local function sortInv(inv)   -- 자동 정렬: 등급 → 부위 → 아이템 레벨
   table.sort(inv, function(a, b)
     local ra, rb = (a.sat and 9 or a.rarity or 0), (b.sat and 9 or b.rarity or 0)
+    if ra ~= rb then return ra > rb end
     local sa, sb = SLOT_ORDER[a.slot] or 99, SLOT_ORDER[b.slot] or 99
-    local ia, ib = a.ilvl or 0, b.ilvl or 0
-    if invSort == "slot" then if sa ~= sb then return sa < sb end; if ra ~= rb then return ra > rb end; return ia > ib end
-    if invSort == "ilvl" then if ia ~= ib then return ia > ib end; if ra ~= rb then return ra > rb end; return sa < sb end
-    if ra ~= rb then return ra > rb end; if sa ~= sb then return sa < sb end; return ia > ib
+    if sa ~= sb then return sa < sb end
+    return (a.ilvl or 0) > (b.ilvl or 0)
   end)
 end
-local invRender
+local invRender, autoRender
 function M.inv(keep)
   if not keep or not invData then
     local r = C.rpc:InvokeServer("inv"); local st = C.rpc:InvokeServer("state"); if st.summary then C.setSummary(st.summary) end
     if r.err or st.err then C.clear(); C.msg.Text = tostring(r.err or st.err); return end
     invData = { inv = r.inv or {}, eq = st.equipped or {} }
   end
-  invRender()
+  if invMode == "auto" then autoRender() else invRender() end
 end
 -- 착용 칸 배치 (사람 모양, PoE 식): 무기·갑옷은 세로로 길게, 반지·목걸이는 작게
 local DOLL = {
@@ -160,24 +220,38 @@ local DOLL = {
   gloves = { 14, 222, 60, 60 }, boots = { 158, 222, 60, 60 },
 }
 invRender = function()
-  C.clear()
+  C.clear(); M.itemTipHide()
   local inv, eq = table.clone(invData.inv), invData.eq
   sortInv(inv)
   local bySlot = {}; for _, e in ipairs(eq) do bySlot[e.slot] = e end
   local byUid = {}; for _, it in ipairs(inv) do byUid[it.uid] = it end
   for _, e in ipairs(eq) do byUid[e.uid] = e; e.equipped = true end
+  local function curOf(it) return not it.equipped and (bySlot[it.slot] or (it.slot == "ring" and bySlot.ring2)) or nil end
+  -- 클릭해도 창을 다시 그리지 않는다: 칸의 선택 표시와 오른쪽 상세만 바꾼다 (깜빡임 · 스크롤 튐 방지)
+  local tiles, fillDetail, buildBar = {}, nil, nil
+  local function selectItem(uid)
+    if tiles[invSel] then tiles[invSel]:SetAttribute("Sel", false) end
+    invSel = uid; if tiles[uid] then tiles[uid]:SetAttribute("Sel", true) end
+    fillDetail()
+  end
+  local function pickItem(uid)
+    invPick[uid] = not invPick[uid] or nil
+    if tiles[uid] then tiles[uid]:SetAttribute("Sel", invPick[uid] == true); tiles[uid]:SetAttribute("Check", invPick[uid] == true) end
+    buildBar()
+  end
   local A = area(392)
   -- 왼쪽: 착용 중 (사람 모양) + 프리셋 + 재화
   local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0, 232, 1, 0), "착용 중")
-  local sil = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 70, 0, 26), Size = UDim2.new(0, 92, 0, 262), Text = "", ZIndex = 1 }, L)   -- 몸통 실루엣 (어두운 판)
-  do local body = mk("Frame", { Position = UDim2.new(0.5, -30, 0, 70), Size = UDim2.new(0, 60, 0, 150), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
+  do local sil = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 70, 0, 26), Size = UDim2.new(0, 92, 0, 262) }, L)
+    local body = mk("Frame", { Position = UDim2.new(0.5, -30, 0, 70), Size = UDim2.new(0, 60, 0, 150), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
     local head = mk("Frame", { Position = UDim2.new(0.5, -22, 0, 6), Size = UDim2.new(0, 44, 0, 44), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(head) end
   for i, slot in ipairs(Items.EQ_SLOTS) do
     local e = bySlot[slot]; local p = DOLL[slot]
-    local t = M.tile(L, p[3], { h = p[4], order = i, tip = e and { title = e.title, color = itemColor(e), lines = e.lines } or nil, art = SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
+    local t = M.tile(L, p[3], { h = p[4], order = i, itip = e and { e } or nil, art = SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
       tl = e and (e.enh > 0 and ("+" .. e.enh) or nil), label = not e and Items.SLOT_NAME[slot] or nil, selected = e and invSel == e.uid,
-      click = function() if e then invSel = e.uid; invRender() end end })
+      click = function() if e then selectItem(e.uid) end end })
     t.Position = UDim2.new(0, p[1], 0, p[2]); t.ZIndex = 2
+    if e then tiles[e.uid] = t end
   end
   M.presetBar(L, UDim2.new(0, 10, 1, -88), UDim2.new(1, -20, 0, 32))
   local s = C.summary()
@@ -194,64 +268,62 @@ invRender = function()
       local tp = { title = c[2], color = c[4], lines = {} }; t.MouseEnter:Connect(function() tipShow(tp) end); t.MouseLeave:Connect(tipHide)
     end
   end
-  -- 가운데: 가방 (정렬 · 자동 분해)
-  local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), string.format("가방 %d개", #inv))
-  local g = grid(B, UDim2.new(0, 6, 0, 32), UDim2.new(1, -12, 1, -122), 58)
-  for i, it in ipairs(inv) do
-    M.tile(g, 58, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
+  -- 가운데: 가방 (전체 · 부위 탭)
+  local shown = {}; for _, it in ipairs(inv) do if invTab == "all" or it.slot == invTab or (invTab == "ring" and it.slot == "ring2") then shown[#shown + 1] = it end end
+  local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), string.format("가방 %d / %d", #shown, #inv))
+  local tabs = mk("Frame", { Position = UDim2.new(0, 6, 0, 32), Size = UDim2.new(1, -12, 0, 34), BackgroundTransparency = 1 }, B)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
+  for i, k in ipairs(INV_TABS) do
+    local on = invTab == k
+    local tb = mk("TextButton", { Size = UDim2.new(k == "all" and 0.16 or 0.12, -3, 1, 0), BackgroundColor3 = on and Color3.fromRGB(120, 40, 36) or Color3.fromRGB(30, 24, 22), Text = k == "all" and "전체" or "", TextSize = 13, Font = M.FONT,
+      TextColor3 = Color3.fromRGB(255, 235, 200), AutoButtonColor = false, LayoutOrder = i }, tabs)
+    corner(tb, 5); stroke(tb, on and M.GOLD or Color3.fromRGB(90, 70, 40), on and 2 or 1)
+    if k ~= "all" then
+      local a = C.Sprites.art(SLOT_ART[k])
+      if a then mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, tb)
+      else tb.Text = SLOT_EMOJI[k] or "?" end
+      tb.MouseEnter:Connect(function() tipShow({ title = Items.SLOT_NAME[k], lines = {} }) end); tb.MouseLeave:Connect(tipHide)
+    end
+    tb.MouseButton1Click:Connect(function() tipHide(); invTab = k; invRender() end)
+  end
+  local g = grid(B, UDim2.new(0, 6, 0, 70), UDim2.new(1, -12, 1, -114), 58)
+  for i, it in ipairs(shown) do
+    tiles[it.uid] = M.tile(g, 58, { order = i, itip = { it, curOf(it) }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or (it.up and "▲" or nil), br = it.ilvl and ("T" .. it.ilvl) or nil,
       selected = (not invMulti and invSel == it.uid) or (invMulti and invPick[it.uid]), check = invMulti and invPick[it.uid] or nil,
-      click = function() if invMulti then invPick[it.uid] = not invPick[it.uid] or nil else invSel = it.uid end; invRender() end })
+      click = function() if invMulti then pickItem(it.uid) else selectItem(it.uid) end end })
   end
-  local function bar(y)
-    local f = mk("Frame", { Position = UDim2.new(0, 6, 1, y), Size = UDim2.new(1, -12, 0, 36), BackgroundTransparency = 1 }, B)
-    mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, f)
-    return f
-  end
-  local bar1, bar2 = bar(-84), bar(-42)
+  local bar = mk("Frame", { Position = UDim2.new(0, 6, 1, -42), Size = UDim2.new(1, -12, 0, 36), BackgroundTransparency = 1 }, B)
   local function bulkDo(mode)
     local cnt = 0
     for uid in pairs(invPick) do local e = C.rpc:InvokeServer(mode, uid); if e.summary then C.setSummary(e.summary) end; if e.ok ~= false then cnt += 1 end end
     invPick = {}; invMulti = false; M.inv(); C.msg.Text = mode == "sell" and string.format("%d개 판매", cnt) or string.format("%d개 분해", cnt)
   end
-  -- 1줄: 정렬 · 자동 분해 규칙 · 지금 분해
-  M.btn(bar1, string.format("정렬: %s", SORT_NAME[invSort]), UDim2.new(0, 110, 1, 0), M.BTN.blue, function() invSort = SORTS[(table.find(SORTS, invSort) or 1) % #SORTS + 1]; invRender() end).LayoutOrder = 1
-  local lv = autoLevel()
-  M.btn(bar1, AUTO_NAME[lv], UDim2.new(0, 170, 1, 0), lv > 0 and M.BTN.green or M.BTN.gray, function()
-    local nv = (lv + 1) % 4
-    for i = 1, 3 do C.setOpt("ar" .. i, i <= nv and 2 or 0) end
-    invRender()
-  end).LayoutOrder = 2
-  if lv > 0 then
-    M.btn(bar1, "지금 분해", UDim2.new(0, 90, 1, 0), M.BTN.red, function()
-      local o = C.opt(); local e = C.rpc:InvokeServer("autoclean", { o.ar1, o.ar2, o.ar3, o.ar4 })
-      if e.summary then C.setSummary(e.summary) end
-      C.msg.Text = e.res and string.format("%d개 분해 · 골드 +%s · 강화석 +%s", e.res.n, n(e.res.gold), n(e.res.ore)) or tostring(e.err or "")
-      M.inv()
-    end).LayoutOrder = 3
+  buildBar = function()
+    bar:ClearAllChildren()
+    mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+    if invMulti then
+      local k = 0; for _ in pairs(invPick) do k += 1 end
+      M.btn(bar, string.format("판매 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.gold, function() bulkDo("sell") end).LayoutOrder = 1
+      M.btn(bar, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
+      M.btn(bar, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
+    else
+      M.btn(bar, "여러 개 선택", UDim2.new(0, 116, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
+      M.btn(bar, "자동 분해", UDim2.new(0, 110, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
+    end
   end
-  -- 2줄: 여러 개 선택
-  if invMulti then
-    local k = 0; for _ in pairs(invPick) do k += 1 end
-    M.btn(bar2, string.format("판매 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.gold, function() bulkDo("sell") end).LayoutOrder = 1
-    M.btn(bar2, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
-    M.btn(bar2, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
-  else
-    M.btn(bar2, "여러 개 선택", UDim2.new(0, 120, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
-  end
-  -- 오른쪽: 선택한 장비 상세 + 착용 중인 같은 부위와 비교
+  buildBar()
+  -- 오른쪽: 선택한 장비 상세 (티어 표시) + 착용 중인 같은 부위
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "장비 정보")
+  local Dc = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 }, D)
+  fillDetail = function()
+  Dc:ClearAllChildren()
   local it = invSel and byUid[invSel]
-  if not it then txt(D, "가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 60), Color3.fromRGB(190, 185, 210)); return end
-  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 32), Size = UDim2.new(1, -16, 1, -84), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, D)
-  mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
-  local t1 = txt(sc, it.title, 15, UDim2.new(), UDim2.new(1, -6, 0, 0), itemColor(it), M.FONT); t1.AutomaticSize = Enum.AutomaticSize.Y; t1.LayoutOrder = 1
-  local t2 = txt(sc, table.concat(it.lines or {}, "\n"), 13, UDim2.new(), UDim2.new(1, -6, 0, 0), Color3.fromRGB(230, 225, 245)); t2.AutomaticSize = Enum.AutomaticSize.Y; t2.LayoutOrder = 2
-  local cur = not it.equipped and (bySlot[it.slot] or (it.slot == "ring" and bySlot.ring2))
-  if cur then
-    local h = txt(sc, string.format("— 착용 중 —\n%s", cur.title), 13, UDim2.new(), UDim2.new(1, -6, 0, 0), itemColor(cur), M.FONT); h.AutomaticSize = Enum.AutomaticSize.Y; h.LayoutOrder = 3
-    local h2 = txt(sc, table.concat(cur.lines or {}, "\n"), 12, UDim2.new(), UDim2.new(1, -6, 0, 0), Color3.fromRGB(170, 165, 190)); h2.AutomaticSize = Enum.AutomaticSize.Y; h2.LayoutOrder = 4
-  end
-  local ab = mk("Frame", { Position = UDim2.new(0, 8, 1, -46), Size = UDim2.new(1, -16, 0, 38), BackgroundTransparency = 1 }, D)
+  if not it then txt(Dc, "가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.\n마우스를 올리면 착용 중인 장비와 나란히 비교합니다.", 14, UDim2.new(0, 12, 0, 38), UDim2.new(1, -24, 0, 80), Color3.fromRGB(200, 190, 180)); return end
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 34), Size = UDim2.new(1, -16, 1, -84), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, Dc)
+  mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  M.itemCard(sc, it, 1, it.equipped and "착용 중" or nil)
+  local cur = curOf(it); if cur then M.itemCard(sc, cur, 2, "착용 중 (비교)") end
+  local ab = mk("Frame", { Position = UDim2.new(0, 8, 1, -46), Size = UDim2.new(1, -16, 0, 38), BackgroundTransparency = 1 }, Dc)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
   local function act(name) local e = C.rpc:InvokeServer(name, it.uid); if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.err and tostring(e.err) or ""; if name ~= "equip" then invSel = nil end; M.inv() end
   if not it.equipped then
@@ -261,6 +333,56 @@ invRender = function()
   else
     M.btn(ab, "강화하러 가기", UDim2.new(0, 160, 1, 0), M.BTN.blue, function() C.openTab("forge") end).LayoutOrder = 1
   end
+  end
+  fillDetail()
+end
+function M.openAuto() invMode = "auto"; M.inv(true) end
+-- 자동 분해 설정 (웹 openAutoDis): 등급별 유지/판매/분해 · 사탄 · ▲ 보호 · 옵션 티어 기준 · 아이템 레벨 상한 · 모든 전투 후 적용
+autoRender = function()
+  C.clear(); M.itemTipHide()
+  local r = C.rpc:InvokeServer("autoget"); local v = r and r.view; if not v then C.msg.Text = "자동 분해 설정을 불러오지 못했습니다"; return end
+  local A = area(392)
+  local P = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), "자동 분해 설정")
+  txt(P, "전투가 끝날 때마다 아래 규칙으로 가방의 장비를 정리합니다. 고유 · 프리셋 · 착용 중 장비는 항상 유지됩니다.", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 20), Color3.fromRGB(200, 190, 180))
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 56), Size = UDim2.new(1, -20, 1, -110), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, P)
+  mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  local function set(k, val) local e = C.rpc:InvokeServer("autoset", { k = k, v = val }); if e and e.view then autoRender() end end
+  local order = 0
+  local function row(label, color, opts)   -- opts = { { 글자, 선택됨, 누르면 } }
+    order += 1
+    local f = mk("Frame", { Size = UDim2.new(1, -8, 0, 32), BackgroundColor3 = Color3.fromRGB(22, 16, 15), BackgroundTransparency = 0.2, LayoutOrder = order }, sc); corner(f, 5)
+    txt(f, label, 15, UDim2.new(0, 10, 0, 7), UDim2.new(0.42, -10, 0, 20), color or Color3.fromRGB(240, 230, 215), M.FONT)
+    local bx = mk("Frame", { Position = UDim2.new(0.42, 0, 0, 3), Size = UDim2.new(0.58, -6, 1, -6), BackgroundTransparency = 1 }, f)
+    mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), HorizontalAlignment = Enum.HorizontalAlignment.Right, SortOrder = Enum.SortOrder.LayoutOrder }, bx)
+    for i, o in ipairs(opts) do local b = M.btn(bx, o[1], UDim2.new(0, o.w or 70, 1, 0), o[2] and M.BTN.gold or M.BTN.gray, o[3]); b.LayoutOrder = i; b.TextSize = 14 end
+  end
+  local RN = { keep = "유지", sell = "판매", dis = "분해" }
+  local function ruleOpts(cur, cb) local t = {}; for _, k in ipairs({ "keep", "sell", "dis" }) do t[#t + 1] = { RN[k], cur == k, function() cb(k) end } end; return t end
+  row("모든 전투 후 자동 정리", nil, { { "켜기", v.always, function() set("always", true) end }, { "끄기", not v.always, function() set("always", false) end } })
+  for r0 = 0, 3 do row(string.format("%s 장비", M.ITEM_RAR[r0 + 1]), M.RAR[r0 + 1], ruleOpts(v.rules[r0 + 1], function(k) set("rule", { r = r0, v = k }) end)) end
+  row("사탄 장비", M.SAT, ruleOpts(v.satRule, function(k) set("satRule", k) end))
+  row("▲ 전투력이 오르는 장비는 처리 안 함", Color3.fromRGB(120, 255, 140), { { "켜기", v.keepUp, function() set("keepUp", true) end }, { "끄기", not v.keepUp, function() set("keepUp", false) end } })
+  local function tierRows(title, color, kx, kn, X, N)
+    local t = { { "없음", X == 0, function() set(kx, 0) end, w = 52 } }
+    for x = 1, 5 do t[#t + 1] = { x == 1 and "T1" or ("T" .. x .. "↑"), X == x, function() set(kx, x) end, w = 46 } end
+    row(title, color, t)
+    if X > 0 then local c = {}; for k = 1, 5 do c[#c + 1] = { string.format("%d개", k), N == k, function() set(kn, k) end, w = 50 } end; row("   … 이 옵션이 몇 개 미만이면 처리", nil, c) end
+  end
+  tierRows("전설 옵션 티어 기준", M.RAR[4], "tierX", "tierN", v.tierX, v.tierN)
+  tierRows("사탄 옵션 티어 기준", M.SAT, "sTierX", "sTierN", v.sTierX, v.sTierN)
+  do local t = { { "없음", v.maxIlvl == 0, function() set("maxIlvl", 0) end, w = 52 } }; for x = 1, 6 do t[#t + 1] = { "T" .. x, v.maxIlvl == x, function() set("maxIlvl", x) end, w = 40 } end
+    row("아이템 레벨 상한 (이하만 처리)", nil, t) end
+  local foot = mk("Frame", { Position = UDim2.new(0, 10, 1, -48), Size = UDim2.new(1, -20, 0, 40), BackgroundTransparency = 1 }, P)
+  txt(foot, string.format("지금 가방에서 처리될 장비 %d개", v.now), 16, UDim2.new(0, 4, 0, 10), UDim2.new(0.5, 0, 0, 22), Color3.fromRGB(255, 210, 110), M.FONT)
+  local fb = mk("Frame", { Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.new(0.5, 0, 1, 0), BackgroundTransparency = 1 }, foot)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Right, SortOrder = Enum.SortOrder.LayoutOrder }, fb)
+  M.btn(fb, "지금 정리하기", UDim2.new(0, 140, 1, 0), v.now > 0 and M.BTN.red or M.BTN.gray, function()
+    if v.now == 0 then return end
+    local e = C.rpc:InvokeServer("autoclean", {}); if e.summary then C.setSummary(e.summary) end
+    C.msg.Text = e.res and string.format("정리 완료: %d개 판매 · %d개 분해 · 골드 +%s · 강화석 +%s", e.res.sold or 0, e.res.dis or 0, n(e.res.gold), n(e.res.ore)) or tostring(e.err or "")
+    invData = nil; autoRender()
+  end).LayoutOrder = 1
+  M.btn(fb, "가방으로", UDim2.new(0, 100, 1, 0), M.BTN.blue, function() invMode = "bag"; M.inv() end).LayoutOrder = 2
 end
 
 -- ───────── 스킬 ─────────

@@ -1849,3 +1849,26 @@ x4 배속	x4 Speed
 전투 재생을 x4 배속으로 볼 수 있습니다 (x1~x3 은 무료). 한 번 사면 영구.	Watch battles at x4 speed (x1–x3 are free). Permanent once bought.
 전투에서 얻는 골드 1.5배 (영구).	Gold from battles x1.5 (permanent).
 준비 중	Coming Soon
+   … 이 옵션이 몇 개 미만이면 처리	   … process if fewer than this many
+%d개	%d
+▲ 전투력이 오르는 장비는 처리 안 함	▲ Keep gear that raises power
+▲ 지금보다 강해집니다	▲ Stronger than current
+가방 %d / %d	Bag %d / %d
+가방으로	Back to Bag
+가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.\n마우스를 올리면 착용 중인 장비와 나란히 비교합니다.	Tap gear in your bag or an equipped slot to see details here.\nHover to compare side by side with what you wear.
+모든 전투 후 자동 정리	Clean after every battle
+사탄 옵션 티어 기준	Satan affix tier rule
+설정 열기	Open
+아이템 레벨 상한 (이하만 처리)	Item tier cap (process at or below)
+없음	None
+자동 분해	Auto Salvage
+자동 분해 설정	Auto Salvage Settings
+자동 분해 설정을 불러오지 못했습니다	Could not load auto salvage settings
+장비 자동 분해	Gear auto salvage
+장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 스킬은 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다.	Gear is cleaned after each battle by the bag [Auto Salvage] settings; skills are cleaned during auto-repeat by the rules above. Equipped, preset, runed or leveled skills are never touched.
+전설 옵션 티어 기준	Legendary affix tier rule
+전투가 끝날 때마다 아래 규칙으로 가방의 장비를 정리합니다. 고유 · 프리셋 · 착용 중 장비는 항상 유지됩니다.	After every battle your bag is cleaned with these rules. Unique, preset and equipped gear is always kept.
+정리 완료: %d개 판매 · %d개 분해 · 골드 +%s · 강화석 +%s	Done: %d sold · %d salvaged · Gold +%s · Ore +%s
+지금 가방에서 처리될 장비 %d개	Gear to process now: %d
+지금 정리하기	Clean Now
+착용 중 (비교)	Equipped (compare)

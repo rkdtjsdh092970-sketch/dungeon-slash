@@ -139,30 +139,39 @@ local panelLayer = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundCo
 local resultLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, ZIndex = 25, Visible = false }, gui)
 local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 30 }, gui)
 
--- 왼쪽 위 능력치 카드 (마을 · 지도에서): 영웅 초상화 + 능력치 칸 + 진행도
-local statLbl = mk("Frame", { Active = true, BackgroundColor3 = DARK, BackgroundTransparency = 0.15, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 384, 0, 78), ZIndex = 11 }, hud)
-corner(statLbl, 8); stroke(statLbl, GOLD, 1.5); local statScale = mk("UIScale", { Scale = K }, statLbl); Skin.frame(statLbl, "ui_card", 0.25, 0.5)
+-- 왼쪽 위 캐릭터 카드 (마을 · 지도에서): 초상화(Lv) | 능력치 5칸 (이름 위 · 숫자 가운데) / 진행도 띠 — 칸을 나눠 배치
+local statLbl = mk("Frame", { Active = true, BackgroundColor3 = Color3.fromRGB(16, 11, 10), BackgroundTransparency = 0.08, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 400, 0, 92), ZIndex = 11 }, hud)
+corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { Scale = K }, statLbl)
 local statVal, statProg, statLv, statGold = {}, nil, nil, nil
 do
-  local pf = mk("Frame", { Position = UDim2.new(0, 9, 0, 9), Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = Color3.fromRGB(14, 10, 12), ZIndex = 12 }, statLbl); corner(pf, 6); Skin.frame(pf, "ui_slot", 0.3, 0.4)
+  local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
+  -- 초상화 칸 + 아래 Lv 띠
+  local pf = mk("Frame", { Position = UDim2.new(0, 8, 0, 8), Size = UDim2.new(0, 76, 0, 76), BackgroundColor3 = CELL, ClipsDescendants = true, ZIndex = 12 }, statLbl); corner(pf, 6); stroke(pf, EDGE, 1.5)
   local wa = Sprites.art("warrior")
-  if wa then mk("ImageLabel", { Size = UDim2.new(1.5, 0, 1.5, 0), Position = UDim2.new(-0.25, 0, -0.05, 0), BackgroundTransparency = 1, ImageContent = wa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, mk("Frame", { Size = UDim2.new(1, -8, 1, -8), Position = UDim2.new(0, 4, 0, 4), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 13 }, pf)) end
+  if wa then mk("ImageLabel", { Size = UDim2.new(1.5, 0, 1.5, 0), Position = UDim2.new(-0.22, 0, -0.06, 0), BackgroundTransparency = 1, ImageContent = wa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, pf) end
+  statLv = mk("TextLabel", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 20), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.15, Text = "", Font = Theme.FONT, TextSize = 14, TextColor3 = Color3.fromRGB(255, 214, 110), ZIndex = 14 }, pf)
+  -- 능력치 5칸: 칸마다 테두리, 이름은 위 가운데, 숫자는 남은 공간 가운데 (길면 자동으로 줄어듦)
   local STATS = { { "hp", "체력", Color3.fromRGB(235, 90, 80) }, { "atk", "공격력", Color3.fromRGB(240, 170, 80) }, { "mag", "주문력", Color3.fromRGB(150, 140, 255) }, { "def", "방어력", Color3.fromRGB(140, 190, 230) }, { "crit", "치명", Color3.fromRGB(255, 220, 110) } }
+  local row = mk("Frame", { Position = UDim2.new(0, 92, 0, 8), Size = UDim2.new(1, -100, 0, 50), BackgroundTransparency = 1, ZIndex = 12 }, statLbl)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i, st in ipairs(STATS) do
-    local x = 78 + (i - 1) * 60
-    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 8), Size = UDim2.new(0, 58, 0, 14), Text = st[2], Font = Theme.FONT, TextSize = 14, TextColor3 = Color3.fromRGB(190, 175, 160), ZIndex = 12 }, statLbl)
-    statVal[st[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 22), Size = UDim2.new(0, 58, 0, 24), Text = "", Font = Theme.FONT, TextSize = 23, TextScaled = false, TextColor3 = st[3], ZIndex = 12 }, statLbl)
-    mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, statVal[st[1]])
+    local c = mk("Frame", { Size = UDim2.new(0.2, -4, 1, 0), BackgroundColor3 = CELL, LayoutOrder = i, ZIndex = 12 }, row); corner(c, 5); stroke(c, EDGE, 1)
+    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 2, 0, 3), Size = UDim2.new(1, -4, 0, 14), Text = st[2], Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(185, 170, 150), ZIndex = 13 }, c)
+    local v = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 3, 0, 18), Size = UDim2.new(1, -6, 1, -21), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = st[3],
+      TextXAlignment = Enum.TextXAlignment.Center, TextYAlignment = Enum.TextYAlignment.Center, ZIndex = 13 }, c)
+    mk("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 10 }, v); mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, v)
+    statVal[st[1]] = v
   end
-  statLv = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 6), Size = UDim2.new(0, 52, 0, 18), BackgroundColor3 = Color3.fromRGB(20, 12, 10), Text = "", Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(255, 214, 110), ZIndex = 15 }, pf); corner(statLv, 6); stroke(statLv, GOLD, 1.5)
+  -- 진행도 띠
+  local pb = mk("Frame", { Position = UDim2.new(0, 92, 0, 62), Size = UDim2.new(1, -100, 0, 22), BackgroundColor3 = CELL, ZIndex = 12 }, statLbl); corner(pb, 5); stroke(pb, EDGE, 1)
+  statProg = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, -8, 1, 0), Position = UDim2.new(0, 4, 0, 0), Text = "", Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(215, 205, 195), ZIndex = 13 }, pb)
   -- 골드: 카드 아래 금빛 판
-  local gp = mk("Frame", { Position = UDim2.new(0, 0, 1, 6), Size = UDim2.new(0, 200, 0, 40), BackgroundColor3 = Color3.fromRGB(40, 28, 14), ZIndex = 11 }, statLbl); corner(gp, 8); stroke(gp, GOLD, 2)
+  local gp = mk("Frame", { Position = UDim2.new(0, 0, 1, 8), Size = UDim2.new(0, 200, 0, 40), BackgroundColor3 = Color3.fromRGB(40, 28, 14), ZIndex = 11 }, statLbl); corner(gp, 8); stroke(gp, GOLD, 2)
   Skin.frame(gp, "ui_pill", 0.3, 0.5)
   local ga = Sprites.art("i_gold")
   if ga then mk("ImageLabel", { Position = UDim2.new(0, 4, 0.5, -20), Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, ImageContent = ga.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, gp) end
   statGold = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -58, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextSize = 22, TextColor3 = Color3.fromRGB(255, 210, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, gp)
   mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 16, 4) }, statGold)
-  statProg = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 80, 0, 50), Size = UDim2.new(1, -90, 0, 18), Text = "", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Color3.fromRGB(215, 205, 195), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 }, statLbl)
 end
 -- 오른쪽 아래: 지도 ⇄ 마을 큰 버튼 (마을에선 지도, 지도에선 마을)
 local dock = mk("TextButton", { Name = "MapBtn", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(180, 130, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
@@ -452,7 +461,7 @@ local function setScreen(name)
   if name == "town" then buildTown() elseif name == "map" then buildMap() end
 end
 root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
-panelLayer.MouseButton1Click:Connect(closePanel)
+-- 창 바깥(어두운 바탕)을 눌러도 닫히지 않는다: 닫기는 X 버튼으로만 (실수로 나가지 않게)
 do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20; b:SetAttribute("SkinClose", true) end
 local function openPanel(title, tabs, first)
   fitPanel(); panelTitle.Text = title; panelLayer.Visible = true; resultLayer.Visible = false; if cancelAutoFn then cancelAutoFn() end
@@ -541,16 +550,13 @@ function views.set_auto()
   clear()
   local function pick(k, v) setOpt(k, v); views.set_auto() end
   optRow("전투 후 자동 반복", nil, { { "끔", function() pick("auto", 0) end, OPT.auto == 0 }, { "같은 단계", function() pick("auto", 1) end, OPT.auto == 1 }, { "다음 단계", function() pick("auto", 2) end, OPT.auto == 2 } })
-  for i, nm in ipairs({ "일반", "매직", "레어", "전설" }) do
-    local k = "ar" .. i
-    optRow(string.format("%s 장비", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 }, { "분해", function() pick(k, 2) end, OPT[k] == 2 } })
-  end
+  optRow("장비 자동 분해", nil, { { "설정 열기", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }); Menus.openAuto() end, false, w = 110 } })
   for i, nm in ipairs({ "일반", "희귀", "전설" }) do
     local k = "sr" .. i
     optRow(string.format("%s 스킬", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 } })
   end
   optRow("같은 스킬 가장 좋은 1개는 유지", nil, { { "켜기", function() pick("sbest", true) end, OPT.sbest }, { "끄기", function() pick("sbest", false) end, not OPT.sbest } })
-  card("자동 정리", { "전투가 끝날 때마다 위 장비 규칙으로 가방을 정리하고, 자동 반복 중에는 스킬도 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
+  card("자동 정리", { "장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 스킬은 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
 end
 local function openSettings()
   local tabs = { { "언어", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
@@ -612,9 +618,9 @@ showResultPanel = function(x, spec)
   local AUTO_TXT = { [0] = "자동 반복: 끔", "자동: 같은 단계", "자동: 다음 단계" }
   if not spec.noRetry then rb(5, AUTO_TXT[OPT.auto] or AUTO_TXT[0], function() setOpt("auto", (OPT.auto + 1) % 3); showResultPanel(x, spec) end, OPT.auto > 0 and Color3.fromRGB(60, 165, 80) or Color3.fromRGB(70, 66, 90)) end
   -- 자동 분해: 전투가 끝날 때마다 가방에 규칙 적용 (가방 · 설정에서 정함)
-  if OPT.ar1 + OPT.ar2 + OPT.ar3 + OPT.ar4 > 0 then
+  do
     task.spawn(function()
-      local ok, e = pcall(function() return rpc:InvokeServer("autoclean", { OPT.ar1, OPT.ar2, OPT.ar3, OPT.ar4 }) end)
+      local ok, e = pcall(function() return rpc:InvokeServer("autoclean", { after = true }) end)
       if ok and e.res and e.res.n > 0 then setSummary(e.summary); toast(string.format("자동 정리: 장비 %d개 · 골드 +%s · 강화석 +%s", e.res.n, n(e.res.gold), n(e.res.ore))) end
     end)
   end
@@ -946,7 +952,7 @@ topButton(1, "m_bag", "🎒", "가방", function() openPanel("장비", { { "장�
 topButton(2, "m_skill", "📘", "스킬", function() openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } }) end)
 topButton(3, "m_passive", "✦", "패시브", function() openPanel("패시브", { { "패시브", "pass" } }) end)
 topButton(3.5, "m_stats", "📊", "스탯", function() openPanel("스탯", { { "스탯", "stats" } }) end)
-shopBtn = mk("TextButton", { Name = "ShopBtn", Position = UDim2.new(0, 12, 0, INSET + 8 + 136 * K), Size = UDim2.new(0, 150, 0, 60), BackgroundColor3 = Color3.fromRGB(150, 50, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
+shopBtn = mk("TextButton", { Name = "ShopBtn", Position = UDim2.new(0, 12, 0, INSET + 8 + 158 * K), Size = UDim2.new(0, 150, 0, 60), BackgroundColor3 = Color3.fromRGB(150, 50, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
 corner(shopBtn, 10); stroke(shopBtn, GOLD, 2); local shopScale = mk("UIScale", { Scale = K }, shopBtn); Skin.frame(shopBtn, "ui_btn_red", 0.3, 0.5)
 do
   local a = Sprites.art("m_shop")
@@ -967,7 +973,7 @@ local relayPending = false
 relayout = function()
   relayPending = false; calcK()
   topScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
-  if shopBtn then shopBtn.Position = UDim2.new(0, 12, 0, INSET + 8 + 136 * K); shopBtn:FindFirstChildOfClass("UIScale").Scale = K end
+  if shopBtn then shopBtn.Position = UDim2.new(0, 12, 0, INSET + 8 + 158 * K); shopBtn:FindFirstChildOfClass("UIScale").Scale = K end
   if mainStage and not mainStage.conn then makeStage() end
   townBuilt = false
   if screen == "town" then buildTown() elseif screen == "map" then buildMap() end

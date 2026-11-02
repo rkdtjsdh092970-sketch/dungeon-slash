@@ -44,14 +44,28 @@ function M.summary(sv)
   local st = Stats.computeStats(sv)
   return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
 end
+-- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
+function M.itemDetail(it)
+  local base = {}
+  for k, v in pairs(it.base or {}) do base[#base + 1] = string.format("%s %s", ({ atk = "공격력", mag = "주문력", hp = "체력", def = "방어력" })[k] or k, fmtNum(v)) end
+  table.sort(base)
+  local aff = {}
+  for _, a in ipairs(it.affixes or {}) do local t = M.affixText(a):gsub("%s+%[T%d+%]$", ""); aff[#aff + 1] = { s = t, t = a.t and (a.t + 1) or nil } end
+  return base, aff, (it.sat and SAT_BY[it.sat]) and SAT_BY[it.sat][4] or nil
+end
 function M.inventory(sv)
   local out = {}
-  for i, it in ipairs(sv.inv) do out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl } end
+  local base; pcall(function() base = M.powerNow(sv) end)
+  for i, it in ipairs(sv.inv) do
+    local b, a, sat = M.itemDetail(it)
+    local up = false; if base then pcall(function() up = M.isUpgrade(sv, it, base) end) end
+    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
+  end
   return out
 end
 function M.equipped(sv)
   local out = {}
-  for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), lines = M.itemLines(it), rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl, sat = it.sat ~= nil } end end
+  for _, slot in ipairs(Items.EQ_SLOTS) do local it = sv.equipped[slot]; if it then local b, a, sat = M.itemDetail(it); out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl, sat = it.sat ~= nil } end end
   return out
 end
 
@@ -71,17 +85,80 @@ end
 -- 판매/분해/일일/오프라인 (Extras)
 function M.dismantle(sv, uid) return Extras.dismantle(sv, uid) end
 -- 자동 정리: rules[등급+1] = 0 유지 · 1 판매 · 2 분해 (강화했거나 사탄 장비는 건드리지 않음 = 일괄 정리와 같은 조건)
-function M.autoClean(sv, rules)
-  local n, gold, ore = 0, 0, 0
-  for i = #sv.inv, 1, -1 do
-    local it = sv.inv[i]; local m = tonumber(rules and rules[(it.rarity or 0) + 1]) or 0
-    if m > 0 and not it.sat and (it.enh or 0) == 0 then
-      table.remove(sv.inv, i); n += 1
-      if m == 1 then gold += Extras.itemValue(it) else local y = Extras.dismantleYield(it); gold += y.gold; ore += y.ore end
-    end
+-- ---------- 자동 분해 (웹 openAutoDis / autoProcess) ----------
+-- 규칙: rules[0~3] 등급별(일반·매직·레어·전설) keep/sell/dis, satRule 사탄, keepUp ▲ 보호, tierX×tierN 전설 옵션 티어 기준, sTierX×sTierN 사탄 기준,
+-- maxIlvl 아이템 레벨 상한(0 = 없음), always 모든 전투 후 적용. 착용 · 프리셋 장비는 가방에 없거나 보호된다.
+local RULE_OK = { keep = true, sell = true, dis = true }
+function M.autoRules(sv)
+  local A = sv.autoR
+  if not A then
+    A = { rules = { [0] = "keep", "keep", "keep", "keep" }, satRule = "keep", keepUp = true, tierX = 0, tierN = 3, sTierX = 0, sTierN = 3, maxIlvl = 0, always = true }
+    local old = sv.set or {}   -- 예전 설정(ar1~ar4: 0 유지 · 1 판매 · 2 분해)을 옮긴다
+    for r = 0, 3 do local v = tonumber(old["ar" .. (r + 1)]) or 0; A.rules[r] = v == 1 and "sell" or (v == 2 and "dis" or "keep") end
+    sv.autoR = A
+  end
+  return A
+end
+function M.autoSet(sv, k, v)
+  local A = M.autoRules(sv)
+  if k == "rule" and type(v) == "table" then local r = tonumber(v.r); if r and r >= 0 and r <= 3 and RULE_OK[v.v] then A.rules[r] = v.v end
+  elseif k == "satRule" and RULE_OK[v] then A.satRule = v
+  elseif (k == "keepUp" or k == "always") and type(v) == "boolean" then A[k] = v
+  elseif (k == "tierX" or k == "sTierX" or k == "maxIlvl") and tonumber(v) then A[k] = math.clamp(floor(tonumber(v)), 0, 6)
+  elseif (k == "tierN" or k == "sTierN") and tonumber(v) then A[k] = math.clamp(floor(tonumber(v)), 1, 5) end
+  return A
+end
+local function goodAffixCount(it, X) local n = 0; for _, a in ipairs(it.affixes or {}) do if a.t ~= nil and a.t + 1 <= X then n += 1 end end; return n end
+local function tierOn(A, it) if it.sat then return A.sTierX > 0 and A.sTierN > 0 end; return A.tierX > 0 and A.tierN > 0 end
+local function tierKeep(A, it)
+  if it.sat then return A.sTierX > 0 and A.sTierN > 0 and goodAffixCount(it, A.sTierX) >= A.sTierN end
+  return A.tierX > 0 and A.tierN > 0 and (it.rarity or 0) >= 3 and goodAffixCount(it, A.tierX) >= A.tierN
+end
+local function ruleOf(A, it)
+  local r = it.sat and A.satRule or A.rules[math.min(3, it.rarity or 0)]
+  if tierOn(A, it) and not tierKeep(A, it) then return r == "sell" and "sell" or "dis" end
+  return r
+end
+-- 전투력 근사 (▲ 판정용): 물리/마법 중 큰 쪽 피해 × 버티는 힘
+local function power(st)
+  local phys = (st.atk or 0) * (1 + (st.physDmg or 0)) * (1 + math.min(1, st.critChance or 0) * (st.critDmg or 0))
+  local mag = (st.mag or 0) * (1 + (st.magDmg or 0) + (st.elemDmg or 0)) * (1 + math.min(1, st.spellCrit or 0) * (st.critDmg or 0))
+  return math.max(phys, mag) * (st.maxHp or 1) * (1 + (st.def or 0) / ((st.def or 0) + 50))
+end
+function M.powerNow(sv) return power(Stats.computeStats(sv)) end
+function M.isUpgrade(sv, it, base)
+  base = base or power(Stats.computeStats(sv))
+  for _, k in ipairs(it.slot == "ring" and { "ring", "ring2" } or { it.slot }) do
+    local old = sv.equipped[k]; sv.equipped[k] = it
+    local ok, p = pcall(function() return power(Stats.computeStats(sv)) end)
+    sv.equipped[k] = old
+    if ok and p > base * 1.0005 then return true end
+  end
+  return false
+end
+local function presetUids(sv) local u = {}; for _, p in ipairs(sv.presets or {}) do if p then for _, id in pairs(p.equip or {}) do u[id] = true end end end; return u end
+local function autoTargets(sv)
+  local A = M.autoRules(sv); local prot = presetUids(sv); local base = A.keepUp and power(Stats.computeStats(sv)) or 0
+  local out = {}
+  for i, it in ipairs(sv.inv) do
+    local rule = ruleOf(A, it)
+    if rule and rule ~= "keep" and not it.uniq and not prot[it.uid] and not (A.maxIlvl > 0 and (it.ilvl or 1) > A.maxIlvl) and not tierKeep(A, it)
+      and not (A.keepUp and M.isUpgrade(sv, it, base)) then out[#out + 1] = { i = i, rule = rule } end
+  end
+  return out
+end
+function M.autoView(sv) local A = M.autoRules(sv); return { rules = { A.rules[0], A.rules[1], A.rules[2], A.rules[3] }, satRule = A.satRule, keepUp = A.keepUp, tierX = A.tierX, tierN = A.tierN, sTierX = A.sTierX, sTierN = A.sTierN, maxIlvl = A.maxIlvl, always = A.always, now = #autoTargets(sv) } end
+function M.autoClean(sv, onlyAlways)
+  local A = M.autoRules(sv)
+  if onlyAlways and not A.always then return { n = 0, gold = 0, ore = 0 } end
+  local T = autoTargets(sv)
+  local n, sold, gold, ore = 0, 0, 0, 0
+  for j = #T, 1, -1 do
+    local it = table.remove(sv.inv, T[j].i); n += 1
+    if T[j].rule == "sell" then gold += Extras.itemValue(it); sold += 1 else local y = Extras.dismantleYield(it); gold += y.gold; ore += y.ore end
   end
   sv.gold += gold; sv.ore += ore
-  return { n = n, gold = gold, ore = ore }
+  return { n = n, sold = sold, dis = n - sold, gold = gold, ore = ore }
 end
 -- 패시브 트리: 찍은 노드 목록 · 남은 포인트 / 노드 찍기(시작점에서 이어지는 경로를 한 번에)
 function M.passView(sv)
