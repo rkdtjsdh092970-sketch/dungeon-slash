@@ -1890,3 +1890,13 @@ x4 배속	x4 Speed
 아르카나 조각은 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트로 얻습니다. 보석은 일일 과제와 상점으로.	Arcana Shards come from victories, bosses, first clears, daily tasks and quests. Gems come from daily tasks and the shop.
 아르카나 조각이 부족합니다	Not enough Arcana Shards
 조각	Shards
+검색 (예: 치명)	Search (e.g. crit)
+노드를 누르면 효과와 가는 길(필요한 점수)이 나옵니다.	Tap a node to see its effect and the path (points needed).
+마법	Arcana
+아직 찍은 노드가 없습니다	No nodes allocated yet
+이어진 길이 없습니다	No connected path
+재화	Fortune
+찍기 · %d칸 %d점	Allocate · %d nodes %d pts
+찍은 효과 합계	Allocated Total
+패시브 트리가 새로 바뀌었습니다! 찍었던 포인트를 모두 돌려드렸어요.	The passive tree has been remade! All your points were refunded.
+포인트가 부족합니다	Not enough points

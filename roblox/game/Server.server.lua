@@ -41,6 +41,10 @@ local function migrate(sv, uid)
   for k, v in pairs(base) do if sv[k] == nil then sv[k] = v end end
   sv.stats = sv.stats or { kills = 0, clears = 0 }; sv.runes = sv.runes or {}; sv.q = sv.q or {}; sv.charms = sv.charms or {}
   sv.spire = sv.spire or { best = 0 }; sv.rift = sv.rift or { best = 0 }
+  if (sv.passVer or 1) < 2 then   -- 패시브 v2 (4갈래 200노드): 예전 노드는 없어졌으므로 초기화 (포인트는 레벨로 계산되어 그대로 돌아온다)
+    if next(sv.pass or {}) then sv.passNotice = true end
+    sv.pass = {}; sv.passSets = nil; sv.passVer = 2
+  end
   return sv
 end
 

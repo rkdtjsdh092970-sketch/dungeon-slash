@@ -29,6 +29,7 @@ def strings(src):   # Lua 문자열 리터럴만 (주석 제외)
 
 found = {}
 for f in sorted(glob.glob(os.path.join(ROOT, 'game', '*.lua')) + glob.glob(os.path.join(ROOT, 'data', '*.lua'))):
+    if os.path.basename(f) in ('Passives.lua', 'LangEn.lua'): continue   # 패시브는 데이터에 영어(name_en · text_en)가 함께 있다
     if os.path.basename(f) in ('LangEn.lua', 'SpriteMap.lua', 'ArtMap.lua'): continue
     for s in strings(open(f, encoding='utf-8').read()):
         if HANGUL.search(s): found.setdefault(s, os.path.basename(f))

@@ -144,6 +144,7 @@ local statLbl = mk("Frame", { Active = true, BackgroundColor3 = Color3.fromRGB(1
 corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { Scale = K }, statLbl)
 local statVal, statProg, statLv, statGold, statFace, statPow = {}, nil, nil, nil, nil, nil
 local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
+local passNoticed = false
 do
   local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
   -- 초상화 칸 + 아래 Lv 띠
@@ -220,6 +221,7 @@ local function setSummary(s)
   if not s then return end
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold)
+  if s.passNotice and not passNoticed then passNoticed = true; task.delay(2, function() toast("패시브 트리가 새로 바뀌었습니다! 찍었던 포인트를 모두 돌려드렸어요.", Color3.fromRGB(255, 220, 120)) end) end
   local hk = s.hero or "warrior"
   if hk ~= Stage.HERO then Stage.HERO = hk; local a = Sprites.art(Stage.heroKey()); if statFace and a then statFace.ImageContent = a.content end; if heroChanged then task.defer(heroChanged) end end
   statVal.hp.Text = n(s.maxHp); statVal.atk.Text = n(s.atk); statVal.mag.Text = n(s.mag); statVal.def.Text = n(s.def); statVal.crit.Text = string.format("%.0f%%", s.crit * 100)

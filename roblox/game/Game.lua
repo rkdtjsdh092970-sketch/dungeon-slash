@@ -43,8 +43,9 @@ function M.itemLines(it)
 end
 
 function M.summary(sv)
+  if sv.passNotice then task.delay(5, function() sv.passNotice = nil end) end   -- 안내는 한 번만 (접속 직후 요약들에 실어 보낸 뒤 지운다)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)) }   -- hero: 지팡이를 끼면 마법사 모습
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
