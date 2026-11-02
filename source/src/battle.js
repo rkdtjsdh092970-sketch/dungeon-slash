@@ -110,6 +110,11 @@ const floorMult = (f) => {
 const riftMult = (base, tier) => floorMult(tier);   // 호환용
 const bossRiftMult = (t) => floorMult(t) * CFG.BOSS_RIFT_K;
 const riftAtkExtra = (node) => Math.pow(floorMult(node.tier || 1), ((node.kind === "spire" || node.kind === "craid" || node.kind === "warden" || node.upper) ? CFG.SPIRE.ATKP : CFG.FLOOR_ATKP) - 1);   // 공격력은 체력보다 천천히 오른다
+function bossInFront(b, e) {
+  if (e.tier !== "normal") return null;
+  for (const o of b.enemies) if (o.tier === "boss" && !o.dead && e.lane >= o.lane && e.lane < o.lane + o.h && e.col >= o.col) return o;
+  return null;
+}
 function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
@@ -562,10 +567,12 @@ function stepBattle(b, dt) {
     if (e.traits.length && e.traits.includes("regen")) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.025 * dt);
     if (e.stun > 0) continue;
     const stalled = b.time - b.lastDealT > 8 && e.col > b.maxReach;   // 사거리 밖에 멈춘 적 때문에 전투가 끝나지 않는 경우: 8초간 피해가 없으면 앞으로 다가온다
-    if (e.col > e.range || stalled || (e.tier === "normal" && e.col === 2 && e.range <= 2 && !occupants(b, e.lane, 1).length && !e.charge)) {   // 앞줄이 비면 근거리 유닛이 채운다
+    const bo = bossInFront(b, e);   // 5.0 (로블록스판과 같게): 보스 뒤에 가려진 일반 몹은 보스를 지나 앞으로 나온다
+    if (e.col > e.range || stalled || bo || (e.tier === "normal" && e.col === 2 && e.range <= 2 && !occupants(b, e.lane, 1).length && !e.charge)) {   // 앞줄이 비면 근거리 유닛이 채운다
       e.moveCd -= d2;
       if (e.moveCd <= 0) {
         if (canPlace(b, e, e.lane, e.col - 1, true)) { e.col -= 1; e.moveCd = e.moveT; if (e.tier !== "normal") displace(b, e); }
+        else if (bo && bo.col > 1 && (() => { for (let c = bo.col - 1; c >= 1; c--) for (const l of [e.lane, e.lane - 1, e.lane + 1]) if (canPlace(b, e, l, c)) { e.moveCd = e.moveT * (e.col - c); e.lane = l; e.col = c; return true; } return false; })()) {}
         else if (e.h === 1) {
           let moved = false;
           for (const l of shuffle([e.lane - 1, e.lane + 1])) if (canPlace(b, e, l, e.col - 1, true)) { e.lane = l; e.col -= 1; if (e.tier !== "normal") displace(b, e); e.moveCd = e.moveT; moved = true; break; }

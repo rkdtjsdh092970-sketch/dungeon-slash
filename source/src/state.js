@@ -12,8 +12,24 @@ function newSave() {
     nextUid: 1, set: { master: 0.8, bgm: 0.5, sfx: 0.8 }, opt: { hitflash: 1, shake: 1, autoNext: 0 }, stats: { kills: 0, clears: 0 }, seen: {},
     charms: [null, null, null, null], charmInv: [], cls: 0, cpass: {}, cbook: [0, 0, 0, 0], craid: [0, 0, 0, 0], passRev: 7, rangeRev: 1, stones: [], sockTix: 0, hone: 100, runes: [], daily: { day: "" }, lastSeen: 0, rate: { gold: 0, exp: 0 }, pass: {}, passPresets: [null, null, null], atlas: {}, skdex: {}, dummy: {}, raid: { cleared: 0, best: 0 }, orbC: 0, orbD: 0, dice: 0, keys: 0, keys2: 0, keys3: 0, keys4: 0, keys5: 0, keys6: 0, presets: [null, null, null], endless: { day: "", used: 0, best: 0, bestKills: 0 }, shop: { slot: -1, bought: [] }, auto: { on: false, sell: -1, equip: true }, uniq: {} };
   for (const slot of ["weapon", "helm", "armor"]) { const it = genItem(s, 1, 0, slot); s.equipped[slot] = it; }
-  const sk = genSkill(s, "strike", 0); s.skills.push(sk); s.loadout[0] = { uid: sk.uid, rule: "front" };
+  s.slots = 4; s.hone = 0; s.needStart = true; s.skVer = 2;   // 5.0 (로블록스판과 같게): 시작 직업을 고르면 무기 · 스타터 스킬 3개 · 소환 조각을 받는다. 스킬 칸은 처음부터 4칸
   return s;
+}
+// ---- 시작 직업 (로블록스판 Game.pickStart) ----
+const START_KITS = { warrior: { wt: "sword", skills: ["strike", "rend", "smash"] }, mage: { wt: "staff", skills: ["arcbolt", "arcmissiles", "arcburst"] } };
+const START_ARCANA = 90, BASIC_GRANTS = [["strike", 1], ["arcbolt", 1]];
+function grantBasics(sv) {   // 레벨이 되면 받는 평타 (일격 · 비전 탄)
+  const got = [], have = new Set(sv.skills.map((k) => k.id));
+  for (const [id, lv] of BASIC_GRANTS) if ((sv.level || 1) >= lv && !have.has(id) && SKILLS.some((d) => d.id === id)) { sv.skills.push({ uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }); have.add(id); got.push(id); }
+  return got;
+}
+function pickStart(sv, cls) {
+  if (!sv.needStart) return false; const K = START_KITS[cls]; if (!K) return false;
+  const w = genItem(sv, 1, 0, "weapon"), T = WTYPES[K.wt]; w.wt = K.wt; w.base = {}; if (T.atk) w.base.atk = T.atk; if (T.mag) w.base.mag = T.mag; sv.equipped.weapon = w;
+  sv.skills = []; sv.loadout = [null, null, null, null]; sv.slots = Math.max(sv.slots || 4, 4);
+  K.skills.forEach((id, i) => { const k = { uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }; sv.skills.push(k); sv.loadout[i] = { uid: k.uid, rule: "front" }; });
+  grantBasics(sv); sv.hone = (sv.hone || 0) + START_ARCANA; sv.startClass = cls; sv.needStart = false;
+  return true;
 }
 // 확인하지 않은 돌(수천 개까지 쌓인다)은 개수로 줄여 저장한다: 서버 세이브가 커져 로그인이 느려지는 것을 막는다
 function packSave(sv) { const o = Object.assign({}, sv), rev = [], u = [0, 0]; for (const st of sv.stones || []) { if (st && !st.rev) u[st.hi ? 1 : 0]++; else rev.push(st); } o.stones = rev; o.stoneU = u; return o; }
@@ -273,7 +289,7 @@ function computeStats(sv) {
   if (sv.passive) { const pi = (sv.skills || []).find((x) => x.uid === sv.passive), pd = pi && SKILLS.find((x) => x.id === pi.id); if (pd && pd.per) for (const k in pd.per) { const base = pd.per[k], lv = 1 + 0.05 * ((pi.lvl || 1) - 1); apply(k, k.endsWith("More") ? 1 + (base - 1) * lv : base * lv); } }   // 패시브 스킬 칸
   for (const id in (sv.pass || {})) { const p = PASSIVE_BY_ID[id]; if (p) for (const k in p.per) apply(k, p.per[k] * sv.pass[id]); }
   s.add.boss += atlasVal(sv, "conq"); s.dmgTaken -= atlasVal(sv, "guard");   // 심연 각인: 보스 피해 · 받는 피해
-  for (const [k, v] of charmEffects(sv)) apply(k, v);   // 참
+  if ((sv.cls || 0) >= 3) for (const [k, v] of charmEffects(sv)) apply(k, v);   // 참 (5.0: 3차 전직 후에만, 로블록스판과 같게)
   for (const id in (sv.cpass || {})) { const cn = C_BY_ID[id]; if (cn && sv.cpass[id]) for (const k in cn.per) apply(k, cn.per[k]); }   // 전직 패시브
   if (sv.guildLv) for (const gp of GUILD_PASSIVES) if (sv.guildLv >= gp.lv) for (const k in gp.per) apply(k, gp.per[k]);   // 길드 패시브
   const sc = {};
@@ -290,7 +306,7 @@ function computeStats(sv) {
   if (s.noCrit) { s.critChance = 0; s.spellCrit = 0; } if (s.noLife) s.lifesteal = 0;
   s.stackCap = Math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density);
   s.lanes = Math.min(CFG.MAX_LANES, sv.lanesBase + s.laneBonus);
-  s.avgIlvl = ilvlCnt ? ilvlSum / ilvlCnt : 1; s.sets = sc;
+  s.avgIlvl = ilvlCnt ? ilvlSum / ilvlCnt : 1; s.sets = sc; s.refIlvl = Math.min(6, 1 + ((sv.rift && sv.rift.best) || 0) / 20);   // 전투력 계산의 적 기준: 진행도
   // 장착 스킬의 물리/마법 비중과 필요 마나 (전투력 추정용)
   let wm = 0, wt = 0, mps = 0; s.skl = [];
   for (const l of sv.loadout || []) { if (!l) continue; const inst = sv.skills.find((x) => x.uid === l.uid); if (!inst) continue; const k = skillOf(inst); s.skl.push(k); if (k.dtype === "buff" || k.dtype === "heal") { mps += k.mana * s.manaCostMul / k.cd; continue; } const w = k.mult / k.cd; wt += w; if (k.dtype === "mag") wm += w; mps += k.mana * s.manaCostMul / (k.cd * (1 - Math.min(0.5, s.cdr))); }
@@ -601,11 +617,11 @@ function guildAccept(sv, id) { if (!sv.guild[id]) { sv.guild[id] = { state: "act
 function guildClaim(sv, id) { const r = claimQuest(sv, id); if (r) { delete sv.guild[id]; delete sv.q[id]; } return r; }
 
 // ---- 경험치 ----
-function addExp(sv, amount) { sv.exp = 0; return 0; }   // v4: 경험치 없음
+function addExp(sv, amount) { return grantExp(sv, amount || 0); }   // 5.0: 퀘스트 경험치도 레벨로
 
 // ---- 대장간 ----
 // 강화 효율: 희귀·전설을 대충 주워 강화만으로 최상급이 되지 않도록 등급별로 다르다 (일반·마법·희귀 60% · 전설 75% · 세트 90% · 고유 100%)
-const ENH_EFF = [0.6, 0.6, 0.6, 0.75, 0.9, 1.0];
+const ENH_EFF = [1, 1, 1, 1, 1, 1];   // 5.0 (로블록스판과 같게): 강화 효과는 모든 티어에서 100% (예전: T1~3 60% · T4 75% · T5 90%)
 const enhMul = (it) => 1;   // 액트(아이템 레벨 10 이하) 장비는 그대로 — 엔드게임 장비에만 적용
 const ENH_RATE = [1, 1, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3];
 const ENH_DROP = [0, 0, 0, 0, 0, 0, 0, 0.3, 0.4, 0.5];   // v3.23: +8 · +9 · +10 강화에 실패하면 이 확률로 강화 단계가 1 내려간다 (시도하는 단계 기준)

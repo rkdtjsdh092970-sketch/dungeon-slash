@@ -143,7 +143,8 @@ function drawBattle(ctx, b, dt, time) {
   const paf = animFrame("warrior", pa, pt); ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 38, 8, 0, 0, 7); ctx.fill(); ctx.restore();
   if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.18 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 40, 58, 70, 0, 0, 7); ctx.fill(); }
   const htint = b.pHurt > 0 ? "rgba(255,90,80,.45)" : b.debuffs.freeze ? "rgba(140,210,255,.5)" : b.debuffs.poison ? "rgba(120,255,120,.3)" : null;
-  const hk = pa === "attack" ? (pt < 0.12 ? "warrior_windup" : "warrior_slash") : "warrior", him = artGet(hk) || artGet("warrior");
+  const isMage = save && save.equipped && save.equipped.weapon && save.equipped.weapon.wt === "staff", hb = isMage ? "mage" : "warrior";   // 지팡이 = 마법사 모습
+  const hk = pa === "attack" ? (isMage ? (pt < 0.12 ? "mage_raise" : "mage_cast") : (pt < 0.12 ? "warrior_windup" : "warrior_slash")) : hb, him = artGet(hk) || artGet(hb);
   if (him) {   // 일러스트 영웅: 숨쉬기, 공격 때 앞으로 내딛음, 쓰러지면 뒤로 눕듯이 사라짐
     const dead = pa === "death", step = pa === "attack" ? Math.sin(Math.min(1, pt / 0.42) * Math.PI) * 18 : 0;
     drawArt(ctx, him, P.x + 18 + step, P.y + 2, 122, { tint: htint, sy: 1 + Math.sin(time * 2.4) * 0.012, alpha: dead ? Math.max(0, 1 - pt * 1.6) : 1, rot: dead ? -pt * 1.2 : 0 });

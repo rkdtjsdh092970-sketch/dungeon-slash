@@ -71,11 +71,21 @@ function openTitle() {
   $("#title").innerHTML = `<div class="logo"><div class="l1">DUNGEON</div><div class="l2">SLASH</div><div class="l3">자동 전투 핵 앤 슬래시</div></div>
   <div class="tbtns"><button class="btn big" data-t="new">새로 시작</button><button class="btn big" data-t="cont" ${has ? "" : "disabled"}>이어하기</button><button class="btn" data-t="login" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-t="opt">소리 설정</button></div><div class="tfoot">클릭하면 소리가 켜집니다</div>`;
 }
-function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
+function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; openClassPick(); }
+// 5.0 (로블록스판과 같게): 시작 직업 고르기 — 전사(검 · 일격 · 찢기 · 강타) / 마법사(지팡이 · 비전 탄 · 비전 미사일 · 비전 폭발)
+function openClassPick() {
+  const card = (cls, name, col, d1, d2, sk) => `<div class="cpick" data-a="pick" data-c="${cls}"><img src="${artURL(cls) || ""}" alt=""><b style="color:${col}">${name}</b><div class="dim">${d1}</div><div class="dim">${d2}</div><div style="color:#ffd98a;font-size:12px">${sk}</div></div>`;
+  Modal.open(`<h2>길을 고르세요</h2><div class="dim center">첫 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 길도 바꿀 수 있어요.</div>
+    <div class="cpicks">${card("warrior", "전사", "#ff8a6a", "검을 쓰는 근접 전사", "튼튼한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타")}${card("mage", "마법사", "#a89aff", "지팡이를 쓰는 마법사", "멀리서 꾸준한 비전 마법", "스킬: 비전 탄 · 비전 미사일 · 비전 폭발")}</div>`, { cls: "wide", noClose: true, on: {
+    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = "map"; openTown(1); toast("소환 조각 90개를 받았습니다 — 마을의 [스킬 소환]에서 10연 소환을 해 보세요!", "ok"); },
+  } });
+}
 function continueGame() {
   const s = loadGame(); if (!s) return; save = s; if (save.skComp) { const c = save.skComp; delete save.skComp; setTimeout(() => toast(`스킬 개편 보상: 아르카나 조각 ${fmtN(c)}개! 마을의 [스킬 소환]에서 쓰세요`, "ok"), 800); } AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
   if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
-  if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
+  if (save.needStart) { openClassPick(); return; }
+  if (!save.tut.done) { save.tut.done = true; save.slots = Math.max(save.slots || 1, 4); }   // 5.0: 튜토리얼 전투 대신 바로 마을 (스킬 칸 4칸)
+  { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
 
 // ---------- 튜토리얼 ----------
