@@ -129,10 +129,9 @@ function P.run(seed, cls, freePulls, budget)
     if (sv.cleared or 0) < 5 then r = Game.fight(sv, "stage", (sv.cleared or 0) + 1, seed + battles)
     else
       local target = sv.rift.best + 1
-      if fails >= 2 then target = math.max(1, sv.rift.best) end   -- 막히면 아래층 파밍
+      if fails >= 2 then target = math.max(1, sv.rift.best - 3 * (fails - 2)) end   -- 막히면 아래층 파밍 (거기서도 지면 3층씩 더 내려감)
       r = Game.fight(sv, "rift", target, seed + battles)
-      if r and r.win and target > sv.rift.best - 1 then fails = 0 elseif r and not r.win then fails += 1 end
-      if fails >= 5 then fails = 0 end
+      if r and r.win then if target > sv.rift.best - 1 or fails >= 2 then fails = 0 end elseif r then fails = math.min(fails + 1, 8) end
     end
     upkeep(sv, fam, rng)
     if battles % 10 == 0 then extras(sv, rng) end
