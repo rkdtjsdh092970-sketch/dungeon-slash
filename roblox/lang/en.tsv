@@ -1743,3 +1743,14 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 정예 우선	Elite First
 %d층	Floor %d
 변형 %s: %s	Modifier %s: %s
+%d단계	Stage %d
+%s %d개	%s ×%d
+%s %d단계	%s Stage %d
+공허의 열쇠	Void Key
+관문 열기	Open Gate
+보스마다 1~4단계 · 상위 관문(노말 레이드 클리어 후, 열쇠 5개). 처치하면 보스 전용 스킬이 나옵니다.	Each boss has Stages 1-4 · Upper Gate (after clearing Normal Raid, 5 keys). Defeating them drops boss-exclusive skills.
+불씨의 징표	Ember Sigil
+상위 관문	Upper Gate
+상위 보스 관문	Upper Boss Gate
+열쇠 1개로 입장합니다. 단계가 높을수록 강하고 보상이 좋습니다.	Costs 1 key to enter. Higher stages are tougher with better rewards.
+열쇠 5개 · 노말 레이드를 클리어해야 열립니다. 더 높은 등급의 스킬이 나옵니다.	5 keys · Unlocks after clearing the Normal Raid. Drops higher-rarity skills.

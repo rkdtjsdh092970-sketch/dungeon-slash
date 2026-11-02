@@ -183,11 +183,12 @@ local function clear() msg.Text = ""; for _, c in ipairs(list:GetChildren()) do 
 local function card(title, lines, btns)
   local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(44, 36, 78); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
   Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10); stroke(f, Color3.fromRGB(90, 76, 140), 1.5)
-  local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 10, 0, 6); tb.Size = UDim2.new(1, -160, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
+  local bw = math.max(1, #(btns or {})) * 72 + 10
+  local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 10, 0, 6); tb.Size = UDim2.new(1, -bw - 14, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
   local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0, 2); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = tb
   local tt = label(tb, title, 15, UDim2.new(), UDim2.new(1, 0, 0, 0)); tt.Font = Theme.FONT; tt.TextColor3 = Color3.fromRGB(255, 225, 140); tt.AutomaticSize = Enum.AutomaticSize.Y; tt.LayoutOrder = 1
   if #lines > 0 then local t = label(tb, table.concat(lines, "\n"), 13, UDim2.new(), UDim2.new(1, 0, 0, 0)); t.TextColor3 = Color3.fromRGB(225, 220, 245); t.AutomaticSize = Enum.AutomaticSize.Y; t.LayoutOrder = 2 end
-  for i, b in ipairs(btns or {}) do button(f, b[1], UDim2.new(1, -150 + (i - 1) * 72, 0, 8), UDim2.new(0, 68, 0, 32), b[2]) end
+  for i, b in ipairs(btns or {}) do button(f, b[1], UDim2.new(1, -bw + (i - 1) * 72, 0, 8), UDim2.new(0, 68, 0, 32), b[2]) end
   Instance.new("UIPadding", f).PaddingBottom = UDim.new(0, 10)
 end
 -- 문자열 입력 팝업
@@ -753,9 +754,8 @@ local function showInfo(t)
   elseif t.id == "RG" then desc.Text = "골드 위주 보상 (보석 없음)"; rb("입장", function() launch(playSpec("황금 보물고", { kind = "vault" })) end, Color3.fromRGB(170, 60, 60))
   elseif t.id == "RX" then desc.Text = "문지기 모르가스 레이드. 처음 쓰러뜨리면 붉은 탑이 솟아오릅니다."; rb("도전", function() launch(playSpec("심연의 문", { kind = "raid" })) end, Color3.fromRGB(170, 60, 60))
   elseif t.id == "RB" then
-    desc.Text = string.format("공허의 군주 모르가스(열쇠 %d) · 속성 보스 징표: 불씨 %d · 철갑 %d · 뇌전 %d · 서리 %d · 맹독 %d", U.keys or 0, U.keys2 or 0, U.keys3 or 0, U.keys4 or 0, U.keys5 or 0, U.keys6 or 0)
-    rb("모르가스", function() launch(playSpec("공허의 군주 모르가스", { kind = "void", vsel = 1 })) end, Color3.fromRGB(110, 60, 160), 84)
-    for _, bo in ipairs({ { "화염", "hive" }, { "철갑", "titan" }, { "뇌제", "storm" }, { "서리", "frost" }, { "독니", "poison" } }) do rb(bo[1], function() launch(playSpec(bo[1] .. " 보스", { kind = bo[2], vsel = 1 })) end, nil, 62) end
+    desc.Text = "보스마다 1~4단계 · 상위 관문(노말 레이드 클리어 후, 열쇠 5개). 처치하면 보스 전용 스킬이 나옵니다."
+    rb("관문 열기", function() infoCard.Visible = false; openPanel("보스 관문", { { "보스 관문", "bosshub" }, { "상위 관문", "bosshub_up" } }) end, Color3.fromRGB(110, 60, 160), 140)
   elseif t.id == "RTP" then desc.Text = "계시의 돌 · 세공의 인장"; rb("1단계", function() launch(playSpec("돌의 신전 1단계", { kind = "temple", vsel = 1 })) end); rb("2단계", function() launch(playSpec("돌의 신전 2단계", { kind = "temple", vsel = 2 })) end)
   elseif t.id == "RR" then desc.Text = "이지 · 노말 · 하드 최초 클리어마다 전직의 서"
     for i, d in ipairs({ "이지", "노말", "하드" }) do rb(d, function() launch(playSpec("레이드 던전 " .. d, { kind = "craid", diff = i })) end) end
@@ -804,6 +804,23 @@ buildMap = function()
   local f = target or BYID.T   -- 다음 목표가 화면 가운데 오게
   mapLayer.CanvasPosition = Vector2.new(math.clamp(f.x * ms - v.X / 2, 0, math.max(0, MW * ms - v.X)), math.clamp(f.y * ms - v.Y / 2, 0, math.max(0, MH * ms - v.Y)))
 end
+
+-- 보스 관문: 보스 6종 × 1~4단계 (상위 관문은 열쇠 5개, 노말 레이드 클리어 후) — 서버 Content.play 가 단계·열쇠를 확인한다
+local HUB = { { "void", "공허의 군주 모르가스", "keys", "공허의 열쇠" }, { "hive", "화염 정령왕 아스카", "keys2", "불씨의 징표" }, { "titan", "철갑의 투사 그라크", "keys3", "철갑의 징표" },
+  { "storm", "뇌제 라이곤", "keys4", "뇌전의 징표" }, { "frost", "서리 여왕 글라시아", "keys5", "서리의 징표" }, { "poison", "독니의 군주 베노크", "keys6", "맹독의 징표" } }
+local function hubView(upper)
+  clear()
+  local okU, ru = pcall(function() return rpc:InvokeServer("unlocks") end); if okU and ru.u then U = ru.u end
+  card(upper and "상위 보스 관문" or "보스 관문", { upper and "열쇠 5개 · 노말 레이드를 클리어해야 열립니다. 더 높은 등급의 스킬이 나옵니다." or "열쇠 1개로 입장합니다. 단계가 높을수록 강하고 보상이 좋습니다." }, {})
+  for _, b in ipairs(HUB) do
+    local have = U[b[3]] or 0
+    local btns = {}
+    for st = 1, 4 do btns[st] = { string.format("%d단계", st), function() launch(playSpec(string.format("%s %d단계", b[2], st), { kind = b[1], vsel = st, upper = upper or nil })) end } end
+    card(b[2], { string.format("%s %d개", b[4], have) }, btns)
+  end
+end
+function views.bosshub() hubView(false) end
+function views.bosshub_up() hubView(true) end
 
 -- 지도 끌어서 이동 (PC 마우스: ScrollingFrame 은 마우스 끌기를 지원하지 않는다. 터치는 기본 스크롤 사용)
 do
