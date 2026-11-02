@@ -586,7 +586,7 @@ function purgeClearedQuests(sv) { let n = 0; for (const id in sv.q) { const st =
 function questBang(act) { if (!save || !save.tut || !save.tut.done) return false; return Object.keys(save.q || {}).some((id) => save.q[id].state === "done") || availableQuests(save).some((q) => q.act === act); }
 function acceptQuest(sv, id) { if (!sv.q[id]) sv.q[id] = { state: "active", p: 0 }; }
 function questEvent(sv, ev) {
-  const done = [];
+  const done = q5Event(sv, ev);   // 5.0: 로블록스판 퀘스트 5개 (quest5.js)
   const store = Object.assign({}, sv.q);
   for (const id in store) {
     const st = sv.q[id]; if (st.state !== "active") continue;
@@ -814,7 +814,7 @@ const DAILY_TASKS = [
   { id: "kill", name: "몬스터 처치", n: 300, key: "kills", reward: { hone: 5, gold: 800 }, text: "아르카나 조각 5 · 800G" },
   { id: "clear", name: "스테이지 클리어", n: 8, key: "clears", reward: { ore: 12 }, text: "강화석 12" },
   { id: "boss", name: "보스 처치", n: 3, key: "bosses", reward: { orbC: 1 }, text: "혼돈 구슬 1" },
-  { id: "rift", name: "균열 클리어 (엔드게임)", n: 3, key: "rifts", reward: { orbD: 1, shards: 5 }, text: "신성한 구슬 1 · 균열 조각 5", endgame: true },
+  { id: "rift", name: "균열 클리어 (엔드게임)", n: 3, key: "rifts", reward: { orbC: 1 }, text: "혼돈 구슬 1", endgame: true },
 ];
 function dailyState(sv) { const d = localDay(); if (!sv.daily || sv.daily.day !== d) sv.daily = { day: d, kills: 0, clears: 0, bosses: 0, rifts: 0, claimed: {}, bonus: false }; return sv.daily; }
 function dailyAdd(sv, key, n) { const D = dailyState(sv); D[key] = (D[key] || 0) + (n || 1); }

@@ -56,7 +56,7 @@ function refreshTop() {
     const m = $("#b-map"), toMap = G.screen !== "map"; m.querySelector("b").textContent = toMap ? "지도" : "마을"; const iu = artURL(toMap ? "m_map" : "m_town"); if (iu && m.querySelector("img").getAttribute("src") !== iu) m.querySelector("img").src = iu;
     if (window.theme5Put) theme5Put(); }
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
-  const q = Object.keys(s.q).filter((id) => s.q[id].state === "done").length; $("#b-quest .dot").style.display = q ? "" : "none";
+  $("#b-quest .dot").style.display = q5Ready(s) || dailyReady5(s) ? "" : "none";
   $("#b-inv .upm").style.display = hasAnyUpgrade(s) ? "" : "none";
   { const D = dailyState(s); const claimable = DAILY_TASKS.some((t) => (!t.endgame || s.endgame) && !D.claimed[t.id] && (D[t.key] || 0) >= t.n); const dd = $("#b-daily .dot"); if (dd) dd.style.display = claimable ? "" : "none"; }
   const pp = passivePoints(s) - passiveSpent(s); $("#b-pass .dot").style.display = pp > 0 ? "" : "none";
@@ -218,20 +218,6 @@ function questRow(d, st, mode) {
   return `<div class="qrow ${d.main ? "main" : ""}"><div class="qi"><b>${d.main ? "[메인] " : ""}${d.title}</b><div class="dim">${d.desc}</div><small>보상: ${rw}</small>${st ? `<div class="bar"><i style="width:${(pr / d.goal.n) * 100}%"></i><span>${pr}/${d.goal.n}</span></div>` : ""}</div>
   ${mode === "accept" ? `<button class="btn pri" data-a="accept" data-id="${d.id}">수락</button>` : st && st.state === "done" ? `<button class="btn pri" data-a="claim" data-id="${d.id}">보상 받기</button>` : ""}</div>`;
 }
-function openQuests(board) {
-  const act = [], done = [];
-  for (const id in save.q) { const st = save.q[id], d = getQDef(id); if (!d || st.state === "claimed") continue; (st.state === "done" ? done : act).push([d, st]); }
-  let body;
-  if (board && QT.tab === "avail") { const a = availableQuests(save); body = a.map((d) => questRow(d, null, "accept")).join("") || `<div class="dim center pad">수락할 수 있는 퀘스트가 없습니다</div>`; }
-  else { const l = [...done, ...act]; body = l.map(([d, st]) => questRow(d, st)).join("") || `<div class="dim center pad">진행 중인 퀘스트가 없습니다${board ? "<br>게시판에서 새 퀘스트를 수락하세요" : ""}</div>`; }
-  Modal.open(`<h2>${board ? "퀘스트 게시판" : "퀘스트"}</h2>${board ? `<div class="tabs"><button class="tab ${QT.tab === "avail" ? "on" : ""}" data-a="qtab" data-t="avail">수락 가능 (${availableQuests(save).length})</button><button class="tab ${QT.tab === "active" ? "on" : ""}" data-a="qtab" data-t="active">진행 중 (${act.length + done.length})</button></div>` : ""}<div class="qlist">${body}</div>`, { cls: "wide", on: {
-    qtab: (el) => { QT.tab = el.dataset.t; openQuests(board); },
-    accept: (el) => { acceptQuest(save, el.dataset.id); snd("quest"); toast("퀘스트를 수락했습니다"); saveGame(); openQuests(board); },
-    claim: (el) => { claimAndShow(el.dataset.id); openQuests(board); },
-  } });
-}
-function claimAndShow(id) { const r = claimQuest(save, id); if (!r) return; snd("quest"); toast("퀘스트 보상을 받았습니다" + (r.item ? " · 장비 획득!" : ""), "ok"); saveGame(); refreshTop(); }
-function openBoard() { QT.tab = availableQuests(save).length ? "avail" : "active"; openQuests(true); }
 
 // ---------- 길드 ----------
 

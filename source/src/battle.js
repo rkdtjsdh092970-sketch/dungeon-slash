@@ -646,11 +646,11 @@ function finishBattle(sv, b) {
   const kf = b.keys * B.key; res.keys = Math.floor(kf) + (Math.random() < kf - Math.floor(kf) ? 1 : 0); sv.keys += res.keys; { const k2 = b.keys2 * B.key; res.keys2 = Math.floor(k2) + (Math.random() < k2 - Math.floor(k2) ? 1 : 0); sv.keys2 = (sv.keys2 || 0) + res.keys2; }
   for (const [f, bf] of [["keys3", b.keys3], ["keys4", b.keys4], ["keys5", b.keys5], ["keys6", b.keys6]]) { const kk = (bf || 0) * B.key; res[f] = Math.floor(kk) + (Math.random() < kk - Math.floor(kk) ? 1 : 0); sv[f] = (sv[f] || 0) + res[f]; }
   const qd = [];
-  if (b.kills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.kills, tier: "normal" }));
-  if (b.eliteKills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.eliteKills, tier: "elite" }));
-  for (let i = 0; i < b.bossKills; i++) { qd.push(...questEvent(sv, { type: "boss", act: node.act })); }
+  if (b.kills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.kills, tier: "normal", kind: node.kind }));
+  if (b.eliteKills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.eliteKills, tier: "elite", kind: node.kind }));
+  for (let i = 0; i < b.bossKills; i++) { qd.push(...questEvent(sv, { type: "boss", act: node.act, kind: node.kind })); }
   if (win) {
-    sv.stats.clears++; dailyAdd(sv, "clears", 1); if (b.bossKills) dailyAdd(sv, "bosses", b.bossKills); if (node.kind === "rift") dailyAdd(sv, "rifts", 1); qd.push(...questEvent(sv, { type: "clear" }));
+    sv.stats.clears++; dailyAdd(sv, "clears", 1); if (b.bossKills) dailyAdd(sv, "bosses", b.bossKills); if (node.kind === "rift") dailyAdd(sv, "rifts", 1); qd.push(...questEvent(sv, { type: "clear", kind: node.kind }));
     if (node.kind === "tutorial") {
       res.tutorialStep = node.step;
       if (node.step === TUTORIAL.length - 1) {

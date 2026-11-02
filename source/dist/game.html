@@ -444,7 +444,19 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .mlk5{margin-top:auto;text-align:center;font-size:16px;font-weight:700;color:#ff8c78;padding-bottom:20px}
 .mt5{display:flex;gap:5px;margin:0}.mt5 .btn{height:26px;font-size:12px!important;min-width:64px}
 .mgo5{margin-top:auto;display:flex;gap:6px;justify-content:flex-end;align-items:stretch}.mgo5{padding-top:4px}.mgo5 .btn{height:38px;min-width:34px;font-size:14px!important}.mgo5 .mg5{width:172px;font-size:16px!important}
+/* ---- 5.0 줄 카드 (로블록스판 rowCard: 퀘스트 · 일일 · 우편) ---- */
+.rl5w{height:392px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 6px 2px 2px}
+.rwall5{display:flex;justify-content:center;flex:none}.rwall5 .btn{width:220px;height:40px;font-size:15px!important}
+.rw5{position:relative;flex:none;min-height:96px;display:flex;align-items:center;gap:12px;padding:10px 14px 12px 16px;box-sizing:border-box;border:10px solid transparent;border-radius:10px;background:#1e1620}
+.rw5.done{opacity:.6;background:#22342c}.rw5.ready{box-shadow:0 0 0 2px #d6a846;animation:rw5g 1.6s ease-in-out infinite}@keyframes rw5g{50%{box-shadow:0 0 0 2px rgba(214,168,70,.25)}}
+.rwi5{flex:none;width:52px;height:52px;border-radius:10px;border:2.5px solid var(--c);background:linear-gradient(color-mix(in srgb,var(--c) 45%,#000),#161024);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--c);box-sizing:border-box}
+.rwb5{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.rwb5 b{font-size:16px;color:#ffe18c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rw5.done .rwb5 b{color:#aaa08c}
+.rwb5 small{font-size:13px;color:#d7d2e1;white-space:pre-wrap;max-height:36px;overflow:hidden}.rwb5 em{font-style:normal;font-size:13px;font-weight:700;color:#f0c878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rwp5{height:9px;background:#0c0810;border-radius:5px;overflow:hidden;margin-top:2px;max-width:calc(100% - 10px)}.rwp5 i{display:block;height:100%;border-radius:5px}
+.rw5>.btn{flex:none;width:128px;height:40px;font-size:14px!important}
+.rwbk5{position:absolute;left:84px;bottom:6px;display:flex;gap:6px}.rwbk5 .btn{height:34px;font-size:12px!important;width:130px}.rw5:has(.rwbk5){min-height:112px;align-items:flex-start}
 /* ---- 5.0 제련소 ---- */
+.fpw5{font-size:13px;margin:-2px 0 6px;color:#d8ccb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
 .frw5{height:50px;box-sizing:border-box;flex:none}.af5{min-height:32px;box-sizing:border-box}.tbd5{flex:none;width:30px;height:18px;line-height:18px;padding:0!important;font-weight:700}.af5 .btn.xs{height:26px}.orb5 .btn{height:40px}
 .forge5{display:flex;flex-direction:column;gap:6px;height:392px}.ftop5{flex-direction:row!important;align-items:center;gap:12px;padding:4px 10px;height:30px;flex:none;font-size:13px}.fc5{display:flex;align-items:center;gap:3px;white-space:nowrap}.fc5 img{width:18px;height:18px}
@@ -2712,7 +2724,7 @@ function purgeClearedQuests(sv) { let n = 0; for (const id in sv.q) { const st =
 function questBang(act) { if (!save || !save.tut || !save.tut.done) return false; return Object.keys(save.q || {}).some((id) => save.q[id].state === "done") || availableQuests(save).some((q) => q.act === act); }
 function acceptQuest(sv, id) { if (!sv.q[id]) sv.q[id] = { state: "active", p: 0 }; }
 function questEvent(sv, ev) {
-  const done = [];
+  const done = q5Event(sv, ev);   // 5.0: 로블록스판 퀘스트 5개 (quest5.js)
   const store = Object.assign({}, sv.q);
   for (const id in store) {
     const st = sv.q[id]; if (st.state !== "active") continue;
@@ -2940,7 +2952,7 @@ const DAILY_TASKS = [
   { id: "kill", name: "몬스터 처치", n: 300, key: "kills", reward: { hone: 5, gold: 800 }, text: "아르카나 조각 5 · 800G" },
   { id: "clear", name: "스테이지 클리어", n: 8, key: "clears", reward: { ore: 12 }, text: "강화석 12" },
   { id: "boss", name: "보스 처치", n: 3, key: "bosses", reward: { orbC: 1 }, text: "혼돈 구슬 1" },
-  { id: "rift", name: "균열 클리어 (엔드게임)", n: 3, key: "rifts", reward: { orbD: 1, shards: 5 }, text: "신성한 구슬 1 · 균열 조각 5", endgame: true },
+  { id: "rift", name: "균열 클리어 (엔드게임)", n: 3, key: "rifts", reward: { orbC: 1 }, text: "혼돈 구슬 1", endgame: true },
 ];
 function dailyState(sv) { const d = localDay(); if (!sv.daily || sv.daily.day !== d) sv.daily = { day: d, kills: 0, clears: 0, bosses: 0, rifts: 0, claimed: {}, bonus: false }; return sv.daily; }
 function dailyAdd(sv, key, n) { const D = dailyState(sv); D[key] = (D[key] || 0) + (n || 1); }
@@ -3712,11 +3724,11 @@ function finishBattle(sv, b) {
   const kf = b.keys * B.key; res.keys = Math.floor(kf) + (Math.random() < kf - Math.floor(kf) ? 1 : 0); sv.keys += res.keys; { const k2 = b.keys2 * B.key; res.keys2 = Math.floor(k2) + (Math.random() < k2 - Math.floor(k2) ? 1 : 0); sv.keys2 = (sv.keys2 || 0) + res.keys2; }
   for (const [f, bf] of [["keys3", b.keys3], ["keys4", b.keys4], ["keys5", b.keys5], ["keys6", b.keys6]]) { const kk = (bf || 0) * B.key; res[f] = Math.floor(kk) + (Math.random() < kk - Math.floor(kk) ? 1 : 0); sv[f] = (sv[f] || 0) + res[f]; }
   const qd = [];
-  if (b.kills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.kills, tier: "normal" }));
-  if (b.eliteKills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.eliteKills, tier: "elite" }));
-  for (let i = 0; i < b.bossKills; i++) { qd.push(...questEvent(sv, { type: "boss", act: node.act })); }
+  if (b.kills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.kills, tier: "normal", kind: node.kind }));
+  if (b.eliteKills) qd.push(...questEvent(sv, { type: "kill", act: node.act, n: b.eliteKills, tier: "elite", kind: node.kind }));
+  for (let i = 0; i < b.bossKills; i++) { qd.push(...questEvent(sv, { type: "boss", act: node.act, kind: node.kind })); }
   if (win) {
-    sv.stats.clears++; dailyAdd(sv, "clears", 1); if (b.bossKills) dailyAdd(sv, "bosses", b.bossKills); if (node.kind === "rift") dailyAdd(sv, "rifts", 1); qd.push(...questEvent(sv, { type: "clear" }));
+    sv.stats.clears++; dailyAdd(sv, "clears", 1); if (b.bossKills) dailyAdd(sv, "bosses", b.bossKills); if (node.kind === "rift") dailyAdd(sv, "rifts", 1); qd.push(...questEvent(sv, { type: "clear", kind: node.kind }));
     if (node.kind === "tutorial") {
       res.tutorialStep = node.step;
       if (node.step === TUTORIAL.length - 1) {
@@ -5524,7 +5536,7 @@ function refreshTop() {
     const m = $("#b-map"), toMap = G.screen !== "map"; m.querySelector("b").textContent = toMap ? "지도" : "마을"; const iu = artURL(toMap ? "m_map" : "m_town"); if (iu && m.querySelector("img").getAttribute("src") !== iu) m.querySelector("img").src = iu;
     if (window.theme5Put) theme5Put(); }
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
-  const q = Object.keys(s.q).filter((id) => s.q[id].state === "done").length; $("#b-quest .dot").style.display = q ? "" : "none";
+  $("#b-quest .dot").style.display = q5Ready(s) || dailyReady5(s) ? "" : "none";
   $("#b-inv .upm").style.display = hasAnyUpgrade(s) ? "" : "none";
   { const D = dailyState(s); const claimable = DAILY_TASKS.some((t) => (!t.endgame || s.endgame) && !D.claimed[t.id] && (D[t.key] || 0) >= t.n); const dd = $("#b-daily .dot"); if (dd) dd.style.display = claimable ? "" : "none"; }
   const pp = passivePoints(s) - passiveSpent(s); $("#b-pass .dot").style.display = pp > 0 ? "" : "none";
@@ -5686,20 +5698,6 @@ function questRow(d, st, mode) {
   return `<div class="qrow ${d.main ? "main" : ""}"><div class="qi"><b>${d.main ? "[메인] " : ""}${d.title}</b><div class="dim">${d.desc}</div><small>보상: ${rw}</small>${st ? `<div class="bar"><i style="width:${(pr / d.goal.n) * 100}%"></i><span>${pr}/${d.goal.n}</span></div>` : ""}</div>
   ${mode === "accept" ? `<button class="btn pri" data-a="accept" data-id="${d.id}">수락</button>` : st && st.state === "done" ? `<button class="btn pri" data-a="claim" data-id="${d.id}">보상 받기</button>` : ""}</div>`;
 }
-function openQuests(board) {
-  const act = [], done = [];
-  for (const id in save.q) { const st = save.q[id], d = getQDef(id); if (!d || st.state === "claimed") continue; (st.state === "done" ? done : act).push([d, st]); }
-  let body;
-  if (board && QT.tab === "avail") { const a = availableQuests(save); body = a.map((d) => questRow(d, null, "accept")).join("") || `<div class="dim center pad">수락할 수 있는 퀘스트가 없습니다</div>`; }
-  else { const l = [...done, ...act]; body = l.map(([d, st]) => questRow(d, st)).join("") || `<div class="dim center pad">진행 중인 퀘스트가 없습니다${board ? "<br>게시판에서 새 퀘스트를 수락하세요" : ""}</div>`; }
-  Modal.open(`<h2>${board ? "퀘스트 게시판" : "퀘스트"}</h2>${board ? `<div class="tabs"><button class="tab ${QT.tab === "avail" ? "on" : ""}" data-a="qtab" data-t="avail">수락 가능 (${availableQuests(save).length})</button><button class="tab ${QT.tab === "active" ? "on" : ""}" data-a="qtab" data-t="active">진행 중 (${act.length + done.length})</button></div>` : ""}<div class="qlist">${body}</div>`, { cls: "wide", on: {
-    qtab: (el) => { QT.tab = el.dataset.t; openQuests(board); },
-    accept: (el) => { acceptQuest(save, el.dataset.id); snd("quest"); toast("퀘스트를 수락했습니다"); saveGame(); openQuests(board); },
-    claim: (el) => { claimAndShow(el.dataset.id); openQuests(board); },
-  } });
-}
-function claimAndShow(id) { const r = claimQuest(save, id); if (!r) return; snd("quest"); toast("퀘스트 보상을 받았습니다" + (r.item ? " · 장비 획득!" : ""), "ok"); saveGame(); refreshTop(); }
-function openBoard() { QT.tab = availableQuests(save).length ? "avail" : "active"; openQuests(true); }
 
 // ---------- 길드 ----------
 
@@ -6108,7 +6106,13 @@ function renderForge5() {
     const aff = sel.affixes.map((a, i) => { const locked = rerollLocked(sel, i), t = a.t != null ? a.t : null;
       return `<div class="af5 ${anyRR && !locked ? "rr" : ""}"><b class="tbd5" style="background:${t != null ? TIER_COL5[Math.min(5, t)] : "#5a5a5a"}">${t != null ? "T" + (t + 1) : "–"}</b><span class="atx5">${affText(a)}${affRangeText(sel, a)}</span>
         ${locked ? "" : `${anyRR ? `<i class="rrt">★ 재굴림 줄</i>` : ""}<span class="cost5">${iconImg("gold", 1)}${fmtN(rc.gold)} ${iconImg("ore", 1)}${rc.ore}</span><button class="btn xs blue" data-a="reroll" data-i="${i}" style="min-width:64px">재굴림</button>`}</div>`; }).join("");
-    R = `<div class="box5 frb5"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>
+    // 전투력: 착용 장비 = 지금 → 강화 후, 가방 장비 = 착용하면 (지금 · 강화 후)
+    const P0 = powerScore5(save), eqd = EQ_SLOTS.some((k) => save.equipped[k] === sel);
+    const pw = (enh) => { const e0 = sel.enh; sel.enh = enh; let v; if (eqd) v = powerScore5(save); else v = Math.max(...slotKeys(sel.slot).map((k) => { const o = save.equipped[k]; save.equipped[k] = sel; const r = powerScore5(save); save.equipped[k] = o; return r; })); sel.enh = e0; return v; };
+    const dl = (v) => `<b style="color:${v >= 0 ? "#8dff9a" : "#ff8a8a"}">${v >= 0 ? "▲+" : "▼"}${fmtN(Math.abs(Math.round(v)))}</b>`;
+    const nowP = pw(sel.enh || 0), nxtP = (sel.enh || 0) < 10 ? pw((sel.enh || 0) + 1) : null;
+    const powLine = `<div class="fpw5">전투력 <b style="color:#ffe08a">${fmtN(P0)}</b>${eqd ? (nxtP != null ? ` · 강화 성공 시 ${fmtN(nxtP)} ${dl(nxtP - P0)}` : "") : ` · 착용하면 ${dl(nowP - P0)}${nxtP != null ? ` · 강화 후 착용하면 ${dl(nxtP - P0)}` : ""}`}</div>`;
+    R = `<div class="box5 frb5"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>${powLine}
       <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn green" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
       <div class="afh5"><b>옵션</b><small>${anyRR ? "금빛 줄만 재굴림할 수 있습니다" : "재굴림할 줄을 하나 고르세요 — 그 뒤로는 그 줄만 재굴림됩니다"}</small></div><div class="afl5">${aff}${socketBlock(sel)}</div>
       <div class="orb5"><button class="btn purple" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn purple" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn pri" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
@@ -6878,9 +6882,8 @@ async function openMail() {
   const r = await api("/api/mail/list"); if (r.err) { toast(r.err, "bad"); return; }
   const rows = r.rows || [], unc = rows.filter((m) => !m.claimed); G.mailN = unc.length;
   const fmtD = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
-  Modal.open(`<h2>우편함 ${unc.length ? `<small style="color:#ffd24a">(${unc.length}통 미수령)</small>` : ""}</h2>
-   ${unc.length > 1 ? `<div class="pbtns" style="margin:4px 0"><button class="btn pri" data-a="mall">모두 받기 (${unc.length}통)</button></div>` : ""}
-   <div class="qlist" style="max-height:330px;overflow:auto">${rows.map((m) => `<div class="qrow" style="${m.claimed ? "opacity:.55" : ""}"><div class="qi"><b>${String(m.title).replace(/</g, "&lt;")}</b> <small class="dim">${fmtD(m.created)}</small><div class="dim" style="white-space:pre-wrap">${String(m.body || "").replace(/</g, "&lt;")}</div><div style="color:#ffe08a">🎁 ${mailRewardText(m)}</div></div>${m.claimed ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="mget" data-id="${m.id}">받기</button>`}</div>`).join("") || `<div class="dim center pad">받은 우편이 없습니다</div>`}</div>`, { cls: "wide", on: {
+  const esc = (t) => String(t || "").replace(/</g, "&lt;"), ord = rows.slice().sort((x, y) => (!!x.claimed - !!y.claimed) || (y.created - x.created));
+  Modal.open(`<h2>우편함</h2><div class="rl5w">${unc.length > 1 ? `<div class="rwall5"><button class="btn green" data-a="mall">모든 우편 받기 (${unc.length})</button></div>` : ""}${ord.map((m) => rowCard5({ emoji: m.claimed ? "✓" : "✉", color: m.claimed ? "#968cbe" : "#d6a846", title: `${esc(m.title)} <small style="display:inline;color:#968c82">${fmtD(m.created)}</small>`, desc: esc(m.body), reward: mailRewardText(m), ready: !m.claimed, done: !!m.claimed, btn: m.claimed ? "받음" : "받기", act: m.claimed ? null : "mget", id: m.id })).join("") || rowCard5({ emoji: "✉", color: "#968cbe", title: "우편함이 비어 있습니다", desc: "알림과 보상 우편이 이곳으로 옵니다." })}</div>`, { cls: "wide", on: {
     mget: async (el) => { const c = await api("/api/mail/claim", { id: +el.dataset.id }); if (c.err) { toast(c.err, "bad"); return openMail(); } const got = mailApply(c); saveGame(); refreshTop(); snd("coin"); toast(`우편 수령: ${mailRewardText(c)}${got.length ? " → " + got.map((x) => UNIQUE_BY_ID[x.uniq].name).join(", ") : ""}`, "ok"); openMail(); },
     mall: async () => { const c = await api("/api/mail/claimall", {}); if (c.err) { toast(c.err, "bad"); return openMail(); } const got = mailApply(c); saveGame(); refreshTop(); snd("coin"); toast(`우편 ${c.n}통 수령: ${mailRewardText(c)}${got.length ? " → " + got.map((x) => UNIQUE_BY_ID[x.uniq].name).join(", ") : ""}`, "ok"); openMail(); },
   } });
@@ -6992,16 +6995,6 @@ function openSockPick(it, idx) {
 // =========================================================
 // 일일 목표 / 오프라인 보상 / 기록 창
 // =========================================================
-function openDaily() {
-  const D = dailyState(save);
-  const rows = DAILY_TASKS.filter((t) => !t.endgame || save.endgame).map((t) => { const p = Math.min(t.n, D[t.key] || 0), done = p >= t.n, got = D.claimed[t.id];
-    return `<div class="qrow"><div class="qi"><b>${t.name}</b> <small class="dim">${t.n}회</small><div class="bar"><i style="width:${(p / t.n) * 100}%"></i><span>${p}/${t.n}</span></div><small>보상: ${t.text}</small></div>${got ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="dclaim" data-id="${t.id}" ${done ? "" : "disabled"}>보상 받기</button>`}</div>`; }).join("");
-  const all = DAILY_TASKS.filter((t) => !t.endgame || save.endgame).every((t) => D.claimed[t.id]);
-  Modal.open(`<h2>일일 목표</h2><div class="dim center">매일 자정에 초기화됩니다</div><div class="qlist" style="height:300px">${rows}</div><div class="pbtns">${D.bonus ? `<span class="dim">전체 완료 보너스 수령 완료</span>` : `<button class="btn pri" data-a="dbonus" ${all ? "" : "disabled"}>전체 완료 보너스 (룬 1개 · 연마석 10)</button>`}</div>`, { cls: "wide", on: {
-    dclaim: (el) => { const r = dailyClaim(save, el.dataset.id); if (r) { snd("quest"); toast("보상을 받았습니다", "ok"); saveGame(); refreshTop(); } openDaily(); },
-    dbonus: () => { if (D.bonus) return; D.bonus = true; save.hone += 10; save.runes.push({ uid: save.nextUid++, id: pick(RUNE_IDS) }); snd("legend"); toast("전체 완료 보너스!", "ok"); saveGame(); refreshTop(); openDaily(); },
-  } });
-}
 function openRecords() {
   const s = save.stats;
   const sec = s.sec || 0, rows = [["플레이 시간", `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분`], ["처치한 몬스터", fmtN(s.kills)], ["클리어한 전투", fmtN(s.clears)], ["균열 최고층", save.rift.best + "층"], ["무한 균열 최고", save.endless.best + "초"], ["스킬 시련 최고", (save.trialBest || 0) + "단계"],
@@ -7015,7 +7008,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-071046";
+const BUILD_ID = "20261103-071351";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7643,6 +7636,74 @@ function mp5Click(ev) {
 }
 
 // =========================================================
+// 5.0 퀘스트 · 일일 · 우편 (로블록스판 Extras.QUESTS · Menus.quests / daily / mail 과 같은 내용 · 배치)
+//  퀘스트는 고정 5개, 수락 없이 저절로 진행 → 다 하면 [보상 받기] (보상 + 아르카나 조각 5)
+//  창은 줄 카드(rowCard): 왼쪽 아이콘 칸 · 제목 · 설명 · 보상 · 진행 막대 · 오른쪽 버튼, 받을 것이 2개 이상이면 [모두 받기]
+// =========================================================
+const QUESTS5 = [
+  { id: "q5k1", title: "소탕", desc: "적 150마리 처치", type: "kill", n: 150, reward: { gold: 40, ore: 2 } },
+  { id: "q5m1", title: "첫 군주", desc: "스테이지 보스 처치", type: "boss", n: 1, reward: { gold: 60, ore: 4 } },
+  { id: "q5f1", title: "대장장이의 부탁", desc: "장비 강화 2번", type: "enhance", n: 2, reward: { gold: 80, ore: 4 } },
+  { id: "q5f2", title: "소켓의 비밀", desc: "원초의 돌 1개 확인", type: "stone", n: 1, reward: { gold: 400, ore: 6 } },
+  { id: "q5r1", title: "균열 도전자", desc: "심연의 균열 3번 클리어", type: "rift", n: 3, reward: { gold: 300, ore: 10 } },
+];
+const Q5RN = { gold: "골드", ore: "강화석" };
+const q5Reward = (d) => Object.keys(d.reward).sort().map((k) => `${Q5RN[k] || k} ${d.reward[k]}`).concat("아르카나 조각 5").join(" · ");
+// 예전 액트 퀘스트는 없앤다 (길드 의뢰는 그대로)
+function q5Migrate(sv) { for (const id in sv.q || {}) if (QDEFS.some((q) => q.id === id)) delete sv.q[id]; }
+// 전투 · 강화 · 돌 확인에서 부른다: 로블록스판 questEvent (kill = 스테이지 처치 수, boss = 스테이지 보스, rift = 균열 클리어)
+function q5Event(sv, ev) {
+  let typ = null, n = 1;
+  if (ev.type === "kill" && (ev.kind === "stage" || ev.kind === "boss")) { typ = "kill"; n = ev.n || 0; }
+  else if (ev.type === "boss" && ev.kind === "boss") typ = "boss";
+  else if (ev.type === "clear" && ev.kind === "rift") typ = "rift";
+  else if (ev.type === "enhance" || ev.type === "stone") typ = ev.type;
+  if (!typ || !n) return [];
+  const out = []; sv.q = sv.q || {};
+  for (const d of QUESTS5) { if (d.type !== typ) continue; const st = sv.q[d.id] = sv.q[d.id] || { p: 0, state: "active" };
+    if (st.state === "active") { st.p = Math.min(d.n, st.p + n); if (st.p >= d.n) { st.state = "done"; out.push(d); } } }
+  return out;
+}
+function q5Claim(sv, id) {
+  const st = sv.q && sv.q[id], d = QUESTS5.find((x) => x.id === id); if (!d || !st || st.state !== "done") return false;
+  for (const k in d.reward) sv[k] = (sv[k] || 0) + d.reward[k]; sv.hone = (sv.hone || 0) + 5; st.state = "claimed"; return true;
+}
+const dailyReady5 = (sv) => { const D = dailyState(sv); return DAILY_TASKS.some((t) => (!t.endgame || sv.graduated || (sv.cleared[0] || 0) >= 5) && !D.claimed[t.id] && (D[t.key] || 0) >= t.n); };
+const q5Ready = (sv) => QUESTS5.some((d) => sv.q && sv.q[d.id] && sv.q[d.id].state === "done");
+// 줄 카드 (로블록스판 rowCard)
+function rowCard5(o) {
+  return `<div class="rw5 ${o.ready ? "ready" : ""} ${o.done ? "done" : ""}">${o.emoji ? `<div class="rwi5" style="--c:${o.color || "#d6a846"}">${o.emoji}</div>` : ""}<div class="rwb5"><b>${o.title}</b>${o.desc ? `<small>${o.desc}</small>` : ""}${o.reward ? `<em>보상  ${o.reward}</em>` : ""}${o.frac != null ? `<div class="rwp5"><i style="width:${Math.min(1, o.frac) * 100}%;background:${o.done ? "#6e6e78" : o.ready ? "#f0be46" : "#5ac86e"}"></i></div>` : ""}</div>${o.btn ? `<button class="btn ${o.ready ? "green" : ""}" ${o.act ? `data-a="${o.act}" data-id="${o.id}"` : "disabled"}>${o.btn}</button>` : ""}${o.extra || ""}</div>`;
+}
+function openQuests5() {
+  q5Migrate(save);
+  const RANK = { done: 0, active: 1, claimed: 2 }, rows = QUESTS5.map((d) => ({ d, st: (save.q && save.q[d.id]) || { p: 0, state: "active" } })).sort((a, b) => RANK[a.st.state] - RANK[b.st.state]);
+  const ready = rows.filter((r) => r.st.state === "done").length;
+  const html = rows.map(({ d, st }) => { const rd = st.state === "done", dn = st.state === "claimed";
+    return rowCard5({ emoji: dn ? "✓" : "📜", color: rd ? "#d6a846" : dn ? "#6ec882" : "#968cbe", title: `${d.title} (${Math.min(st.p, d.n)}/${d.n})`, desc: d.desc, reward: q5Reward(d), frac: st.p / d.n, ready: rd, done: dn, btn: dn ? "완료" : rd ? "보상 받기" : "진행 중", act: rd ? "qclaim" : null, id: d.id }); }).join("");
+  Modal.open(`<h2>퀘스트</h2><div class="rl5w">${ready > 1 ? `<div class="rwall5"><button class="btn green" data-a="qall">모두 받기 (${ready})</button></div>` : ""}${html}</div>`, { cls: "wide", on: {
+    qclaim: (el) => { if (q5Claim(save, el.dataset.id)) { snd("quest"); toast("퀘스트 보상을 받았습니다", "ok"); saveGame(); refreshTop(); } openQuests5(); },
+    qall: () => { for (const d of QUESTS5) q5Claim(save, d.id); snd("quest"); saveGame(); refreshTop(); openQuests5(); },
+  } });
+}
+function openDaily() {
+  const D = dailyState(save), st = (t) => (D[t.key] || 0) >= t.n && !D.claimed[t.id] ? 0 : D.claimed[t.id] ? 2 : 1;
+  const rows = DAILY_TASKS.filter((t) => !t.endgame || save.graduated || (save.cleared[0] || 0) >= 5).sort((a, b) => st(a) - st(b));
+  const ready = rows.filter((t) => st(t) === 0).length;
+  const html = rows.map((t) => { const p = Math.min(t.n, D[t.key] || 0), rd = st(t) === 0, got = !!D.claimed[t.id];
+    return rowCard5({ emoji: got ? "✓" : "📅", color: rd ? "#d6a846" : "#968cbe", title: `${t.name} (${p}/${t.n})`, reward: t.text, frac: p / t.n, ready: rd, done: got, btn: got ? "받음" : rd ? "받기" : "진행 중", act: rd ? "dclaim" : null, id: t.id }); }).join("");
+  const bulk = rowCard5({ emoji: "🧹", color: "#968cbe", title: "장비 한꺼번에 정리", desc: "강화한 장비와 사탄 장비는 건드리지 않습니다.", extra: `<div class="rwbk5"><button class="btn pri" data-a="bulk" data-r="0" data-m="dis">일반 분해</button><button class="btn pri" data-a="bulk" data-r="1" data-m="dis">매직까지 분해</button><button class="btn gold" data-a="bulk" data-r="1" data-m="sell">매직까지 판매</button></div>` });
+  Modal.open(`<h2>일일</h2><div class="rl5w">${ready > 1 ? `<div class="rwall5"><button class="btn green" data-a="dall">모두 받기 (${ready})</button></div>` : ""}${html}${bulk}</div>`, { cls: "wide", on: {
+    dclaim: (el) => { if (dailyClaim(save, el.dataset.id)) { snd("quest"); toast("보상을 받았습니다", "ok"); saveGame(); refreshTop(); } openDaily(); },
+    dall: () => { for (const t of rows) if (st(t) === 0) dailyClaim(save, t.id); snd("quest"); saveGame(); refreshTop(); openDaily(); },
+    bulk: (el) => { const r = +el.dataset.r, sell = el.dataset.m === "sell"; let n = 0;
+      for (const it of save.inv.slice()) { if (it.rarity > r || (it.enh || 0) > 0 || it.sat || isProtected(it)) continue; if (sell) sellItem(save, it); else dismantleItem(save, it); n++; }
+      snd("coin"); toast(sell ? `${n}개 판매했습니다` : `${n}개 분해했습니다`, "ok"); saveGame(); refreshTop(); openDaily(); },
+  } });
+}
+const openBoard = openQuests5;
+function openQuests() { openQuests5(); }
+
+// =========================================================
 // 5.0 마을 (로블록스판 Client.lua BUILD 와 같은 건물 · 위치 · 탭 묶음)
 // 건물은 마을 그림(bg_town)에 그려져 있다. box = 그림 기준 영역 (x0, y0, x1, y1). 비슷한 기능은 한 건물에 탭으로 묶는다
 // 오른쪽 위 건물(로블록스판 Info Desk)은 웹판에서는 업데이트 게시판 (게시판 · 우편함 · 도감 · 기록)
@@ -7654,7 +7715,7 @@ const TOWN5 = [
     tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도움말", () => openHelp5()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
   { id: "trainer", name: "훈련소", box: [0.0, 0.38, 0.25, 0.59], badge: () => passivePoints(save) - passiveSpent(save) > 0,
     tabs: [["패시브", () => openPassives()], ["허수아비", () => openDummy()], ["전직", () => openClass(() => {})], ["참", () => openCharms()]] },
-  { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => Object.keys(save.q || {}).some((id) => save.q[id].state === "done"),
+  { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => q5Ready(save) || dailyReady5(save),
     tabs: [["퀘스트", () => openBoard()], ["일일", () => openDaily()]] },
   { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => openSkills()], ["룬", () => openRunes5()]] },
   { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화", () => openItems("forge")], ["돌", () => openStones()]] },
@@ -7807,6 +7868,7 @@ function tutTick() {
   .r5band{border:14px solid transparent;border-image:${U("title")} 60 fill / 14px stretch}
   #mbox.res5{background:${U("panel")} center/100% 100% no-repeat, #100b0a !important}
   #mappanel{border-image:${U("panel")} 120 fill / 12px stretch !important}.x5{background:${U("close")} center/contain no-repeat}
+  .rw5{border-image:${U("card")} 40 fill / 10px stretch}
   .btn.gold{border-image:${U("btn_gold")} 36 fill / 10px stretch !important}.btn.blue{border-image:${U("btn_blue")} 36 fill / 10px stretch !important}.btn.purple{border-image:${U("btn_purple")} 36 fill / 10px stretch !important}.btn.green{border-image:${U("btn_green")} 36 fill / 10px stretch !important}
   .btn.big{padding:6px 14px !important}
   .btn:hover:not([disabled]){filter:brightness(1.18)}
@@ -7856,6 +7918,12 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.11", date: "11/3", title: "퀘스트 · 일일 · 우편을 로블록스판과 같게, 제련소 전투력", items: [
+    "퀘스트는 로블록스판과 같은 5개로 바뀌었습니다 (소탕 · 첫 군주 · 대장장이의 부탁 · 소켓의 비밀 · 균열 도전자). 수락 없이 저절로 진행되고, 다 하면 [보상 받기] (보상 + 아르카나 조각 5).",
+    "퀘스트 · 일일 · 우편함이 줄 카드로 바뀌었습니다: 진행 막대 · 보상 · 받기 버튼, 받을 것이 2개 이상이면 [모두 받기].",
+    "일일 탭 아래에 [장비 한꺼번에 정리] (일반 분해 · 매직까지 분해 · 매직까지 판매, 강화한 장비 · 사탄 장비 제외). 일일 균열 보상은 혼돈 구슬 1, 전체 완료 보너스는 없어졌습니다.",
+    "제련소: 고른 장비의 전투력 변화를 보여 줍니다 (착용 장비 = 강화 성공 시, 가방 장비 = 착용하면 · 강화 후 착용하면).",
+  ] },
   { ver: "5.10", date: "11/3", title: "제련소 화면 고침", items: [
     "고침: 제련소의 장비 목록 줄이 겹치고, 옵션 줄의 티어 표시가 길게 늘어나고, 옵션 글자 뒤에 어두운 막대가 깔리던 것.",
     "제련소 아래 구슬 · 분해 버튼 줄이 늘 보이고, 옵션이 많으면 옵션 목록만 스크롤됩니다 (로블록스판과 같은 배치).",

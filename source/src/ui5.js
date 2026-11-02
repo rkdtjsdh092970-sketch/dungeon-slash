@@ -1,16 +1,6 @@
 // =========================================================
 // 일일 목표 / 오프라인 보상 / 기록 창
 // =========================================================
-function openDaily() {
-  const D = dailyState(save);
-  const rows = DAILY_TASKS.filter((t) => !t.endgame || save.endgame).map((t) => { const p = Math.min(t.n, D[t.key] || 0), done = p >= t.n, got = D.claimed[t.id];
-    return `<div class="qrow"><div class="qi"><b>${t.name}</b> <small class="dim">${t.n}회</small><div class="bar"><i style="width:${(p / t.n) * 100}%"></i><span>${p}/${t.n}</span></div><small>보상: ${t.text}</small></div>${got ? `<span class="dim">수령 완료</span>` : `<button class="btn pri" data-a="dclaim" data-id="${t.id}" ${done ? "" : "disabled"}>보상 받기</button>`}</div>`; }).join("");
-  const all = DAILY_TASKS.filter((t) => !t.endgame || save.endgame).every((t) => D.claimed[t.id]);
-  Modal.open(`<h2>일일 목표</h2><div class="dim center">매일 자정에 초기화됩니다</div><div class="qlist" style="height:300px">${rows}</div><div class="pbtns">${D.bonus ? `<span class="dim">전체 완료 보너스 수령 완료</span>` : `<button class="btn pri" data-a="dbonus" ${all ? "" : "disabled"}>전체 완료 보너스 (룬 1개 · 연마석 10)</button>`}</div>`, { cls: "wide", on: {
-    dclaim: (el) => { const r = dailyClaim(save, el.dataset.id); if (r) { snd("quest"); toast("보상을 받았습니다", "ok"); saveGame(); refreshTop(); } openDaily(); },
-    dbonus: () => { if (D.bonus) return; D.bonus = true; save.hone += 10; save.runes.push({ uid: save.nextUid++, id: pick(RUNE_IDS) }); snd("legend"); toast("전체 완료 보너스!", "ok"); saveGame(); refreshTop(); openDaily(); },
-  } });
-}
 function openRecords() {
   const s = save.stats;
   const sec = s.sec || 0, rows = [["플레이 시간", `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분`], ["처치한 몬스터", fmtN(s.kills)], ["클리어한 전투", fmtN(s.clears)], ["균열 최고층", save.rift.best + "층"], ["무한 균열 최고", save.endless.best + "초"], ["스킬 시련 최고", (save.trialBest || 0) + "단계"],

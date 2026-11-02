@@ -12,6 +12,7 @@
   .r5band{border:14px solid transparent;border-image:${U("title")} 60 fill / 14px stretch}
   #mbox.res5{background:${U("panel")} center/100% 100% no-repeat, #100b0a !important}
   #mappanel{border-image:${U("panel")} 120 fill / 12px stretch !important}.x5{background:${U("close")} center/contain no-repeat}
+  .rw5{border-image:${U("card")} 40 fill / 10px stretch}
   .btn.gold{border-image:${U("btn_gold")} 36 fill / 10px stretch !important}.btn.blue{border-image:${U("btn_blue")} 36 fill / 10px stretch !important}.btn.purple{border-image:${U("btn_purple")} 36 fill / 10px stretch !important}.btn.green{border-image:${U("btn_green")} 36 fill / 10px stretch !important}
   .btn.big{padding:6px 14px !important}
   .btn:hover:not([disabled]){filter:brightness(1.18)}

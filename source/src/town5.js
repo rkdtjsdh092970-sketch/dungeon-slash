@@ -10,7 +10,7 @@ const TOWN5 = [
     tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도움말", () => openHelp5()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
   { id: "trainer", name: "훈련소", box: [0.0, 0.38, 0.25, 0.59], badge: () => passivePoints(save) - passiveSpent(save) > 0,
     tabs: [["패시브", () => openPassives()], ["허수아비", () => openDummy()], ["전직", () => openClass(() => {})], ["참", () => openCharms()]] },
-  { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => Object.keys(save.q || {}).some((id) => save.q[id].state === "done"),
+  { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => q5Ready(save) || dailyReady5(save),
     tabs: [["퀘스트", () => openBoard()], ["일일", () => openDaily()]] },
   { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => openSkills()], ["룬", () => openRunes5()]] },
   { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화", () => openItems("forge")], ["돌", () => openStones()]] },
