@@ -1007,9 +1007,9 @@ function M.step(b, dt)
           if e.moveCd <= 0 then
             if canPlace(b, e, e.lane, e.col - 1, true) then e.col -= 1; e.moveCd = e.moveT; if e.tier ~= "normal" then displace(b, e) end
             elseif bo and bo.col > 1 and (function()   -- 보스를 지나 보스 바로 앞 칸으로 (같은 줄 → 옆 줄)
-                for _, l in ipairs({ e.lane, e.lane - 1, e.lane + 1 }) do
-                  if canPlace(b, e, l, bo.col - 1) then e.moveCd = e.moveT * (e.col - bo.col + 1); e.lane = l; e.col = bo.col - 1; return true end
-                end
+                for c = bo.col - 1, 1, -1 do for _, l in ipairs({ e.lane, e.lane - 1, e.lane + 1 }) do
+                  if canPlace(b, e, l, c) then e.moveCd = e.moveT * (e.col - c); e.lane = l; e.col = c; return true end
+                end end
               end)() then
             elseif e.h == 1 then
               local moved = false
