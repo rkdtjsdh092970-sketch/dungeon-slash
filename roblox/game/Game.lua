@@ -246,7 +246,8 @@ function M.fight(sv, kind, n, seed)
     Extras.onWin(sv, b.kills, boss, kind == "rift"); Extras.setRate(sv, b.gold, b.time)
     if kind == "stage" then Extras.questEvent(sv, "kill", b.kills); if node.kind == "boss" then Extras.questEvent(sv, "boss", 1) end end
     if kind == "rift" then Extras.questEvent(sv, "rift", 1); if boss and rng:NextNumber() < 0.2 then local rid = Extras.randomRune(rng); Extras.addRune(sv, rid); res.rune = rid end end
-    local d = Loot.fieldDrops(rng, sv, node, boss)
+    local mfv = math.max(0, Stats.computeStats(sv).mf + Econ.atlasVal(sv, "mf") + 0.01 * (sv.guildLv or 0))
+    local d = Loot.fieldDrops(rng, sv, node, boss, 1 + mfv / (1 + mfv / CFG.MF_HALF))   -- 웹 mfEff
     do local om = 1 + Econ.atlasVal(sv, "orb"); local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0); d.orbD = roll(d.orbD or 0) end   -- 혼돈의 인장
     sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     d.ore = floor(d.ore * (1 + Econ.atlasVal(sv, "ore")) + 0.5)

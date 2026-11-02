@@ -99,22 +99,24 @@ end
 
 -- 스테이지 · 균열 드랍 (장비 + 강화석 · 연마석 · 혼돈 구슬)
 local function floorTier(f) return max(1, min(5, 1 + floor((max(1, f) - 1 + 1) / 20))) end
-function M.fieldDrops(rng, sv, node, boss)
+function M.fieldDrops(rng, sv, node, boss, mf)   -- mf: 실효 MF 가중치 1 + mfEff (웹 mfw)
+  local mfw = mf or 1
   local kind = node.kind; local isRift = kind == "rift"
   local ilvl = isRift and floorTier(node.tier) or 1
   local n = isRift and (4 + min(8, floor(node.tier / 6)) + (boss and 3 or 0)) or (boss and 4 or (2 + ((node.stage or 0) >= 3 and 1 or 0)))
   local items = {}
   for _ = 1, n do
     local r
-    if isRift then r = wpick(rng, { 0, 1, 2, 3 }, function(x) return ({ 30, 40, 25, 5 })[x + 1] end)
-    else r = wpick(rng, { 0, 1, 2, 3 }, function(x) local R = Items.ITEM_RARITY[x + 1]; return boss and max(R.bossDrop, R.drop * 0.5) or R.drop end) end
+    local function mfb(x) return x >= 1 and mfw ^ (0.3 + x * 0.2) or 1 end   -- MF 는 높은 등급일수록 크게 (웹과 같은 식)
+    if isRift then r = wpick(rng, { 0, 1, 2, 3 }, function(x) return ({ 30, 40, 25, 5 })[x + 1] * mfb(x) end)
+    else r = wpick(rng, { 0, 1, 2, 3 }, function(x) local R = Items.ITEM_RARITY[x + 1]; return (boss and max(R.bossDrop, R.drop * 0.5) or R.drop) * mfb(x) end) end
     items[#items + 1] = M.genItem(rng, sv, ilvl, r)
   end
   local out = { items = items }
   out.ore = floor(rng:NextInteger(1, 2) + (boss and 4 or 0) + floor((node.tier or 0) / 3) + 0.5)
   if isRift then out.hone = max(1, floor((1 + node.tier / 8) * (boss and 2 or 1) + 0.5)) end
   if isRift then   -- 원초의 돌 (보스 층은 1개 확정 + 확률)
-    local chance = math.min(0.75, 0.30 + 0.004 * node.tier); local c = boss and 1 or 0
+    local chance = math.min(0.75, (0.30 + 0.004 * node.tier) * mfw ^ 0.3); local c = boss and 1 or 0
     if rng:NextNumber() < chance then c += 1 end; out.stones = c
   end
   local oc = isRift and (0.4 + node.tier / 30) or ((boss and kind == "boss") and 0.4 or 0.03)
