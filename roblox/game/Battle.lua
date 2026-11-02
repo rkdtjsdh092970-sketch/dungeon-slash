@@ -1126,7 +1126,12 @@ local function snapshot(b)
   for _, e in ipairs(b.enemies) do
     ens[#ens + 1] = { id = e.id, n = e.def and e.def.name or "?", tier = e.tier, l = e.lane, c = e.col, w = e.w, h = e.h, hp = e.maxHp > 0 and math.max(0, e.hp / e.maxHp) or 0,
       d = R.acc.dmg[e.id], dead = e.dead or nil, hue = e.def and e.def.hue, sc = e.def and e.def.sc, ranged = e.def and e.def.ranged or nil, wind = (e.winding or 0) > 0 or nil, sp = nil }
-    if e.tier == "boss" then ens[#ens].bs = bossArt(e.def); ens[#ens].bh = e.def.hue; ens[#ens].scl = e.def.sc else ens[#ens].sp, ens[#ens].hu = spriteOf(b, e) end
+    if e.tier == "boss" then ens[#ens].bs = bossArt(e.def); ens[#ens].bh = e.def.hue; ens[#ens].scl = e.def.sc
+    else
+      ens[#ens].sp, ens[#ens].hu = spriteOf(b, e)
+      R.arSent = R.arSent or {}
+      if not WARP[e.type] and not R.arSent[e.id] then R.arSent[e.id] = true; ens[#ens].ar = "a" .. ((e.va or (min(10, b.act or 1) - 1)) + 1) .. "_" .. (e.type == "sniper" and "archer" or e.type) end   -- 지역별 몬스터 그림 (art/mobs/a<지역>_<역할>.png, 없으면 기존 도트)
+    end
   end
   R.snaps[#R.snaps + 1] = { t = math.floor(b.time * 100) / 100, hp = b.hp / b.maxHp, mp = b.maxMana > 0 and b.mana / b.maxMana or 0, e = ens, ph = R.acc.ph > 0 and math.floor(R.acc.ph) or nil, c = #R.acc.casts > 0 and R.acc.casts or nil }
   R.acc = { dmg = {}, casts = {}, ph = 0 }

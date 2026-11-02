@@ -314,8 +314,11 @@ local function unitFor(S, e, lanes)
   local key, hue = e.sp, e.hu
   local size = (boss and math.min(224, 64 * (e.scl or 3)) or (e.tier == "elite" and 96 or 64)) * S.u * dep   -- 웹과 같은 비율 (일반 64 · 정예 96 · 보스 sc*64)
   local lab, info
-  if boss then if (e.bh or 0) == 0 then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size) end
-  elseif key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 일러스트(색조 변형은 아직 도트)
+  if boss then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size)   -- 보스 그림 (있으면 색조와 상관없이)
+  else
+    if e.ar then lab = Sprites.artLabel(S.layer, e.ar, size) end   -- 지역별 몬스터 그림
+    if not lab and key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 1지역 그림 (색조 변형은 도트)
+  end
   local art = lab ~= nil
   if art then -- 일러스트 사용
   elseif boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
@@ -331,6 +334,7 @@ local function unitFor(S, e, lanes)
   MB.bg.AnchorPoint = Vector2.new(0.5, 1); MB.bg.Visible = e.tier ~= "normal"   -- 일반 몹은 맞은 뒤부터 보인다
   local bar = MB.bg
   u = { lab = lab, info = info, art = art, shadow = shadow, bar = bar, MB = MB, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
+  if boss and art then u.idleArt = Sprites.art("boss" .. (e.bs or 0)); u.atkArt = Sprites.art("boss" .. (e.bs or 0) .. "_atk") end   -- 보스 공격 자세 그림
   S.units[e.id] = u; return u
 end
 
@@ -369,6 +373,7 @@ function M:applySnap(s, lanes)
     if e.d and e.d > 0 then self:floatText(fmt(e.d), x, y - u.size * 0.8, e.tier == "boss" and Color3.fromRGB(255, 190, 120) or Color3.fromRGB(255, 244, 200), e.d > 0 and 15 or 13); u.hit = 0.16; hits[#hits + 1] = u; if #hits <= 6 then Fx.hit(self, u) end end
     if u.wind and not e.wind and not e.dead then u.atk = 0; Fx.enemyHit(self, u, e.ranged) end   -- 모았던 공격을 내지른다
     u.wind = e.wind
+    if u.atkArt then local pose = (e.wind or u.atk) and "atk" or "idle"; if pose ~= u.pose then u.pose = pose; u.lab.ImageContent = (pose == "atk" and u.atkArt or u.idleArt).content end end   -- 공격을 모으거나 내지를 때 공격 자세
   end
   for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("☠  처치 %d", self.kills) end end
   if s.ph and s.ph > 0 then self.shake = math.max(self.shake or 0, 0.18) end
