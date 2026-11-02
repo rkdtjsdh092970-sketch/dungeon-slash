@@ -70,8 +70,8 @@ ARMS = [
           key=('피의 계약', {'lifesteal': 0.03, 'hpPct': 0.20, 'regen': 0.006}, 'k_bloodpact'))),
  dict(arm='mag', ang=90, name='마법',
    trunk=[{'magPct': 0.05}, {'magDmg': 0.06}], trunkN=[('비전 집중', {'magPct': 0.10, 'magDmg': 0.08}), ('주문 숙련', {'magPct': 0.08, 'spellCrit': 0.02, 'magDmg': 0.08})],
-   A=dict(name='원소', small=[{'elemDmg': 0.07}, {'penElem': 0.03}], notes=[('불꽃의 혀', {'elemDmg': 0.14}), ('얼음 심장', {'elemDmg': 0.10, 'penElem': 0.05}), ('폭풍 부름', {'elemDmg': 0.12, 'spellCrit': 0.03})],
-          key=('원소 군주', {'elemDmg': 0.40, 'penElem': 0.15, 'magMore': 1.08}, 'k_elemlord')),
+   A=dict(name='원소', small=[{'elemDmg': 0.06}, {'spellCrit': 0.015}, {'critDmg': 0.10}], notes=[('불꽃의 혀', {'elemDmg': 0.12, 'spellCrit': 0.03}), ('얼음 심장', {'critDmg': 0.25, 'penElem': 0.05}), ('폭풍 부름', {'spellCrit': 0.04, 'critDmg': 0.20})],   # 물리 치명 분기와 같은 수준의 주문 치명 (2026-11-02 밸런스)
+          key=('원소 군주', {'elemDmg': 0.30, 'spellCrit': 0.10, 'critDmg': 0.40, 'magMore': 1.08}, 'k_elemlord')),
    B=dict(name='마나', small=[{'manaPct': 0.06}, {'cdr': 0.02}, {'manaRegen': 0.04}], notes=[('마나의 샘', {'manaPct': 0.12, 'manaRegen': 0.06}), ('시간 왜곡', {'cdr': 0.05, 'manaCostRed': 0.05}), ('비전 방벽', {'manaShield': 0.08, 'manaPct': 0.06})],
           key=('대마법사', {'magMore': 1.15, 'cdr': 0.06, 'manaShield': 0.15}, 'k_archmage'))),
  dict(arm='wealth', ang=180, name='재화',
