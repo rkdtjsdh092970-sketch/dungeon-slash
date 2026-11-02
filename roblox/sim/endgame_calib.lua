@@ -9,7 +9,7 @@ local function builds(spec)
   local out = {}
   for _, fam in ipairs({ "phys", "mag" }) do
     for b = 1, C.BUILDS do
-      local s = table.clone(spec); s.fam = fam; s.level = 100; s.ilvl = 5; s.late = true; s.skR = s.skR or { 2, 2, 3, 3 }; s.skL = 10; s.seed = b * 101
+      local s = table.clone(spec); s.fam = fam; s.level = 100; s.ilvl = 5; s.late = true; s.skL = s.skL or 3; s.seed = b * 101
       out[#out + 1] = REF.build(s)
     end
   end
@@ -38,6 +38,8 @@ function C.runAll()
   for _, t in ipairs(C.TOWER) do SS:SetAttribute("Calib_tower" .. t[1], maxTier({ tiers = t[2], sat = t[3] }, function(x) return { act = 10, floor = t[1], tier = x, tw = 1 } end, 60, 220)) end
   for i, tiers in ipairs(C.GATE) do SS:SetAttribute("Calib_gate" .. i, maxTier({ tiers = tiers }, function(x) return { kind = "void", act = 10, tier = x, vsel = i } end, 60, 220)) end
   for d, r in ipairs(C.RAID) do SS:SetAttribute("Calib_raid" .. d, maxTier({ tiers = r[1], sat = r[2], stones = r[3] }, function(x) return { kind = "craid", act = 10, diff = d, tier = x } end, 60, 240)) end
+  -- 모르가스(심연의 문): 기준표 T5 1등급3 · 2등급2 + 전설 2 · 신화 2 (결계석은 자동 공격으로 부순다)
+  SS:SetAttribute("Calib_morgath", maxTier({ tiers = { 1, 1, 1, 2, 2 } }, function(x) return { kind = "raid", act = 10, tier = x } end, 60, 160))
   SS:SetAttribute("Calib_done", true)
 end
 return C

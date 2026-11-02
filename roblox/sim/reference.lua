@@ -18,7 +18,8 @@ REF.VALID = {
 -- 뽑기 기준 스킬 (계열별 대표 조합: 기본 공격 1 + 범위 2 + 단일/관통 1), 등급 · 레벨은 구간에 따라
 REF.SKILLS = { phys = { "rip", "rend", "lance", "sweep" }, mag = { "ember", "chain", "bomb", "firewall" } }
 -- 엔드게임(균열 졸업 후) 기준: 그 시기 뽑을 수 있는 후반 스킬
-REF.SKILLS_LATE = { phys = { "rip", "pierce2", "trap", "whirl" }, mag = { "ember", "storm", "blizzard", "meteor" } }
+-- 2026-11-03 고정 등급 아르카나: 평타(전설) + 신화 2 + 전설 1 = 기준표 "전설 2 · 신화 2"
+REF.SKILLS_LATE = { phys = { "skycleave", "skypierce", "bloodmoon", "giantmaul" }, mag = { "arcbarrage", "suncore", "voideye", "phoenix" } }
 local Q75 = { NextNumber = function() return 0.75 end, NextInteger = function(_, a, b) return a end }
 local by = {}; for _, a in ipairs(Items.AFFIXES) do by[a.k] = a end
 local function makeItem(rng, sv, slot, ilvl, tiers, fam)
@@ -44,7 +45,7 @@ function REF.build(spec)
   for _, s in ipairs({ "weapon", "helm", "armor", "gloves", "boots", "ring", "ring2", "neck" }) do local it, n = makeItem(rng, sv, s, spec.ilvl, spec.tiers, spec.fam); sv.equipped[s] = it; miss += 5 - n end
   sv.skills = {}; sv.loadout = { false, false, false, false }
   for i, id in ipairs((spec.late and REF.SKILLS_LATE or REF.SKILLS)[spec.fam]) do
-    local r = type(spec.skR) == "table" and spec.skR[i] or spec.skR or 0
+    local r = type(spec.skR) == "table" and spec.skR[i] or spec.skR or Econ.skillTier(id)   -- 지정이 없으면 아르카나 고정 등급
     sv.skills[i] = { uid = i, id = id, rarity = r, lvl = spec.skL or 1 }; sv.loadout[i] = { uid = i, rule = "front" }
   end
   -- 상급 유효 사탄 효과 (테스터 기준 "상급유효사탄옵션 n개"): 계열에 맞는 효과를 정해진 칸에
