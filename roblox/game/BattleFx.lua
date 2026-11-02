@@ -369,6 +369,32 @@ SIG.riftsplit = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   --
 SIG.eternalwinter = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 끝나지 않는 겨울: 하얀 눈보라 화면 + 얼음 가시 · 떨어지는 얼음
   M.screen(S, Color3.fromRGB(220, 240, 255), 0.6, 0.8); M.skyCircle(S, X.tx, 60 * u, 180 * u, X.col, 1.2)
   each(X, 9, 0.06, function(h) M.erupt(S, h.tx, h.ty or h.y, X.col, "ice", 150); M.fall(S, h.tx, hy(h), WHITE, "shard") end) end
+-- 설명과 어긋나던 아르카나 (웹 5.24 와 같게)
+local function novaFx(X, light) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 영웅 둘레로 퍼지는 파동
+  M.ring(S, S.plX, S.plY, 380 * u, X.col, 0.55); M.ring(S, S.plX, S.plY, 250 * u, WHITE, 0.45); M.glow(S, S.plX, S.plY - 50 * u, 160 * u, X.col, 0.5, 0.2); if light then M.screen(S, WHITE, 0.7, 0.25) end
+  each(X, 10, 0.03, function(h) M.burst(S, h.tx, hy(h), 46 * u, X.col); M.sparks(S, h.tx, hy(h), X.col, 3, 30) end) end
+SIG.arcnova = function(X) novaFx(X, false) end
+SIG.angelfall = function(X) local S, u = X.S, X.u; novaFx(X, true)   -- + 빛 날개 두 줄기
+  for _, r in ipairs({ -25, 205 }) do local w = img(S, "fx_beam", { AnchorPoint = Vector2.new(0, 0.5), Position = at(S.plX, S.plY - 70 * u), Size = sz(10, 40 * u), Rotation = r, ImageColor3 = WHITE, ZIndex = 15 })
+    if w then tw(w, 0.25, { Size = sz(260 * u, 40 * u) }, nil, false).Completed:Connect(function() tw(w, 0.4, { ImageTransparency = 1 }) end) end end end
+SIG.trap = function(X) local S, u = X.S, X.u; S:heroPose("throw")   -- 지뢰를 던져 묻는다
+  local gyy = X.tg and (X.tg.ty or X.tg.y) or X.ty
+  M.proj(S, S.plX + 30 * u, S.plY - 50 * u, X.tx, gyy, X.col, 0.25, "orb", function() M.sigil(S, X.tx, gyy, 60 * u, X.col, 0.5); M.sparks(S, X.tx, gyy, X.col, 4, 24) end) end
+local function shuriFx(X, n, big) local S, u = X.S, X.u; S:heroPose("throw")   -- 빙글 도는 수리검
+  for i, h in ipairs(X.list) do if i > n then break end
+    task.delay((i - 1) * 0.06, function()
+      local d = (big and 110 or 44) * u
+      local o = img(S, "fx_xslash", { Position = at(S.plX + 30 * u, S.plY - 50 * u), Size = sz(d), ImageColor3 = Color3.fromRGB(220, 230, 255), ZIndex = 16 })
+      if o then tw(o, big and 0.3 or 0.16, { Position = at(h.tx, hy(h)), Rotation = 720 }, Enum.EasingStyle.Linear, true).Completed:Connect(function() M.slash(S, h.tx, hy(h), (big and 120 or 70) * u, X.col, math.random(-40, 40)); M.sparks(S, h.tx, hy(h), WHITE, 3, 30) end) end
+    end) end end
+SIG.shuriken = function(X) shuriFx(X, 6, false) end
+SIG.bigshuriken = function(X) shuriFx(X, 1, true) end
+SIG.skysword = function(X) SIG.skypierce(X) end   -- 하늘에서 거대한 검이 내리꽂힌다
+SIG.venomrain = function(X) local S, u = X.S, X.u; S:heroPose("throw")   -- 마법진 없이 독 가시가 떨어진다
+  each(X, 9, 0.06, function(h) M.fall(S, h.tx, hy(h), X.col, "shard", function() M.erupt(S, h.tx, h.ty or h.y, X.col, "bubble", 80); M.sparks(S, h.tx, hy(h), X.col, 2, 24) end) end) end
+SIG.volley = function(X) local S, u = X.S, X.u; S:heroPose("throw")   -- 화살 · 독침
+  for i, h in ipairs(X.list) do if i > 10 then break end; task.delay((i - 1) * 0.035, function() M.proj(S, S.plX + 30 * u, S.plY - 60 * u, h.tx, hy(h), X.col, 0.16, "shard", function() M.sparks(S, h.tx, hy(h), X.col, 2, 20) end) end) end end
+SIG.venom = SIG.volley
 -- 스킬 연출: c = { id, color, elem, kind }, hits = 이번에 피해를 받은 몹들(가까운 순), first = 가장 가까운 몹
 function M.cast(S, c, hits, first)
   local d = BY[c[1]] or {}
