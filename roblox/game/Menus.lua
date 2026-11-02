@@ -489,6 +489,28 @@ local function arcCard(parent, k, w, h, o)
   return b
 end
 local ELEM_NAME = { fire = "화염", cold = "냉기", light = "번개", void = "공허" }
+-- 천상의 빛: 카드 뒤로 빛줄기가 천천히 돌고(rays), 별빛이 여기저기서 반짝인다(stars) — 타로 카드와 어울리게 (마법진 대신)
+local function celestial(parent, cx, cy, size, rays, stars, col)
+  col = col or Color3.fromRGB(255, 220, 170)
+  local bm = C.Sprites.art("fx_beam")
+  if bm and rays > 0 then
+    local hub = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, cy), Size = UDim2.new(0, 2, 0, 2), BackgroundTransparency = 1, ZIndex = 0 }, parent)   -- 가로 가운데
+    for i = 1, rays do
+      local r = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, size, 0, size * 0.09), Rotation = i * 180 / rays, BackgroundTransparency = 1, ImageContent = bm.content, ImageColor3 = col, ImageTransparency = 0.82, ZIndex = 0 }, hub)
+      TweenService:Create(r, TweenInfo.new(2 + (i % 3) * 0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.93 }):Play()
+    end
+    TweenService:Create(hub, TweenInfo.new(40, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = 360 }):Play()
+  end
+  local sp = C.Sprites.art("fx_spark")
+  if sp then
+    for i = 1, stars do
+      local x, y = math.random(), math.random()
+      local z = 6 + math.random() * 10
+      local st = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(x, 0, y, 0), Size = UDim2.new(0, z, 0, z), BackgroundTransparency = 1, ImageContent = sp.content, ImageColor3 = i % 3 == 0 and Color3.fromRGB(220, 190, 255) or col, ImageTransparency = 1, ZIndex = 0 }, parent)
+      task.delay(math.random() * 2, function() if st.Parent then TweenService:Create(st, TweenInfo.new(0.9 + math.random(), Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.2, Rotation = 45 }):Play() end end)
+    end
+  end
+end
 local arcFilter, arcSort = "all", "rar"   -- 아르카나 보관함 분류 · 정렬 (다시 열어도 유지)
 function M.skills()
   C.clear()
@@ -502,9 +524,7 @@ function M.skills()
   local table0 = mk("Frame", { Size = UDim2.new(1, -300, 1, 0), BackgroundColor3 = Color3.fromRGB(20, 10, 30), ClipsDescendants = true }, A); corner(table0, 8)
   mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(44, 20, 62), Color3.fromRGB(14, 8, 20)) }, table0)
   mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.3 }, table0)
-  do local ci = C.Sprites.art("fx_circle")
-    if ci then local m = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 520, 0, 520), BackgroundTransparency = 1, ImageContent = ci.content, ImageColor3 = Color3.fromRGB(170, 110, 255), ImageTransparency = 0.9 }, table0)
-      TweenService:Create(m, TweenInfo.new(60, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = 360 }):Play() end end
+  celestial(table0, 0, 0, 0, 0, 22)   -- 탁자 위로 별빛이 반짝인다
   local function head(parent, text, y)
     local l = txt(parent, text, 15, UDim2.new(0, 14, 0, y), UDim2.new(0.6, 0, 0, 20), Color3.fromRGB(225, 195, 255), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l); return l
   end
@@ -1664,9 +1684,7 @@ function M.gacha()
   local L = mk("Frame", { Size = UDim2.new(0.42, -4, 1, 0), BackgroundColor3 = Color3.fromRGB(20, 10, 30), ClipsDescendants = true }, A); corner(L, 8)
   mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(46, 20, 64), Color3.fromRGB(12, 6, 18)) }, L)
   mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.3 }, L)
-  local ci = C.Sprites.art("fx_circle")
-  if ci then local m = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 120), Size = UDim2.new(0, 250, 0, 250), BackgroundTransparency = 1, ImageContent = ci.content, ImageColor3 = Color3.fromRGB(190, 120, 255), ImageTransparency = 0.55 }, L)
-    TweenService:Create(m, TweenInfo.new(24, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = 360 }):Play() end
+  celestial(L, 0, 120, 330, 9, 18)   -- 카드 뒤 빛줄기 · 별빛 (카드보다 뒤)
   local gl = C.Sprites.art("fx_glow")
   if gl then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 120), Size = UDim2.new(0, 220, 0, 220), BackgroundTransparency = 1, ImageContent = gl.content, ImageColor3 = Color3.fromRGB(220, 130, 255), ImageTransparency = 0.5 }, L)
     TweenService:Create(g, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.8 }):Play() end
