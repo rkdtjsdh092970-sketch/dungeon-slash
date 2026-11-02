@@ -781,6 +781,7 @@ end
 
 -- ── 월드맵 (웹 data.js buildMap 과 같은 배치: 초원 마을 → 스테이지 1~5 → 심연의 균열 → 갈래 → 솟아난 탑) ──
 local MW, MH = 1800, 1100
+local MAPICON = { T = "mi_town", R = "mi_rift", RE = "mi_endless", RB = "mi_bossgate", RG = "mi_vault", RX = "mi_abyssdoor", RTW = "mi_tower", RTP = "mi_temple", RR = "mi_raid", RWD = "mi_warden", RCD = "mi_truedungeon", RTW2 = "mi_newtower" }   -- 지도 아이콘 그림 (art/mapicon)
 local NODES, BYID = {}, {}
 local function node(t) NODES[#NODES + 1] = t; BYID[t.id] = t; return t end
 -- 위치는 월드맵 그림(map/world.jpg)에 맞춤: 왼쪽 아래 마을 → 길을 따라 스테이지 → 가운데 보라 균열 → 오른쪽 위 화산 고원(탑)
@@ -904,6 +905,14 @@ buildMap = function()
       local sz = (t.id == "T" and 64 or 52) * K
       local b = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, t.x * ms, 0, t.y * ms), Size = UDim2.new(0, sz, 0, sz), BackgroundColor3 = st == "locked" and Color3.fromRGB(80, 74, 92) or t.col, Text = st == "locked" and "🔒" or t.icon, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBlack, TextSize = math.floor(sz * 0.48), AutoButtonColor = true, ZIndex = 5 }, mapLayer)
       corner(b); local ring = mk("UIStroke", { Color = t == target and Color3.fromRGB(255, 220, 80) or Color3.fromRGB(30, 16, 40), Thickness = t == target and 4 or 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+      do   -- 지도 아이콘 그림 (잠긴 곳은 자물쇠): 원형 메달이라 바탕 · 글자를 감춘다
+        local mi = Sprites.art(st == "locked" and "mi_lock" or MAPICON[t.id] or (t.stage and (t.stage == 5 and "mi_boss" or "mi_stage")) or "")
+        if mi then b.BackgroundTransparency = 1; b.TextTransparency = 1; ring.Transparency = t == target and 0 or 1
+          mk("ImageLabel", { Size = UDim2.new(1.25, 0, 1.25, 0), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), BackgroundTransparency = 1, ImageContent = mi.content, ScaleType = Enum.ScaleType.Fit,
+            ImageColor3 = st == "locked" and Color3.fromRGB(150, 140, 140) or Color3.new(1, 1, 1), ZIndex = b.ZIndex }, b)
+          if t.stage and t.stage < 5 then local nn = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.6, 0, 0.6, 0), BackgroundTransparency = 1, Text = tostring(t.stage), TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 240, 210), ZIndex = b.ZIndex + 1 }, b); mk("UIStroke", { Thickness = 2.5, Color = Color3.new(0, 0, 0) }, nn) end
+        end
+      end
       if t == target then TweenService:Create(ring, TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8 }):Play() end
       if st == "done" then local c = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -4, 0, 4), Size = UDim2.new(0, 20 * K, 0, 20 * K), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBlack, TextSize = math.floor(14 * K), ZIndex = 6 }, b); corner(c) end
       local nm = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, t.x * ms, 0, t.y * ms + sz / 2 + 2), Size = UDim2.new(0, 160 * K, 0, 20 * K), BackgroundTransparency = 1, Text = t.name, TextColor3 = st == "locked" and Color3.fromRGB(200, 195, 210) or Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = math.floor(14 * K), ZIndex = 5 }, mapLayer)

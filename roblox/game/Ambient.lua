@@ -30,13 +30,17 @@ function M.attach(parent, o)
   -- 구름 (위쪽 하늘 띠에서 천천히 흘러간다)
   local clouds = {}
   if o.clouds then
-    local y0, y1, cnt = o.clouds[1], o.clouds[2], o.clouds[3] or 3
-    for i = 1, cnt do
-      local a = Sprites.art("fx_cloud" .. ((i - 1) % 3 + 1))
-      if a then
-        local c = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0.42 + math.random() * 0.18, 0, 0, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Stretch,
-          ImageTransparency = 0.35 + math.random() * 0.2, ResampleMode = Enum.ResamplerMode.Pixelated, ZIndex = z }, fx)
-        clouds[#clouds + 1] = { f = c, x = (i - 1) / cnt * 1.5 - 0.25, y = y0 + (y1 - y0) * math.random(), sp = 0.006 + math.random() * 0.006 }
+    -- 두 겹(먼 구름: 작고 느리고 흐림 / 가까운 구름: 크고 빠름), 겹마다 같은 간격으로 3개씩 → 화면에 늘 구름이 지나간다
+    local y0, y1 = o.clouds[1], o.clouds[2]
+    for layer = 1, 2 do
+      local far = layer == 1
+      for j = 1, 3 do
+        local a = Sprites.art("fx_cloud" .. ((j + layer) % 3 + 1))
+        if a then
+          local c = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new((far and 0.3 or 0.48) + math.random() * 0.08, 0, 0, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Stretch,
+            ImageTransparency = far and 0.55 or 0.35, ResampleMode = Enum.ResamplerMode.Pixelated, ZIndex = z }, fx)
+          clouds[#clouds + 1] = { f = c, x = -0.3 + (j - 1) / 3 * 1.6 + (far and 0.27 or 0), y = far and (y0 + (y1 - y0) * 0.25) or (y0 + (y1 - y0) * (0.55 + 0.3 * math.random())), sp = far and 0.007 or 0.012 }
+        end
       end
     end
   end

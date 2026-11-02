@@ -42,6 +42,10 @@ ART = [
     # 배경 생동감 (game/Ambient.lua): 불꽃 8프레임 · 빛무리 · 구름 3 · 까마귀 4프레임
     ('fx_fire', 'fx/fire.png', (512, 96)), ('fx_glow', 'fx/glow.png', (64, 64)), ('fx_crow', 'fx/crow.png', (256, 48)),
     *[(f'fx_cloud{i}', f'fx/cloud{i}.png', (512, 160)) for i in (1, 2, 3)],
+    # 지도 아이콘 · 패시브 아이콘 · 무기 종류 · 마법사
+    *[('mi_' + os.path.splitext(f)[0], 'mapicon/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'mapicon')))],
+    *[('p_' + os.path.splitext(f)[0], 'passive/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'passive')))],
+    ('i_staff', 'icons/staff.png', (96, 96)), ('mage', 'hero/mage.png', (256, 256)),
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
 # 배경 불 패치 (fire_anim.py 가 만든 art/fx/<배경>_fires.json): 8프레임 시트, 배경 해상도 그대로
