@@ -4,7 +4,7 @@
 // =========================================================
 const TUT5 = [
   { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[아르카나 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
-    target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : document.querySelector('[data-a="s10"]:not([disabled])') },
+    target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : (document.querySelector(".srv5") || document.querySelector('[data-a="spull"][data-n="10"]:not([data-no])')) },
   { title: "아르카나 칸", text: "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다 (1번 = 평타, 2~4번 = 아르카나). 오른쪽 위 <b>[아르카나]</b>를 열고 새로 뽑은 카드를 누른 뒤 <b>[4번 칸에]</b>를 누르세요 (카드를 칸으로 끌어다 놓아도 됩니다).", ev: "equipsk",
     target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector(".arc5") ? document.querySelector("#modal .x") : document.querySelector('[data-a="aeq"][data-s="3"]') || document.querySelector('.og5 .ac5[data-k="active"]:not(.eqd)') },
   { title: "첫 전투", text: "창을 닫고 오른쪽 아래 <b>[지도]</b> → 반짝이는 <b>[초원 1]</b> → <b>[도전]</b>. 전투는 자동으로 진행됩니다.", ev: "battle",
