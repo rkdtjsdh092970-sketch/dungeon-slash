@@ -165,7 +165,7 @@ function M.play(sv, spec, seed)
   end
   if kind ~= "vault" then
     local boss = true
-    for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비" } else res.full = true end end
+    for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   end
   if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do sv.skills[#sv.skills + 1] = k; res.skills[#res.skills + 1] = k.id end end
   if kind == "raid" then
@@ -232,7 +232,7 @@ function M.wardenFinish(sv, uid, seed)
     local it
     if rng:NextNumber() < 0.30 then it = Loot.genSatan(rng, sv, 6)
     else it = Loot.genItem(rng, sv, 6, wpick(rng, { 0, 1, 2, 3 }, function(x) return ({ 0, 10, 40, 50 })[x + 1] end)) end
-    if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비" } else res.full = true end
+    if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end
   end
   sv.ore += 8; sv.orbC = (sv.orbC or 0) + 8; res.orbC = 8
   return res
@@ -253,7 +253,7 @@ function M.tower2(sv, floorN, seed)
   if b.win then
     res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills
     local first = floorN > sv.spire2.best; if first then sv.spire2.best = floorN; res.first = true end
-    for _, it in ipairs(Loot.spireDrops(rng, sv, node, floorN % 5 == 0, first)) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비" } else res.full = true end end
+    for _, it in ipairs(Loot.spireDrops(rng, sv, node, floorN % 5 == 0, first)) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "사탄 장비" or "장비", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
   return res
 end

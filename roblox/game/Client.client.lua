@@ -525,7 +525,7 @@ function views.help()
   card("전투력 올리는 법 (중요한 순서)", {
     "1) 장비: 가방의 [자동 장착]. 초록 ▲가 붙은 장비는 지금보다 좋습니다. 무기 · 장갑 · 목걸이가 특히 중요해요.",
     "2) 아르카나: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 아르카나를 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.",
-    "3) 패시브: 레벨마다 2점. 내 무기 계열 갈래(물리 · 마법)부터 찍고, 고민되면 [자동 배분].",
+    "3) 패시브: 레벨마다 1점. 내 무기 계열 갈래(물리 · 마법)부터 찍고, 고민되면 [자동 배분].",
     "4) 강화: 제련소에서 장비 강화 · 옵션 재굴림. 좋은 옵션(공격력 · 주문력 · 내 계열 피해 · 치명타)을 남기세요.",
     "5) 레벨: 균열 층을 처음 깨면 레벨이 오릅니다. 막히면 아래층을 돌며 장비를 모으세요." }, {})
   card("막혔을 때", {
@@ -732,7 +732,12 @@ showResultPanel = function(x, spec)
   if type(x.arcana) == "number" and x.arcana > 0 then chip("i_arcana", "아르카나 조각 +" .. x.arcana, Color3.fromRGB(240, 170, 255)) end
   if type(x.ore) == "number" and x.ore > 0 then chip("i_ore", "강화석 +" .. x.ore, Color3.fromRGB(170, 210, 255)) end
   if (x.orbC or 0) > 0 then chip("i_chaos", "혼돈 구슬 +" .. x.orbC, Color3.fromRGB(240, 120, 110)) end
-  if x.items and #x.items > 0 then chip("i_weapon", "장비 " .. #x.items .. "개", Color3.fromRGB(230, 200, 160)) end
+  if x.items and #x.items > 0 then   -- 장비: 등급별 개수 (사탄 · 전설 · 레어 · 매직 · 일반)
+    local cnt = {}; for _, it in ipairs(x.items) do local key = it.sat and 4 or (it.rarity or 0); cnt[key] = (cnt[key] or 0) + 1 end
+    local NM = { [0] = "일반", "매직", "레어", "전설", "사탄" }
+    local COL = { [0] = Color3.fromRGB(205, 205, 215), Color3.fromRGB(110, 160, 255), Color3.fromRGB(255, 214, 70), Color3.fromRGB(255, 150, 40), Color3.fromRGB(255, 70, 60) }
+    for r = 4, 0, -1 do if cnt[r] then chip("i_weapon", string.format("%s 장비 %d개", NM[r], cnt[r]), COL[r]) end end
+  end
   if x.skills and #x.skills > 0 then chip("i_arcana", "아르카나 " .. #x.skills .. "장", Color3.fromRGB(240, 170, 255)) end
   if x.stones and x.stones > 0 then chip("i_stone", "돌 +" .. x.stones, Color3.fromRGB(160, 220, 255)) end
   if x.charms and #x.charms > 0 then chip(nil, "참 " .. #x.charms .. "개", Color3.fromRGB(255, 190, 230)) end

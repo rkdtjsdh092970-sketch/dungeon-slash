@@ -271,6 +271,8 @@ M.OPT = { dmg = true, flash = 1 }   -- 그래픽 설정: 피해 숫자 표시 ·
 -- 레인 길 (웹 drawRoads): 레인마다 어두운 길 띠 + 가장자리 + 칸 자리 발판. 몬스터는 이 길을 따라 오른쪽에서 걸어 들어온다
 function M:buildLanes(lanes)
   if self.roads then self.roads:Destroy() end
+  -- 칸 너비: 뒤 줄은 오른쪽으로 밀려 그려지므로(laneShift), 맨 뒤 줄 6번째 칸까지 화면 안에 들어오게 줄 수만큼 좁힌다 (예전엔 오른쪽 끝 밖에 몹이 겹쳐 쌓여 보였다)
+  self.cw = math.max(56, (self.W / self.u - 236) / (6 + 0.3 * ((lanes or 2) - 1)))
   local u = self.u
   local R = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 2 }, self.root); self.roads = R
   for l = 0, (lanes or 2) - 1 do

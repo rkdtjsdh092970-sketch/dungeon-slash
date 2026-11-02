@@ -51,6 +51,7 @@ local function migrate(sv, uid)
   end
   if (sv.hone or 0) > 0 then sv.arcana = (sv.arcana or 0) + sv.hone; sv.hone = 0 end   -- 연마석 폐지 → 아르카나 조각 1:1
   if (sv.orbD or 0) > 0 then sv.orbC = (sv.orbC or 0) + sv.orbD; sv.orbD = 0 end   -- 신성 구슬 폐지 → 혼돈 구슬 1:1 (2026-11-02)
+  if require(RS.Game.Economy).passiveLeft(sv) < 0 then sv.pass = {}; sv.passNotice = true end   -- 패시브 레벨당 1점으로 바뀜 (2026-11-02): 넘치게 찍혀 있으면 돌려준다
   if sv.needStart == nil then sv.needStart = false end   -- 예전 계정은 직업 선택 없이 그대로
   return sv
 end

@@ -396,7 +396,7 @@ function M.battle(sv, floorN, seed)
     res.arcana = Econ.addArcana(sv, 3 + (boss and 5 or 0) + (first and 10 or 0))
     local drops = Loot.spireDrops(rng, sv, node, boss, first)
     for _, it in ipairs(drops) do
-      if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil } else res.full = true end
+      if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end
     end
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
   return res
@@ -431,7 +431,7 @@ function M.fight(sv, kind, n, seed)
     d.ore = floor(d.ore * (1 + Econ.atlasVal(sv, "ore")) + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
     if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
-    for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it) } else res.full = true end end
+    for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
       if n >= 3 and sv.slots < 3 then sv.slots = 3; res.note = "3번 아르카나 칸이 열렸습니다!" end
