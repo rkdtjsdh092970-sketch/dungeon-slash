@@ -277,6 +277,11 @@ local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 3
 -- 창 내용 지우기: 옛 내용은 바로 지우지 않고, 새 내용이 들어오는 순간 바꿔치기한다 (서버 응답을 기다리는 동안 화면이 비어 깜빡이지 않게)
 local pendingOld = {}
 local swapNew, swapLast, swapStart   -- (아래 깜빡임 없는 다시 그리기)
+local function swapNow()   -- 예전 화면을 지우고 새 화면을 보인다 (한 프레임 안에)
+  if not swapNew or #swapNew == 0 then return end
+  for o in pairs(pendingOld) do o:Destroy() end; pendingOld = {}
+  for _, f in ipairs(swapNew) do if f.Parent then f.Visible = true end end; swapNew = {}
+end
 local function clear(hard)
   msg.Text = ""
   for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then if hard then c:Destroy() else pendingOld[c] = true end end end
@@ -290,10 +295,9 @@ list.ChildAdded:Connect(function(c)
   c.Visible = false; swapNew[#swapNew + 1] = c
   if #swapNew > 1 then return end
   swapStart = os.clock(); swapLast = os.clock()
-  task.spawn(function()
-    while os.clock() - swapLast < 0.06 and os.clock() - swapStart < 1.2 do game:GetService("RunService").Heartbeat:Wait() end
-    for o in pairs(pendingOld) do o:Destroy() end; pendingOld = {}
-    for _, f in ipairs(swapNew) do if f.Parent then f.Visible = true end end; swapNew = {}
+  task.spawn(function()   -- 창 함수가 끝났다는 신호(buildDone)가 오면 바로, 신호가 없는 화면은 0.3초 동안 새 요소가 없을 때(길어도 1.5초)
+    while #swapNew > 0 and os.clock() - swapLast < 0.3 and os.clock() - swapStart < 1.5 do game:GetService("RunService").Heartbeat:Wait() end
+    swapNow()
   end)
 end)
 local function card(title, lines, btns)
@@ -546,7 +550,7 @@ openPanel = function(title, tabs, first)
   local btns = {}
   local function sel(key)
     for k, b in pairs(btns) do b.BackgroundColor3 = k == key and Color3.fromRGB(160, 116, 40) or Color3.fromRGB(60, 52, 100) end
-    clear(); views[key]()
+    clear(); views[key](); swapNow()   -- 다 그렸으면 바로 보이기
   end
   if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 110, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; b:SetAttribute("SkinTab", true); btns[t[2]] = b end end
   sel(first or tabs[1][2])
@@ -645,7 +649,7 @@ end
 
 -- 새 메뉴 화면 연결 (장비 · 스킬 · 패시브 트리는 Menus 모듈)
 local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "아르카나", pass = "패시브", stones = "돌", shop = "아르카나 상점", quests = "퀘스트" }
-Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
+Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, done = function() swapNow() end, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily

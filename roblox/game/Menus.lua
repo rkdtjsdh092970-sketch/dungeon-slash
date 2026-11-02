@@ -1643,4 +1643,10 @@ function M.gachalist()
   end
 end
 
+-- 창 함수가 끝나면 Client 에 알려 새 화면을 바로 보이게 한다 (다 그리기 전엔 예전 화면이 그대로 → 깜빡임 없음)
+for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "atlas", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist" }) do
+  local f = M[k]
+  if type(f) == "function" then M[k] = function(...) f(...); if C and C.done then C.done() end end end
+end
+
 return M
