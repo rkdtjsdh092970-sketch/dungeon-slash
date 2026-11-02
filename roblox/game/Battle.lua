@@ -526,7 +526,7 @@ applyDamage = function(b, e, dmg, o)
   end
   e.hp -= dmg; e.flash = 0.1; e.hurtT = 0.22; b.dealt += dmg; b.lastDealT = b.time
   if e.charge then e.charge.dealt += dmg end
-  if e.reflect and o.src == "skill" then damagePlayer(b, min(dmg * e.reflect.pct, b.maxHp * 0.002), { undodgeable = true }) end
+  if e.reflect and o.src == "skill" then damagePlayer(b, min(dmg * e.reflect.pct, b.maxHp * 0.002), { undodgeable = true, src = "반사" }) end
   local ls = ((o.lifesteal or 0) + b.stats.lifesteal) * (b.debuffs.wound and b.debuffs.wound.mult or 1)
   if ls > 0 and o.src == "skill" then
     local want = min(dmg * ls, b.lsTok); b.hp = min(b.maxHp, b.hp + want); b.lsTok -= want
@@ -869,9 +869,9 @@ local function bossAbility(b, e, a)
   elseif id == "pylon" then
     local before = {}; for _, x in ipairs(b.enemies) do before[x] = true end
     summonAdds(b, "imp", d.count, e); for _, x in ipairs(b.enemies) do if not before[x] and not x.dead then x.pylon = true; x.maxHp = x.maxHp * 14; x.hp = x.maxHp end end
-  elseif id == "chainbolt" then for i = 0, d.hits - 1 do b.events[#b.events + 1] = { t = 0.6 + i * 0.28, fn = function() damagePlayer(b, e.atk * d.mult, { boss = true }) end } end
+  elseif id == "chainbolt" then for i = 0, d.hits - 1 do b.events[#b.events + 1] = { t = 0.6 + i * 0.28, fn = function() damagePlayer(b, e.atk * d.mult, { boss = true, src = "보스:연쇄번개" }) end } end
   elseif id == "charge" then e.charge = { t = d.windup, dealt = 0, mult = d.mult, interrupt = d.interrupt }
-  elseif id == "rain" then for i = 0, d.hits - 1 do b.events[#b.events + 1] = { t = 0.8 + i * 0.45, fn = function() damagePlayer(b, e.atk * d.mult, { boss = true }) end } end
+  elseif id == "rain" then for i = 0, d.hits - 1 do b.events[#b.events + 1] = { t = 0.8 + i * 0.45, fn = function() damagePlayer(b, e.atk * d.mult, { boss = true, src = "보스:비" }) end } end
   end
 end
 local function bossTick(b, e, dt)
@@ -895,7 +895,7 @@ local function bossTick(b, e, dt)
   if e.charge then
     e.charge.t -= dt
     if e.charge.dealt >= e.charge.interrupt * e.maxHp then e.charge = nil; e.stun = 2.5
-    elseif e.charge.t <= 0 then damagePlayer(b, e.atk * e.charge.mult, { boss = true }); e.charge = nil end
+    elseif e.charge.t <= 0 then damagePlayer(b, e.atk * e.charge.mult, { boss = true, src = "보스:돌진" }); e.charge = nil end
   end
 end
 local function traitHit(b, e)
@@ -978,7 +978,7 @@ function M.step(b, dt)
   for _, k in ipairs({ "slow", "freeze", "curse", "poison", "wound" }) do local d = b.debuffs[k]; if d then d.t -= dt; if d.t <= 0 then b.debuffs[k] = nil end end end
   for _, m in ipairs(b.mods) do if m.poison then b.poisonCd -= dt; if b.poisonCd <= 0 then b.debuffs.poison = { t = 5, dps = 0.012 }; b.poisonCd = 14 end end end
   if b.buffs.cry then b.buffs.cry.t -= dt; if b.buffs.cry.t <= 0 then b.buffs.cry = nil end end
-  if b.debuffs.poison then local x = b.maxHp * b.debuffs.poison.dps * dt; b.hp -= x; b.taken += x end
+  if b.debuffs.poison then local x = b.maxHp * b.debuffs.poison.dps * dt; b.hp -= x; b.taken += x; if b.hurtBy then b.hurtBy["중독(최대체력 %)"] = (b.hurtBy["중독(최대체력 %)"] or 0) + x end end
   for _, ev in ipairs(b.events) do ev.t -= dt end
   local due = filter(b.events, function(ev) return ev.t <= 0 end)
   if #due > 0 then b.events = filter(b.events, function(ev) return ev.t > 0 end); for _, ev in ipairs(due) do ev.fn() end end
@@ -1014,7 +1014,7 @@ function M.step(b, dt)
               local dmg = e.atk
               if e.tier == "normal" then local n = #filter(occupants(b, e.lane, e.col), function(x) return x.tier == "normal" end); dmg *= max(1, n) ^ (CFG.STACK_EXP - 1) end
               if hasTrait(e, "explode") then dmg *= 3; e.exploded = true end
-              damagePlayer(b, dmg, { boss = e.tier == "boss", ranged = e.def.ranged and true or false })
+              damagePlayer(b, dmg, { boss = e.tier == "boss", ranged = e.def.ranged and true or false, src = e.tier .. (e.def.ranged and "·원거리" or "") })
               if #e.traits > 0 then traitHit(b, e) end
               if e.exploded then killEnemy(b, e) else e.atkCd = e.interval * rnd(b, 1 - CFG.JITTER, 1 + CFG.JITTER) end
             end
@@ -1086,6 +1086,7 @@ end
 damagePlayer = function(b, raw, opt)
   local before = b.hp; local r = _hurt(b, raw, opt)
   if b.rec and b.hp < before then b.rec.acc.ph += before - b.hp end
+  if b.hurtBy and b.hp < before then local k = (opt and opt.src) or "기타"; b.hurtBy[k] = (b.hurtBy[k] or 0) + (before - b.hp) end   -- 계측: 받은 피해 출처 (sim 용, b.hurtBy = {} 일 때만)
   return r
 end
 castSkillRaw = function(b, sk)
