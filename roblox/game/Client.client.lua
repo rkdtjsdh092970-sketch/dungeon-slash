@@ -1303,16 +1303,28 @@ topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 -- 시작 직업 고르기 (새 계정 첫 접속): 전사(검) / 마법사(지팡이) → 무기 · 스타터 스킬 3개 · 아르카나 조각
 -- 튜토리얼 (새 계정): 직업 선택 → 스킬 소환 → 스킬 칸 → 스테이지 1. 스테이지 1~4를 처음 깰 때마다 한 가지씩 알려 주고, 나머지는 [안내소 → 도움말]로 넘긴다
 local coachBox, coachHl
-local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end end
+local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end; if coachShade then coachShade:Destroy(); coachShade = nil end end
 local coach_hl
-coach_hl = function(target)   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다
+local coachShade
+coach_hl = function(target)   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다 + 나머지 화면은 어둡게 덮어 누를 수 없게 (튜토리얼은 짚은 곳만)
+    if coachShade then coachShade:Destroy() end
+    coachShade = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 44 }, gui)
+    local sides = {}
+    for i = 1, 4 do sides[i] = mk("TextButton", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ZIndex = 44 }, coachShade) end
+    local shade = coachShade
     coachHl = mk("Frame", { BackgroundTransparency = 1, ZIndex = 45 }, gui)
     local sk = mk("UIStroke", { Color = Color3.fromRGB(255, 220, 120), Thickness = 4 }, coachHl); corner(coachHl, 10)
     TweenService:Create(sk, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8, Transparency = 0.4 }):Play()
     local hl = coachHl
     local conn; conn = game:GetService("RunService").RenderStepped:Connect(function()
-      if not hl.Parent or not target.Parent then conn:Disconnect(); if hl.Parent then hl:Destroy() end; return end
-      hl.Position = UDim2.new(0, target.AbsolutePosition.X - 6, 0, target.AbsolutePosition.Y - 6); hl.Size = UDim2.new(0, target.AbsoluteSize.X + 12, 0, target.AbsoluteSize.Y + 12)
+      if not hl.Parent or not target.Parent then conn:Disconnect(); if hl.Parent then hl:Destroy() end; if shade.Parent then shade:Destroy() end; return end
+      local p, z = target.AbsolutePosition, target.AbsoluteSize
+      hl.Position = UDim2.new(0, p.X - 6, 0, p.Y - 6); hl.Size = UDim2.new(0, z.X + 12, 0, z.Y + 12)
+      local x0, y0, x1, y1 = p.X - 4, p.Y - 4, p.X + z.X + 4, p.Y + z.Y + 4
+      sides[1].Position = UDim2.new(0, 0, 0, 0); sides[1].Size = UDim2.new(1, 0, 0, math.max(0, y0))                    -- 위
+      sides[2].Position = UDim2.new(0, 0, 0, y1); sides[2].Size = UDim2.new(1, 0, 1, -y1)                               -- 아래
+      sides[3].Position = UDim2.new(0, 0, 0, y0); sides[3].Size = UDim2.new(0, math.max(0, x0), 0, y1 - y0)              -- 왼쪽
+      sides[4].Position = UDim2.new(0, x1, 0, y0); sides[4].Size = UDim2.new(1, -x1, 0, y1 - y0)                         -- 오른쪽
     end)
 end
 local function coach(title, text, btns, target)
@@ -1347,7 +1359,7 @@ local function guide(title, text, finder, waitFor, nextFn)
     local cur
     while coachBox == box and box.Parent do
       local t = finder and finder() or nil
-      if t ~= cur then cur = t; if coachHl then coachHl:Destroy(); coachHl = nil end; if t then coach_hl(t) end end
+      if t ~= cur then cur = t; if coachHl then coachHl:Destroy(); coachHl = nil end; if coachShade then coachShade:Destroy(); coachShade = nil end; if t then coach_hl(t) end end
       task.wait(0.3)
     end
   end)
@@ -1356,6 +1368,7 @@ Menus.onPulled = function() if tutSignal then tutSignal("pulled") end end
 tutSignal = function(ev)   -- 소환을 닫음(pulled) · 전투력이 바뀜(power) · 전투 시작(battle) 이 오면 다음 단계
   if tutWait and ev == tutWait then local f = tutNext; tutWait, tutNext = nil, nil; coachClose(); if f then task.delay(0.4, f) end end
 end
+local function closeBtn() for _, c in ipairs(root:GetChildren()) do if c:IsA("TextButton") and c:GetAttribute("SkinClose") then return c end end end
 local function topBtn(name) local b = topBar:FindFirstChild(name); return b and b.Visible and b or nil end
 tutorial = function(step)
   tutStep = step
@@ -1368,11 +1381,11 @@ tutorial = function(step)
       function() if panelLayer.Visible then return findBtn(function(d) return d.AbsoluteSize.Y > 40 and hasText(d, "10회 소환") end) end; return topBtn("m_gacha") end,
       "pulled", function() tutorial(2) end)
   elseif step == 2 then
-    guide("아르카나 칸", "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 아래 새 카드를 위 빈칸으로 끌어다 놓거나, 카드를 누르고 [N번 칸에]를 누르세요.",
+    guide("아르카나 칸", "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 빛나는 새 카드를 누른 뒤 [N번 칸에]를 누르세요.",
       function()
         local pt = panelTitle:GetAttribute("_src") or panelTitle.Text
         if not panelLayer.Visible then return topBtn("m_skill") end
-        if pt ~= "아르카나" then return nil end
+        if pt ~= "아르카나" then return closeBtn() end
         return findBtn(function(d) return hasText(d, "번 칸에") end) or findBtn(function(d) return d.AbsoluteSize.X > 50 and d.AbsoluteSize.X < 70 and d.AbsoluteSize.Y > 80 end)
       end,
       "power", function() tutorial(3) end)
@@ -1380,7 +1393,7 @@ tutorial = function(step)
     tutSet(3)
     guide("첫 전투", "창을 닫고 오른쪽 아래 [지도]를 누른 뒤, 금빛 ▼ 표시가 있는 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다.",
       function()
-        if panelLayer.Visible then return root:FindFirstChildWhichIsA("TextButton") end
+        if panelLayer.Visible then return closeBtn() end
         if screen ~= "map" then return dock end
         if infoCard.Visible then return findBtn(function(d) return d:IsDescendantOf(infoCard) and d.AbsoluteSize.X > 150 end) end
         return mapTarget
