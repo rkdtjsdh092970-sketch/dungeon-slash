@@ -231,8 +231,13 @@ local invMode = "bag"   -- bag | auto (자동 분해 설정)
 local INV_TABS = { "all", "weapon", "helm", "armor", "gloves", "boots", "ring", "neck" }
 local SLOT_ORDER = {}; for i, s in ipairs(Items.EQ_SLOTS) do SLOT_ORDER[s] = i end
 local function itemColor(it) return it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1] end
+local CUR_DESC = {   -- 재화 설명 (마우스를 올리면)
+  i_ore = "장비 강화 · 옵션 재굴림에 씁니다. 장비를 분해하면 얻습니다.", i_chaos = "장비에 옵션을 하나 더 붙입니다 (대장간).", i_divine = "장비 옵션 수치를 다시 굴립니다 (대장간).",
+  i_gem = "스킬 소환에 쓰는 보석입니다.", i_arcana = "스킬 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 스킬 분해로 얻습니다.", i_shard = "균열 조각: 특별한 콘텐츠 입장 · 보상에 씁니다.",
+}
 local function sortInv(inv)   -- 자동 정렬: 등급 → 부위 → 아이템 레벨
   table.sort(inv, function(a, b)
+    if (a.up and true or false) ~= (b.up and true or false) then return a.up and true or false end   -- 끼면 강해지는 장비(▲)가 맨 앞
     local ra, rb = (a.sat and 9 or a.rarity or 0), (b.sat and 9 or b.rarity or 0)
     if ra ~= rb then return ra > rb end
     local sa, sb = SLOT_ORDER[a.slot] or 99, SLOT_ORDER[b.slot] or 99
@@ -298,21 +303,23 @@ invRender = function()
   M.setTabs(L, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "gear", "세트", function() invData = nil; M.inv() end)
   local s = C.summary()
   if s then   -- 재화 (강화석 · 혼돈/신성 구슬 · 보석 · 아르카나 조각 · 균열 조각)
-    local cg = mk("Frame", { Position = UDim2.new(0, 10, 1, -54), Size = UDim2.new(1, -20, 0, 52), BackgroundTransparency = 1 }, L)
-    mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 16), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
-    for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80) },
-      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120) }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220) }, { "i_shard", "균열 조각", s.shards, Color3.fromRGB(190, 120, 240) } }) do
-      local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, cg)
+    local cg = mk("Frame", { Position = UDim2.new(0, 8, 1, -78), Size = UDim2.new(1, -16, 0, 74), BackgroundTransparency = 1 }, L)
+    mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 22), CellPadding = UDim2.new(0, 6, 0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
+    for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80), "혼돈" },
+      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120), "신성" }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220), "아르카나" }, { "i_shard", "균열 조각", s.shards, Color3.fromRGB(190, 120, 240) } }) do
+      local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i, Active = true }, cg)   -- 칸 전체(아이콘 포함)에 마우스를 올리면 설명
       local a = C.Sprites.art(c[1])
-      if a then mk("ImageLabel", { Size = UDim2.new(0, 16, 0, 16), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
+      if a then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
       else local dot = mk("Frame", { Size = UDim2.new(0, 10, 0, 10), Position = UDim2.new(0, 3, 0, 3), BackgroundColor3 = c[4] }, f); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, dot) end
-      local t = txt(f, n(c[3] or 0), 13, UDim2.new(0, 20, 0, 0), UDim2.new(1, -20, 1, 0), c[4], M.FONT)
-      local tp = { title = c[2], color = c[4], lines = {} }; t.MouseEnter:Connect(function() tipShow(tp) end); t.MouseLeave:Connect(tipHide)
+      local t = txt(f, (c[5] or c[2]) .. " " .. n(c[3] or 0), 15, UDim2.new(0, 26, 0, 0), UDim2.new(1, -26, 1, 0), c[4], M.FONT); t.TextTruncate = Enum.TextTruncate.AtEnd   -- 이름도 함께 (아이콘만으론 무엇인지 모름)
+      local tp = { title = string.format("%s  %s", c[2], n(c[3] or 0)), color = c[4], lines = { CUR_DESC[c[1]] or "" } }; f.MouseEnter:Connect(function() tipShow(tp) end); f.MouseLeave:Connect(tipHide)
     end
   end
   -- 가운데: 가방 (전체 · 부위 탭)
   local shown = {}; for _, it in ipairs(inv) do if invTab == "all" or it.slot == invTab or (invTab == "ring" and it.slot == "ring2") then shown[#shown + 1] = it end end
-  local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), string.format("가방 %d / %d", #shown, #inv))
+  local INV_MAX = require(script.Parent.Data.Config).CFG.INV_MAX or 300
+  local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), invTab == "all" and string.format("가방 %d / %d칸", #inv, INV_MAX) or string.format("가방 %d개 (전체 %d / %d칸)", #shown, #inv, INV_MAX))
+  if #inv >= INV_MAX * 0.9 then local w = txt(B, "가방이 거의 찼습니다 · 자동 분해를 켜 두세요", 11, UDim2.new(0, 150, 0, 6), UDim2.new(1, -156, 0, 16), Color3.fromRGB(255, 130, 110), M.FONT, Enum.TextXAlignment.Right); w.TextTruncate = Enum.TextTruncate.AtEnd end
   local tabs = mk("Frame", { Position = UDim2.new(0, 6, 0, 32), Size = UDim2.new(1, -12, 0, 34), BackgroundTransparency = 1 }, B)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
   for i, k in ipairs(INV_TABS) do
@@ -354,7 +361,7 @@ invRender = function()
       M.btn(bar, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
       M.btn(bar, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
     else
-      M.btn(bar, "여러 개 선택", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
+      M.btn(bar, "골라 정리", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
       M.btn(bar, "자동 분해", UDim2.new(0.333, -4, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
       M.btn(bar, "자동 장착", UDim2.new(0.333, -4, 1, 0), M.BTN.green, function()
         local e = C.rpc:InvokeServer("autoequip"); if e and e.summary then C.setSummary(e.summary) end
@@ -805,7 +812,7 @@ function M.forge()
   local A = area(392)
   -- 위: 보유 재화 (강화 · 재굴림 · 구슬 · 인장에 쓰는 것)
   local top = mk("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = Color3.fromRGB(16, 12, 12), BackgroundTransparency = 0.1 }, A); corner(top, 6); stroke(top, Color3.fromRGB(120, 92, 48), 1.5)
-  txt(top, "보유", 13, UDim2.new(0, 10, 0, 0), UDim2.new(0, 40, 1, 0), Color3.fromRGB(190, 170, 140), M.FONT)
+  txt(top, "보유", 13, UDim2.new(0, 10, 0, 6), UDim2.new(0, 40, 0, 18), Color3.fromRGB(190, 170, 140), M.FONT)
   cost(top, { { "i_gold", s.gold or 0, Color3.fromRGB(255, 220, 120), "골드" }, { "i_ore", s.ore or 0, Color3.fromRGB(200, 220, 255), "강화석" }, { "i_chaos", s.orbC or 0, Color3.fromRGB(220, 170, 255), "혼돈" },
     { "i_divine", s.orbD or 0, Color3.fromRGB(255, 230, 150), "신성" }, { "i_seal", s.sockTix or 0, Color3.fromRGB(190, 160, 255), "인장" }, { "i_stone", s.stones or 0, Color3.fromRGB(160, 220, 255), "돌" } }, UDim2.new(0, 46, 0, 3))
   -- 왼쪽: 착용 장비 목록 (칸마다 부위 · 티어 · 강화 · 이름)
@@ -857,7 +864,7 @@ function M.forge()
   -- 소켓: 빈 칸 · [돌 끼우기]를 누르면 돌 목록만 뜬다 (이 장비 · 그 칸에 바로 끼움)
   local So = mk("Frame", { Position = UDim2.new(0, 12, 1, -52), Size = UDim2.new(1, -24, 0, 44), BackgroundTransparency = 1 }, R)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, So)
-  local sl = txt(So, string.format("소켓 %d개", #(sel.sockets or {})), 15, UDim2.new(), UDim2.new(0, 72, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT); sl.LayoutOrder = 0
+  local sl = txt(So, string.format("소켓 %d칸", #(sel.sockets or {})), 15, UDim2.new(), UDim2.new(0, 72, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT); sl.LayoutOrder = 0
   local function pickStone(idx)   -- 돌 고르기 창 (이 장비의 idx 번 소켓)
     local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Text = "", AutoButtonColor = false, ZIndex = 30 }, R)
     local P = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.9, 0, 0.9, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 11), ZIndex = 31 }, ov); corner(P, 8); stroke(P, M.GOLD, 2)

@@ -3,6 +3,11 @@
 local M = {}
 M.ART = {
   warrior = { w = 256, h = 256, foot = 0.883, file = "art_warrior.rgba", id = nil },
+  warrior_windup = { w = 256, h = 256, foot = 0.902, file = "art_warrior_windup.rgba", id = nil },
+  warrior_slash = { w = 256, h = 256, foot = 0.902, file = "art_warrior_slash.rgba", id = nil },
+  warrior_overhead = { w = 256, h = 256, foot = 0.898, file = "art_warrior_overhead.rgba", id = nil },
+  mage_raise = { w = 256, h = 256, foot = 0.898, file = "art_mage_raise.rgba", id = nil },
+  mage_cast = { w = 256, h = 256, foot = 0.898, file = "art_mage_cast.rgba", id = nil },
   c_imp = { w = 256, h = 256, foot = 0.918, file = "art_c_imp.rgba", id = nil },
   c_goblin = { w = 256, h = 256, foot = 0.922, file = "art_c_goblin.rgba", id = nil },
   c_archer = { w = 256, h = 256, foot = 0.977, file = "art_c_archer.rgba", id = nil },

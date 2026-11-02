@@ -500,7 +500,8 @@ local shopBtn   -- 왼쪽 상점 버튼 (아래에서 만든다)
 local buildTown, buildMap
 local infoCard
 local function fitPanel() local v = vp(); panelScale.Scale = math.clamp(math.min((v.X - 24) / 880, (v.Y - INSET - 16) / 540), 0.45, 1.3) end
-local function closePanel() panelLayer.Visible = false; clear(true); if screen == "battle" and mainStage and not mainStage.conn then resultLayer.Visible = true end end
+local function hudShow(on) local v = on and screen ~= "battle"; dock.Visible = v; topBar.Visible = v; statLbl.Visible = v; if shopBtn then shopBtn.Visible = v end end   -- 창이 열려 있으면 위쪽 HUD 를 숨긴다 (창 뒤로 반쯤 잘려 보이지 않게)
+local function closePanel() panelLayer.Visible = false; hudShow(true); clear(true); if screen == "battle" and mainStage and not mainStage.conn then resultLayer.Visible = true end end
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
@@ -512,7 +513,7 @@ root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
 -- 창 바깥(어두운 바탕)을 눌러도 닫히지 않는다: 닫기는 X 버튼으로만 (실수로 나가지 않게)
 do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20; b:SetAttribute("SkinClose", true) end
 local function openPanel(title, tabs, first)
-  fitPanel(); panelTitle.Text = title; panelLayer.Visible = true; resultLayer.Visible = false; if cancelAutoFn then cancelAutoFn() end
+  fitPanel(); panelTitle.Text = title; panelLayer.Visible = true; hudShow(false); resultLayer.Visible = false; if cancelAutoFn then cancelAutoFn() end
   for _, c in ipairs(tabRow:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   local btns = {}
   local function sel(key)

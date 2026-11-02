@@ -2036,3 +2036,15 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 인장	Seals
 혼돈	Chaos
 확인하지 않은 돌 %d개 → [돌] 탭에서 확인	%d unrevealed stones → reveal in the [Stones] tab
+소켓 %d칸	Sockets: %d
+가방 %d / %d칸	Bag %d / %d
+가방 %d개 (전체 %d / %d칸)	Bag %d (total %d / %d)
+가방이 거의 찼습니다 · 자동 분해를 켜 두세요	Bag almost full · turn on Auto Salvage
+골라 정리	Select & Clear
+균열 조각: 특별한 콘텐츠 입장 · 보상에 씁니다.	Rift Shards: used for special content entry and rewards.
+스킬 소환에 쓰는 보석입니다.	Gems used for skill summons.
+스킬 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 스킬 분해로 얻습니다.	Used for skill summons (10 for 1 · 90 for 10). Earned from battles, quests and dismantling skills.
+아르카나	Arcana
+장비 강화 · 옵션 재굴림에 씁니다. 장비를 분해하면 얻습니다.	Used to enhance gear and reroll affixes. Earned by dismantling gear.
+장비 옵션 수치를 다시 굴립니다 (대장간).	Rerolls the values of gear affixes (Forge).
+장비에 옵션을 하나 더 붙입니다 (대장간).	Adds one more affix to gear (Forge).

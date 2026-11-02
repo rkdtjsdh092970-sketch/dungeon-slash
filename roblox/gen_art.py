@@ -7,6 +7,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # 키: 영웅 "warrior" / 몬스터는 SpriteMap 시트 키(색조 0 일 때만 대체) / 보스 "boss<번호>" / 배경 "bg<지역>"
 ART = [
     ('warrior', 'hero/warrior.png', (256, 256)),
+    # 영웅 동작 그림 (전투에서 자세마다 바꿔 끼운다: Stage.setPose)
+    *[(f'{h}_{p}', f'hero/{h}_{p}.png', (256, 256)) for h, ps in (('warrior', ('windup', 'slash', 'overhead')), ('mage', ('raise', 'cast'))) for p in ps],
     ('c_imp', 'mobs/imp.png', (256, 256)),
     ('c_goblin', 'mobs/goblin.png', (256, 256)),
     ('c_archer', 'mobs/archer.png', (256, 256)),
