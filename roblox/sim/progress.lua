@@ -55,7 +55,7 @@ local function tuneGear(sv, fam, rng)
   end
 end
 local RUNE_PRI = { "power", "swift", "keen", "pierce", "wide", "fang", "thrift" }   -- 룬은 전투력 계산에 안 들어가므로 우선순위로
--- 실제 플레이어가 하는 나머지 성장: 퀘스트 · 일일 보상 받기, 원초의 돌 확인 → 소켓, 룬 장착, 심연 각인
+-- 실제 플레이어가 하는 나머지 성장: 퀘스트 · 일일 보상 받기, 원초의 돌 확인 → 소켓, 룬 장착
 local function extras(sv, rng)
   for _, q in ipairs(Extras.questView(sv)) do if q.state == "done" then Extras.questClaim(sv, q.id) end end
   for _, t in ipairs(Extras.dailyView(sv)) do if not t.claimed and t.p >= t.n then Extras.dailyClaim(sv, t.id) end end
@@ -87,7 +87,6 @@ local function extras(sv, rng)
       end
     end end end
   end
-  for _ = 1, 30 do local ok = false; for _, id in ipairs({ "conq", "mf", "gold" }) do if Econ.atlasBuy(sv, id) then ok = true; break end end; if not ok then break end end
 end
 local function bestLoadout(sv)   -- 가진 스킬 중 전투력이 가장 높아지는 조합 (칸마다 욕심쟁이)
   local ids, seen = {}, {}

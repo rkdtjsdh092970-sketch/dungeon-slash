@@ -664,7 +664,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, done = function()
   openTab = function(key) if key == "forge" or key == "stones" then openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }, key) else openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
-views.guild = Menus.guild; views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
+views.guild = Menus.guild; views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
 
 -- ── 전투 시작 → 재생 → 결과 ──
 -- 결과 창: 장식 틀 · 위 가장자리에 걸친 큰 승리/패배 띠(빛) · 전투 이름 · 시간·처치 줄 · 보상은 아이콘 칩 · 버튼
@@ -833,7 +833,7 @@ local BUILD = {   -- 건물은 배경 그림(bg/town.jpg)에 함께 그려져 �
   { key = "b_guild", name = "길드", box = { 0.206, 0.17, 0.434, 0.47 }, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
   { key = "b_skill_shop", name = "아르카나 소환", box = { 0.455, 0.06, 0.635, 0.50 }, tabs = { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } } },
   { key = "b_notice", name = "안내소", box = { 0.67, 0.20, 0.815, 0.51 }, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
-  { key = "b_trainer", name = "훈련소", box = { 0.0, 0.38, 0.25, 0.59 }, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
+  { key = "b_trainer", name = "훈련소", box = { 0.0, 0.38, 0.25, 0.59 }, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "전직", "class" }, { "참", "charm" } } },
   { key = "b_quest_board", name = "퀘스트 게시판", box = { 0.83, 0.38, 0.99, 0.65 }, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
   { key = "b_skill_hall", name = "아르카나 정비소", box = { 0.06, 0.53, 0.335, 0.85 }, tabs = { { "아르카나", "skills" }, { "룬", "runes" } } },
   { key = "b_forge", name = "제련소", box = { 0.338, 0.53, 0.553, 0.87 }, smoke = { 0.375, 0.0 }, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },

@@ -1,5 +1,5 @@
 -- computeStats 이식 (JS state.js → Luau). 서버/클라이언트 공용.
--- 아직 이식하지 않은 것: 심연 각인(atlas), 길드 패시브, 장착 스킬 기반 전투력 필드(s.skl/mix/manaNeed)
+-- 아직 이식하지 않은 것: 길드 패시브, 장착 스킬 기반 전투력 필드(s.skl/mix/manaNeed)
 local Data = script.Parent.Data
 local Config = require(Data.Config)
 local CFG = Config.CFG
@@ -144,7 +144,6 @@ function M.computeStats(sv)
   s.stackCap = math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density)
   s.lanes = math.min(CFG.MAX_LANES, (sv.lanesBase or 3) + s.laneBonus)
   s.avgIlvl = ilvlCnt > 0 and ilvlSum / ilvlCnt or 1
-  if sv.atlas then s.add.boss += (sv.atlas.conq or 0) * 0.02; s.dmgTaken -= (sv.atlas.guard or 0) * 0.01 end   -- 심연 각인
   return s
 end
 

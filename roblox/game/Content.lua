@@ -114,7 +114,7 @@ function M.play(sv, spec, seed)
     if not graduated(sv) then return nil, "균열 100층을 졸업해야 합니다" end
     sv.endless = sv.endless or { day = 0, used = 0, best = 0, bestKills = 0 }
     if sv.endless.day ~= dayKey() then sv.endless.day = dayKey(); sv.endless.used = 0 end
-    if sv.endless.used >= CFG.ENDLESS_DAILY + Econ.atlasVal(sv, "endless") then return nil, "오늘의 무한 균열 입장 횟수를 모두 썼습니다" end
+    if sv.endless.used >= CFG.ENDLESS_DAILY then return nil, "오늘의 무한 균열 입장 횟수를 모두 썼습니다" end
     sv.endless.used += 1
     node = { kind = "endless", act = 10, tier = max(1, sv.rift.best - 2) }
   elseif kind == "craid" then
@@ -184,7 +184,7 @@ function M.play(sv, spec, seed)
   -- 재화
   local ore = floor(rng:NextInteger(1, 2) + 4 + floor((node.tier or 0) / 3) + waves * 2 + 0.5)
   sv.ore += ore; res.ore = ore
-  local shards = floor((1 + floor((node.tier or 1) / 6) + 3 + waves + (kind == "void" and 2 * (node.vsel or 1) or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5)
+  local shards = floor((1 + floor((node.tier or 1) / 6) + 3 + waves + (kind == "void" and 2 * (node.vsel or 1) or 0)) + 0.5)
   sv.shards = (sv.shards or 0) + shards; res.shards = shards
   local oc = orbs(kind, node, waves)
   local od = oc * 0.05; local c = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0); sv.orbC = (sv.orbC or 0) + c; res.orbC = c   -- 혼돈 구슬: 예전 신성 구슬 확률

@@ -217,7 +217,6 @@ function M.passPreview(sv, id)
   sv.pass = tmp; local after = Power.score(sv); sv.pass = old
   return { before = before, after = after, cost = P.cost, n = #P.ids }
 end
-function M.atlasView(sv) return Econ.atlasView(sv) end
 -- ---------- 창고 (웹 openStash: 장비 보관, 100칸에서 골드로 10칸씩 최대 500) ----------
 local STASH_MAX, STASH_STEP = 500, 10
 local function stash(sv) sv.stash = sv.stash or { items = {}, cap = 100 }; sv.stash.items = sv.stash.items or {}; sv.stash.cap = sv.stash.cap or 100; return sv.stash end
@@ -319,10 +318,9 @@ function M.statsView(sv)
   el[#el + 1] = { "원소 피해", P(s.elemDmg) }; el[#el + 1] = { "속성 저항 관통", P(s.penElem) }; el[#el + 1] = { "방어 무시", P(s.ignoreDef) }; el[#el + 1] = { "지속 피해", P(s.dotDmg) }
   G[#G + 1] = { "속성 · 관통", el }
   G[#G + 1] = { "추가 피해", { { "보스", P(s.add.boss) }, { "정예", P(s.add.elite) }, { "원거리", P(s.add.ranged) }, { "일반", P(s.add.normal) }, { "광역 피해", P(s.aoeDmg) }, { "레인", tostring(s.lanes) } } }
-  G[#G + 1] = { "획득", { { "MF", P(s.mf + Econ.atlasVal(sv, "mf")) }, { "골드 획득", P(s.goldFind + Econ.atlasVal(sv, "gold")) }, { "균열 조각", tostring(sv.shards or 0) } } }
+  G[#G + 1] = { "획득", { { "MF", P(s.mf) }, { "골드 획득", P(s.goldFind) }, { "균열 조각", tostring(sv.shards or 0) } } }
   return G
 end
-function M.atlasBuy(sv, id) return Econ.atlasBuy(sv, id) end
 function M.gachaView(sv) return Econ.gachaView(sv) end
 function M.gachaPull(sv, n, pay, fam) return Econ.gachaPull(sv, n, pay, Random.new(os.clock() * 1e6 + sv.nextUid), fam) end
 -- 기록 (웹 openRecords)
@@ -419,18 +417,18 @@ function M.fight(sv, kind, n, seed)
   local b = Battle.run(sv, node, rng:NextInteger(1, 2 ^ 30), 0.05, 700)
   local res = { win = b.win, time = b.time, kind = kind, n = n, kills = b.kills, items = {}, gold = 0 }
   if b.win then
-    res.gold = floor(b.gold * (1 + Econ.atlasVal(sv, "gold"))); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
+    res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
     local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
     Extras.onWin(sv, b.kills, boss, kind == "rift"); Extras.setRate(sv, b.gold, b.time)
     if kind == "stage" then Extras.questEvent(sv, "kill", b.kills); if node.kind == "boss" then Extras.questEvent(sv, "boss", 1) end end
     if kind == "rift" then Extras.questEvent(sv, "rift", 1); if boss and rng:NextNumber() < 0.2 then local rid = Extras.randomRune(rng); Extras.addRune(sv, rid); res.rune = rid end end
-    local mfv = math.max(0, Stats.computeStats(sv).mf + Econ.atlasVal(sv, "mf") + 0.01 * (sv.guildLv or 0))
+    local mfv = math.max(0, Stats.computeStats(sv).mf + 0.01 * (sv.guildLv or 0))
     local d = Loot.fieldDrops(rng, sv, node, boss, 1 + mfv / (1 + mfv / CFG.MF_HALF))   -- 웹 mfEff
-    do local om = 1 + Econ.atlasVal(sv, "orb"); local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0) end   -- 혼돈의 인장
+    do local om = 1; local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0) end   -- 혼돈의 인장
     if (d.orbC or 0) > 0 then sv.orbC = (sv.orbC or 0) + d.orbC; res.orbC = d.orbC end; if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
-    d.ore = floor(d.ore * (1 + Econ.atlasVal(sv, "ore")) + 0.5)
+    d.ore = floor(d.ore + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
-    if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
+    if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
@@ -545,7 +543,7 @@ function M.unlocks(sv)   -- 어떤 콘텐츠가 열려 있는지 (화면 표시�
     warden = Content.wardenOpen(sv), tower2 = Content.tower2Open(sv), class = (sv.raid and sv.raid.tower) and true or false, charm = (sv.cls or 0) >= 3, keys = sv.keys or 0, keys2 = sv.keys2 or 0, keys3 = sv.keys3 or 0, keys4 = sv.keys4 or 0, keys5 = sv.keys5 or 0, keys6 = sv.keys6 or 0,
     -- 지도 전용 창 표시용: 레이드 클리어 · 상위 관문 · 신전 단계 · 무한 균열 남은 횟수 · 관문 난이도
     craidDone = { (sv.craid and sv.craid[1] == 1) or false, (sv.craid and sv.craid[2] == 1) or false, (sv.craid and sv.craid[3] == 1) or false }, up = (sv.craid and sv.craid[2]) and true or false,
-    spireBest = sv.spire and sv.spire.best or 0, endlessLeft = math.max(0, CFG.ENDLESS_DAILY + Econ.atlasVal(sv, "endless") - ((sv.endless and sv.endless.day == math.floor(os.time() / 86400) and sv.endless.used) or 0)),
+    spireBest = sv.spire and sv.spire.best or 0, endlessLeft = math.max(0, CFG.ENDLESS_DAILY - ((sv.endless and sv.endless.day == math.floor(os.time() / 86400) and sv.endless.used) or 0)),
     gateTiers = Content.GATE_TIERS, upTiers = Content.UP_TIERS }
 end
 

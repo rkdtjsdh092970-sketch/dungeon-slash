@@ -1304,24 +1304,6 @@ function M.charm()
 end
 
 
--- ───────── 심연 각인 (균열 조각 → 영구 보너스) ─────────
-function M.atlas()
-  C.clear()
-  local r = C.rpc:InvokeServer("atlas"); if r.summary then C.setSummary(r.summary) end
-  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
-  local v = r.view
-  local head = mk("Frame", { Size = UDim2.new(1, -16, 0, 40), BackgroundTransparency = 1 }, C.list)
-  txt(head, string.format("균열 조각 %s", n(v.shards)), 18, UDim2.new(0, 4, 0, 4), UDim2.new(0.5, 0, 0, 24), Color3.fromRGB(190, 160, 255), M.FONT)
-  txt(head, "균열 조각으로 영구 보너스를 새깁니다. 조각은 심연의 균열 등 후반 콘텐츠에서 얻습니다.", 12, UDim2.new(0.42, 0, 0, 8), UDim2.new(0.58, 0, 0, 30), Color3.fromRGB(200, 195, 225))
-  for _, a in ipairs(v.rows) do
-    local maxed = a.rank >= a.max
-    local cur = a.pct and string.format("+%d%%", math.floor(a.cur * 100 + 0.5)) or string.format("+%d", a.cur)
-    rowCard({ emoji = "◈", color = maxed and M.GOLD or Color3.fromRGB(170, 120, 255), title = string.format("%s  %d/%d", a.name, a.rank, a.max), desc = string.format("%s · 현재 %s", a.text, cur), frac = a.rank / a.max, ready = not maxed and v.shards >= a.cost,
-      btn = maxed and "최대" or string.format("새기기 %d", a.cost), btnColor = (not maxed and v.shards >= a.cost) and M.BTN.purple or M.BTN.gray,
-      click = (not maxed) and function() local e = C.rpc:InvokeServer("atlasbuy", a.id); if e.summary then C.setSummary(e.summary) end; if e.ok then C.toast("각인을 새겼습니다") else C.msg.Text = tostring(e.err) end; M.atlas() end or nil })
-  end
-end
-
 -- ───────── 스탯 ─────────
 local STAT_COL = { Color3.fromRGB(255, 200, 110), Color3.fromRGB(235, 110, 90), Color3.fromRGB(150, 140, 255), Color3.fromRGB(120, 210, 140), Color3.fromRGB(110, 200, 230), Color3.fromRGB(230, 160, 240) }
 function M.stats()
@@ -1822,7 +1804,7 @@ end
 
 require(script.Parent.GuildUI)(M, { mk = mk, corner = corner, stroke = stroke, txt = txt, area = area, box = box, pbar = pbar, n = n, C = function() return C end })   -- 길드 화면 (길이 한도 때문에 따로)
 -- 창 함수가 끝나면 Client 에 알려 새 화면을 바로 보이게 한다 (다 그리기 전엔 예전 화면이 그대로 → 깜빡임 없음)
-for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "atlas", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist", "mail", "guild" }) do
+for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist", "mail", "guild" }) do
   local f = M[k]
   if type(f) == "function" then M[k] = function(...) f(...); if C and C.done then C.done() end end end
 end

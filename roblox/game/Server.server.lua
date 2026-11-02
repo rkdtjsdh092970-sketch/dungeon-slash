@@ -46,6 +46,11 @@ local function migrate(sv, uid)
   for k, v in pairs(base) do if sv[k] == nil then sv[k] = v end end
   sv.stats = sv.stats or { kills = 0, clears = 0 }; sv.runes = sv.runes or {}; sv.q = sv.q or {}; sv.charms = sv.charms or {}
   sv.spire = sv.spire or { best = 0 }; sv.rift = sv.rift or { best = 0 }
+  if sv.atlas then   -- 심연 각인 폐지 (2026-11-02): 새긴 데 쓴 균열 조각을 돌려준다
+    local C = { gold = { 6 }, conq = { 14 }, ore = { 6 }, orb = { 8 }, shard = { 8 }, key = { 10 }, mf = { 10 }, guard = { 14 }, endless = { 60, 2.5 } }
+    for id, r in pairs(sv.atlas) do local c = C[id]; if c then for k = 0, (tonumber(r) or 0) - 1 do sv.shards = (sv.shards or 0) + math.floor(c[1] * 1.6 * (1 + k * (c[2] or 0.6)) + 0.5) end end end
+    sv.atlas = nil
+  end
   if (sv.passVer or 1) < 2 then   -- 패시브 v2 (4갈래 200노드): 예전 노드는 없어졌으므로 초기화 (포인트는 레벨로 계산되어 그대로 돌아온다)
     if next(sv.pass or {}) then sv.passNotice = true end
     sv.pass = {}; sv.passSets = nil; sv.passVer = 2
@@ -285,8 +290,6 @@ local handle = function(player, action, arg)
     local reward = {}; for k, v in pairs(arg.reward or {}) do if MAIL_KEYS[k] and tonumber(v) and tonumber(v) > 0 then reward[k] = math.floor(tonumber(v)) end end
     local id = mailSend(tostring(arg.title or ""):sub(1, 60), tostring(arg.body or ""):sub(1, 300), reward)
     return { ok = true, id = id }
-  elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
-  elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }
   elseif action == "autoclean" then return { res = Game.autoClean(sv, type(arg) == "table" and arg.after == true), summary = Game.summary(sv) }   -- after = 전투 후 자동 (always 일 때만)
   elseif action == "autoget" then return { view = Game.autoView(sv) }
