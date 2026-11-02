@@ -140,7 +140,7 @@ function M.tile(parent, size, o)
   if a then mk("ImageLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.78, 0, 0.78, 0), ScaleType = Enum.ScaleType.Fit, ImageContent = a.content, ImageTransparency = o.dim and 0.6 or 0 }, b)
   elseif o.emoji then mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = o.emoji, TextScaled = true, Font = M.FONT, TextColor3 = col, TextTransparency = o.dim and 0.6 or 0 }, b) end
   if o.label then local l = txt(b, o.label, 11, UDim2.new(0, 2, 1, -28), UDim2.new(1, -4, 0, 26), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); l.TextYAlignment = Enum.TextYAlignment.Bottom; mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
-  if o.tl then local l = txt(b, o.tl, 12, UDim2.new(0, 5, 0, 3), UDim2.new(1, -8, 0, 16), Color3.fromRGB(255, 240, 200), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
+  if o.tl then local l = txt(b, o.tl, o.tl == "▲" and 16 or 12, UDim2.new(0, 5, 0, 2), UDim2.new(1, -8, 0, 18), o.tl == "▲" and Color3.fromRGB(90, 255, 120) or Color3.fromRGB(255, 240, 200), M.FONT); l.ZIndex = 3; mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end   -- ▲ = 끼면 전투력 상승 (초록)
   if o.br then local l = txt(b, o.br, 13, UDim2.new(0, 2, 1, -18), UDim2.new(1, -6, 0, 16), Color3.fromRGB(120, 255, 140), M.FONT, Enum.TextXAlignment.Right); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, l) end
   if o.check then local c = mk("TextLabel", { Name = "Check", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(60, 190, 90), Text = "✓", TextColor3 = Color3.new(1, 1, 1), Font = M.FONT, TextSize = 14 }, b); corner(c) end
   b:SetAttribute("Sel", o.selected and true or false)
@@ -354,9 +354,9 @@ invRender = function()
       M.btn(bar, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
       M.btn(bar, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
     else
-      M.btn(bar, "여러 개 선택", UDim2.new(0, 100, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
-      M.btn(bar, "자동 분해", UDim2.new(0, 104, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
-      M.btn(bar, "자동 장착", UDim2.new(0, 104, 1, 0), M.BTN.green, function()
+      M.btn(bar, "여러 개 선택", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
+      M.btn(bar, "자동 분해", UDim2.new(0.333, -4, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
+      M.btn(bar, "자동 장착", UDim2.new(0.333, -4, 1, 0), M.BTN.green, function()
         local e = C.rpc:InvokeServer("autoequip"); if e and e.summary then C.setSummary(e.summary) end
         C.msg.Text = (e and e.n or 0) > 0 and string.format("%d칸을 더 강한 장비로 바꿨습니다 · 전투력 %s", e.n, n(e.summary and e.summary.power or 0)) or "지금이 가장 강한 조합입니다"
         invData = nil; M.inv()
