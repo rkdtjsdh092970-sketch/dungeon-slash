@@ -1568,6 +1568,7 @@ do
   if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" then if deferred(k) then later[#later + 1] = k else now[#now + 1] = k end end end end
   table.sort(now); table.sort(later)
   local done, run = 0, 0
+  Sprites.preloadIds(now)   -- 업로드한 에셋 그림은 Roblox 가 바로 보내 준다: 한 번에 미리 받아 둔다
   for _, k in ipairs(now) do
     while run >= 4 do task.wait() end
     run += 1; task.spawn(function() Sprites.art(k); run -= 1; done += 1 end)

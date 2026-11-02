@@ -92,6 +92,11 @@ function M.art(key)
   end
   artCache[key] = info; return info
 end
+-- 업로드한 에셋(id 있는 그림)을 ContentProvider 로 미리 받는다 (keys = 그림 키 목록)
+function M.preloadIds(keys)
+  local ids = {}; for _, k in ipairs(keys) do local m = ART[k]; if m and m.id then ids[#ids + 1] = m.id end end
+  if #ids > 0 then pcall(function() game:GetService("ContentProvider"):PreloadAsync(ids) end) end
+end
 -- 흑백 그림 (도감의 아직 없는 아르카나 등): 원본 픽셀을 읽어 밝기만 남긴다. 실패하면 원본
 local grayCache = {}
 function M.artGray(key)
