@@ -5,16 +5,16 @@
 // =========================================================
 const TOWN5 = [
   { id: "guild", name: "길드", box: [0.206, 0.17, 0.434, 0.47], tabs: [["길드", () => openGuild()], ["랭킹", () => openRanking()]] },
-  { id: "skillshop", name: "아르카나 소환", box: [0.455, 0.06, 0.635, 0.5], tabs: [["아르카나 소환", () => openSummon()], ["골드 상점", () => openSkillShop()]] },
+  { id: "skillshop", name: "아르카나 소환", box: [0.455, 0.06, 0.635, 0.5], tabs: [["아르카나 소환", () => openSummon()], ["아르카나 목록", () => openGachaList5()]] },
   { id: "notice", name: "업데이트 게시판", box: [0.67, 0.2, 0.815, 0.51], badge: () => typeof notesUnread === "function" && notesUnread(),
-    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
+    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도움말", () => openHelp5()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
   { id: "trainer", name: "훈련소", box: [0.0, 0.38, 0.25, 0.59], badge: () => passivePoints(save) - passiveSpent(save) > 0,
     tabs: [["패시브", () => openPassives()], ["허수아비", () => openDummy()], ["전직", () => openClass(() => {})], ["참", () => openCharms()]] },
   { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => Object.keys(save.q || {}).some((id) => save.q[id].state === "done"),
     tabs: [["퀘스트", () => openBoard()], ["일일", () => openDaily()]] },
-  { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => { SK.slot = 1; openSkills(); }]] },
-  { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화 · 재굴림", () => openItems("forge")], ["돌", () => openStones()]] },
-  { id: "shop", name: "창고", box: [0.565, 0.6, 0.837, 0.885], tabs: [["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }], ["창고", () => openStash()]] },
+  { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => openSkills()], ["룬", () => openRunes5()]] },
+  { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화", () => openItems("forge")], ["돌", () => openStones()]] },
+  { id: "shop", name: "창고", box: [0.565, 0.6, 0.837, 0.885], tabs: [["창고", () => openStash()], ["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }]] },
 ];
 // 탭 묶음 창: 건물을 누르면 첫 탭을 열고, 창 위에 탭 줄을 붙인다 (창이 다시 그려져도 유지)
 function openGroup(B, i) {
@@ -41,3 +41,8 @@ function town5Draw(g, time, hover) {
     g.restore();
   }
 }
+// 상단 메뉴도 로블록스판처럼 탭 묶음 창으로 연다 (Client topButton)
+const TOP5 = { "b-inv": { name: "장비", tabs: [["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }], ["창고", () => openStash()]] },
+  "b-skill": { name: "아르카나", tabs: [["아르카나", () => openSkills()], ["룬", () => openRunes5()]] },
+  "b-quest": { name: "퀘스트", tabs: [["퀘스트", () => openQuests(false)], ["일일", () => openDaily()]] } };
+function top5Wire() { for (const id in TOP5) { const b = document.getElementById(id); if (b) b.onclick = () => { snd("click"); if (G.grp) G.grp = null; openGroup(TOP5[id], 0); }; } }

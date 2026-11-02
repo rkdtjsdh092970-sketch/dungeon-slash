@@ -306,6 +306,83 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .h5card .kn{position:absolute;left:-4px;top:16px;font-size:11px;background:#281408;border:1px solid #c09048;border-radius:50%;width:16px;height:16px;line-height:14px;text-align:center;color:#ffe}
 .h5empty{display:none}
 .grpbar{display:flex;gap:4px;justify-content:center;margin:-2px 0 6px;flex-wrap:wrap}.grpbar .tab{font-size:13px;padding:2px 12px}
+
+/* ---- 5.0 가방 (로블록스판 배치) ---- */
+.bag5{display:flex;gap:8px;height:392px}
+.box5{position:relative;background:#100c0ce6;border:1.5px solid #785c30;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.bh5{height:27px;line-height:27px;padding:0 10px;background:linear-gradient(#461612,#1c0a09);color:#ffdc8c;font-weight:700;font-size:15px;text-shadow:0 1px 2px #000;border-bottom:1px solid #966e32;flex:none;white-space:nowrap;overflow:hidden}
+.bh5.sm{height:22px;line-height:22px;font-size:13px}
+.box5.bl{width:232px;flex:none}.box5.bm{flex:1;min-width:0}.box5.br{width:292px;flex:none}
+.doll5{position:relative;height:286px;flex:none}
+.sil5{position:absolute;left:70px;top:26px;width:92px;height:262px}.sil5 i{position:absolute;left:24px;top:6px;width:44px;height:44px;border-radius:50%;background:#3c2c1e99}.sil5 b{position:absolute;left:16px;top:70px;width:60px;height:150px;border-radius:24px;background:#3c2c1e99}
+.d5{position:absolute;border:2px solid #4a4038;border-radius:6px;background:#1c1214;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.d5 img{max-width:80%;max-height:80%;object-fit:contain}.d5.empty{opacity:.45;cursor:default}.d5.empty img{opacity:.35}
+.d5 span{position:absolute;bottom:1px;font-size:9px;color:#c8b8a0}.d5 em{position:absolute;left:3px;top:1px;font-size:11px;font-style:normal;color:#fff;text-shadow:0 0 3px #000}.d5 small{position:absolute;right:3px;bottom:1px;font-size:10px;color:#ffd98a;text-shadow:0 0 3px #000}
+.d5.sel{box-shadow:0 0 0 2px #fff,0 0 10px #ffd24a}
+.bl .pv,.bl .presets{margin:2px 6px}
+.curs5{display:grid;grid-template-columns:1fr 1fr;gap:3px 6px;padding:4px 8px;margin-top:auto}.cur5{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;overflow:hidden}.cur5 img{width:20px;height:20px}
+.tabs5{display:flex;gap:3px;padding:5px 6px 3px}.t5{flex:1;height:32px;background:#1e1816;border:1px solid #5a4628;border-radius:5px;color:#ffebc8;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}.t5:first-child{flex:1.4}.t5 img{width:24px;height:24px}.t5.on{background:#782824;border:2px solid #c49e52}
+.g5{flex:1;overflow-y:auto;padding:4px 6px;align-content:start}
+.bar5{display:flex;gap:6px;padding:6px}.bar5 .btn{flex:1;font-size:12px!important;white-space:nowrap;padding:2px 4px!important}
+.det5{flex:1;overflow-y:auto;padding:6px 8px;font-size:13px}.cmp5{margin-top:8px;border-top:1px dashed #785c30;padding-top:4px;opacity:.9}
+
+/* ---- 5.0 아르카나 창 (로블록스판 Menus.skills) ---- */
+.arc5{display:flex;gap:8px;height:392px}
+.tbl5{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;border:1.5px solid rgba(150,100,210,.7);border-radius:8px;background:linear-gradient(#2c143e,#0e0814);overflow:hidden}
+.arcbg5{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.th5{position:relative;height:26px;padding:4px 14px 0;color:#e1c3ff;font-weight:700;font-size:15px;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000;display:flex;align-items:center;gap:6px;flex:none}
+.set5{margin-left:auto;display:flex;gap:4px;align-items:center}.set5 b{color:#ffe18c;font-size:13px;margin-right:2px}.set5 .btn{width:30px;font-size:13px!important}
+.flt5{margin-left:auto;display:flex;gap:4px;align-items:center}.flt5 .btn{width:54px;font-size:12px!important;white-space:nowrap}
+.srt5{height:22px;background:#0c0812;border:1px solid #9664d2;border-radius:12px;color:#dcc8ff;font-size:12px;padding:0 8px;cursor:pointer;white-space:nowrap;font-weight:700}
+.eqrow5{position:relative;display:flex;gap:12px;align-items:flex-start;padding:4px 14px 0;height:136px;flex:none}
+.es5{position:relative;width:88px;height:130px;flex:none;border-radius:8px}
+.es5.over{box-shadow:0 0 0 3px #ffe08a,0 0 16px #c080ff}
+.bt5{position:absolute;left:-2px;right:-2px;top:-2px;height:18px;line-height:16px;z-index:8;text-align:center;font-size:11px;font-weight:700;color:#ebf0ff;background:#46506a;border:1px solid #c8d7eb;border-radius:4px;box-sizing:border-box}
+.sep5{width:3px;height:120px;background:rgba(214,168,70,.7);flex:none}
+.emp5{position:relative;width:100%;height:100%;background:#100a18;border:1.5px solid rgba(150,100,210,.5);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box}
+.emp5 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.25}.emp5 span{position:relative;font-size:12px;font-weight:700;color:#beaadc;line-height:1.35}
+.ac5{position:relative;cursor:pointer;flex:none;border-radius:8px;box-shadow:0 0 0 1.5px color-mix(in srgb,var(--rc) 60%,transparent);transition:transform .08s}.ac5 .acard{width:100%;height:100%}
+.ac5:hover{transform:translateY(-3px);box-shadow:0 0 0 2.5px var(--rc)}.ac5.sel{box-shadow:0 0 0 3px #ffe18c}
+.ac5 .acbadge{display:none}
+.lv5{position:absolute;left:3px;top:3px;z-index:4;font-style:normal;background:rgba(20,12,8,.85);color:#ffe196;border-radius:4px;font-size:11px;font-weight:700;padding:0 4px;line-height:15px}
+.sn5{position:absolute;right:3px;top:3px;z-index:4;font-style:normal;background:#c8963c;color:#140c08;border-radius:50%;width:16px;height:16px;font-size:11px;font-weight:700;text-align:center;line-height:16px}
+.og5 .lv5{font-size:9px;line-height:12px;padding:0 3px}.og5 .sn5{width:14px;height:14px;line-height:14px;font-size:10px}
+.og5 .ac5 .acname{font-size:8px;padding:6px 1px 2px}
+.og5{position:relative;flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,60px);grid-auto-rows:88px;gap:8px;align-content:start;padding:6px 10px;scrollbar-color:#9664d2 transparent}
+.ar5{width:292px;flex:none;overflow-y:auto;padding:12px;font-size:13px;position:relative}
+.adh5{display:flex;gap:10px}.adh5 .acard{width:92px;height:136px;flex:none}.adn5{font-size:20px;color:#fff;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000;display:block;line-height:26px}
+.tg5{color:#beafd2;font-size:13px;margin:2px 0}
+.ag5{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;margin-top:2px}.ag5 div{display:flex;flex-direction:column;line-height:1.05}.ag5 small{color:#a091b4;font-size:11px}.ag5 b{font-size:13px;color:#fff}
+.adesc5{background:#180e20;border:1px solid rgba(110,80,150,.7);border-radius:6px;padding:8px 10px;margin-top:8px;font-size:13px;line-height:1.4;color:#ebe4f5;height:104px;overflow-y:auto}
+.pw5{font-size:12px;color:#e6dcaa;margin:6px 0 4px;min-height:16px}
+.ab5{display:grid;grid-template-columns:repeat(3,84px);gap:6px}.ab5 .btn{height:40px;font-size:12px!important;line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 2px!important}.ab5 small{font-size:11px;font-weight:700}
+.rule5{width:100%;height:34px;margin-top:6px;font-size:14px!important}
+.rg5{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,76px);grid-auto-rows:76px;gap:6px;padding:6px;align-content:start}
+.rt5{position:relative;border-radius:8px;border:2px solid var(--rc);overflow:hidden;cursor:pointer;background:#140c18}.rt5.sel{border-color:#ffe18c;box-shadow:0 0 8px #ffe18c}
+.rt5 img{width:100%;height:100%;object-fit:cover}.rt5 i{position:absolute;left:3px;top:1px;font-style:normal;color:#be9cff;text-shadow:0 0 3px #000}
+.rt5 span{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,#000d 50%);font-size:10px;font-weight:700;text-align:center;padding:8px 1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rh5{margin:6px 10px;height:44px;background:#1c1632;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 10px;flex:none}.rh5 b{color:#ffe18c;font-size:14px}.rh5 .btn{height:34px;font-size:12px!important}
+.rl5{flex:1;overflow-y:auto;padding:0 10px 8px;display:flex;flex-direction:column;gap:6px}
+.rr5{display:flex;align-items:center;gap:8px;height:58px;background:#1a1220;border:1.5px solid #7864be;border-radius:8px;padding:0 8px 0 10px;flex:none}.rr5>div{flex:1;min-width:0;display:flex;flex-direction:column}.rr5 b{color:#bea0ff;font-size:15px}.rr5 small{color:#d7d2eb;font-size:12px}.rr5 .btn{width:88px;height:36px}
+.tg84{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,84px);grid-auto-rows:84px;gap:6px;padding:6px;align-content:start}
+.tl5{position:relative;border-radius:10px;border:2.5px solid var(--rc);overflow:hidden;background:linear-gradient(color-mix(in srgb,var(--rc) 45%,#000),#161024)}.tl5 img{position:absolute;left:11%;top:11%;width:78%;height:78%;object-fit:contain}.tl5.dim5 img{opacity:.35;filter:grayscale(.6)}
+.tl5 em{position:absolute;left:5px;top:2px;font-style:normal;font-size:11px;font-weight:700;color:#fff0c8;text-shadow:0 0 2px #000,0 0 2px #000}.tl5 u{position:absolute;right:4px;bottom:16px;text-decoration:none;font-size:12px;font-weight:700;color:#78ff8c;text-shadow:0 0 2px #000,0 0 2px #000}
+.tl5 span{position:absolute;left:2px;right:2px;bottom:2px;font-size:11px;font-weight:700;text-align:center;text-shadow:0 0 2px #000,0 0 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hl5{height:392px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 4px}.hc5{background:#100c0ce6;border:1.5px solid #785c30;border-radius:6px;padding:6px 12px}.hc5 b{color:#ffdc8c;font-size:15px}.hc5 p{margin:3px 0;font-size:13px;color:#e8dcc8}
+.bh5 .set5{font-size:12px}.bh5 .set5 .btn{width:26px;height:20px;font-size:12px!important;line-height:1}.bh5{display:flex;align-items:center}
+.det5 .dbtns{gap:4px;margin-top:6px}.det5 .dbtns .btn{padding:0 4px!important;font-size:12px!important;line-height:1.15;min-height:34px}
+/* ---- 5.0 제련소 ---- */
+.forge5{display:flex;flex-direction:column;gap:6px;height:392px}.ftop5{flex-direction:row!important;align-items:center;gap:12px;padding:4px 10px;height:30px;flex:none;font-size:13px}.fc5{display:flex;align-items:center;gap:3px;white-space:nowrap}.fc5 img{width:18px;height:18px}
+.fbody5{display:flex;gap:8px;flex:1;min-height:0}.fl5{width:250px;flex:none}.fr5b{flex:1;min-width:0;padding:6px 10px;overflow-y:auto}
+.fsw5{display:flex;gap:4px;padding:4px 6px}.fsw5 .btn{flex:1;font-size:12px!important}.flist5{flex:1;overflow-y:auto;padding:2px 6px;display:flex;flex-direction:column;gap:4px}
+.fr5{display:flex;gap:8px;align-items:center;padding:3px;border:1px solid #46341e;border-radius:6px;background:#1a1412;cursor:pointer}.fr5.on{background:#462e16;border:2px solid #c49e52}.fr5 .tile{width:44px;height:44px;flex:none}.fr5 small{display:block;font-size:11px;color:#aa9b87}.fr5 b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.fh5{display:flex;justify-content:space-between;align-items:baseline;font-size:17px;margin-bottom:4px}
+.enh5{display:flex;align-items:center;gap:10px;background:#1c1410;border-radius:8px;padding:8px 10px}.enh5>b{font-size:20px;color:#ffdc78;white-space:nowrap}.enh5 .btn{margin-left:auto}
+.cost5{display:inline-flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap}.cost5 img{width:16px;height:16px}
+.afh5{display:flex;gap:10px;align-items:baseline;margin:8px 0 4px}.afh5 b{color:#ffe18c}.afh5 small{color:#e6c88c;font-size:11px}
+.afl5{display:flex;flex-direction:column;gap:4px}.af5{display:flex;align-items:center;gap:8px;background:#1c1410;border-radius:6px;padding:4px 6px;font-size:13px}.af5.rr{border:2px solid #c49e52}
+.tb5{min-width:30px;text-align:center;border-radius:4px;color:#140c08;font-size:12px;padding:1px 0}.at5{flex:1;min-width:0}.rrt{font-style:normal;font-size:11px;color:#ffd778}
+.orb5{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.orb5 .btn{flex:1;font-size:12px!important;min-width:110px}
 </style></head><body>
 <div id="ttpop" class="hidden"></div>
 <div id="app">
@@ -318,7 +395,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
  <span class="cur" id="t-shard-w" data-tipk="shard"><img class="ico" id="is" width="16" height="16"><span id="t-shard"></span></span>
  <span class="cur" id="t-orb-w" data-tipk="orbC"><img class="ico" id="iorb" width="16" height="16"><span id="t-orb"></span></span>
  <span class="srvdot" id="t-srv" title="서버 연결 상태">☁</span><span class="sp"></span><span id="t-world"></span>
- <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">스킬</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-rank">랭킹</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
+ <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">아르카나</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-rank">랭킹</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
 <div id="townbar" class="hidden"><span class="tname"></span></div>
 <div id="mappanel" class="hidden"></div>
 <div id="guide" class="hidden"></div>
@@ -1993,7 +2070,7 @@ const START_KITS = { warrior: { wt: "sword", skills: ["strike", "rend", "smash"]
 const START_ARCANA = 90, BASIC_GRANTS = [["strike", 1], ["arcbolt", 1]];
 function grantBasics(sv) {   // 레벨이 되면 받는 평타 (일격 · 비전 탄)
   const got = [], have = new Set(sv.skills.map((k) => k.id));
-  for (const [id, lv] of BASIC_GRANTS) if ((sv.level || 1) >= lv && !have.has(id) && SKILLS.some((d) => d.id === id)) { sv.skills.push({ uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }); have.add(id); got.push(id); }
+  for (const [id, lv] of BASIC_GRANTS) if (!((SKILLS.find((d) => d.id === id) || {}).dtype === (sv.startClass === "warrior" ? "mag" : sv.startClass === "mage" ? "phys" : "-")) && ((sv.level || 1) >= lv && !have.has(id) && SKILLS.some((d) => d.id === id))) { sv.skills.push({ uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }); have.add(id); got.push(id); }
   return got;
 }
 function pickStart(sv, cls) {
@@ -2001,7 +2078,7 @@ function pickStart(sv, cls) {
   const w = genItem(sv, 1, 0, "weapon"), T = WTYPES[K.wt]; w.wt = K.wt; w.base = {}; if (T.atk) w.base.atk = T.atk; if (T.mag) w.base.mag = T.mag; sv.equipped.weapon = w;
   sv.skills = []; sv.loadout = [null, null, null, null]; sv.slots = Math.max(sv.slots || 4, 4);
   K.skills.forEach((id, i) => { const k = { uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }; sv.skills.push(k); sv.loadout[i] = { uid: k.uid, rule: "front" }; });
-  grantBasics(sv); sv.hone = (sv.hone || 0) + START_ARCANA; sv.startClass = cls; sv.needStart = false;
+  sv.startClass = cls; grantBasics(sv); sv.hone = (sv.hone || 0) + START_ARCANA; sv.needStart = false;
   return true;
 }
 // 확인하지 않은 돌(수천 개까지 쌓인다)은 개수로 줄여 저장한다: 서버 세이브가 커져 로그인이 느려지는 것을 막는다
@@ -5943,7 +6020,7 @@ function socketBlock(it) {
   if (!it.sock) return "";
   return `<div class="socks">` + it.sock.map((m, i) => m ? `<div class="sock on" style="border-color:${stoneT(m).color}88">${stoneName(m)} <small class="dim">(고정 · 회수 불가)</small>${IB.mode === "forge" ? ` <button class="btn xs warn" data-a="sockdel" data-i="${i}">삭제</button>` : ""}</div>` : `<div class="sock">◇ 빈 소켓${IB.mode === "forge" ? ` <button class="btn xs" data-a="sockpick" data-i="${i}">끼우기</button>` : ""}</div>`).join("") + `</div>`;
 }
-function itemDetail(it) {
+function itemDetail(it, cmpOnly) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = null, t = 0;
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
@@ -5954,6 +6031,7 @@ function itemDetail(it) {
   h += satHtml(it) + socketBlock(it);
 
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = Math.pow(p1 / p0, 1 / PW5.FIT_G) - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
+  if (cmpOnly) return h;
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
   // 장착 버튼: 전투력이 얼마나 오르는지(수치·%)와 어떤 장비를 대체하는지 함께 보여준다. 반지는 1번/2번 칸을 직접 고른다
@@ -5969,6 +6047,7 @@ function itemDetail(it) {
     h += `<button class="btn orbb" data-a="divine" ${!it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
+  if (IB.mode === "inv") h += `<button class="btn" data-a="gofor">강화하기<br><small>제련소</small></button>`;
   if (IB.mode === "inv") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매<br><small>${fmtN(itemValue(it))}G</small></button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
   if (false) h += "";
   return h + `</div>`;
@@ -6004,13 +6083,20 @@ function renderItems() {
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 돌 (${save.stones.length})</button>${charmUnlocked(save) ? charmBar() : ""}` : `<button class="btn pri wide1" data-a="stones">💎 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}<option value="9" ${IB.rar === 9 ? "selected" : ""}>사탄</option></select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
+  if (m === "inv") return renderBag5(list, nUp);   // 5.0: 로블록스판 가방 창
+  if (m === "forge") return renderForge5(list);   // 5.0: 로블록스판 제련소
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${invMax(save)}</div></div>
   <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
   const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
-  Modal.open(html, { cls: "wide", on: Object.assign({
+  Modal.open(html, { cls: "wide", on: itemHandlers(list) });
+}
+function itemHandlers(list) {
+  const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
+  const done = () => { saveGame(); refreshTop(); renderItems(); };
+  return Object.assign({
     pick: (el) => { IB.sel = find(el); renderItems(); }, tab: (el) => { IB.tab = el.dataset.t; renderItems(); },
     frar: (el) => { IB.rar = +el.value; renderItems(); }, fsort: (el) => { IB.sort = el.value; renderItems(); }, flock: () => { IB.lockOnly = !IB.lockOnly; renderItems(); },
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
@@ -6031,7 +6117,52 @@ function renderItems() {
       const a = IB.sel.affixes[i]; if (a && a.t === 0 && !rerollLocked(IB.sel, i)) askConfirm(`이 옵션은 <b style="color:#ffd070">1티어(최고 티어)</b>입니다.<br>정말 재굴림하시겠습니까?<br><small class="dim">${affText(a)}</small>`, "재굴림", doIt, true, () => renderItems()); else doIt(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
-  }, presetHandlers(renderItems)) });
+    gofor: () => { const it = IB.sel; IB.mode = "forge"; IB.sel = it; renderItems(); },
+  }, presetHandlers(renderItems));
+}
+// ---------- 5.0 가방 (로블록스판 Menus.invRender 배치) ----------
+const DOLL5 = { helm: [86, 30, 60, 60], neck: [160, 44, 44, 44], weapon: [14, 74, 60, 136], armor: [84, 98, 64, 112], ring: [160, 106, 44, 44], ring2: [160, 160, 44, 44], gloves: [14, 222, 60, 60], boots: [158, 222, 60, 60] };
+const SLOT_ICON5 = { weapon: "i_weapon", helm: "i_helm", armor: "i_armor", gloves: "i_gloves", boots: "i_boots", ring: "i_ring", ring2: "i_ring", neck: "i_neck" };
+function renderBag5(list, nUp) {
+  const eq = Object.values(save.equipped).filter(Boolean), byU = new Set(eq.map((e) => e.uid));
+  const doll = Object.entries(DOLL5).map(([s, p]) => { const it = save.equipped[s], col = it ? itemColor(it) : null;
+    return `<div class="d5 ${it ? tcls(it) : "empty"} ${IB.sel === it && it ? "sel" : ""}" style="left:${p[0]}px;top:${p[1]}px;width:${p[2]}px;height:${p[3]}px;${col ? `border-color:${col}` : ""}" ${it ? `data-a="pick" data-u="${it.uid}" data-tipu="${it.uid}"` : ""}>
+      <img src="${artURL(it ? (it.slot === "weapon" && it.wt === "staff" ? "i_staff" : SLOT_ICON5[s]) : SLOT_ICON5[s]) || ""}" alt="">${it ? (it.enh ? `<em>+${it.enh}</em>` : "") + `<small>T${it.ilvl}</small>` : `<span>${SLOT_NAME[s === "ring2" ? "ring" : s]}</span>`}</div>`; }).join("");
+  const cur = (k, ic, nm, v, col) => `<div class="cur5" data-tipk="${k}"><img src="${artURL(ic) || ""}" alt=""><b style="color:${col}">${nm} ${fmtN(v || 0)}</b></div>`;
+  const L = `<div class="box5 bl"><div class="bh5">착용 중${setTabs5("gear", renderItems)}</div><div class="doll5"><div class="sil5"><i></i><b></b></div>${doll}</div>
+    <div class="curs5">${cur("gold", "i_gold", "골드", save.gold, "#ffd76e")}${cur("ore", "i_ore", "강화석", save.ore, "#96aac8")}${cur("orbC", "i_chaos", "혼돈", save.orbC, "#e65a50")}${cur("orbD", "i_divine", "신성", save.orbD, "#ffe08a")}${cur("hone", "i_arcana", "아르카나", save.hone, "#ffa0dc")}${cur("stones", "i_stone", "돌", save.stones.length, "#a0dcff")}</div></div>`;
+  const tabs = ["all", ...SLOTS].map((t) => `<button class="t5 ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}" title="${t === "all" ? "전체" : SLOT_NAME[t]}">${t === "all" ? "전체" : `<img src="${artURL(SLOT_ICON5[t]) || ""}" alt="">`}</button>`).join("");
+  const grid = list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`;
+  const bar = IB.multi ? `<button class="btn pri" data-a="msell">${IB.chk.size}개 판매</button><button class="btn" data-a="mdis">${IB.chk.size}개 분해</button><button class="btn" data-a="mall">전부 선택</button><button class="btn" data-a="mtog">취소</button>`
+    : `<button class="btn" data-a="mtog">골라서 정리</button><button class="btn" data-a="autodis">자동 분해</button><button class="btn pri" data-a="recommend">자동 장착${nUp ? ` <i class="tri">▲${nUp}</i>` : ""}</button>`;
+  const B = `<div class="box5 bm"><div class="bh5">가방 ${save.inv.length} / ${invMax(save)} <button class="btn xs" data-a="openstash" style="float:right">창고</button></div><div class="tabs5">${tabs}</div><div class="grid g5">${grid}</div><div class="bar5">${bar}</div></div>`;
+  const it = IB.sel, ce = it && !byU.has(it.uid) ? (it.slot === "ring" ? save.equipped.ring || save.equipped.ring2 : save.equipped[it.slot]) : null;
+  const R = `<div class="box5 br"><div class="bh5">장비 정보</div><div class="det5">${IB.multi ? multiPanel(list) : it ? itemDetail(it) + (ce ? `<div class="cmp5"><div class="bh5 sm">착용 중 (비교)</div>${itemDetail(ce, true)}</div>` : "") : `<div class="dim pad">가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.</div>`}</div></div>`;
+  Modal.open(`<h2>장비</h2><div class="bag5">${L}${B}${R}</div>`, { cls: "wide", on: itemHandlers(list) });
+}
+
+// ---------- 5.0 제련소 (로블록스판 Menus.forge 배치) ----------
+const TIER_COL5 = ["#ffd24a", "#ff9a3a", "#c07aff", "#5aa0ff", "#7ad07a", "#aaaaaa"];
+function renderForge5() {
+  const rows = IB.fbag ? save.inv.slice().sort((a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity) : EQ_SLOTS.map((k) => save.equipped[k]).filter(Boolean);
+  if (!IB.sel || !rows.includes(IB.sel)) IB.sel = rows[0] || null; const sel = IB.sel;
+  const cur = (ic, v, col, nm) => `<span class="fc5"><img src="${artURL(ic) || ""}" alt=""><b style="color:${col}">${nm} ${fmtN(v || 0)}</b></span>`;
+  const top = `<div class="box5 ftop5"><span class="dim">보유</span>${cur("i_gold", save.gold, "#ffdc78", "골드")}${cur("i_ore", save.ore, "#c8dcff", "강화석")}${cur("i_chaos", save.orbC, "#dcaaff", "혼돈")}${cur("i_divine", save.orbD, "#ffe08a", "신성")}${cur("i_stone", save.stones.length, "#a0dcff", "돌")}${save.sockTix ? `<span class="fc5">🔏 <b>인장 ${save.sockTix}</b></span>` : ""}</div>`;
+  const L = `<div class="box5 fl5"><div class="fsw5"><button class="btn ${IB.fbag ? "" : "pri"}" data-a="fbag" data-v="0">착용 장비</button><button class="btn ${IB.fbag ? "pri" : ""}" data-a="fbag" data-v="1">가방 장비</button></div><div class="flist5">${rows.map((it) =>
+    `<div class="fr5 ${it === sel ? "on" : ""}" data-a="pick" data-u="${it.uid}">${tileHtml(it, { up: false })}<div><small>${SLOT_NAME[it.slot]}</small><b class="${RCLS(it)}">${itemTitle(it)}</b></div></div>`).join("") || `<div class="dim pad">${IB.fbag ? "가방이 비어 있습니다" : "착용한 장비가 없습니다"}</div>`}</div></div>`;
+  let R = `<div class="box5 fr5b"><div class="dim pad">장비를 고르세요</div></div>`;
+  if (sel) {
+    const c = enhCost(sel), rate = ENH_RATE[sel.enh || 0], rc = rerollCost(sel), anyRR = sel.rrIdx != null, y = dismantleYield(sel);
+    const ok = (v, have) => have >= v ? "#fff" : "#ff7878";
+    const aff = sel.affixes.map((a, i) => { const locked = rerollLocked(sel, i), t = a.t != null ? a.t : null;
+      return `<div class="af5 ${anyRR && !locked ? "rr" : ""}"><b class="tb5" style="background:${t != null ? TIER_COL5[Math.min(5, t)] : "#5a5a5a"}">${t != null ? "T" + (t + 1) : "–"}</b><span class="at5">${affText(a)}${affRangeText(sel, a)}</span>
+        ${locked ? "" : `${anyRR ? `<i class="rrt">★ 재굴림 줄</i>` : ""}<span class="cost5">${iconImg("gold", 1)}${fmtN(rc.gold)} ${iconImg("ore", 1)}${rc.ore}</span><button class="btn xs" data-a="reroll" data-i="${i}">재굴림</button>`}</div>`; }).join("");
+    R = `<div class="box5 fr5b"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>
+      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn pri" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
+      <div class="afh5"><b>옵션</b><small>${anyRR ? "금빛 줄만 재굴림할 수 있습니다" : "재굴림할 줄을 하나 고르세요 — 그 뒤로는 그 줄만 재굴림됩니다"}</small></div><div class="afl5">${aff}${socketBlock(sel)}</div>
+      <div class="orb5"><button class="btn" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
+  }
+  Modal.open(`<h2>제련소</h2><div class="forge5">${top}<div class="fbody5">${L}${R}</div></div>`, { cls: "wide", on: Object.assign(itemHandlers(rows), { fbag: (el) => { IB.fbag = el.dataset.v === "1"; IB.sel = null; renderItems(); } }) });
 }
 
 // ---------- 일괄 정리 ----------
@@ -6075,76 +6206,10 @@ function openStats() {
 
 // ---------- 스킬 정비 (카드형) ----------
 const skCost = (sk, st) => Math.round((sk.mana || 0) * st.manaCostMul * 10) / 10;
-// 스킬창의 등급 효과 줄: 등급이 올라가면 숫자만이 아니라 동작이 바뀐다는 것을 보여 준다
-function rarityFxText(inst, sk) {
-  if (sk.kind === "passive") return `${SKILL_RARITY[inst.rarity].name} 패시브`;
-  const R = SKILL_RARITY[inst.rarity], o = [`${R.name} 등급`, `피해 ×${R.mult}`, `쿨타임 ×${R.cdMul}`];
-  if (sk.hits > 1) o.push(`${sk.hits}연타`); if (R.bonusMul > 1) o.push(`추가 피해 ×${R.bonusMul}`);
-  if (inst.rarity >= 3) o.push(["", "", "", "화염의 문양", "사탄의 낙인", "종말의 각인"][inst.rarity]);
-  return o.join(" · ");
-}
 function skTags(sk, st) {
   if (sk.kind === "passive") return `<span class="chip buff">패시브</span>`;
   const nm = { phys: "물리", mag: "마법", buff: "버프", heal: "회복" }[sk.dtype] || "물리", cl = { phys: "phys", mag: "mag", buff: "buff", heal: "buff" }[sk.dtype] || "phys";
   return `<span class="chip ${cl}">${nm}</span>${sk.elem ? `<span class="chip" style="background:${ELEM_COLOR[sk.elem]}33;color:${ELEM_COLOR[sk.elem]}">${ELEM_NAME[sk.elem]}</span>` : ""}<span class="chip mana">마나 ${skCost(sk, st)}</span>`;
-}
-function openSkills() {
-  const st = computeStats(save), lo = save.loadout, used = new Set(lo.filter(Boolean).map((l) => l.uid));
-  const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
-  const lvTxt = (inst) => `Lv.${inst.lvl || 1}${(inst.lvl || 1) < SKILL_MAX_LV ? ` <small>(${inst.dup || 0}/${inst.lvl || 1})</small>` : ""}`;
-  // 위: 장착 칸 (타로 카드)
-  const slotCard = (i) => {
-    const lab = i === 4 ? "패시브" : (i + 1) + (i === 0 ? " 평타" : "");
-    if (i < 4 && i >= save.slots) return `<div class="sks locked"><div class="skn">${lab}</div><div class="sk-empty">🔒<small>${SLOT_HINT[i]}</small></div></div>`;
-    const l = i === 4 ? (save.passive ? { uid: save.passive } : null) : lo[i], inst = l && save.skills.find((x) => x.uid === l.uid);
-    if (!inst) return `<div class="sks ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="skn">${lab}</div><div class="sk-empty">비어 있음<small>눌러서 고르기</small></div></div>`;
-    const sk = skillOf(inst);
-    return `<div class="sks ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}" data-tips="${sk.id}"><div class="skn">${lab}</div>${arcCard(inst.id, inst.rarity, { badge: "Lv." + (inst.lvl || 1) })}
-      ${i < 4 ? `<select data-i="rule" data-s="${i}">${RULE_ORDER.map((r) => `<option value="${r}" ${l.rule === r ? "selected" : ""}>${RULES[r]}</option>`).join("")}</select>` : ""}${i > 0 ? `<button class="btn xs" data-a="clear" data-s="${i}">해제</button>` : ""}</div>`;
-  };
-  const cards = [0, 1, 2, 3, 4].map(slotCard).join("");
-  used.add(save.passive);
-  const want = SK.slot === 4 ? "passive" : SK.slot === 0 ? "basic" : "active";
-  const TABS = want === "active" ? [["all", "전체"], ["single", "단일"], ["aoe", "범위"], ["dot", "지속 · 소환"], ["sup", "지원"]] : [["all", "전체"]];
-  const tabOf = (d) => ["buff", "heal"].includes(d.dtype) || ["buff", "heal"].includes(d.kind) ? "sup" : ["zone", "zone2", "aura", "orbit", "rain", "summon", "trap", "hole", "shuri"].includes(d.kind) ? "dot" : ["single", "bounce"].includes(d.kind) ? "single" : "aoe";
-  if (!TABS.some((t) => t[0] === SK.tab)) SK.tab = "all";
-  const SORTS = [["r", "등급"], ["dps", "초당 피해"], ["lv", "레벨"]]; SK.sort = SK.sort || "r";
-  const owned = save.skills.filter((x) => { const d = SKILLS.find((q) => q.id === x.id); return d && d.slot === want && (SK.tab === "all" || tabOf(d) === SK.tab); }).map((inst) => ({ inst, sk: skillOf(inst) }));
-  for (const o of owned) o.dps = o.sk.dtype === "buff" || o.sk.dtype === "heal" || want === "passive" ? 0 : dpsOf(o.sk);
-  owned.sort((a, b) => SK.sort === "dps" ? b.dps - a.dps : SK.sort === "lv" ? (b.inst.lvl || 1) - (a.inst.lvl || 1) || b.inst.rarity - a.inst.rarity : b.inst.rarity - a.inst.rarity || b.dps - a.dps);
-  const grid = owned.map(({ inst, sk, dps }) => { const eqi = lo.findIndex((l) => l && l.uid === inst.uid);
-    return `<div class="skg ${SK.sel === inst.uid ? "picked" : ""} ${used.has(inst.uid) ? "used" : ""}" data-a="picksk" data-u="${inst.uid}" data-tips="${inst.id}">${arcCard(inst.id, inst.rarity, { badge: eqi >= 0 ? (eqi + 1) + "번" : save.passive === inst.uid ? "P" : "" })}<div class="skgl">${lvTxt(inst)}${dps ? ` · <span class="dps">${fmtPow(dps)}</span>` : ""}</div></div>`; }).join("");
-  const sel = save.skills.find((x) => x.uid === SK.sel), det = (() => {
-    if (!sel) return `<div class="skdet"><div class="dim center pad">카드를 누르면 설명이 보이고,<br>[장착] 으로 ${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸에 넣습니다.</div></div>`;
-    const sk = skillOf(sel), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === sel.uid), typeOk = d.slot === want, slotOk = SK.slot === 4 || SK.slot < save.slots, dup = typeOk && SK.slot !== 4 ? skillDupSlot(save, sel, SK.slot) : -1;
-    const bon = Object.keys(sk.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(sk.bonus[k] * 100)}%`).join(", "), dps = d.slot === "passive" ? 0 : dpsOf(sk);
-    const can = typeOk && slotOk && dup < 0 && (SK.slot === 4 ? save.passive !== sel.uid : eqi !== SK.slot);
-    const lab = dup >= 0 ? `같은 스킬이 ${dup + 1}번 칸에` : !typeOk ? (d.slot === "basic" ? "평타는 1번 칸만" : d.slot === "passive" ? "패시브 칸 전용" : "2~4번 칸 전용") : SK.slot === 4 ? (save.passive === sel.uid ? "장착 중" : "패시브 칸에 장착") : eqi === SK.slot ? "장착 중" : `${SK.slot + 1}번 칸에 장착`;
-    return `<div class="skdet"><div class="dh">${arcCard(sel.id, sel.rarity, { cls: sel.rarity >= 2 ? "glow" + sel.rarity : "" })}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><div class="rfx rk${sel.rarity}">${rarityFxText(sel, sk)}</div>
-      <div class="skkv">레벨 <b>${sel.lvl || 1}</b>${(sel.lvl || 1) < SKILL_MAX_LV ? ` <small class="dim">다음 레벨까지 같은 스킬 ${(sel.lvl || 1) - (sel.dup || 0)}장</small>` : " (최대)"}</div>
-      <div class="skkv">쿨타임 <b>${sk.cd.toFixed(1)}초</b> · 피해 <b>${Math.round(sk.mult * 100)}%</b>${dps ? ` · 초당 <b class="dps">${fmtPow(dps)}</b>` : ""}</div>${sk.rune ? `<div class="skkv" style="color:${sk.rune.color}">${sk.rune.name}</div>` : ""}</div></div>
-      <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${can ? "" : "disabled"}>${lab}</button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? "룬 바꾸기" : "룬 장착"}</button>
-      <button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || save.passive === sel.uid || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 || save.passive === sel.uid ? "장착 중" : "조각 +" + skillDisYield(sel)}</small></button>
-      <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div></div>`;
-  })();
-  const tabs = TABS.length > 1 ? TABS.map(([k, n]) => `<button class="tab ${SK.tab === k ? "on" : ""}" data-a="sktab" data-t="${k}">${n}</button>`).join("") : "";
-  const sorts = SORTS.map(([k, n]) => `<button class="btn xs ${SK.sort === k ? "pri" : ""}" data-a="sksort" data-t="${k}">${n}</button>`).join(" ");
-  Modal.open(`<h2>아르카나</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
-  <div class="dim center" style="font-size:12px">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 · 전투에서는 위 4칸만 씁니다 (1번 = 평타)</div><div class="skslots">${cards}</div>
-  <div class="skbar"><b>${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸용 ${want === "basic" ? "평타" : want === "passive" ? "패시브" : "스킬"} ${owned.length}</b> ${tabs} <span style="margin-left:auto">정렬 ${sorts}</span></div><div class="skbot"><div class="skgrid2">${grid || `<div class="dim pad">이 칸에 넣을 스킬이 없습니다 — [소환]에서 얻으세요</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
-    sktab: (el) => { SK.tab = el.dataset.t; openSkills(); }, sksort: (el) => { SK.sort = el.dataset.t; openSkills(); }, gosum: () => openSummon(),
-    slot: (el) => { SK.slot = +el.dataset.s; const l = SK.slot === 4 ? (save.passive ? { uid: save.passive } : null) : save.loadout[SK.slot]; SK.sel = l ? l.uid : null; if (l) snd("click"); openSkills(); },   // 장착 중인 스킬 카드를 눌러도 정보가 보인다
-    picksk: (el) => { SK.sel = +el.dataset.u; snd("click"); openSkills(); },
-    autosk: () => openAutoSkill(),
-    dissk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) 분해해 <b style="color:#ffe08a">연마석 ${skillDisYield(inst)}개</b>를 얻을까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "분해", () => { const h = dismantleSkill(save, inst); if (h == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 분해할 수 없습니다", "bad"); return; } if (SK.sel === inst.uid) SK.sel = null; snd("coin"); toast(`분해: 연마석 +${h}`, "ok"); saveGame(); refreshTop(); openSkills(); }); },
-    sellsk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) <b style="color:#ffe08a">${fmtN(skillSellValue(inst))}G</b>에 판매할까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "판매", () => { const v = sellSkill(save, inst); if (v == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 팔 수 없습니다", "bad"); return; } SK.sel = null; snd("coin"); toast(`+${fmtN(v)}G`, "ok"); saveGame(); refreshTop(); openSkills(); }, false); },
-    ahpostsk: (el) => ahPostSkill(save.skills.find((x) => x.uid === +el.dataset.u), openSkills),
-    clear: (el, ev) => { ev.stopPropagation(); if (+el.dataset.s === 4) save.passive = null; else save.loadout[+el.dataset.s] = null; saveGame(); openSkills(); },
-    rule: (el) => { const i = +el.dataset.s; if (save.loadout[i]) save.loadout[i].rule = el.value; saveGame(); },
-    equipsk: (el) => { setTimeout(() => { if (typeof tutEvent === "function" && SK.slot === 3 && save.loadout[3]) tutEvent("equipsk"); }, 0); if (SK.slot === 4) { save.passive = +el.dataset.u; snd("equip"); toast("패시브 칸에 장착했습니다", "ok"); saveGame(); openSkills(); return; } if (SK.slot >= save.slots) return; const u = +el.dataset.u; { const si = save.skills.find((x) => x.uid === u), dj = si ? skillDupSlot(save, si, SK.slot) : -1; if (dj >= 0) { toast(`같은 스킬이 이미 ${dj + 1}번 칸에 장착되어 있습니다`, "bad"); snd("error"); return; } } const j = save.loadout.findIndex((l) => l && l.uid === u); const prev = save.loadout[SK.slot]; if (j >= 0 && j !== SK.slot) save.loadout[j] = j === 0 ? save.loadout[j] : null; save.loadout[SK.slot] = { uid: u, rule: (prev && prev.rule) || "front" }; snd("equip"); toast("장착했습니다", "ok"); saveGame(); openSkills(); },
-    hone: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u), cost = honeCost(inst.lvl || 1, inst.rarity); if ((inst.lvl || 1) >= SKILL_MAX_LV || save.hone < cost) return; save.hone -= cost; inst.lvl = (inst.lvl || 1) + 1; snd("enh_ok"); toast(`${SKILLS.find((x) => x.id === inst.id).name} Lv.${inst.lvl}`, "ok"); saveGame(); openSkills(); },
-    rune: (el) => openRunePicker(+el.dataset.u),
-  }, presetHandlers(openSkills)) });
 }
 
 // ---------- 패시브 (방사형 트리) ----------
@@ -6999,7 +7064,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-063003";
+const BUILD_ID = "20261103-064651";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7306,22 +7371,172 @@ function openCharms(back) {
 }
 
 // =========================================================
+// 5.0 아르카나 창 (로블록스판 Menus.skills 와 같은 배치 · 기능)
+//  왼쪽 보랏빛 탁자: 장착한 아르카나 (1번 = 평타, 끌어다 놓기) + 세트 1·2·3 · 보유 아르카나 (분류 · 정렬)
+//  오른쪽: 고른 아르카나 정보 (큰 카드 · 수치 · 설명 · 칸 버튼과 전투력 변화 · 분해 · 대상 규칙)
+//  룬 탭 (로블록스판 Menus.runes): 왼쪽 아르카나 고르기 · 오른쪽 내 룬
+// =========================================================
+const ARC5 = { sel: null, filter: "all", sort: "rar" };
+const SK_RCOL5 = ["#aaaab4", "#5096ff", "#ff9628", "#be5aff", "#e62832"];
+// 세트 (로블록스판 Game.setSwitch): 장비 · 아르카나 · 패시브를 따로 3벌씩. 바꾸면 지금 것을 저장하고 고른 세트를 불러온다
+function setSwitch5(sv, kind, i) {
+  sv.sets = sv.sets || {}; const cur = sv.sets[kind] || 0; if (cur === i) return;
+  sv.presets = sv.presets || [null, null, null]; for (let j = 0; j < 3; j++) if (!sv.presets[j]) sv.presets[j] = { equip: {}, loadout: [] };
+  const P = sv.presets;
+  if (kind === "gear") {
+    const saveE = (k) => { P[k].equip = Object.fromEntries(EQ_SLOTS.filter((s) => sv.equipped[s]).map((s) => [s, sv.equipped[s].uid])); P[k].eqSet = true; };
+    saveE(cur); if (P[i].eqSet) { for (const s of EQ_SLOTS) if (sv.equipped[s]) { sv.inv.push(sv.equipped[s]); delete sv.equipped[s]; }
+      for (const s of EQ_SLOTS) { const u = P[i].equip[s], j = u != null ? sv.inv.findIndex((x) => x.uid === u) : -1; if (j >= 0) sv.equipped[s] = sv.inv.splice(j, 1)[0]; } } else saveE(i);
+  } else if (kind === "skill") {
+    const saveL = (k) => { P[k].loadout = [0, 1, 2, 3].map((j) => { const l = sv.loadout[j]; return l ? { uid: l.uid, rule: l.rule } : null; }); P[k].loSet = true; };
+    saveL(cur); if (P[i].loSet) { const seen = new Set(); sv.loadout = [0, 1, 2, 3].map((j) => { const l = P[i].loadout[j], k = l && sv.skills.find((x) => x.uid === l.uid); if (!k || seen.has(k.id) || j >= (sv.slots || 4)) return null; seen.add(k.id); return { uid: l.uid, rule: l.rule || "front" }; }); } else saveL(i);
+  } else { sv.passSets = sv.passSets || []; sv.passSets[cur] = Object.assign({}, sv.pass || {}); sv.pass = Object.assign({}, sv.passSets[i] || {}); }
+  sv.sets[kind] = i;
+}
+function setTabs5(kind, after) {
+  const cur = (save.sets && save.sets[kind]) || 0;
+  setTimeout(() => { for (const b of $$(`#mbox [data-set5="${kind}"]`)) b.onclick = (ev) => { ev.stopPropagation(); const i = +b.dataset.i; if (i === cur) return; setSwitch5(save, kind, i); snd("equip"); toast(`세트 ${i + 1}`); saveGame(); refreshTop(); after(); }; }, 0);
+  return `<span class="set5"><b>세트</b>${[0, 1, 2].map((i) => `<button class="btn xs ${i === cur ? "gold" : ""}" data-set5="${kind}" data-i="${i}">${i + 1}</button>`).join("")}</span>`;
+}
+function arcPowerDelta(inst, slot) {   // 그 칸에 넣었을 때 전투력 변화
+  const lo0 = save.loadout.map((l) => l && Object.assign({}, l)), p0 = powerScore5(save);
+  const j = save.loadout.findIndex((l) => l && l.uid === inst.uid); if (j >= 0) save.loadout[j] = null;
+  const dj = skillDupSlot(save, inst, slot); if (dj >= 0) save.loadout[dj] = null;
+  save.loadout[slot] = { uid: inst.uid, rule: "front" }; const p1 = powerScore5(save); save.loadout = lo0; return p1 - p0;
+}
+function openSkills() {
+  const st = computeStats(save), slots = save.slots || 4, lo = save.loadout;
+  const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
+  const slotOf = (uid) => lo.findIndex((l) => l && l.uid === uid);
+  const card = (inst, w, h) => { const j = slotOf(inst.uid), d = SKILLS.find((x) => x.id === inst.id) || {};
+    return `<div class="ac5 ${ARC5.sel === inst.uid ? "sel" : ""} ${j >= 0 ? "eqd" : ""}" style="width:${w}px;height:${h}px;--rc:${SK_RCOL5[inst.rarity] || SK_RCOL5[0]}" data-a="asel" data-u="${inst.uid}" draggable="true" data-drag="${inst.uid}" data-k="${d.slot || ""}">${arcCard(inst.id, inst.rarity, {})}<i class="lv5">Lv${inst.lvl || 1}</i>${j >= 0 ? `<i class="sn5">${j + 1}</i>` : ""}</div>`; };
+  // 장착 칸
+  let eq = "";
+  for (let i = 0; i < slots; i++) {
+    if (i === 1) eq += `<div class="sep5"></div>`;
+    const l = lo[i], inst = l && save.skills.find((x) => x.uid === l.uid);
+    eq += `<div class="es5" data-drop="${i}">${inst ? card(inst, 88, 130) : `<div class="emp5"><img src="${artURL("cardback") || ""}" alt=""><span>${i === 0 ? "평타" : i + 1 + "번 칸"}<br>비어 있음<br>(끌어다 놓기)</span></div>`}${i === 0 ? `<div class="bt5">BASIC ATTACK</div>` : ""}</div>`;
+  }
+  // 보유
+  const F = [["all", "전체"], ["phys", "물리"], ["mag", "마법"], ["eq", "장착 중"], ["basic", "평타"]];
+  const rows = save.skills.map((inst) => ({ inst, d: SKILLS.find((x) => x.id === inst.id) })).filter((r) => r.d);
+  const shown = rows.filter(({ inst, d }) => ARC5.filter === "all" || (ARC5.filter === "eq" && slotOf(inst.uid) >= 0) || (ARC5.filter === "basic" && d.slot === "basic") || (ARC5.filter === "phys" && d.dtype === "phys") || (ARC5.filter === "mag" && d.dtype === "mag"));
+  for (const r of shown) r.dps = r.d.slot === "passive" || r.d.dtype === "buff" || r.d.dtype === "heal" ? 0 : dpsOf(skillOf(r.inst));
+  shown.sort((a, b) => ((slotOf(b.inst.uid) >= 0) - (slotOf(a.inst.uid) >= 0)) || (ARC5.sort === "dps" ? b.dps - a.dps : ARC5.sort === "lvl" ? (b.inst.lvl || 1) - (a.inst.lvl || 1) : 0) || b.inst.rarity - a.inst.rarity || (b.inst.lvl || 1) - (a.inst.lvl || 1));
+  const grid = shown.map(({ inst }) => card(inst, 60, 88)).join("") || `<div class="dim pad">이 분류에 아르카나가 없습니다.</div>`;
+  const SN = { rar: "등급", dps: "초당 피해", lvl: "레벨" };
+  const left = `<div class="tbl5"><canvas class="arcbg5" width="572" height="392"></canvas><div class="th5">장착한 아르카나 (${slots}칸)${setTabs5("skill", openSkills)}</div><div class="eqrow5">${eq}</div>
+    <div class="th5 r2">보유 ${rows.length}<span class="flt5"><button class="srt5" data-a="asrt">⇅ 정렬: ${SN[ARC5.sort]}</button>${F.map(([k, n]) => `<button class="btn xs ${ARC5.filter === k ? "gold" : ""}" data-a="aflt" data-f="${k}">${n}</button>`).join("")}</span></div><div class="og5">${grid}</div></div>`;
+  // 오른쪽 정보
+  let right = `<div class="dim pad">아르카나 카드를 누르면 위력 · 쿨타임 · 사거리 · 범위 · 설명이 나옵니다.<br>카드를 위 칸으로 끌어다 놓으면 장착됩니다.<br>새 아르카나는 마을의 [아르카나 소환]에서 얻습니다.</div>`;
+  const sel = ARC5.sel && save.skills.find((x) => x.uid === ARC5.sel);
+  if (sel) {
+    const sk = skillOf(sel), d = sk.def, R = SKILL_RARITY[sel.rarity], dps = d.slot === "passive" ? 0 : dpsOf(sk), j = slotOf(sel.uid), isBasic = d.slot === "basic";
+    const tags = [isBasic ? "평타" : "아르카나", d.dtype === "mag" ? "마법" : d.dtype === "phys" ? "물리" : "지원"]; if (d.elem && ELEM_NAME[d.elem]) tags.push(ELEM_NAME[d.elem]);
+    const area = { single: "단일", multi: "3x3", pierce: "한 줄", chain: "연쇄", nova: "화면 전체", meteor: "무작위 범위", zone: "장판", zone2: "장판", aura: "앞줄", orbit: "주변", rain: "무작위", spray: "무작위", summon: "앞줄", bounce: "튕김", cone: "부채꼴", trap: "덫" }[d.kind] || "–";
+    const fx = []; const BN = { boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" };
+    for (const k in sk.bonus || {}) if (BN[k] && sk.bonus[k]) fx.push(`${BN[k]}에게 피해 +${Math.round(sk.bonus[k] * 100)}%`);
+    if ((sk.hits || 1) > 1) fx.push(`${sk.hits}연타`); if (sk.count) fx.push(`${sk.count}발`); if (sk.jumps) fx.push(`${sk.jumps}번 튕김`); if (sk.dur) fx.push(`${sk.dur.toFixed(1)}초 지속`);
+    if (sk.lifesteal > 0) fx.push(`흡혈 ${Math.round(sk.lifesteal * 100)}%`);
+    for (const [k, n] of [["bleed", "출혈"], ["poison", "중독"], ["ignite", "점화"]]) if (sk[k] > 0) fx.push(`${n} 확률 ${Math.round(Math.min(1, sk[k]) * 100)}%`); if (sk.chill > 0) fx.push(`둔화 ${sk.chill.toFixed(1)}초`); if (sk.power > 0) fx.push(`효과 ${Math.round(sk.power * 100)}%`);
+    const btns = [], parts = [];
+    if (d.slot !== "passive") for (let i = 0; i < slots; i++) if ((i === 0) === isBasic && j !== i) { const dv = arcPowerDelta(sel, i); parts.push(`${i === 0 ? "평타" : i + 1 + "번"} ${dv >= 0 ? "▲+" : "▼"}${fmtN(Math.abs(dv))}`);
+      btns.push(`<button class="btn blue" data-a="aeq" data-s="${i}">${i === 0 ? "평타 칸" : i + 1 + "번 칸으로"}<small style="color:${dv >= 0 ? "#82ff96" : "#ff786e"}">${dv >= 0 ? "▲" : "▼"}${fmtN(Math.abs(dv))}</small></button>`); }
+    if (j < 0 && !isBasic) btns.push(`<button class="btn pri" data-a="dissk" data-u="${sel.uid}">분해</button>`);
+    const RN = { front: "앞줄", auto: "자동", boss: "보스 먼저", ranged: "원거리 먼저", elite: "정예 먼저", normal: "일반 먼저" };
+    const rule = j >= 0 && lo[j] ? lo[j].rule || "front" : null;
+    right = `<div class="adh5">${arcCard(sel.id, sel.rarity, {})}<div style="min-width:0"><b class="adn5">${d.name}</b><div style="color:${SK_RCOL5[sel.rarity]};font-weight:700">${R.name} · Lv ${sel.lvl || 1} / ${SKILL_MAX_LV}${(sel.lvl || 1) < SKILL_MAX_LV ? `  (중복 ${sel.dup || 0}/${sel.lvl || 1})` : ""}</div><div class="tg5">${tags.join(" · ")}</div>
+      <div class="ag5"><div><small>초당 피해</small><b style="color:#ffc86e">${dps ? fmtPow(dps) : "–"}</b></div><div><small>1회 위력</small><b>${Math.round(sk.mult * 100)}%</b></div><div><small>쿨타임</small><b>${sk.cd.toFixed(1)}초</b></div><div><small>사거리</small><b>${sk.range ? sk.range + "칸" : "–"}</b></div><div><small>범위</small><b>${area}</b></div><div><small>마나</small><b>${sk.mana ? Math.round(sk.mana) : "없음"}</b></div></div></div></div>
+      <div class="adesc5">${d.desc}${fx.length ? "<br><br>• " + fx.join("<br>• ") : ""}${sk.rune ? `<br><br>룬: ${sk.rune.name}` : ""}</div>
+      <div class="pw5">${parts.length ? "장착하면 전투력:  " + parts.join("   ") : isBasic ? "평타 — 1번 칸에만 넣을 수 있습니다" : "아르카나 — 2~4번 칸에 넣습니다"}</div>
+      <div class="ab5">${btns.join("")}</div>${rule ? `<button class="btn gold rule5" data-a="arule">대상: ${RN[rule] || rule}  (눌러서 바꾸기)</button>` : ""}`;
+  }
+  Modal.open(`<h2>아르카나</h2><div class="arc5">${left}<div class="box5 ar5">${right}</div></div>`, { cls: "wide", on: {
+    asel: (el) => { ARC5.sel = +el.dataset.u; snd("click"); openSkills(); },
+    aflt: (el) => { ARC5.filter = el.dataset.f; openSkills(); }, asrt: () => { ARC5.sort = { rar: "dps", dps: "lvl", lvl: "rar" }[ARC5.sort]; openSkills(); },
+    aeq: (el) => arcEquip(ARC5.sel, +el.dataset.s),
+    arule: () => { const RL = ["front", "auto", "boss", "ranged", "elite", "normal"], l = save.loadout[slotOf(ARC5.sel)]; if (!l) return; l.rule = RL[(RL.indexOf(l.rule || "front") + 1) % RL.length]; saveGame(); snd("click"); openSkills(); },
+    dissk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; const h = dismantleSkill(save, inst); if (h == null) return toast("장착 중이거나 세트에 포함된 아르카나는 분해할 수 없습니다", "bad"); ARC5.sel = null; snd("coin"); toast(`분해 · 아르카나 조각 +${h}`, "ok"); saveGame(); refreshTop(); openSkills(); },
+  } });
+  arc5Wire();
+}
+function arcEquip(uid, slot) {
+  const inst = save.skills.find((x) => x.uid === uid); if (!inst) return; const d = SKILLS.find((x) => x.id === inst.id);
+  if (d.slot === "passive") return;
+  if ((slot === 0) !== (d.slot === "basic")) { toast(slot === 0 ? "1번 칸에는 평타만 넣을 수 있습니다" : "평타는 1번 칸에만 넣을 수 있습니다", "bad"); snd("error"); return; }
+  if (slot >= (save.slots || 4)) return;
+  const dj = skillDupSlot(save, inst, slot); if (dj >= 0) save.loadout[dj] = null;
+  const j = save.loadout.findIndex((l) => l && l.uid === uid), prev = save.loadout[slot]; if (j >= 0) save.loadout[j] = j === 0 ? save.loadout[j] : null;
+  save.loadout[slot] = { uid, rule: (prev && prev.rule) || "front" };
+  snd("equip"); saveGame(); refreshTop(); ARC5.sel = uid; openSkills();
+  if (slot === 3 && typeof tutEvent === "function") tutEvent("equipsk");
+}
+function arc5Wire() {   // 끌어다 놓기 + 뒤에서 도는 마법진 · 룬 고리 · 피어오르는 마력 입자
+  for (const el of $$("#mbox [data-drag]")) el.addEventListener("dragstart", (e) => { e.dataTransfer.setData("text/plain", el.dataset.drag); });
+  for (const el of $$("#mbox [data-drop]")) { el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("over"); }); el.addEventListener("dragleave", () => el.classList.remove("over")); el.addEventListener("drop", (e) => { e.preventDefault(); arcEquip(+e.dataTransfer.getData("text/plain"), +el.dataset.drop); }); }
+  const cv = $("#mbox .arcbg5"); if (!cv) return; const g = cv.getContext("2d"), t0 = performance.now();
+  const L = [["fx_mc_main", 1, 90, 0.18], ["fx_mc_runes", 1.18, -140, 0.14], ["fx_mc_inner", 0.42, 60, 0.2]], P = [];
+  const tint = (im) => { if (!im || !im.width) return null; const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d"); x.drawImage(im, 0, 0); x.globalCompositeOperation = "source-atop"; x.fillStyle = "rgb(170,120,255)"; x.fillRect(0, 0, c.width, c.height); return c; };
+  const IM = L.map((l) => tint(artGet(l[0])));
+  const tick = () => { if (!cv.isConnected) return; const t = (performance.now() - t0) / 1000, W = cv.width, H = cv.height; g.clearRect(0, 0, W, H);
+    L.forEach((l, i) => { const im = IM[i]; if (!im) return; const s = 520 * l[1]; g.save(); g.globalAlpha = l[3] * (i === 0 ? 0.75 + 0.25 * Math.sin(t * 1.05) : 1); g.translate(W / 2, H * 0.55); g.rotate(t * Math.PI * 2 / l[2]); g.drawImage(im, -s / 2, -s / 2, s, s); g.restore(); });
+    if (Math.random() < 0.07) P.push({ x: Math.random() * W, y: H, vx: (Math.random() - 0.5) * 10, vy: -(0.6 + Math.random() * 0.4) * H / 4.5, r: 1 + Math.random() * 1.5, t: 0, life: 3 + Math.random() * 3 });
+    for (let i = P.length - 1; i >= 0; i--) { const p = P[i]; p.t += 1 / 60; if (p.t > p.life) { P.splice(i, 1); continue; } g.fillStyle = `rgba(200,170,255,${0.7 * (1 - p.t / p.life)})`; g.beginPath(); g.arc(p.x + p.vx * p.t, p.y + p.vy * p.t, p.r, 0, 7); g.fill(); }
+    requestAnimationFrame(tick); };
+  tick();
+}
+// 룬 탭 (로블록스판 Menus.runes): 왼쪽 아르카나 고르기 · 오른쪽 내 룬 (끼우기 · 빼기)
+const RUNE5 = { sel: null };
+function openRunes5() {
+  const sk = save.skills.filter((k) => { const d = SKILLS.find((x) => x.id === k.id); return d && d.slot !== "passive"; });
+  if (RUNE5.sel == null || !sk.some((k) => k.uid === RUNE5.sel)) RUNE5.sel = sk[0] ? sk[0].uid : null;
+  const sel = sk.find((k) => k.uid === RUNE5.sel), runes = save.runes || [];
+  const tiles = sk.map((k) => { const d = SKILLS.find((x) => x.id === k.id); return `<div class="rt5 ${k.uid === RUNE5.sel ? "sel" : ""}" data-a="rsel" data-u="${k.uid}" style="--rc:${SK_RCOL5[k.rarity] || SK_RCOL5[0]}"><img src="${artURL("card_s_" + k.id) || ""}" alt="">${k.rune ? `<i>◆</i>` : ""}<span>${d.name}</span></div>`; }).join("") || `<div class="dim pad">아직 아르카나가 없습니다. 마을의 [아르카나 소환]에서 얻으세요.</div>`;
+  let R;
+  if (!sel) R = `<div class="dim pad">아르카나마다 룬을 하나 끼울 수 있고, 룬은 아르카나의 동작을 바꿉니다 (쿨타임 · 위력 · 범위 · 출혈 · 점화 …).<br><br>룬은 균열과 보스 전투에서 나옵니다. 먼저 아르카나를 얻고 왼쪽에서 고르세요.</div>`;
+  else { const sd = SKILLS.find((x) => x.id === sel.id), cur = sel.rune && RUNES[sel.rune];
+    R = `<div class="rh5"><b>${sd.name} · ${cur ? "룬: " + cur.name : "룬 없음"}</b>${cur ? `<button class="btn pri" data-a="runoff">룬 빼기</button>` : ""}</div><div class="rl5">${runes.length ? runes.map((r) => { const D = RUNES[r.id] || {}; return `<div class="rr5"><div><b>◆ ${D.name || r.id}</b><small>${D.text || ""}</small></div><button class="btn purple" data-a="runin" data-u="${r.uid}">끼우기</button></div>`; }).join("") : `<div class="dim pad">아직 룬이 없습니다. 전투에서 얻을 수 있습니다.</div>`}</div>`; }
+  Modal.open(`<h2>아르카나</h2><div class="arc5"><div class="box5" style="flex:1"><div class="bh5">아르카나 고르기</div><div class="rg5">${tiles}</div></div><div class="box5" style="flex:1"><div class="bh5">내 룬 (${runes.length})</div>${R}</div></div>`, { cls: "wide", on: {
+    rsel: (el) => { RUNE5.sel = +el.dataset.u; snd("click"); openRunes5(); },
+    runoff: () => { if (sel.rune) save.runes.push({ uid: save.nextUid++, id: sel.rune }); sel.rune = null; saveGame(); snd("click"); openRunes5(); },
+    runin: (el) => { const ru = save.runes.find((x) => x.uid === +el.dataset.u); if (!ru) return; save.runes = save.runes.filter((x) => x !== ru); if (sel.rune) save.runes.push({ uid: save.nextUid++, id: sel.rune }); sel.rune = ru.id; saveGame(); snd("equip"); openRunes5(); },
+  } });
+}
+// 아르카나 목록 탭 (로블록스판 Menus.gachalist): 소환에서 나오는 모든 아르카나 · 가진 것은 레벨
+function openGachaList5() {
+  const list = SKILLS.filter((d) => GACHA_TIER[d.id] != null).sort((a, b) => (GACHA_TIER[a.id] - GACHA_TIER[b.id]) || ((a.unlock || 0) - (b.unlock || 0)) || (a.id < b.id ? -1 : 1));
+  const own = (id) => save.skills.find((k) => k.id === id); const n = list.filter((d) => own(d.id)).length;
+  const tiles = list.map((d) => { const t = GACHA_TIER[d.id], k = own(d.id), c = SK_RCOL5[t];
+    return `<div class="tl5 ${k ? "" : "dim5"}" style="--rc:${c}"><img src="${artURL("card_s_" + d.id) || ""}" alt=""><em>${SKILL_RARITY[t].name}</em>${k ? `<u>Lv${k.lvl || 1}</u>` : ""}<span>${d.name}</span></div>`; }).join("");
+  Modal.open(`<h2>아르카나 소환</h2><div class="box5" style="height:392px"><div class="bh5">소환 가능한 아르카나 ${list.length}종 · 보유 ${n}</div><div class="tg84">${tiles}</div></div>`, { cls: "wide" });
+}
+// 도움말 탭 (로블록스판 views.help)
+function openHelp5() {
+  const C = (t, L) => `<div class="hc5"><b>${t}</b>${L.map((x) => `<p>${x}</p>`).join("")}</div>`;
+  Modal.open(`<h2>안내소</h2><div class="hl5">${C("게임 흐름", ["영웅은 자동으로 싸웁니다. 아르카나 · 장비 · 패시브로 강해져서 점점 더 높이 올라가세요.", "초원 1~5 → 심연의 균열 1~100층 (전투에서 경험치) · 균열 20/40/80/100층에 보스 관문이 열리고 평타를 떨어뜨립니다 (열쇠는 열쇠 몬스터에게서) → 100층 졸업 → 끝없는 균열 · 보물고"])}
+  ${C("전투력 올리는 법 (중요한 순서)", ["1) 장비: 가방에서 [자동 장착]. 초록 ▲ 는 더 좋은 장비입니다. 무기 · 장갑 · 목걸이가 가장 중요합니다.", "2) 아르카나: 1번 칸은 평타 (새 평타 · 레벨업은 보스 관문에서). 2~4번 칸에는 내 계열(물리 · 마법) 아르카나를 소환에서 얻어 넣으세요. 같은 아르카나가 또 나오면 레벨이 오릅니다.", "3) 패시브: 레벨마다 1점. 무기에 맞는 갈래(힘 · 비전)부터, 또는 [자동 배분].", "4) 강화: 제련소에서 장비 강화 · 재굴림. 좋은 옵션(공격력 · 주문력 · 내 피해 종류 · 치명)을 남기세요.", "5) 레벨: 균열 층을 처음 깰 때마다 레벨이 오릅니다. 막히면 아래층에서 장비를 모으세요."])}
+  ${C("막혔을 때", ["지도 창의 [권장 전투력]과 내 전투력을 비교하세요. 낮으면 위 순서대로 강해지세요.", "원거리 몬스터에게 많이 맞으면 사거리가 긴 아르카나를, 몬스터가 많으면 범위 아르카나를 섞으세요.", "자동 반복(결과 화면)을 켜면 같은 층을 계속 돌며 장비와 조각을 모읍니다."])}
+  ${C("재화", ["골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 아르카나 소환 (1회 10개, 10회 90개).", "안 쓰는 장비는 분해해 강화석을, 안 쓰는 아르카나는 분해해 아르카나 조각을 얻으세요. 가방의 [자동 분해]를 켜면 전투마다 정리됩니다."])}
+  ${C("매일 할 일", ["퀘스트 게시판에서 일일 목표를, 우편함에서 보상을 받으세요. 끝없는 균열은 하루 입장 횟수가 정해져 있습니다."])}</div>`, { cls: "wide" });
+}
+
+// =========================================================
 // 5.0 마을 (로블록스판 Client.lua BUILD 와 같은 건물 · 위치 · 탭 묶음)
 // 건물은 마을 그림(bg_town)에 그려져 있다. box = 그림 기준 영역 (x0, y0, x1, y1). 비슷한 기능은 한 건물에 탭으로 묶는다
 // 오른쪽 위 건물(로블록스판 Info Desk)은 웹판에서는 업데이트 게시판 (게시판 · 우편함 · 도감 · 기록)
 // =========================================================
 const TOWN5 = [
   { id: "guild", name: "길드", box: [0.206, 0.17, 0.434, 0.47], tabs: [["길드", () => openGuild()], ["랭킹", () => openRanking()]] },
-  { id: "skillshop", name: "아르카나 소환", box: [0.455, 0.06, 0.635, 0.5], tabs: [["아르카나 소환", () => openSummon()], ["골드 상점", () => openSkillShop()]] },
+  { id: "skillshop", name: "아르카나 소환", box: [0.455, 0.06, 0.635, 0.5], tabs: [["아르카나 소환", () => openSummon()], ["아르카나 목록", () => openGachaList5()]] },
   { id: "notice", name: "업데이트 게시판", box: [0.67, 0.2, 0.815, 0.51], badge: () => typeof notesUnread === "function" && notesUnread(),
-    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
+    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도움말", () => openHelp5()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
   { id: "trainer", name: "훈련소", box: [0.0, 0.38, 0.25, 0.59], badge: () => passivePoints(save) - passiveSpent(save) > 0,
     tabs: [["패시브", () => openPassives()], ["허수아비", () => openDummy()], ["전직", () => openClass(() => {})], ["참", () => openCharms()]] },
   { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => Object.keys(save.q || {}).some((id) => save.q[id].state === "done"),
     tabs: [["퀘스트", () => openBoard()], ["일일", () => openDaily()]] },
-  { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => { SK.slot = 1; openSkills(); }]] },
-  { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화 · 재굴림", () => openItems("forge")], ["돌", () => openStones()]] },
-  { id: "shop", name: "창고", box: [0.565, 0.6, 0.837, 0.885], tabs: [["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }], ["창고", () => openStash()]] },
+  { id: "skill", name: "아르카나 공방", box: [0.06, 0.53, 0.335, 0.85], tabs: [["아르카나", () => openSkills()], ["룬", () => openRunes5()]] },
+  { id: "forge", name: "제련소", box: [0.338, 0.53, 0.553, 0.87], tabs: [["강화", () => openItems("forge")], ["돌", () => openStones()]] },
+  { id: "shop", name: "창고", box: [0.565, 0.6, 0.837, 0.885], tabs: [["창고", () => openStash()], ["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }]] },
 ];
 // 탭 묶음 창: 건물을 누르면 첫 탭을 열고, 창 위에 탭 줄을 붙인다 (창이 다시 그려져도 유지)
 function openGroup(B, i) {
@@ -7348,6 +7563,11 @@ function town5Draw(g, time, hover) {
     g.restore();
   }
 }
+// 상단 메뉴도 로블록스판처럼 탭 묶음 창으로 연다 (Client topButton)
+const TOP5 = { "b-inv": { name: "장비", tabs: [["장비", () => { IB.mode = "inv"; IB.sel = null; renderItems(); }], ["창고", () => openStash()]] },
+  "b-skill": { name: "아르카나", tabs: [["아르카나", () => openSkills()], ["룬", () => openRunes5()]] },
+  "b-quest": { name: "퀘스트", tabs: [["퀘스트", () => openQuests(false)], ["일일", () => openDaily()]] } };
+function top5Wire() { for (const id in TOP5) { const b = document.getElementById(id); if (b) b.onclick = () => { snd("click"); if (G.grp) G.grp = null; openGroup(TOP5[id], 0); }; } }
 
 // =========================================================
 // 5.0 전투 화면 HUD (로블록스판 Stage.lua 와 같은 구성)
@@ -7401,8 +7621,8 @@ function hud5Tick(b) {
 const TUT5 = [
   { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[아르카나 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
     target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : document.querySelector('[data-a="s10"]:not([disabled])') },
-  { title: "스킬 칸", text: "전투에서는 위쪽 4칸에 넣은 스킬만 씁니다 (1번 = 평타, 2~4번 = 스킬). 위 메뉴 <b>[스킬]</b>에서 <b>4번 칸</b>을 누르고, 새로 뽑은 스킬을 골라 <b>[장착]</b>하세요.", ev: "equipsk",
-    target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector('[data-a="slot"]') ? document.querySelector("#modal .x") : SK.slot !== 3 ? document.querySelector('[data-a="slot"][data-s="3"]') : document.querySelector('[data-a="equipsk"]:not([disabled])') || document.querySelector('[data-a="picksk"]:not(.used)') },
+  { title: "아르카나 칸", text: "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다 (1번 = 평타, 2~4번 = 아르카나). 위 메뉴 <b>[아르카나]</b>를 열고 새로 뽑은 카드를 누른 뒤 <b>[4번 칸에]</b>를 누르세요 (카드를 칸으로 끌어다 놓아도 됩니다).", ev: "equipsk",
+    target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector(".arc5") ? document.querySelector("#modal .x") : document.querySelector('[data-a="aeq"][data-s="3"]') || document.querySelector('.og5 .ac5[data-k="active"]:not(.eqd)') },
   { title: "첫 전투", text: "창을 닫고 위쪽 <b>[🗺 지도]</b> → 반짝이는 <b>[초원 1]</b> → <b>[도전]</b>. 전투는 자동으로 진행됩니다.", ev: "battle",
     target: () => Modal.isOpen() ? document.querySelector("#modal .x") : G.screen !== "map" ? $("#b-map") : (MapView.sel && MapView.sel.id === "S1-1" ? document.querySelector('#mappanel [data-p="go"]') : { map: "S1-1" }) },
   { title: "장비 장착", text: "전투에서 장비를 얻었어요! 위 메뉴 <b>[장비]</b>를 열고 <b>[추천 장비 착용]</b>을 누르세요. 초록 ▲ 는 더 좋은 장비 표시입니다.", ev: "power", after: 1,
@@ -7462,6 +7682,7 @@ function tutTick() {
   #mbox h2{font-family:Georgia,"Times New Roman",serif;color:#f0d08a !important;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px #c08a3a66;background:${U("header")} center/100% 100% no-repeat;padding:3px 40px 4px;margin:0 auto 4px !important;max-width:460px;font-size:19px !important}
   .btn{background:transparent !important;border:10px solid transparent !important;border-image:${U("btn_gray")} 36 fill / 10px stretch !important;border-radius:0 !important;box-shadow:none !important;color:#f5e8cd !important;text-shadow:0 1px 2px #000;padding:2px 8px !important}
   .btn.pri{border-image:${U("btn_red")} 36 fill / 10px stretch !important}
+  .btn.gold{border-image:${U("btn_gold")} 36 fill / 10px stretch !important}.btn.blue{border-image:${U("btn_blue")} 36 fill / 10px stretch !important}.btn.purple{border-image:${U("btn_purple")} 36 fill / 10px stretch !important}.btn.green{border-image:${U("btn_green")} 36 fill / 10px stretch !important}
   .btn.big{padding:6px 14px !important}
   .btn:hover:not([disabled]){filter:brightness(1.18)}
   .btn[disabled]{filter:grayscale(.7) brightness(.7)}
@@ -7512,6 +7733,14 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.07", date: "11/3", title: "아르카나 · 장비 창을 로블록스판과 같게", items: [
+    "아르카나 창이 새로워졌습니다: 보랏빛 탁자 위에 장착한 아르카나 카드 (1번 = 평타), 아래에 보유 카드 (분류 · 정렬). 카드를 칸으로 끌어다 놓거나, 카드를 누르고 [n번 칸으로]를 누르면 장착됩니다. 칸마다 전투력 변화가 보입니다.",
+    "장착한 아르카나는 [대상] 버튼으로 노릴 적을 바꿉니다. 룬은 [룬] 탭에서 끼웁니다.",
+    "프리셋 대신 세트 1 · 2 · 3: 장비와 아르카나를 따로 3벌씩 저장해 바꿔 쓸 수 있습니다 (지금 구성이 세트 1).",
+    "가방 창: 왼쪽 착용 인형 · 가운데 가방 · 오른쪽 장비 정보. 제련소: 왼쪽 장비 목록 · 오른쪽 강화 · 옵션 재굴림 · 구슬.",
+    "아르카나 소환 건물에 [아르카나 목록] (소환에서 나오는 모든 아르카나), 업데이트 게시판에 [도움말] 탭이 생겼습니다.",
+    "고침: 전사로 시작해도 마법 평타(비전 탄)가 함께 들어오던 것 — 이제 내 직업 평타만 받습니다.",
+  ] },
   { ver: "5.06", date: "11/3", title: "마을 개편", items: [
     "마을 건물이 8곳으로 정리되었습니다: 길드(길드 · 랭킹) · 아르카나 소환(소환 · 골드 상점) · 업데이트 게시판(게시판 · 우편함 · 도감 · 기록) · 훈련소(패시브 · 허수아비 · 전직 · 참) · 퀘스트 게시판(퀘스트 · 일일) · 아르카나 공방 · 제련소(강화 · 돌) · 창고(장비 · 창고).",
     "건물 창 위의 탭으로 같은 건물의 다른 기능으로 바로 넘어갈 수 있습니다. 할 일이 있는 건물에는 빨간 점이 뜹니다.",
@@ -8123,6 +8352,7 @@ function bindInput() {
   $("#b-stat").onclick = () => { snd("click"); openStats(); };
   $("#b-daily").onclick = () => { snd("click"); openDaily(); };
   $("#b-codex").onclick = () => { snd("click"); CX.sel = null; openCodex(); };
+  top5Wire();
   $("#b-pause").onclick = () => { G.paused = !G.paused; $("#b-pause").textContent = G.paused ? "▶" : "❚❚"; };
   $("#b-speed").onclick = () => { G.speed = G.speed >= 3 ? 1 : G.speed + 1; $("#b-speed").textContent = "×" + G.speed; };
   $("#b-flee").onclick = () => { snd("click"); retreat(); };

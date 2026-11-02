@@ -47,6 +47,7 @@ function bindInput() {
   $("#b-stat").onclick = () => { snd("click"); openStats(); };
   $("#b-daily").onclick = () => { snd("click"); openDaily(); };
   $("#b-codex").onclick = () => { snd("click"); CX.sel = null; openCodex(); };
+  top5Wire();
   $("#b-pause").onclick = () => { G.paused = !G.paused; $("#b-pause").textContent = G.paused ? "▶" : "❚❚"; };
   $("#b-speed").onclick = () => { G.speed = G.speed >= 3 ? 1 : G.speed + 1; $("#b-speed").textContent = "×" + G.speed; };
   $("#b-flee").onclick = () => { snd("click"); retreat(); };

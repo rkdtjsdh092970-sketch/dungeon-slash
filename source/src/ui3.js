@@ -40,7 +40,7 @@ function socketBlock(it) {
   if (!it.sock) return "";
   return `<div class="socks">` + it.sock.map((m, i) => m ? `<div class="sock on" style="border-color:${stoneT(m).color}88">${stoneName(m)} <small class="dim">(고정 · 회수 불가)</small>${IB.mode === "forge" ? ` <button class="btn xs warn" data-a="sockdel" data-i="${i}">삭제</button>` : ""}</div>` : `<div class="sock">◇ 빈 소켓${IB.mode === "forge" ? ` <button class="btn xs" data-a="sockpick" data-i="${i}">끼우기</button>` : ""}</div>`).join("") + `</div>`;
 }
-function itemDetail(it) {
+function itemDetail(it, cmpOnly) {
   if (!it) return `<div class="dim center pad">아이템을 선택하세요</div>`;
   const eq = isEquipped(it), prot = isProtected(it), st = null, t = 0;
   let h = `<div class="dname">${ITEM_ICON(it)} ${itemTitle(it)}</div>`;
@@ -51,6 +51,7 @@ function itemDetail(it) {
   h += satHtml(it) + socketBlock(it);
 
   if (!eq) { const p0 = playerPower(computeStats(save)), p1 = Math.max(...slotKeys(it.slot).map((k) => powerWith(save, k, it))), d = Math.pow(p1 / p0, 1 / PW5.FIT_G) - 1; h += `<div class="cmp ${d >= 0 ? "up" : "dn"}">${canEquip(save, it) ? "" : "레벨 도달 시 "}전투력 ${d >= 0 ? "▲" : "▼"} ${Math.abs(d * 100).toFixed(1)}%</div>`; }
+  if (cmpOnly) return h;
   h += `<div class="dbtns">`;
   h += `<button class="btn" data-a="lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button>`;
   // 장착 버튼: 전투력이 얼마나 오르는지(수치·%)와 어떤 장비를 대체하는지 함께 보여준다. 반지는 1번/2번 칸을 직접 고른다
@@ -66,6 +67,7 @@ function itemDetail(it) {
     h += `<button class="btn orbb" data-a="divine" ${!it.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 재굴림</small></button>`;
   }
   if (IB.mode === "shop") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매 ${fmtN(itemValue(it))}G</button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
+  if (IB.mode === "inv") h += `<button class="btn" data-a="gofor">강화하기<br><small>제련소</small></button>`;
   if (IB.mode === "inv") { const y = dismantleYield(it); h += `<button class="btn pri" data-a="sell" ${prot ? "disabled" : ""}>판매<br><small>${fmtN(itemValue(it))}G</small></button><button class="btn" data-a="dis" ${prot ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button>`; }
   if (false) h += "";
   return h + `</div>`;
@@ -101,13 +103,20 @@ function renderItems() {
   const left = m === "inv" ? `<button class="btn pri wide1" data-a="recommend" ${nUp ? "" : "disabled"}>추천 장비 착용 ${nUp ? `<i class="tri">▲${nUp}</i>` : ""}</button>${presetRow()}<button class="btn wide1" data-a="openstat">스탯 보기</button><button class="btn wide1" data-a="stones">💎 돌 (${save.stones.length})</button>${charmUnlocked(save) ? charmBar() : ""}` : `<button class="btn pri wide1" data-a="stones">💎 돌 (${save.stones.length})</button><div class="pad dim">${m === "forge" ? "강화 실패 시 강화석 일부만 소모됩니다.<br>혼돈 구슬은 균열·지옥·무한 균열에서 얻습니다." : "판매·분해로 골드와 강화석을 얻습니다. 잠금·프리셋 장비는 팔리지 않습니다."}</div>`;
   const tabs = ["all", ...SLOTS].map((t) => `<button class="tab ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}">${t === "all" ? "전체" : SLOT_NAME[t]}</button>`).join("");
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}<option value="9" ${IB.rar === 9 ? "selected" : ""}>사탄</option></select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
+  if (m === "inv") return renderBag5(list, nUp);   // 5.0: 로블록스판 가방 창
+  if (m === "forge") return renderForge5(list);   // 5.0: 로블록스판 제련소
   const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${invMax(save)}</div></div>
   <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
   const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
   const done = () => { saveGame(); refreshTop(); renderItems(); };
-  Modal.open(html, { cls: "wide", on: Object.assign({
+  Modal.open(html, { cls: "wide", on: itemHandlers(list) });
+}
+function itemHandlers(list) {
+  const find = (el) => { const u = +el.dataset.u; return save.inv.find((x) => x.uid === u) || EQ_SLOTS.map((s) => save.equipped[s]).find((x) => x && x.uid === u); };
+  const done = () => { saveGame(); refreshTop(); renderItems(); };
+  return Object.assign({
     pick: (el) => { IB.sel = find(el); renderItems(); }, tab: (el) => { IB.tab = el.dataset.t; renderItems(); },
     frar: (el) => { IB.rar = +el.value; renderItems(); }, fsort: (el) => { IB.sort = el.value; renderItems(); }, flock: () => { IB.lockOnly = !IB.lockOnly; renderItems(); },
     lock: () => { IB.sel.lock = !IB.sel.lock; snd("click"); done(); },
@@ -128,7 +137,52 @@ function renderItems() {
       const a = IB.sel.affixes[i]; if (a && a.t === 0 && !rerollLocked(IB.sel, i)) askConfirm(`이 옵션은 <b style="color:#ffd070">1티어(최고 티어)</b>입니다.<br>정말 재굴림하시겠습니까?<br><small class="dim">${affText(a)}</small>`, "재굴림", doIt, true, () => renderItems()); else doIt(); },
     chaos: () => { const a = addAffix(save, IB.sel); if (a) { snd("orb"); toast(`옵션 추가: ${a.name}`, "ok"); } else snd("error"); done(); },
     divine: () => { if (divineItem(save, IB.sel)) { snd("orb"); toast("옵션 수치가 다시 굴려졌습니다", "ok"); } else snd("error"); done(); },
-  }, presetHandlers(renderItems)) });
+    gofor: () => { const it = IB.sel; IB.mode = "forge"; IB.sel = it; renderItems(); },
+  }, presetHandlers(renderItems));
+}
+// ---------- 5.0 가방 (로블록스판 Menus.invRender 배치) ----------
+const DOLL5 = { helm: [86, 30, 60, 60], neck: [160, 44, 44, 44], weapon: [14, 74, 60, 136], armor: [84, 98, 64, 112], ring: [160, 106, 44, 44], ring2: [160, 160, 44, 44], gloves: [14, 222, 60, 60], boots: [158, 222, 60, 60] };
+const SLOT_ICON5 = { weapon: "i_weapon", helm: "i_helm", armor: "i_armor", gloves: "i_gloves", boots: "i_boots", ring: "i_ring", ring2: "i_ring", neck: "i_neck" };
+function renderBag5(list, nUp) {
+  const eq = Object.values(save.equipped).filter(Boolean), byU = new Set(eq.map((e) => e.uid));
+  const doll = Object.entries(DOLL5).map(([s, p]) => { const it = save.equipped[s], col = it ? itemColor(it) : null;
+    return `<div class="d5 ${it ? tcls(it) : "empty"} ${IB.sel === it && it ? "sel" : ""}" style="left:${p[0]}px;top:${p[1]}px;width:${p[2]}px;height:${p[3]}px;${col ? `border-color:${col}` : ""}" ${it ? `data-a="pick" data-u="${it.uid}" data-tipu="${it.uid}"` : ""}>
+      <img src="${artURL(it ? (it.slot === "weapon" && it.wt === "staff" ? "i_staff" : SLOT_ICON5[s]) : SLOT_ICON5[s]) || ""}" alt="">${it ? (it.enh ? `<em>+${it.enh}</em>` : "") + `<small>T${it.ilvl}</small>` : `<span>${SLOT_NAME[s === "ring2" ? "ring" : s]}</span>`}</div>`; }).join("");
+  const cur = (k, ic, nm, v, col) => `<div class="cur5" data-tipk="${k}"><img src="${artURL(ic) || ""}" alt=""><b style="color:${col}">${nm} ${fmtN(v || 0)}</b></div>`;
+  const L = `<div class="box5 bl"><div class="bh5">착용 중${setTabs5("gear", renderItems)}</div><div class="doll5"><div class="sil5"><i></i><b></b></div>${doll}</div>
+    <div class="curs5">${cur("gold", "i_gold", "골드", save.gold, "#ffd76e")}${cur("ore", "i_ore", "강화석", save.ore, "#96aac8")}${cur("orbC", "i_chaos", "혼돈", save.orbC, "#e65a50")}${cur("orbD", "i_divine", "신성", save.orbD, "#ffe08a")}${cur("hone", "i_arcana", "아르카나", save.hone, "#ffa0dc")}${cur("stones", "i_stone", "돌", save.stones.length, "#a0dcff")}</div></div>`;
+  const tabs = ["all", ...SLOTS].map((t) => `<button class="t5 ${IB.tab === t ? "on" : ""}" data-a="tab" data-t="${t}" title="${t === "all" ? "전체" : SLOT_NAME[t]}">${t === "all" ? "전체" : `<img src="${artURL(SLOT_ICON5[t]) || ""}" alt="">`}</button>`).join("");
+  const grid = list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad">비어 있습니다</div>`;
+  const bar = IB.multi ? `<button class="btn pri" data-a="msell">${IB.chk.size}개 판매</button><button class="btn" data-a="mdis">${IB.chk.size}개 분해</button><button class="btn" data-a="mall">전부 선택</button><button class="btn" data-a="mtog">취소</button>`
+    : `<button class="btn" data-a="mtog">골라서 정리</button><button class="btn" data-a="autodis">자동 분해</button><button class="btn pri" data-a="recommend">자동 장착${nUp ? ` <i class="tri">▲${nUp}</i>` : ""}</button>`;
+  const B = `<div class="box5 bm"><div class="bh5">가방 ${save.inv.length} / ${invMax(save)} <button class="btn xs" data-a="openstash" style="float:right">창고</button></div><div class="tabs5">${tabs}</div><div class="grid g5">${grid}</div><div class="bar5">${bar}</div></div>`;
+  const it = IB.sel, ce = it && !byU.has(it.uid) ? (it.slot === "ring" ? save.equipped.ring || save.equipped.ring2 : save.equipped[it.slot]) : null;
+  const R = `<div class="box5 br"><div class="bh5">장비 정보</div><div class="det5">${IB.multi ? multiPanel(list) : it ? itemDetail(it) + (ce ? `<div class="cmp5"><div class="bh5 sm">착용 중 (비교)</div>${itemDetail(ce, true)}</div>` : "") : `<div class="dim pad">가방이나 착용 칸의 장비를 누르면 여기에 자세히 나옵니다.</div>`}</div></div>`;
+  Modal.open(`<h2>장비</h2><div class="bag5">${L}${B}${R}</div>`, { cls: "wide", on: itemHandlers(list) });
+}
+
+// ---------- 5.0 제련소 (로블록스판 Menus.forge 배치) ----------
+const TIER_COL5 = ["#ffd24a", "#ff9a3a", "#c07aff", "#5aa0ff", "#7ad07a", "#aaaaaa"];
+function renderForge5() {
+  const rows = IB.fbag ? save.inv.slice().sort((a, b) => b.ilvl - a.ilvl || b.rarity - a.rarity) : EQ_SLOTS.map((k) => save.equipped[k]).filter(Boolean);
+  if (!IB.sel || !rows.includes(IB.sel)) IB.sel = rows[0] || null; const sel = IB.sel;
+  const cur = (ic, v, col, nm) => `<span class="fc5"><img src="${artURL(ic) || ""}" alt=""><b style="color:${col}">${nm} ${fmtN(v || 0)}</b></span>`;
+  const top = `<div class="box5 ftop5"><span class="dim">보유</span>${cur("i_gold", save.gold, "#ffdc78", "골드")}${cur("i_ore", save.ore, "#c8dcff", "강화석")}${cur("i_chaos", save.orbC, "#dcaaff", "혼돈")}${cur("i_divine", save.orbD, "#ffe08a", "신성")}${cur("i_stone", save.stones.length, "#a0dcff", "돌")}${save.sockTix ? `<span class="fc5">🔏 <b>인장 ${save.sockTix}</b></span>` : ""}</div>`;
+  const L = `<div class="box5 fl5"><div class="fsw5"><button class="btn ${IB.fbag ? "" : "pri"}" data-a="fbag" data-v="0">착용 장비</button><button class="btn ${IB.fbag ? "pri" : ""}" data-a="fbag" data-v="1">가방 장비</button></div><div class="flist5">${rows.map((it) =>
+    `<div class="fr5 ${it === sel ? "on" : ""}" data-a="pick" data-u="${it.uid}">${tileHtml(it, { up: false })}<div><small>${SLOT_NAME[it.slot]}</small><b class="${RCLS(it)}">${itemTitle(it)}</b></div></div>`).join("") || `<div class="dim pad">${IB.fbag ? "가방이 비어 있습니다" : "착용한 장비가 없습니다"}</div>`}</div></div>`;
+  let R = `<div class="box5 fr5b"><div class="dim pad">장비를 고르세요</div></div>`;
+  if (sel) {
+    const c = enhCost(sel), rate = ENH_RATE[sel.enh || 0], rc = rerollCost(sel), anyRR = sel.rrIdx != null, y = dismantleYield(sel);
+    const ok = (v, have) => have >= v ? "#fff" : "#ff7878";
+    const aff = sel.affixes.map((a, i) => { const locked = rerollLocked(sel, i), t = a.t != null ? a.t : null;
+      return `<div class="af5 ${anyRR && !locked ? "rr" : ""}"><b class="tb5" style="background:${t != null ? TIER_COL5[Math.min(5, t)] : "#5a5a5a"}">${t != null ? "T" + (t + 1) : "–"}</b><span class="at5">${affText(a)}${affRangeText(sel, a)}</span>
+        ${locked ? "" : `${anyRR ? `<i class="rrt">★ 재굴림 줄</i>` : ""}<span class="cost5">${iconImg("gold", 1)}${fmtN(rc.gold)} ${iconImg("ore", 1)}${rc.ore}</span><button class="btn xs" data-a="reroll" data-i="${i}">재굴림</button>`}</div>`; }).join("");
+    R = `<div class="box5 fr5b"><div class="fh5"><b class="${RCLS(sel)}">${itemTitle(sel)}</b><span class="dim">${SLOT_NAME[sel.slot]} · T${sel.ilvl}</span></div>
+      <div class="enh5"><b>강화 +${sel.enh || 0}</b>${(sel.enh || 0) >= 10 ? `<span class="dim">최대 강화</span>` : `<span class="cost5">${iconImg("gold", 1)}<b style="color:${ok(c.gold, save.gold)}">${fmtN(c.gold)}</b> ${iconImg("ore", 1)}<b style="color:${ok(c.ore, save.ore)}">${c.ore}</b> · 성공 ${Math.round(rate * 100)}%</span><button class="btn pri" data-a="enh">+${(sel.enh || 0) + 1} 강화</button>`}</div>
+      <div class="afh5"><b>옵션</b><small>${anyRR ? "금빛 줄만 재굴림할 수 있습니다" : "재굴림할 줄을 하나 고르세요 — 그 뒤로는 그 줄만 재굴림됩니다"}</small></div><div class="afl5">${aff}${socketBlock(sel)}</div>
+      <div class="orb5"><button class="btn" data-a="chaos" ${sel.affixes.length >= 5 || save.orbC < 1 ? "disabled" : ""}>혼돈 구슬 ×${save.orbC}<br><small>옵션 1줄 추가</small></button><button class="btn" data-a="divine" ${!sel.affixes.length || save.orbD < 1 ? "disabled" : ""}>신성한 구슬 ×${save.orbD}<br><small>옵션 수치 다시</small></button>${sel.sock ? `<button class="btn" data-a="sockroll" ${save.sockTix > 0 ? "" : "disabled"}>세공의 인장 ×${save.sockTix || 0}<br><small>소켓 다시</small></button>` : ""}<button class="btn" data-a="dis" ${isProtected(sel) ? "disabled" : ""}>분해<br><small>${fmtN(y.gold)}G · 강화석 ${y.ore}</small></button></div></div>`;
+  }
+  Modal.open(`<h2>제련소</h2><div class="forge5">${top}<div class="fbody5">${L}${R}</div></div>`, { cls: "wide", on: Object.assign(itemHandlers(rows), { fbag: (el) => { IB.fbag = el.dataset.v === "1"; IB.sel = null; renderItems(); } }) });
 }
 
 // ---------- 일괄 정리 ----------
@@ -172,76 +226,10 @@ function openStats() {
 
 // ---------- 스킬 정비 (카드형) ----------
 const skCost = (sk, st) => Math.round((sk.mana || 0) * st.manaCostMul * 10) / 10;
-// 스킬창의 등급 효과 줄: 등급이 올라가면 숫자만이 아니라 동작이 바뀐다는 것을 보여 준다
-function rarityFxText(inst, sk) {
-  if (sk.kind === "passive") return `${SKILL_RARITY[inst.rarity].name} 패시브`;
-  const R = SKILL_RARITY[inst.rarity], o = [`${R.name} 등급`, `피해 ×${R.mult}`, `쿨타임 ×${R.cdMul}`];
-  if (sk.hits > 1) o.push(`${sk.hits}연타`); if (R.bonusMul > 1) o.push(`추가 피해 ×${R.bonusMul}`);
-  if (inst.rarity >= 3) o.push(["", "", "", "화염의 문양", "사탄의 낙인", "종말의 각인"][inst.rarity]);
-  return o.join(" · ");
-}
 function skTags(sk, st) {
   if (sk.kind === "passive") return `<span class="chip buff">패시브</span>`;
   const nm = { phys: "물리", mag: "마법", buff: "버프", heal: "회복" }[sk.dtype] || "물리", cl = { phys: "phys", mag: "mag", buff: "buff", heal: "buff" }[sk.dtype] || "phys";
   return `<span class="chip ${cl}">${nm}</span>${sk.elem ? `<span class="chip" style="background:${ELEM_COLOR[sk.elem]}33;color:${ELEM_COLOR[sk.elem]}">${ELEM_NAME[sk.elem]}</span>` : ""}<span class="chip mana">마나 ${skCost(sk, st)}</span>`;
-}
-function openSkills() {
-  const st = computeStats(save), lo = save.loadout, used = new Set(lo.filter(Boolean).map((l) => l.uid));
-  const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
-  const lvTxt = (inst) => `Lv.${inst.lvl || 1}${(inst.lvl || 1) < SKILL_MAX_LV ? ` <small>(${inst.dup || 0}/${inst.lvl || 1})</small>` : ""}`;
-  // 위: 장착 칸 (타로 카드)
-  const slotCard = (i) => {
-    const lab = i === 4 ? "패시브" : (i + 1) + (i === 0 ? " 평타" : "");
-    if (i < 4 && i >= save.slots) return `<div class="sks locked"><div class="skn">${lab}</div><div class="sk-empty">🔒<small>${SLOT_HINT[i]}</small></div></div>`;
-    const l = i === 4 ? (save.passive ? { uid: save.passive } : null) : lo[i], inst = l && save.skills.find((x) => x.uid === l.uid);
-    if (!inst) return `<div class="sks ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}"><div class="skn">${lab}</div><div class="sk-empty">비어 있음<small>눌러서 고르기</small></div></div>`;
-    const sk = skillOf(inst);
-    return `<div class="sks ${SK.slot === i ? "cursel" : ""}" data-a="slot" data-s="${i}" data-tips="${sk.id}"><div class="skn">${lab}</div>${arcCard(inst.id, inst.rarity, { badge: "Lv." + (inst.lvl || 1) })}
-      ${i < 4 ? `<select data-i="rule" data-s="${i}">${RULE_ORDER.map((r) => `<option value="${r}" ${l.rule === r ? "selected" : ""}>${RULES[r]}</option>`).join("")}</select>` : ""}${i > 0 ? `<button class="btn xs" data-a="clear" data-s="${i}">해제</button>` : ""}</div>`;
-  };
-  const cards = [0, 1, 2, 3, 4].map(slotCard).join("");
-  used.add(save.passive);
-  const want = SK.slot === 4 ? "passive" : SK.slot === 0 ? "basic" : "active";
-  const TABS = want === "active" ? [["all", "전체"], ["single", "단일"], ["aoe", "범위"], ["dot", "지속 · 소환"], ["sup", "지원"]] : [["all", "전체"]];
-  const tabOf = (d) => ["buff", "heal"].includes(d.dtype) || ["buff", "heal"].includes(d.kind) ? "sup" : ["zone", "zone2", "aura", "orbit", "rain", "summon", "trap", "hole", "shuri"].includes(d.kind) ? "dot" : ["single", "bounce"].includes(d.kind) ? "single" : "aoe";
-  if (!TABS.some((t) => t[0] === SK.tab)) SK.tab = "all";
-  const SORTS = [["r", "등급"], ["dps", "초당 피해"], ["lv", "레벨"]]; SK.sort = SK.sort || "r";
-  const owned = save.skills.filter((x) => { const d = SKILLS.find((q) => q.id === x.id); return d && d.slot === want && (SK.tab === "all" || tabOf(d) === SK.tab); }).map((inst) => ({ inst, sk: skillOf(inst) }));
-  for (const o of owned) o.dps = o.sk.dtype === "buff" || o.sk.dtype === "heal" || want === "passive" ? 0 : dpsOf(o.sk);
-  owned.sort((a, b) => SK.sort === "dps" ? b.dps - a.dps : SK.sort === "lv" ? (b.inst.lvl || 1) - (a.inst.lvl || 1) || b.inst.rarity - a.inst.rarity : b.inst.rarity - a.inst.rarity || b.dps - a.dps);
-  const grid = owned.map(({ inst, sk, dps }) => { const eqi = lo.findIndex((l) => l && l.uid === inst.uid);
-    return `<div class="skg ${SK.sel === inst.uid ? "picked" : ""} ${used.has(inst.uid) ? "used" : ""}" data-a="picksk" data-u="${inst.uid}" data-tips="${inst.id}">${arcCard(inst.id, inst.rarity, { badge: eqi >= 0 ? (eqi + 1) + "번" : save.passive === inst.uid ? "P" : "" })}<div class="skgl">${lvTxt(inst)}${dps ? ` · <span class="dps">${fmtPow(dps)}</span>` : ""}</div></div>`; }).join("");
-  const sel = save.skills.find((x) => x.uid === SK.sel), det = (() => {
-    if (!sel) return `<div class="skdet"><div class="dim center pad">카드를 누르면 설명이 보이고,<br>[장착] 으로 ${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸에 넣습니다.</div></div>`;
-    const sk = skillOf(sel), d = sk.def, eqi = lo.findIndex((l) => l && l.uid === sel.uid), typeOk = d.slot === want, slotOk = SK.slot === 4 || SK.slot < save.slots, dup = typeOk && SK.slot !== 4 ? skillDupSlot(save, sel, SK.slot) : -1;
-    const bon = Object.keys(sk.bonus).map((k) => `${{ boss: "보스", elite: "정예", ranged: "원거리", normal: "일반" }[k]} +${Math.round(sk.bonus[k] * 100)}%`).join(", "), dps = d.slot === "passive" ? 0 : dpsOf(sk);
-    const can = typeOk && slotOk && dup < 0 && (SK.slot === 4 ? save.passive !== sel.uid : eqi !== SK.slot);
-    const lab = dup >= 0 ? `같은 스킬이 ${dup + 1}번 칸에` : !typeOk ? (d.slot === "basic" ? "평타는 1번 칸만" : d.slot === "passive" ? "패시브 칸 전용" : "2~4번 칸 전용") : SK.slot === 4 ? (save.passive === sel.uid ? "장착 중" : "패시브 칸에 장착") : eqi === SK.slot ? "장착 중" : `${SK.slot + 1}번 칸에 장착`;
-    return `<div class="skdet"><div class="dh">${arcCard(sel.id, sel.rarity, { cls: sel.rarity >= 2 ? "glow" + sel.rarity : "" })}<div><b>${skillTitle(sel)}</b><div>${skTags(sk, st)}</div><div class="rfx rk${sel.rarity}">${rarityFxText(sel, sk)}</div>
-      <div class="skkv">레벨 <b>${sel.lvl || 1}</b>${(sel.lvl || 1) < SKILL_MAX_LV ? ` <small class="dim">다음 레벨까지 같은 스킬 ${(sel.lvl || 1) - (sel.dup || 0)}장</small>` : " (최대)"}</div>
-      <div class="skkv">쿨타임 <b>${sk.cd.toFixed(1)}초</b> · 피해 <b>${Math.round(sk.mult * 100)}%</b>${dps ? ` · 초당 <b class="dps">${fmtPow(dps)}</b>` : ""}</div>${sk.rune ? `<div class="skkv" style="color:${sk.rune.color}">${sk.rune.name}</div>` : ""}</div></div>
-      <div class="dbtns"><button class="btn pri" data-a="equipsk" data-u="${sel.uid}" ${can ? "" : "disabled"}>${lab}</button><button class="btn" data-a="rune" data-u="${sel.uid}">${sk.rune ? "룬 바꾸기" : "룬 장착"}</button>
-      <button class="btn" data-a="dissk" data-u="${sel.uid}" ${eqi >= 0 || save.passive === sel.uid || skillInPreset(save, sel) ? "disabled" : ""}>분해<br><small>${eqi >= 0 || save.passive === sel.uid ? "장착 중" : "조각 +" + skillDisYield(sel)}</small></button>
-      <div class="dd">${skillAreaHtml(sk, 11)}<div>${skillDescFull(sk, st)}</div><div class="dim" style="margin-top:4px">${d.desc}${bon ? " · " + bon : ""}</div></div></div></div>`;
-  })();
-  const tabs = TABS.length > 1 ? TABS.map(([k, n]) => `<button class="tab ${SK.tab === k ? "on" : ""}" data-a="sktab" data-t="${k}">${n}</button>`).join("") : "";
-  const sorts = SORTS.map(([k, n]) => `<button class="btn xs ${SK.sort === k ? "pri" : ""}" data-a="sksort" data-t="${k}">${n}</button>`).join(" ");
-  Modal.open(`<h2>아르카나</h2><div class="res"><span data-tipk="hone">${iconImg("shard", 1)} 아르카나 조각 ${fmtN(save.hone)}</span> · 룬 ${save.runes.length} <button class="btn xs" data-a="autosk">자동 정리</button> <button class="btn xs pri" data-a="gosum">소환</button></div>${presetRow()}
-  <div class="dim center" style="font-size:12px">마나 ${fmtN(st.maxMana)} · 초당 ${(st.maxMana * st.manaRate).toFixed(1)} 재생 · 스킬 소모 ${st.manaNeed.toFixed(1)}/초 · 전투에서는 위 4칸만 씁니다 (1번 = 평타)</div><div class="skslots">${cards}</div>
-  <div class="skbar"><b>${SK.slot === 4 ? "패시브" : SK.slot + 1 + "번"} 칸용 ${want === "basic" ? "평타" : want === "passive" ? "패시브" : "스킬"} ${owned.length}</b> ${tabs} <span style="margin-left:auto">정렬 ${sorts}</span></div><div class="skbot"><div class="skgrid2">${grid || `<div class="dim pad">이 칸에 넣을 스킬이 없습니다 — [소환]에서 얻으세요</div>`}</div>${det}</div>`, { cls: "wide", on: Object.assign({
-    sktab: (el) => { SK.tab = el.dataset.t; openSkills(); }, sksort: (el) => { SK.sort = el.dataset.t; openSkills(); }, gosum: () => openSummon(),
-    slot: (el) => { SK.slot = +el.dataset.s; const l = SK.slot === 4 ? (save.passive ? { uid: save.passive } : null) : save.loadout[SK.slot]; SK.sel = l ? l.uid : null; if (l) snd("click"); openSkills(); },   // 장착 중인 스킬 카드를 눌러도 정보가 보인다
-    picksk: (el) => { SK.sel = +el.dataset.u; snd("click"); openSkills(); },
-    autosk: () => openAutoSkill(),
-    dissk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) 분해해 <b style="color:#ffe08a">연마석 ${skillDisYield(inst)}개</b>를 얻을까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "분해", () => { const h = dismantleSkill(save, inst); if (h == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 분해할 수 없습니다", "bad"); return; } if (SK.sel === inst.uid) SK.sel = null; snd("coin"); toast(`분해: 연마석 +${h}`, "ok"); saveGame(); refreshTop(); openSkills(); }); },
-    sellsk: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u); if (!inst) return; askConfirm(`${skillTitle(inst)} Lv.${inst.lvl || 1} 을(를) <b style="color:#ffe08a">${fmtN(skillSellValue(inst))}G</b>에 판매할까요?${inst.rune ? "<br>장착된 룬은 보관함으로 돌아옵니다." : ""}`, "판매", () => { const v = sellSkill(save, inst); if (v == null) { toast("장착 중이거나 프리셋에 포함된 스킬은 팔 수 없습니다", "bad"); return; } SK.sel = null; snd("coin"); toast(`+${fmtN(v)}G`, "ok"); saveGame(); refreshTop(); openSkills(); }, false); },
-    ahpostsk: (el) => ahPostSkill(save.skills.find((x) => x.uid === +el.dataset.u), openSkills),
-    clear: (el, ev) => { ev.stopPropagation(); if (+el.dataset.s === 4) save.passive = null; else save.loadout[+el.dataset.s] = null; saveGame(); openSkills(); },
-    rule: (el) => { const i = +el.dataset.s; if (save.loadout[i]) save.loadout[i].rule = el.value; saveGame(); },
-    equipsk: (el) => { setTimeout(() => { if (typeof tutEvent === "function" && SK.slot === 3 && save.loadout[3]) tutEvent("equipsk"); }, 0); if (SK.slot === 4) { save.passive = +el.dataset.u; snd("equip"); toast("패시브 칸에 장착했습니다", "ok"); saveGame(); openSkills(); return; } if (SK.slot >= save.slots) return; const u = +el.dataset.u; { const si = save.skills.find((x) => x.uid === u), dj = si ? skillDupSlot(save, si, SK.slot) : -1; if (dj >= 0) { toast(`같은 스킬이 이미 ${dj + 1}번 칸에 장착되어 있습니다`, "bad"); snd("error"); return; } } const j = save.loadout.findIndex((l) => l && l.uid === u); const prev = save.loadout[SK.slot]; if (j >= 0 && j !== SK.slot) save.loadout[j] = j === 0 ? save.loadout[j] : null; save.loadout[SK.slot] = { uid: u, rule: (prev && prev.rule) || "front" }; snd("equip"); toast("장착했습니다", "ok"); saveGame(); openSkills(); },
-    hone: (el) => { const inst = save.skills.find((x) => x.uid === +el.dataset.u), cost = honeCost(inst.lvl || 1, inst.rarity); if ((inst.lvl || 1) >= SKILL_MAX_LV || save.hone < cost) return; save.hone -= cost; inst.lvl = (inst.lvl || 1) + 1; snd("enh_ok"); toast(`${SKILLS.find((x) => x.id === inst.id).name} Lv.${inst.lvl}`, "ok"); saveGame(); openSkills(); },
-    rune: (el) => openRunePicker(+el.dataset.u),
-  }, presetHandlers(openSkills)) });
 }
 
 // ---------- 패시브 (방사형 트리) ----------

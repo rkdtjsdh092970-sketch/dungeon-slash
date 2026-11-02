@@ -5,8 +5,8 @@
 const TUT5 = [
   { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[아르카나 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
     target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : document.querySelector('[data-a="s10"]:not([disabled])') },
-  { title: "스킬 칸", text: "전투에서는 위쪽 4칸에 넣은 스킬만 씁니다 (1번 = 평타, 2~4번 = 스킬). 위 메뉴 <b>[스킬]</b>에서 <b>4번 칸</b>을 누르고, 새로 뽑은 스킬을 골라 <b>[장착]</b>하세요.", ev: "equipsk",
-    target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector('[data-a="slot"]') ? document.querySelector("#modal .x") : SK.slot !== 3 ? document.querySelector('[data-a="slot"][data-s="3"]') : document.querySelector('[data-a="equipsk"]:not([disabled])') || document.querySelector('[data-a="picksk"]:not(.used)') },
+  { title: "아르카나 칸", text: "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다 (1번 = 평타, 2~4번 = 아르카나). 위 메뉴 <b>[아르카나]</b>를 열고 새로 뽑은 카드를 누른 뒤 <b>[4번 칸에]</b>를 누르세요 (카드를 칸으로 끌어다 놓아도 됩니다).", ev: "equipsk",
+    target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector(".arc5") ? document.querySelector("#modal .x") : document.querySelector('[data-a="aeq"][data-s="3"]') || document.querySelector('.og5 .ac5[data-k="active"]:not(.eqd)') },
   { title: "첫 전투", text: "창을 닫고 위쪽 <b>[🗺 지도]</b> → 반짝이는 <b>[초원 1]</b> → <b>[도전]</b>. 전투는 자동으로 진행됩니다.", ev: "battle",
     target: () => Modal.isOpen() ? document.querySelector("#modal .x") : G.screen !== "map" ? $("#b-map") : (MapView.sel && MapView.sel.id === "S1-1" ? document.querySelector('#mappanel [data-p="go"]') : { map: "S1-1" }) },
   { title: "장비 장착", text: "전투에서 장비를 얻었어요! 위 메뉴 <b>[장비]</b>를 열고 <b>[추천 장비 착용]</b>을 누르세요. 초록 ▲ 는 더 좋은 장비 표시입니다.", ev: "power", after: 1,

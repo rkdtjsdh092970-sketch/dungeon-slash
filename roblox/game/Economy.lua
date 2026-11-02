@@ -48,7 +48,8 @@ function M.levelUpSkill(sv, uid) return false, "Level up by getting the same Arc
 function M.grantBasics(sv)
   local got = {}; local have = {}; for _, k in ipairs(sv.skills or {}) do have[k.id] = true end
   for _, b in ipairs(Skills.BASIC or {}) do
-    if (sv.level or 1) >= b[2] and not have[b[1]] and SKILL_BY[b[1]] then
+    local foe = (sv.startClass == "warrior" and SKILL_BY[b[1]] and SKILL_BY[b[1]].dtype == "mag") or (sv.startClass == "mage" and SKILL_BY[b[1]] and SKILL_BY[b[1]].dtype == "phys")   -- 다른 직업 평타는 주지 않는다
+    if not foe and (sv.level or 1) >= b[2] and not have[b[1]] and SKILL_BY[b[1]] then
       sv.skills[#sv.skills + 1] = { uid = sv.nextUid, id = b[1], rarity = M.skillTier(b[1]), lvl = 1 }; sv.nextUid += 1; have[b[1]] = true; got[#got + 1] = SKILL_BY[b[1]].name
     end
   end

@@ -20,7 +20,7 @@ const START_KITS = { warrior: { wt: "sword", skills: ["strike", "rend", "smash"]
 const START_ARCANA = 90, BASIC_GRANTS = [["strike", 1], ["arcbolt", 1]];
 function grantBasics(sv) {   // 레벨이 되면 받는 평타 (일격 · 비전 탄)
   const got = [], have = new Set(sv.skills.map((k) => k.id));
-  for (const [id, lv] of BASIC_GRANTS) if ((sv.level || 1) >= lv && !have.has(id) && SKILLS.some((d) => d.id === id)) { sv.skills.push({ uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }); have.add(id); got.push(id); }
+  for (const [id, lv] of BASIC_GRANTS) if (!((SKILLS.find((d) => d.id === id) || {}).dtype === (sv.startClass === "warrior" ? "mag" : sv.startClass === "mage" ? "phys" : "-")) && ((sv.level || 1) >= lv && !have.has(id) && SKILLS.some((d) => d.id === id))) { sv.skills.push({ uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }); have.add(id); got.push(id); }
   return got;
 }
 function pickStart(sv, cls) {
@@ -28,7 +28,7 @@ function pickStart(sv, cls) {
   const w = genItem(sv, 1, 0, "weapon"), T = WTYPES[K.wt]; w.wt = K.wt; w.base = {}; if (T.atk) w.base.atk = T.atk; if (T.mag) w.base.mag = T.mag; sv.equipped.weapon = w;
   sv.skills = []; sv.loadout = [null, null, null, null]; sv.slots = Math.max(sv.slots || 4, 4);
   K.skills.forEach((id, i) => { const k = { uid: sv.nextUid++, id, rarity: skillTier(id), lvl: 1 }; sv.skills.push(k); sv.loadout[i] = { uid: k.uid, rule: "front" }; });
-  grantBasics(sv); sv.hone = (sv.hone || 0) + START_ARCANA; sv.startClass = cls; sv.needStart = false;
+  sv.startClass = cls; grantBasics(sv); sv.hone = (sv.hone || 0) + START_ARCANA; sv.needStart = false;
   return true;
 }
 // 확인하지 않은 돌(수천 개까지 쌓인다)은 개수로 줄여 저장한다: 서버 세이브가 커져 로그인이 느려지는 것을 막는다
