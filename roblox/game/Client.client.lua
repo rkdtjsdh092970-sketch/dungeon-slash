@@ -327,9 +327,10 @@ list.ChildAdded:Connect(function(c)
 end)
 local function card(title, lines, btns)
   local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(20, 15, 15); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list
-  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6); stroke(f, Color3.fromRGB(120, 92, 48), 1.5)
+  Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6); Skin.frame(f, "ui_card", 0.25, 0.5)   -- 질감 있는 카드 틀
+  local acc = Instance.new("Frame"); acc.Size = UDim2.new(0, 3, 1, -12); acc.Position = UDim2.new(0, 4, 0, 6); acc.BackgroundColor3 = Color3.fromRGB(200, 150, 70); acc.BorderSizePixel = 0; acc.Parent = f   -- 왼쪽 금빛 표시줄
   local bw = math.max(1, #(btns or {})) * 72 + 10
-  local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 10, 0, 6); tb.Size = UDim2.new(1, -bw - 14, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
+  local tb = Instance.new("Frame"); tb.BackgroundTransparency = 1; tb.Position = UDim2.new(0, 18, 0, 10); tb.Size = UDim2.new(1, -bw - 14, 0, 0); tb.AutomaticSize = Enum.AutomaticSize.Y; tb.Parent = f
   local ll = Instance.new("UIListLayout"); ll.Padding = UDim.new(0, 2); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Parent = tb
   local tt = label(tb, title, 15, UDim2.new(), UDim2.new(1, 0, 0, 0)); tt.Font = Theme.FONT; tt.TextColor3 = Color3.fromRGB(255, 225, 140); tt.AutomaticSize = Enum.AutomaticSize.Y; tt.LayoutOrder = 1
   if #lines > 0 then local t = label(tb, table.concat(lines, "\n"), 13, UDim2.new(), UDim2.new(1, 0, 0, 0)); t.TextColor3 = Color3.fromRGB(225, 220, 245); t.AutomaticSize = Enum.AutomaticSize.Y; t.LayoutOrder = 2 end
@@ -602,8 +603,8 @@ local function setOpt(k, v)
 end
 local SEL = Color3.fromRGB(160, 116, 40)
 local function optRow(title, value, btns)   -- 한 줄: 제목 · (값) · 선택 버튼들
-  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(40, 34, 70); f.Size = UDim2.new(1, -16, 0, 48); f.Parent = list; corner(f, 6)
-  label(f, title, 15, UDim2.new(0, 12, 0, 0), UDim2.new(0.42, 0, 1, 0))
+  local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(24, 18, 15); f.Size = UDim2.new(1, -16, 0, 52); f.Parent = list; corner(f, 6); Skin.frame(f, "ui_card", 0.25, 0.5)
+  local tl = label(f, title, 15, UDim2.new(0, 18, 0, 0), UDim2.new(0.42, 0, 1, 0)); tl.TextColor3 = Color3.fromRGB(240, 225, 200); tl.Font = Theme.FONT; tl.TextWrapped = true
   local row = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0.58, 0, 0, 36) }, f)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   local order = 0

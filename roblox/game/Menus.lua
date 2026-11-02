@@ -162,9 +162,14 @@ end
 local function area(h) local full = math.floor(C.list.AbsoluteSize.Y / math.max(0.01, C.scale and C.scale() or 1)) - 14; return mk("Frame", { Size = UDim2.new(1, -16, 0, math.max(h or 392, full)), BackgroundTransparency = 1 }, C.list) end   -- 창 높이를 꽉 채운다
 local function box(parent, pos, size, title)
   local f = mk("Frame", { Position = pos, Size = size, BackgroundColor3 = Color3.fromRGB(16, 12, 12), BackgroundTransparency = 0.1 }, parent); corner(f, 6); stroke(f, Color3.fromRGB(120, 92, 48), 1.5)
-  if title then
-    txt(f, title, 15, UDim2.new(0, 10, 0, 5), UDim2.new(1, -20, 0, 20), Color3.fromRGB(255, 220, 120), M.FONT)
-    mk("Frame", { Position = UDim2.new(0, 8, 0, 27), Size = UDim2.new(1, -16, 0, 1), BackgroundColor3 = Color3.fromRGB(150, 112, 50), BorderSizePixel = 0 }, f)
+  if title then   -- 머리 띠: 짙은 진홍 그라데이션 + 금빛 제목 + 보석 구분선
+    local hb = mk("Frame", { Position = UDim2.new(0, 1, 0, 1), Size = UDim2.new(1, -2, 0, 27), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, f); corner(hb, 6)
+    mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(70, 22, 18), Color3.fromRGB(28, 10, 9)) }, hb)
+    local tl = txt(hb, title, 15, UDim2.new(0, 10, 0, 0), UDim2.new(1, -20, 1, 0), Color3.fromRGB(255, 220, 140), M.FONT); tl.TextYAlignment = Enum.TextYAlignment.Center; tl.TextTruncate = Enum.TextTruncate.AtEnd
+    mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, tl)
+    local dv = C.Sprites.art("ui_divider")
+    if dv then mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 28), Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1, ImageContent = dv.content, ScaleType = Enum.ScaleType.Stretch }, f)
+    else mk("Frame", { Position = UDim2.new(0, 8, 0, 27), Size = UDim2.new(1, -16, 0, 1), BackgroundColor3 = Color3.fromRGB(150, 112, 50), BorderSizePixel = 0 }, f) end
   end
   return f
 end
