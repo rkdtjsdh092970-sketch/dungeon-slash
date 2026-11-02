@@ -240,15 +240,11 @@ const MapView = {
     if (cleared) { g.fillStyle = "#e8fff0"; g.fillRect(x - 5, y, 3, 3); g.fillRect(x - 2, y + 3, 3, 3); g.fillRect(x + 1, y, 3, 3); g.fillRect(x + 4, y - 4, 3, 3); }
   },
   hidden(n) { return n.kind === "tower2" ? !(save && tower2Open(save)) : n.sub === "warden" ? !(save && wardenOpen(save)) : n.sub === "charm" ? !(save && charmOpen(save)) : n.kind === "bosshub2" ? true : (n.kind === "tower" || n.kind === "temple" || n.kind === "craid") && !(save && save.raid && save.raid.tower); },   // 탑이 솟아야 돌의 신전도 나타난다
-  drawTower(g, x, y, time) {   // 솟아오르는 탑: 아래에서부터 드러나고, 흔들리며 먼지가 인다
-    const p = this.rise, H = 96 * p; g.save(); g.fillStyle = "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(x, y + 8, 26, 8, 0, 0, 7); g.fill();
-    g.beginPath(); g.rect(x - 40, y + 8 - H, 80, H + 2); g.clip();
-    g.fillStyle = "#2a2036"; g.fillRect(x - 15, y - 88, 30, 96); g.fillStyle = "#3a2c48"; g.fillRect(x - 15, y - 88, 8, 96); g.fillStyle = "#1a1224"; g.fillRect(x + 8, y - 88, 7, 96);
-    g.fillStyle = "#4a3a58"; g.fillRect(x - 21, y - 96, 42, 10); g.fillRect(x - 18, y - 70, 36, 5); g.fillRect(x - 18, y - 40, 36, 5); g.fillStyle = "#6a5a78"; for (const bx of [-21, -9, 3, 15]) g.fillRect(x + bx, y - 104, 6, 8);
-    g.fillStyle = "#ff8a28"; for (const wy of [-80, -58, -30, -10]) g.fillRect(x - 2, y + wy, 4, 8); g.fillStyle = "#ffe0a0"; g.fillRect(x - 1, y - 90, 2, 4);
-    g.restore();
-    if (p < 1) { g.fillStyle = "rgba(200,180,160,.5)"; for (let i = 0; i < 14; i++) { const k = (time * 1.6 + i * 0.37) % 1, dx = (i % 2 ? 1 : -1) * (14 + k * 34 + (i % 5) * 4); g.globalAlpha = 0.55 * (1 - k); g.fillRect(x + dx - 3, y + 4 - k * 26 - (i % 3) * 4, 6 + (i % 3), 6 + (i % 3)); } g.globalAlpha = 1; }
-    else { g.fillStyle = `rgba(255,150,60,${0.25 + 0.15 * Math.sin(time * 3)})`; g.beginPath(); g.arc(x, y - 92, 10, 0, 7); g.fill(); }
+  drawTower(g, x, y, time) {   // 솟아오르는 탑 (5.25: 지도 탑 일러스트가 아래에서부터 드러난다, 먼지)
+    const p = this.rise, im = artGet("mi_tower"), S = 50 + 40 * (1 - p); if (!im) return;
+    g.save(); g.beginPath(); g.rect(x - S, y + S / 2 - S * p, S * 2, S * p + 2); g.clip(); g.imageSmoothingEnabled = true; g.drawImage(im, x - S / 2, y + S / 2 - S, S, S); g.restore();
+    if (p < 1) { g.save(); for (let i = 0; i < 10; i++) { const a = time * 3 + i * 0.63, r = 20 + ((time * 40 + i * 13) % 30); g.fillStyle = `rgba(120,100,90,${0.5 * (1 - r / 50)})`; g.beginPath(); g.arc(x + Math.cos(a) * r, y + S / 2 - 4 + Math.sin(a) * r * 0.25, 6, 0, 7); g.fill(); } g.restore(); }
+    return;
   },
   draw(sv, time, dt) {
     this.build(); const g = this.g; g.imageSmoothingEnabled = false; this.t = time;
@@ -257,7 +253,7 @@ const MapView = {
     const C = this.cine; let shx = 0, shy = 0; this.rise = 1;
     if (C) {
       if (C.t0 == null) C.t0 = time; const k = time - C.t0; this.rise = clamp((k - 1.4) / 3.6, 0, 1);
-      const amp = k < 0.6 ? 0 : k < 1.4 ? (k - 0.6) / 0.8 * 3 : this.rise < 1 ? 8 : Math.max(0, 1 - (k - 5)) * 8; shx = rnd(-1, 1) * amp; shy = rnd(-1, 1) * amp;
+      const amp = k < 0.6 ? 0 : k < 1.4 ? (k - 0.6) / 0.8 * 3 : this.rise < 1 ? 8 : Math.max(0, 1 - (k - 5)) * 8; void amp;   // 5.25: 화면 흔들림 없음
       const e = (t) => t * t * (3 - 2 * t), w = e(clamp((k - 0.4) / 2.4, 0, 1)); this.cam.x = C.fx + (C.tx - C.fx) * w; this.cam.y = C.fy + (C.ty - C.fy) * w;
       if (!C.sfx1 && k > 0.6) { C.sfx1 = 1; snd("orb"); } if (!C.sfx2 && k > 1.4) { C.sfx2 = 1; snd("legend"); }
       if (k > 6.2) { this.cine = null; toast("🗼 먼 곳에서 정체불명의 탑이 솟아올랐다!", "ok"); }

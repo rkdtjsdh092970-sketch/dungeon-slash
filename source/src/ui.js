@@ -136,7 +136,7 @@ function raidAftermath() {
   const R = (save.raid = save.raid || { cleared: 0, best: 0 }), first = !R.tower;
   openMap(11); const gate = MAP.byId.RX; MapView.sel = null; mapPanel();
   MapView.cam.x = clamp(RIFT_POS[0] - CW / 2 - 40, 0, MAP_W - CW); MapView.cam.y = clamp(RIFT_POS[1] - CH / 2, 0, MAP_H - CH);
-  if (first) { R.tower = 1; saveGame(); MapView.cine = { t0: null, fx: MapView.cam.x, fy: MapView.cam.y, tx: clamp(TOWER_POS[0] - CW / 2 - 60, 0, MAP_W - CW), ty: clamp(TOWER_POS[1] - CH / 2 + 70, 0, MAP_H - CH) }; }
+  if (first) { R.tower = 1; saveGame(); MapView.cine = { t0: null, fx: MapView.cam.x, fy: MapView.cam.y, tx: clamp(TOWER_POS[0] - CW / 2 - 60, 0, MAP_W - CW), ty: clamp(TOWER_POS[1] - CH / 2 - 60, 0, MAP_H - CH) }; }
   else MapView.sel = gate, mapPanel();
 }
 function mapGo() {
