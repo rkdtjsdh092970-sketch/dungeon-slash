@@ -3,7 +3,7 @@ return function(M, h)
 local mk, corner, stroke, txt, area, box, pbar, n = h.mk, h.corner, h.stroke, h.txt, h.area, h.box, h.pbar, h.n
 local C = setmetatable({}, { __index = function(_, k) return h.C()[k] end })
 -- ───────── 길드 (v2): 길드가 없으면 찾기 · 초대 · 창설 / 있으면 홈 · 길드원 · 콘텐츠 · 연구 · 상점 · 관리 ─────────
-local G_SYM = { "⚔", "♛", "☠", "✦", "☾", "♞", "❖", "✠" }
+local G_SYM = { "⚔️", "👑", "☠️", "⭐", "🌙", "🐺", "❖", "🔥" }   -- Roblox 가 그려 주는 기호만 (♛ ✦ 같은 기호는 빈칸으로 나온다)
 local G_COL = { Color3.fromRGB(170, 40, 40), Color3.fromRGB(190, 120, 30), Color3.fromRGB(200, 170, 60), Color3.fromRGB(50, 130, 70), Color3.fromRGB(40, 110, 170), Color3.fromRGB(110, 60, 170), Color3.fromRGB(150, 150, 160), Color3.fromRGB(40, 36, 44) }
 function M.emblem(parent, e, size)   -- 길드 문양: 색 방패 + 금테 + 문양
   e = e or { s = 1, c = 1 }

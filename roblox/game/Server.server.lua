@@ -130,6 +130,7 @@ Players.PlayerAdded:Connect(function(p)
   if okLoad == false then p:Kick("Couldn't load your save data. Please rejoin in a moment. (Your progress is protected.)"); return end
   sv = sv and migrate(sv, p.UserId) or Loot.newSave(Random.new(p.UserId))
   sessions[p.UserId] = { sv = sv, busy = false, last = 0 }
+  if freshTest() then sv.gold += tonumber(game:GetService("ServerStorage"):GetAttribute("TestGold")) or 0 end   -- Studio 시험 모드 전용: 시험 골드
   task.spawn(function() pcall(function() if gsyncFn then gsyncFn(p.UserId, sv) end end) end)   -- 길드 효과
 end)
 -- ── 랭킹 (OrderedDataStore): 균열 최고층 · 레벨 · 허수아비 DPS. Studio 에서 막혀 있으면 빈 목록 ──
