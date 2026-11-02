@@ -118,6 +118,27 @@ Players.PlayerAdded:Connect(function(p)
   sv = sv and migrate(sv, p.UserId) or Loot.newSave(Random.new(p.UserId))
   sessions[p.UserId] = { sv = sv, busy = false, last = 0 }
 end)
+-- ── 랭킹 (OrderedDataStore): 균열 최고층 · 레벨 · 허수아비 DPS. Studio 에서 막혀 있으면 빈 목록 ──
+local RANKS = { rift = "Rank_Rift", level = "Rank_Level", dps = "Rank_Dps" }
+local rankStore, rankCache = {}, {}
+for k, n in pairs(RANKS) do local ok, st = pcall(function() return DSS:GetOrderedDataStore(n) end); if ok then rankStore[k] = st end end
+local function rankSet(kind, uid, v) local st = rankStore[kind]; if st and v and v > 0 then task.spawn(function() pcall(function() st:SetAsync(tostring(uid), math.floor(v)) end) end) end end
+local function rankTop(kind)
+  local c = rankCache[kind]; if c and os.clock() - c.t < 60 then return c.rows end
+  local st = rankStore[kind]; if not st then return {} end
+  local rows = {}
+  local ok = pcall(function()
+    local page = st:GetSortedAsync(false, 50):GetCurrentPage()
+    for i, e in ipairs(page) do
+      local nm = e.key; pcall(function() nm = Players:GetNameFromUserIdAsync(tonumber(e.key)) end)
+      rows[i] = { rank = i, name = nm, value = e.value, uid = tonumber(e.key) }
+    end
+  end)
+  if ok then rankCache[kind] = { t = os.clock(), rows = rows } end
+  return rows
+end
+local function rankPush(uid, sv) rankSet("rift", uid, sv.rift and sv.rift.best or 0); rankSet("level", uid, sv.level) end
+
 Players.PlayerRemoving:Connect(function(p)
   local s = sessions[p.UserId]; if s then save(p.UserId, s.sv); sessions[p.UserId] = nil end
 end)
@@ -191,6 +212,19 @@ local handle = function(player, action, arg)
   elseif action == "sockdel" then local ok, m = Game.sockDel(sv, tonumber(arg.uid), tonumber(arg.idx)); return { ok = ok, msg = m, rows = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "skillclean" then return { res = Game.skillClean(sv, type(arg) == "table" and arg.rules or {}, type(arg) == "table" and arg.best ~= false), summary = Game.summary(sv) }
   elseif action == "records" then return { view = Game.records(sv), summary = Game.summary(sv) }
+  elseif action == "dummy" then   -- 허수아비: 60초 동안 순수 딜 측정 (30초에 한 번)
+    if s.dummyT and os.clock() - s.dummyT < 30 then return { err = string.format("%d초 뒤에 다시 측정할 수 있습니다", math.ceil(30 - (os.clock() - s.dummyT))) } end
+    s.dummyT = os.clock()
+    local dmg, by = Battle.dummyDamage(sv, 60, os.time() + player.UserId)
+    local dps = math.floor(dmg / 60); local best = sv.dummyBest or 0; local nb = dps > best
+    if nb then sv.dummyBest = dps; rankSet("dps", player.UserId, dps) end
+    local parts = {}; for id, v in pairs(by or {}) do parts[#parts + 1] = { id = id, dmg = math.floor(v) } end
+    table.sort(parts, function(a, b) return a.dmg > b.dmg end)
+    return { dps = dps, total = math.floor(dmg), best = math.max(best, dps), newBest = nb, parts = parts }
+  elseif action == "ranking" then
+    rankPush(player.UserId, sv); if (sv.dummyBest or 0) > 0 then rankSet("dps", player.UserId, sv.dummyBest) end
+    local kind = RANKS[arg] and arg or "rift"
+    return { kind = kind, rows = rankTop(kind), my = { rift = sv.rift and sv.rift.best or 0, level = sv.level, dps = sv.dummyBest or 0 } }
   elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }

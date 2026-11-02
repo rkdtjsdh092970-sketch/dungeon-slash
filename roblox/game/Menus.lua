@@ -736,4 +736,62 @@ function M.codex()
   end
 end
 
+-- ───────── 허수아비: 60초 딜 측정 ─────────
+local lastDummy
+function M.dummy()
+  C.clear()
+  local A = area(392)
+  local B = box(A, UDim2.new(0.15, 0, 0, 0), UDim2.new(0.7, 0, 1, 0), "허수아비")
+  txt(B, "60초 동안 공격만 해서 초당 피해(DPS)를 잽니다. 최고 기록은 랭킹에 올라갑니다. (30초에 한 번)", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
+  if lastDummy then
+    local r = lastDummy
+    txt(B, string.format("DPS %s", n(r.dps)), 30, UDim2.new(0, 14, 0, 74), UDim2.new(1, -28, 0, 36), r.newBest and M.GOLD or Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center)
+    txt(B, string.format("총 피해 %s · 최고 %s%s", n(r.total), n(r.best), r.newBest and " · 신기록!" or ""), 14, UDim2.new(0, 14, 0, 114), UDim2.new(1, -28, 0, 20), Color3.fromRGB(220, 215, 240), nil, Enum.TextXAlignment.Center)
+    local lst = mk("Frame", { Position = UDim2.new(0, 30, 0, 142), Size = UDim2.new(1, -60, 0, 170), BackgroundTransparency = 1 }, B)
+    mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
+    for i, p in ipairs(r.parts or {}) do
+      if i > 6 then break end
+      local d = SK_BY[p.id]; local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, LayoutOrder = i }, lst)
+      local frac = r.total > 0 and p.dmg / r.total or 0
+      local bg = mk("Frame", { Position = UDim2.new(0.35, 0, 0.2, 0), Size = UDim2.new(0.5, 0, 0.6, 0), BackgroundColor3 = Color3.fromRGB(20, 16, 28) }, f); corner(bg, 4)
+      local fl = mk("Frame", { Size = UDim2.new(frac, 0, 1, 0), BackgroundColor3 = (M.skStyle(p.id)) }, bg); corner(fl, 4)
+      txt(f, d and d.name or tostring(p.id), 13, UDim2.new(0, 0, 0, 3), UDim2.new(0.34, 0, 1, 0), Color3.new(1, 1, 1))
+      txt(f, string.format("%d%%", math.floor(frac * 100 + 0.5)), 13, UDim2.new(0.86, 0, 0, 3), UDim2.new(0.14, 0, 1, 0), Color3.fromRGB(220, 215, 240), M.FONT, Enum.TextXAlignment.Right)
+    end
+  end
+  local b = M.btn(B, "측정 시작", UDim2.new(0, 200, 0, 46), M.BTN.green, function()
+    C.msg.Text = "측정 중..."
+    local r = C.rpc:InvokeServer("dummy"); if r.err then C.msg.Text = tostring(r.err); return end
+    lastDummy = r; C.msg.Text = ""; M.dummy()
+  end)
+  b.AnchorPoint = Vector2.new(0.5, 1); b.Position = UDim2.new(0.5, 0, 1, -12)
+end
+
+-- ───────── 랭킹 (균열 · 레벨 · DPS) ─────────
+local rankKind = "rift"
+function M.ranking()
+  C.clear()
+  local r = C.rpc:InvokeServer("ranking", rankKind); if r.err then C.msg.Text = tostring(r.err); return end
+  local A = area(392)
+  local bar = mk("Frame", { Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1 }, A)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+  for i, k in ipairs({ { "rift", "균열 최고층" }, { "level", "레벨" }, { "dps", "허수아비 DPS" } }) do
+    local b = M.btn(bar, k[2], UDim2.new(0, 150, 1, 0), rankKind == k[1] and M.BTN.gold or M.BTN.purple, function() rankKind = k[1]; M.ranking() end); b.LayoutOrder = i
+  end
+  local my = r.my or {}
+  local mine = rankKind == "dps" and n(my.dps) or tostring(my[rankKind] or 0)
+  local B = box(A, UDim2.new(0, 0, 0, 44), UDim2.new(1, 0, 1, -44), string.format("상위 50명 · 내 기록 %s", mine))
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 32), Size = UDim2.new(1, -20, 1, -40), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6 }, B)
+  mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  if #(r.rows or {}) == 0 then txt(sc, "아직 기록이 없거나, 지금 서버에서 랭킹을 불러올 수 없습니다. (Studio 에서는 저장소 접근이 막혀 있으면 비어 보입니다)", 13, UDim2.new(), UDim2.new(1, -8, 0, 40), Color3.fromRGB(190, 185, 210)) end
+  local me = game:GetService("Players").LocalPlayer.UserId
+  for i, row in ipairs(r.rows or {}) do
+    local medal = ({ M.GOLD, Color3.fromRGB(200, 200, 215), Color3.fromRGB(190, 120, 70) })[row.rank]
+    local f = mk("Frame", { Size = UDim2.new(1, -8, 0, 28), BackgroundColor3 = row.uid == me and Color3.fromRGB(60, 52, 30) or (i % 2 == 0 and Color3.fromRGB(36, 32, 46) or Color3.fromRGB(28, 25, 36)), LayoutOrder = i }, sc); corner(f, 4)
+    local rk = txt(f, tostring(row.rank), 16, UDim2.new(0, 8, 0, 4), UDim2.new(0, 40, 1, 0), medal or Color3.new(1, 1, 1), M.FONT); rk:SetAttribute("NoTr", true)
+    local nm = txt(f, tostring(row.name), 14, UDim2.new(0, 56, 0, 5), UDim2.new(0.6, 0, 1, 0), Color3.new(1, 1, 1)); nm:SetAttribute("NoTr", true)
+    local v = txt(f, rankKind == "dps" and n(row.value) or tostring(row.value), 15, UDim2.new(0.6, 0, 0, 4), UDim2.new(0.4, -12, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT, Enum.TextXAlignment.Right); v:SetAttribute("NoTr", true)
+  end
+end
+
 return M

@@ -1775,3 +1775,14 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 전체	All
 처치한 몬스터	Monsters Slain
 클리어한 전투	Battles Cleared
+ · 신기록!	 · New record!
+%d초 뒤에 다시 측정할 수 있습니다	You can measure again in %ds
+60초 동안 공격만 해서 초당 피해(DPS)를 잽니다. 최고 기록은 랭킹에 올라갑니다. (30초에 한 번)	Attack for 60 seconds to measure your damage per second (DPS). Your best goes on the ranking. (Once every 30s)
+랭킹	Ranking
+상위 50명 · 내 기록 %s	Top 50 · My record %s
+아직 기록이 없거나, 지금 서버에서 랭킹을 불러올 수 없습니다. (Studio 에서는 저장소 접근이 막혀 있으면 비어 보입니다)	No records yet, or the ranking cannot be loaded right now.
+총 피해 %s · 최고 %s%s	Total %s · Best %s%s
+측정 시작	Start
+측정 중...	Measuring...
+허수아비	Training Dummy
+허수아비 DPS	Dummy DPS
