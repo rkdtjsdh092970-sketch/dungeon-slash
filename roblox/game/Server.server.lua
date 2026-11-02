@@ -142,7 +142,7 @@ local function rankPush(uid, sv) rankSet("rift", uid, sv.rift and sv.rift.best o
 -- ── 우편함: 게임 주인이 보내는 전체 우편(공지 + 보상). DataStore "DungeonSlashMail" 의 "global" 목록, 받은 우편은 세이브 sv.mailGot ──
 local okMail, mailStore = pcall(function() return DSS:GetDataStore("DungeonSlashMail") end)
 local mailCache, mailT = {}, -1e9
-local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, shards = true, keys = true }
+local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, shards = true, keys = true, gems = true }
 local function mailList(force)
   if not force and os.clock() - mailT < 30 then return mailCache end
   if okMail then local ok, v = pcall(function() return mailStore:GetAsync("global") end); if ok then mailCache = v or {}; mailT = os.clock() end end
@@ -184,7 +184,7 @@ local handle = function(player, action, arg)
   elseif action == "sell" then local ok, e = Game.sell(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "bulk" then return { res = Game.bulk(sv, arg.r, arg.mode), summary = Game.summary(sv) }
   elseif action == "daily" then return { rows = Game.daily(sv) }
-  elseif action == "dailyclaim" then local ok, e = Game.dailyClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.daily(sv), summary = Game.summary(sv) }
+  elseif action == "dailyclaim" then local ok, e = Game.dailyClaim(sv, tostring(arg)); if ok then sv.gems = (sv.gems or 0) + 10 end; return { ok = ok, err = (not ok) and e or nil, rows = Game.daily(sv), summary = Game.summary(sv) }
   elseif action == "offline" then return { r = Game.offline(sv), summary = Game.summary(sv) }
   elseif action == "runes" then return { runes = Game.runes(sv), skills = Game.skills(sv) }
   elseif action == "runeequip" then local ok, e = Game.runeEquip(sv, tonumber(arg.skill), tonumber(arg.rune)); return { ok = ok, err = (not ok) and e or nil, runes = Game.runes(sv) }
@@ -192,6 +192,8 @@ local handle = function(player, action, arg)
   elseif action == "quests" then return { rows = Game.quests(sv) }
   elseif action == "questclaim" then local ok, e = Game.questClaim(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.quests(sv), summary = Game.summary(sv) }
   elseif action == "shop" then return { rows = Game.shop(sv), summary = Game.summary(sv) }
+  elseif action == "gacha" then return { view = Game.gachaView(sv), summary = Game.summary(sv) }
+  elseif action == "gachapull" then local r, e = Game.gachaPull(sv, type(arg) == "table" and tonumber(arg.n) or 1, type(arg) == "table" and arg.pay or "gold"); return { res = r, err = (not r) and e or nil, view = Game.gachaView(sv), summary = Game.summary(sv) }
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
   elseif action == "levelup" then local ok, e = Game.levelUp(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }

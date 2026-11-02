@@ -42,7 +42,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
 end
 function M.inventory(sv)
   local out = {}
@@ -159,6 +159,8 @@ function M.statsView(sv)
   return G
 end
 function M.atlasBuy(sv, id) return Econ.atlasBuy(sv, id) end
+function M.gachaView(sv) return Econ.gachaView(sv) end
+function M.gachaPull(sv, n, pay) return Econ.gachaPull(sv, n, pay, Random.new(os.clock() * 1e6 + sv.nextUid)) end
 -- 기록 (웹 openRecords)
 function M.records(sv)
   local st = sv.stats or {}

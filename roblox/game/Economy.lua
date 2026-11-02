@@ -227,4 +227,55 @@ function M.atlasBuy(sv, id)
   sv.shards -= c; sv.atlas[id] = r + 1; return true
 end
 
+-- ---------- 스킬 뽑기 (스킬 상점 대체). 숫자는 여기서만 고친다 ----------
+M.GACHA = {
+  RATES = { 70, 24, 5, 0.9, 0.1 },   -- 등급별 확률(%): 일반 · 희귀 · 전설 · 신화 · 사탄
+  PITY10 = 1,                        -- 10연차: 희귀(1) 이상 1개 보장
+  PITY_HARD = 80, PITY_HARD_R = 2,   -- 80회 안에 전설(2) 이상 보장 (카운터는 전설 이상이 나오면 초기화)
+  GEM1 = 30, GEM10 = 270,            -- 보석 가격
+  DUP_HONE = { 2, 5, 15, 50, 150 },  -- 이미 같거나 더 높은 등급을 가진 스킬이 나오면 연마석으로 바꿈
+}
+function M.gachaGold(sv) return floor(300 * 1.55 ^ (M.skillAct(sv) - 1) + 0.5) end
+local function gachaPool(sv)
+  local out = {}
+  for _, d in ipairs(Skills.SKILLS) do if not isSpecial(d) and d.id ~= "p_none" and (d.unlock or 1) <= M.skillAct(sv) then out[#out + 1] = d end end
+  return out
+end
+local function rollRarity(rng, minR)
+  local G = M.GACHA; local tot = 0
+  for r = (minR or 0), #G.RATES - 1 do tot += G.RATES[r + 1] end
+  local x = rng:NextNumber() * tot
+  for r = (minR or 0), #G.RATES - 1 do x -= G.RATES[r + 1]; if x <= 0 then return r end end
+  return #G.RATES - 1
+end
+function M.gachaView(sv)
+  local G = M.GACHA
+  return { gold = M.gachaGold(sv), gold10 = M.gachaGold(sv) * 9, gem1 = G.GEM1, gem10 = G.GEM10, rates = G.RATES, pity = sv.gachaPity or 0, pityMax = G.PITY_HARD, gems = sv.gems or 0, pool = #gachaPool(sv) }
+end
+-- n = 1 | 10, pay = "gold" | "gem"
+function M.gachaPull(sv, n, pay, rng)
+  local G = M.GACHA; n = (n == 10) and 10 or 1
+  if pay == "gem" then local c = n == 10 and G.GEM10 or G.GEM1; if (sv.gems or 0) < c then return nil, "보석이 부족합니다" end; sv.gems -= c
+  else local c = M.gachaGold(sv) * (n == 10 and 9 or 1); if sv.gold < c then return nil, "골드가 부족합니다" end; sv.gold -= c end
+  local pool = gachaPool(sv); if #pool == 0 then return nil, "뽑을 스킬이 없습니다" end
+  local out, gotHigh = {}, false
+  for i = 1, n do
+    sv.gachaPity = (sv.gachaPity or 0) + 1
+    local minR = 0
+    if sv.gachaPity >= G.PITY_HARD then minR = G.PITY_HARD_R end
+    if n == 10 and i == 10 and not gotHigh then minR = math.max(minR, G.PITY10) end
+    local r = rollRarity(rng, minR)
+    if r >= G.PITY10 then gotHigh = true end
+    if r >= G.PITY_HARD_R then sv.gachaPity = 0 end
+    local dd = pool[rng:NextInteger(1, #pool)]
+    if dd.slot == "passive" then r = dd.pt or 0 end
+    local best = -1; for _, k in ipairs(sv.skills) do if k.id == dd.id then best = math.max(best, k.rarity or 0) end end
+    local res = { id = dd.id, name = dd.name, rarity = r }
+    if best >= r then local h = G.DUP_HONE[r + 1] or 2; sv.hone = (sv.hone or 0) + h; res.dup = h
+    else sv.skills[#sv.skills + 1] = { uid = sv.nextUid, id = dd.id, rarity = r }; sv.nextUid += 1; res.new = true end
+    out[#out + 1] = res
+  end
+  return out
+end
+
 return M

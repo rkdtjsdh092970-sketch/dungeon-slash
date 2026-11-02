@@ -45,6 +45,50 @@ local function txt(parent, text, size, pos, sz, color, font, xa)
     TextXAlignment = xa or Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top }, parent)
 end
 -- 아이콘 타일: 등급 테두리 · 아이콘(그림 없으면 이모지/글자) · 왼쪽 위/오른쪽 아래 작은 글자
+-- ───────── 등급 이펙트: 전설 이상은 고유 효과, 위로 갈수록 화려하게 ─────────
+-- 전설(2): 테두리에 빛이 흐름 · 신화(3): + 맥박 광채 + 회전 빛줄기 · 사탄(4): + 불티 입자
+local FX = {}
+local RAR_FX = { [2] = Color3.fromRGB(255, 150, 40), [3] = Color3.fromRGB(190, 90, 255), [4] = Color3.fromRGB(230, 40, 50) }
+game:GetService("RunService").RenderStepped:Connect(function(dt)
+  local t = os.clock()
+  for i = #FX, 1, -1 do
+    local f = FX[i]
+    if not f.host.Parent then table.remove(FX, i)
+    else
+      if f.grad then f.grad.Rotation = (t * f.spin) % 360 end
+      if f.glow then local k = 0.5 + 0.5 * math.sin(t * 3); f.glow.BackgroundTransparency = 0.55 + 0.35 * k; f.glow.Size = UDim2.new(1.12 + 0.06 * k, 0, 1.12 + 0.06 * k, 0) end
+      if f.rays then f.rays.Rotation = (t * 40) % 360 end
+      if f.embers then for _, e in ipairs(f.embers) do e.y -= dt * e.v; if e.y < -0.1 then e.y = 1.05; e.x = math.random() end; e.f.Position = UDim2.new(e.x, 0, e.y, 0); e.f.BackgroundTransparency = 0.2 + 0.7 * (1 - e.y) end end
+    end
+  end
+end)
+function M.rarityFx(host, rarity, z)
+  rarity = rarity or 0; if rarity < 2 then return end
+  local col = RAR_FX[math.min(4, rarity)]; z = z or host.ZIndex
+  local f = { host = host, spin = 90 + 60 * (rarity - 2) }
+  -- 흐르는 빛 테두리
+  local st = mk("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 3 + (rarity - 2), ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, host)
+  f.grad = mk("UIGradient", { Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, col), ColorSequenceKeypoint.new(0.45, col), ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(0.55, col), ColorSequenceKeypoint.new(1, col) }) }, st)
+  -- 신화 이상: 광채 · 회전 빛줄기는 카드 "뒤"에 깔아야 하므로 부모 쪽에 둔다 (자식은 항상 부모 위에 그려짐).
+  -- 부모가 격자/목록 배치면 배치가 깨지므로 그때는 생략하고 테두리 · 불티만 쓴다
+  local par = host.Parent
+  if rarity >= 3 and par and not par:FindFirstChildWhichIsA("UIGridStyleLayout") then
+    local back = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = math.max(1, z - 1) }, par)
+    f.glow = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1.15, 0, 1.15, 0), BackgroundColor3 = col, BackgroundTransparency = 0.7, ZIndex = math.max(1, z - 1) }, back); corner(f.glow, 14)
+    f.rays = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1.7, 0, 1.7, 0), BackgroundTransparency = 1, ZIndex = math.max(1, z - 1) }, back)
+    for k = 0, 3 do mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1, 0, 0, 3), Rotation = k * 45, BackgroundColor3 = col, BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = math.max(1, z - 1) }, f.rays) end
+    host.Destroying:Connect(function() back:Destroy() end)
+  end
+  if rarity >= 4 then
+    f.embers = {}
+    for k = 1, 10 do
+      local e = mk("Frame", { Size = UDim2.new(0, 3, 0, 3), BackgroundColor3 = k % 2 == 0 and Color3.fromRGB(255, 120, 40) or col, BorderSizePixel = 0, ZIndex = z + 2 }, host); corner(e)
+      f.embers[k] = { f = e, x = math.random(), y = math.random(), v = 0.25 + math.random() * 0.35 }
+    end
+  end
+  FX[#FX + 1] = f
+end
+
 local tipGui, tipBox, tipTitle, tipBody, tipConn
 local function tipShow(t)
   local Players = game:GetService("Players")
@@ -206,20 +250,22 @@ function M.skills()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i = 1, slots do
     local k = inSlot[i]; local d = k and SK_BY[k.id]
-    M.tile(row, 86, { order = i, tip = k and { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } } or nil, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), emoji = k and skIcon(d) or tostring(i), dim = not k,
+    local t0 = M.tile(row, 86, { order = i, tip = k and { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } } or nil, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), emoji = k and skIcon(d) or tostring(i), dim = not k,
       label = k and k.name or "빈 칸", tl = k and ("Lv" .. k.lvl) or nil, selected = k and skSel == k.uid, click = function() if k then skSel = k.uid; M.skills() end end })
+    if k then M.rarityFx(t0, k.rarity) end
   end
   -- 아래: 보유 스킬
   local B = box(A, UDim2.new(0, 0, 0, 136), UDim2.new(1, -300, 1, -136), string.format("보유 스킬 %d개", #rows))
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -36), 76)
   for i, k in ipairs(rows) do
     local d = SK_BY[k.id]
-    M.tile(g, 76, { order = i, tip = { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } }, color = skColor(d), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
+    local t1 = M.tile(g, 76, { order = i, tip = { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } }, color = skColor(d), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
+    M.rarityFx(t1, k.rarity)
   end
   -- 오른쪽: 상세
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "스킬 정보")
   local k = skSel and byUid[skSel]
-  if not k then txt(D, "스킬을 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 스킬은 마을의 [스킬 상점]에서 삽니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 80), Color3.fromRGB(190, 185, 210)); return end
+  if not k then txt(D, "스킬을 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 스킬은 마을의 [스킬 소환]에서 뽑습니다.", 13, UDim2.new(0, 12, 0, 36), UDim2.new(1, -24, 0, 80), Color3.fromRGB(190, 185, 210)); return end
   local d = SK_BY[k.id] or {}
   txt(D, k.name .. "  Lv" .. k.lvl, 18, UDim2.new(0, 12, 0, 32), UDim2.new(1, -24, 0, 24), skColor(d), M.FONT)
   local info = {}
@@ -808,6 +854,90 @@ function M.mail()
       btn = has and (m.got and "받음" or "받기") or nil, btnColor = (has and not m.got) and M.BTN.green or M.BTN.gray,
       click = (has and not m.got) and function() local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.mail() end or nil })
   end
+end
+
+-- ───────── 스킬 뽑기 (스킬 상점 대체) ─────────
+M.SK_RAR = { "일반", "희귀", "전설", "신화", "사탄" }
+M.SK_RCOL = { Color3.fromRGB(170, 170, 180), Color3.fromRGB(80, 150, 255), Color3.fromRGB(255, 150, 40), Color3.fromRGB(190, 90, 255), Color3.fromRGB(230, 40, 50) }
+local pulling = false
+local function revealResults(res)
+  -- 결과를 창 위에 덮어 한 장씩 뒤집으며 보여 준다. 전설 이상은 빛이 터진다
+  local host = C.list.Parent
+  local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.25, Text = "", AutoButtonColor = false, ZIndex = 60 }, host); corner(ov, 14)
+  local grid = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.47, 0), Size = UDim2.new(0, 5 * 120 + 4 * 12, 0, (#res > 5 and 2 or 1) * 150 + 12), BackgroundTransparency = 1, ZIndex = 61 }, ov)
+  mk("UIGridLayout", { CellSize = UDim2.new(0, 120, 0, 150), CellPadding = UDim2.new(0, 12, 0, 12), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+  local hint = txt(ov, "누르면 닫힙니다", 14, UDim2.new(0, 0, 1, -34), UDim2.new(1, 0, 0, 20), Color3.fromRGB(200, 195, 220), nil, Enum.TextXAlignment.Center); hint.ZIndex = 62; hint.Visible = false
+  local done = false
+  ov.MouseButton1Click:Connect(function() if done then ov:Destroy() end end)
+  task.spawn(function()
+    for i, r in ipairs(res) do
+      local col = M.SK_RCOL[r.rarity + 1] or M.SK_RCOL[1]
+      local cell = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i, ZIndex = 61 }, grid)
+      if r.rarity >= 2 then   -- 빛 번짐 (등급이 높을수록 크고 길게)
+        local glow = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 0, 0, 0), BackgroundColor3 = col, BackgroundTransparency = 0.2, ZIndex = 61 }, cell); corner(glow)
+        TweenService:Create(glow, TweenInfo.new(0.4 + 0.25 * (r.rarity - 2), Enum.EasingStyle.Quad), { Size = UDim2.new(1.6 + 0.6 * (r.rarity - 2), 0, 1.6 + 0.6 * (r.rarity - 2), 0), BackgroundTransparency = 1 }):Play()
+      end
+      if r.rarity >= 3 then   -- 신화 이상: 화면 번쩍임
+        local fl = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = col, BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 70 }, ov); corner(fl, 14)
+        TweenService:Create(fl, TweenInfo.new(0.6), { BackgroundTransparency = 1 }):Play(); task.delay(0.7, function() fl:Destroy() end)
+      end
+      if r.rarity >= 4 then   -- 사탄: 흔들림
+        task.spawn(function() for k = 1, 10 do grid.Position = UDim2.new(0.5, math.random(-8, 8), 0.47, math.random(-6, 6)); task.wait(0.03) end; grid.Position = UDim2.new(0.5, 0, 0.47, 0) end)
+      end
+      local card = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 10, 1, 0), BackgroundColor3 = Color3.fromRGB(24, 18, 34), ZIndex = 62 }, cell)
+      corner(card, 10); stroke(card, col, r.rarity >= 2 and 4 or 2.5)
+      mk("UIGradient", { Color = ColorSequence.new(col:Lerp(Color3.new(0, 0, 0), 0.45), Color3.fromRGB(18, 14, 26)), Rotation = 90 }, card)
+      local scol, icon = M.skStyle(r.id)
+      local ic = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 14), Size = UDim2.new(1, 0, 0, 56), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol, ZIndex = 63 }, card)
+      local nm = txt(card, r.name, 14, UDim2.new(0, 6, 0, 76), UDim2.new(1, -12, 0, 34), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Center); nm.ZIndex = 63
+      local rr = txt(card, M.SK_RAR[r.rarity + 1] or "", 14, UDim2.new(0, 6, 0, 108), UDim2.new(1, -12, 0, 18), col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 63
+      local tag = txt(card, r.dup and string.format("연마석 +%d", r.dup) or "NEW", 12, UDim2.new(0, 6, 1, -20), UDim2.new(1, -12, 0, 16), r.dup and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120), M.FONT, Enum.TextXAlignment.Center); tag.ZIndex = 63
+      if not r.dup then tag:SetAttribute("NoTr", true) end
+      TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) }):Play()
+      M.rarityFx(card, r.rarity, 62)
+      if r.rarity >= 3 then C.toast(string.format("%s 등급! %s", M.SK_RAR[r.rarity + 1], r.name)) end
+      task.wait(#res > 1 and (({ 0.13, 0.13, 0.4, 0.8, 1.2 })[r.rarity + 1] or 0.13) or (r.rarity >= 3 and 0.9 or 0.3))
+    end
+    done = true; hint.Visible = true
+  end)
+end
+function M.gacha()
+  C.clear()
+  local r = C.rpc:InvokeServer("gacha"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local v = r.view; local s = C.summary() or {}
+  local A = area(392)
+  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.42, -4, 1, 0), "스킬 소환")
+  txt(L, "스킬은 소환으로만 얻습니다. 이미 같거나 더 높은 등급을 가진 스킬이 나오면 연마석으로 바뀝니다.", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
+  local rl = mk("Frame", { Position = UDim2.new(0, 14, 0, 76), Size = UDim2.new(1, -28, 0, 140), BackgroundTransparency = 1 }, L)
+  mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, rl)
+  for i, pct in ipairs(v.rates) do
+    local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, LayoutOrder = i }, rl)
+    txt(f, M.SK_RAR[i], 15, UDim2.new(0, 0, 0, 2), UDim2.new(0.5, 0, 1, 0), M.SK_RCOL[i], M.FONT)
+    local pv = txt(f, string.format("%g%%", pct), 15, UDim2.new(0.5, 0, 0, 2), UDim2.new(0.5, 0, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); pv:SetAttribute("NoTr", true)
+  end
+  txt(L, string.format("전설 이상 보장까지 %d / %d회", v.pity, v.pityMax), 14, UDim2.new(0, 14, 1, -66), UDim2.new(1, -28, 0, 20), Color3.fromRGB(255, 200, 120), M.FONT)
+  pbar(L, UDim2.new(0, 14, 1, -40), UDim2.new(1, -28, 0, 14), v.pity / v.pityMax, Color3.fromRGB(255, 150, 40))
+  txt(L, "10회 소환은 희귀 이상 1개 보장", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
+  local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0), string.format("보유 보석 %s · 골드 %s", n(v.gems), n(s.gold)))
+  local function pull(nn, pay)
+    if pulling then return end; pulling = true
+    local e = C.rpc:InvokeServer("gachapull", { n = nn, pay = pay }); pulling = false
+    if e.summary then C.setSummary(e.summary) end
+    if e.err or not e.res then C.msg.Text = tostring(e.err); return end
+    M.gacha(); revealResults(e.res)
+  end
+  local function costRow(parent, art, val) return M.cost(parent, { { art, val } }, UDim2.new(0.58, 0, 0, 22)) end
+  local function bb(y, title, art, val, col, cb)
+    local b = M.btn(R, "", UDim2.new(1, -28, 0, 66), col, cb); b.Position = UDim2.new(0, 14, 0, y)
+    txt(b, title, 22, UDim2.new(0, 18, 0, 18), UDim2.new(0.55, 0, 0, 30), Color3.new(1, 1, 1), M.FONT)
+    costRow(b, art, val)
+  end
+  bb(40, "1회 소환", "i_gold", v.gold, M.BTN.blue, function() pull(1, "gold") end)
+  bb(114, "10회 소환", "i_gold", v.gold10, M.BTN.gold, function() pull(10, "gold") end)
+  bb(198, "1회 소환", "i_divine", v.gem1, M.BTN.purple, function() pull(1, "gem") end)
+  bb(272, "10회 소환", "i_divine", v.gem10, M.BTN.red, function() pull(10, "gem") end)
+  txt(R, "보석은 일일 과제(+10)와 우편으로 얻습니다.", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
 end
 
 return M

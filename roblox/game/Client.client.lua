@@ -126,10 +126,10 @@ local resultLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3
 local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 30 }, gui)
 
 -- 상단 자원 (로블록스 상단 줄 가운데: 양 끝의 로블록스 버튼과 겹치지 않음)
-local pillRow = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, INSET / 2), Size = UDim2.new(0, 520, 0, 34), ZIndex = 11 }, hud)
+local pillRow = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, INSET / 2), Size = UDim2.new(0, 620, 0, 34), ZIndex = 11 }, hud)
 local pillScale = mk("UIScale", { Scale = K }, pillRow)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, pillRow)
-local PILLS = { { "lv", Color3.fromRGB(240, 200, 70), "Lv", 64 }, { "gold", Color3.fromRGB(240, 190, 60), "골드", 104 }, { "ore", Color3.fromRGB(150, 170, 200), "강화석", 96 }, { "hone", Color3.fromRGB(110, 210, 150), "연마석", 96 }, { "orb", Color3.fromRGB(190, 120, 240), "구슬", 90 } }
+local PILLS = { { "lv", Color3.fromRGB(240, 200, 70), "Lv", 64 }, { "gold", Color3.fromRGB(240, 190, 60), "골드", 104 }, { "ore", Color3.fromRGB(150, 170, 200), "강화석", 96 }, { "hone", Color3.fromRGB(110, 210, 150), "연마석", 96 }, { "orb", Color3.fromRGB(190, 120, 240), "구슬", 90 }, { "gem", Color3.fromRGB(90, 220, 255), "보석", 90 } }
 local pillLbl = {}
 for i, p in ipairs(PILLS) do
   local f = mk("Frame", { Size = UDim2.new(0, p[4], 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, LayoutOrder = i, ZIndex = 11 }, pillRow); corner(f); stroke(f, p[2], 1.5)
@@ -165,7 +165,7 @@ local summary
 local function setSummary(s)
   if not s then return end
   summary = s
-  pillLbl.lv.Text = "Lv " .. tostring(s.level); pillLbl.gold.Text = n(s.gold); pillLbl.ore.Text = n(s.ore); pillLbl.hone.Text = n(s.hone); pillLbl.orb.Text = n(s.orbC)
+  pillLbl.lv.Text = "Lv " .. tostring(s.level); pillLbl.gold.Text = n(s.gold); pillLbl.ore.Text = n(s.ore); pillLbl.hone.Text = n(s.hone); pillLbl.orb.Text = n(s.orbC); pillLbl.gem.Text = n(s.gems)
   statLbl.Text = string.format("체력 %s · 공격 %s · 주문 %s · 방어 %s · 치명 %.0f%%\n스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", n(s.maxHp), n(s.atk), n(s.mag), n(s.def), s.crit * 100, s.cleared, s.riftBest, s.best)
 end
 
@@ -521,7 +521,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setS
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
-views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail
+views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.shop = Menus.gacha
 
 -- ── 전투 시작 → 재생 → 결과 ──
 local resBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 640, 0, 320), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 26 }, resultLayer)
@@ -636,7 +636,7 @@ local BUILD = {
   { key = "b_forge", name = "제련소", icon = "🔨", x = 0.22, row = 1, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
   { key = "b_shop", name = "장비 상점", icon = "🛡", x = 0.36, row = 1, tabs = { { "장비", "inv" }, { "창고", "stash" } } },
   { key = "b_quest_board", name = "퀘스트 게시판", icon = "📜", x = 0.50, row = 1, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
-  { key = "b_skill_shop", name = "스킬 상점", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 구매", "shop" } } },
+  { key = "b_skill_shop", name = "스킬 소환", icon = "🔮", x = 0.64, row = 1, tabs = { { "스킬 소환", "gacha" } } },
   { key = "b_guild", name = "길드", icon = "🏰", x = 0.2, row = 2, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
   { key = "b_trainer", name = "훈련소", icon = "⚔", x = 0.42, row = 2, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "스탯", "stats" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
   { key = "b_notice", name = "안내소", icon = "🔔", x = 0.64, row = 2, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
