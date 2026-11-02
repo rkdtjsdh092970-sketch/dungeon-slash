@@ -330,7 +330,7 @@ end
 
 -- ---------- 길드 ----------
 local okG, gds = pcall(function() return DSS:GetDataStore("DungeonSlashGuilds") end)
-local gstore = okG and Guild.datastoreStore(gds) or Guild.memoryStore()
+local gstore = (freshTest() and Guild.memoryStore()) or (okG and Guild.datastoreStore(gds)) or Guild.memoryStore()   -- Studio 시험 모드에서는 실제 길드 저장소를 건드리지 않는다
 if not okG then warn("길드: DataStore 사용 불가 → 메모리 저장소") end
 -- 길드 효과를 세이브에 싣는다 (길드 레벨 패시브 · 연구 → Stats). 접속 · 길드 요청마다
 local function gsync(uid, sv) local g = Guild.guildOf(gstore, uid); local b = Guild.buffOf(g); sv.guildLv = b and b.lv or 0; sv.gbuff = b and b.per or nil; return g end
