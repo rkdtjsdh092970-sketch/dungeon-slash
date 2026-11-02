@@ -45,8 +45,31 @@ function REF.build(spec)
     local r = type(spec.skR) == "table" and spec.skR[i] or spec.skR or 0
     sv.skills[i] = { uid = i, id = id, rarity = r, lvl = spec.skL or 1 }; sv.loadout[i] = { uid = i, rule = "front" }
   end
+  -- 상급 유효 사탄 효과 (테스터 기준 "상급유효사탄옵션 n개"): 계열에 맞는 효과를 정해진 칸에
+  local SAT = { phys = { { "gloves", "g_noelem" }, { "weapon", "w_fire" }, { "neck", "n_aoe" }, { "armor", "a_hp" }, { "helm", "h_boss" } },
+    mag = { { "weapon", "w_proc" }, { "gloves", "g_ign" }, { "neck", "n_aoe" }, { "armor", "a_shield" }, { "helm", "h_boss" } } }
+  for i = 1, math.min(5, spec.sat or 0) do local e = SAT[spec.fam][i]; sv.equipped[e[1]].sat = e[2] end
+  -- 계시의 돌 n개 (유효한 것만, 장비 소켓에): 레이드 기준
+  if spec.stones and spec.stones > 0 then
+    local V = spec.fam == "mag" and { "magPct", "magFlat", "hpPct", "cdr" } or { "atkPct", "atkFlat", "hpPct", "cdr" }
+    local pool = {}; for _, st in ipairs(Items.STONE_POOL) do if table.find(V, st.k) then pool[#pool + 1] = st end end
+    local left = spec.stones
+    for _, s in ipairs({ "weapon", "helm", "armor", "gloves", "boots", "ring", "ring2", "neck" }) do
+      local it = sv.equipped[s]; it.sock = it.sock or {}
+      for j = 1, 3 do if left > 0 then local st = pool[((left - 1) % #pool) + 1]; it.sock[#it.sock + 1] = { k = st.k, v = st.v * 1.5 }; left -= 1 end end   -- 계시의 돌: 일반 돌의 1.5배로 가정
+    end
+  end
   Econ.autoPassives(sv)
   return sv, miss
+end
+-- 이 빌드가 이기는 가장 높은 난이도(tier) — nodeOf(tier) 로 전투 노드를 만든다
+function REF.maxTier(sv, nodeOf, lo, hi)
+  local function w(t) return Battle.run(sv, nodeOf(t), 1, 0.05, 600).win end
+  if not w(lo) then return lo - 1 end
+  local a, b = lo, hi
+  while b - a > 1 do local m = math.floor((a + b) / 2); if w(m) then a = m else b = m end; task.wait() end
+  if w(b) then return b end
+  return a
 end
 local function win(sv, node, seed) return Battle.run(sv, node, seed or 1, 0.05, 240).win end
 function REF.maxRift(sv, lo, hi)   -- 이기는 가장 높은 균열 층 (이분 탐색)
