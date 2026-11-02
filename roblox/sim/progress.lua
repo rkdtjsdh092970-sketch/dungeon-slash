@@ -115,7 +115,7 @@ local function upkeep(sv, fam, rng)
   end
   if #sv.inv > 150 then for i = #sv.inv, 60, -1 do table.remove(sv.inv, i) end end
 end
-function P.run(seed, cls, freePulls, budget)
+function P.run(seed, cls, freePulls, budget, onBattle)   -- onBattle(sv, battles): 측정용 (상태 저장 등)
   local rng = Random.new(seed)
   local sv = Loot.newSave(rng); Game.pickStart(sv, cls)
   sv.arcana = freePulls * Econ.GACHA.ARC1
@@ -136,6 +136,7 @@ function P.run(seed, cls, freePulls, budget)
     upkeep(sv, fam, rng)
     if battles % 10 == 0 then extras(sv, rng) end
     if battles % 120 == 0 then marks[battles // 120] = sv.rift.best end
+    if onBattle then onBattle(sv, battles) end
     if battles % 5 == 0 then task.wait() end
   end
   local best = {}; for _, k in ipairs(sv.skills) do best[#best + 1] = k.id .. "r" .. (k.rarity or 0) .. "L" .. (k.lvl or 1) end
