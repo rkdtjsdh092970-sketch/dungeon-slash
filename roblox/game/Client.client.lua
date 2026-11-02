@@ -219,7 +219,7 @@ local panelScale = mk("UIScale", { Scale = 1 }, root)
 local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 44, 0, 12), Size = UDim2.new(1, -90, 0, 36), Font = Theme.FONT, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
 local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 50), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)
-local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(16, 14, 32), BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
+local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(12, 9, 9), BackgroundTransparency = 0.35, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
 corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6) }, list)
 local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 34)); msg.ZIndex = 22; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
 local function clear() msg.Text = ""; for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end end

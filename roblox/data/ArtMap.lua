@@ -48,6 +48,7 @@ M.ART = {
   m_skill = { w = 128, h = 128, foot = 0.945, file = "art_m_skill.rgba", id = nil },
   m_passive = { w = 128, h = 128, foot = 0.984, file = "art_m_passive.rgba", id = nil },
   m_stats = { w = 128, h = 128, foot = 0.953, file = "art_m_stats.rgba", id = nil },
+  m_shop = { w = 128, h = 128, foot = 0.938, file = "art_m_shop.rgba", id = nil },
   m_quest = { w = 128, h = 128, foot = 0.945, file = "art_m_quest.rgba", id = nil },
   m_mail = { w = 128, h = 128, foot = 0.859, file = "art_m_mail.rgba", id = nil },
   m_gacha = { w = 128, h = 128, foot = 0.914, file = "art_m_gacha.rgba", id = nil },
