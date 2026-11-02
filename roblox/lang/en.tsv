@@ -1825,3 +1825,14 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 소환	Summon
 우편	Mail
 신성 구슬	Divine Orb
+%d개 분해 · 골드 +%s · 강화석 +%s	%d dismantled · Gold +%s · Ore +%s
+등급순	Rarity
+레벨순	Level
+부위순	Slot
+자동 분해: 끔	Auto Salvage: Off
+자동 분해: 일반	Auto Salvage: Normal
+자동 분해: 매직까지	Auto Salvage: ≤ Magic
+자동 분해: 레어까지	Auto Salvage: ≤ Rare
+전투가 끝날 때마다 위 장비 규칙으로 가방을 정리하고, 자동 반복 중에는 스킬도 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다.	After every battle your bag is cleaned with the gear rules above; during auto-repeat skills are cleaned too. Enhanced or Satan gear and equipped, preset, runed or leveled skills are never touched.
+정렬: %s	Sort: %s
+지금 분해	Salvage Now

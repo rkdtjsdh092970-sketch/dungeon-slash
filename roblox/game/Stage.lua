@@ -3,6 +3,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Sprites = require(script.Parent.Sprites)
 local Theme = require(script.Parent.Theme)
+local Ambient = require(script.Parent.Ambient)   -- 불씨 · 안개 · 일렁이는 빛 · 배경 흔들림
 local M = {}
 
 local function mk(class, props, parent) local o = Instance.new(class); for k, v in pairs(props) do o[k] = v end; o.Parent = parent; return o end
@@ -64,6 +65,7 @@ function M.create(parent, W, H, replayAct)
   end
   S.buildBg = function(act) if S.act ~= act then S.act = act; buildBg(act) end end
   S.buildBg(replayAct or 1)
+  Ambient.attach(root, { z = 2, embers = 36, sway = function() return bg:FindFirstChildOfClass("ImageLabel") end })
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
   S.plX, S.plY = S.ox + 104 * u, S.oy + 336 * u   -- 웹 PLAYER_POS

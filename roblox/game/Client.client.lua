@@ -89,6 +89,7 @@ local Stage = require(RS:WaitForChild("Game"):WaitForChild("Stage"))
 local Sprites = require(RS.Game.Sprites); Sprites.init(rpc)
 local Theme = require(RS.Game.Theme)   -- 글꼴 · 색
 local Menus = require(RS.Game.Menus)   -- 장비 · 스킬 · 패시브 트리 화면
+local Ambient = require(RS.Game.Ambient)   -- 배경 움직임 (불씨 · 안개 · 빛)
 local Skin = require(RS.Game.Skin)   -- UI 키트 그림 (없으면 기존 모양)
 task.spawn(function()   -- 시작 그림 · 로고가 오면 서서히 깐다 (시작 그림이 없으면 전투 배경)
   local a = Sprites.art("bg_title") or Sprites.art("bg1"); if not a or not loadGui.Parent then return end
@@ -138,7 +139,7 @@ local resultLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3
 local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 30 }, gui)
 
 -- 왼쪽 위 능력치 카드 (마을 · 지도에서): 영웅 초상화 + 능력치 칸 + 진행도
-local statLbl = mk("Frame", { BackgroundColor3 = DARK, BackgroundTransparency = 0.15, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 384, 0, 78), ZIndex = 11 }, hud)
+local statLbl = mk("Frame", { Active = true, BackgroundColor3 = DARK, BackgroundTransparency = 0.15, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 384, 0, 78), ZIndex = 11 }, hud)
 corner(statLbl, 8); stroke(statLbl, GOLD, 1.5); local statScale = mk("UIScale", { Scale = K }, statLbl); Skin.frame(statLbl, "ui_card", 0.25, 0.5)
 local statVal, statProg, statLv, statGold = {}, nil, nil, nil
 do
@@ -178,7 +179,7 @@ local function dockSet(toMap)
 end
 
 -- 오른쪽 위: 메뉴 아이콘 줄 (마을 · 지도에서)
-local topBar = mk("Frame", { Name = "TopBar", BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 7 * 66 + 6 * 6, 0, 80), ZIndex = 11 }, hud)
+local topBar = mk("Frame", { Name = "TopBar", BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 8 * 66 + 7 * 6, 0, 80), ZIndex = 11 }, hud)
 local topScale = mk("UIScale", { Scale = K }, topBar)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, topBar)
 local function topButton(i, key, emoji, text, cb)
@@ -214,7 +215,7 @@ end
 local root = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, INSET / 2), Size = UDim2.new(0, 880, 0, 540), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 21 }, panelLayer)
 corner(root, 14); stroke(root, GOLD, 2.5); Skin.frame(root, "ui_panel", 0.2, 0.6)
 local panelScale = mk("UIScale", { Scale = 1 }, root)
-local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -90, 0, 36), Font = Theme.FONT, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
+local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 44, 0, 12), Size = UDim2.new(1, -90, 0, 36), Font = Theme.FONT, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
 local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 50), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)
 local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(16, 14, 32), BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
@@ -547,7 +548,7 @@ function views.set_auto()
     optRow(string.format("%s 스킬", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "판매", function() pick(k, 1) end, OPT[k] == 1 } })
   end
   optRow("같은 스킬 가장 좋은 1개는 유지", nil, { { "켜기", function() pick("sbest", true) end, OPT.sbest }, { "끄기", function() pick("sbest", false) end, not OPT.sbest } })
-  card("자동 정리", { "자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방과 스킬을 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
+  card("자동 정리", { "전투가 끝날 때마다 위 장비 규칙으로 가방을 정리하고, 자동 반복 중에는 스킬도 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
 end
 local function openSettings()
   local tabs = { { "언어", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
@@ -559,7 +560,7 @@ end
 -- 새 메뉴 화면 연결 (장비 · 스킬 · 패시브 트리는 Menus 모듈)
 local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "스킬", pass = "패시브", stones = "돌", shop = "스킬 상점", quests = "퀘스트" }
 Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
-  openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end })
+  openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
 views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.shop = Menus.gacha
@@ -608,6 +609,13 @@ showResultPanel = function(x, spec)
   rb(3, "지도", function() setScreen("map") end); rb(4, "마을", function() setScreen("town") end)
   local AUTO_TXT = { [0] = "자동 반복: 끔", "자동: 같은 단계", "자동: 다음 단계" }
   if not spec.noRetry then rb(5, AUTO_TXT[OPT.auto] or AUTO_TXT[0], function() setOpt("auto", (OPT.auto + 1) % 3); showResultPanel(x, spec) end, OPT.auto > 0 and Color3.fromRGB(60, 165, 80) or Color3.fromRGB(70, 66, 90)) end
+  -- 자동 분해: 전투가 끝날 때마다 가방에 규칙 적용 (가방 · 설정에서 정함)
+  if OPT.ar1 + OPT.ar2 + OPT.ar3 + OPT.ar4 > 0 then
+    task.spawn(function()
+      local ok, e = pcall(function() return rpc:InvokeServer("autoclean", { OPT.ar1, OPT.ar2, OPT.ar3, OPT.ar4 }) end)
+      if ok and e.res and e.res.n > 0 then setSummary(e.summary); toast(string.format("자동 정리: 장비 %d개 · 골드 +%s · 강화석 +%s", e.res.n, n(e.res.gold), n(e.res.ore))) end
+    end)
+  end
   -- 자동 반복 (웹 autoNext): 이기면 3초 뒤 같은/다음 단계를 다시 시작, 끝날 때마다 자동 정리 규칙 적용. 지면 멈춘다
   if OPT.auto > 0 and not spec.noRetry then
     if not x.win then resCount.Text = "패배해서 자동 반복을 멈췄습니다"; return end
@@ -615,10 +623,6 @@ showResultPanel = function(x, spec)
     autoJob = task.spawn(function()
       for i = 3, 1, -1 do resCount.Text = string.format("자동 반복: %d초 후 시작", i); task.wait(1) end
       autoJob = nil
-      if OPT.ar1 + OPT.ar2 + OPT.ar3 + OPT.ar4 > 0 then
-        local ok, e = pcall(function() return rpc:InvokeServer("autoclean", { OPT.ar1, OPT.ar2, OPT.ar3, OPT.ar4 }) end)
-        if ok and e.res and e.res.n > 0 then setSummary(e.summary); toast(string.format("자동 정리: 장비 %d개 · 골드 +%s · 강화석 +%s", e.res.n, n(e.res.gold), n(e.res.ore))) end
-      end
       if OPT.sr1 + OPT.sr2 + OPT.sr3 > 0 then
         local ok, e = pcall(function() return rpc:InvokeServer("skillclean", { rules = { OPT.sr1, OPT.sr2, OPT.sr3 }, best = OPT.sbest }) end)
         if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 판매 · 골드 +%s", e.res.sold, n(e.res.gold))) end
@@ -698,7 +702,8 @@ buildTown = function()
     townBuilt = true; townLayer:ClearAllChildren(); badgeDots = {}
     local v = vp(); local W, H = v.X, v.Y
     local bg = Sprites.art("bg_town")
-    if bg then cover(townLayer, bg, W, H, 1) else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
+    local townArt = bg and cover(townLayer, bg, W, H, 1)
+    if bg then Ambient.attach(townLayer, { z = 2, embers = 30, sway = function() return townArt end }) else mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(120, 180, 230), Color3.fromRGB(90, 150, 80)), Rotation = 90 }, townLayer) end
     for _, b in ipairs(BUILD) do
       local size = (b.row == 1 and 0.30 or 0.25) * H; local fy = (b.row == 1 and 0.95 or 0.67) * H
       local holder = mk("TextButton", { BackgroundTransparency = 1, Text = "", AutoButtonColor = false, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, b.x * W, 0, fy), Size = UDim2.new(0, size, 0, size), ZIndex = b.row == 1 and 4 or 3 }, townLayer)
@@ -716,8 +721,11 @@ buildTown = function()
       plate.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
       if b.badge then badgeDots[b.badge] = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 2), Size = UDim2.new(0, 14, 0, 14), BackgroundColor3 = Color3.fromRGB(255, 70, 70), Visible = false, ZIndex = 7 }, plate); corner(badgeDots[b.badge]); stroke(badgeDots[b.badge], Color3.new(1, 1, 1), 2) end
     end
-    local hero = Sprites.artLabel(townLayer, "warrior", 0.24 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.24 * H)
-    hero.Position = UDim2.new(0, 0.85 * W, 0, 0.74 * H); hero.ZIndex = 5
+    local hero = Sprites.artLabel(townLayer, "warrior", 0.17 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.17 * H)
+    hero.Position = UDim2.new(0, 0.86 * W, 0, 0.66 * H); hero.ZIndex = 5
+    if hero:IsA("ImageLabel") then hero.ImageColor3 = Color3.fromRGB(205, 165, 140) end
+    do local hs0 = hero.Size; TweenService:Create(hero, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Size = UDim2.new(hs0.X.Scale, hs0.X.Offset * 0.99, hs0.Y.Scale, hs0.Y.Offset * 1.03) }):Play() end   -- 숨쉬기   -- 마을 밤 조명(횃불)에 맞춰 어둡고 따뜻하게
+    local sh = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = hero.Position, Size = UDim2.new(0, 0.09 * H, 0, 0.022 * H), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, ZIndex = 4 }, townLayer); corner(sh)   -- 발밑 그림자
   end
   updateBadges()
 end
@@ -901,7 +909,9 @@ dock.MouseButton1Click:Connect(function() closePanel(); setScreen(screen == "map
 -- 메뉴 아이콘 (오른쪽 위)
 topButton(1, "m_bag", "🎒", "가방", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }) end)
 topButton(2, "m_skill", "📘", "스킬", function() openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } }) end)
-topButton(3, "m_passive", "✦", "패시브", function() openPanel("패시브", { { "패시브", "pass" }, { "스탯", "stats" } }) end)
+topButton(3, "m_passive", "✦", "패시브", function() openPanel("패시브", { { "패시브", "pass" } }) end)
+topButton(3.5, "m_stats", "📊", "스탯", function() openPanel("스탯", { { "스탯", "stats" } }) end)
+statLbl.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then openPanel("스탯", { { "스탯", "stats" } }) end end)
 topButton(4, "m_quest", "📜", "퀘스트", function() openPanel("퀘스트", { { "퀘스트", "quests" }, { "일일", "daily" } }) end)
 topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", { { "스킬 소환", "gacha" } }) end)
 topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "우편함", "mail" } }) end)
