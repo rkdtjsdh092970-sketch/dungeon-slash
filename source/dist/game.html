@@ -22,7 +22,7 @@
 #top{position:absolute;left:0;right:0;top:0;height:44px;background:linear-gradient(#150f26f0,#150f26cc);border-bottom:3px solid #6a5a9a;display:flex;align-items:center;gap:8px;padding:0 8px}
 #top .lv{font-weight:900;color:#ffd24a;font-size:18px;min-width:56px}.xp{width:110px;height:10px;background:#000;border:2px solid #555;border-radius:3px;overflow:hidden}.xp i{display:block;height:100%;background:#6ad0ff}
 .cur{display:flex;align-items:center;gap:4px;font-weight:bold;font-size:14px}.sp{flex:1}
-.cpicks{display:flex;gap:16px;justify-content:center;margin:14px 0}.cpick{width:260px;background:#1a1424;border:2px solid #4a3a60;border-radius:10px;padding:10px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:4px}.cpick:hover{border-color:#ffd24a;box-shadow:0 0 14px #ffd24a66}.cpick img{height:170px;object-fit:contain}.cpick b{font-size:22px}.sumgrid{display:grid;grid-template-columns:repeat(5,90px);gap:8px 12px;justify-content:center;margin:10px 0;perspective:900px}
+.cpicks{display:flex;gap:16px;justify-content:center;margin:14px 0}.cpick{width:260px;background:#1a1424;border:2px solid #4a3a60;border-radius:10px;padding:10px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:4px}.cpick:hover{border-color:#ffd24a;box-shadow:0 0 14px #ffd24a66}.cpick img{height:170px;object-fit:contain}.cpick b{font-size:22px}.advl{display:flex;flex-direction:column;gap:4px;margin:4px 0}.advb{display:flex;align-items:center;gap:8px;background:#241a1c;border:1px solid #786030;border-radius:6px;color:#f0e6d8;padding:6px 10px;font-size:14px;cursor:pointer;text-align:left}.advb:hover{border-color:#ffd24a}.advb span{width:20px}.advb em{margin-left:auto;color:#8cdcff;font-style:normal}.sumgrid{display:grid;grid-template-columns:repeat(5,90px);gap:8px 12px;justify-content:center;margin:10px 0;perspective:900px}
 .acard{position:relative;width:90px;height:135px}.acard .acart{position:absolute;left:12%;top:9%;width:76%;height:82%;object-fit:cover;border-radius:3px}.acard .acfrm{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .acard .acname{position:absolute;left:12%;right:12%;bottom:9%;background:linear-gradient(transparent,#000c 40%);font-size:11px;font-weight:700;text-align:center;padding:10px 2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acard .acbadge{position:absolute;top:-6px;right:-6px;background:#1a1424;border:1px solid #ffd24a;border-radius:8px;font-size:11px;padding:1px 5px;color:#ffe9a8}
@@ -5406,6 +5406,7 @@ function showResult(res, b, replay) {
     },
     autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
+    adv: (el) => adviceGo(el.dataset.k),
   } });
   if (!replay) animateResult(res);
   refreshTop();
@@ -6654,7 +6655,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-053441";
+const BUILD_ID = "20261103-053534";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -6708,6 +6709,24 @@ function drawEndOverlay(g, b) {
 }
 
 // ---------------- 결과 화면 ----------------
+// 5.0 (로블록스판과 같게): 패배하면 지금 바로 강해질 수 있는 방법을 보여 주고, 누르면 그 메뉴로
+function adviceList(sv) {
+  const out = [], left = passivePoints(sv) - passiveSpent(sv);
+  if (left > 0) out.push(["pass", "✦", `남은 패시브 포인트 ${left}점 찍기`]);
+  const up = sv.inv.filter((it) => isUpgrade(sv, it)).length; if (up > 0) out.push(["gear", "🛡", `가방에 더 좋은 장비 ${up}개 — 장착하기`]);
+  if ((sv.hone || 0) >= GACHA.ARC1) out.push(["gacha", "🔮", `새 스킬 소환 (아르카나 조각 ${fmtN(sv.hone)}개)`]);
+  if (EQ_SLOTS.some((k) => sv.equipped[k] && (sv.equipped[k].enh || 0) < 10) && sv.ore >= 5) out.push(["forge", "⚒", `제련소에서 장비 강화 (강화석 ${fmtN(sv.ore)}개)`]);
+  const keys = ["keys", "keys2", "keys3", "keys4", "keys5", "keys6"].reduce((a, k) => a + (sv[k] || 0), 0); if (keys > 0) out.push(["gate", "🗝", `보스 관문 열쇠 ${keys}개로 더 좋은 평타 얻기`]);
+  return out;
+}
+function adviceHtml() {
+  const L = adviceList(save); if (!L.length) return "";
+  return `<div class="rs-sec">강해지는 방법</div><div class="advl">${L.map(([k, ic, t]) => `<button class="advb" data-a="adv" data-k="${k}"><span>${ic}</span>${t}<em>가기 ▶</em></button>`).join("")}</div>`;
+}
+function adviceGo(k) {
+  G.pending = null; Modal.close(true); G.battle = null; AU.stopBgm(); openTown(G.townAct || 1);
+  setTimeout(() => { if (k === "pass") openPassives(); else if (k === "gear") { IB.mode = "inv"; IB.sel = null; renderItems(); } else if (k === "gacha") openSummon(); else if (k === "forge") openItems("forge"); else if (k === "gate") openMap(); }, 50);
+}
 function starCount(res, b) { if (!res.win || b.node.kind === "tutorial") return 0; const hp = b.hp / b.maxHp; return 1 + (hp >= 0.4 ? 1 : 0) + (hp >= 0.75 ? 1 : 0); }
 function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
   const win = res.win, T = endTitle(b), stars = starCount(res, b), pre = res.pre || { level: save.level, exp: save.exp, need: expNeed(save.level) };
@@ -6718,7 +6737,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
     ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
   const tiles = res.items.slice().sort((x, y) => y.rarity - x.rarity).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
   const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");
-  const skLab = (i) => { const g = res.skillRes && res.skillRes[i]; return !g || g.new ? "새 스킬" : g.lvlUp ? `레벨 업! Lv.${g.lvlUp}` : g.dupProg ? `중복 ${g.dupProg[0]} / ${g.dupProg[1]}` : `최대 레벨 · 연마석 +${g.dupHone}`; };
+  const skLab = (i) => { const g = res.skillRes && res.skillRes[i]; return !g || g.new ? "새 스킬" : g.lvlUp ? `레벨 업! Lv.${g.lvlUp}` : g.dupProg ? `중복 ${g.dupProg[0]} / ${g.dupProg[1]}` : `최대 레벨 · 조각 +${g.dupHone}`; };
   const sk = res.skills.map((s, i) => `<div class="rs-sk">${skIcon(s.id, 3)}<div><small>${skLab(i)}</small>${skillTitle(s)}</div></div>`).join("");
   const notes = res.notes.map((n) => `<div class="note">★ ${n}</div>`).join("") + res.quests.map((q) => `<div class="note">✔ 퀘스트 완료: ${q.title}</div>`).join("");
   const frac0 = Math.min(1, pre.exp / pre.need), fracN = save.level >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / expNeed(save.level));
@@ -6729,7 +6748,7 @@ function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
     <div class="rs-stats">${stat("처치", res.kills)}${stat("시간", Math.round(res.time) + "초")}${stat("가한 피해", fmtN(b.dealt))}${stat("받은 피해", fmtN(b.taken))}</div>
     <div class="rs-exp"><div class="rs-lv">Lv.<b id="rs-lv">${replay ? save.level : pre.level}</b></div><div class="rs-bar"><i id="rs-fill" style="width:${(replay ? fracN : frac0) * 100}%"></i><span id="rs-txt"></span></div><div class="rs-gain">${res.levelUps ? `레벨 <b>+${res.levelUps}</b>` : `<small class="dim">경험치 없음 · 균열 첫 클리어마다 레벨 +1</small>`}</div><div class="rs-up" id="rs-up">LEVEL UP!</div></div>
     <div class="rs-rew">${rew}</div>
-    ${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>` : ""}${res.buffs && res.buffs.length ? `<div class="dim center">월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}
+    ${res.exp ? `<div class="center" style="color:#9ad0ff;font-size:13px">경험치 +${fmtN(res.exp)}</div>` : ""}${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>${adviceHtml()}` : ""}${res.buffs && res.buffs.length ? `<div class="dim center">월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}
     ${tiles ? `<div class="rs-sec">획득 장비 <em>${res.items.length}</em></div><div class="rs-drops">${tiles}</div>${rareLines}` : ""}${sk}${notes}
     <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry" ${canRetry.disabled ? "disabled" : ""}>${canRetry.label || "다시 도전"}</button>` : ""}${nb ? `<button class="btn pri" data-a="next">${nb.label}</button>` : ""}</div><div class="center" style="margin-top:6px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">${AUTO_KINDS.includes(node.kind) && !replay ? `<button class="btn xs" data-a="autoloop">${autoLoopLabel(node)}</button>` : ""}${nb && !replay && res.win ? `<button class="btn xs" data-a="autotog">${autoNextLabel()}</button>` : ""}</div></div>`;
 }

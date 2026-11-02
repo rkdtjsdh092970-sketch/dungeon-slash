@@ -406,6 +406,7 @@ function showResult(res, b, replay) {
     },
     autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
+    adv: (el) => adviceGo(el.dataset.k),
   } });
   if (!replay) animateResult(res);
   refreshTop();
