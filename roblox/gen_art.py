@@ -33,6 +33,7 @@ ART = [
     ('ui_slot', 'ui/slot.png', (128, 128)), ('ui_pill', 'ui/pill.png', (192, 48)),
     ('ui_header', 'ui/header.png', (768, 69)), ('ui_divider', 'ui/divider.png', (768, 36)),   # 창 머리 띠 · 구분선
     ('summon_altar', 'summon/altar.png', (384, 480)), ('summon_deck', 'summon/deck.png', (384, 288)),   # 아르카나 소환 제단 · 덱
+    ('hud_bar', 'hud/bar_frame.png', (512, 64)), ('hud_portrait', 'hud/portrait_frame.png', (192, 192)), ('hud_boss', 'hud/boss_frame.png', (768, 72)), ('hud_plate', 'hud/hud_plate.png', (384, 120)),   # 전투 HUD 틀
     # 메뉴 아이콘 (오른쪽 위 줄 · 오른쪽 아래 지도/마을 버튼)
     *[('m_' + k, f'menu/{k}.png', (128, 128)) for k in ('bag', 'skill', 'passive', 'stats', 'shop', 'quest', 'mail', 'gacha', 'settings', 'map', 'town')],
     # 배경 생동감 (game/Ambient.lua): 불꽃 8프레임 · 빛무리 · 구름 3 · 까마귀 4프레임

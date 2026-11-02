@@ -108,44 +108,53 @@ function M.create(parent, W, H, replayAct)
   -- ── 전투 HUD (웹 battleHudBuild 구성): 로블록스 상단 버튼 줄(M.TOP) 아래부터. 크기는 Client 의 HUD 배율 M.HUD ──
   local TOP, k = M.TOP, M.HUD
   local FONT, GOLD, EDGE = Theme.FONT, Color3.fromRGB(214, 168, 70), Color3.fromRGB(20, 10, 30)
-  local function plate(props) local f = mk("Frame", props, root); mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, f); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, f); task.defer(function() if f.Parent then Skin.frame(f, "ui_panel", 0.2, 0.35) end end); return f end   -- 질감 있는 틀
   local function outl(o, t) mk("UIStroke", { Thickness = t or 2, Color = EDGE }, o); return o end
-  -- 왼쪽 위: 초상화 + 레벨 + HP/MP
-  local L = plate({ Position = UDim2.new(0, 12, 0, TOP + 6 * k), Size = UDim2.new(0, 330 * k, 0, 88 * k), BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.12, ZIndex = 8 })
-  -- 초상화: 어두운 원 안 붉은 빛 + 금 두 겹 고리
-  local ring = mk("Frame", { Position = UDim2.new(0, 5 * k, 0, 5 * k), Size = UDim2.new(0, 78 * k, 0, 78 * k), BackgroundColor3 = Color3.fromRGB(70, 50, 22), ZIndex = 9 }, L)
-  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, ring); mk("UIGradient", { Rotation = 135, Color = ColorSequence.new(Color3.fromRGB(255, 225, 140), Color3.fromRGB(110, 70, 25)) }, ring)
-  local face = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(1, -8 * k, 1, -8 * k), BackgroundColor3 = Color3.fromRGB(26, 10, 12), ClipsDescendants = true, ZIndex = 9 }, ring)
-  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, face); mk("UIStroke", { Color = Color3.fromRGB(30, 14, 8), Thickness = 2 }, face)
+  -- 왼쪽 위: 가죽 · 철 상태판(hud_plate) + 왕관 장식 초상화 고리(hud_portrait) + 장식 틀 안 체력바(hud_bar) + 마나 · 처치
+  local L = mk("Frame", { Position = UDim2.new(0, 10, 0, TOP + 4 * k), Size = UDim2.new(0, 352 * k, 0, 110 * k), BackgroundTransparency = 1, ZIndex = 8 }, root)
+  local function art(key, props, parent) local a = Sprites.art(key); if not a then return nil end; props.BackgroundTransparency = 1; props.ImageContent = a.content; props.ScaleType = props.ScaleType or Enum.ScaleType.Stretch; return mk("ImageLabel", props, parent) end
+  if not art("hud_plate", { Position = UDim2.new(0, 22 * k, 0, 6 * k), Size = UDim2.new(0, 330 * k, 0, 100 * k), ZIndex = 8 }, L) then
+    local f = mk("Frame", { Position = UDim2.new(0, 22 * k, 0, 6 * k), Size = UDim2.new(0, 330 * k, 0, 100 * k), BackgroundColor3 = Color3.fromRGB(22, 16, 14), BackgroundTransparency = 0.1, ZIndex = 8 }, L); mk("UICorner", { CornerRadius = UDim.new(0, 10 * k) }, f)
+  end
+  -- 초상화: 판의 반원 홈 위에 (안쪽 원 지름 = 고리 크기의 64%)
+  local PS = 112 * k
+  local face = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 52 * k, 0, 57 * k), Size = UDim2.new(0, PS * 0.66, 0, PS * 0.66), BackgroundColor3 = Color3.fromRGB(26, 10, 12), ClipsDescendants = true, ZIndex = 9 }, L)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, face)
   mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(120, 30, 30), Color3.fromRGB(20, 6, 8)) }, face)
   local fa = Sprites.art(M.heroKey())
   if fa then mk("ImageLabel", { BackgroundTransparency = 1, Size = UDim2.new(1.15, 0, 1.15, 0), AnchorPoint = Vector2.new(0.5, 0.4), Position = UDim2.new(0.5, 0, 0.5, 0), ImageContent = fa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 10 }, face) end
+  art("hud_portrait", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 52 * k, 0, 55 * k), Size = UDim2.new(0, PS, 0, PS), ScaleType = Enum.ScaleType.Fit, ZIndex = 11 }, L)
   -- 레벨: 초상화 아래 마름모 보석 배지
-  local gem = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 44 * k, 0, 80 * k), Size = UDim2.new(0, 26 * k, 0, 26 * k), Rotation = 45, BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 11 }, L)
+  local gem = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 52 * k, 0, 100 * k), Size = UDim2.new(0, 24 * k, 0, 24 * k), Rotation = 45, BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 12 }, L)
   mk("UIGradient", { Rotation = 45, Color = ColorSequence.new(Color3.fromRGB(255, 220, 130), Color3.fromRGB(150, 90, 25)) }, gem); mk("UIStroke", { Color = Color3.fromRGB(40, 20, 6), Thickness = 2 }, gem); mk("UICorner", { CornerRadius = UDim.new(0, 4 * k) }, gem)
-  S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 44 * k, 0, 80 * k), Size = UDim2.new(0, 30 * k, 0, 20 * k), BackgroundTransparency = 1, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(15 * k), ZIndex = 12 }, L))
-  local function bar(y, h, c1, c2, c3, ticks)
-    local B = fancyBar(L, UDim2.new(0, 90 * k, 0, y * k), UDim2.new(0, 228 * k, 0, h * k), c1, c2, c3, 9, ticks, 4)
-    local t = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(h * 0.72 * k), ZIndex = 15 }, B.bg), 1.5)
-    return B, t
-  end
-  S.hpB, S.hpTxt = bar(12, 24, Color3.fromRGB(255, 140, 120), Color3.fromRGB(215, 45, 45), Color3.fromRGB(120, 15, 25), 10)
-  S.mpB, S.mpTxt = bar(42, 14, Color3.fromRGB(150, 200, 255), Color3.fromRGB(60, 110, 230), Color3.fromRGB(25, 40, 120), 0)
+  S.lvLbl = outl(mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 52 * k, 0, 100 * k), Size = UDim2.new(0, 30 * k, 0, 20 * k), BackgroundTransparency = 1, Text = "1", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 13 }, L))
+  -- 체력: 장식 틀(hud_bar)의 빈 칸(가로 11.5%~92.4%, 세로 45%~73%)에 막대를 맞춘다
+  local FX, FY, FW, FH = 104 * k, 2 * k, 246 * k, 56 * k
+  art("hud_bar", { Position = UDim2.new(0, FX, 0, FY), Size = UDim2.new(0, FW, 0, FH), ZIndex = 14 }, L)
+  S.hpB = fancyBar(L, UDim2.new(0, FX + FW * 0.115, 0, FY + FH * 0.453), UDim2.new(0, FW * 0.81, 0, FH * 0.28), Color3.fromRGB(255, 140, 120), Color3.fromRGB(215, 45, 45), Color3.fromRGB(120, 15, 25), 9, 10, 2)
+  S.hpB.bg:FindFirstChildOfClass("UIStroke").Enabled = false   -- 틀 그림이 테두리
+  S.hpTxt = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 15 }, S.hpB.bg), 1.5)
+  -- 마나: 체력 아래 얇게
+  S.mpB = fancyBar(L, UDim2.new(0, FX + FW * 0.115, 0, 58 * k), UDim2.new(0, FW * 0.81, 0, 9 * k), Color3.fromRGB(150, 200, 255), Color3.fromRGB(60, 110, 230), Color3.fromRGB(25, 40, 120), 9, 0, 2)
+  S.mpTxt = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0), Text = "", Visible = false }, S.mpB.bg)   -- (마나 숫자는 숨김: 막대만)
   -- 처치 수: 해골 표식이 있는 작은 알약
-  local kp = mk("Frame", { Position = UDim2.new(0, 90 * k, 0, 62 * k), Size = UDim2.new(0, 110 * k, 0, 20 * k), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.2, ZIndex = 10 }, L)
-  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, kp); mk("UIStroke", { Color = Color3.fromRGB(120, 90, 50), Thickness = 1 }, kp)
+  local kp = mk("Frame", { Position = UDim2.new(0, FX + FW * 0.115, 0, 74 * k), Size = UDim2.new(0, 120 * k, 0, 22 * k), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.2, ZIndex = 10 }, L)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, kp); mk("UIStroke", { Color = Color3.fromRGB(150, 110, 60), Thickness = 1 }, kp)
   S.killLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 8 * k, 0, 0), Size = UDim2.new(1, -16 * k, 1, 0), Text = "", TextColor3 = Color3.fromRGB(255, 225, 160), Font = FONT, TextSize = math.floor(13 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 11 }, kp), 1.5)
   -- 위 가운데: 단계 이름 + 보스 체력
   S.titleLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 4 * k), Size = UDim2.new(0, 520 * k, 0, 30 * k), Text = "", TextColor3 = Color3.fromRGB(255, 225, 140), Font = FONT, TextSize = math.floor(24 * k), ZIndex = 9 }, root), 3)
   S.boss = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, TOP + 38 * k), Size = UDim2.new(0, 460 * k, 0, 48 * k), BackgroundTransparency = 1, Visible = false, ZIndex = 9 }, root)
   S.bossName = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20 * k), Text = "", TextColor3 = Color3.fromRGB(255, 160, 150), Font = FONT, TextSize = math.floor(17 * k), ZIndex = 10 }, S.boss), 2)
-  S.bossB = fancyBar(S.boss, UDim2.new(0, 0, 0, 22 * k), UDim2.new(1, 0, 0, 20 * k), Color3.fromRGB(255, 130, 90), Color3.fromRGB(200, 30, 30), Color3.fromRGB(90, 8, 14), 10, 10, 3)
-  S.bossB.bg:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(200, 150, 70); S.bossB.bg:FindFirstChildOfClass("UIStroke").Thickness = 2
-  for _, side in ipairs({ 0, 1 }) do   -- 양 끝 보석 장식
-    local gem = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(side, 0, 0.5, 0), Size = UDim2.new(0, 12 * k, 0, 12 * k), Rotation = 45, BackgroundColor3 = Color3.fromRGB(200, 30, 40), ZIndex = 16 }, S.bossB.bg)
-    mk("UIStroke", { Color = Color3.fromRGB(230, 180, 90), Thickness = 1.5 }, gem)
+  do
+    local BW, BH = 460 * k / 0.784, 22 * k / 0.219   -- 틀 크기 (빈 칸이 460 x 22 가 되게)
+    local bx, by = (460 * k - BW) / 2, 22 * k - BH * 0.396
+    local ba = Sprites.art("hud_boss")
+    S.bossB = fancyBar(S.boss, UDim2.new(0, 0, 0, 22 * k), UDim2.new(1, 0, 0, 22 * k), Color3.fromRGB(255, 130, 90), Color3.fromRGB(200, 30, 30), Color3.fromRGB(90, 8, 14), 10, 10, 2)
+    if ba then
+      S.bossB.bg:FindFirstChildOfClass("UIStroke").Enabled = false
+      mk("ImageLabel", { Position = UDim2.new(0, bx, 0, by), Size = UDim2.new(0, BW, 0, BH), BackgroundTransparency = 1, ImageContent = ba.content, ScaleType = Enum.ScaleType.Stretch, ZIndex = 15 }, S.boss)
+    end
   end
-  S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 16 }, S.bossB.bg), 1.5)
+  S.bossPct = outl(mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), ZIndex = 17 }, S.bossB.bg), 1.5)
   -- 오른쪽 위: 건너뛰기 · 배속(누르면 x1~x4 가 아래로 펼쳐짐, x4 는 게임패스)
   S.ctrl = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, TOP + 6 * k), Size = UDim2.new(0, 236, 0, 40), Visible = false, ZIndex = 30 }, root)
   mk("UIScale", { Scale = k }, S.ctrl)
