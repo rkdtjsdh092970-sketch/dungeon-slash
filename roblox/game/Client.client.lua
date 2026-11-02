@@ -35,7 +35,7 @@ loadLogo.AnchorPoint = Vector2.new(0.5, 0); loadLogo.Size = UDim2.new(0, 600, 0,
 do local sc = Instance.new("UIScale"); sc.Parent = loadBox; local function f() local vp = workspace.CurrentCamera.ViewportSize; sc.Scale = math.clamp(math.min(vp.X / 640, vp.Y / 420), 0.5, 1.6) end; f(); workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(f) end
 local function logoText(t, y, size, color)
   local l = Instance.new("TextLabel"); l.BackgroundTransparency = 1; l.Size = UDim2.new(1, 0, 0, size + 8); l.Position = UDim2.new(0, 0, 0, y); l.Text = t; l.Font = Enum.Font.GothamBlack; l.TextSize = size; l.TextColor3 = color; l.Parent = loadBox
-  local s = Instance.new("UIStroke"); s.Thickness = 3; s.Color = Color3.fromRGB(40, 14, 60); s.Parent = l; return l
+  local s = Instance.new("UIStroke"); s.Thickness = 3; s.Color = Color3.fromRGB(12, 4, 4); s.Parent = l; return l
 end
 local logoTxt = { logoText("ARCANA", 10, 64, Color3.fromRGB(255, 214, 90)), logoText("SLAYER", 80, 72, Color3.fromRGB(255, 120, 90)) }; logoText("자동 전투 핵 앤 슬래시", 186, 20, Color3.fromRGB(235, 215, 200))
 local loadBarBg = Instance.new("Frame"); loadBarBg.Size = UDim2.new(0.8, 0, 0, 14); loadBarBg.Position = UDim2.new(0.1, 0, 0, 226); loadBarBg.BackgroundColor3 = Color3.fromRGB(30, 12, 10); loadBarBg.Parent = loadBox
@@ -132,7 +132,7 @@ local stageHolder = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransp
 local townLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(90, 150, 90), BorderSizePixel = 0, ZIndex = 2, Visible = false }, gui)
 local mapDragged = false   -- 지도를 끌었으면 노드 클릭 무시
 local mapLayer = mk("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(60, 50, 40), BorderSizePixel = 0, ZIndex = 3, Visible = false, ScrollBarThickness = 0, ScrollingDirection = Enum.ScrollingDirection.XY, ElasticBehavior = Enum.ElasticBehavior.Never }, gui)
-local hud = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 10 }, gui)
+local hud = mk("Frame", { Name = "Hud", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 10 }, gui)
 local panelLayer = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, Text = "", AutoButtonColor = false, ZIndex = 20, Visible = false }, gui)
 local resultLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, ZIndex = 25, Visible = false }, gui)
 local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 30 }, gui)
@@ -148,8 +148,8 @@ do
   local STATS = { { "hp", "체력", Color3.fromRGB(235, 90, 80) }, { "atk", "공격력", Color3.fromRGB(240, 170, 80) }, { "mag", "주문력", Color3.fromRGB(150, 140, 255) }, { "def", "방어력", Color3.fromRGB(140, 190, 230) }, { "crit", "치명", Color3.fromRGB(255, 220, 110) } }
   for i, st in ipairs(STATS) do
     local x = 78 + (i - 1) * 60
-    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 8), Size = UDim2.new(0, 58, 0, 14), Text = st[2], Font = Theme.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(190, 175, 160), ZIndex = 12 }, statLbl)
-    statVal[st[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 22), Size = UDim2.new(0, 58, 0, 22), Text = "", Font = Theme.FONT, TextSize = 19, TextScaled = false, TextColor3 = st[3], ZIndex = 12 }, statLbl)
+    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 8), Size = UDim2.new(0, 58, 0, 14), Text = st[2], Font = Theme.FONT, TextSize = 14, TextColor3 = Color3.fromRGB(190, 175, 160), ZIndex = 12 }, statLbl)
+    statVal[st[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 22), Size = UDim2.new(0, 58, 0, 24), Text = "", Font = Theme.FONT, TextSize = 23, TextScaled = false, TextColor3 = st[3], ZIndex = 12 }, statLbl)
     mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, statVal[st[1]])
   end
   statLv = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 6), Size = UDim2.new(0, 52, 0, 18), BackgroundColor3 = Color3.fromRGB(20, 12, 10), Text = "", Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(255, 214, 110), ZIndex = 15 }, pf); corner(statLv, 6); stroke(statLv, GOLD, 1.5)
@@ -160,10 +160,10 @@ do
   if ga then mk("ImageLabel", { Position = UDim2.new(0, 4, 0.5, -20), Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, ImageContent = ga.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, gp) end
   statGold = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -58, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextSize = 22, TextColor3 = Color3.fromRGB(255, 210, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, gp)
   mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 16, 4) }, statGold)
-  statProg = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 80, 0, 50), Size = UDim2.new(1, -90, 0, 18), Text = "", Font = Enum.Font.GothamMedium, TextSize = 12, TextColor3 = Color3.fromRGB(215, 205, 195), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 }, statLbl)
+  statProg = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 80, 0, 50), Size = UDim2.new(1, -90, 0, 18), Text = "", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Color3.fromRGB(215, 205, 195), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 }, statLbl)
 end
 -- 오른쪽 아래: 지도 ⇄ 마을 큰 버튼 (마을에선 지도, 지도에선 마을)
-local dock = mk("TextButton", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(180, 130, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
+local dock = mk("TextButton", { Name = "MapBtn", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(180, 130, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
 corner(dock, 10); stroke(dock, GOLD, 2.5); local dockScale = mk("UIScale", { Scale = K }, dock)
 Skin.frame(dock, "ui_btn_gold", 0.3, 0.6)
 local dockIcon = mk("ImageLabel", { Position = UDim2.new(0, 10, 0.5, -34), Size = UDim2.new(0, 68, 0, 68), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, dock)
@@ -178,11 +178,11 @@ local function dockSet(toMap)
 end
 
 -- 오른쪽 위: 메뉴 아이콘 줄 (마을 · 지도에서)
-local topBar = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 7 * 66 + 6 * 6, 0, 80), ZIndex = 11 }, hud)
+local topBar = mk("Frame", { Name = "TopBar", BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 7 * 66 + 6 * 6, 0, 80), ZIndex = 11 }, hud)
 local topScale = mk("UIScale", { Scale = K }, topBar)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, topBar)
 local function topButton(i, key, emoji, text, cb)
-  local b = mk("TextButton", { Size = UDim2.new(0, 66, 0, 80), BackgroundTransparency = 1, Text = "", LayoutOrder = i, ZIndex = 11 }, topBar)
+  local b = mk("TextButton", { Name = key, Size = UDim2.new(0, 66, 0, 80), BackgroundTransparency = 1, Text = "", LayoutOrder = i, ZIndex = 11 }, topBar)
   local fr = mk("Frame", { Size = UDim2.new(0, 62, 0, 62), Position = UDim2.new(0.5, -31, 0, 0), BackgroundColor3 = PANEL, ZIndex = 11 }, b); corner(fr, 10); stroke(fr, GOLD, 2)
   Skin.frame(fr, "ui_slot", 0.3, 0.45)
   local a = Sprites.art(key)
@@ -710,8 +710,10 @@ buildTown = function()
       holder.MouseEnter:Connect(function() TweenService:Create(hs, TweenInfo.new(0.12), { Scale = 1.06 }):Play() end)
       holder.MouseLeave:Connect(function() TweenService:Create(hs, TweenInfo.new(0.12), { Scale = 1 }):Play() end)
       holder.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
-      local plate = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(0, 132, 0, 28), BackgroundColor3 = DARK, BackgroundTransparency = 0.08, Text = b.icon .. " " .. b.name, TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 6 }, holder)
-      corner(plate); stroke(plate, GOLD, 1.5); mk("UIScale", { Scale = K }, plate)
+      -- 이름표는 건물 묶음 밖(위층)에 둔다: 앞줄 건물 그림에 뒷줄 이름표가 가려지지 않게
+      local plate = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, b.x * W, 0, fy - 4), Size = UDim2.new(0, 140, 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.08, AutoButtonColor = false, Text = b.name, TextColor3 = Color3.new(1, 1, 1), Font = Theme.FONT, TextSize = 16, ZIndex = 6 }, townLayer)
+      corner(plate); stroke(plate, GOLD, 1.5); mk("UIScale", { Scale = K }, plate); Skin.button(plate)
+      plate.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
       if b.badge then badgeDots[b.badge] = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 2), Size = UDim2.new(0, 14, 0, 14), BackgroundColor3 = Color3.fromRGB(255, 70, 70), Visible = false, ZIndex = 7 }, plate); corner(badgeDots[b.badge]); stroke(badgeDots[b.badge], Color3.new(1, 1, 1), 2) end
     end
     local hero = Sprites.artLabel(townLayer, "warrior", 0.24 * H) or Sprites.label(townLayer, "warrior", 0, false, 0.24 * H)
@@ -933,7 +935,7 @@ loadStep("준비 완료!", 1)
 setScreen("town")
 task.wait(0.35)
 do   -- 시작화면: 눌러야 들어간다
-  loadBarBg.Visible = false; loadTxt.Text = "화면을 눌러 시작"; loadTxt.TextSize = 22; loadTxt.Font = Theme.FONT
+  loadBarBg.Visible = false; loadTxt.Text = "화면을 눌러 시작"; loadTxt.TextSize = 30; loadTxt.Font = Theme.FONT; loadTxt.TextColor3 = Color3.fromRGB(255, 225, 160)
   local pressed = false
   local tw = TweenService:Create(loadTxt, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { TextTransparency = 0.7 }); tw:Play()
   local hit = Instance.new("TextButton"); hit.Size = UDim2.new(1, 0, 1, 0); hit.BackgroundTransparency = 1; hit.Text = ""; hit.ZIndex = 50; hit.Parent = loadBg
