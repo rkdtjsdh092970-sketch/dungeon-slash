@@ -55,6 +55,28 @@ local function baseCast(k, s, act, sc)
 end
 function M.baseCast(k, s) local act = math.max(1, math.min(10, math.floor(s.avgIlvl + 0.5))); return baseCast(k, s, act, 1 + CFG.DEF_ACT * (act - 1)) end   -- 측정(sim)용
 M.castMult = castMult
+-- 사탄 장비 · 전직(cm) 조건부 피해 배율의 기대값 (Battle satMult 와 같은 조건을 평균으로)
+local function satExp(s, k, idx, empty, lanes)
+  local S, C = s.sat or {}, s.cm or {}; local m = 1
+  if S.noelem and k.elem then return 0 end
+  if C.first and idx == 0 then m *= 1 + C.first end
+  if C.full then m *= 1 + C.full * 0.6 end
+  if C.start then m *= 1 + C.start * 0.05 end
+  if C.elite then m *= 1 + C.elite * 0.2 end
+  if S.manafull then m *= 1.1 end
+  if S.first then m *= idx == 0 and 1.4 or 0.9 end
+  if S.empty then m *= 1 + 0.25 * empty end
+  if S.fire and k.dtype ~= "mag" then m *= 1.25 end
+  if S.elite then m *= 1.05 end
+  if S.lowhp then m *= 0.6 end
+  if S.normalonly then m *= 1.5 end
+  if S.start then m *= 1.05 end
+  if S.ready then m *= 1.1 end
+  if S.lanes then m *= 1 + 0.05 * lanes end
+  if S.stack then m *= 1.1 end
+  if S.dodgeamp then m *= 1 + 0.3 * (s.dodge or 0) end
+  return m
+end
 local function statusPow(s)
   local function up(c) return math.min(0.85, (c or 0) * 1.2) end
   local f = 1
@@ -71,20 +93,21 @@ local function equippedSkills(sv)
   end
   return out
 end
-function M.detail(s, skl)
+function M.detail(s, skl, slots)
   local act = math.max(1, math.min(10, math.floor(s.avgIlvl + 0.5))); local sc = 1 + CFG.DEF_ACT * (act - 1)
   local refAtk = M.RAW * 6 * CFG.A0 * actScale(math.max(1, s.avgIlvl)); local mit = 1 + s.def / (5 * refAtk)
   local out = { skills = {}, dps = 0, manaFactor = 1, buff = 1 }
   local demand, buffMul = 0, 1
   local cdMul = 1 - s.cdr
   local rows = {}
-  for _, k in ipairs(skl) do
+  local empty = math.max(0, (slots or #skl) - #skl)
+  for idx, k in ipairs(skl) do
     local cd = math.max(0.2, (k.cd or 1) * cdMul); local cost = (k.mana or 0) * s.manaCostMul / cd
     if k.dtype == "buff" then buffMul *= 1 + (k.power or 0) * math.min(1, (k.dur or 0) / cd); demand += cost
     elseif k.dtype == "heal" then demand += cost
     else
       local mag = k.dtype == "mag"
-      local cast = castMult(k, s) * baseCast(k, s, act, sc)
+      local cast = castMult(k, s) * baseCast(k, s, act, sc) * satExp(s, k, idx - 1, empty, s.lanes or 2)
       local dot = 0
       for _, st in ipairs({ "bleed", "poison", "ignite" }) do
         local q = (st == "ignite") and k.elem == "fire" or (st ~= "ignite" and not mag)
@@ -107,7 +130,7 @@ function M.detail(s, skl)
 end
 function M.of(sv)
   local s = Stats.computeStats(sv)
-  local d = M.detail(s, equippedSkills(sv))
+  local d = M.detail(s, equippedSkills(sv), sv.slots)
   return M.K * d.dps * d.ehp * statusPow(s) * (1 + 0.35 * (s.revive or 0)) * (1 + s.laneBonus * 0.05) * (1 + 0.04 * (s.density or 0)) * (1 + s.lifesteal * 2), d, s
 end
 return M
