@@ -610,7 +610,10 @@ function M.skills()
       local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
       local RULE_NAME = { front = "앞열", auto = "오토", boss = "보스 우선", ranged = "원거리 우선", elite = "정예 우선", normal = "일반 우선" }
       local cur = k.rule or "front"; local nxt = RULE[(table.find(RULE, cur) or 1) % #RULE + 1]
-      local rb = M.btn(D, string.format("공격 대상: %s  (눌러서 바꾸기)", RULE_NAME[cur] or cur), UDim2.new(1, -20, 0, 34), M.BTN.gold, function() res(C.rpc:InvokeServer("equipskill", { slot = k.slot, uid = k.uid, rule = nxt })) end)
+      local rb = M.btn(D, string.format("공격 대상: %s  (눌러서 바꾸기)", RULE_NAME[cur] or cur), UDim2.new(1, -20, 0, 34), M.BTN.gold, function()
+        local e = C.rpc:InvokeServer("equipskill", { slot = k.slot, uid = k.uid, rule = nxt }); if e.summary then C.setSummary(e.summary) end
+        if e.err then C.msg.Text = tostring(e.err) else k.rule = nxt; fillDetail() end   -- 창 전체를 다시 그리지 않고 이 칸만 (깜빡임 없음)
+      end)
       rb.Position = UDim2.new(0, 10, 1, -44); rb.TextSize = 14   -- 한 줄 전체 (글자가 접히지 않게)
     end
   end
