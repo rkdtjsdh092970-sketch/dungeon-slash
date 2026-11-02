@@ -506,7 +506,7 @@ function views.help()
   clear()
   card("How the game flows", {
     "Your hero fights automatically. You grow stronger with arcana, gear and passives, and push ever higher.",
-    "Meadow 1–5 → Abyssal Rift floors 1–100 (each first clear: level +1) → graduate at floor 100 → Boss Gate · Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms." }, {})
+    "Meadow 1–5 → Abyssal Rift floors 1–100 (win battles for EXP) · Boss Gates open at Rift 20/40/70/100 and drop basic attacks (keys come from key monsters) → graduate at floor 100 → Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms." }, {})
   card("How to raise your Power (most important first)", {
     "1) Gear: press [Auto Equip] in your bag. Items marked with a green ▲ are upgrades. Weapon, gloves and amulet matter most.",
     "2) Arcana: slot 1 is your basic attack (new ones unlock as you level, upgrade with gold). Fill slots 2–4 with Arcana of your family (physical or magic) from Summon — pulling the same Arcana again levels it up.",
@@ -1097,6 +1097,7 @@ local function showInfo(t)
         local okM, mods = pcall(function() return require(RS.Game.Battle).riftMods(cur) end)
         if okM and #mods > 0 then for _, m in ipairs(mods) do line(string.format("Modifier · %s: %s", m.name, m.text), 14, Color3.fromRGB(215, 160, 255), 40) end end
         line(string.format("Drops: T%d gear · Arcana Shards · Gold%s", math.min(5, math.floor(cur / 20) + 1), cur % 5 == 0 and " · Boss rewards" or ""), 15, Color3.fromRGB(150, 210, 255))
+        line("Key monsters (golden glow) drop Boss Gate keys — Boss Gates drop basic attacks", 13, Color3.fromRGB(255, 215, 120), 34)
         if cur > best then line("First clear raises your level by 1.", 15, Color3.fromRGB(200, 190, 175)) end
       else
         recLine(okP and CF.SPIRE and PW.recTier(CF.SPIRE.TAB[cur], true) or nil)
@@ -1130,9 +1131,31 @@ local function showInfo(t)
       end
       if desc then line(desc, 14, Color3.fromRGB(205, 195, 180), 40) end
       tabs({ { text = "Gate", w = 90 }, { text = "Upper Gate", w = 120, ok = U.up } }, upper and 2 or 1, function(i) upper = i == 2; refresh() end)
-      tabs({ { text = "Phase 1", w = 84 }, { text = "Phase 2", w = 84 }, { text = "Stage 3", w = 84 }, { text = "Stage 4", w = 84 } }, stage, function(i) stage = i; refresh() end)
+      tabs({ { text = "Stage 1", w = 84 }, { text = "Stage 2", w = 84 }, { text = "Stage 3", w = 84 }, { text = "Stage 4", w = 84 } }, stage, function(i) stage = i; refresh() end)
       local tiers = upper and U.upTiers or U.gateTiers
       recLine(okP and tiers and PW.recTier(tiers[stage]) or nil)
+      if not upper and U.gateNeed then   -- 단계마다 필요한 균열 층
+        local need = U.gateNeed[stage]; local ok = (U.riftBest or 0) >= need
+        line(ok and string.format("Open — requires Rift floor %d", need) or string.format("Locked — requires Rift floor %d", need), 14, ok and Color3.fromRGB(150, 230, 160) or Color3.fromRGB(255, 130, 110))
+      end
+      do   -- 드랍 안내: 이 보스 · 이 단계에서 나오는 평타 (등급색) + 장비
+        local okS, SKd = pcall(require, RS.Game.Data.Skills)
+        local RC = { Color3.fromRGB(190, 190, 200), Color3.fromRGB(110, 170, 255), Color3.fromRGB(255, 170, 70), Color3.fromRGB(200, 120, 255), Color3.fromRGB(240, 70, 70) }
+        if okS and SKd.GATE_BASIC and not upper then
+          local maxT = ({ 0, 1, 2, 3 })[stage]; local names = {}
+          local byId = {}; for _, d in ipairs(SKd.SKILLS) do byId[d.id] = d end
+          for _, id in ipairs(SKd.GATE_BASIC[hb[1]] or {}) do local d = byId[id]; local tr = d and (d.tier or 0) or 0; if d and tr <= maxT then names[#names + 1] = d.name end end
+          line(string.format("Drops — Basic attacks (30–50%%): %s", #names > 0 and table.concat(names, ", ") or "—"), 14, RC[maxT + 1], 40)
+          line(string.format("Gear T%d · Orbs · Gold%s", ({ 2, 3, 4, 5 })[stage], U.graduated and " · Arcana of this element" or ""), 14, Color3.fromRGB(150, 210, 255))
+        elseif upper then line("Drops — Satan · Doom grade Arcana · T6 gear", 14, Color3.fromRGB(255, 120, 110)) end
+      end
+      do   -- 보스 그림 (오른쪽 위)
+        local okM2, MonD = pcall(require, RS.Game.Data.Monsters)
+        local artN = (okM2 and MonD.EB[hb[1]] and MonD.EB[hb[1]].boss.art) or 10
+        local a = Sprites.art("boss" .. artN)
+        if a then local im = mk("ImageLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0, 170, 0, 170), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 17 }, R)
+          local g = Sprites.art("fx_glow"); if g then mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(1.2, 0, 1.2, 0), BackgroundTransparency = 1, ImageContent = g.content, ImageColor3 = col, ImageTransparency = 0.6, ZIndex = 16 }, im) end end
+      end
       local have, need = U[hb[3]] or 0, upper and 5 or 1
       line(string.format("%s  %d (need %d)", hb[4], have, need), 16, have >= need and Color3.fromRGB(255, 220, 140) or Color3.fromRGB(255, 130, 110))
       if upper and not U.up then line("The Upper Gate opens after clearing the Normal raid.", 14, Color3.fromRGB(255, 140, 120)) end

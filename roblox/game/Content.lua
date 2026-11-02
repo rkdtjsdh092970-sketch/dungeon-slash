@@ -11,7 +11,9 @@ local Econ = require(script.Parent.Economy)
 local M = {}
 local floor, max, min = math.floor, math.max, math.min
 local UP_TIERS, UP_KEYS = { 165.7, 171.7, 177.7, 183.6 }, 5   -- 2026-11-02 재보정: 탑 100층 비례 (참 4개 조건은 시뮬 불가)
-local GATE_TIERS = { 108.5, 111, 116, 128 }   -- 2026-11-03: 4단계는 솟아오른 탑 약 40층 수준 (신화 평타를 떨어뜨림)   -- 2026-11-02 재보정 (sim/endgame_calib.lua, 난이도당 24판 · 승률 60%)
+local GATE_TIERS = { 25, 45, 75, 105 }   -- 2026-11-03: 균열 진행 중에 차근차근 연다 (단계 = 균열 층 수준)
+local GATE_NEED = { 20, 40, 70, 100 }   -- 단계마다 필요한 균열 최고층
+M.GATE_NEED = GATE_NEED   -- 2026-11-02 재보정 (sim/endgame_calib.lua, 난이도당 24판 · 승률 60%)
 M.GATE_TIERS, M.UP_TIERS = GATE_TIERS, UP_TIERS   -- 지도 창 권장 전투력 표시용   -- 보스 관문 1~4단계 (2026-11-02 전 테스터 기준: T5 1등급1·2등급2·3등급2 → 1등급3·2등급2)
 local BOSS_SKILL_RW = { { 12, 42, 42, 4, 0, 0 }, { 8, 28, 55, 9, 0, 0 }, { 6, 18, 67, 9, 0, 0 }, { 5, 12, 70, 13, 0, 0 } }
 local BOSS_SKILL_CH = { 0.12, 0.18, 0.28, 0.45 }
@@ -62,6 +64,7 @@ end
 -- 늦은 콘텐츠 장비 드랍
 local function lateItems(rng, sv, node, kind, boss, extra)
   local ilvl = ((kind == "craid" and node.diff == 3) or kind == "warden") and 6 or 5
+  if (kind == "void" or Mon.EB[kind]) and not node.upper then ilvl = ({ 2, 3, 4, 5 })[max(1, min(4, node.vsel or 1))] end   -- 보스 관문 단계별 장비 티어
   local n
   if kind == "raid" then n = 8
   elseif kind == "craid" then n = 6 + 2 * (node.diff or 1)
@@ -94,8 +97,8 @@ function M.play(sv, spec, seed)
   local node
   local keyField, cost = nil, 0
   if kind == "void" or EBk then
-    if not graduated(sv) then return nil, "Requires clearing Rift Floor 100" end
     local vs = max(1, min(4, spec.vsel or 1))
+    if not spec.upper and (sv.rift and sv.rift.best or 0) < GATE_NEED[vs] then return nil, string.format("Stage %d requires Rift floor %d", vs, GATE_NEED[vs]) end
     if spec.upper and not (sv.craid and sv.craid[2]) then return nil, "Higher Gates unlock after clearing the Normal Raid" end
     keyField = kind == "void" and "keys" or EBk.key; cost = spec.upper and UP_KEYS or 1
     if (sv[keyField] or 0) < cost then return nil, "Not enough Keys (" .. cost .. "required)" end
@@ -168,8 +171,8 @@ function M.play(sv, spec, seed)
     for _, it in ipairs(lateItems(rng, sv, node, kind, boss, { waves = waves })) do if #sv.inv < 200 then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = it.sat and "Satan Gear" or "Gear", sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
   end
   if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do Econ.grantSkill(sv, k.id); res.skills[#res.skills + 1] = k.id end end
-  if kind == "void" or EBk then   -- 상위 평타: 관문 단계 1~2 = 희귀, 3 = 전설까지, 4 = 신화까지 (확률 30 · 35 · 40 · 50%)
-    local st = max(1, min(4, node.vsel or 1)); local maxT = ({ 1, 1, 2, 3 })[st]
+  if kind == "void" or EBk then   -- 평타: 관문 단계 1 = 일반, 2 = 희귀까지, 3 = 전설까지, 4 = 신화까지 (확률 30 · 35 · 40 · 50%)
+    local st = max(1, min(4, node.vsel or 1)); local maxT = ({ 0, 1, 2, 3 })[st]
     if rng:NextNumber() < ({ 0.3, 0.35, 0.4, 0.5 })[st] then
       local pool = {}
       for _, id in ipairs((SK.GATE_BASIC or {})[kind] or {}) do if Econ.skillTier(id) <= maxT then pool[#pool + 1] = id end end

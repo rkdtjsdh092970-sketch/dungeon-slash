@@ -60,13 +60,10 @@ for _, id in ipairs({ "solarflare", "glacierfall", "titanfist", "legion" }) do M
 for _, id in ipairs({ "skysword", "starfall", "dragonbreath", "angelfall", "verdict" }) do M.GACHA[id] = 4 end
 for _, d in ipairs(M.LIST) do if d.slot ~= "basic" then M.GACHA[d.id] = d.tier end end
 -- 평타 세트: 이 레벨이 되면 받는다 (물리 · 마법 모두). 평타 레벨은 골드로 올린다
-M.BASIC = {   -- 기본 평타: 레벨로 열린다
-  { "strike", 1 }, { "rapid", 3 }, { "rip", 6 }, { "crush", 10 }, { "venom", 14 },
-  { "ember", 1 }, { "frostbolt", 3 }, { "spark", 6 }, { "voidbolt", 10 },
-}
--- 상위 평타: 열쇠 보스(보스 관문)가 떨어뜨린다. 보스 원소에 맞는 것 우선, 관문 단계가 높을수록 높은 등급까지
+M.BASIC = { { "strike", 1 }, { "ember", 1 } }   -- 시작 평타 (나머지 평타는 모두 보스 관문에서)
+-- 평타는 열쇠 보스(보스 관문)가 떨어뜨린다: 보스 원소에 맞는 것, 관문 단계가 높을수록 높은 등급까지 (1 = 일반, 2 = 희귀까지, 3 = 전설까지, 4 = 신화까지)
 M.GATE_BASIC = {
-  titan = { "twinfang", "skycleave", "heavensplit" }, storm = { "galeshot", "voltlash" }, poison = { "bloodclaw" },
-  hive = { "fireball", "cometbolt" }, void = { "arcbarrage" }, frost = { "voltlash", "arcbarrage" },
+  titan = { "rapid", "crush", "twinfang", "skycleave", "heavensplit" }, storm = { "spark", "galeshot", "voltlash" }, poison = { "venom", "rip", "bloodclaw" },
+  hive = { "fireball", "cometbolt" }, void = { "voidbolt", "arcbarrage" }, frost = { "frostbolt", "voltlash" },
 }
 return M
