@@ -191,7 +191,7 @@ local function guildHome(v)
     local cb = M.btn(f, "보상 받기", UDim2.new(0, 140, 0, 40), anyDone and M.BTN.green or M.BTN.gray, function() gcall("g_claim") end); cb.AnchorPoint = Vector2.new(1, 0); cb.Position = UDim2.new(1, -12, 0, 10)
     local b2 = row(sc, 190, 2)
     txt(b2, string.format("👹 길드 보스  ·  60초 동안 최대 피해  ·  이번 주 남은 도전 %d회  ·  길드 합계 %s", v.bossTries, n(v.bossTotal)), 14, UDim2.new(0, 14, 0, 8), UDim2.new(1, -170, 0, 20), Color3.fromRGB(255, 210, 120), M.FONT)
-    local rl = {}; for i, x in ipairs(v.bossRank) do if i <= 5 then rl[#rl + 1] = string.format(require(script.Parent.Lang).lang == "en" and "#%d  %s   %s" or "%d위  %s   %s", i, x.name, n(x.damage))   -- 이름이 섞여 사전 번역이 안 되므로 직접 end end
+    local rl = {}; for i, x in ipairs(v.bossRank) do if i <= 5 then rl[#rl + 1] = string.format(require(script.Parent.Lang).lang == "en" and "#%d  %s   %s" or "%d위  %s   %s", i, x.name, n(x.damage)) end end
     local rt = txt(b2, #rl > 0 and table.concat(rl, "\n") or "이번 주 기록이 없습니다", 13, UDim2.new(0, 14, 0, 36), UDim2.new(1, -180, 1, -44), Color3.fromRGB(220, 210, 195)); rt.TextYAlignment = Enum.TextYAlignment.Top; rt:SetAttribute("NoTr", #rl > 0)
     local bb = M.btn(b2, "도전", UDim2.new(0, 140, 0, 40), v.bossTries > 0 and M.BTN.red or M.BTN.gray, function() gcall("g_boss") end); bb.AnchorPoint = Vector2.new(1, 0); bb.Position = UDim2.new(1, -12, 0, 10)
     local pb = M.btn(b2, "지난주 순위 보상", UDim2.new(0, 140, 0, 36), M.BTN.gold, function() gcall("g_bossclaim") end); pb.AnchorPoint = Vector2.new(1, 0); pb.Position = UDim2.new(1, -12, 0, 58); pb.TextSize = 13
