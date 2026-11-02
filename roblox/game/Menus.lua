@@ -593,7 +593,7 @@ function M.pass()
     if ca then mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, cx, 0, cy), Size = UDim2.new(0, 70, 0, 70), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 4 }, sf)
     else local c0 = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, cx, 0, cy), Size = UDim2.new(0, 34, 0, 34), BackgroundColor3 = M.GOLD, ZIndex = 4 }, sf); corner(c0) end
     for arm, ang in pairs({ phys = -90, mag = 0, wealth = 90, def = 180 }) do   -- 갈래 이름
-      local a = math.rad(ang); local l = txt(sf, ARM_NAME[arm], 16, UDim2.new(0, cx + math.cos(a) * 140 - 40, 0, cy + math.sin(a) * 140 - 10), UDim2.new(0, 80, 0, 20), ARM[arm], M.FONT, Enum.TextXAlignment.Center); l.ZIndex = 6
+      local a = math.rad(ang); local l = noTr(txt(sf, PLang.lang == "en" and ({ phys = "Might", mag = "Arcana", wealth = "Fortune", def = "Bulwark" })[arm] or ARM_NAME[arm], 16, UDim2.new(0, cx + math.cos(a) * 140 - 40, 0, cy + math.sin(a) * 140 - 10), UDim2.new(0, 80, 0, 20), ARM[arm], M.FONT, Enum.TextXAlignment.Center)); l.ZIndex = 6
       mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, l)
     end
   end

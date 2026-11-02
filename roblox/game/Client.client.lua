@@ -1017,7 +1017,7 @@ loadStep("모험 기록을 불러오는 중...", 0.3)
 for _ = 1, 120 do local ok, r = pcall(function() return rpc:InvokeServer("state") end); if ok and r and r.summary then setSummary(r.summary); Lang.set(r.summary.lang or "en"); for k, v in pairs(r.summary.set or {}) do if OPT[k] ~= nil then OPT[k] = v end end; calcK(); applyOpt(); break end; task.wait(0.5) end
 do
   local okArt, ARTM = pcall(require, RS.Game.Data:FindFirstChild("ArtMap"))
-  local keys = {}; if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" and k:sub(1, 2) ~= "p_" then keys[#keys + 1] = k end end end; table.sort(keys)   -- 스킬 카드 · 패시브 아이콘은 처음 볼 때 받는다
+  local keys = {}; if okArt then for k in pairs(ARTM.ART) do if k:sub(1, 7) ~= "card_s_" then keys[#keys + 1] = k end end end; table.sort(keys)   -- 스킬 카드는 처음 볼 때 받는다
   for i, k in ipairs(keys) do loadStep(string.format("그림을 불러오는 중... (%d/%d)", i, #keys), 0.35 + 0.6 * i / #keys); Sprites.art(k) end
 end
 pcall(function() isOwner = rpc:InvokeServer("isowner").owner == true end)
