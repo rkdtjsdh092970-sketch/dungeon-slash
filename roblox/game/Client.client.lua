@@ -938,7 +938,7 @@ local function showInfo(t)
     for f = 1, shown do
       local lock = f > maxN
       local b = mk("TextButton", { Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = Color3.fromRGB(30, 22, 18), AutoButtonColor = false, Text = "", LayoutOrder = -f, ZIndex = 18 }, left); corner(b, 6)
-      local sk = stroke(b, Color3.fromRGB(70, 52, 30), 1)
+      local sk = mk("UIStroke", { Color = Color3.fromRGB(70, 52, 30), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
       local tag, tcol = mark(f)
       L(b, string.format("%d층", f), 17, UDim2.new(0, 10, 0, 0), UDim2.new(0.5, 0, 1, 0), lock and Color3.fromRGB(110, 100, 95) or (f <= best and Color3.fromRGB(170, 160, 145) or Color3.fromRGB(245, 232, 205))).ZIndex = 19
       L(b, (f <= best and "✓ " or "") .. (tag or ""), 14, UDim2.new(0.45, 0, 0, 0), UDim2.new(0.55, -8, 1, 0), tcol or Color3.fromRGB(140, 220, 140), Enum.TextXAlignment.Right).ZIndex = 19
@@ -1007,7 +1007,7 @@ local function showInfo(t)
     end
     for i, hb in ipairs(HUB) do
       local b = mk("TextButton", { Size = UDim2.new(1, 0, 0, 52), BackgroundColor3 = Color3.fromRGB(30, 22, 18), AutoButtonColor = false, Text = "", LayoutOrder = i, ZIndex = 18 }, left); corner(b, 6)
-      local sk = stroke(b, Color3.fromRGB(70, 52, 30), 1.5)
+      local sk = mk("UIStroke", { Color = Color3.fromRGB(70, 52, 30), Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
       L(b, hb[2], 15, UDim2.new(0, 10, 0, 4), UDim2.new(1, -16, 0, 24), BOSSCOL[hb[1]]).ZIndex = 19
       L(b, string.format("%s %d개", hb[4], U[hb[3]] or 0), 13, UDim2.new(0, 10, 0, 26), UDim2.new(1, -16, 0, 20), Color3.fromRGB(180, 170, 155)).ZIndex = 19
       brow[i] = { b = b, sk = sk }
