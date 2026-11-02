@@ -901,6 +901,7 @@ local function revealResults(res)
     done = true; hint.Visible = true
   end)
 end
+M.revealResults = revealResults   -- (시험용: 가짜 결과로 연출 확인)
 function M.gacha()
   C.clear()
   local r = C.rpc:InvokeServer("gacha"); if r.summary then C.setSummary(r.summary) end
