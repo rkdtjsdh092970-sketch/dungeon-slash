@@ -712,33 +712,42 @@ local function nodeState(t)
   return "locked"
 end
 -- 노드 정보 카드 (지도 아래 가운데)
-infoCard = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14), Size = UDim2.new(0, 560, 0, 168), BackgroundColor3 = Color3.fromRGB(24, 20, 44), Visible = false, ZIndex = 15 }, hud)
+infoCard = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14), Size = UDim2.new(0, 560, 0, 214), BackgroundColor3 = Color3.fromRGB(24, 20, 44), Visible = false, ZIndex = 15 }, hud)
 corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); local infoScale = mk("UIScale", { Scale = K }, infoCard)
 local function showInfo(t)
   infoCard:ClearAllChildren(); corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
   local st, hint, prog = nodeState(t)
   mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 10), Size = UDim2.new(1, -80, 0, 30), Font = Enum.Font.GothamBlack, TextSize = 22, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = t.icon .. "  " .. t.name .. (prog and ("   " .. prog) or ""), ZIndex = 16 }, infoCard)
   do local b = button(infoCard, "X", UDim2.new(1, -50, 0, 10), UDim2.new(0, 36, 0, 32), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 16 end
-  local desc = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 44), Size = UDim2.new(1, -36, 0, 48), Font = Enum.Font.GothamMedium, TextSize = 14, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(225, 220, 245), Text = "", ZIndex = 16 }, infoCard)
+  local desc = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 44), Size = UDim2.new(1, -36, 0, 94), Font = Enum.Font.GothamMedium, TextSize = 14, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(225, 220, 245), Text = "", ZIndex = 16 }, infoCard)
   local row = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 1, -58), Size = UDim2.new(1, -32, 0, 44), ZIndex = 16 }, infoCard)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   local order = 0
   local function rb(text, cb, col, w) order += 1; local b = button(row, text, UDim2.new(), UDim2.new(0, w or 92, 0, 40), cb, col); b.LayoutOrder = order; b.ZIndex = 17; b.TextSize = 15; return b end
   if st == "locked" then desc.Text = "🔒 " .. (hint or "아직 열리지 않았습니다"); infoCard.Visible = true; return end
   -- 층 선택 (균열 · 탑)
-  local function floors(maxN, def, specFn, what)
+  local function floors(maxN, def, specFn, what, showMods)
     local num = def
     local lbl
-    rb("−", function() num = math.max(1, num - 1); lbl.Text = num .. "층" end, nil, 40)
-    lbl = rb(num .. "층", function() end, Color3.fromRGB(40, 34, 70), 80)
-    rb("+", function() num = math.min(maxN, num + 1); lbl.Text = num .. "층" end, nil, 40)
+    local function upd()
+      lbl.Text = string.format("%d층", num)
+      local t = what
+      if showMods then   -- 균열 변형 (10층부터, 층마다 정해져 있음 — 웹 riftMods)
+        local ok, mods = pcall(function() return require(RS.Game.Battle).riftMods(num) end)
+        if ok then for _, m in ipairs(mods) do t ..= "\n" .. string.format("변형 %s: %s", m.name, m.text) end end
+      end
+      desc.Text = t
+    end
+    rb("−", function() num = math.max(1, num - 1); upd() end, nil, 40)
+    lbl = rb("", function() end, Color3.fromRGB(40, 34, 70), 80)
+    rb("+", function() num = math.min(maxN, num + 1); upd() end, nil, 40)
     rb("도전!", function() launch(specFn(num)) end, Color3.fromRGB(170, 60, 60), 110)
-    desc.Text = what
+    upd()
   end
   local s = summary
   if t.id == "T" then desc.Text = "마을로 돌아가 장비 · 스킬 · 퀘스트를 정비합니다."; rb("마을로", function() setScreen("town") end, Color3.fromRGB(110, 80, 30), 120)
   elseif t.stage then desc.Text = t.stage == 5 and "초원의 보스. 쓰러뜨리면 심연의 균열이 열립니다." or ("초원 " .. t.stage .. "번째 전투. 권장 레벨 " .. t.stage); rb("도전!", function() launch(stageSpec(t.stage)) end, Color3.fromRGB(170, 60, 60), 120)
-  elseif t.id == "R" then floors(math.min(100, s.riftBest + 1), math.min(100, s.riftBest + 1), riftSpec, "층을 깰 때마다 레벨이 1 오릅니다. 100층을 깨면 졸업.")
+  elseif t.id == "R" then floors(math.min(100, s.riftBest + 1), math.min(100, s.riftBest + 1), riftSpec, "층을 깰 때마다 레벨이 1 오릅니다. 100층을 깨면 졸업.", true)
   elseif t.id == "RTW" then floors(math.min(100, s.best + 1), math.min(100, s.best + 1), towerSpec, "솔로 탑. 100층을 깨면 새 문지기가 열립니다.")
   elseif t.id == "RE" then desc.Text = "하루 3번 · 오래 버틸수록 보상"; rb("입장", function() launch(playSpec("무한 균열", { kind = "endless" })) end, Color3.fromRGB(170, 60, 60))
   elseif t.id == "RG" then desc.Text = "골드 위주 보상 (보석 없음)"; rb("입장", function() launch(playSpec("황금 보물고", { kind = "vault" })) end, Color3.fromRGB(170, 60, 60))
