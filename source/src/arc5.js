@@ -29,12 +29,6 @@ function setTabs5(kind, after) {
 }
 document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-set5]"); if (!b || !save) return; ev.stopPropagation(); const kind = b.dataset.set5, i = +b.dataset.i, cur = (save.sets && save.sets[kind]) || 0; if (i === cur) return;
   setSwitch5(save, kind, i); snd("equip"); toast(`세트 ${i + 1}`); saveGame(); refreshTop(); if (SET5_AFTER[kind]) SET5_AFTER[kind](); }, true);
-function arcPowerDelta(inst, slot) {   // 그 칸에 넣었을 때 전투력 변화
-  const lo0 = save.loadout, p0 = powerScore5(save); save.loadout = lo0.map((l) => l && Object.assign({}, l));   // 복사본에서 계산 (원래 칸은 건드리지 않는다)
-  const j = save.loadout.findIndex((l) => l && l.uid === inst.uid); if (j >= 0) save.loadout[j] = null;
-  const dj = skillDupSlot(save, inst, slot); if (dj >= 0) save.loadout[dj] = null;
-  save.loadout[slot] = { uid: inst.uid, rule: "front" }; const p1 = powerScore5(save); save.loadout = lo0; return p1 - p0;
-}
 function openSkills() {
   const st = computeStats(save), slots = save.slots || 4, lo = save.loadout;
   const dpsOf = (sk) => { try { const s2 = Object.assign({}, st); s2.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20); return pwDetail(s2, [sk], 1).dps; } catch (e) { return 0; } };
@@ -70,16 +64,16 @@ function openSkills() {
     if ((sk.hits || 1) > 1) fx.push(`${sk.hits}연타`); if (sk.count) fx.push(`${sk.count}발`); if (sk.jumps) fx.push(`${sk.jumps}번 튕김`); if (sk.dur) fx.push(`${sk.dur.toFixed(1)}초 지속`);
     if (sk.lifesteal > 0) fx.push(`흡혈 ${Math.round(sk.lifesteal * 100)}%`);
     for (const [k, n] of [["bleed", "출혈"], ["poison", "중독"], ["ignite", "점화"]]) if (sk[k] > 0) fx.push(`${n} 확률 ${Math.round(Math.min(1, sk[k]) * 100)}%`); if (sk.chill > 0) fx.push(`둔화 ${sk.chill.toFixed(1)}초`); if (sk.power > 0) fx.push(`효과 ${Math.round(sk.power * 100)}%`);
-    const btns = [], parts = [];
-    if (d.slot !== "passive") for (let i = 0; i < slots; i++) if ((i === 0) === isBasic && j !== i) { const dv = arcPowerDelta(sel, i); parts.push(`${i === 0 ? "평타" : i + 1 + "번"} ${dv >= 0 ? "▲+" : "▼"}${fmtN(Math.abs(dv))}`);
-      btns.push(`<button class="btn blue" data-a="aeq" data-s="${i}">${i === 0 ? "평타 칸" : i + 1 + "번 칸으로"}<small style="color:${dv >= 0 ? "#82ff96" : "#ff786e"}">${dv >= 0 ? "▲" : "▼"}${fmtN(Math.abs(dv))}</small></button>`); }
+    const btns = [];
+    if (d.slot !== "passive") for (let i = 0; i < slots; i++) if ((i === 0) === isBasic && j !== i) { const l = lo[i], cur = l && save.skills.find((x) => x.uid === l.uid), cd = cur && SKILLS.find((x) => x.id === cur.id);   // 5.29: 전투력 대신 무엇과 바뀌는지
+      btns.push(`<button class="btn blue" data-a="aeq" data-s="${i}">${i === 0 ? "평타 칸" : i + 1 + "번 칸으로"}<small style="color:#d8ccb8">${cd ? "교체: " + cd.name : "빈 칸"}</small></button>`); }
     if (j < 0 && !isBasic) btns.push(`<button class="btn pri" data-a="dissk" data-u="${sel.uid}">분해</button>`);
     const RN = RULES;
     const rule = j >= 0 && lo[j] ? lo[j].rule || "front" : null;
     right = `<div class="adh5">${arcCard(sel.id, sel.rarity, {})}<div style="min-width:0"><b class="adn5">${d.name}</b><div style="color:${SK_RCOL5[sel.rarity]};font-weight:700">${R.name} · Lv ${sel.lvl || 1} / ${SKILL_MAX_LV}${(sel.lvl || 1) < SKILL_MAX_LV ? `  (중복 ${sel.dup || 0}/${sel.lvl || 1})` : ""}</div><div class="tg5">${tags.join(" · ")}</div>
-      <div class="ag5"><div><small>초당 피해</small><b style="color:#ffc86e">${dps ? fmtPow(dps) : "–"}</b></div><div><small>1회 위력</small><b>${Math.round(sk.mult * 100)}%</b></div><div><small>쿨타임</small><b>${sk.cd.toFixed(1)}초</b></div><div><small>사거리</small><b>${sk.range ? sk.range + "칸" : "–"}</b></div><div><small>범위</small><b>${area}</b></div><div><small>마나</small><b>${sk.mana ? Math.round(sk.mana) : "없음"}</b></div></div></div></div>
+      <div class="ag5"><div class="dpsw5"><small>초당 피해 ⓘ</small><b style="color:#ffc86e">${dps ? fmtPow(dps) : "–"}</b>${dps ? `<div class="dpst5">${dpsBreak5(sk, st)}</div>` : ""}</div><div><small>1회 위력</small><b>${Math.round(sk.mult * 100)}%</b></div><div><small>쿨타임</small><b>${sk.cd.toFixed(1)}초</b></div><div><small>사거리</small><b>${sk.range ? sk.range + "칸" : "–"}</b></div><div><small>범위</small><b>${area}</b></div><div><small>마나</small><b>${sk.mana ? Math.round(sk.mana) : "없음"}</b></div></div></div></div>
       <div class="adesc5">${d.desc}${fx.length ? "<br><br>• " + fx.join("<br>• ") : ""}${sk.rune ? `<br><br>룬: ${sk.rune.name}` : ""}</div>
-      <div class="pw5">${parts.length ? "장착하면 전투력:  " + parts.join("   ") : isBasic ? "평타 — 1번 칸에만 넣을 수 있습니다" : "아르카나 — 2~4번 칸에 넣습니다"}</div>
+      <div class="pw5">${isBasic ? "평타 — 1번 칸에만 넣을 수 있습니다" : "아르카나 — 2~4번 칸에 넣습니다"}</div>
       <div class="ab5">${btns.join("")}</div>${rule ? `<button class="btn gold rule5" data-a="arule">대상: ${RN[rule] || rule}  (눌러서 바꾸기)</button>` : ""}`;
   }
   Modal.open(`<h2>아르카나</h2><div class="arc5">${left}<div class="box5 ar5">${right}</div></div>`, { cls: "wide", on: {
@@ -169,4 +163,22 @@ function openCodex() {
     <div class="tbl5" style="flex:1"><div class="th5">아르카나 도감  ${have} / ${all.length}</div><div class="og5">${list.map((x) => card(x, 60, 88)).join("") || `<div class="dim pad">이 분류에 아르카나가 없습니다.</div>`}</div></div></div><div class="box5 ar5">${R}</div></div>`, { cls: "wide", on: {
     cxf: (el) => { CXA.f = el.dataset.f; openCodex(); }, cxs: (el) => { CXA.sel = el.dataset.id; snd("click"); openCodex(); },
   } });
+}
+
+// 초당 피해 풀이 (마우스를 올리면): power5.js pwBaseCast · pwCastMult 와 같은 순서로 곱한다
+function dpsBreak5(k, s0) {
+  const s = Object.assign({}, s0); s.refIlvl = Math.min(6, 1 + ((save.rift && save.rift.best) || 0) / 20);
+  const ref = s.refIlvl, act = Math.max(1, Math.min(10, Math.round(ref))), sc = 1 + CFG.DEF_ACT * (act - 1), mag = k.dtype === "mag";
+  const base = mag ? s.mag * CFG.MAG_BASE : s.atk * CFG.PHYS_BASE;
+  let inc = 1 + s.allDmg + (mag ? s.magDmg : s.physDmg); if (k.elem) inc += s.elemDmg + (s[k.elem + "Dmg"] || 0);
+  const ig = Math.min(0.9, (mag ? s.ignoreRes : s.ignoreDef) + (k.ignoreAdd || 0)), sh = (mag ? s.shredRes : s.shredDef) * 0.7, X = 1.1 * sc * (1 - ig) * (1 - sh), red = 1 - Math.min(CFG.DEF_CAP, X / (X + CFG.DEF_C));
+  let er = 1; if (k.elem) { const ei = ELEMS.indexOf(k.elem); er = 1 - Math.max(-0.5, Math.min(CFG.RES_CAP, (ACT_ELEM[act - 1] || ACT_ELEM[0])[ei] - s.penElem)); }
+  const cc = Math.min(0.9, (mag ? (s.magCrit ? s.critChance + s.spellCrit : s.spellCrit) : s.critChance) + (k.critAdd || 0)), crit = 1 + cc * s.critDmg;
+  let bsum = s.add.boss + s.add.elite + s.add.ranged + s.add.normal; for (const v of Object.values(k.bonus || {})) bsum += v;
+  const bon = 1 + 0.15 * bsum, kind = pwKindMul(k, s), cast = pwCastMult(k, s), cdr = Math.max(0.2, (k.cd || 1) * (1 - s.cdr));
+  const f = (v, dg) => "×" + (v >= 100 ? fmtN(v) : v.toFixed(dg == null ? 2 : dg));
+  const rows = [[mag ? "주문력 × 마법 계수" : "공격력 × 물리 계수", fmtN(Math.round(base))], ["1회 피해 배율 (실측 · 맞히는 적 수 포함)", f(cast)], ["피해 증가 % (주는 피해 · 계열 · 원소)", f(inc)],
+    [mag ? "적 마법 저항으로 깎임" : "적 방어력으로 깎임", f(red)], ...(k.elem ? [["원소 저항으로 깎임", f(er)]] : []), [`치명타 기대값 (확률 ${Math.round(cc * 100)}% · 피해 +${Math.round(s.critDmg * 100)}%)`, f(crit)],
+    ["보스 · 정예 등 추가 피해", f(bon)], ...(kind !== 1 ? [["단일 · 지속 · 소환 보너스", f(kind)]] : []), ["÷ 쿨타임 (쿨타임 감소 반영)", "÷" + cdr.toFixed(2) + "초"]];
+  return `<b>초당 피해 계산</b>${rows.map(([a, b]) => `<div><span>${a}</span><em>${b}</em></div>`).join("")}<small>기준: 균열 ${Math.max(1, (save.rift && save.rift.best) || 1)}층 근처 몬스터. 상태이상 · 마나 부족 · 버프가 더 곱해질 수 있습니다.</small>`;
 }
