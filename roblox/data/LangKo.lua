@@ -985,6 +985,7 @@ M.exact = {
   ["On taking a hit, counter chance 8%, counter Damage based on DEF 300%"] = "피격 시 8% 확률로 방어력의 300% 반격",
   ["On taking a hit, stack Damage dealt +1% (5s, up to 20)"] = "피격 시 주는 피해 +1%씩 중첩 (5초, 최대 20)",
   ["Only Arcana in the 4 top slots are used in battle — slot 1 is your basic attack, slots 2–4 are Arcana. Open [Arcana], tap the glowing new card, then press its glowing slot button."] = "전투에서는 위쪽 4칸에 넣은 아르카나만 씁니다 — 1번 칸은 평타, 2~4번 칸은 아르카나입니다. [아르카나]를 열고 빛나는 새 카드를 누른 뒤 빛나는 칸 버튼을 누르세요.",
+  ["Only Arcana in the 4 top slots are used in battle — slot 1 is your basic attack, slots 2–4 are Arcana. Open [Arcana], tap your newest card and press [To Slot 4] — or drag the card onto slot 4."] = "전투에서는 위쪽 4칸의 아르카나만 씁니다 — 1번 칸은 평타, 2~4번 칸은 아르카나입니다. [아르카나]를 열고 가장 최근에 뽑은 카드를 눌러 [4번 칸에]를 누르세요 — 또는 카드를 4번 칸으로 끌어다 놓아도 됩니다.",
   ["Only Arcana in the 4 top slots are used in battle. Open [Arcana], tap the glowing new card, then press the empty [To Slot 4]."] = "전투에서는 위쪽 4칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 빛나는 새 카드를 누른 뒤 비어 있는 [4번 칸에]를 누르세요.",
   ["Only processes Common~Magic Gear, excluding Enhanced·Satan Gear."] = "일반~마법 장비 중 강화·사탄이 아닌 것만 처리합니다.",
   ["Only the game owner can use this"] = "게임 주인만 사용할 수 있습니다",

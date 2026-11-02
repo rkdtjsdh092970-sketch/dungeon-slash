@@ -1357,7 +1357,8 @@ coach_hl = function(target)   -- 눌러야 할 곳: 둥근 금빛 테두리(빛�
     if coachShade then coachShade:Destroy() end
     coachShade = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 44 }, gui)
     local sides = {}
-    for i = 1, 4 do sides[i] = mk("TextButton", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ZIndex = 44 }, coachShade) end
+    for i = 1, 4 do sides[i] = gui:GetAttribute("CoachNoBlock") and mk("Frame", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.55, BorderSizePixel = 0, Active = false, ZIndex = 44 }, coachShade)   -- 끌어다 놓는 단계: 어둡게만, 막지 않음
+      or mk("TextButton", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ZIndex = 44 }, coachShade) end
     local shade = coachShade
     coachHl = mk("Frame", { BackgroundTransparency = 1, ZIndex = 45 }, gui)
     local hl = coachHl
@@ -1446,7 +1447,8 @@ local function hasText(d, t)
   return false
 end
 local function skipAll() coachClose(); tutStep, tutWait, tutNext = nil, nil, nil; tutSet(99) end
-local function guide(title, text, finder, waitFor, nextFn, textFn)   -- textFn: 지금 화면에 맞는 안내 글 (단계 안에서 할 일이 바뀔 때)
+local function guide(title, text, finder, waitFor, nextFn, textFn, noBlock)   -- textFn: 지금 화면에 맞는 안내 글 (단계 안에서 할 일이 바뀔 때), noBlock: 끌어다 놓기 허용
+  gui:SetAttribute("CoachNoBlock", noBlock and true or false)   -- true 면 강조 밖을 어둡게만 하고 누르기 · 끌기는 막지 않는다
   coach(title, text, { { "Skip Tutorial", skipAll, 170, Color3.fromRGB(70, 66, 70) } })
   tutWait, tutNext = waitFor, nextFn
   local box = coachBox
@@ -1490,14 +1492,50 @@ tutorial = function(step)
         return (want == "mag" and "③ [Magic] is selected — only Arcana for Mages will come out." or "③ [Physical] is selected — only Arcana for Warriors will come out.") .. "\nTap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are revealed, tap the screen again to close."
       end)
   elseif step == 2 then
-    guide("Arcana slots", "Only Arcana in the 4 top slots are used in battle — slot 1 is your basic attack, slots 2–4 are Arcana. Open [Arcana], tap the glowing new card, then press its glowing slot button.",
+    local function newestCard()   -- 아직 칸에 없는 카드 중 가장 최근에 얻은 것 (새로 뽑은 카드)
+      local best, bu
+      for _, d in ipairs(gui:GetDescendants()) do
+        if d:IsA("GuiButton") and d.Visible and d:GetAttribute("Uid") and d:GetAttribute("Equipped") == false and d.AbsoluteSize.X < 80 then
+          local u = d:GetAttribute("Uid"); if not bu or u > bu then best, bu = d, u end
+        end
+      end
+      return best, bu
+    end
+    guide("Arcana slots", "Only Arcana in the 4 top slots are used in battle — slot 1 is your basic attack, slots 2–4 are Arcana. Open [Arcana], tap your newest card and press [To Slot 4] — or drag the card onto slot 4.",
       function()
         local pt = panelTitle:GetAttribute("_src") or panelTitle.Text
         if not panelLayer.Visible then return topBtn("m_skill") end
         if pt ~= "Arcana" then return closeBtn() end
-        return findBtn(function(d) return hasText(d, "To Slot") or hasText(d, "Basic Slot") end) or findBtn(function(d) return d.AbsoluteSize.X > 50 and d.AbsoluteSize.X < 70 and d.AbsoluteSize.Y > 80 end)
+        local slot4 = findBtn(function(d) return hasText(d, "To Slot 4") end)
+        if slot4 then return slot4 end
+        return (newestCard()) or findBtn(function(d) return hasText(d, "To Slot") end)
       end,
-      "power", function() tutorial(3) end)
+      "power", function() tutorial(3) end, nil, true)
+    task.spawn(function()   -- 끌어다 놓기 시범: 반투명 카드 + 손가락 화살표가 새 카드에서 4번 칸으로 날아간다 (반복)
+      while tutStep == 2 do
+        local card = panelLayer.Visible and newestCard() or nil
+        local slot4; for _, d in ipairs(gui:GetDescendants()) do if d:GetAttribute("SlotIdx") == 4 and d.Visible then slot4 = d end end
+        if card and slot4 then
+          local o = gui.AbsolutePosition
+          local a = card.AbsolutePosition - o + card.AbsoluteSize / 2; local b = slot4.AbsolutePosition - o + slot4.AbsoluteSize / 2
+          local ghost = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, a.X, 0, a.Y), Size = UDim2.new(0, card.AbsoluteSize.X, 0, card.AbsoluteSize.Y), BackgroundTransparency = 1, Rotation = -6, ZIndex = 49 }, gui)
+          local src; for _, x in ipairs(card:GetDescendants()) do if x:IsA("ImageLabel") and x.ImageTransparency < 0.5 then src = x; break end end
+          if src then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = src.ImageContent, ScaleType = Enum.ScaleType.Crop, ImageTransparency = 0.35, ZIndex = 49 }, ghost) end
+          mk("UIStroke", { Color = Color3.fromRGB(255, 215, 120), Thickness = 2 }, ghost)
+          local aa = Sprites.art("tut_arrow")
+          local hand = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.new(0, 46, 0, 46), Rotation = 180, BackgroundTransparency = 1, ZIndex = 50 }, ghost)
+          if aa then hand.ImageContent = aa.content end
+          local glow = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, b.X, 0, b.Y), Size = UDim2.new(0, slot4.AbsoluteSize.X + 10, 0, slot4.AbsoluteSize.Y + 10), BackgroundTransparency = 1, ZIndex = 48 }, gui)
+          corner(glow, 10); local gs = mk("UIStroke", { Color = Color3.fromRGB(255, 215, 120), Thickness = 3, Transparency = 0.2 }, glow)
+          task.wait(0.35)
+          local t = TweenService:Create(ghost, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), { Position = UDim2.new(0, b.X, 0, b.Y), Rotation = 4 }); t:Play(); t.Completed:Wait()
+          TweenService:Create(gs, TweenInfo.new(0.3), { Thickness = 6, Transparency = 0 }):Play()
+          task.wait(0.4)
+          ghost:Destroy(); glow:Destroy()
+          task.wait(0.4)
+        else task.wait(0.4) end
+      end
+    end)
   elseif step == 3 then
     tutSet(3)
     guide("First battle", "Close the window, press [Map] at the bottom right, tap [Meadow 1] with the golden ▼ and press [Challenge]. The battle plays automatically.",
