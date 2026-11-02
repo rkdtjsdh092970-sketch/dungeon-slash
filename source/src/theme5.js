@@ -9,6 +9,8 @@
   #mbox h2{font-family:Georgia,"Times New Roman",serif;color:#f0d08a !important;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px #c08a3a66;background:${U("header")} center/100% 100% no-repeat;padding:3px 40px 4px;margin:0 auto 4px !important;max-width:460px;font-size:19px !important}
   .btn{background:transparent !important;border:10px solid transparent !important;border-image:${U("btn_gray")} 36 fill / 10px stretch !important;border-radius:0 !important;box-shadow:none !important;color:#f5e8cd !important;text-shadow:0 1px 2px #000;padding:2px 8px !important}
   .btn.pri{border-image:${U("btn_red")} 36 fill / 10px stretch !important}
+  .r5band{border:14px solid transparent;border-image:${U("title")} 60 fill / 14px stretch}
+  #mbox.res5{background:${U("panel")} center/100% 100% no-repeat, #100b0a !important}
   .btn.gold{border-image:${U("btn_gold")} 36 fill / 10px stretch !important}.btn.blue{border-image:${U("btn_blue")} 36 fill / 10px stretch !important}.btn.purple{border-image:${U("btn_purple")} 36 fill / 10px stretch !important}.btn.green{border-image:${U("btn_green")} 36 fill / 10px stretch !important}
   .btn.big{padding:6px 14px !important}
   .btn:hover:not([disabled]){filter:brightness(1.18)}
@@ -17,9 +19,6 @@
   .tab{background:transparent !important;border:8px solid transparent !important;border-image:${U("tab")} 30 fill / 8px stretch !important;border-radius:0 !important;color:#d8c8a8 !important}
   .tab.on{border-image:${U("tab_on")} 30 fill / 8px stretch !important;color:#fff4d8 !important}
   #mbox > .x{width:30px;height:30px;font-size:0 !important;background:${U("close")} center/contain no-repeat !important;border:0 !important;top:-6px !important;right:-6px !important;z-index:5}
-  #top{background:linear-gradient(#1c0e0ef4,#0e0808e8) !important;border-bottom:2px solid #8a6a38 !important;box-shadow:0 2px 0 #000,0 4px 14px #0008}
-  #top .btn{border-width:6px !important;border-image-width:6px !important;padding:1px 3px !important;font-size:12px !important;margin:0 !important}
-  #top .btn .mi{width:18px;height:18px;vertical-align:-4px;margin-right:1px}
   .tabs .tab,.itabs .tab{margin:1px}
   .skdet,.sks,.skg,.sumc,.advb,.rs-chip,.rs-stat,.shopcard{background-color:#1a1012 !important;border-color:#6a4a2a !important}
   .sks.cursel,.skg.picked{border-color:#f0c060 !important}
@@ -50,8 +49,9 @@
         if (nv !== v) r.style.setProperty(p, nv, r.style.getPropertyPriority(p));
       } } }
   const st = document.createElement("style"); st.id = "theme5"; st.textContent = css; document.head.appendChild(st);
-  // 상단 메뉴 버튼: 로블록스판 메뉴 아이콘
-  const MI = { "b-map": "m_map", "b-inv": "m_bag", "b-pass": "m_passive", "b-stat": "m_stats", "b-skill": "m_skill", "b-quest": "m_quest", "b-opt": "m_settings", "b-daily": "m_mail", "b-codex": "m_gacha" };
-  const put = () => { for (const id in MI) { const b = document.getElementById(id), u = typeof artURL === "function" && artURL(MI[id]); if (!b || !u || b.querySelector(".mi")) continue; const t = b.firstChild; if (t && t.nodeType === 3) t.textContent = t.textContent.replace(/^[^\w가-힣]+\s*/, ""); const im = document.createElement("img"); im.className = "mi"; im.src = u; b.insertBefore(im, b.firstChild); } };
+  // 마을 · 지도 HUD 그림 (로블록스판 Skin: 판 · 슬롯)
+  const st2 = document.createElement("style"); st2.textContent = `.tb5>i{border-image:${U("slot")} 30 fill / 6px stretch}.h5pill{border-image:${U("pill")} 30 fill / 6px stretch}#b-map{border-image:${U("panel")} 120 fill / 10px stretch}`; document.head.appendChild(st2);
+  const put = () => { for (const b of document.querySelectorAll(".tb5[data-mi]")) { const u = typeof artURL === "function" && artURL(b.dataset.mi); const i = b.querySelector("i"); if (u && i && !i.firstChild) i.innerHTML = `<img src="${u}" alt="">`; } for (const [id, k] of [["h5ig", "i_gold"], ["h5ia", "i_arcana"]]) { const e = document.getElementById(id), u = typeof artURL === "function" && artURL(k); if (e && u && !e.getAttribute("src")) e.src = u; } };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", put); else put();
+  window.theme5Put = put;
 })();

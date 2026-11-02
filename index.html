@@ -371,6 +371,59 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .hl5{height:392px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 4px}.hc5{background:#100c0ce6;border:1.5px solid #785c30;border-radius:6px;padding:6px 12px}.hc5 b{color:#ffdc8c;font-size:15px}.hc5 p{margin:3px 0;font-size:13px;color:#e8dcc8}
 .bh5 .set5{font-size:12px}.bh5 .set5 .btn{width:26px;height:20px;font-size:12px!important;line-height:1}.bh5{display:flex;align-items:center}
 .det5 .dbtns{gap:4px;margin-top:6px}.det5 .dbtns .btn{padding:0 4px!important;font-size:12px!important;line-height:1.15;min-height:34px}
+/* ---- 5.0 결과 창 (로블록스판 showResultPanel) ---- */
+#mbox.res5{width:660px!important;max-width:96vw;min-height:360px;overflow:visible!important;padding:0 20px 16px!important;margin-top:40px;position:relative}
+.r5{position:relative;display:flex;flex-direction:column;align-items:center;min-height:330px}
+.r5glow{position:absolute;left:50%;top:-75px;width:520px;height:170px;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(255,190,90,.6),transparent 65%);pointer-events:none}.r5.lose .r5glow{background:radial-gradient(ellipse,rgba(200,40,40,.6),transparent 65%)}
+.r5band{position:relative;margin-top:-40px;width:340px;height:70px;box-sizing:border-box;display:flex;align-items:center;justify-content:center}
+.r5.anim .r5band{animation:r5band .35s cubic-bezier(.3,1.6,.5,1) both}@keyframes r5band{from{transform:scale(.76)}to{transform:none}}
+.r5band b{font-family:Georgia,serif;font-size:44px;line-height:1;color:#ffdc78;text-shadow:-2px 0 #140604,2px 0 #140604,0 -2px #140604,0 2px #140604,0 0 14px #ffb04080}.r5.lose .r5band b{color:#ff786e}
+.r5sub{margin-top:4px;font-size:18px;font-weight:700;color:#e6d7be;height:24px}
+.r5stat{display:flex;gap:18px;background:rgba(8,5,4,.7);border-radius:15px;padding:0 16px;height:30px;align-items:center;margin-top:6px;font-size:16px;font-weight:700;color:#dccdb9}
+.r5exp{position:relative;width:calc(100% - 90px);margin:12px 0 0 36px;height:20px;background:#08060c;border:2px solid #d6a846;border-radius:10px;box-sizing:border-box}
+.r5bar{position:absolute;inset:2px;border-radius:8px;overflow:hidden}.r5bar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:linear-gradient(90deg,#2846c8,#4696ff 60%,#a0ebff);transition:width .9s cubic-bezier(.2,.8,.3,1);box-shadow:inset 0 5px 0 rgba(255,255,255,.28),3px 0 6px #dcfaff}
+.r5bar s{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(0,0,0,.45) calc(10% - 1px) 10%);opacity:.8;clip-path:inset(20% 0 20% 0)}
+.r5exp>span{position:absolute;right:10px;top:0;line-height:16px;font-size:13px;font-weight:700;color:#fff;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000}
+.r5lv{position:absolute;left:-33px;top:50%;width:38px;height:38px;margin-top:-19px;transform:rotate(45deg);background:linear-gradient(45deg,#466edc,#141028);border:2px solid #d6a846;box-sizing:border-box;z-index:2}
+.r5lv b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(-45deg);font-size:15px;color:#ffebb4;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000}
+.r5lv.up{animation:r5lv .5s cubic-bezier(.3,1.6,.5,1)}@keyframes r5lv{from{transform:rotate(45deg) scale(1.5);box-shadow:0 0 20px #8cf}to{transform:rotate(45deg)}}
+.r5chips{display:grid;grid-template-columns:repeat(3,192px);gap:6px 8px;justify-content:center;margin-top:14px}
+.r5.anim .rc5{animation:rsPop .4s both;animation-delay:.15s}
+.rc5{display:flex;align-items:center;gap:6px;height:36px;background:#1a120e;border:1.5px solid color-mix(in srgb,var(--c) 60%,#000);border-radius:8px;padding:0 8px 0 6px;box-sizing:border-box;min-width:0}
+.rc5 img{width:26px;height:26px;object-fit:contain;flex:none}.rc5 span{color:var(--c);font-weight:700;font-size:15px;line-height:1.05;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.r5adv{width:100%;margin-top:6px;display:flex;flex-direction:column;gap:4px}.r5adv>b{color:#ffd782;font-size:16px}
+.r5adv button{display:flex;justify-content:space-between;align-items:center;height:30px;background:#241a16;border:1px solid #785c30;border-radius:6px;color:#ebe1d2;font-size:15px;font-weight:700;padding:0 10px;cursor:pointer}.r5adv button:hover{filter:brightness(1.3)}.r5adv em{font-style:normal;color:#8cdcff}
+.r5cnt{height:22px;margin-top:auto;padding-top:8px;font-size:16px;font-weight:700;color:#8cffa0}
+.r5btns{display:flex;gap:8px;justify-content:center;margin-top:6px}.r5btns .btn{width:112px;height:46px;font-size:16px!important}
+/* ---- 5.0 마을 · 지도 HUD (로블록스판 statLbl · topBar · dock, 720 -> 540 = x0.75) ---- */
+#top{position:absolute;inset:0;height:auto!important;background:none!important;border:0!important;box-shadow:none!important;display:block!important;padding:0!important;pointer-events:none;z-index:6}
+#top.hidden{display:none!important}#top>*{pointer-events:auto}
+body:has(#modal:not(.hidden)) #top{visibility:hidden}
+#h5card{position:absolute;left:9px;top:8px;width:300px;height:69px;background:rgba(16,11,10,.92);border:1.5px solid #d6a846;border-radius:6px;box-sizing:border-box;cursor:pointer}
+.h5pf{position:absolute;left:5px;top:5px;width:57px;height:57px;background:#1c1411;border:1px solid #6e542c;border-radius:5px;overflow:hidden;box-sizing:border-box}
+.h5pf img{position:absolute;left:-60%;top:-12%;width:200%;height:200%;object-fit:cover}
+#h5card .lv{position:absolute;left:0;right:0;bottom:0;height:15px;line-height:13px;background:rgba(10,6,6,.85);text-align:center;font-size:11px;font-weight:700;color:#ffd66e;min-width:0}
+#h5card .xp{position:absolute;left:0;right:0;bottom:0;height:2px;width:auto;background:none;border:0;border-radius:0}#h5card .xp i{display:block;height:100%;background:#78c8ff}
+.h5st{position:absolute;left:69px;top:5px;right:6px;height:38px;display:flex;gap:3px}
+.h5st div{flex:1;min-width:0;background:#1c1411;border:1px solid #6e542c;border-radius:4px;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+.h5st small{font-size:10px;font-weight:700;color:#b9aa96;line-height:12px;margin-top:2px}.h5st b{font-size:15px;line-height:20px;text-shadow:-1px 0 #0a0608,1px 0 #0a0608,0 -1px #0a0608,0 1px #0a0608;white-space:nowrap}
+.h5pg{position:absolute;left:69px;right:6px;top:46px;height:17px;background:#1c1411;border:1px solid #6e542c;border-radius:4px;display:flex!important;align-items:center;gap:4px;padding:0 5px;box-sizing:border-box}
+.h5pg small{font-size:9px;font-weight:700;color:#bea06e}.h5pg b{font-size:14px;background:linear-gradient(#fff4c8,#ffc850 50%,#c8781e);-webkit-background-clip:text;background-clip:text;color:transparent}.h5pg span{margin-left:auto;font-size:9px;font-weight:700;color:#c8beb4}
+.h5pill{position:absolute;top:83px;height:30px;display:flex;align-items:center;gap:4px;border:6px solid transparent;box-sizing:border-box;padding:0 6px 0 0;background:none}
+.h5pill img{width:30px;height:30px;object-fit:contain;margin:-6px 0 -6px -6px}.h5pill b{font-size:17px;line-height:1}
+.h5pill.gold{left:9px;width:150px}.h5pill.gold b{color:#ffd25a;text-shadow:0 0 2px #1e1004,0 0 2px #1e1004}
+.h5pill.arc{left:165px;width:128px;cursor:pointer}.h5pill.arc b{color:#f0beff;text-shadow:0 0 2px #18061e,0 0 2px #18061e}
+#h5top{position:absolute;right:9px;top:8px;display:flex;gap:4.5px}
+.tb5{position:relative;width:50px;height:60px;background:none;border:0;padding:0;cursor:pointer}
+.tb5>i{position:absolute;left:2px;top:0;width:46px;height:46px;box-sizing:border-box;border:6px solid transparent;transition:top .08s}.tb5:hover>i{top:-2px}
+.tb5>i img{position:absolute;inset:-3px;width:calc(100% + 6px);height:calc(100% + 6px);object-fit:contain}
+.tb5>span{position:absolute;left:-3px;right:-3px;top:45px;font-size:11px;font-weight:700;color:#ffebc8;text-align:center;white-space:nowrap;text-shadow:-1px 0 #0a0608,1px 0 #0a0608,0 -1px #0a0608,0 1px #0a0608}
+.tb5 em{position:absolute;right:0;top:-2px;font-style:normal}.tb5 em.dot{width:10px;height:10px;border-radius:50%;background:#ff4a4a;border:2px solid #fff}.tb5 em.upm{color:#5aff78;font-weight:900;text-shadow:0 0 3px #000}
+#b-map{position:absolute;right:12px;bottom:12px;width:172px;height:57px;border:10px solid transparent;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0;background:none;transition:transform .08s}
+#b-map:hover{transform:scale(1.035)}#b-map img{width:51px;height:51px;object-fit:contain;margin:-8px 0 -8px -4px}
+#b-map b{font-family:Georgia,serif;font-size:24px;background:linear-gradient(#fff0c8,#f0be64 55%,#b46e28);-webkit-background-clip:text;background-clip:text;color:transparent}
+#townbar{display:none!important}
+#mappanel{bottom:78px!important;max-height:380px;overflow-y:auto}
 /* ---- 5.0 제련소 ---- */
 .forge5{display:flex;flex-direction:column;gap:6px;height:392px}.ftop5{flex-direction:row!important;align-items:center;gap:12px;padding:4px 10px;height:30px;flex:none;font-size:13px}.fc5{display:flex;align-items:center;gap:3px;white-space:nowrap}.fc5 img{width:18px;height:18px}
 .fbody5{display:flex;gap:8px;flex:1;min-height:0}.fl5{width:250px;flex:none}.fr5b{flex:1;min-width:0;padding:6px 10px;overflow-y:auto}
@@ -388,14 +441,15 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas><div id="tutHi" style="display:none"></div><div id="tutArrow" style="display:none"></div><div id="tutBox" style="display:none"><div class="tt"></div><div class="tx"></div><button class="btn xs" onclick="tutSkip()">안내 건너뛰기</button></div>
 <div id="title" class="hidden"></div>
-<div id="top" class="hidden"><span class="lv" id="t-lv"></span><div class="xp"><i id="t-exp"></i></div>
- <span class="cur pw" id="t-pow-w" data-tipk="pow" style="color:#ffd070;cursor:pointer;font-weight:700"><small style="opacity:.8">전투력</small>&nbsp;<span id="t-pow">0</span></span>
- <span class="cur" id="t-gold-w" data-tipk="gold"><img class="ico" id="ig" width="16" height="16"><span id="t-gold"></span></span>
- <span class="cur" data-tipk="ore"><img class="ico" id="io" width="16" height="16"><span id="t-ore"></span></span>
- <span class="cur" id="t-shard-w" data-tipk="shard"><img class="ico" id="is" width="16" height="16"><span id="t-shard"></span></span>
- <span class="cur" id="t-orb-w" data-tipk="orbC"><img class="ico" id="iorb" width="16" height="16"><span id="t-orb"></span></span>
- <span class="srvdot" id="t-srv" title="서버 연결 상태">☁</span><span class="sp"></span><span id="t-world"></span>
- <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">아르카나</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-rank">랭킹</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
+<div id="top" class="hidden">
+ <div id="h5card" data-tipk="pow"><div class="h5pf"><img id="h5face" alt=""><span class="lv" id="t-lv"></span><div class="xp"><i id="t-exp"></i></div></div>
+  <div class="h5st"><div><small>HP</small><b id="h5hp" style="color:#eb5a50"></b></div><div><small>ATK</small><b id="h5atk" style="color:#f0aa50"></b></div><div><small>SPL</small><b id="h5mag" style="color:#968cff"></b></div><div><small>DEF</small><b id="h5def" style="color:#8cbee6"></b></div><div><small>치명</small><b id="h5crit" style="color:#ffdc6e"></b></div></div>
+  <div class="h5pg" id="t-pow-w"><small>전투력</small><b id="t-pow">0</b><span id="h5prog"></span></div></div>
+ <div class="h5pill gold" id="t-gold-w" data-tipk="gold"><img id="h5ig" alt=""><b id="t-gold"></b></div><button class="h5pill arc" id="t-shard-w" data-tipk="hone"><img id="h5ia" alt=""><b id="t-shard"></b></button>
+ <span style="display:none"><span id="t-ore"></span><span id="t-orb-w"><span id="t-orb"></span></span><span id="t-world"></span><span class="srvdot" id="t-srv"></span><button id="b-codex"></button><button id="b-rank"></button><button id="b-daily"><i class="dot"></i></button></span>
+ <div id="h5top"><button class="tb5" id="b-inv" data-mi="m_bag"><i></i><span>가방</span><em class="upm" style="display:none">▲</em></button><button class="tb5" id="b-skill" data-mi="m_skill"><i></i><span>아르카나</span></button><button class="tb5" id="b-pass" data-mi="m_passive"><i></i><span>패시브</span><em class="dot" style="display:none"></em></button><button class="tb5" id="b-stat" data-mi="m_stats"><i></i><span>스탯</span></button><button class="tb5" id="b-quest" data-mi="m_quest"><i></i><span>퀘스트</span><em class="dot" style="display:none"></em></button><button class="tb5" id="b-sum" data-mi="m_gacha"><i></i><span>소환</span></button><button class="tb5" id="b-mail" data-mi="m_mail"><i></i><span>우편</span></button><button class="tb5" id="b-opt" data-mi="m_settings"><i></i><span>설정</span></button></div>
+ <button id="b-map"><img alt=""><b>지도</b></button>
+</div>
 <div id="townbar" class="hidden"><span class="tname"></span></div>
 <div id="mappanel" class="hidden"></div>
 <div id="guide" class="hidden"></div>
@@ -2471,7 +2525,6 @@ function dropBonus(sv, now) {
   B.mf += atlasVal(sv, "mf"); B.exp += st.expFind + atlasVal(sv, "exp"); B.gold += atlasVal(sv, "gold"); B.ore += atlasVal(sv, "ore"); B.orb += atlasVal(sv, "orb"); B.shard += atlasVal(sv, "shard"); B.key += atlasVal(sv, "key"); B.hell += atlasVal(sv, "hell");
   B.key *= 1 + charmVal(sv, "keyFind"); B.stone *= 1 + charmVal(sv, "stoneFind");
   B.buffs = []; { const gl = sv.guildLv || 0; B.gold += 0.02 * gl; B.exp += 0.02 * gl; B.mf += 0.01 * gl; }
-  if (sv.endgame) for (const w of worldBuffs(now)) { B.buffs.push(w); B.mf += w.mf || 0; B.exp *= w.exp || 1; B.gold *= w.gold || 1; B.qty *= w.qty || 1; B.orb *= w.orb || 1; B.unique *= w.unique || 1; B.stone *= w.stone || 1; B.key *= w.key || 1; }
   return B;
 }
 // =====================================================================
@@ -3655,6 +3708,7 @@ function finishBattle(sv, b) {
       if (d.charms && d.charms.length) { sv.charmInv = sv.charmInv || []; sv.charmInv.push(...d.charms); res.charms = d.charms; }
       sv.inv.push(...d.items); res.skillRes = d.skills.map((s) => grantSkill(sv, s.id)); sv.hone += d.hone; for (const r of d.runes) sv.runes.push({ uid: sv.nextUid++, id: r }); sv.ore += d.ore; sv.shards += d.shards; sv.orbC += d.orbC; sv.orbD += d.orbD; sv.dice = (sv.dice || 0) + (d.dice || 0); res.dice = d.dice || 0;
       const stageFirst = (node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage;
+      res.first = stageFirst;
       if ((node.kind === "stage" || node.kind === "boss") && sv.cleared[node.act - 1] < node.stage) {
         sv.cleared[node.act - 1] = node.stage;
         if (node.stage >= 3 && sv.slots < 3) { sv.slots = 3; res.notes.push("3번 스킬 칸이 열렸습니다!"); }
@@ -4799,7 +4853,7 @@ const MapView = {
       if (k > 6.2) { this.cine = null; toast("🗼 먼 곳에서 정체불명의 탑이 솟아올랐다!", "ok"); }
     }
     g.save(); g.translate(shx, shy);
-    HELL_SET = sv.endgame ? hellNodes(Date.now()) : null;
+    HELL_SET = null;   // 5.08: 지옥 스테이지 폐지
     g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH);
     // 길
     g.lineWidth = 4; g.setLineDash([2, 10]); g.lineCap = "round";
@@ -4888,8 +4942,7 @@ const TownView = {
   drawArt(sv, time, tim) {   // 일러스트 마을: 건물은 그림에 있으니 이름표 · 강조만 (경매소 · 우편함은 코드로)
     const g = this.g, A = ACTS[this.act - 1]; drawCover(g, tim, CW, CH);
     const theme = ["#4a8a3a", "#2f6a4a", "#7a5a3a", "#c8884a", "#3a6a5a", "#6a8ab8", "#a8402a", "#6a4aa8", "#c8b86a", "#a82a3a"][this.act - 1];
-    town5Draw(g, gtime, this.hover);   // 5.0: 로블록스판 건물 8곳
-    g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
+    town5Draw(g, gtime, this.hover);   // 5.0: 로블록스판 건물 8곳 (마을 이름표 없음)
   },
   pick(mx, my) { if (artGet("bg_town")) return town5Pick(mx, my); for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
 };
@@ -5441,10 +5494,13 @@ function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산�
   try { _pwCache = powerScore5(save); } catch (e) {} return _pwCache;   // 5.0: 로블록스판 전투력 (균열 1층 권장 = 100, 몬스터 강함에 정비례)
 }
 function refreshTop() {
-  const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
+  const s = save; $("#t-lv").textContent = "Lv " + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
   $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp || 0) / expNeed(s.level) * 100)) + "%";   // 5.0: 막대 = 경험치
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.hone);
-  $("#t-shard-w").style.display = "none";   // 5.0: 균열 조각 폐지
+  { const st = computeStats(save); $("#h5hp").textContent = fmtN(st.maxHp); $("#h5atk").textContent = fmtN(st.atk); $("#h5mag").textContent = fmtN(st.mag); $("#h5def").textContent = fmtN(st.def); $("#h5crit").textContent = Math.round((st.critChance || 0) * 100) + "%";
+    $("#h5prog").textContent = `균열 ${(s.rift && s.rift.best) || 0} · 탑 ${(s.spire && s.spire.best) || 0}`; const f = $("#h5face"), u = artURL(s.equipped.weapon && s.equipped.weapon.wt === "staff" ? "mage" : "warrior"); if (u && f.getAttribute("src") !== u) f.src = u;
+    const m = $("#b-map"), toMap = G.screen !== "map"; m.querySelector("b").textContent = toMap ? "지도" : "마을"; const iu = artURL(toMap ? "m_map" : "m_town"); if (iu && m.querySelector("img").getAttribute("src") !== iu) m.querySelector("img").src = iu;
+    if (window.theme5Put) theme5Put(); }
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
   const q = Object.keys(s.q).filter((id) => s.q[id].state === "done").length; $("#b-quest .dot").style.display = q ? "" : "none";
   $("#b-inv .upm").style.display = hasAnyUpgrade(s) ? "" : "none";
@@ -5455,6 +5511,7 @@ function refreshTop() {
 function showScreen(name) {
   G.screen = name; document.body.dataset.screen = name;
   for (const id of ["title", "top", "battlehud", "mappanel", "townbar"]) $("#" + id).classList.toggle("hidden", !({ title: ["title"], map: ["top", "mappanel"], town: ["top", "townbar"], battle: ["battlehud"] }[name] || []).includes(id));
+  if (save && (name === "town" || name === "map")) refreshTop();
   const bgm = { title: "title", map: "town", town: "town" }[name]; if (bgm) AU.bgm(bgm);
   if (name !== "town" && name !== "map") setGuide(null);
   if (name !== "battle") { G.battle = null; if (save) refreshTop(); }
@@ -5500,7 +5557,7 @@ function riftMods(tier) {
   const r = seeded(tier * 131 + 7), n = tier < 10 ? 0 : tier < 30 ? 1 : tier < 60 ? 2 : 3, pool = RIFT_MODS.slice(), out = [];   // v4: 변이는 10층부터 · 층이 높을수록 개수가 늘어난다
   for (let i = 0; i < n; i++) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]); return out;
 }
-const isHell = (n) => GRADUATED(save) && n.kind === "stage" && hellNodes(Date.now()).has(n.id);
+const isHell = () => false;   // 5.08: 지옥 스테이지 폐지 (로블록스판에 없음)
 function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
@@ -5729,7 +5786,6 @@ function battleHudBuild(b) {
   $("#b-speed").textContent = "×" + G.speed + " ▼"; updateAutoBtn(); $("#h5pause").classList.add("hidden");
   const canAuto = AUTO_KINDS.includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
 }
-function updateAutoBtn() { const on = save && save.auto.on; $("#b-auto").textContent = on ? "자동 ON" : "자동 OFF"; $("#b-auto").classList.toggle("pri", !!on); }
 function battleHud(b) {
   hud5Tick(b);
   const hp = Math.max(0, b.hp / b.maxHp), dt = Math.min(0.1, G.dt || 0.016);
@@ -5752,31 +5808,8 @@ function finishFlow(b) {
   saveGame();
   const uniq = res.items.filter((i) => i.uniq);
   const next = () => afterBattle(res, b);
-  b.resultAt = (save.auto.on && res.win ? 0.9 : endWin(b) && (node.kind === "boss" || node.kind === "void" || isEB(node.kind)) ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
+  b.resultAt = ( endWin(b) && (node.kind === "boss" || node.kind === "void" || isEB(node.kind)) ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
   b.next = () => { if (uniq.length && !document.hidden) showUniqueFx(uniq, next); else next(); };
-}
-function afterBattle(res, b) {
-  const node = G.node, A = save.auto;
-  if (A.on && res.win && AUTO_KINDS.includes(node.kind)) {   // 자동 반복
-    let note = ""; const pr = autoProcess(save);
-    if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`; if (pr.sSold || pr.sDis) note += ` · 스킬 ${pr.sSold ? pr.sSold + "개 판매 " : ""}${pr.sDis ? pr.sDis + "개 분해" : ""}`;
-    saveGame(); refreshTop();
-    toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
-    if (save.inv.length >= invMax(save) - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
-    if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
-    const go = () => {
-      if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
-      const ki = autoKeyInfo(node); if (ki) { if (ki.have < ki.cost) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key] -= ki.cost; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
-      startBattle(node, G.retry);
-    };
-    if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
-    return;
-  }
-  if (A.on && !res.win) { A.on = false; saveGame(); }
-  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "endless", "void", "hive", "titan", "storm", "frost", "poison"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
-    const pr = autoProcess(save); if (pr.sold || pr.dis || pr.sSold || pr.sDis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? "장비 " + pr.sold + "개 판매 " : ""}${pr.dis ? "장비 " + pr.dis + "개 분해 " : ""}${pr.sSold ? "스킬 " + pr.sSold + "개 판매 " : ""}${pr.sDis ? "스킬 " + pr.sDis + "개 분해" : ""}`, "ok"); }
-  }
-  showResult(res, b);
 }
 // 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
 function nextBattleOf(node, res) {
@@ -5792,45 +5825,7 @@ function nextBattleOf(node, res) {
   if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
   return null;
 }
-function showResult(res, b, replay) {
-  G.pending = [res, b];
-  const node = G.node, tut = node.kind === "tutorial", endless = node.kind === "endless", win = res.win;
-  if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
-  const nextTut = tut && win && node.step < TUTORIAL.length - 1;
- const back = () => { if (win && node.kind === "raid") { G.battle = null; AU.stopBgm(); raidAftermath(); return; } if (win && node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act < CFG.ACTS) { G.battle = null; AU.stopBgm(); openTown(node.act + 1); return; } if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
-  const keyKind = node.kind === "void" || isEB(node.kind), keyHave = node.kind === "void" ? save.keys : isEB(node.kind) ? (save[EB[node.kind].key] || 0) : 0, bossLike = node.kind === "boss" || node.kind === "raid" || keyKind;
-  const canRetry = tut || endless ? false : keyKind ? { label: `다시 처치 · 열쇠 1개 소모 (보유 ${keyHave}개)`, disabled: keyHave < 1 } : bossLike ? { label: "다시 처치" } : true, nb = tut ? null : nextBattleOf(node, res);
-  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay, nb), { cls: "result", persistent: true, noClose: true, on: {
-    next: () => { if (!nb) return; G.pending = null; Modal.close(true); if (nb.town) { G.battle = null; AU.stopBgm(); openTown(nb.town); return; } const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },
-    ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { if (keyKind) { if (node.kind === "void") { if (save.keys < 1) return; save.keys--; } else { const E = EB[node.kind]; if ((save[E.key] || 0) < 1) return; save[E.key]--; } saveGame(); refreshTop(); } G.pending = null; Modal.close(true); startBattle(node, G.retry); },
-    autoloop: (el) => {
-      if (save.auto.on) { save.auto.on = false; saveGame(); updateAutoBtn(); el.textContent = autoLoopLabel(node); return; }
-      const ki = autoKeyInfo(node); if (ki && ki.have < ki.cost) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
-      save.auto.on = true; if (ki) save[ki.key]--; saveGame(); refreshTop(); G.pending = null; Modal.close(true); startBattle(node, G.retry);
-    },
-    autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
-    inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
-    adv: (el) => adviceGo(el.dataset.k),
-  } });
-  if (!replay) animateResult(res);
-  refreshTop();
-  if (!replay && win && nb && save.opt && save.opt.autoNext > 0) autoNextCountdown(res, save.opt.autoNext);
-}
 // 설정 '다음 스테이지로 자동 이동': 승리 결과창에서 대기시간이 지나면 [다음] 버튼을 자동으로 누른다. 화면을 누르거나 키를 누르면 취소된다
-const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 ${ki.cost}개 소모)` : ""}`; };
-const autoNextLabel = () => (save.opt && save.opt.autoNext > 0 ? `다음 스테이지 자동 이동: ON (${save.opt.autoNext}초)` : "다음 스테이지 자동 이동: OFF");
-function autoNextCountdown(res, sec) {
-  const btn = document.querySelector('#modal [data-a="next"]'), modal = $("#modal"); if (!btn) return;
-  const base = btn.innerHTML; let left = sec, dead = false;
-  const stop = () => { dead = true; btn.innerHTML = base; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); }; G.autoCdStop = stop;
-  modal.addEventListener("pointerdown", stop, true); document.addEventListener("keydown", stop, true);
-  const tick = () => {
-    if (dead || !G.pending || G.pending[0] !== res) { stop(); return; }
-    if (left <= 0) { dead = true; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); btn.click(); return; }
-    btn.innerHTML = `${base} <small>(${left}초 후 자동 이동)</small>`; left--; setTimeout(tick, 1000);
-  };
-  tick();
-}
 function retreat() {
   if (!G.battle || G.battle.over) return; const wasPaused = G.paused; G.paused = true;
   Modal.open(`<h2>전투 중단</h2><p class="center">퇴각하면 보상을 받지 못합니다.${G.node.kind === "endless" ? "<br>(무한 균열 입장 횟수는 돌아오지 않습니다)" : ""}</p><div class="pbtns"><button class="btn warn" data-a="yes">퇴각</button><button class="btn pri" data-a="no">계속 싸운다</button></div>`, { cls: "sm", persistent: true, noClose: true, on: {
@@ -5855,7 +5850,7 @@ function setGuide(html) { const g = $("#guide"); if (!html) { g.classList.add("h
 
 function updateWorld() {
   const el = $("#t-world"); if (!el) return;
-  if (!save || !save.endgame) { el.innerHTML = ""; return; }
+  el.innerHTML = ""; return;   // 5.08: 월드 버프 · 지옥 스테이지 폐지 (로블록스판에 없음)
   const now = Date.now(), ws = worldSlot(now);
   if (G.wslot !== ws) { if (G.wslot >= 0) { toast("월드 버프와 지옥 스테이지가 바뀌었습니다!", "ok"); snd("quest"); if (G.screen === "map") mapPanel(); } G.wslot = ws; }
   el.innerHTML = worldBuffs(now).map((w) => `<span class="wb" title="${w.name}: ${w.text}">${iconImg(w.ico, 1)} ${w.text}</span>`).join("") + `<span class="wt">갱신 ${fmtTime(worldLeft(now))}</span>`;
@@ -7064,7 +7059,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-064651";
+const BUILD_ID = "20261103-070035";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7123,52 +7118,14 @@ function adviceList(sv) {
   const out = [], left = passivePoints(sv) - passiveSpent(sv);
   if (left > 0) out.push(["pass", "✦", `남은 패시브 포인트 ${left}점 찍기`]);
   const up = sv.inv.filter((it) => isUpgrade(sv, it)).length; if (up > 0) out.push(["gear", "🛡", `가방에 더 좋은 장비 ${up}개 — 장착하기`]);
-  if ((sv.hone || 0) >= GACHA.ARC1) out.push(["gacha", "🔮", `새 스킬 소환 (아르카나 조각 ${fmtN(sv.hone)}개)`]);
+  if ((sv.hone || 0) >= GACHA.ARC1) out.push(["gacha", "🔮", `새 아르카나 소환 (아르카나 조각 ${fmtN(sv.hone)}개)`]);
   if (EQ_SLOTS.some((k) => sv.equipped[k] && (sv.equipped[k].enh || 0) < 10) && sv.ore >= 5) out.push(["forge", "⚒", `제련소에서 장비 강화 (강화석 ${fmtN(sv.ore)}개)`]);
   const keys = ["keys", "keys2", "keys3", "keys4", "keys5", "keys6"].reduce((a, k) => a + (sv[k] || 0), 0); if (keys > 0) out.push(["gate", "🗝", `보스 관문 열쇠 ${keys}개로 더 좋은 평타 얻기`]);
   return out;
 }
-function adviceHtml() {
-  const L = adviceList(save); if (!L.length) return "";
-  return `<div class="rs-sec">강해지는 방법</div><div class="advl">${L.map(([k, ic, t]) => `<button class="advb" data-a="adv" data-k="${k}"><span>${ic}</span>${t}<em>가기 ▶</em></button>`).join("")}</div>`;
-}
 function adviceGo(k) {
   G.pending = null; Modal.close(true); G.battle = null; AU.stopBgm(); openTown(G.townAct || 1);
   setTimeout(() => { if (k === "pass") openPassives(); else if (k === "gear") { IB.mode = "inv"; IB.sel = null; renderItems(); } else if (k === "gacha") openSummon(); else if (k === "forge") openItems("forge"); else if (k === "gate") openMap(); }, 50);
-}
-function starCount(res, b) { if (!res.win || b.node.kind === "tutorial") return 0; const hp = b.hp / b.maxHp; return 1 + (hp >= 0.4 ? 1 : 0) + (hp >= 0.75 ? 1 : 0); }
-function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
-  const win = res.win, T = endTitle(b), stars = starCount(res, b), pre = res.pre || { level: save.level, exp: save.exp, need: expNeed(save.level) };
-  const A = replay ? "" : "rs-anim";
-  const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
-  const stat = (label, val) => `<div class="rs-stat"><small>${label}</small><b>${val}</b></div>`;
-  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.stones ? chip("💎", "미확인된 원초의 돌", "+" + res.stones, null, "gem") : "", res.stonesHi ? chip("🔶", "미확인된 계시의 돌", "+" + res.stonesHi, null, "gem") : "", res.sockTix ? chip("🔏", "세공의 인장", "+" + res.sockTix, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.keys3 ? chip(iconImg("skull", 2), "철갑의 징표", "+" + res.keys3) : "", res.keys4 ? chip(iconImg("skull", 2), "뇌전의 징표", "+" + res.keys4) : "", res.keys5 ? chip(iconImg("skull", 2), "서리의 징표", "+" + res.keys5) : "", res.keys6 ? chip(iconImg("skull", 2), "맹독의 징표", "+" + res.keys6) : "", res.hone ? chip(iconImg("shard", 2), "아르카나 조각", "+" + res.hone) : "",
-    ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
-  const tiles = res.items.slice().sort((x, y) => y.rarity - x.rarity).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
-  const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");
-  const skLab = (i) => { const g = res.skillRes && res.skillRes[i]; return !g || g.new ? "새 스킬" : g.lvlUp ? `레벨 업! Lv.${g.lvlUp}` : g.dupProg ? `중복 ${g.dupProg[0]} / ${g.dupProg[1]}` : `최대 레벨 · 조각 +${g.dupHone}`; };
-  const sk = res.skills.map((s, i) => `<div class="rs-sk">${skIcon(s.id, 3)}<div><small>${skLab(i)}</small>${skillTitle(s)}</div></div>`).join("");
-  const notes = res.notes.map((n) => `<div class="note">★ ${n}</div>`).join("") + res.quests.map((q) => `<div class="note">✔ 퀘스트 완료: ${q.title}</div>`).join("");
-  const frac0 = Math.min(1, pre.exp / pre.need), fracN = save.level >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / expNeed(save.level));
-  return `<div class="rs ${A} ${win ? "win" : "lose"}">
-    <div class="rs-head"><div class="rs-ribbon"><span>${T[0]}</span></div><div class="rs-en">${T[1]}</div>
-      ${stars ? `<div class="rs-stars">${[0, 1, 2].map((i) => `<i class="${i < stars ? "on" : ""}" style="--d:${350 + i * 220}ms">★</i>`).join("")}</div>` : ""}
-      <div class="rs-node">${node.name || ""}</div></div>
-    <div class="rs-stats">${stat("처치", res.kills)}${stat("시간", Math.round(res.time) + "초")}${stat("가한 피해", fmtN(b.dealt))}${stat("받은 피해", fmtN(b.taken))}</div>
-    <div class="rs-exp"><div class="rs-lv">Lv.<b id="rs-lv">${replay ? save.level : pre.level}</b></div><div class="rs-bar"><i id="rs-fill" style="width:${(replay ? fracN : frac0) * 100}%"></i><span id="rs-txt"></span></div><div class="rs-gain">${res.levelUps ? `레벨 <b>+${res.levelUps}</b>` : (res.exp ? `<small style="color:#9ad0ff">경험치 +${fmtN(res.exp)}</small>` : `<small class="dim">경험치 없음</small>`)}</div><div class="rs-up" id="rs-up">LEVEL UP!</div></div>
-    <div class="rs-rew">${rew}</div>
-    ${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>${adviceHtml()}` : ""}${res.buffs && res.buffs.length ? `<div class="dim center">월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}
-    ${tiles ? `<div class="rs-sec">획득 장비 <em>${res.items.length}</em></div><div class="rs-drops">${tiles}</div>${rareLines}` : ""}${sk}${notes}
-    <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry" ${canRetry.disabled ? "disabled" : ""}>${canRetry.label || "다시 도전"}</button>` : ""}${nb ? `<button class="btn pri" data-a="next">${nb.label}</button>` : ""}</div><div class="center" style="margin-top:6px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">${AUTO_KINDS.includes(node.kind) && !replay ? `<button class="btn xs" data-a="autoloop">${autoLoopLabel(node)}</button>` : ""}${nb && !replay && res.win ? `<button class="btn xs" data-a="autotog">${autoNextLabel()}</button>` : ""}</div></div>`;
-}
-function animateResult(res) {
-  $$("#mbox [data-cnt]").forEach((el, k) => { const to = +el.dataset.cnt, t0 = performance.now() + 250, dur = 1000; const f = (now) => { if (!el.isConnected) return; const p = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - p, 3); el.textContent = fmtN(Math.round(to * e)); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); });
-  const pre = res.pre; if (!pre) return; const fill = $("#rs-fill"), lv = $("#rs-lv"), up = $("#rs-up"), txt = $("#rs-txt"); if (!fill) return;
-  const segs = [], lv1 = save.level, startLv = Math.max(pre.level, lv1 - 5);
-  for (let l = startLv; l <= lv1; l++) segs.push({ lv: l, from: l === pre.level ? Math.min(1, pre.exp / pre.need) : 0, to: l === lv1 ? (lv1 >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / expNeed(lv1))) : 1 });
-  let i = 0, t0 = 0, dur = 0; const begin = () => { const s = segs[i]; lv.textContent = s.lv; fill.style.width = s.from * 100 + "%"; t0 = performance.now(); dur = 350 + (s.to - s.from) * 700; };
-  setTimeout(() => { begin(); const step = (now) => { if (!fill.isConnected) return; const s = segs[i], p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 2); fill.style.width = (s.from + (s.to - s.from) * e) * 100 + "%";
-    if (p >= 1) { if (i < segs.length - 1) { i++; lv.textContent = segs[i].lv; up.classList.remove("show"); void up.offsetWidth; up.classList.add("show"); snd("levelup"); begin(); } else { if (txt && save.level < CFG.LEVEL_CAP) txt.textContent = `${fmtN(save.exp)} / ${fmtN(expNeed(save.level))}`; return; } } requestAnimationFrame(step); }; requestAnimationFrame(step); }, 450);
 }
 
 // =========================================================
@@ -7521,6 +7478,98 @@ function openHelp5() {
 }
 
 // =========================================================
+// 5.0 전투 결과 창 (로블록스판 Client showResultPanel 과 같은 구성)
+//  장식 틀 · 위 가장자리에 걸친 큰 승리/패배 띠(빛) · 전투 이름 · 시간·처치 줄 · 경험치 막대(레벨 문장) · 보상 칩 3열 · (패배) 강해지는 방법
+//  버튼: 다음 ▶ · 다시 · 지도 · 마을 · 자동: 끔 / 같은 단계 / 다음 단계 (이기면 3초 뒤 자동 시작, 지면 멈춤)
+// =========================================================
+const AUTO5_TXT = ["자동: 끔", "자동: 같은 단계", "자동: 다음 단계"];
+const auto5 = () => (save && save.opt && save.opt.auto5) || 0;
+function setAuto5(v) { save.opt = save.opt || {}; save.opt.auto5 = v; saveGame(); updateAutoBtn(); }
+function updateAutoBtn() { const b = $("#b-auto"); if (!b) return; const v = auto5(); b.textContent = AUTO5_TXT[v]; b.classList.toggle("pri", v > 0); }
+function afterBattle(res, b) {
+  const node = G.node, A = save.auto;
+  if (res.win && (A.always || auto5() > 0) && node.kind !== "tutorial") {   // 자동 정리: 전투가 끝날 때마다 가방에 규칙 적용
+    const pr = autoProcess(save); if (pr.sold || pr.dis || pr.sSold || pr.sDis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? "장비 " + pr.sold + "개 판매 " : ""}${pr.dis ? "장비 " + pr.dis + "개 분해 " : ""}${pr.sDis ? "아르카나 " + pr.sDis + "개 분해" : ""}`, "ok"); }
+  }
+  showResult(res, b);
+}
+function showResult(res, b, replay) {
+  G.pending = [res, b]; if (G.autoT) { clearInterval(G.autoT); G.autoT = null; }
+  const node = G.node, tut = node.kind === "tutorial", win = res.win;
+  if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
+  const keyKind = node.kind === "void" || isEB(node.kind), bossLike = node.kind === "boss" || node.kind === "raid" || keyKind;
+  const canRetry = !tut && node.kind !== "endless";
+  const nb = tut ? null : nextBattleOf(node, res);
+  const back = () => { if (win && node.kind === "raid") { G.battle = null; AU.stopBgm(); raidAftermath(); return; } if (tut && !save.tut.done) { startTutorial(); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
+  const T = (s) => s;
+  // 보상 칩
+  const C = []; const chip = (ic, t, col) => C.push(`<div class="rc5" style="--c:${col}">${ic ? `<img src="${artURL(ic) || ""}" alt="">` : ""}<span>${t}</span></div>`);
+  if (res.first || res.riftFirst || res.spireFirst) chip(null, "★ 첫 클리어!", "#ffdc78");
+  if (res.exp > 0) chip(null, "경험치 +" + fmtN(res.exp), "#96c8ff");
+  if (res.levelUps) chip(null, "레벨 +" + res.levelUps, "#96e6ff");
+  if (res.gold > 0) chip("i_gold", "골드 +" + fmtN(res.gold), "#ffd76e");
+  if (res.hone > 0) chip("i_arcana", "아르카나 조각 +" + res.hone, "#f0aaff");
+  if (res.ore > 0) chip("i_ore", "강화석 +" + res.ore, "#aad2ff");
+  if (res.orbC > 0) chip("i_chaos", "혼돈 구슬 +" + res.orbC, "#f0786e");
+  if (res.orbD > 0) chip("i_divine", "신성한 구슬 +" + res.orbD, "#ffe6a0");
+  if (res.items.length) { const cnt = {}; for (const it of res.items) { const k = it.sat ? 4 : Math.min(3, it.rarity || 0); cnt[k] = (cnt[k] || 0) + 1; }
+    const NM = ["일반", "매직", "레어", "전설", "사탄"], COL = ["#cdcdd7", "#6ea0ff", "#ffd646", "#ff9628", "#ff463c"];
+    for (let r = 4; r >= 0; r--) if (cnt[r]) chip("i_weapon", `${NM[r]} 장비 x${cnt[r]}`, COL[r]); }
+  if (res.skills && res.skills.length) chip("i_arcana", `아르카나 ${res.skills.length}장`, "#f0aaff");
+  if (res.stones > 0) chip("i_stone", "돌 +" + res.stones, "#a0dcff");
+  if (res.charms && res.charms.length) chip(null, `참 ${res.charms.length}개`, "#ffbee6");
+  if (res.stonesHi) chip("i_stone", "계시의 돌 +" + res.stonesHi, "#ffdc8c");
+  if (res.sockTix) chip(null, "세공의 인장 +" + res.sockTix, "#c8aaff");
+  const KN = [["keys", "공허의 열쇠"], ["keys2", "정령의 불씨"], ["keys3", "철갑의 징표"], ["keys4", "뇌전의 징표"], ["keys5", "서리의 징표"], ["keys6", "맹독의 징표"]];
+  for (const [k, n] of KN) if (res[k] > 0) chip(null, `🗝 ${n} +${res[k]}`, "#e6c88c");
+  for (const r of res.runes || []) chip(null, `◆ ${RUNES[r].name}`, RUNES[r].color);
+  if (!C.length) chip(null, win ? "보상 없음" : "다시 도전 · 장비 · 아르카나 · 패시브를 올리면 이길 수 있습니다", "#c8beb4");
+  const note = res.notes && res.notes[0]; if (note) chip(null, note, "#c8beb4");
+  for (const q of res.quests || []) chip(null, "✔ 퀘스트 완료: " + q.title, "#8cff9a");
+  // 경험치 막대
+  const pre = res.pre || { level: save.level, exp: save.exp, need: expNeed(save.level) }, need = expNeed(save.level);
+  const to = save.level >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / need), from = replay ? to : res.levelUps ? 0 : Math.min(1, pre.exp / pre.need);
+  const showExp = res.exp > 0 || res.levelUps;
+  // 강해지는 방법 (패배)
+  const adv = !win ? adviceList(save) : [];
+  const btns = [];
+  if (nb) btns.push(`<button class="btn gold" data-a="next">다음 ▶</button>`);
+  if (canRetry) btns.push(`<button class="btn blue" data-a="retry">다시</button>`);
+  btns.push(`<button class="btn" data-a="map">지도</button>`, `<button class="btn" data-a="town">마을</button>`);
+  if (canRetry && AUTO_KINDS.includes(node.kind)) btns.push(`<button class="btn ${auto5() > 0 ? "green" : ""}" data-a="auto">${AUTO5_TXT[auto5()]}</button>`);
+  Modal.open(`<div class="r5 ${win ? "win" : "lose"} ${replay ? "" : "anim"}"><div class="r5glow"></div><div class="r5band"><b>${win ? "승리" : "패배"}</b></div>
+    <div class="r5sub">${node.name || endTitle(b)[0] || ""}</div><div class="r5stat"><span>⏱ ${Math.round(res.time || 0)}초</span><span>☠ 처치 ${res.kills || 0}</span></div>
+    ${showExp ? `<div class="r5exp"><div class="r5lv"><b>${save.level}</b></div><div class="r5bar"><i style="width:${from * 100}%" data-to="${to * 100}"></i><s></s></div><span>${fmtN(save.exp)} / ${fmtN(need)} 경험치</span></div>` : ""}
+    <div class="r5chips">${C.join("")}</div>
+    ${adv.length ? `<div class="r5adv"><b>강해지는 방법</b>${adv.map(([k, ic, t]) => `<button data-a="adv" data-k="${k}"><span>${ic}  ${t}</span><em>가기 ▶</em></button>`).join("")}</div>` : ""}
+    <div class="r5cnt" id="r5cnt"></div><div class="r5btns">${btns.join("")}</div></div>`, { cls: "res5", persistent: true, noClose: true, on: {
+    next: () => { stopAuto5(); if (!nb) return; G.pending = null; Modal.close(true); if (nb.town) { G.battle = null; AU.stopBgm(); openTown(nb.town); return; } const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },
+    retry: () => { stopAuto5(); retry5(node); },
+    map: () => { stopAuto5(); G.pending = null; Modal.close(true); back(); },
+    town: () => { stopAuto5(); G.pending = null; Modal.close(true); G.battle = null; AU.stopBgm(); openTown(G.townAct || 1); },
+    ok: () => { stopAuto5(); G.pending = null; Modal.close(true); back(); },
+    auto: () => { setAuto5((auto5() + 1) % 3); showResult(res, b, true); },
+    adv: (el) => { stopAuto5(); adviceGo(el.dataset.k); },
+  } });
+  if (!replay) { const f = $("#mbox .r5bar i"); if (f) setTimeout(() => { f.style.width = f.dataset.to + "%"; if (res.levelUps) { const l = $("#mbox .r5lv"); if (l) l.classList.add("up"); snd("levelup"); } }, 300); }
+  refreshTop();
+  // 자동 반복: 이기면 3초 뒤 같은/다음 단계를 다시 시작, 지면 멈춘다
+  if (auto5() > 0 && canRetry && AUTO_KINDS.includes(node.kind)) {
+    const cnt = $("#r5cnt");
+    if (!win) { cnt.textContent = "패배 — 자동 반복을 멈췄습니다"; return; }
+    if (save.inv.length >= invMax(save) - 3) { cnt.textContent = "가방이 가득 차서 자동 반복을 멈췄습니다"; return; }
+    let left = document.hidden ? 0 : 3; cnt.textContent = `자동 반복: ${left}초 후 시작`;
+    const go = () => { if (!G.pending || G.pending[0] !== res) return stopAuto5(); if (left > 0) { cnt.textContent = `자동 반복: ${left}초 후 시작`; left--; return; } stopAuto5(); if (auto5() === 2 && nb && !nb.town) { const n = nb.node; G.pending = null; Modal.close(true); startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); } else retry5(node); };
+    G.autoT = setInterval(go, 1000); go();
+  }
+}
+function stopAuto5() { if (G.autoT) { clearInterval(G.autoT); G.autoT = null; } }
+function retry5(node) {   // 열쇠를 쓰는 보스는 다시 할 때마다 열쇠 1개
+  const ki = autoKeyInfo(node); if (ki) { if (ki.have < ki.cost) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); const c = $("#r5cnt"); if (c) c.textContent = `${ki.name}가 부족합니다`; return; } save[ki.key] -= ki.cost; saveGame(); refreshTop(); }
+  G.pending = null; Modal.close(true); startBattle(node, G.retry);
+}
+
+// =========================================================
 // 5.0 마을 (로블록스판 Client.lua BUILD 와 같은 건물 · 위치 · 탭 묶음)
 // 건물은 마을 그림(bg_town)에 그려져 있다. box = 그림 기준 영역 (x0, y0, x1, y1). 비슷한 기능은 한 건물에 탭으로 묶는다
 // 오른쪽 위 건물(로블록스판 Info Desk)은 웹판에서는 업데이트 게시판 (게시판 · 우편함 · 도감 · 기록)
@@ -7596,12 +7645,12 @@ function hud5Build() {
   const pause = (on) => { G.paused = on; $("#h5pause").classList.toggle("hidden", !on); };
   $("#b-pause").onclick = () => { snd("click"); pause(!G.paused); };
   $("#h5res").onclick = () => pause(false);
-  const leave = (dest) => { pause(false); if (!G.battle || G.battle.over) return; AU.stopBgm(); save.auto.on = false; G.battle = null; if (dest === "map") openMap(); else openTown(G.townAct || 1); };
+  const leave = (dest) => { pause(false); if (!G.battle || G.battle.over) return; AU.stopBgm(); stopAuto5(); G.battle = null; if (dest === "map") openMap(); else openTown(G.townAct || 1); };
   $("#h5map").onclick = () => leave("map"); $("#h5town").onclick = () => leave("town");
   $("#b-speed").onclick = () => { snd("click"); $("#h5spd").classList.toggle("open"); };
   for (const b of $$("#h5spd [data-spd]")) b.onclick = () => { G.speed = +b.dataset.spd; $("#b-speed").textContent = "×" + G.speed + " ▼"; $("#h5spd").classList.remove("open"); snd("click"); };
   $("#b-flee").onclick = () => { snd("click"); retreat(); };
-  $("#b-auto").onclick = () => { save.auto.on = !save.auto.on; saveGame(); updateAutoBtn(); snd("click"); toast(save.auto.on ? "자동 반복 ON — 이긴 뒤 같은 스테이지를 계속 반복합니다" : "자동 반복 OFF"); };
+  $("#b-auto").onclick = () => { setAuto5((auto5() + 1) % 3); snd("click"); toast(AUTO5_TXT[auto5()]); };
 }
 // 카드형 스킬 칸 (로블록스판: 카드 그림 · 등급 테두리 · 아래 이름 띠 · 위 쿨타임 숫자)
 function hud5Skills(b) {
@@ -7621,13 +7670,13 @@ function hud5Tick(b) {
 const TUT5 = [
   { title: "스킬 소환", text: "시작 선물로 아르카나 조각 90개를 받았어요. 마을의 <b>[아르카나 소환]</b> 탑을 누르고, 내 계열 탭이 고른 상태에서 <b>[10회 소환]</b>을 눌러 보세요.", ev: "pulled",
     target: () => G.screen === "town" && !Modal.isOpen() ? { town: "skillshop" } : document.querySelector('[data-a="s10"]:not([disabled])') },
-  { title: "아르카나 칸", text: "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다 (1번 = 평타, 2~4번 = 아르카나). 위 메뉴 <b>[아르카나]</b>를 열고 새로 뽑은 카드를 누른 뒤 <b>[4번 칸에]</b>를 누르세요 (카드를 칸으로 끌어다 놓아도 됩니다).", ev: "equipsk",
+  { title: "아르카나 칸", text: "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다 (1번 = 평타, 2~4번 = 아르카나). 오른쪽 위 <b>[아르카나]</b>를 열고 새로 뽑은 카드를 누른 뒤 <b>[4번 칸에]</b>를 누르세요 (카드를 칸으로 끌어다 놓아도 됩니다).", ev: "equipsk",
     target: () => !Modal.isOpen() ? $("#b-skill") : !document.querySelector(".arc5") ? document.querySelector("#modal .x") : document.querySelector('[data-a="aeq"][data-s="3"]') || document.querySelector('.og5 .ac5[data-k="active"]:not(.eqd)') },
-  { title: "첫 전투", text: "창을 닫고 위쪽 <b>[🗺 지도]</b> → 반짝이는 <b>[초원 1]</b> → <b>[도전]</b>. 전투는 자동으로 진행됩니다.", ev: "battle",
+  { title: "첫 전투", text: "창을 닫고 오른쪽 아래 <b>[지도]</b> → 반짝이는 <b>[초원 1]</b> → <b>[도전]</b>. 전투는 자동으로 진행됩니다.", ev: "battle",
     target: () => Modal.isOpen() ? document.querySelector("#modal .x") : G.screen !== "map" ? $("#b-map") : (MapView.sel && MapView.sel.id === "S1-1" ? document.querySelector('#mappanel [data-p="go"]') : { map: "S1-1" }) },
-  { title: "장비 장착", text: "전투에서 장비를 얻었어요! 위 메뉴 <b>[장비]</b>를 열고 <b>[추천 장비 착용]</b>을 누르세요. 초록 ▲ 는 더 좋은 장비 표시입니다.", ev: "power", after: 1,
+  { title: "장비 장착", text: "전투에서 장비를 얻었어요! 오른쪽 위 <b>[가방]</b>을 열고 <b>[자동 장착]</b>을 누르세요. 초록 ▲ 는 더 좋은 장비 표시입니다.", ev: "power", after: 1,
     target: () => !Modal.isOpen() ? $("#b-inv") : !document.querySelector('[data-a="recommend"]') ? document.querySelector("#modal .x") : document.querySelector('[data-a="recommend"]:not([disabled])') },
-  { title: "패시브", text: "레벨이 올라 패시브 포인트가 생겼어요. 위 메뉴 <b>[패시브]</b>에서 <b>[자동 배분]</b>을 누르세요. 나중에 직접 노드를 눌러 찍을 수도 있어요.", ev: "power", after: 2,
+  { title: "패시브", text: "레벨이 올라 패시브 포인트가 생겼어요. 오른쪽 위 <b>[패시브]</b>에서 <b>[자동 배분]</b>을 누르세요. 나중에 직접 노드를 눌러 찍을 수도 있어요.", ev: "power", after: 2,
     target: () => !Modal.isOpen() ? $("#b-pass") : !document.querySelector('[data-a="pauto"]') ? document.querySelector("#modal .x") : document.querySelector('[data-a="pauto"]') },
   { title: "장비 강화", text: "마을 <b>[제련소]</b>에서 장비를 강화하면 전투력이 오릅니다. 무기를 고르고 반짝이는 <b>[강화]</b>를 눌러 보세요.", ev: "power", after: 3,
     target: () => { if (G.screen !== "town") return $("#b-town") || null; if (!Modal.isOpen()) return { town: "forge" }; const e = document.querySelector('[data-a="enh"]'); if (e) return e; if (IB.mode !== "forge") return document.querySelector("#modal .x"); if (!IB.sel && save.equipped.weapon) { IB.sel = save.equipped.weapon; renderItems(); } return document.querySelector('[data-a="enh"]'); } },
@@ -7682,6 +7731,8 @@ function tutTick() {
   #mbox h2{font-family:Georgia,"Times New Roman",serif;color:#f0d08a !important;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px #c08a3a66;background:${U("header")} center/100% 100% no-repeat;padding:3px 40px 4px;margin:0 auto 4px !important;max-width:460px;font-size:19px !important}
   .btn{background:transparent !important;border:10px solid transparent !important;border-image:${U("btn_gray")} 36 fill / 10px stretch !important;border-radius:0 !important;box-shadow:none !important;color:#f5e8cd !important;text-shadow:0 1px 2px #000;padding:2px 8px !important}
   .btn.pri{border-image:${U("btn_red")} 36 fill / 10px stretch !important}
+  .r5band{border:14px solid transparent;border-image:${U("title")} 60 fill / 14px stretch}
+  #mbox.res5{background:${U("panel")} center/100% 100% no-repeat, #100b0a !important}
   .btn.gold{border-image:${U("btn_gold")} 36 fill / 10px stretch !important}.btn.blue{border-image:${U("btn_blue")} 36 fill / 10px stretch !important}.btn.purple{border-image:${U("btn_purple")} 36 fill / 10px stretch !important}.btn.green{border-image:${U("btn_green")} 36 fill / 10px stretch !important}
   .btn.big{padding:6px 14px !important}
   .btn:hover:not([disabled]){filter:brightness(1.18)}
@@ -7690,9 +7741,6 @@ function tutTick() {
   .tab{background:transparent !important;border:8px solid transparent !important;border-image:${U("tab")} 30 fill / 8px stretch !important;border-radius:0 !important;color:#d8c8a8 !important}
   .tab.on{border-image:${U("tab_on")} 30 fill / 8px stretch !important;color:#fff4d8 !important}
   #mbox > .x{width:30px;height:30px;font-size:0 !important;background:${U("close")} center/contain no-repeat !important;border:0 !important;top:-6px !important;right:-6px !important;z-index:5}
-  #top{background:linear-gradient(#1c0e0ef4,#0e0808e8) !important;border-bottom:2px solid #8a6a38 !important;box-shadow:0 2px 0 #000,0 4px 14px #0008}
-  #top .btn{border-width:6px !important;border-image-width:6px !important;padding:1px 3px !important;font-size:12px !important;margin:0 !important}
-  #top .btn .mi{width:18px;height:18px;vertical-align:-4px;margin-right:1px}
   .tabs .tab,.itabs .tab{margin:1px}
   .skdet,.sks,.skg,.sumc,.advb,.rs-chip,.rs-stat,.shopcard{background-color:#1a1012 !important;border-color:#6a4a2a !important}
   .sks.cursel,.skg.picked{border-color:#f0c060 !important}
@@ -7723,16 +7771,24 @@ function tutTick() {
         if (nv !== v) r.style.setProperty(p, nv, r.style.getPropertyPriority(p));
       } } }
   const st = document.createElement("style"); st.id = "theme5"; st.textContent = css; document.head.appendChild(st);
-  // 상단 메뉴 버튼: 로블록스판 메뉴 아이콘
-  const MI = { "b-map": "m_map", "b-inv": "m_bag", "b-pass": "m_passive", "b-stat": "m_stats", "b-skill": "m_skill", "b-quest": "m_quest", "b-opt": "m_settings", "b-daily": "m_mail", "b-codex": "m_gacha" };
-  const put = () => { for (const id in MI) { const b = document.getElementById(id), u = typeof artURL === "function" && artURL(MI[id]); if (!b || !u || b.querySelector(".mi")) continue; const t = b.firstChild; if (t && t.nodeType === 3) t.textContent = t.textContent.replace(/^[^\w가-힣]+\s*/, ""); const im = document.createElement("img"); im.className = "mi"; im.src = u; b.insertBefore(im, b.firstChild); } };
+  // 마을 · 지도 HUD 그림 (로블록스판 Skin: 판 · 슬롯)
+  const st2 = document.createElement("style"); st2.textContent = `.tb5>i{border-image:${U("slot")} 30 fill / 6px stretch}.h5pill{border-image:${U("pill")} 30 fill / 6px stretch}#b-map{border-image:${U("panel")} 120 fill / 10px stretch}`; document.head.appendChild(st2);
+  const put = () => { for (const b of document.querySelectorAll(".tb5[data-mi]")) { const u = typeof artURL === "function" && artURL(b.dataset.mi); const i = b.querySelector("i"); if (u && i && !i.firstChild) i.innerHTML = `<img src="${u}" alt="">`; } for (const [id, k] of [["h5ig", "i_gold"], ["h5ia", "i_arcana"]]) { const e = document.getElementById(id), u = typeof artURL === "function" && artURL(k); if (e && u && !e.getAttribute("src")) e.src = u; } };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", put); else put();
+  window.theme5Put = put;
 })();
 
 // =========================================================
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.08", date: "11/3", title: "마을 · 지도 화면과 결과 창을 로블록스판과 같게", items: [
+    "왼쪽 위 캐릭터 카드: 초상화(레벨 · 경험치) · HP · ATK · SPL · DEF · 치명 · 전투력 · 균열/탑 진행. 아래에 골드 · 아르카나 조각 (조각을 누르면 소환).",
+    "오른쪽 위 메뉴 아이콘 8개: 가방 · 아르카나 · 패시브 · 스탯 · 퀘스트 · 소환 · 우편 · 설정. 오른쪽 아래 큰 버튼으로 지도 ⇄ 마을. 도감 · 랭킹은 마을 건물(업데이트 게시판 · 길드)에서 엽니다.",
+    "전투 결과 창: 승리/패배 띠 · 시간 · 처치 · 경험치 막대 · 보상 칩 · 패배 시 강해지는 방법. 버튼은 다음 ▶ · 다시 · 지도 · 마을 · 자동.",
+    "자동 반복은 3가지: 끔 / 같은 단계 / 다음 단계. 이기면 결과 창에서 3초 뒤 자동으로 시작하고, 지면 멈춥니다. 전투 화면 오른쪽 위 버튼으로도 바꿉니다.",
+    "월드 버프와 지옥 스테이지를 없앴습니다 (로블록스판에 없는 콘텐츠).",
+  ] },
   { ver: "5.07", date: "11/3", title: "아르카나 · 장비 창을 로블록스판과 같게", items: [
     "아르카나 창이 새로워졌습니다: 보랏빛 탁자 위에 장착한 아르카나 카드 (1번 = 평타), 아래에 보유 카드 (분류 · 정렬). 카드를 칸으로 끌어다 놓거나, 카드를 누르고 [n번 칸으로]를 누르면 장착됩니다. 칸마다 전투력 변화가 보입니다.",
     "장착한 아르카나는 [대상] 버튼으로 노릴 적을 바꿉니다. 룬은 [룬] 탭에서 끼웁니다.",
@@ -8353,11 +8409,15 @@ function bindInput() {
   $("#b-daily").onclick = () => { snd("click"); openDaily(); };
   $("#b-codex").onclick = () => { snd("click"); CX.sel = null; openCodex(); };
   top5Wire();
+  $("#b-sum").onclick = () => { snd("click"); G.grp = null; openGroup({ name: "아르카나 소환", tabs: [["아르카나 소환", () => openSummon()], ["아르카나 목록", () => openGachaList5()]] }, 0); };
+  $("#t-shard-w").onclick = () => $("#b-sum").click();
+  $("#b-mail").onclick = () => { snd("click"); G.grp = null; openMail(); };
+  $("#h5card").onclick = () => { snd("click"); openStats(); };
   $("#b-pause").onclick = () => { G.paused = !G.paused; $("#b-pause").textContent = G.paused ? "▶" : "❚❚"; };
   $("#b-speed").onclick = () => { G.speed = G.speed >= 3 ? 1 : G.speed + 1; $("#b-speed").textContent = "×" + G.speed; };
   $("#b-flee").onclick = () => { snd("click"); retreat(); };
   $("#b-pass").onclick = () => { snd("click"); openPassives(); };
-  $("#b-auto").onclick = () => { save.auto.on = !save.auto.on; saveGame(); updateAutoBtn(); snd("click"); toast(save.auto.on ? "자동 반복 ON — 이긴 뒤 같은 스테이지를 계속 반복합니다" : "자동 반복 OFF"); };
+  $("#b-auto").onclick = () => { setAuto5((auto5() + 1) % 3); snd("click"); toast(AUTO5_TXT[auto5()]); };
   initModal(); window.addEventListener("resize", fitApp); fitApp();
   window.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").classList.contains("hidden")) { if (!Modal.persistent) Modal.close(); } else if (G.screen === "battle") retreat(); }
     if ((G.screen === "town" || G.screen === "map") && $("#modal").classList.contains("hidden") && !e.repeat && !e.ctrlKey && !e.metaKey) {
@@ -8411,7 +8471,7 @@ function frame(ms) {
 window.addEventListener("load", () => {
   CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
-  loadAssets(() => artWaitAll(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#iorb").src = iconURL("orb", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); }));
+  loadAssets(() => artWaitAll(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); }));
 });
 
 </script></body></html>

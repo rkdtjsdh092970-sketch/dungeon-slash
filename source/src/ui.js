@@ -48,10 +48,13 @@ function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산�
   try { _pwCache = powerScore5(save); } catch (e) {} return _pwCache;   // 5.0: 로블록스판 전투력 (균열 1층 권장 = 100, 몬스터 강함에 정비례)
 }
 function refreshTop() {
-  const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
+  const s = save; $("#t-lv").textContent = "Lv " + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
   $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp || 0) / expNeed(s.level) * 100)) + "%";   // 5.0: 막대 = 경험치
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.hone);
-  $("#t-shard-w").style.display = "none";   // 5.0: 균열 조각 폐지
+  { const st = computeStats(save); $("#h5hp").textContent = fmtN(st.maxHp); $("#h5atk").textContent = fmtN(st.atk); $("#h5mag").textContent = fmtN(st.mag); $("#h5def").textContent = fmtN(st.def); $("#h5crit").textContent = Math.round((st.critChance || 0) * 100) + "%";
+    $("#h5prog").textContent = `균열 ${(s.rift && s.rift.best) || 0} · 탑 ${(s.spire && s.spire.best) || 0}`; const f = $("#h5face"), u = artURL(s.equipped.weapon && s.equipped.weapon.wt === "staff" ? "mage" : "warrior"); if (u && f.getAttribute("src") !== u) f.src = u;
+    const m = $("#b-map"), toMap = G.screen !== "map"; m.querySelector("b").textContent = toMap ? "지도" : "마을"; const iu = artURL(toMap ? "m_map" : "m_town"); if (iu && m.querySelector("img").getAttribute("src") !== iu) m.querySelector("img").src = iu;
+    if (window.theme5Put) theme5Put(); }
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
   const q = Object.keys(s.q).filter((id) => s.q[id].state === "done").length; $("#b-quest .dot").style.display = q ? "" : "none";
   $("#b-inv .upm").style.display = hasAnyUpgrade(s) ? "" : "none";
@@ -62,6 +65,7 @@ function refreshTop() {
 function showScreen(name) {
   G.screen = name; document.body.dataset.screen = name;
   for (const id of ["title", "top", "battlehud", "mappanel", "townbar"]) $("#" + id).classList.toggle("hidden", !({ title: ["title"], map: ["top", "mappanel"], town: ["top", "townbar"], battle: ["battlehud"] }[name] || []).includes(id));
+  if (save && (name === "town" || name === "map")) refreshTop();
   const bgm = { title: "title", map: "town", town: "town" }[name]; if (bgm) AU.bgm(bgm);
   if (name !== "town" && name !== "map") setGuide(null);
   if (name !== "battle") { G.battle = null; if (save) refreshTop(); }
@@ -107,7 +111,7 @@ function riftMods(tier) {
   const r = seeded(tier * 131 + 7), n = tier < 10 ? 0 : tier < 30 ? 1 : tier < 60 ? 2 : 3, pool = RIFT_MODS.slice(), out = [];   // v4: 변이는 10층부터 · 층이 높을수록 개수가 늘어난다
   for (let i = 0; i < n; i++) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]); return out;
 }
-const isHell = (n) => GRADUATED(save) && n.kind === "stage" && hellNodes(Date.now()).has(n.id);
+const isHell = () => false;   // 5.08: 지옥 스테이지 폐지 (로블록스판에 없음)
 function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
@@ -336,7 +340,6 @@ function battleHudBuild(b) {
   $("#b-speed").textContent = "×" + G.speed + " ▼"; updateAutoBtn(); $("#h5pause").classList.add("hidden");
   const canAuto = AUTO_KINDS.includes(b.node.kind); $("#b-auto").style.display = canAuto ? "" : "none";
 }
-function updateAutoBtn() { const on = save && save.auto.on; $("#b-auto").textContent = on ? "자동 ON" : "자동 OFF"; $("#b-auto").classList.toggle("pri", !!on); }
 function battleHud(b) {
   hud5Tick(b);
   const hp = Math.max(0, b.hp / b.maxHp), dt = Math.min(0.1, G.dt || 0.016);
@@ -359,31 +362,8 @@ function finishFlow(b) {
   saveGame();
   const uniq = res.items.filter((i) => i.uniq);
   const next = () => afterBattle(res, b);
-  b.resultAt = (save.auto.on && res.win ? 0.9 : endWin(b) && (node.kind === "boss" || node.kind === "void" || isEB(node.kind)) ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
+  b.resultAt = ( endWin(b) && (node.kind === "boss" || node.kind === "void" || isEB(node.kind)) ? 2.2 : 1.8);   // 종료 연출이 끝난 뒤 결과창
   b.next = () => { if (uniq.length && !document.hidden) showUniqueFx(uniq, next); else next(); };
-}
-function afterBattle(res, b) {
-  const node = G.node, A = save.auto;
-  if (A.on && res.win && AUTO_KINDS.includes(node.kind)) {   // 자동 반복
-    let note = ""; const pr = autoProcess(save);
-    if (pr.sold) note += ` · ${pr.sold}개 판매`; if (pr.dis) note += ` · ${pr.dis}개 분해`; if (pr.sSold || pr.sDis) note += ` · 스킬 ${pr.sSold ? pr.sSold + "개 판매 " : ""}${pr.sDis ? pr.sDis + "개 분해" : ""}`;
-    saveGame(); refreshTop();
-    toast(`승리! 처치 ${res.kills} · +${fmtN(res.gold)}G${res.items.length ? ` · 장비 ${res.items.length}` : ""}${note}`, "ok");
-    if (save.inv.length >= invMax(save) - 3) { A.on = false; toast("가방이 가득 차서 자동 반복을 멈췄습니다", "bad"); showResult(res, b); return; }
-    if (res.levelUps) toast(`레벨 업! Lv.${save.level}`, "ok");
-    const go = () => {
-      if (!(G.screen === "battle" && save.auto.on && $("#modal").classList.contains("hidden"))) return;
-      const ki = autoKeyInfo(node); if (ki) { if (ki.have < ki.cost) { save.auto.on = false; saveGame(); updateAutoBtn(); toast(`${ki.name}가 부족해 자동 반복을 멈췄습니다`, "bad"); showResult(res, b); return; } save[ki.key] -= ki.cost; saveGame(); refreshTop(); }   // 열쇠를 쓰는 보스: 반복마다 열쇠 1개, 모자라면 멈춘다
-      startBattle(node, G.retry);
-    };
-    if (document.hidden) go(); else setTimeout(go, 1400);   // 백그라운드에서는 바로 다음 전투
-    return;
-  }
-  if (A.on && !res.win) { A.on = false; saveGame(); }
-  if (res.win && A.always && ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "endless", "void", "hive", "titan", "storm", "frost", "poison"].includes(node.kind)) {   // 자동 분해 설정: 모든 전투 후 적용
-    const pr = autoProcess(save); if (pr.sold || pr.dis || pr.sSold || pr.sDis) { saveGame(); refreshTop(); toast(`자동 정리: ${pr.sold ? "장비 " + pr.sold + "개 판매 " : ""}${pr.dis ? "장비 " + pr.dis + "개 분해 " : ""}${pr.sSold ? "스킬 " + pr.sSold + "개 판매 " : ""}${pr.sDis ? "스킬 " + pr.sDis + "개 분해" : ""}`, "ok"); }
-  }
-  showResult(res, b);
 }
 // 결과창의 [다음 스테이지/단계] 버튼: 일반 스테이지·보스는 다음 노드, 균열·시련은 한 단계 위
 function nextBattleOf(node, res) {
@@ -399,45 +379,7 @@ function nextBattleOf(node, res) {
   if (node.kind === "trial" && node.tier + 1 <= Math.min(MAX_TRIAL, (save.trialBest || 0) + 1)) { G.trialTier = node.tier + 1; const n = MAP.nodes.find((x) => x.kind === "trial"); return { label: `${node.tier + 1}단계 도전 ▶`, node: n, battle: nodeToBattle({ kind: "trial" }) }; }
   return null;
 }
-function showResult(res, b, replay) {
-  G.pending = [res, b];
-  const node = G.node, tut = node.kind === "tutorial", endless = node.kind === "endless", win = res.win;
-  if (!replay && !res.uniques && res.items.some((i) => i.rarity >= 3)) snd("legend");
-  const nextTut = tut && win && node.step < TUTORIAL.length - 1;
- const back = () => { if (win && node.kind === "raid") { G.battle = null; AU.stopBgm(); raidAftermath(); return; } if (win && node.kind === "boss" && node.id && node.stage >= CFG.STAGES && node.act < CFG.ACTS) { G.battle = null; AU.stopBgm(); openTown(node.act + 1); return; } if (tut && !save.tut.done) { startTutorial(); return; } if (tut) { G.townAct = 1; G.guide = "map"; openTown(1); return; } G.retry.back ? G.retry.back() : openMap(node.act); };
-  const keyKind = node.kind === "void" || isEB(node.kind), keyHave = node.kind === "void" ? save.keys : isEB(node.kind) ? (save[EB[node.kind].key] || 0) : 0, bossLike = node.kind === "boss" || node.kind === "raid" || keyKind;
-  const canRetry = tut || endless ? false : keyKind ? { label: `다시 처치 · 열쇠 1개 소모 (보유 ${keyHave}개)`, disabled: keyHave < 1 } : bossLike ? { label: "다시 처치" } : true, nb = tut ? null : nextBattleOf(node, res);
-  Modal.open(resultHtml(res, b, node, tut, endless, nextTut, canRetry, !!replay, nb), { cls: "result", persistent: true, noClose: true, on: {
-    next: () => { if (!nb) return; G.pending = null; Modal.close(true); if (nb.town) { G.battle = null; AU.stopBgm(); openTown(nb.town); return; } const n = nb.node; startBattle(nb.battle, { back: () => { openMap(Math.min(10, n.act)); MapView.sel = n; mapPanel(); } }); },
-    ok: () => { G.pending = null; Modal.close(true); back(); }, retry: () => { if (keyKind) { if (node.kind === "void") { if (save.keys < 1) return; save.keys--; } else { const E = EB[node.kind]; if ((save[E.key] || 0) < 1) return; save[E.key]--; } saveGame(); refreshTop(); } G.pending = null; Modal.close(true); startBattle(node, G.retry); },
-    autoloop: (el) => {
-      if (save.auto.on) { save.auto.on = false; saveGame(); updateAutoBtn(); el.textContent = autoLoopLabel(node); return; }
-      const ki = autoKeyInfo(node); if (ki && ki.have < ki.cost) { toast(`${ki.name}가 부족합니다`, "bad"); snd("error"); return; }
-      save.auto.on = true; if (ki) save[ki.key]--; saveGame(); refreshTop(); G.pending = null; Modal.close(true); startBattle(node, G.retry);
-    },
-    autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
-    inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
-    adv: (el) => adviceGo(el.dataset.k),
-  } });
-  if (!replay) animateResult(res);
-  refreshTop();
-  if (!replay && win && nb && save.opt && save.opt.autoNext > 0) autoNextCountdown(res, save.opt.autoNext);
-}
 // 설정 '다음 스테이지로 자동 이동': 승리 결과창에서 대기시간이 지나면 [다음] 버튼을 자동으로 누른다. 화면을 누르거나 키를 누르면 취소된다
-const autoLoopLabel = (node) => { const ki = autoKeyInfo(node); return `자동 반복: ${save.auto && save.auto.on ? "ON" : "OFF"}${ki ? ` (${ki.name} ${ki.have}개 · 반복마다 ${ki.cost}개 소모)` : ""}`; };
-const autoNextLabel = () => (save.opt && save.opt.autoNext > 0 ? `다음 스테이지 자동 이동: ON (${save.opt.autoNext}초)` : "다음 스테이지 자동 이동: OFF");
-function autoNextCountdown(res, sec) {
-  const btn = document.querySelector('#modal [data-a="next"]'), modal = $("#modal"); if (!btn) return;
-  const base = btn.innerHTML; let left = sec, dead = false;
-  const stop = () => { dead = true; btn.innerHTML = base; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); }; G.autoCdStop = stop;
-  modal.addEventListener("pointerdown", stop, true); document.addEventListener("keydown", stop, true);
-  const tick = () => {
-    if (dead || !G.pending || G.pending[0] !== res) { stop(); return; }
-    if (left <= 0) { dead = true; document.removeEventListener("keydown", stop, true); modal.removeEventListener("pointerdown", stop, true); btn.click(); return; }
-    btn.innerHTML = `${base} <small>(${left}초 후 자동 이동)</small>`; left--; setTimeout(tick, 1000);
-  };
-  tick();
-}
 function retreat() {
   if (!G.battle || G.battle.over) return; const wasPaused = G.paused; G.paused = true;
   Modal.open(`<h2>전투 중단</h2><p class="center">퇴각하면 보상을 받지 못합니다.${G.node.kind === "endless" ? "<br>(무한 균열 입장 횟수는 돌아오지 않습니다)" : ""}</p><div class="pbtns"><button class="btn warn" data-a="yes">퇴각</button><button class="btn pri" data-a="no">계속 싸운다</button></div>`, { cls: "sm", persistent: true, noClose: true, on: {

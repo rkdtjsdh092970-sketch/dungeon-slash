@@ -263,7 +263,7 @@ const MapView = {
       if (k > 6.2) { this.cine = null; toast("🗼 먼 곳에서 정체불명의 탑이 솟아올랐다!", "ok"); }
     }
     g.save(); g.translate(shx, shy);
-    HELL_SET = sv.endgame ? hellNodes(Date.now()) : null;
+    HELL_SET = null;   // 5.08: 지옥 스테이지 폐지
     g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH);
     // 길
     g.lineWidth = 4; g.setLineDash([2, 10]); g.lineCap = "round";
@@ -352,8 +352,7 @@ const TownView = {
   drawArt(sv, time, tim) {   // 일러스트 마을: 건물은 그림에 있으니 이름표 · 강조만 (경매소 · 우편함은 코드로)
     const g = this.g, A = ACTS[this.act - 1]; drawCover(g, tim, CW, CH);
     const theme = ["#4a8a3a", "#2f6a4a", "#7a5a3a", "#c8884a", "#3a6a5a", "#6a8ab8", "#a8402a", "#6a4aa8", "#c8b86a", "#a82a3a"][this.act - 1];
-    town5Draw(g, gtime, this.hover);   // 5.0: 로블록스판 건물 8곳
-    g.font = "bold 22px sans-serif"; g.textAlign = "left"; g.fillStyle = "#000"; g.fillText(`${A.name} 마을`, 22, 82); g.fillStyle = A.color; g.fillText(`${A.name} 마을`, 20, 80);
+    town5Draw(g, gtime, this.hover);   // 5.0: 로블록스판 건물 8곳 (마을 이름표 없음)
   },
   pick(mx, my) { if (artGet("bg_town")) return town5Pick(mx, my); for (const s of townSpots().slice().sort((p, q) => q.y - p.y)) if (mx > s.x - s.w && mx < s.x + s.w && my > s.y - s.h && my < s.y + 40) return TOWN_SPOTS.find((t) => t.id === s.id) || s; return null; },
 };

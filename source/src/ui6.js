@@ -45,50 +45,12 @@ function adviceList(sv) {
   const out = [], left = passivePoints(sv) - passiveSpent(sv);
   if (left > 0) out.push(["pass", "✦", `남은 패시브 포인트 ${left}점 찍기`]);
   const up = sv.inv.filter((it) => isUpgrade(sv, it)).length; if (up > 0) out.push(["gear", "🛡", `가방에 더 좋은 장비 ${up}개 — 장착하기`]);
-  if ((sv.hone || 0) >= GACHA.ARC1) out.push(["gacha", "🔮", `새 스킬 소환 (아르카나 조각 ${fmtN(sv.hone)}개)`]);
+  if ((sv.hone || 0) >= GACHA.ARC1) out.push(["gacha", "🔮", `새 아르카나 소환 (아르카나 조각 ${fmtN(sv.hone)}개)`]);
   if (EQ_SLOTS.some((k) => sv.equipped[k] && (sv.equipped[k].enh || 0) < 10) && sv.ore >= 5) out.push(["forge", "⚒", `제련소에서 장비 강화 (강화석 ${fmtN(sv.ore)}개)`]);
   const keys = ["keys", "keys2", "keys3", "keys4", "keys5", "keys6"].reduce((a, k) => a + (sv[k] || 0), 0); if (keys > 0) out.push(["gate", "🗝", `보스 관문 열쇠 ${keys}개로 더 좋은 평타 얻기`]);
   return out;
 }
-function adviceHtml() {
-  const L = adviceList(save); if (!L.length) return "";
-  return `<div class="rs-sec">강해지는 방법</div><div class="advl">${L.map(([k, ic, t]) => `<button class="advb" data-a="adv" data-k="${k}"><span>${ic}</span>${t}<em>가기 ▶</em></button>`).join("")}</div>`;
-}
 function adviceGo(k) {
   G.pending = null; Modal.close(true); G.battle = null; AU.stopBgm(); openTown(G.townAct || 1);
   setTimeout(() => { if (k === "pass") openPassives(); else if (k === "gear") { IB.mode = "inv"; IB.sel = null; renderItems(); } else if (k === "gacha") openSummon(); else if (k === "forge") openItems("forge"); else if (k === "gate") openMap(); }, 50);
-}
-function starCount(res, b) { if (!res.win || b.node.kind === "tutorial") return 0; const hp = b.hp / b.maxHp; return 1 + (hp >= 0.4 ? 1 : 0) + (hp >= 0.75 ? 1 : 0); }
-function resultHtml(res, b, node, tut, endless, nextTut, canRetry, replay, nb) {
-  const win = res.win, T = endTitle(b), stars = starCount(res, b), pre = res.pre || { level: save.level, exp: save.exp, need: expNeed(save.level) };
-  const A = replay ? "" : "rs-anim";
-  const chip = (ic, label, val, cnt, cls) => `<div class="rs-chip ${cls || ""}"><span class="ic">${ic}</span><div><small>${label}</small><b ${cnt != null ? `data-cnt="${cnt}"` : ""}>${val}</b></div></div>`;
-  const stat = (label, val) => `<div class="rs-stat"><small>${label}</small><b>${val}</b></div>`;
-  const rew = [chip(iconImg("gold", 2), "골드", replay ? fmtN(res.gold) : "0", res.gold), res.ore ? chip(iconImg("ore", 2), "강화석", "+" + res.ore) : "", res.shards ? chip(iconImg("shard", 2), "균열 조각", "+" + res.shards) : "", res.orbC ? chip(iconImg("orb", 2), "혼돈 구슬", "+" + res.orbC) : "", res.orbD ? chip(iconImg("orb", 2), "신성한 구슬", "+" + res.orbD, null, "gem") : "", res.stones ? chip("💎", "미확인된 원초의 돌", "+" + res.stones, null, "gem") : "", res.stonesHi ? chip("🔶", "미확인된 계시의 돌", "+" + res.stonesHi, null, "gem") : "", res.sockTix ? chip("🔏", "세공의 인장", "+" + res.sockTix, null, "gem") : "", res.keys ? chip(iconImg("skull", 2), "공허의 열쇠", "+" + res.keys) : "", res.keys2 ? chip(iconImg("skull", 2), "정령의 불씨", "+" + res.keys2) : "", res.keys3 ? chip(iconImg("skull", 2), "철갑의 징표", "+" + res.keys3) : "", res.keys4 ? chip(iconImg("skull", 2), "뇌전의 징표", "+" + res.keys4) : "", res.keys5 ? chip(iconImg("skull", 2), "서리의 징표", "+" + res.keys5) : "", res.keys6 ? chip(iconImg("skull", 2), "맹독의 징표", "+" + res.keys6) : "", res.hone ? chip(iconImg("shard", 2), "아르카나 조각", "+" + res.hone) : "",
-    ...(res.runes || []).map((r) => chip(`<i style="color:${RUNES[r].color}">◆</i>`, "룬", RUNES[r].name, null, "rune"))].join("");
-  const tiles = res.items.slice().sort((x, y) => y.rarity - x.rarity).map((it, i) => `<div class="rs-pop" style="--i:${i}">${tileHtml(it)}</div>`).join("");
-  const rareLines = res.items.filter((i) => i.rarity >= 2).slice(0, 6).map((it) => `<div class="drop">${ITEM_ICON(it)} ${itemTitle(it)}</div>`).join("") + (res.items.filter((i) => i.rarity >= 2).length > 6 ? `<div class="dim center">외 ${res.items.filter((i) => i.rarity >= 2).length - 6}개</div>` : "");
-  const skLab = (i) => { const g = res.skillRes && res.skillRes[i]; return !g || g.new ? "새 스킬" : g.lvlUp ? `레벨 업! Lv.${g.lvlUp}` : g.dupProg ? `중복 ${g.dupProg[0]} / ${g.dupProg[1]}` : `최대 레벨 · 조각 +${g.dupHone}`; };
-  const sk = res.skills.map((s, i) => `<div class="rs-sk">${skIcon(s.id, 3)}<div><small>${skLab(i)}</small>${skillTitle(s)}</div></div>`).join("");
-  const notes = res.notes.map((n) => `<div class="note">★ ${n}</div>`).join("") + res.quests.map((q) => `<div class="note">✔ 퀘스트 완료: ${q.title}</div>`).join("");
-  const frac0 = Math.min(1, pre.exp / pre.need), fracN = save.level >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / expNeed(save.level));
-  return `<div class="rs ${A} ${win ? "win" : "lose"}">
-    <div class="rs-head"><div class="rs-ribbon"><span>${T[0]}</span></div><div class="rs-en">${T[1]}</div>
-      ${stars ? `<div class="rs-stars">${[0, 1, 2].map((i) => `<i class="${i < stars ? "on" : ""}" style="--d:${350 + i * 220}ms">★</i>`).join("")}</div>` : ""}
-      <div class="rs-node">${node.name || ""}</div></div>
-    <div class="rs-stats">${stat("처치", res.kills)}${stat("시간", Math.round(res.time) + "초")}${stat("가한 피해", fmtN(b.dealt))}${stat("받은 피해", fmtN(b.taken))}</div>
-    <div class="rs-exp"><div class="rs-lv">Lv.<b id="rs-lv">${replay ? save.level : pre.level}</b></div><div class="rs-bar"><i id="rs-fill" style="width:${(replay ? fracN : frac0) * 100}%"></i><span id="rs-txt"></span></div><div class="rs-gain">${res.levelUps ? `레벨 <b>+${res.levelUps}</b>` : (res.exp ? `<small style="color:#9ad0ff">경험치 +${fmtN(res.exp)}</small>` : `<small class="dim">경험치 없음</small>`)}</div><div class="rs-up" id="rs-up">LEVEL UP!</div></div>
-    <div class="rs-rew">${rew}</div>
-    ${!win ? `<div class="dim center">패배 시 보상은 절반입니다</div>${adviceHtml()}` : ""}${res.buffs && res.buffs.length ? `<div class="dim center">월드 버프: ${res.buffs.map((w) => w.name).join(", ")}</div>` : ""}
-    ${tiles ? `<div class="rs-sec">획득 장비 <em>${res.items.length}</em></div><div class="rs-drops">${tiles}</div>${rareLines}` : ""}${sk}${notes}
-    <div class="pbtns rs-btns"><button class="btn pri big" data-a="ok">${nextTut ? "다음 훈련" : tut ? "마을로" : "확인"} <small>Enter</small></button>${!tut ? `<button class="btn" data-a="inv">장비 정리</button>` : ""}${canRetry ? `<button class="btn" data-a="retry" ${canRetry.disabled ? "disabled" : ""}>${canRetry.label || "다시 도전"}</button>` : ""}${nb ? `<button class="btn pri" data-a="next">${nb.label}</button>` : ""}</div><div class="center" style="margin-top:6px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">${AUTO_KINDS.includes(node.kind) && !replay ? `<button class="btn xs" data-a="autoloop">${autoLoopLabel(node)}</button>` : ""}${nb && !replay && res.win ? `<button class="btn xs" data-a="autotog">${autoNextLabel()}</button>` : ""}</div></div>`;
-}
-function animateResult(res) {
-  $$("#mbox [data-cnt]").forEach((el, k) => { const to = +el.dataset.cnt, t0 = performance.now() + 250, dur = 1000; const f = (now) => { if (!el.isConnected) return; const p = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - p, 3); el.textContent = fmtN(Math.round(to * e)); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); });
-  const pre = res.pre; if (!pre) return; const fill = $("#rs-fill"), lv = $("#rs-lv"), up = $("#rs-up"), txt = $("#rs-txt"); if (!fill) return;
-  const segs = [], lv1 = save.level, startLv = Math.max(pre.level, lv1 - 5);
-  for (let l = startLv; l <= lv1; l++) segs.push({ lv: l, from: l === pre.level ? Math.min(1, pre.exp / pre.need) : 0, to: l === lv1 ? (lv1 >= CFG.LEVEL_CAP ? 1 : Math.min(1, save.exp / expNeed(lv1))) : 1 });
-  let i = 0, t0 = 0, dur = 0; const begin = () => { const s = segs[i]; lv.textContent = s.lv; fill.style.width = s.from * 100 + "%"; t0 = performance.now(); dur = 350 + (s.to - s.from) * 700; };
-  setTimeout(() => { begin(); const step = (now) => { if (!fill.isConnected) return; const s = segs[i], p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 2); fill.style.width = (s.from + (s.to - s.from) * e) * 100 + "%";
-    if (p >= 1) { if (i < segs.length - 1) { i++; lv.textContent = segs[i].lv; up.classList.remove("show"); void up.offsetWidth; up.classList.add("show"); snd("levelup"); begin(); } else { if (txt && save.level < CFG.LEVEL_CAP) txt.textContent = `${fmtN(save.exp)} / ${fmtN(expNeed(save.level))}`; return; } } requestAnimationFrame(step); }; requestAnimationFrame(step); }, 450);
 }

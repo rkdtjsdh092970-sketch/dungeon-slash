@@ -371,6 +371,59 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 .hl5{height:392px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 4px}.hc5{background:#100c0ce6;border:1.5px solid #785c30;border-radius:6px;padding:6px 12px}.hc5 b{color:#ffdc8c;font-size:15px}.hc5 p{margin:3px 0;font-size:13px;color:#e8dcc8}
 .bh5 .set5{font-size:12px}.bh5 .set5 .btn{width:26px;height:20px;font-size:12px!important;line-height:1}.bh5{display:flex;align-items:center}
 .det5 .dbtns{gap:4px;margin-top:6px}.det5 .dbtns .btn{padding:0 4px!important;font-size:12px!important;line-height:1.15;min-height:34px}
+/* ---- 5.0 결과 창 (로블록스판 showResultPanel) ---- */
+#mbox.res5{width:660px!important;max-width:96vw;min-height:360px;overflow:visible!important;padding:0 20px 16px!important;margin-top:40px;position:relative}
+.r5{position:relative;display:flex;flex-direction:column;align-items:center;min-height:330px}
+.r5glow{position:absolute;left:50%;top:-75px;width:520px;height:170px;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(255,190,90,.6),transparent 65%);pointer-events:none}.r5.lose .r5glow{background:radial-gradient(ellipse,rgba(200,40,40,.6),transparent 65%)}
+.r5band{position:relative;margin-top:-40px;width:340px;height:70px;box-sizing:border-box;display:flex;align-items:center;justify-content:center}
+.r5.anim .r5band{animation:r5band .35s cubic-bezier(.3,1.6,.5,1) both}@keyframes r5band{from{transform:scale(.76)}to{transform:none}}
+.r5band b{font-family:Georgia,serif;font-size:44px;line-height:1;color:#ffdc78;text-shadow:-2px 0 #140604,2px 0 #140604,0 -2px #140604,0 2px #140604,0 0 14px #ffb04080}.r5.lose .r5band b{color:#ff786e}
+.r5sub{margin-top:4px;font-size:18px;font-weight:700;color:#e6d7be;height:24px}
+.r5stat{display:flex;gap:18px;background:rgba(8,5,4,.7);border-radius:15px;padding:0 16px;height:30px;align-items:center;margin-top:6px;font-size:16px;font-weight:700;color:#dccdb9}
+.r5exp{position:relative;width:calc(100% - 90px);margin:12px 0 0 36px;height:20px;background:#08060c;border:2px solid #d6a846;border-radius:10px;box-sizing:border-box}
+.r5bar{position:absolute;inset:2px;border-radius:8px;overflow:hidden}.r5bar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:linear-gradient(90deg,#2846c8,#4696ff 60%,#a0ebff);transition:width .9s cubic-bezier(.2,.8,.3,1);box-shadow:inset 0 5px 0 rgba(255,255,255,.28),3px 0 6px #dcfaff}
+.r5bar s{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(0,0,0,.45) calc(10% - 1px) 10%);opacity:.8;clip-path:inset(20% 0 20% 0)}
+.r5exp>span{position:absolute;right:10px;top:0;line-height:16px;font-size:13px;font-weight:700;color:#fff;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000}
+.r5lv{position:absolute;left:-33px;top:50%;width:38px;height:38px;margin-top:-19px;transform:rotate(45deg);background:linear-gradient(45deg,#466edc,#141028);border:2px solid #d6a846;box-sizing:border-box;z-index:2}
+.r5lv b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(-45deg);font-size:15px;color:#ffebb4;text-shadow:-1px 0 #000,1px 0 #000,0 -1px #000,0 1px #000}
+.r5lv.up{animation:r5lv .5s cubic-bezier(.3,1.6,.5,1)}@keyframes r5lv{from{transform:rotate(45deg) scale(1.5);box-shadow:0 0 20px #8cf}to{transform:rotate(45deg)}}
+.r5chips{display:grid;grid-template-columns:repeat(3,192px);gap:6px 8px;justify-content:center;margin-top:14px}
+.r5.anim .rc5{animation:rsPop .4s both;animation-delay:.15s}
+.rc5{display:flex;align-items:center;gap:6px;height:36px;background:#1a120e;border:1.5px solid color-mix(in srgb,var(--c) 60%,#000);border-radius:8px;padding:0 8px 0 6px;box-sizing:border-box;min-width:0}
+.rc5 img{width:26px;height:26px;object-fit:contain;flex:none}.rc5 span{color:var(--c);font-weight:700;font-size:15px;line-height:1.05;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.r5adv{width:100%;margin-top:6px;display:flex;flex-direction:column;gap:4px}.r5adv>b{color:#ffd782;font-size:16px}
+.r5adv button{display:flex;justify-content:space-between;align-items:center;height:30px;background:#241a16;border:1px solid #785c30;border-radius:6px;color:#ebe1d2;font-size:15px;font-weight:700;padding:0 10px;cursor:pointer}.r5adv button:hover{filter:brightness(1.3)}.r5adv em{font-style:normal;color:#8cdcff}
+.r5cnt{height:22px;margin-top:auto;padding-top:8px;font-size:16px;font-weight:700;color:#8cffa0}
+.r5btns{display:flex;gap:8px;justify-content:center;margin-top:6px}.r5btns .btn{width:112px;height:46px;font-size:16px!important}
+/* ---- 5.0 마을 · 지도 HUD (로블록스판 statLbl · topBar · dock, 720 -> 540 = x0.75) ---- */
+#top{position:absolute;inset:0;height:auto!important;background:none!important;border:0!important;box-shadow:none!important;display:block!important;padding:0!important;pointer-events:none;z-index:6}
+#top.hidden{display:none!important}#top>*{pointer-events:auto}
+body:has(#modal:not(.hidden)) #top{visibility:hidden}
+#h5card{position:absolute;left:9px;top:8px;width:300px;height:69px;background:rgba(16,11,10,.92);border:1.5px solid #d6a846;border-radius:6px;box-sizing:border-box;cursor:pointer}
+.h5pf{position:absolute;left:5px;top:5px;width:57px;height:57px;background:#1c1411;border:1px solid #6e542c;border-radius:5px;overflow:hidden;box-sizing:border-box}
+.h5pf img{position:absolute;left:-60%;top:-12%;width:200%;height:200%;object-fit:cover}
+#h5card .lv{position:absolute;left:0;right:0;bottom:0;height:15px;line-height:13px;background:rgba(10,6,6,.85);text-align:center;font-size:11px;font-weight:700;color:#ffd66e;min-width:0}
+#h5card .xp{position:absolute;left:0;right:0;bottom:0;height:2px;width:auto;background:none;border:0;border-radius:0}#h5card .xp i{display:block;height:100%;background:#78c8ff}
+.h5st{position:absolute;left:69px;top:5px;right:6px;height:38px;display:flex;gap:3px}
+.h5st div{flex:1;min-width:0;background:#1c1411;border:1px solid #6e542c;border-radius:4px;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+.h5st small{font-size:10px;font-weight:700;color:#b9aa96;line-height:12px;margin-top:2px}.h5st b{font-size:15px;line-height:20px;text-shadow:-1px 0 #0a0608,1px 0 #0a0608,0 -1px #0a0608,0 1px #0a0608;white-space:nowrap}
+.h5pg{position:absolute;left:69px;right:6px;top:46px;height:17px;background:#1c1411;border:1px solid #6e542c;border-radius:4px;display:flex!important;align-items:center;gap:4px;padding:0 5px;box-sizing:border-box}
+.h5pg small{font-size:9px;font-weight:700;color:#bea06e}.h5pg b{font-size:14px;background:linear-gradient(#fff4c8,#ffc850 50%,#c8781e);-webkit-background-clip:text;background-clip:text;color:transparent}.h5pg span{margin-left:auto;font-size:9px;font-weight:700;color:#c8beb4}
+.h5pill{position:absolute;top:83px;height:30px;display:flex;align-items:center;gap:4px;border:6px solid transparent;box-sizing:border-box;padding:0 6px 0 0;background:none}
+.h5pill img{width:30px;height:30px;object-fit:contain;margin:-6px 0 -6px -6px}.h5pill b{font-size:17px;line-height:1}
+.h5pill.gold{left:9px;width:150px}.h5pill.gold b{color:#ffd25a;text-shadow:0 0 2px #1e1004,0 0 2px #1e1004}
+.h5pill.arc{left:165px;width:128px;cursor:pointer}.h5pill.arc b{color:#f0beff;text-shadow:0 0 2px #18061e,0 0 2px #18061e}
+#h5top{position:absolute;right:9px;top:8px;display:flex;gap:4.5px}
+.tb5{position:relative;width:50px;height:60px;background:none;border:0;padding:0;cursor:pointer}
+.tb5>i{position:absolute;left:2px;top:0;width:46px;height:46px;box-sizing:border-box;border:6px solid transparent;transition:top .08s}.tb5:hover>i{top:-2px}
+.tb5>i img{position:absolute;inset:-3px;width:calc(100% + 6px);height:calc(100% + 6px);object-fit:contain}
+.tb5>span{position:absolute;left:-3px;right:-3px;top:45px;font-size:11px;font-weight:700;color:#ffebc8;text-align:center;white-space:nowrap;text-shadow:-1px 0 #0a0608,1px 0 #0a0608,0 -1px #0a0608,0 1px #0a0608}
+.tb5 em{position:absolute;right:0;top:-2px;font-style:normal}.tb5 em.dot{width:10px;height:10px;border-radius:50%;background:#ff4a4a;border:2px solid #fff}.tb5 em.upm{color:#5aff78;font-weight:900;text-shadow:0 0 3px #000}
+#b-map{position:absolute;right:12px;bottom:12px;width:172px;height:57px;border:10px solid transparent;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0;background:none;transition:transform .08s}
+#b-map:hover{transform:scale(1.035)}#b-map img{width:51px;height:51px;object-fit:contain;margin:-8px 0 -8px -4px}
+#b-map b{font-family:Georgia,serif;font-size:24px;background:linear-gradient(#fff0c8,#f0be64 55%,#b46e28);-webkit-background-clip:text;background-clip:text;color:transparent}
+#townbar{display:none!important}
+#mappanel{bottom:78px!important;max-height:380px;overflow-y:auto}
 /* ---- 5.0 제련소 ---- */
 .forge5{display:flex;flex-direction:column;gap:6px;height:392px}.ftop5{flex-direction:row!important;align-items:center;gap:12px;padding:4px 10px;height:30px;flex:none;font-size:13px}.fc5{display:flex;align-items:center;gap:3px;white-space:nowrap}.fc5 img{width:18px;height:18px}
 .fbody5{display:flex;gap:8px;flex:1;min-height:0}.fl5{width:250px;flex:none}.fr5b{flex:1;min-width:0;padding:6px 10px;overflow-y:auto}
@@ -388,14 +441,15 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 <div id="app">
 <canvas id="cv" width="960" height="540"></canvas><div id="tutHi" style="display:none"></div><div id="tutArrow" style="display:none"></div><div id="tutBox" style="display:none"><div class="tt"></div><div class="tx"></div><button class="btn xs" onclick="tutSkip()">안내 건너뛰기</button></div>
 <div id="title" class="hidden"></div>
-<div id="top" class="hidden"><span class="lv" id="t-lv"></span><div class="xp"><i id="t-exp"></i></div>
- <span class="cur pw" id="t-pow-w" data-tipk="pow" style="color:#ffd070;cursor:pointer;font-weight:700"><small style="opacity:.8">전투력</small>&nbsp;<span id="t-pow">0</span></span>
- <span class="cur" id="t-gold-w" data-tipk="gold"><img class="ico" id="ig" width="16" height="16"><span id="t-gold"></span></span>
- <span class="cur" data-tipk="ore"><img class="ico" id="io" width="16" height="16"><span id="t-ore"></span></span>
- <span class="cur" id="t-shard-w" data-tipk="shard"><img class="ico" id="is" width="16" height="16"><span id="t-shard"></span></span>
- <span class="cur" id="t-orb-w" data-tipk="orbC"><img class="ico" id="iorb" width="16" height="16"><span id="t-orb"></span></span>
- <span class="srvdot" id="t-srv" title="서버 연결 상태">☁</span><span class="sp"></span><span id="t-world"></span>
- <button class="btn" id="b-map">🗺 지도</button><button class="btn" id="b-inv">장비<i class="upm" style="display:none">▲</i></button><button class="btn" id="b-pass">패시브<i class="dot" style="display:none"></i></button><button class="btn" id="b-stat">스탯</button><button class="btn" id="b-skill">아르카나</button><button class="btn" id="b-codex">도감</button><button class="btn" id="b-rank">랭킹</button><button class="btn" id="b-daily">일일<i class="dot" style="display:none"></i></button><button class="btn" id="b-quest">퀘스트<i class="dot" style="display:none"></i></button><button class="btn" id="b-opt">설정</button></div>
+<div id="top" class="hidden">
+ <div id="h5card" data-tipk="pow"><div class="h5pf"><img id="h5face" alt=""><span class="lv" id="t-lv"></span><div class="xp"><i id="t-exp"></i></div></div>
+  <div class="h5st"><div><small>HP</small><b id="h5hp" style="color:#eb5a50"></b></div><div><small>ATK</small><b id="h5atk" style="color:#f0aa50"></b></div><div><small>SPL</small><b id="h5mag" style="color:#968cff"></b></div><div><small>DEF</small><b id="h5def" style="color:#8cbee6"></b></div><div><small>치명</small><b id="h5crit" style="color:#ffdc6e"></b></div></div>
+  <div class="h5pg" id="t-pow-w"><small>전투력</small><b id="t-pow">0</b><span id="h5prog"></span></div></div>
+ <div class="h5pill gold" id="t-gold-w" data-tipk="gold"><img id="h5ig" alt=""><b id="t-gold"></b></div><button class="h5pill arc" id="t-shard-w" data-tipk="hone"><img id="h5ia" alt=""><b id="t-shard"></b></button>
+ <span style="display:none"><span id="t-ore"></span><span id="t-orb-w"><span id="t-orb"></span></span><span id="t-world"></span><span class="srvdot" id="t-srv"></span><button id="b-codex"></button><button id="b-rank"></button><button id="b-daily"><i class="dot"></i></button></span>
+ <div id="h5top"><button class="tb5" id="b-inv" data-mi="m_bag"><i></i><span>가방</span><em class="upm" style="display:none">▲</em></button><button class="tb5" id="b-skill" data-mi="m_skill"><i></i><span>아르카나</span></button><button class="tb5" id="b-pass" data-mi="m_passive"><i></i><span>패시브</span><em class="dot" style="display:none"></em></button><button class="tb5" id="b-stat" data-mi="m_stats"><i></i><span>스탯</span></button><button class="tb5" id="b-quest" data-mi="m_quest"><i></i><span>퀘스트</span><em class="dot" style="display:none"></em></button><button class="tb5" id="b-sum" data-mi="m_gacha"><i></i><span>소환</span></button><button class="tb5" id="b-mail" data-mi="m_mail"><i></i><span>우편</span></button><button class="tb5" id="b-opt" data-mi="m_settings"><i></i><span>설정</span></button></div>
+ <button id="b-map"><img alt=""><b>지도</b></button>
+</div>
 <div id="townbar" class="hidden"><span class="tname"></span></div>
 <div id="mappanel" class="hidden"></div>
 <div id="guide" class="hidden"></div>

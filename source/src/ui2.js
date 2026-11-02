@@ -5,7 +5,7 @@ function setGuide(html) { const g = $("#guide"); if (!html) { g.classList.add("h
 
 function updateWorld() {
   const el = $("#t-world"); if (!el) return;
-  if (!save || !save.endgame) { el.innerHTML = ""; return; }
+  el.innerHTML = ""; return;   // 5.08: 월드 버프 · 지옥 스테이지 폐지 (로블록스판에 없음)
   const now = Date.now(), ws = worldSlot(now);
   if (G.wslot !== ws) { if (G.wslot >= 0) { toast("월드 버프와 지옥 스테이지가 바뀌었습니다!", "ok"); snd("quest"); if (G.screen === "map") mapPanel(); } G.wslot = ws; }
   el.innerHTML = worldBuffs(now).map((w) => `<span class="wb" title="${w.name}: ${w.text}">${iconImg(w.ico, 1)} ${w.text}</span>`).join("") + `<span class="wt">갱신 ${fmtTime(worldLeft(now))}</span>`;

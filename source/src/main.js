@@ -48,11 +48,15 @@ function bindInput() {
   $("#b-daily").onclick = () => { snd("click"); openDaily(); };
   $("#b-codex").onclick = () => { snd("click"); CX.sel = null; openCodex(); };
   top5Wire();
+  $("#b-sum").onclick = () => { snd("click"); G.grp = null; openGroup({ name: "아르카나 소환", tabs: [["아르카나 소환", () => openSummon()], ["아르카나 목록", () => openGachaList5()]] }, 0); };
+  $("#t-shard-w").onclick = () => $("#b-sum").click();
+  $("#b-mail").onclick = () => { snd("click"); G.grp = null; openMail(); };
+  $("#h5card").onclick = () => { snd("click"); openStats(); };
   $("#b-pause").onclick = () => { G.paused = !G.paused; $("#b-pause").textContent = G.paused ? "▶" : "❚❚"; };
   $("#b-speed").onclick = () => { G.speed = G.speed >= 3 ? 1 : G.speed + 1; $("#b-speed").textContent = "×" + G.speed; };
   $("#b-flee").onclick = () => { snd("click"); retreat(); };
   $("#b-pass").onclick = () => { snd("click"); openPassives(); };
-  $("#b-auto").onclick = () => { save.auto.on = !save.auto.on; saveGame(); updateAutoBtn(); snd("click"); toast(save.auto.on ? "자동 반복 ON — 이긴 뒤 같은 스테이지를 계속 반복합니다" : "자동 반복 OFF"); };
+  $("#b-auto").onclick = () => { setAuto5((auto5() + 1) % 3); snd("click"); toast(AUTO5_TXT[auto5()]); };
   initModal(); window.addEventListener("resize", fitApp); fitApp();
   window.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").classList.contains("hidden")) { if (!Modal.persistent) Modal.close(); } else if (G.screen === "battle") retreat(); }
     if ((G.screen === "town" || G.screen === "map") && $("#modal").classList.contains("hidden") && !e.repeat && !e.ctrlKey && !e.metaKey) {
@@ -106,5 +110,5 @@ function frame(ms) {
 window.addEventListener("load", () => {
   CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
-  loadAssets(() => artWaitAll(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#iorb").src = iconURL("orb", 1); $("#ig").src = iconURL("gold", 1); $("#io").src = iconURL("ore", 1); $("#is").src = iconURL("shard", 1); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); }));
+  loadAssets(() => artWaitAll(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); }));
 });

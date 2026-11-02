@@ -25,12 +25,12 @@ function hud5Build() {
   const pause = (on) => { G.paused = on; $("#h5pause").classList.toggle("hidden", !on); };
   $("#b-pause").onclick = () => { snd("click"); pause(!G.paused); };
   $("#h5res").onclick = () => pause(false);
-  const leave = (dest) => { pause(false); if (!G.battle || G.battle.over) return; AU.stopBgm(); save.auto.on = false; G.battle = null; if (dest === "map") openMap(); else openTown(G.townAct || 1); };
+  const leave = (dest) => { pause(false); if (!G.battle || G.battle.over) return; AU.stopBgm(); stopAuto5(); G.battle = null; if (dest === "map") openMap(); else openTown(G.townAct || 1); };
   $("#h5map").onclick = () => leave("map"); $("#h5town").onclick = () => leave("town");
   $("#b-speed").onclick = () => { snd("click"); $("#h5spd").classList.toggle("open"); };
   for (const b of $$("#h5spd [data-spd]")) b.onclick = () => { G.speed = +b.dataset.spd; $("#b-speed").textContent = "×" + G.speed + " ▼"; $("#h5spd").classList.remove("open"); snd("click"); };
   $("#b-flee").onclick = () => { snd("click"); retreat(); };
-  $("#b-auto").onclick = () => { save.auto.on = !save.auto.on; saveGame(); updateAutoBtn(); snd("click"); toast(save.auto.on ? "자동 반복 ON — 이긴 뒤 같은 스테이지를 계속 반복합니다" : "자동 반복 OFF"); };
+  $("#b-auto").onclick = () => { setAuto5((auto5() + 1) % 3); snd("click"); toast(AUTO5_TXT[auto5()]); };
 }
 // 카드형 스킬 칸 (로블록스판: 카드 그림 · 등급 테두리 · 아래 이름 띠 · 위 쿨타임 숫자)
 function hud5Skills(b) {
