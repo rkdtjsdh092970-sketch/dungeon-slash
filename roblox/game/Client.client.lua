@@ -1466,12 +1466,12 @@ tutorial = function(step)
         return (want == "mag" and "③ [Magic] is selected — only Arcana for Mages will come out." or "③ [Physical] is selected — only Arcana for Warriors will come out.") .. "\nTap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are revealed, tap the screen again to close."
       end)
   elseif step == 2 then
-    guide("Arcana slots", "Only Arcana in the 4 top slots are used in battle. Open [Arcana], tap the glowing new card, then press the empty [To Slot 4].",
+    guide("Arcana slots", "Only Arcana in the 4 top slots are used in battle — slot 1 is your basic attack, slots 2–4 are Arcana. Open [Arcana], tap the glowing new card, then press its glowing slot button.",
       function()
         local pt = panelTitle:GetAttribute("_src") or panelTitle.Text
         if not panelLayer.Visible then return topBtn("m_skill") end
         if pt ~= "Arcana" then return closeBtn() end
-        return findBtn(function(d) return hasText(d, "To Slot") end) or findBtn(function(d) return d.AbsoluteSize.X > 50 and d.AbsoluteSize.X < 70 and d.AbsoluteSize.Y > 80 end)
+        return findBtn(function(d) return hasText(d, "To Slot") or hasText(d, "Basic Slot") end) or findBtn(function(d) return d.AbsoluteSize.X > 50 and d.AbsoluteSize.X < 70 and d.AbsoluteSize.Y > 80 end)
       end,
       "power", function() tutorial(3) end)
   elseif step == 3 then

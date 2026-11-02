@@ -6,6 +6,7 @@ local Game = require(G.Game); local Loot = require(G.Loot); local Econ = require
 local P = {}
 local Extras = require(G.Extras)
 local Items = require(G.Data.Items)
+local Skills = require(G.Data.Skills); local SKB = {}; for _, d in ipairs(Skills.SKILLS) do SKB[d.id] = d end
 local VALID = require(game:GetService("ServerStorage").SimRef).VALID
 local MID = { NextNumber = function() return 0.5 end, NextInteger = function(_, a, b) return math.floor((a + b) / 2) end }   -- 평균 굴림
 local function validOf(fam, slot) local v = {}; for i, k in ipairs(VALID[fam][(slot == "ring2") and "ring" or slot] or {}) do v[k] = i end; return v end
@@ -98,7 +99,7 @@ local function bestLoadout(sv)   -- 가진 스킬 중 전투력이 가장 높아
   local used = {}
   for i = 1, sv.slots do
     local best, bk = -1, nil
-    for _, k in ipairs(ids) do if not used[k.uid] then
+    for _, k in ipairs(ids) do if not used[k.uid] and ((SKB[k.id] and SKB[k.id].slot == "basic") == (i == 1)) then   -- 1번 칸 = 평타, 2~4 = 아르카나
       sv.loadout[i] = { uid = k.uid, rule = "front" }
       local p = Power.of(sv); if p > best then best, bk = p, k end
     end end

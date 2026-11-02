@@ -10,6 +10,9 @@ Tap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are 
 Ambient
 Art
 BackgroundColor3
+Basic Attack
+Empty
+(drag here)
 Beta is now OPEN to everyone
 Beta is now invite only
 Beta tester %s: %s (%d total)
@@ -39,6 +42,7 @@ Might
 More
 Player not found: 
 Players
+Power if equipped:  
 Rank_Dps
 Rank_Level
 Rank_Rift
@@ -46,6 +50,7 @@ Rpc
 Sel
 Skin
 Skinned
+Slot 
 Smoke
 Text
 UserId 

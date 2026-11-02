@@ -495,6 +495,18 @@ function M.skills(sv)
 end
 function M.levelUp(sv, uid) return Econ.levelUpSkill(sv, uid) end
 function M.equipSkill(sv, slot, uid, rule) return Econ.equipSkill(sv, slot, uid, rule) end
+-- 아르카나를 칸마다 넣어 봤을 때 화면 전투력 변화 (넣을 수 있는 칸만)
+function M.skillDelta(sv, uid)
+  local k; for _, x in ipairs(sv.skills) do if x.uid == uid then k = x end end; if not k then return {} end
+  local base = Power.display(powerOf(sv)); local out = {}
+  local saved = table.clone(sv.loadout)
+  for i = 1, sv.slots do
+    if Econ.equipSkill(sv, i, uid) then out[i] = Power.display(powerOf(sv)) - base end
+    sv.loadout = table.clone(saved)
+  end
+  sv.loadout = saved
+  return out
+end
 function M.sellSkill(sv, uid) return Econ.sellSkill(sv, uid) end
 function M.autoPassives(sv) return Econ.autoPassives(sv) end
 function M.resetPassives(sv) Econ.resetPassives(sv); return true end

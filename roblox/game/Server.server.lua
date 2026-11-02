@@ -50,7 +50,7 @@ local function migrate(sv, uid)
   for _, it in pairs(sv.equipped or {}) do Loot.defUp(it) end; for _, it in ipairs(sv.inv or {}) do Loot.defUp(it) end   -- 장비 체력 · 방어 상향 (2026-11-03)
   if sv.stash then for _, it in ipairs(sv.stash.items or {}) do Loot.defUp(it) end end
   if (sv.slots or 0) < 4 then sv.slots = 4 end   -- 아르카나 칸은 처음부터 4칸 (2026-11-03)
-  require(RS.Game.Economy).migrateSkillTiers(sv)   -- 아르카나 등급 고정: 같은 아르카나 여러 장을 한 장으로 (2026-11-03)
+  require(RS.Game.Economy).migrateSkillTiers(sv); require(RS.Game.Economy).fixBasicSlot(sv)   -- 아르카나 등급 고정: 같은 아르카나 여러 장을 한 장으로 (2026-11-03)
   if (sv.passVer or 1) < 2 then   -- 패시브 v2 (4갈래 200노드): 예전 노드는 없어졌으므로 초기화 (포인트는 레벨로 계산되어 그대로 돌아온다)
     if next(sv.pass or {}) then sv.passNotice = true end
     sv.pass = {}; sv.passSets = nil; sv.passVer = 2
@@ -230,6 +230,7 @@ local handle = function(player, action, arg)
   elseif action == "buy" then local ok, e = Game.buySkill(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "skills" then return { rows = Game.skills(sv), slots = sv.slots, summary = Game.summary(sv) }
   elseif action == "levelup" then local ok, e = Game.levelUp(sv, tonumber(arg)); return { ok = ok, err = e, summary = Game.summary(sv) }
+  elseif action == "skilldelta" then local d = Game.skillDelta(sv, tonumber(arg)); local o = {}; for i, v in pairs(d) do o[tostring(i)] = v end; return { delta = o }
   elseif action == "equipskill" then local ok, e = Game.equipSkill(sv, tonumber(arg.slot), tonumber(arg.uid), type(arg.rule) == "string" and arg.rule or nil); return { ok = ok, err = e }
   elseif action == "sellskill" then local ok, e = Game.sellSkill(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, summary = Game.summary(sv) }
   elseif action == "passives" then return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }

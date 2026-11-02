@@ -53,8 +53,19 @@ function M.equipSkill(sv, slotIdx, uid, rule)
   if slotIdx < 1 or slotIdx > sv.slots then return false, "Slot locked" end
   local k = findSkill(sv, uid); if not k then return false, "Arcana not found" end
   local d = SKILL_BY[k.id]; if d.slot == "passive" then sv.passive = uid; return true end
+  if (d.slot == "basic") ~= (slotIdx == 1) then return false, slotIdx == 1 and "Slot 1 is for basic attacks only" or "Basic attacks go in slot 1" end   -- 1번 칸 = 평타 전용 (2026-11-03)
   for i, l in ipairs(sv.loadout) do if l and l.uid == uid then sv.loadout[i] = false end end
   sv.loadout[slotIdx] = { uid = uid, rule = rule or "front" }; return true
+end
+-- 예전 세이브: 1번 칸에 평타, 2~4번 칸에 평타가 아닌 것만 남도록 정리
+function M.fixBasicSlot(sv)
+  local lo = sv.loadout or {}; local function isBasic(l) local k = l and findSkill(sv, l.uid); return k and SKILL_BY[k.id] and SKILL_BY[k.id].slot == "basic" end
+  if lo[1] and not isBasic(lo[1]) then   -- 1번 칸의 일반 아르카나는 빈 칸으로 옮기거나 뺀다
+    for i = 2, 4 do if not lo[i] then lo[i] = lo[1]; break end end
+    lo[1] = false
+  end
+  for i = 2, 4 do if lo[i] and isBasic(lo[i]) then if not lo[1] then lo[1] = lo[i] end; lo[i] = false end end
+  if not lo[1] then for _, k in ipairs(sv.skills or {}) do local d = SKILL_BY[k.id]; if d and d.slot == "basic" then lo[1] = { uid = k.uid, rule = "front" }; break end end end
 end
 function M.unequipSkill(sv, slotIdx) sv.loadout[slotIdx] = false; return true end
 M.SKILL_DIS_ARC = { 1, 2, 5, 15, 40 }   -- 스킬 분해 → 아르카나 조각: 일반 · 희귀 · 전설 · 신화 · 사탄 (레벨마다 +25%). 연마석은 없앴다 (2026-11-02)

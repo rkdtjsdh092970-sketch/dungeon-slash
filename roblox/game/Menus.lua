@@ -210,10 +210,11 @@ function M.drag(b, payload, art)
       if not ghost and (p - start).Magnitude > 8 then
         b:SetAttribute("Dragging", true); tipHide(); M.itemTipHide()
         if not dragGui then dragGui = mk("ScreenGui", { Name = "DungeonDrag", DisplayOrder = 70, IgnoreGuiInset = true, ResetOnSpawn = false }, game:GetService("Players").LocalPlayer.PlayerGui) end
-        ghost = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 56, 0, 56), BackgroundColor3 = Color3.fromRGB(30, 22, 18), BackgroundTransparency = 0.2, ZIndex = 70 }, dragGui)
+        local isCard = type(art) == "string" and art:sub(1, 7) == "card_s_"   -- 아르카나는 카드 모양으로 따라온다
+        ghost = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = isCard and UDim2.new(0, 64, 0, 94) or UDim2.new(0, 56, 0, 56), Rotation = isCard and -6 or 0, BackgroundColor3 = Color3.fromRGB(30, 22, 18), BackgroundTransparency = 0.2, ZIndex = 70, ClipsDescendants = isCard }, dragGui)
         corner(ghost, 8); stroke(ghost, M.GOLD, 2)
         local a = art and C.Sprites.art(art)
-        if a then mk("ImageLabel", { Size = UDim2.new(0.85, 0, 0.85, 0), Position = UDim2.new(0.075, 0, 0.075, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 71 }, ghost) end
+        if a then mk("ImageLabel", { Size = isCard and UDim2.new(1, 0, 1, 0) or UDim2.new(0.85, 0, 0.85, 0), Position = isCard and UDim2.new() or UDim2.new(0.075, 0, 0.075, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = isCard and Enum.ScaleType.Crop or Enum.ScaleType.Fit, ZIndex = 71 }, ghost) end
       end
       if ghost then ghost.Position = UDim2.new(0, p.X, 0, p.Y) end
     end)
@@ -551,15 +552,25 @@ function M.skills()
   local function reg(uid, c) cards[uid] = cards[uid] or {}; table.insert(cards[uid], c) end
   local row = mk("Frame", { Position = UDim2.new(0, 14, 0, 30), Size = UDim2.new(1, -28, 0, 132), BackgroundTransparency = 1 }, table0)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+  local function cardArt(id) local dd = SK_BY[id]; if C.Sprites.art("card_s_" .. tostring(id)) then return "card_s_" .. tostring(id) end; return dd and dd.art and ("card_s_" .. dd.art) or nil end
   for i = 1, slots do
+    if i == 2 then   -- 평타 칸과 아르카나 칸 사이 구분선
+      local sep = mk("Frame", { Size = UDim2.new(0, 3, 0, 120), BackgroundColor3 = Color3.fromRGB(214, 168, 70), BackgroundTransparency = 0.3, BorderSizePixel = 0, LayoutOrder = 1 }, row)
+      local _ = sep
+    end
     local k = inSlot[i]
     local c
-    if k then c = arcCard(row, k, 88, 130, { order = i, sel = skSel == k.uid, slot = i, click = function() select(k.uid) end }); reg(k.uid, c); M.drag(c, { kind = "skill", uid = k.uid })
+    if k then c = arcCard(row, k, 88, 130, { order = i * 2, sel = skSel == k.uid, slot = i, click = function() select(k.uid) end }); reg(k.uid, c); M.drag(c, { kind = "skill", uid = k.uid }, cardArt(k.id))
     else   -- 빈 칸: 카드 뒷면을 흐리게
-      c = mk("Frame", { Size = UDim2.new(0, 88, 0, 130), BackgroundColor3 = Color3.fromRGB(16, 10, 24), LayoutOrder = i }, row); corner(c, 8)
+      c = mk("Frame", { Size = UDim2.new(0, 88, 0, 130), BackgroundColor3 = Color3.fromRGB(16, 10, 24), LayoutOrder = i * 2 }, row); corner(c, 8)
       local bk = C.Sprites.art("card_back"); if bk then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = bk.content, ImageTransparency = 0.75 }, c) end
       mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.5 }, c)
-      txt(c, string.format("Slot %d\nEmpty\n(drag here)", i), 12, UDim2.new(0, 4, 0.3, 0), UDim2.new(1, -8, 0.4, 0), Color3.fromRGB(190, 170, 220), M.FONT, Enum.TextXAlignment.Center).TextWrapped = true
+      txt(c, i == 1 and "Basic Attack\nEmpty\n(drag here)" or string.format("Slot %d\nEmpty\n(drag here)", i), 12, UDim2.new(0, 4, 0.3, 0), UDim2.new(1, -8, 0.4, 0), Color3.fromRGB(190, 170, 220), M.FONT, Enum.TextXAlignment.Center).TextWrapped = true
+    end
+    if i == 1 then   -- 1번 칸 표시: 평타 전용 (강철색 테두리 + 위 띠)
+      local tag = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, -2), Size = UDim2.new(1, 4, 0, 18), BackgroundColor3 = Color3.fromRGB(70, 80, 100), ZIndex = 8 }, c); corner(tag, 4)
+      mk("UIStroke", { Color = Color3.fromRGB(200, 215, 235), Thickness = 1 }, tag)
+      local tl = txt(tag, "BASIC ATTACK", 11, UDim2.new(), UDim2.new(1, 0, 1, 0), Color3.fromRGB(235, 240, 255), M.FONT, Enum.TextXAlignment.Center); tl.ZIndex = 9
     end
     M.drop(c, function(pl)
       if pl.kind ~= "skill" then return end
@@ -595,7 +606,7 @@ function M.skills()
   if #order == 0 then txt(g, "No Arcana in this category.", 13, UDim2.new(), UDim2.new(0, 300, 0, 20), Color3.fromRGB(190, 170, 220)) end
   for i, k in ipairs(order) do
     local c = arcCard(g, k, 60, 88, { order = i, sel = skSel == k.uid, slot = k.slot, click = function() select(k.uid) end }); reg(k.uid, c)
-    M.drag(c, { kind = "skill", uid = k.uid })
+    M.drag(c, { kind = "skill", uid = k.uid }, cardArt(k.id))
   end
   -- 오른쪽: 고른 아르카나 정보 (큰 카드 + 수치 + 설명 + 버튼) — 고를 때 이 칸만 다시 채운다
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0))
@@ -640,7 +651,24 @@ function M.skills()
     -- 버튼
     local ab = mk("Frame", { Position = UDim2.new(0, 10, 1, -96), Size = UDim2.new(1, -20, 0, 46), BackgroundTransparency = 1 }, D)
     mk("UIGridLayout", { CellSize = UDim2.new(0, 84, 0, 40), CellPadding = UDim2.new(0, 6, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
-    for i = 1, slots do if k.slot ~= i then M.btn(ab, string.format("To Slot %d", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end).LayoutOrder = 1 + i end end
+    local isBasic = d.slot == "basic"
+    local slotBtns = {}
+    for i = 1, slots do if k.slot ~= i and (i == 1) == isBasic and d.slot ~= "passive" then
+      local b = M.btn(ab, i == 1 and "Basic Slot" or string.format("To Slot %d", i), UDim2.new(), M.BTN.blue, function() res(C.rpc:InvokeServer("equipskill", { slot = i, uid = k.uid })) end); b.LayoutOrder = 1 + i; slotBtns[i] = b
+    end end
+    local pw = txt(D, isBasic and "Basic attack — goes in slot 1 only" or "Arcana — goes in slots 2–4", 12, UDim2.new(0, 12, 1, -118), UDim2.new(1, -24, 0, 18), Color3.fromRGB(190, 175, 210))
+    task.spawn(function()   -- 칸마다 넣었을 때 전투력 변화 (▲ 초록 / ▼ 빨강)
+      local e = C.rpc:InvokeServer("skilldelta", k.uid); if not (e and e.delta) or not pw.Parent or skSel ~= k.uid then return end
+      local parts = {}
+      for i = 1, slots do
+        local v = e.delta[tostring(i)]
+        if v and k.slot ~= i then
+          parts[#parts + 1] = string.format("%s %s%s", i == 1 and "Basic" or ("Slot " .. i), v >= 0 and "▲+" or "▼", n(math.abs(v)))
+          local b = slotBtns[i]; if b then local s = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -2), Size = UDim2.new(1, 0, 0, 12), BackgroundTransparency = 1, Text = (v >= 0 and "▲" or "▼") .. n(math.abs(v)), Font = M.FONT, TextSize = 11, TextColor3 = v >= 0 and Color3.fromRGB(130, 255, 150) or Color3.fromRGB(255, 120, 110), ZIndex = (b.ZIndex or 1) + 2 }, b); s:SetAttribute("NoTr", true) end
+        end
+      end
+      if #parts > 0 then pw.Text = "Power if equipped:  " .. table.concat(parts, "   "); pw:SetAttribute("NoTr", true); pw.TextColor3 = Color3.fromRGB(230, 220, 170) end
+    end)
     if k.slot == 0 then M.btn(ab, "Dismantle", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "Salvaged · gained Arcana Shards" end end).LayoutOrder = 20 end
     if k.slot > 0 and d.slot ~= "passive" then   -- 대상 규칙: 누를 때마다 다음 규칙
       local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }
