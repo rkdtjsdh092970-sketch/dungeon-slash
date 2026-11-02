@@ -268,7 +268,7 @@ local function showPowerChange(old, new)
 end
 local function setSummary(s)
   if not s then return end
-  if summary and summary.power and s.power and s.power ~= summary.power then showPowerChange(summary.power, s.power) end
+  if summary and (summary.power or 0) > 0 and s.power and s.power ~= summary.power then showPowerChange(summary.power, s.power) end
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold); if statArc then statArc.Text = n(s.arcana or 0) end
   if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end

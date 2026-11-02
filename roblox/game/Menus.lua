@@ -1619,7 +1619,7 @@ local function cardFace(card, r)
   local tg = lab(r.lvlUp and string.format("중복 · Lv %d", r.lvlUp) or (r.dupArc and string.format("최대 레벨 · 조각 +%d", r.dupArc)) or "NEW", 0.84, 0.07, (r.lvlUp or r.dupArc) and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120))
   if not (r.lvlUp or r.dupArc) then tg:SetAttribute("NoTr", true) end
 end
-local function revealResults(res)
+local function revealResults(res, from)
   local sg = C.list:FindFirstAncestorWhichIsA("ScreenGui")
   local vs = sg.AbsoluteSize
   local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(6, 4, 10), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 80 }, sg)
@@ -1636,7 +1636,7 @@ local function revealResults(res)
     return x, y
   end
   local sx, sy = vs.X * 0.25, vs.Y * 0.5
-  if deckRef and deckRef.Parent then local p = deckRef.AbsolutePosition + deckRef.AbsoluteSize / 2; sx, sy = p.X, p.Y end
+  if from then sx, sy = from.X, from.Y elseif deckRef and deckRef.Parent then local p = deckRef.AbsolutePosition + deckRef.AbsoluteSize / 2; sx, sy = p.X, p.Y end
   local cards, auras = {}, {}
   local revealed, done, skip = 0, false, false
   local hint = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24), Size = UDim2.new(0, 400, 0, 24), BackgroundTransparency = 1, Text = "화면을 누르면 한꺼번에 공개", Font = M.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(200, 190, 220), ZIndex = 90 }, ov)
@@ -1745,7 +1745,8 @@ function M.gacha()
     local e = C.rpc:InvokeServer("gachapull", { n = nn, pay = pay, fam = gachaFam ~= "all" and gachaFam or nil }); pulling = false
     if e.summary then C.setSummary(e.summary) end
     if e.err or not e.res then C.msg.Text = tostring(e.err); return end
-    M.gacha(); revealResults(e.res)
+    local dp = deckRef and deckRef.Parent and (deckRef.AbsolutePosition + deckRef.AbsoluteSize / 2) or nil   -- 창을 다시 그리기 전에 덱 자리
+    M.gacha(); revealResults(e.res, dp)
   end
   if not gachaFam then local hs = C.summary(); gachaFam = hs and (hs.hero == "mage" and "mag" or "phys") or "all" end
   txt(R, "어떤 아르카나를 부를까요?", 14, UDim2.new(0, 14, 0, 10), UDim2.new(1, -28, 0, 18), Color3.fromRGB(210, 195, 230), M.FONT)

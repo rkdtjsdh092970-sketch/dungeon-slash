@@ -23,7 +23,7 @@ local function skillPrice(d, rarity)
   return floor(70 * 1.55 ^ (d.unlock - 1) * ({ 1, 3.5, 12, 40, 130, 500 })[rarity + 1] * (d.slot == "basic" and 0.6 or 1) + 0.5)
 end
 M.skillPrice = skillPrice
-function M.skillAct(sv) return math.max(1, math.min(8, 1 + floor(sv.level / 10))) end
+function M.skillAct(sv) return math.max(1, math.min(8, 2 + floor(sv.level / 6))) end   -- 소환 풀 단계: 처음부터 2단계, 6레벨마다 +1 (새 계정이 같은 2~3종만 뽑지 않게, 2026-11-02)
 function M.shopStock(sv)
   local out = {}
   for _, d in ipairs(Skills.SKILLS) do
