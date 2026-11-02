@@ -248,10 +248,10 @@ function M.inv(keep)
   if invMode == "auto" then autoRender() else invRender() end
 end
 -- 착용 칸 배치 (사람 모양, PoE 식): 무기·갑옷은 세로로 길게, 반지·목걸이는 작게
-local DOLL = {   -- 왼쪽 열: 무기 · 반지 · 장갑 / 가운데: 투구 · 갑옷 / 오른쪽 열: 목걸이 · 반지 2 · 신발 (반지는 좌우 대칭)
-  helm = { 86, 30, 60, 60 }, weapon = { 14, 40, 60, 128 }, armor = { 84, 96, 64, 108 }, neck = { 166, 104, 44, 44 },
-  ring = { 22, 176, 44, 44 }, ring2 = { 166, 176, 44, 44 },
-  gloves = { 14, 230, 60, 56 }, boots = { 158, 230, 60, 56 },
+local DOLL = {   -- 왼쪽: 무기(길게) · 장갑 / 가운데: 투구 · 목걸이(목 자리) · 갑옷 / 오른쪽: 반지 두 개(쌓은 높이 = 무기) · 신발 → 좌우 대칭
+  weapon = { 14, 40, 60, 128 }, gloves = { 14, 180, 60, 60 },
+  helm = { 86, 30, 60, 56 }, neck = { 96, 92, 40, 40 }, armor = { 84, 138, 64, 102 },
+  ring = { 158, 40, 60, 60 }, ring2 = { 158, 108, 60, 60 }, boots = { 158, 180, 60, 60 },
 }
 invRender = function()
   C.clear(); M.itemTipHide()
@@ -277,8 +277,8 @@ invRender = function()
   -- 왼쪽: 착용 중 (사람 모양) + 프리셋 + 재화
   local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0, 232, 1, 0), "착용 중")
   do local sil = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 70, 0, 26), Size = UDim2.new(0, 92, 0, 262) }, L)
-    local body = mk("Frame", { Position = UDim2.new(0.5, -30, 0, 66), Size = UDim2.new(0, 60, 0, 150), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
-    local head = mk("Frame", { Position = UDim2.new(0.5, -22, 0, 6), Size = UDim2.new(0, 44, 0, 44), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(head) end
+    local body = mk("Frame", { Position = UDim2.new(0.5, -32, 0, 104), Size = UDim2.new(0, 64, 0, 116), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
+    local head = mk("Frame", { Position = UDim2.new(0.5, -24, 0, 4), Size = UDim2.new(0, 48, 0, 52), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(head) end
   for i, slot in ipairs(Items.EQ_SLOTS) do
     local e = bySlot[slot]; local p = DOLL[slot]
     local t = M.tile(L, p[3], { h = p[4], order = i, itip = e and { e } or nil, art = SLOT_ART[slot], emoji = SLOT_EMOJI[slot], rarity = e and e.rarity or 0, color = e and itemColor(e) or Color3.fromRGB(70, 66, 90), dim = not e,
