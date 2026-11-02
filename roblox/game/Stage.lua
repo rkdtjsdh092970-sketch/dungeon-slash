@@ -327,12 +327,22 @@ function M:applySnap(s, lanes)
   local seen = {}
   local py = self.plY
   local hits = {}
+  -- 같은 칸에 몹이 여럿이면 칸 안에서 고르게 펼친다 (예전엔 3자리뿐이라 오른쪽 칸에 겹쳐 쌓여 보였다)
+  local cellN, cellK = {}, {}
+  for _, e in ipairs(s.e) do if e.tier == "normal" and not e.dead then local key = e.l .. ":" .. e.c; cellN[key] = (cellN[key] or 0) + 1; cellK[e.id] = cellN[key] end end
   for _, e in ipairs(s.e) do
     seen[e.id] = true
     local u = unitFor(self, e, lanes)
     local cy, lh = self:laneY(e.l, lanes); local cw = (self.W - 150) / 6
     local x = self:colX(e.c + ((e.w or 1) - 1) / 2, e.l + ((e.h or 1) - 1) / 2, lanes); local y = cy + ((e.h or 1) - 1) * lh / 2 + lh * 0.3
-    if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
+    if not u.boss and e.tier == "normal" then
+      local cnt, kk = cellN[e.l .. ":" .. e.c] or 1, cellK[e.id] or 1
+      if cnt > 1 then   -- 칸 너비의 70% 안에서 지그재그로 (앞뒤로 살짝 엇갈려 겹쳐도 보이게)
+        local span = self.cw * self.u * 0.7
+        x += ((kk - 1) / (cnt - 1) - 0.5) * span
+        y += ((kk % 2 == 0) and 1 or -1) * 6 * self.u
+      end
+    end
     if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
     u.tx, u.ty = x, y; u.hp = e.hp
     if e.dead and not u.dying then u.dying = 0; Fx.death(self, u); if e.tier ~= "normal" then self.shake = math.max(self.shake or 0, 0.3) end; self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end
