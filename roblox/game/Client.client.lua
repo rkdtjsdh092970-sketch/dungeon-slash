@@ -156,7 +156,7 @@ corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { 
 local statVal, statProg, statLv, statGold, statFace, statPow = {}, nil, nil, nil, nil, nil
 local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
 local passNoticed = false
-local startShown, showStartPick = false, nil   -- 새 계정: 시작 직업 고르기 창 (아래에서 정함)
+local startShown, showStartPick, tutorial = false, nil, nil   -- 새 계정: 시작 직업 고르기 창 · 튜토리얼 (아래에서 정함)
 do
   local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
   -- 초상화 칸 + 아래 Lv 띠
@@ -241,6 +241,7 @@ local function setSummary(s)
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold)
   if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end
+  if not s.needStart and s.tut and s.tut < 3 and not startShown then startShown = true; task.delay(1, function() if tutorial then tutorial(0) end end) end   -- 튜토리얼 도중에 나갔다 오면 처음부터 짧게
   if s.passNotice and not passNoticed then passNoticed = true; task.delay(2, function() toast("패시브 트리가 새로 바뀌었습니다! 찍었던 포인트를 모두 돌려드렸어요.", Color3.fromRGB(255, 220, 120)) end) end
   local hk = s.hero or "warrior"
   if hk ~= Stage.HERO then Stage.HERO = hk; local a = Sprites.art(Stage.heroKey()); if statFace and a then statFace.ImageContent = a.content end; if heroChanged then task.defer(heroChanged) end end
@@ -462,12 +463,23 @@ function views.guild()
 end
 function views.help()
   clear()
-  card("시작 안내", {
-    "1) 도전 탭 → 스테이지 1~5를 차례로 클리어하세요 (3·5 클리어 시 스킬 칸이 열립니다).",
-    "2) 상점에서 스킬을 사고, 장비 탭에서 더 좋은 장비를 장착하세요. 안 쓰는 장비는 판매/분해.",
-    "3) 대장간에서 강화·옵션 재굴림, 패시브 탭에서 포인트를 찍습니다 (자동 배분 있음).",
-    "4) 스테이지 5를 깨면 '균열'이 열립니다. 100층을 깨면 졸업 → 탑 · 콘텐츠 · 전직 · 참 · 문지기.",
-    "5) 일일 탭에서 매일 보상과 오프라인 보상을 받고, 길드에 가입해 주간 목표·보스에 참여하세요." }, {})
+  card("게임의 흐름", {
+    "캐릭터는 자동으로 싸웁니다. 여러분은 스킬 · 장비 · 패시브로 강해지고, 더 높은 곳에 도전합니다.",
+    "초원 1~5 → 심연의 균열 1~100층(층을 처음 깰 때마다 레벨 +1) → 균열 100층 졸업 → 보스 관문 · 무한 균열 · 보물고 · 심연의 문 → 솟아난 탑 · 돌의 신전 · 레이드 → 전직 · 참." }, {})
+  card("전투력 올리는 법 (중요한 순서)", {
+    "1) 장비: 가방의 [자동 장착]. 초록 ▲가 붙은 장비는 지금보다 좋습니다. 무기 · 장갑 · 목걸이가 특히 중요해요.",
+    "2) 스킬: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 스킬을 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.",
+    "3) 패시브: 레벨마다 2점. 내 무기 계열 갈래(물리 · 마법)부터 찍고, 고민되면 [자동 배분].",
+    "4) 강화: 제련소에서 장비 강화 · 옵션 재굴림. 좋은 옵션(공격력 · 주문력 · 내 계열 피해 · 치명타)을 남기세요.",
+    "5) 레벨: 균열 층을 처음 깨면 레벨이 오릅니다. 막히면 아래층을 돌며 장비를 모으세요." }, {})
+  card("막혔을 때", {
+    "지도 창의 [권장 전투력]과 내 전투력을 비교하세요. 내 전투력이 낮으면 위의 순서대로 올리면 됩니다.",
+    "원거리 몹에게 많이 맞으면 사거리가 긴 스킬을, 몹이 많으면 범위 스킬을 섞어 보세요.",
+    "자동 반복(결과 화면)을 켜 두면 같은 층을 계속 돌며 장비와 조각을 모읍니다." }, {})
+  card("재화", {
+    "골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 스킬 소환(1회 10개 · 10회 90개).",
+    "안 쓰는 장비는 분해하면 강화석, 안 쓰는 스킬은 분해하면 아르카나 조각이 됩니다. 가방의 [자동 분해] 설정으로 전투마다 알아서 정리할 수 있어요." }, {})
+  card("매일 할 일", { "퀘스트 게시판의 일일 과제와 우편함 보상을 챙기세요. 무한 균열은 하루 입장 횟수가 정해져 있습니다." }, {})
   card("베타 안내", { "베타 테스트 중입니다. 진행 데이터는 저장되지만 밸런스·보상은 바뀔 수 있습니다.", "버그나 이상한 점은 게임 설명란/디스코드로 알려 주세요." }, {})
 end
 
@@ -640,13 +652,14 @@ local launch
 local autoJob
 local function cancelAuto() if autoJob then task.cancel(autoJob); autoJob = nil end end
 cancelAutoFn = cancelAuto
-local showResultPanel
+local showResultPanel, tutAfterStage
 showResultPanel = function(x, spec)
   resultLayer.Visible = true
   resTitle.Text = x.win and "승리!" or "패배"; resTitle.TextColor3 = x.win and Color3.fromRGB(255, 214, 90) or Color3.fromRGB(255, 120, 120)
   resText.Text = (spec.title and (spec.title .. "\n") or "") .. resultLines(x)
   for _, c in ipairs(resBtns:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   cancelAuto(); resCount.Text = ""
+  if x.win and spec.stage and tutAfterStage then task.delay(0.6, function() tutAfterStage(spec.stage) end) end
   local function rb(i, t, cb, col) local b = button(resBtns, t, UDim2.new(), UDim2.new(0, 112, 1, 0), function() cancelAuto(); cb() end, col); b.LayoutOrder = i; b.ZIndex = 28; b.TextSize = 16; return b end
   local nxt = spec.nextSpec and spec.nextSpec()
   if nxt then rb(1, "다음 ▶", function() launch(nxt) end, Color3.fromRGB(200, 140, 40)) end
@@ -733,7 +746,7 @@ showResult = function(r) launch({ call = function() return r end, noRetry = true
 
 -- 전투 종류
 local stageSpec, riftSpec, towerSpec
-stageSpec = function(k) return { title = k == 5 and "스테이지 5 — 들판의 군주 그룸" or ("스테이지 " .. k), call = function() return rpc:InvokeServer("fight", { kind = "stage", n = k }) end,
+stageSpec = function(k) return { stage = k, title = k == 5 and "스테이지 5 — 들판의 군주 그룸" or ("스테이지 " .. k), call = function() return rpc:InvokeServer("fight", { kind = "stage", n = k }) end,
   nextSpec = function() if k < 5 and summary.cleared >= k then return stageSpec(k + 1) elseif k == 5 and summary.cleared >= 5 then return riftSpec(math.min(100, summary.riftBest + 1)) end end } end
 riftSpec = function(f) return { title = "심연의 균열 " .. f .. "층", call = function() return rpc:InvokeServer("fight", { kind = "rift", n = f }) end,
   nextSpec = function() if f < 100 and summary.riftBest >= f then return riftSpec(f + 1) end end } end
@@ -1188,23 +1201,87 @@ topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "�
 topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 
 -- 시작 직업 고르기 (새 계정 첫 접속): 전사(검) / 마법사(지팡이) → 무기 · 스타터 스킬 3개 · 아르카나 조각
+-- 튜토리얼 (새 계정): 직업 선택 → 스킬 소환 → 스킬 칸 → 스테이지 1. 스테이지 1~4를 처음 깰 때마다 한 가지씩 알려 주고, 나머지는 [안내소 → 도움말]로 넘긴다
+local coachBox, coachHl
+local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end end
+local function coach(title, text, btns, target)
+  coachClose()
+  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, INSET + 120 * K), Size = UDim2.new(0, 640, 0, 170), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
+  corner(coachBox, 10); stroke(coachBox, GOLD, 2.5); mk("UIScale", { Scale = K }, coachBox); Skin.frame(coachBox, "ui_panel", 0.2, 0.5)
+  local tl = mk("TextLabel", { Position = UDim2.new(0, 20, 0, 12), Size = UDim2.new(1, -40, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 24, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
+  mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, tl)
+  mk("TextLabel", { Position = UDim2.new(0, 20, 0, 46), Size = UDim2.new(1, -40, 0, 70), BackgroundTransparency = 1, Text = text, TextSize = 17, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
+  local row = mk("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -12), Size = UDim2.new(1, -32, 0, 40), BackgroundTransparency = 1, ZIndex = 47 }, coachBox)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+  for i, bt in ipairs(btns) do local b = button(row, bt[1], UDim2.new(), UDim2.new(0, bt[3] or 130, 1, 0), bt[2], bt[4] or Color3.fromRGB(200, 150, 60)); b.LayoutOrder = i; b.ZIndex = 48; b.TextSize = 16 end
+  if target then   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다
+    coachHl = mk("Frame", { BackgroundTransparency = 1, ZIndex = 45 }, gui)
+    local sk = mk("UIStroke", { Color = Color3.fromRGB(255, 220, 120), Thickness = 4 }, coachHl); corner(coachHl, 10)
+    TweenService:Create(sk, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8, Transparency = 0.4 }):Play()
+    local hl = coachHl
+    local conn; conn = game:GetService("RunService").RenderStepped:Connect(function()
+      if not hl.Parent or not target.Parent then conn:Disconnect(); if hl.Parent then hl:Destroy() end; return end
+      hl.Position = UDim2.new(0, target.AbsolutePosition.X - 6, 0, target.AbsolutePosition.Y - 6 + (gui.IgnoreGuiInset and 0 or 0)); hl.Size = UDim2.new(0, target.AbsoluteSize.X + 12, 0, target.AbsoluteSize.Y + 12)
+    end)
+  end
+end
+local function tutSet(n) task.spawn(function() local ok, e = pcall(function() return rpc:InvokeServer("tut", n) end); if ok and e and e.summary then setSummary(e.summary) end end) end
+tutorial = function(step)
+  local cls = summary and summary.hero == "mage" and "마법사" or "전사"
+  if step == 0 then
+    coach("환영합니다, " .. cls .. "!", "Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 스킬 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 스킬을 뽑아 볼까요?",
+      { { "건너뛰기", function() coachClose(); tutSet(99) end, 110, Color3.fromRGB(70, 66, 70) }, { "다음", function() tutorial(1) end } })
+  elseif step == 1 then
+    openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } })
+    coach("스킬 소환", "아르카나 조각으로 스킬 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 스킬이 또 나오면 그 스킬 레벨이 오릅니다.",
+      { { "뽑았어요", function() tutorial(2) end } })
+  elseif step == 2 then
+    openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } })
+    coach("스킬 칸", "전투에서는 스킬 칸에 넣은 스킬만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 스킬을 끌어다 칸에 넣어 보세요.",
+      { { "다음", function() tutorial(3) end } })
+  elseif step == 3 then
+    closePanel(); setScreen("map"); tutSet(3)
+    coach("첫 전투", "지도에서 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다. 이기면 장비와 경험치를 얻습니다.", { { "알겠어요", function() coachClose() end } })
+  end
+end
+-- 스테이지 1~4를 처음 깼을 때 한 가지씩
+local TUT_STAGE = {
+  { "장비", "전투에서 장비를 얻었습니다! 가방([가방] 아이콘)의 [자동 장착]을 누르면 더 좋은 장비를 바로 낍니다. 초록 ▲ 표시는 지금보다 좋은 장비예요.", "가방 열기", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }) end },
+  { "패시브", "레벨이 오르면 패시브 포인트가 생깁니다. [패시브]에서 노드를 눌러 찍으세요. 고민되면 [자동 배분]을 누르면 무기에 맞게 찍어 줍니다.", "패시브 열기", function() openPanel("패시브", { { "패시브", "pass" } }) end },
+  { "강화", "마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 스킬을 또 뽑으면 스킬 레벨도 오릅니다. 막히면 강화 · 장비 · 스킬 레벨부터 올리세요.", "제련소 열기", function() openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }) end },
+  { "보스와 그 너머", "다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 더 자세한 공략은 마을 [안내소 → 도움말]에 있습니다.", "도움말 보기", function() openPanel("안내소", { { "도움말", "help" } }) end },
+}
+tutAfterStage = function(k)
+  local tt = summary and summary.tut
+  if not tt or tt >= 99 or not TUT_STAGE[k] or tt >= 3 + k then return end
+  local T = TUT_STAGE[k]; tutSet(k >= 4 and 99 or 3 + k)
+  coach(T[1], T[2], { { "나중에", function() coachClose() end, 110, Color3.fromRGB(70, 66, 70) }, { T[3], function() coachClose(); T[4]() end, 150 } })
+end
 showStartPick = function()
-  local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.25, Text = "", AutoButtonColor = false, ZIndex = 40 }, gui)
-  local box = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 640, 0, 420), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 41 }, ov)
-  corner(box, 10); stroke(box, GOLD, 2.5); mk("UIScale", { Scale = K }, box); Skin.frame(box, "ui_panel", 0.2, 0.5)
-  local t = mk("TextLabel", { Position = UDim2.new(0, 0, 0, 26), Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, Text = "길을 고르세요", TextSize = 30, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), ZIndex = 42 }, box)
-  mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, t)
-  for i, c in ipairs({ { "warrior", "warrior", "전사", "검 · 물리 피해\n일격 · 찢기(범위) · 강타" }, { "mage", "mage", "마법사", "지팡이 · 마법 피해\n불씨 · 체인 라이트닝 · 폭열탄" } }) do
-    local card = mk("TextButton", { Position = UDim2.new(0, 40 + (i - 1) * 290, 0, 80), Size = UDim2.new(0, 270, 0, 300), BackgroundColor3 = Color3.fromRGB(26, 18, 15), Text = "", AutoButtonColor = false, ZIndex = 42 }, box)
-    corner(card, 8); local cs = stroke(card, Color3.fromRGB(120, 92, 48), 2)
-    local a = Sprites.art(c[2]); if a then mk("ImageLabel", { Position = UDim2.new(0.5, -90, 0, 10), Size = UDim2.new(0, 180, 0, 180), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 43 }, card) end
-    local nm = mk("TextLabel", { Position = UDim2.new(0, 0, 0, 192), Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Text = c[3], TextSize = 28, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 235, 200), ZIndex = 43 }, card)
-    mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, nm)
-    mk("TextLabel", { Position = UDim2.new(0, 10, 0, 228), Size = UDim2.new(1, -20, 0, 60), BackgroundTransparency = 1, Text = c[4], TextSize = 15, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(210, 200, 190), ZIndex = 43 }, card)
-    card.MouseEnter:Connect(function() cs.Color = GOLD end); card.MouseLeave:Connect(function() cs.Color = Color3.fromRGB(120, 92, 48) end)
+  local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(6, 3, 3), BackgroundTransparency = 0.08, Text = "", AutoButtonColor = false, ZIndex = 40 }, gui)
+  local t = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.04, 0), Size = UDim2.new(0.8, 0, 0.08, 0), BackgroundTransparency = 1, Text = "길을 고르세요", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), ZIndex = 42 }, ov)
+  mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, t)
+  local sub = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.12, 0), Size = UDim2.new(0.8, 0, 0.04, 0), BackgroundTransparency = 1, Text = "처음 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(200, 185, 165), ZIndex = 42 }, ov)
+  for i, c in ipairs({ { "warrior", "warrior", "전사", "검을 든 근접 전사", "단단한 체력과 강한 물리 공격", "일격 · 찢기(범위) · 강타", Color3.fromRGB(235, 110, 80) },
+                       { "mage", "mage", "마법사", "지팡이를 든 원소 마법사", "멀리서 화면을 쓸어버리는 마법", "불씨 · 체인 라이트닝 · 폭열탄", Color3.fromRGB(150, 130, 255) } }) do
+    local card = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(i == 1 and 0.28 or 0.72, 0, 0.19, 0), Size = UDim2.new(0.38, 0, 0.74, 0), BackgroundColor3 = Color3.fromRGB(22, 15, 13), Text = "", AutoButtonColor = false, ZIndex = 42 }, ov)
+    corner(card, 12); local cs = mk("UIStroke", { Color = Color3.fromRGB(120, 92, 48), Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
+    Skin.frame(card, "ui_panel", 0.2, 0.5)
+    local glowA = Sprites.art("fx_glow")
+    local gl = glowA and mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.36, 0), Size = UDim2.new(0.9, 0, 0.6, 0), BackgroundTransparency = 1, ImageContent = glowA.content, ImageColor3 = c[7], ImageTransparency = 0.7, ZIndex = 43 }, card)
+    local a = Sprites.art(c[2])
+    local img = a and mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.36, 0), Size = UDim2.new(0.85, 0, 0.6, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 44 }, card)
+    local nm = mk("TextLabel", { Position = UDim2.new(0, 0, 0.665, 0), Size = UDim2.new(1, 0, 0.09, 0), BackgroundTransparency = 1, Text = c[3], TextScaled = true, Font = Theme.FONT, TextColor3 = c[7], ZIndex = 44 }, card)
+    mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, nm)
+    for j, line in ipairs({ c[4], c[5], "스킬: " .. c[6] }) do
+      local l = mk("TextLabel", { Position = UDim2.new(0.06, 0, 0.765 + (j - 1) * 0.055, 0), Size = UDim2.new(0.88, 0, 0.045, 0), BackgroundTransparency = 1, Text = line, TextScaled = true, Font = Theme.FONT, TextColor3 = j == 3 and Color3.fromRGB(255, 220, 150) or Color3.fromRGB(220, 210, 195), ZIndex = 44 }, card)
+      mk("UITextSizeConstraint", { MaxTextSize = 24 }, l)
+    end
+    card.MouseEnter:Connect(function() cs.Color = GOLD; if gl then TweenService:Create(gl, TweenInfo.new(0.2), { ImageTransparency = 0.35 }):Play() end; if img then TweenService:Create(img, TweenInfo.new(0.2), { Size = UDim2.new(0.92, 0, 0.65, 0) }):Play() end end)
+    card.MouseLeave:Connect(function() cs.Color = Color3.fromRGB(120, 92, 48); if gl then TweenService:Create(gl, TweenInfo.new(0.2), { ImageTransparency = 0.7 }):Play() end; if img then TweenService:Create(img, TweenInfo.new(0.2), { Size = UDim2.new(0.85, 0, 0.6, 0) }):Play() end end)
     card.MouseButton1Click:Connect(function()
       local e = rpc:InvokeServer("pickstart", c[1]); if e and e.summary then setSummary(e.summary) end
-      if e and e.ok then ov:Destroy(); toast("아르카나 조각을 받았습니다! 마을의 [스킬 소환]에서 스킬을 뽑아 보세요.", Color3.fromRGB(255, 220, 140)) end
+      if e and e.ok then ov:Destroy(); task.delay(0.3, function() if tutorial then tutorial(0) end end) end
     end)
   end
 end
@@ -1254,13 +1331,16 @@ end
 loadBox.Visible = false; for _, m in ipairs(motes) do m.f.Visible = false end
 TweenService:Create(loadArt, TweenInfo.new(0.5), { ImageTransparency = 1 }):Play(); TweenService:Create(loadDim, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
 local fade = TweenService:Create(loadBg, TweenInfo.new(0.5), { BackgroundTransparency = 1 }); fade:Play(); fade.Completed:Connect(function() loadGui:Destroy() end)
-if summary and (summary.cleared or 0) == 0 then toast("오른쪽 아래 [지도]를 눌러 스테이지 1에 도전하세요!", Color3.fromRGB(255, 230, 140)) end
+if summary and (summary.cleared or 0) == 0 and not (summary.tut and summary.tut < 99) then toast("오른쪽 아래 [지도]를 눌러 스테이지 1에 도전하세요!", Color3.fromRGB(255, 230, 140)) end
 
 -- 디버그 훅: gui:SetAttribute("Debug", "fight" | "map" | "town" | 메뉴이름) (자동 테스트용)
 gui:GetAttributeChangedSignal("Debug"):Connect(function()
   local v = gui:GetAttribute("Debug")
   if v == "fight" then launch(stageSpec(1))
   elseif v == "map" or v == "town" then setScreen(v)
+  elseif v == "start" then showStartPick()   -- 시험: 직업 고르기 화면 (이미 시작한 계정은 서버가 거절해 바뀌지 않음)
+  elseif v == "tut" then tutorial(0)          -- 시험: 튜토리얼 (기존 계정은 진행이 저장되지 않음)
+  elseif v == "tutst" then tutAfterStage(1)
   elseif v == "gachafx" then   -- 소환 연출 시험 (가짜 결과, 재화 소모 없음)
     openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } })
     local R = {}; for i, r in ipairs({ 0, 1, 0, 2, 0, 1, 3, 0, 1, 4 }) do R[i] = { id = i % 2 == 0 and "rapid" or "strike", name = i % 2 == 0 and "연사" or "일격", rarity = r, dup = (r == 0) and 2 or nil, new = r > 0 or nil } end

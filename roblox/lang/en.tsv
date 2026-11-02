@@ -1979,3 +1979,49 @@ x4 배속	x4 Speed
 탑에서 내려온 붉은 군단의 본거지. 난이도마다 처음 깨면 전직의 서를 얻습니다.	The stronghold of the red legion that descended from the tower. The first clear of each difficulty grants a Class Tome.
 하드 레이드를 깨고 3차 전직을 마친 사람만 들어올 수 있습니다. 참이 나옵니다.	Only those who cleared the Hard raid and finished their 3rd class may enter. Drops Charms.
 🧱 벽 층: 처음 넘으면 사탄 장비 1개 확정	🧱 Wall floor: first clear guarantees 1 Satan item
+1) 장비: 가방의 [자동 장착]. 초록 ▲가 붙은 장비는 지금보다 좋습니다. 무기 · 장갑 · 목걸이가 특히 중요해요.	1) Gear: press [Auto Equip] in your bag. Items marked with a green ▲ are upgrades. Weapon, gloves and amulet matter most.
+2) 스킬: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 스킬을 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.	2) Skills: fill all 4 slots with one family (physical or magic). Pulling a skill again levels it up, and higher rarities are stronger.
+3) 패시브: 레벨마다 2점. 내 무기 계열 갈래(물리 · 마법)부터 찍고, 고민되면 [자동 배분].	3) Passives: 2 points per level. Start with the branch that matches your weapon (Might or Arcana), or press [Auto Allocate].
+4) 강화: 제련소에서 장비 강화 · 옵션 재굴림. 좋은 옵션(공격력 · 주문력 · 내 계열 피해 · 치명타)을 남기세요.	4) Upgrade: enhance and reroll gear at the Smeltery. Keep good stats (Attack, Spell Power, your damage type, Crit).
+5) 레벨: 균열 층을 처음 깨면 레벨이 오릅니다. 막히면 아래층을 돌며 장비를 모으세요.	5) Level: each first clear of a Rift floor raises your level. If stuck, farm lower floors for gear.
+Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 스킬 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 스킬을 뽑아 볼까요?	Arcana Slayer is an auto-battle game. Your hero fights on their own — you make them stronger with skills, gear and passives. Shall we summon some skills first?
+가방 열기	Open Bag
+강화	Upgrade
+검을 든 근접 전사	A sword-wielding melee fighter
+게임의 흐름	How the game flows
+골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 스킬 소환(1회 10개 · 10회 90개).	Gold: upgrades and shops. Enhance Stones: gear enhancing. Arcana Shards: skill summons (10 for 1 pull, 90 for 10).
+나중에	Later
+다음	Next
+다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 더 자세한 공략은 마을 [안내소 → 도움말]에 있습니다.	Next is Groom, Lord of the Fields! Compare your Power (top left) with the Recommended Power on the map panel. Defeat Groom to open the Abyssal Rift. More tips are in the village [Info Desk → Help].
+단단한 체력과 강한 물리 공격	Sturdy health and strong physical attacks
+도움말 보기	Open Help
+레벨이 오르면 패시브 포인트가 생깁니다. [패시브]에서 노드를 눌러 찍으세요. 고민되면 [자동 배분]을 누르면 무기에 맞게 찍어 줍니다.	Leveling up gives passive points. Click nodes in [Passive] to allocate them. Not sure? [Auto Allocate] picks for your weapon.
+마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 스킬을 또 뽑으면 스킬 레벨도 오릅니다. 막히면 강화 · 장비 · 스킬 레벨부터 올리세요.	Enhancing gear at the village [Smeltery] raises your Power. Pulling the same skill again raises its level. When stuck, upgrade gear and skill levels first.
+막혔을 때	When you are stuck
+매일 할 일	Daily to-do
+멀리서 화면을 쓸어버리는 마법	Magic that sweeps the screen from afar
+보스와 그 너머	The boss and beyond
+불씨 · 체인 라이트닝 · 폭열탄	Ember · Chain Lightning · Firebomb
+뽑았어요	Done
+스킬 칸	Skill slots
+스킬: 	Skills: 
+아르카나 조각으로 스킬 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 스킬이 또 나오면 그 스킬 레벨이 오릅니다.	Skill cards are summoned with Arcana Shards. You got enough for a 10x summon as a welcome gift — press [10x Summon]. Duplicates level that skill up.
+안 쓰는 장비는 분해하면 강화석, 안 쓰는 스킬은 분해하면 아르카나 조각이 됩니다. 가방의 [자동 분해] 설정으로 전투마다 알아서 정리할 수 있어요.	Dismantle unused gear for Enhance Stones and unused skills for Arcana Shards. Set [Auto Dismantle] in your bag to clean up after every battle.
+알겠어요	Got it
+원거리 몹에게 많이 맞으면 사거리가 긴 스킬을, 몹이 많으면 범위 스킬을 섞어 보세요.	If ranged monsters hit you a lot, use longer-range skills; if there are many monsters, mix in area skills.
+일격 · 찢기(범위) · 강타	Strike · Rend (area) · Smash
+자동 반복(결과 화면)을 켜 두면 같은 층을 계속 돌며 장비와 조각을 모읍니다.	Turn on Auto Repeat (result screen) to keep farming the same floor for gear and shards.
+전투력 올리는 법 (중요한 순서)	How to raise your Power (most important first)
+전투에서 장비를 얻었습니다! 가방([가방] 아이콘)의 [자동 장착]을 누르면 더 좋은 장비를 바로 낍니다. 초록 ▲ 표시는 지금보다 좋은 장비예요.	You got gear from battle! Press [Auto Equip] in your bag to wear the best items instantly. A green ▲ means an upgrade.
+전투에서는 스킬 칸에 넣은 스킬만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 스킬을 끌어다 칸에 넣어 보세요.	Only skills in your slots are used in battle. Matching your family (physical for warriors, magic for mages) is stronger. Drag a new skill into a slot.
+제련소 열기	Open Smeltery
+지도 창의 [권장 전투력]과 내 전투력을 비교하세요. 내 전투력이 낮으면 위의 순서대로 올리면 됩니다.	Compare [Recommended Power] on the map panel with yours. If yours is lower, improve in the order above.
+지도에서 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다. 이기면 장비와 경험치를 얻습니다.	On the map, tap [Meadow 1] and press [Challenge]. The battle plays automatically. Winning gives gear and experience.
+지팡이를 든 원소 마법사	A staff-wielding elemental mage
+처음 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.	This sets your first weapon and 3 skills. You can switch paths later by changing weapons.
+첫 전투	First battle
+초원 1~5 → 심연의 균열 1~100층(층을 처음 깰 때마다 레벨 +1) → 균열 100층 졸업 → 보스 관문 · 무한 균열 · 보물고 · 심연의 문 → 솟아난 탑 · 돌의 신전 · 레이드 → 전직 · 참.	Meadow 1–5 → Abyssal Rift floors 1–100 (each first clear: level +1) → graduate at floor 100 → Boss Gate · Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms.
+캐릭터는 자동으로 싸웁니다. 여러분은 스킬 · 장비 · 패시브로 강해지고, 더 높은 곳에 도전합니다.	Your hero fights automatically. You grow stronger with skills, gear and passives, and push ever higher.
+퀘스트 게시판의 일일 과제와 우편함 보상을 챙기세요. 무한 균열은 하루 입장 횟수가 정해져 있습니다.	Collect daily tasks from the Quest Board and rewards from the mailbox. The Endless Rift has limited daily entries.
+패시브 열기	Open Passives
+환영합니다, 	Welcome, 
