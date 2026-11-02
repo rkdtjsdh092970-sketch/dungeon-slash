@@ -279,6 +279,7 @@ M.exact = {
   ["Bonus Ranged Damage +40%, Bonus Normal Damage -20%"] = "원거리 추가 피해 +40%, 일반 추가 피해 -20%",
   ["Boosts"] = "부스트",
   ["Boosts & packs in the Shop"] = "상점의 부스트 · 패키지",
+  ["Farm cleared stages with Auto Repeat to collect better gear"] = "이미 깬 단계를 자동 반복해 더 좋은 장비 모으기",
   ["Boots"] = "신발",
   ["Boss"] = "보스",
   ["Boss First"] = "보스 우선",

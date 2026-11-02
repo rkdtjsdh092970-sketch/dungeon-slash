@@ -783,6 +783,8 @@ showResultPanel = function(x, spec)
           gate = { "🗝", "Use %s Boss Gate keys for better basic attacks", function() setScreen("map") end },
         }
         local tips = (ok and r and r.tips) or {}
+        tips[#tips + 1] = { k = "farm" }   -- 늘 보이는 방법: 이미 깬 단계를 자동 반복해 장비 모으기
+        TIP.farm = { "🔁", "Farm cleared stages with Auto Repeat to collect better gear", function() setScreen("map") end }
         tips[#tips + 1] = { k = "shop" }
         TIP.shop = { "💎", "Boosts & packs in the Shop", function() openPanel("Shop", { { "Shop", "robux" } }) end }
         for i, t in ipairs(tips) do

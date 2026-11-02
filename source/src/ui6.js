@@ -48,9 +48,10 @@ function adviceList(sv) {
   if ((sv.hone || 0) >= GACHA.ARC1) out.push(["gacha", "🔮", `새 아르카나 소환 (아르카나 조각 ${fmtN(sv.hone)}개)`]);
   if (EQ_SLOTS.some((k) => sv.equipped[k] && (sv.equipped[k].enh || 0) < 10) && sv.ore >= 5) out.push(["forge", "⚒", `제련소에서 장비 강화 (강화석 ${fmtN(sv.ore)}개)`]);
   const keys = ["keys", "keys2", "keys3", "keys4", "keys5", "keys6"].reduce((a, k) => a + (sv[k] || 0), 0); if (keys > 0) out.push(["gate", "🗝", `보스 관문 열쇠 ${keys}개로 더 좋은 평타 얻기`]);
+  out.push(["farm", "🔁", "이미 깬 단계를 자동 반복해 더 좋은 장비 모으기"]);   // 늘 보이는 방법 (로블록스판과 같게)
   return out;
 }
 function adviceGo(k) {
   G.pending = null; Modal.close(true); G.battle = null; AU.stopBgm(); openTown(G.townAct || 1);
-  setTimeout(() => { if (k === "pass") openPassives(); else if (k === "gear") { IB.mode = "inv"; IB.sel = null; renderItems(); } else if (k === "gacha") openSummon(); else if (k === "forge") openItems("forge"); else if (k === "gate") openMap(); }, 50);
+  setTimeout(() => { if (k === "pass") openPassives(); else if (k === "gear") { IB.mode = "inv"; IB.sel = null; renderItems(); } else if (k === "gacha") openSummon(); else if (k === "forge") openItems("forge"); else if (k === "gate" || k === "farm") openMap(); }, 50);
 }
