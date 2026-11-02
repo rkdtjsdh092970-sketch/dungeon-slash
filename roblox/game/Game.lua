@@ -4,6 +4,7 @@ local CFG = require(Data.Config).CFG
 local Items = require(Data.Items)
 local Stats = require(script.Parent.Stats)
 local Power = require(script.Parent.Power)
+local powerOf, bestWith   -- 아래(전투력 부분)에서 정한다 — 위쪽 요약 · 가방 보기에서도 쓴다
 local Battle = require(script.Parent.Battle)
 local Loot = require(script.Parent.Loot)
 local Sat = require(Data.Satan).SAT_DEFS
@@ -126,11 +127,11 @@ local function ruleOf(A, it)
   return r
 end
 -- 전투력 (Power.lua, 시뮬레이션 보정): ▲ 판정 · 자동 장착 · 장비 비교에 쓴다
-local function powerOf(sv) local ok, P = pcall(Power.of, sv); return ok and P or 0 end
+powerOf = function(sv) local ok, P = pcall(Power.of, sv); return ok and P or 0 end
 function M.powerNow(sv) return powerOf(sv) end
 local function slotsFor(it) return it.slot == "ring" and { "ring", "ring2" } or { it.slot } end
 -- 이 장비를 꼈을 때 가장 높은 원전투력 (반지는 두 칸 중 좋은 쪽)
-local function bestWith(sv, it)
+bestWith = function(sv, it)
   local best, bk = -1, nil
   for _, k in ipairs(slotsFor(it)) do
     local old = sv.equipped[k]; sv.equipped[k] = it
