@@ -475,7 +475,7 @@ local function arcCard(parent, k, w, h, o)
   local d = SK_BY[k.id] or {}
   local rcol = M.SK_RCOL[(k.rarity or 0) + 1] or M.SK_RCOL[1]
   local b = mk("TextButton", { Size = UDim2.new(0, w, 0, h), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, LayoutOrder = o.order or 0 }, parent); corner(b, 8)
-  b:SetAttribute("Uid", k.uid); b:SetAttribute("Equipped", (k.slot or 0) > 0)   -- 튜토리얼이 새 카드를 찾는다
+  b:SetAttribute("Uid", k.uid); b:SetAttribute("Equipped", (k.slot or 0) > 0); b:SetAttribute("Kind", d.slot)   -- 튜토리얼이 새 카드를 찾는다
   local inner = mk("Frame", { Position = UDim2.new(0.12, 0, 0.09, 0), Size = UDim2.new(0.76, 0, 0.82, 0), BackgroundColor3 = Color3.fromRGB(14, 9, 22), BorderSizePixel = 0, ClipsDescendants = true }, b)   -- 그림은 테두리 안쪽에만
   local glow = mk("UIStroke", { Color = o.sel and Color3.fromRGB(255, 225, 140) or rcol, Thickness = o.sel and 3 or 1.5, Transparency = o.sel and 0 or 0.4 }, b)
   task.spawn(function()   -- 그림은 뒤에서 받아 붙인다 (카드가 많아도 창이 바로 열림). 그림 ZIndex 1 · 테두리 2 · 띠 3 · 글자 4

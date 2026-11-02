@@ -1495,7 +1495,7 @@ tutorial = function(step)
     local function newestCard()   -- 아직 칸에 없는 카드 중 가장 최근에 얻은 것 (새로 뽑은 카드)
       local best, bu
       for _, d in ipairs(gui:GetDescendants()) do
-        if d:IsA("GuiButton") and d.Visible and d:GetAttribute("Uid") and d:GetAttribute("Equipped") == false and d.AbsoluteSize.X < 80 then
+        if d:IsA("GuiButton") and d.Visible and d:GetAttribute("Uid") and d:GetAttribute("Equipped") == false and d:GetAttribute("Kind") == "active" and d.AbsoluteSize.X < 80 then
           local u = d:GetAttribute("Uid"); if not bu or u > bu then best, bu = d, u end
         end
       end

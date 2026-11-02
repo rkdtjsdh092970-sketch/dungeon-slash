@@ -344,6 +344,14 @@ function M.gachaPull(sv, n, pay, rng, fam)
     for rr = r, 0, -1 do for _, d in ipairs(pool) do if M.skillTier(d) == rr then tp[#tp + 1] = d end end; if #tp > 0 then break end end
     if #tp == 0 then tp = pool end
     local dd = tp[rng:NextInteger(1, #tp)]
+    if i == n and (sv.tut or 99) < 3 then   -- 튜토리얼 첫 소환: 칸에 넣을 새 아르카나(내 계열 · 패시브 아님)가 한 장도 없으면 마지막 장을 그것으로
+      local gotNew = false; for _, x in ipairs(out) do local xd = SKILL_BY[x.id]; if x.new and xd and xd.slot == "active" then gotNew = true end end
+      if not gotNew then
+        local have = {}; for _, k in ipairs(sv.skills) do have[k.id] = true end
+        local cand = {}; for _, d in ipairs(pool) do if not have[d.id] and d.slot == "active" and M.skillTier(d) <= 1 then cand[#cand + 1] = d end end
+        if #cand > 0 then dd = cand[rng:NextInteger(1, #cand)] end
+      end
+    end
     out[#out + 1] = M.grantSkill(sv, dd.id)
   end
   return out
