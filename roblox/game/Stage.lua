@@ -195,7 +195,8 @@ function M.artPose(S)
     dy = math.sin((S.idleT or 0) * 2.2) * 1.2 * u
   end
   S.pl.Position = UDim2.new(0, S.plX + dx, 0, S.plY + dy); S.pl.Rotation = rot
-  S.pl.ImageColor3 = a.name == "hurt" and Color3.new(1, 1 - 0.55 * M.OPT.flash, 1 - 0.55 * M.OPT.flash) or Color3.new(1, 1, 1)
+  local hurt = a.name == "hurt" or (S.plHurt or 0) > 0
+  S.pl.ImageColor3 = hurt and Color3.new(1, 1 - 0.55 * M.OPT.flash, 1 - 0.55 * M.OPT.flash) or Color3.new(1, 1, 1)
 end
 
 M.TOP, M.HUD = 58, 1   -- 로블록스 상단 버튼 줄 높이 / HUD 배율 (Client 가 화면에 맞춰 갱신)
@@ -288,7 +289,7 @@ function M:applySnap(s, lanes)
   end
   for id, u in pairs(self.units) do if not seen[id] and not u.dying then u.dying = 0; Fx.death(self, u); self.kills += 1; self.killLbl.Text = string.format("처치 %d", self.kills) end end
   if s.ph and s.ph > 0 then self.shake = math.max(self.shake or 0, 0.18) end
-  if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); self.plAnim = { name = "hurt", t = 0 } end
+  if s.ph then self:floatText("-" .. fmt(s.ph), self.plX, py - 100 * self.u, Color3.fromRGB(255, 100, 110), 16); local an = self.plAnim and self.plAnim.name; if an == "idle" or an == "hurt" or an == nil then self.plAnim = { name = "hurt", t = 0 } else self.plHurt = 0.2 end end   -- 공격 동작 중에 맞으면 동작은 끝까지, 붉은 번쩍임만
   if s.c then   -- 스킬 연출 (계열 · 원소 · 종류별, BattleFx)
     local tgt; for _, u in pairs(self.units) do if not u.dying and u.tx and (not tgt or u.tx < tgt.tx) then tgt = u end end
     table.sort(hits, function(a, b) return (a.tx or 0) < (b.tx or 0) end)
@@ -389,7 +390,7 @@ function M:play(replay, onDone, maxSec, hud)
       if u.hit and u.hit > 0 then u.hit -= dt; if not u.dying then u.lab.ImageColor3 = Color3.new(1, 1 - 0.5 * M.OPT.flash, 1 - 0.5 * M.OPT.flash) end elseif not u.dying then u.lab.ImageColor3 = Color3.new(1, 1, 1) end
       if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); u.shadow:Destroy(); self.units[id] = nil end end
     end
-    if self.plArt then self.plAnim.t += dt * slow; M.artPose(self)
+    if self.plArt then self.plAnim.t += dt * slow; if self.plHurt then self.plHurt -= dt end; M.artPose(self)
     elseif self.plInfo then
       local a = self.plAnim; a.t += dt
       local row, frame, done = Sprites.anim("warrior", a.name, a.t); if done then self.plAnim = { name = "idle", t = 0 } end
