@@ -58,7 +58,10 @@ PATCHES = {}
 for jf in sorted(glob.glob(os.path.join(HERE, 'art', 'fx', '*_fires.json'))):
     bgk = os.path.basename(jf)[:-len('_fires.json')]; PATCHES[bgk] = json.load(open(jf))
     for e in PATCHES[bgk]: ART.append((e['key'], 'fx/' + e['key'][3:] + '.png', (e['pw'] * 8, e['ph'])))
-IDS = {}   # 예: 'warrior': 'rbxassetid://123'
+import json
+# 업로드한 에셋 ID (art/asset_ids.json, 키 → rbxassetid). 있으면 게임이 HTTP 대신 그 에셋을 쓴다 (2026-11-03)
+IDS = json.load(open(os.path.join(HERE, 'art', 'asset_ids.json'), encoding='utf-8')) if os.path.exists(os.path.join(HERE, 'art', 'asset_ids.json')) else {}
+os.makedirs(os.path.join(HERE, '_upload'), exist_ok=True)   # 업로드용 PNG (게임에 쓰는 크기 그대로, 커밋 안 함)
 lines = ['-- 자동 생성 (roblox/gen_art.py). 일러스트 표: 파일은 roblox/sprites/<file> (RGBA 8bit, w × h).',
          '-- id 를 채우면 업로드한 에셋을 우선 사용한다.', 'local M = {}', 'M.ART = {']
 for key, src, size in ART:
@@ -75,6 +78,7 @@ for key, src, size in ART:
         im = im.resize(size, Image.LANCZOS)
     f = f'art_{key}.rgba'
     open(os.path.join(HERE, 'sprites', f), 'wb').write(im.tobytes())
+    im.save(os.path.join(HERE, '_upload', key + '.png'))
     idv = f'"{IDS[key]}"' if key in IDS else 'nil'
     bb = im.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox()   # 발밑 = 가장 아래 불투명 줄 (그림마다 여백이 달라서)
     foot = round(bb[3] / im.height, 3) if bb and not key.startswith('bg') else 1
