@@ -504,7 +504,7 @@ local function celestial(parent, cx, cy, size, rays, stars, col)
   local sp = C.Sprites.art("fx_spark")
   if sp then
     for i = 1, stars do
-      local x, y = math.random(), math.random()
+      local x, y = math.random(), math.random() * (rays > 0 and 0.5 or 1)   -- 소환 창은 카드 둘레에만 (아래 확률 글자에 겹치지 않게)
       local z = 6 + math.random() * 10
       local st = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(x, 0, y, 0), Size = UDim2.new(0, z, 0, z), BackgroundTransparency = 1, ImageContent = sp.content, ImageColor3 = i % 3 == 0 and Color3.fromRGB(220, 190, 255) or col, ImageTransparency = 1, ZIndex = 0 }, parent)
       task.delay(math.random() * 2, function() if st.Parent then TweenService:Create(st, TweenInfo.new(0.9 + math.random(), Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.2, Rotation = 45 }):Play() end end)
