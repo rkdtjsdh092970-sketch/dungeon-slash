@@ -134,7 +134,7 @@ function M.create(parent, W, H, replayAct)
   S.timeLbl = outl(mk("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, TOP + 50 * k), Size = UDim2.new(0, 120 * k, 0, 20 * k), Text = "", TextColor3 = Color3.new(1, 1, 1), Font = FONT, TextSize = math.floor(14 * k), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, root), 1.5)
   -- 아래 가운데: 장착 스킬 (쓰면 쿨타임 표시)
   S.skillBar = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12 * k), Size = UDim2.new(0, 0, 0, 74 * k), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(22, 16, 40), BackgroundTransparency = 0.15, Visible = false, ZIndex = 8 }, root)
-  mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar); task.defer(function() Skin.frame(S.skillBar, "ui_panel", 0.2, 0.35) end)
+  mk("UICorner", { CornerRadius = UDim.new(0, 14 * k) }, S.skillBar); mk("UIStroke", { Color = GOLD, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, S.skillBar)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 8 * k), SortOrder = Enum.SortOrder.LayoutOrder }, S.skillBar)
   mk("UIPadding", { PaddingLeft = UDim.new(0, 8 * k), PaddingRight = UDim.new(0, 8 * k) }, S.skillBar)
   S.skillCells = {}
