@@ -10,8 +10,8 @@ local Econ = require(script.Parent.Economy)
 
 local M = {}
 local floor, max, min = math.floor, math.max, math.min
-local UP_TIERS, UP_KEYS = { 165.7, 171.7, 177.7, 183.6 }, 5   -- 2026-11-02 재보정: 탑 100층 비례 (참 4개 조건은 시뮬 불가)
-local GATE_TIERS = { 25, 50, 90, 128 }   -- 2026-11-03: 균열 진행 중에 차근차근 (1~3단계 = 균열 층 수준, 4단계 = 솟아오른 탑 약 40층)
+local UP_TIERS, UP_KEYS = { 184.7, 190.7, 196.7, 202.6 }, 5   -- 2026-11-02 재보정: 탑 100층 비례 (참 4개 조건은 시뮬 불가)
+local GATE_TIERS = { 25, 50, 90, 148.6 }   -- 2026-11-03: 균열 진행 중에 차근차근 (1~3단계 = 균열 층 수준, 4단계 = 솟아오른 탑 약 40층)
 local GATE_NEED = { 20, 40, 80, 100 }   -- 단계마다 필요한 균열 최고층
 M.GATE_NEED = GATE_NEED   -- 2026-11-02 재보정 (sim/endgame_calib.lua, 난이도당 24판 · 승률 60%)
 M.GATE_TIERS, M.UP_TIERS = GATE_TIERS, UP_TIERS   -- 지도 창 권장 전투력 표시용   -- 보스 관문 1~4단계 (2026-11-02 전 테스터 기준: T5 1등급1·2등급2·3등급2 → 1등급3·2등급2)
