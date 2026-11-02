@@ -311,7 +311,7 @@ invRender = function()
       local a = C.Sprites.art(c[1])
       if a then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
       else local dot = mk("Frame", { Size = UDim2.new(0, 10, 0, 10), Position = UDim2.new(0, 3, 0, 3), BackgroundColor3 = c[4] }, f); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, dot) end
-      local t = txt(f, (c[5] or c[2]) .. " " .. n(c[3] or 0), 15, UDim2.new(0, 26, 0, 0), UDim2.new(1, -26, 1, 0), c[4], M.FONT); t.TextScaled = true; mk("UITextSizeConstraint", { MaxTextSize = 15, MinTextSize = 8 }, t)   -- 이름도 함께, 길면 글자를 줄여 칸에 맞춘다
+      local t = txt(f, (c[5] or c[2]) .. " " .. n(c[3] or 0), 15, UDim2.new(0, 26, 0, 0), UDim2.new(1, -26, 1, 0), c[4], M.FONT); t.TextWrapped = false; t.TextScaled = true; mk("UITextSizeConstraint", { MaxTextSize = 15, MinTextSize = 8 }, t)   -- 이름도 함께, 길면 한 줄 그대로 글자를 줄여 칸에 맞춘다
       local tp = { title = string.format("%s  %s", c[2], n(c[3] or 0)), color = c[4], lines = { CUR_DESC[c[1]] or "" } }; f.MouseEnter:Connect(function() tipShow(tp) end); f.MouseLeave:Connect(tipHide)
     end
   end
@@ -361,7 +361,7 @@ invRender = function()
       M.btn(bar, string.format("분해 %d", k), UDim2.new(0, 84, 1, 0), M.BTN.red, function() bulkDo("dismantle") end).LayoutOrder = 2
       M.btn(bar, "취소", UDim2.new(0, 60, 1, 0), M.BTN.gray, function() invMulti = false; invPick = {}; invRender() end).LayoutOrder = 3
     else
-      M.btn(bar, "골라 정리", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end).LayoutOrder = 1
+      local mb = M.btn(bar, "골라 정리", UDim2.new(0.333, -4, 1, 0), M.BTN.purple, function() invMulti = true; invPick = {}; invRender() end); mb.LayoutOrder = 1; mb.TextSize = 13
       M.btn(bar, "자동 분해", UDim2.new(0.333, -4, 1, 0), M.BTN.red, function() invMode = "auto"; M.inv(true) end).LayoutOrder = 2
       M.btn(bar, "자동 장착", UDim2.new(0.333, -4, 1, 0), M.BTN.green, function()
         local e = C.rpc:InvokeServer("autoequip"); if e and e.summary then C.setSummary(e.summary) end
@@ -923,7 +923,7 @@ function M.forge()
   local A = area(392)
   -- 위: 보유 재화 (강화 · 재굴림 · 구슬 · 인장에 쓰는 것)
   local top = mk("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundColor3 = Color3.fromRGB(16, 12, 12), BackgroundTransparency = 0.1 }, A); corner(top, 6); stroke(top, Color3.fromRGB(120, 92, 48), 1.5)
-  txt(top, "보유", 13, UDim2.new(0, 10, 0, 6), UDim2.new(0, 40, 0, 18), Color3.fromRGB(190, 170, 140), M.FONT)
+  txt(top, "보유", 13, UDim2.new(0, 10, 0, 0), UDim2.new(0, 40, 1, 0), Color3.fromRGB(190, 170, 140), M.FONT).TextYAlignment = Enum.TextYAlignment.Center
   cost(top, { { "i_gold", s.gold or 0, Color3.fromRGB(255, 220, 120), "골드" }, { "i_ore", s.ore or 0, Color3.fromRGB(200, 220, 255), "강화석" }, { "i_chaos", s.orbC or 0, Color3.fromRGB(220, 170, 255), "혼돈" },
     { "i_seal", s.sockTix or 0, Color3.fromRGB(190, 160, 255), "인장" }, { "i_stone", s.stones or 0, Color3.fromRGB(160, 220, 255), "돌" } }, UDim2.new(0, 46, 0, 3))
   -- 왼쪽: 착용 장비 목록 (칸마다 부위 · 티어 · 강화 · 이름)
@@ -965,7 +965,7 @@ function M.forge()
   local eb = M.btn(E, string.format("+%d 강화", sel.enh + 1), UDim2.new(0, 120, 0, 38), M.BTN.green, function() res(C.rpc:InvokeServer("enhance", sel.uid)) end); eb.AnchorPoint = Vector2.new(1, 0.5); eb.Position = UDim2.new(1, -8, 0.5, 0)
   -- 옵션 (티어 표시 · 재굴림)
   txt(R, "옵션", 15, UDim2.new(0, 14, 0, 94), UDim2.new(0, 200, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
-  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 12, 0, 116), Size = UDim2.new(1, -24, 0, 132), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, R)
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 12, 0, 116), Size = UDim2.new(1, -24, 1, -226), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5 }, R)   -- 아래 구슬 줄까지 꽉
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   for i, a in ipairs(sel.affixes or {}) do
     local row = mk("Frame", { Size = UDim2.new(1, -8, 0, 32), BackgroundColor3 = Color3.fromRGB(28, 20, 16), LayoutOrder = i }, sc); corner(row, 6)

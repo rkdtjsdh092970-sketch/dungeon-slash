@@ -38,6 +38,7 @@ tr = function(s)
     if not hangul(r) then break end
     if string.find(r, f[1], 1, true) then r = string.gsub(r, plain(f[1]), (string.gsub(f[2], "%%", "%%%%"))) end
   end
+  if hangul(r) then r = string.gsub(r, "[^%s%(%)%[%]]+", function(w) return EXACT[w] or w end) end   -- 남은 한 글자 낱말 (예: "희귀 검" 의 "검")
   return r
 end
 
