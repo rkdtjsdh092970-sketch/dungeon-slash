@@ -137,7 +137,7 @@ end
 -- ── 화면에 보이는 전투력 (시뮬레이션 보정, roblox/sim/calibrate_power.lua · 2026-11-02, 빌드 112개, 균열 보스층 기준 R²=0.96 · 평균 오차 약 4층) ──
 -- 실측: 깨는 층의 난이도 D(=FLOOR_TAB) 와 원전투력 P 의 관계 ln P = FIT_A + FIT_G · ln D.
 -- 보이는 전투력 = 100 × (P 로 깰 수 있는 난이도) / D(1층) → 몬스터 강함에 정비례 (2배 = 2배 강한 층), 균열 1층 권장 = 100.
-M.FIT_A, M.FIT_G = 8.352, 2.298
+M.FIT_A, M.FIT_G = 9.085, 2.250   -- 2026-11-02 저녁 재보정 (새 균열 난이도 표, 빌드 62개, R²=0.93)
 local function D(f)   -- 층 난이도 (Battle floorMult 와 같음)
   local T = CFG.FLOOR_TAB; f = math.max(1, f)
   if f <= #T then return T[math.floor(f)] end
