@@ -238,7 +238,7 @@ local SLOT_ORDER = {}; for i, s in ipairs(Items.EQ_SLOTS) do SLOT_ORDER[s] = i e
 local function itemColor(it) return it.sat and M.SAT or M.RAR[(it.rarity or 0) + 1] end
 local CUR_DESC = {   -- 재화 설명 (마우스를 올리면)
   i_ore = "장비 강화 · 옵션 재굴림에 씁니다. 장비를 분해하면 얻습니다.", i_chaos = "장비 옵션의 수치를 (같은 옵션 · 티어 안에서) 다시 굴립니다 (대장간). 귀하게 나옵니다.",
-  i_gem = "아르카나 소환에 쓰는 보석입니다.", i_arcana = "아르카나 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 아르카나 분해로 얻습니다.", i_shard = "균열 조각: 특별한 콘텐츠 입장 · 보상에 씁니다.",
+  i_gem = "아르카나 소환에 쓰는 보석입니다.", i_arcana = "아르카나 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 아르카나 분해로 얻습니다.",
 }
 local function sortInv(inv)   -- 자동 정렬: 등급 → 부위 → 아이템 레벨
   table.sort(inv, function(a, b)
@@ -307,11 +307,11 @@ invRender = function()
   end
   M.setTabs(L, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "gear", "세트", function() invData = nil; M.inv() end)
   local s = C.summary()
-  if s then   -- 재화 (강화석 · 혼돈/신성 구슬 · 보석 · 아르카나 조각 · 균열 조각)
+  if s then   -- 재화 (강화석 · 혼돈 구슬 · 보석 · 아르카나 조각)
     local cg = mk("Frame", { Position = UDim2.new(0, 8, 1, -78), Size = UDim2.new(1, -16, 0, 74), BackgroundTransparency = 1 }, L)
     mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 22), CellPadding = UDim2.new(0, 6, 0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
     for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80), "혼돈" },
-      { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220), "아르카나" }, { "i_shard", "균열 조각", s.shards, Color3.fromRGB(190, 120, 240) } }) do
+      { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_arcana", "아르카나 조각", s.arcana, Color3.fromRGB(255, 160, 220), "아르카나" } }) do
       local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i, Active = true }, cg)   -- 칸 전체(아이콘 포함)에 마우스를 올리면 설명
       local a = C.Sprites.art(c[1])
       if a then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
@@ -1566,7 +1566,7 @@ function M.ranking()
 end
 
 -- ───────── 우편함 ─────────
-local MAIL_NAME = { gold = "골드", ore = "강화석", hone = "아르카나 조각", arcana = "아르카나 조각", orbC = "혼돈 구슬", orbD = "혼돈 구슬", shards = "균열 조각", keys = "공허의 열쇠", gems = "보석" }
+local MAIL_NAME = { gold = "골드", ore = "강화석", hone = "아르카나 조각", arcana = "아르카나 조각", orbC = "혼돈 구슬", orbD = "혼돈 구슬", keys = "공허의 열쇠", gems = "보석" }
 function M.mail()
   C.clear()
   local r = C.rpc:InvokeServer("mail"); if r.err then C.msg.Text = tostring(r.err); return end

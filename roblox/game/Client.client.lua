@@ -628,7 +628,7 @@ function views.set_beta()
   optRow("베타 입장", nil, { { "초대 전용", function() op("close") end, not v.open, w = 110 }, { "누구나", function() op("open") end, v.open, w = 110 } })
   card(string.format("테스터 %d명", #v.list), { "로블록스 닉네임으로 추가합니다. 게임 주인은 항상 입장할 수 있습니다." }, { { "추가", function() prompt("추가할 테스터의 로블록스 닉네임", "닉네임", function(nm) if nm ~= "" then op("add", nm) end end) end } })
   for _, x in ipairs(v.list) do card(x.name, { "UserId " .. x.id }, { { "삭제", function() op("remove", tostring(x.id)) end } }) end
-  card("전체 우편 보내기", { "모든 플레이어의 우편함에 공지와 보상을 보냅니다. 보상 형식 예: gold=5000, ore=20 (gold · ore · hone · orbC · orbD · shards · keys)" }, { { "보내기", function()
+  card("전체 우편 보내기", { "모든 플레이어의 우편함에 공지와 보상을 보냅니다. 보상 형식 예: gold=5000, ore=20 (gold · ore · hone · orbC · orbD · keys)" }, { { "보내기", function()
     prompt("우편 제목", "제목", function(title) if title == "" then return end
       prompt("내용", "내용", function(body)
         prompt("보상 (비우면 없음)", "gold=5000, ore=20", function(rw)

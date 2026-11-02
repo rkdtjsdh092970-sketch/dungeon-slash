@@ -8,7 +8,7 @@ M.DAILY_TASKS = {
   { id = "kill", name = "몬스터 처치", n = 300, key = "kills", reward = { arcana = 5, gold = 800 }, text = "아르카나 조각 5 · 800G" },
   { id = "clear", name = "스테이지 클리어", n = 8, key = "clears", reward = { ore = 12 }, text = "강화석 12" },
   { id = "boss", name = "보스 처치", n = 3, key = "bosses", reward = { orbC = 1 }, text = "혼돈 구슬 1" },
-  { id = "rift", name = "균열 클리어 (엔드게임)", n = 3, key = "rifts", reward = { orbC = 1, shards = 5 }, text = "혼돈 구슬 1 · 균열 조각 5", endgame = true },
+  { id = "rift", name = "균열 클리어 (엔드게임)", n = 3, key = "rifts", reward = { orbC = 1 }, text = "혼돈 구슬 1", endgame = true },
 }
 local function today() return floor(os.time() / 86400) end
 function M.dailyState(sv)
@@ -128,7 +128,7 @@ M.QUESTS = {
   { id = "m1", title = "첫 군주", desc = "스테이지 보스 처치", type = "boss", n = 1, reward = { gold = 60, ore = 4 } },
   { id = "f1", title = "대장장이의 부탁", desc = "장비 2번 강화", type = "enhance", n = 2, reward = { gold = 80, ore = 4 } },
   { id = "f2", title = "소켓의 비밀", desc = "원초의 돌 1개 확인", type = "stone", n = 1, reward = { gold = 400, ore = 6 } },
-  { id = "r1", title = "균열의 도전자", desc = "균열 3층 클리어", type = "rift", n = 3, reward = { gold = 300, ore = 10, shards = 3 } },
+  { id = "r1", title = "균열의 도전자", desc = "균열 3층 클리어", type = "rift", n = 3, reward = { gold = 300, ore = 10 } },
 }
 function M.questEvent(sv, typ, n)
   sv.q = sv.q or {}
@@ -143,7 +143,7 @@ function M.questView(sv)
   sv.q = sv.q or {}; local out = {}
   for _, d in ipairs(M.QUESTS) do
     local st = sv.q[d.id] or { p = 0, state = "active" }
-    local RN = { gold = "골드", ore = "강화석", orbC = "혼돈 구슬", arcana = "아르카나 조각", hone = "아르카나 조각", shards = "균열 조각", keys = "공허의 열쇠", gems = "보석" }
+    local RN = { gold = "골드", ore = "강화석", orbC = "혼돈 구슬", arcana = "아르카나 조각", hone = "아르카나 조각", keys = "공허의 열쇠", gems = "보석" }
     local rw = {}; for k, v in pairs(d.reward or {}) do rw[#rw + 1] = string.format("%s %s", RN[k] or k, tostring(v)) end; table.sort(rw); rw[#rw + 1] = "아르카나 조각 5"
     out[#out + 1] = { id = d.id, title = d.title, desc = d.desc, n = d.n, p = st.p, state = st.state, reward = table.concat(rw, " · ") }
   end

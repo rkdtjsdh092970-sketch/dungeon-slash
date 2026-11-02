@@ -46,11 +46,7 @@ local function migrate(sv, uid)
   for k, v in pairs(base) do if sv[k] == nil then sv[k] = v end end
   sv.stats = sv.stats or { kills = 0, clears = 0 }; sv.runes = sv.runes or {}; sv.q = sv.q or {}; sv.charms = sv.charms or {}
   sv.spire = sv.spire or { best = 0 }; sv.rift = sv.rift or { best = 0 }
-  if sv.atlas then   -- 심연 각인 폐지 (2026-11-02): 새긴 데 쓴 균열 조각을 돌려준다
-    local C = { gold = { 6 }, conq = { 14 }, ore = { 6 }, orb = { 8 }, shard = { 8 }, key = { 10 }, mf = { 10 }, guard = { 14 }, endless = { 60, 2.5 } }
-    for id, r in pairs(sv.atlas) do local c = C[id]; if c then for k = 0, (tonumber(r) or 0) - 1 do sv.shards = (sv.shards or 0) + math.floor(c[1] * 1.6 * (1 + k * (c[2] or 0.6)) + 0.5) end end end
-    sv.atlas = nil
-  end
+  sv.atlas = nil; sv.shards = nil   -- 심연 각인 · 균열 조각 폐지 (2026-11-02)
   if (sv.passVer or 1) < 2 then   -- 패시브 v2 (4갈래 200노드): 예전 노드는 없어졌으므로 초기화 (포인트는 레벨로 계산되어 그대로 돌아온다)
     if next(sv.pass or {}) then sv.passNotice = true end
     sv.pass = {}; sv.passSets = nil; sv.passVer = 2
@@ -162,7 +158,7 @@ local function rankPush(uid, sv) rankSet("rift", uid, sv.rift and sv.rift.best o
 -- ── 우편함: 게임 주인이 보내는 전체 우편(공지 + 보상). DataStore "DungeonSlashMail" 의 "global" 목록, 받은 우편은 세이브 sv.mailGot ──
 local okMail, mailStore = pcall(function() return DSS:GetDataStore("DungeonSlashMail") end)
 local mailCache, mailT = {}, -1e9
-local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, shards = true, keys = true, gems = true, arcana = true }
+local MAIL_KEYS = { gold = true, ore = true, hone = true, orbC = true, orbD = true, keys = true, gems = true, arcana = true }
 local function mailList(force)
   if not force and os.clock() - mailT < 30 then return mailCache end
   if okMail then local ok, v = pcall(function() return mailStore:GetAsync("global") end); if ok then mailCache = v or {}; mailT = os.clock() end end

@@ -184,8 +184,6 @@ function M.play(sv, spec, seed)
   -- 재화
   local ore = floor(rng:NextInteger(1, 2) + 4 + floor((node.tier or 0) / 3) + waves * 2 + 0.5)
   sv.ore += ore; res.ore = ore
-  local shards = floor((1 + floor((node.tier or 1) / 6) + 3 + waves + (kind == "void" and 2 * (node.vsel or 1) or 0)) + 0.5)
-  sv.shards = (sv.shards or 0) + shards; res.shards = shards
   local oc = orbs(kind, node, waves)
   local od = oc * 0.05; local c = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0); sv.orbC = (sv.orbC or 0) + c; res.orbC = c   -- 혼돈 구슬: 예전 신성 구슬 확률
   -- 원초의 돌

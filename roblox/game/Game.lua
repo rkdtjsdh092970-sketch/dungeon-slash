@@ -45,7 +45,7 @@ end
 function M.summary(sv)
   if sv.passNotice then task.delay(5, function() sv.passNotice = nil end) end   -- 안내는 한 번만 (접속 직후 요약들에 실어 보낸 뒤 지운다)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice, needStart = sv.needStart or nil, tut = sv.tut }   -- hero: 지팡이를 끼면 마법사 모습
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice, needStart = sv.needStart or nil, tut = sv.tut }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
@@ -318,7 +318,7 @@ function M.statsView(sv)
   el[#el + 1] = { "원소 피해", P(s.elemDmg) }; el[#el + 1] = { "속성 저항 관통", P(s.penElem) }; el[#el + 1] = { "방어 무시", P(s.ignoreDef) }; el[#el + 1] = { "지속 피해", P(s.dotDmg) }
   G[#G + 1] = { "속성 · 관통", el }
   G[#G + 1] = { "추가 피해", { { "보스", P(s.add.boss) }, { "정예", P(s.add.elite) }, { "원거리", P(s.add.ranged) }, { "일반", P(s.add.normal) }, { "광역 피해", P(s.aoeDmg) }, { "레인", tostring(s.lanes) } } }
-  G[#G + 1] = { "획득", { { "MF", P(s.mf) }, { "골드 획득", P(s.goldFind) }, { "균열 조각", tostring(sv.shards or 0) } } }
+  G[#G + 1] = { "획득", { { "MF", P(s.mf) }, { "골드 획득", P(s.goldFind) } } }
   return G
 end
 function M.gachaView(sv) return Econ.gachaView(sv) end
@@ -332,7 +332,7 @@ function M.records(sv)
     { "스테이지", string.format("%d/5", sv.cleared or 0) }, { "균열 최고층", string.format("%d층", sv.rift and sv.rift.best or 0) },
     { "솟아난 탑 최고층", string.format("%d층", sv.spire and sv.spire.best or 0) }, { "무한 균열 최고 웨이브", tostring(sv.endless and sv.endless.best or 0) },
     { "문지기 처치", (sv.raid and (sv.raid.cleared or 0) > 0) and "예" or "아니오" }, { "전직", string.format("%d차", sv.cls or 0) },
-    { "보유 장비", tostring(#sv.inv) }, { "보유 아르카나", tostring(#sv.skills) }, { "균열 조각", tostring(sv.shards or 0) } }, owned = owned }
+    { "보유 장비", tostring(#sv.inv) }, { "보유 아르카나", tostring(#sv.skills) } }, owned = owned }
 end
 function M.skillClean(sv, rules, keepBest)
   local busy = {}
@@ -428,7 +428,6 @@ function M.fight(sv, kind, n, seed)
     if (d.orbC or 0) > 0 then sv.orbC = (sv.orbC or 0) + d.orbC; res.orbC = d.orbC end; if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     d.ore = floor(d.ore + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
-    if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it), sat = it.sat ~= nil, rarity = it.rarity or 0 } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
