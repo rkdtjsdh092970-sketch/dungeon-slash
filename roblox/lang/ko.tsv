@@ -1413,7 +1413,7 @@ This preset is empty	빈 프리셋입니다
 This preset is empty. Press [Save] to store your current setup.	빈 프리셋입니다. [저장]을 눌러 현재 구성을 저장하세요.
 This sets your first weapon and 3 arcana. You can switch paths later by changing weapons.	처음 무기와 아르카나 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.
 Thorn Armor! Arcana hits reflect Damage back at you!	가시 갑옷! 스킬로 때릴수록 피해가 되돌아온다!
-Throws a shuriken that randomly bounces between enemies on screen, slashing repeatedly (more bounces at higher rarities)	수리검을 던진다. 화면 안의 적 사이를 무작위로 튕기며 여러 번 벤다 (등급이 오를수록 튕기는 횟수가 늘어난다)
+Throws a shuriken that randomly bounces between enemies on screen, slashing repeatedly	수리검을 던진다. 화면 안의 적 사이를 무작위로 튕기며 여러 번 벤다
 Thunder Emperor	뇌제
 Thunder Emperor's Bloodline	뇌제의 혈통
 Thunder Emperor's Heart	뇌제의 심장
@@ -1547,12 +1547,12 @@ Your mailbox is empty	우편함이 비어 있습니다
 [Ignite·Fire Build · Boss Specialist Skill] Brands one target with the sun, guaranteeing Ignite. Damage to Bosses +100%	[점화·화염 빌드 · 보스 전용기] 한 대상에 태양의 낙인을 찍어 반드시 점화시킨다. 보스에게 +100% 피해
 [Lightning Build · Boss Specialist Skill] Strikes one target with Lightning. Damage to Bosses +100%	[번개 빌드 · 보스 전용기] 한 대상에게 벼락을 내리꽂는다. 보스에게 +100% 피해
 [Mana·SPL Build · Boss Specialist Skill] Blasts one target with a surge of Mana. High Mana cost. Damage to Bosses +100%	[마나·주문 빌드 · 보스 전용기] 마나를 크게 쏟아 한 대상을 폭파한다. 마나 소모가 크다. 보스에게 +100% 피해
-[Mythic or Higher Only] A giant sword descends, piercing one lane and sending shockwaves into adjacent lanes	[신화 이상 전용] 하늘에서 거대한 검이 내려와 한 줄을 꿰뚫고, 충격파가 위아래 줄까지 번진다
-[Mythic or Higher Only] A punishing strike against Elites and Bosses (more hits at higher rarities)	[신화 이상 전용] 정예와 보스를 단죄하는 일격 (등급이 오를수록 연타가 늘어난다)
-[Mythic or Higher Only] Dragon breath sweeps all lanes at once, burning enemies	[신화 이상 전용] 용의 숨결이 모든 줄을 한꺼번에 휩쓸고 불태운다
-[Mythic or Higher Only] Stars fill the screen, raining down on random enemies in succession	[신화 이상 전용] 화면 가득 별이 쏟아져 무작위 적에게 연속으로 떨어진다
-[Mythic or Higher Only] The ground splits, spreading Rifts across a wide rear area for 6s to deal ongoing Damage	[신화 이상 전용] 땅이 갈라지며 뒤쪽 넓은 구역에 6초 동안 균열이 번져 지속 피해를 준다
-[Mythic or Higher Only] Wings unfurl, burning all enemies in range with light and restoring HP by 8%	[신화 이상 전용] 날개가 펼쳐지며 사거리 안의 모든 적을 빛으로 태우고 체력을 8% 회복한다
+A giant sword descends, piercing one lane and sending shockwaves into adjacent lanes	하늘에서 거대한 검이 내려와 한 줄을 꿰뚫고, 충격파가 위아래 줄까지 번진다
+A punishing strike against Elites and Bosses	정예와 보스를 단죄하는 일격
+Dragon breath sweeps all lanes at once, burning enemies	용의 숨결이 모든 줄을 한꺼번에 휩쓸고 불태운다
+Stars fill the screen, raining down on random enemies in succession	화면 가득 별이 쏟아져 무작위 적에게 연속으로 떨어진다
+The ground splits, spreading Rifts across a wide rear area for 6s to deal ongoing Damage	땅이 갈라지며 뒤쪽 넓은 구역에 6초 동안 균열이 번져 지속 피해를 준다
+Wings unfurl, burning all enemies in range with light and restoring HP by 8%	날개가 펼쳐지며 사거리 안의 모든 적을 빛으로 태우고 체력을 8% 회복한다
 [Passive] All Damage +14%, ATK·SPL increased by an additional 5%, Cooldown -6%, DEF·Resistance Penetration 10%, Chain +1	[패시브] 모든 피해 +14%, 공격·주문 5% 추가 증가, 쿨타임 -6%, 방어·저항 10% 관통, 연쇄 +1
 [Passive] Chain +1 (Lightning·Chain Arcana), All Damage +10%, Crit Chance +6%, DEF Reduction +6%	[패시브] 연쇄 +1회(번개·연쇄 스킬), 모든 피해 +10%, 치명타 +6%, 방어 감소 +6%
 [Passive] DEF·Resistance Penetration 10%, All Damage +8%, Cooldown -4%	[패시브] 방어·저항 10% 관통, 모든 피해 +8%, 쿨타임 -4%
@@ -1638,3 +1638,4 @@ Chance          Lowest roll  →  Highest roll (at this gear tier)	확률       
 ★ Reroll line	★ 재굴림 줄
 Reroll this line?	이 줄을 다시 굴릴까요?
 Each item can reroll only ONE line. Once you reroll this line, it becomes this item's reroll line and the other lines stay as they are.	장비마다 한 줄만 다시 굴릴 수 있습니다. 이 줄을 굴리면 이 장비의 재굴림 줄이 되고, 나머지 줄은 그대로 고정됩니다.
+2) Arcana: slot 1 is your basic attack (new ones unlock as you level, upgrade with gold). Fill slots 2–4 with Arcana of your family (physical or magic) from Summon — pulling the same Arcana again levels it up.	2) 아르카나: 1번 칸은 평타입니다 (레벨이 오르면 새 평타가 열리고, 골드로 강화). 2~4번 칸은 소환에서 얻은 내 계열(물리 또는 마법) 아르카나로 채우세요 — 같은 아르카나를 또 뽑으면 레벨이 오릅니다.

@@ -509,7 +509,7 @@ function views.help()
     "Meadow 1–5 → Abyssal Rift floors 1–100 (each first clear: level +1) → graduate at floor 100 → Boss Gate · Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms." }, {})
   card("How to raise your Power (most important first)", {
     "1) Gear: press [Auto Equip] in your bag. Items marked with a green ▲ are upgrades. Weapon, gloves and amulet matter most.",
-    "2) Arcana: fill all 4 slots with one family (physical or magic). Pulling a arcana again levels it up, and higher rarities are stronger.",
+    "2) Arcana: slot 1 is your basic attack (new ones unlock as you level, upgrade with gold). Fill slots 2–4 with Arcana of your family (physical or magic) from Summon — pulling the same Arcana again levels it up.",
     "3) Passives: 1 point per level. Start with the branch that matches your weapon (Might or Arcana), or press [Auto Allocate].",
     "4) Upgrade: enhance and reroll gear at the Smeltery. Keep good stats (Attack, Spell Power, your damage type, Crit).",
     "5) Level: each first clear of a Rift floor raises your level. If stuck, farm lower floors for gear." }, {})
