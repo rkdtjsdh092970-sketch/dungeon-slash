@@ -100,7 +100,7 @@ function M.create(parent, W, H, replayAct)
   Ambient.attach(root, { z = 2, embers = 24, fog = true, clouds = { 0.03, 0.16, 3 }, birds = true })
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
-  S.plX, S.plY = S.ox + 104 * u, S.oy + 336 * u   -- 웹 PLAYER_POS
+  S.plX, S.plY = S.ox + 150 * u, S.oy + 336 * u   -- 웹 PLAYER_POS 보다 앞으로 (영웅 · 몹 사이가 비어 보이지 않게, 2026-11-03)
   S.pl = Sprites.artLabel(S.layer, M.heroKey(), 138 * u); S.plArt = S.pl ~= nil
   if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 128 * u) end
   S.pl.Position = UDim2.new(0, S.plX, 0, S.plY); S.pl.ZIndex = 5
