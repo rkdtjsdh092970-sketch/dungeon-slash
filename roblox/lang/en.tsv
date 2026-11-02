@@ -1934,3 +1934,48 @@ x4 배속	x4 Speed
 찍지 않은 노드입니다	Node not allocated
 한 번 더 누르면 찍습니다	Click again to allocate
 %s 노드를 뺐습니다 (%d점 돌려받음)	Removed %s (%d pt refunded)
+ · 보스 보상	 · Boss rewards
+ 입장	 Enter
+%d단계 입장	Enter Stage %d
+%d층 도전	Challenge Floor %d
+%s  %d개 (입장에 %d개)	%s  %d (need %d)
+1층부터	From Floor 1
+20층까지 이어지는 새 탑입니다.	A new tower that rises to floor 20.
+3단계	Stage 3
+4단계	Stage 4
+6명의 군주가 기다리는 관문. 열쇠 1개로 입장하며 단계가 높을수록 강하고 보상이 좋습니다. 처치하면 보스 전용 스킬이 나옵니다.	Six lords await beyond this gate. Enter with 1 key; higher stages are tougher with better rewards. Bosses drop exclusive skills.
+▼ 부족합니다	▼ Too weak
+✓ 충분합니다	✓ Ready
+계시의 돌과 세공의 인장을 얻는 신전. 솟아난 탑을 높이 오를수록 더 깊은 단계가 열립니다.	A temple of Revelation Stones and Artisan Seals. Climb the Risen Tower to unlock deeper stages.
+관문	Gate
+권장 레벨 %d	Recommended Lv %d
+권장 전투력  %s	Recommended Power  %s
+금화와 보따리가 쏟아지는 보물고. 골드 위주 보상입니다. 운이 좋으면 거대 보물상자가 나타납니다.	A vault overflowing with coins and sacks. Mostly gold. With luck, a giant treasure chest appears.
+기록 	Record 
+끝없이 이어지는 심연의 균열. 층을 처음 깰 때마다 레벨이 오르고, 5층마다 보스가 지킵니다. 10층부터는 층마다 정해진 변형이 붙습니다. 100층을 깨면 졸업하고 새 콘텐츠가 열립니다.	The endless Abyssal Rift. Each first clear raises your level, and a boss guards every 5th floor. From floor 10, each floor has fixed modifiers. Clear floor 100 to graduate and unlock new content.
+내 전투력  %s   %s	My Power  %s   %s
+다음 단계: 솟아난 탑 %d층	Next stage: Risen Tower floor %d
+다음 벽 %d층	Next wall: floor %d
+다음 층 도전	Next Floor
+단계	Stage
+돌의 신전 	Stone Temple 
+드랍: 장비 T%d · 아르카나 조각 · 골드%s	Drops: T%d gear · Arcana Shards · Gold%s
+드랍: 장비(전설 비중 높음) · 사탄 장비 확률 · 구슬 · 조각 · 골드	Drops: gear (more legendaries) · chance of Satan gear · orbs · shards · gold
+레이드 	Raid 
+문지기가 공명 구슬을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않아 직접 눌러 터뜨려야 합니다.	The Warden keeps spawning resonance orbs. Skills cannot hit them — tap them yourself to burst them.
+벽	Wall
+변형 · %s: %s	Modifier · %s: %s
+상위 관문은 노말 레이드를 깬 뒤 열립니다.	The Upper Gate opens after clearing the Normal raid.
+쉬지 않고 몰려오는 적을 상대로 오래 버틸수록 보상이 커집니다. 하루 입장 횟수가 정해져 있습니다.	Enemies never stop coming — the longer you last, the bigger the reward. Limited entries per day.
+심연의 문지기 모르가스와의 레이드. 결계석을 부숴 가며 싸워야 합니다. 처음 쓰러뜨리면 붉은 탑이 솟아오릅니다.	A raid against Morgath, the Abyss Gatekeeper. Break the ward stones as you fight. His first defeat raises the Red Tower.
+심연의 문지기를 쓰러뜨리자 솟아난 붉은 탑. 20층마다 벽이 있어 장비를 갖춰야 넘을 수 있습니다. 벽 층을 처음 넘으면 사탄 장비 1개가 확정으로 나옵니다.	The Red Tower that rose when the Gatekeeper fell. A wall every 20 floors demands better gear. Your first clear of a wall floor guarantees 1 Satan item.
+오늘 남은 입장  %d회	Entries left today  %d
+전투력	Power
+처음 깨면 %d차 전직의 서	First clear: Class Tome %d
+처음 깨면 레벨이 1 오릅니다.	First clear raises your level by 1.
+초원 %d번째 전투. 몬스터를 모두 쓰러뜨리세요.	Meadow battle %d. Defeat every monster.
+초원의 보스, 들판의 군주 그룸. 쓰러뜨리면 심연의 균열이 열립니다.	Groom, Lord of the Fields. Defeat him to open the Abyssal Rift.
+클리어 ✓	Cleared ✓
+탑에서 내려온 붉은 군단의 본거지. 난이도마다 처음 깨면 전직의 서를 얻습니다.	The stronghold of the red legion that descended from the tower. The first clear of each difficulty grants a Class Tome.
+하드 레이드를 깨고 3차 전직을 마친 사람만 들어올 수 있습니다. 참이 나옵니다.	Only those who cleared the Hard raid and finished their 3rd class may enter. Drops Charms.
+🧱 벽 층: 처음 넘으면 사탄 장비 1개 확정	🧱 Wall floor: first clear guarantees 1 Satan item

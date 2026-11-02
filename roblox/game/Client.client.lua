@@ -173,8 +173,11 @@ do
   end
   -- 진행도 띠
   local pb = mk("Frame", { Position = UDim2.new(0, 92, 0, 62), Size = UDim2.new(1, -100, 0, 22), BackgroundColor3 = CELL, ZIndex = 12 }, statLbl); corner(pb, 5); stroke(pb, EDGE, 1)
-  statPow = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.45, 0, 1, 0), Position = UDim2.new(0, 6, 0, 0), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(255, 205, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, pb)
-  mk("UITextSizeConstraint", { MaxTextSize = 15, MinTextSize = 6 }, statPow)
+  -- 전투력: 작은 이름표 + 큰 금빛 숫자 (금속 느낌 그라데이션)
+  local pl = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0, 46, 1, 0), Position = UDim2.new(0, 6, 0, 0), Text = "전투력", Font = Theme.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(190, 160, 110), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, pb)
+  statPow = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.5, -52, 1, 2), Position = UDim2.new(0, 52, 0, -1), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, pb)
+  mk("UITextSizeConstraint", { MaxTextSize = 20, MinTextSize = 8 }, statPow)
+  mk("UIGradient", { Rotation = 90, Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 244, 200)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 80)), ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 120, 30)) }) }, statPow)
   mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(20, 8, 4) }, statPow)
   statProg = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(0.55, -8, 1, 0), Position = UDim2.new(0.45, 0, 0, 0), Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(200, 190, 180), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 13 }, pb)
   mk("UITextSizeConstraint", { MaxTextSize = 12, MinTextSize = 6 }, statProg)
@@ -188,12 +191,13 @@ do
   mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 16, 4) }, statGold)
 end
 -- 오른쪽 아래: 지도 ⇄ 마을 큰 버튼 (마을에선 지도, 지도에선 마을)
-local dock = mk("TextButton", { Name = "MapBtn", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(180, 130, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
+local dock = mk("TextButton", { Name = "MapBtn", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(20, 14, 12), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
 corner(dock, 10); stroke(dock, GOLD, 2.5); local dockScale = mk("UIScale", { Scale = K }, dock)
-Skin.frame(dock, "ui_btn_gold", 0.3, 0.6)
+Skin.frame(dock, "ui_panel", 0.2, 0.5)   -- 주황 버튼 대신 어두운 판 (마을 · 지도 그림과 어울리게)
 local dockIcon = mk("ImageLabel", { Position = UDim2.new(0, 10, 0.5, -34), Size = UDim2.new(0, 68, 0, 68), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, dock)
 local dockEmoji = mk("TextLabel", { Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(0, 68, 1, 0), BackgroundTransparency = 1, TextSize = 36, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1), Text = "", ZIndex = 13 }, dock)
-local dockText = mk("TextLabel", { Position = UDim2.new(0, 82, 0, 0), Size = UDim2.new(1, -92, 1, 0), BackgroundTransparency = 1, TextSize = 32, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 240, 210), Text = "", ZIndex = 13 }, dock)
+local dockText = mk("TextLabel", { Position = UDim2.new(0, 82, 0, 0), Size = UDim2.new(1, -92, 1, 0), BackgroundTransparency = 1, TextSize = 32, Font = Theme.FONT, TextColor3 = Color3.new(1, 1, 1), Text = "", ZIndex = 13 }, dock)
+mk("UIGradient", { Rotation = 90, Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 200)), ColorSequenceKeypoint.new(0.55, Color3.fromRGB(240, 190, 100)), ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 110, 40)) }) }, dockText)
 mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(30, 14, 6) }, dockText)
 dock.MouseEnter:Connect(function() dock.Size = UDim2.new(0, 238, 0, 80) end); dock.MouseLeave:Connect(function() dock.Size = UDim2.new(0, 230, 0, 76) end)
 local function dockSet(toMap)
@@ -236,7 +240,7 @@ local function setSummary(s)
   local hk = s.hero or "warrior"
   if hk ~= Stage.HERO then Stage.HERO = hk; local a = Sprites.art(Stage.heroKey()); if statFace and a then statFace.ImageContent = a.content end; if heroChanged then task.defer(heroChanged) end end
   statVal.hp.Text = n(s.maxHp); statVal.atk.Text = n(s.atk); statVal.mag.Text = n(s.mag); statVal.def.Text = n(s.def); statVal.crit.Text = string.format("%.0f%%", s.crit * 100)
-  statPow.Text = string.format("전투력 %s", n(s.power or 0)); statProg.Text = string.format("균열 %d · 탑 %d", s.riftBest, s.best)
+  statPow.Text = n(s.power or 0); statProg.Text = string.format("균열 %d · 탑 %d", s.riftBest, s.best)
 end
 
 -- ── 가운데 창 (건물 · 장비 · 문지기 등): 제목 + 탭 + 내용 목록 + 메시지 ──
@@ -855,61 +859,208 @@ local function nodeState(t)
   if t.id == "RTW2" then return U.tower2 and "open" or "hidden" end
   return "locked"
 end
--- 노드 정보 카드 (지도 아래 가운데)
-infoCard = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14), Size = UDim2.new(0, 560, 0, 214), BackgroundColor3 = Color3.fromRGB(24, 20, 44), Visible = false, ZIndex = 15 }, hud)
-corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); local infoScale = mk("UIScale", { Scale = K }, infoCard)
+local HUB = { { "void", "공허의 군주 모르가스", "keys", "공허의 열쇠" }, { "hive", "화염 정령왕 아스카", "keys2", "불씨의 징표" }, { "titan", "철갑의 투사 그라크", "keys3", "철갑의 징표" },
+  { "storm", "뇌제 라이곤", "keys4", "뇌전의 징표" }, { "frost", "서리 여왕 글라시아", "keys5", "서리의 징표" }, { "poison", "독니의 군주 베노크", "keys6", "맹독의 징표" } }
+-- 지도 전용 창: 지점을 누르면 화면 가운데 큰 창. 층이 있는 곳(균열 · 탑)은 왼쪽에 층 목록, 보스 관문은 보스 목록, 나머지는 설명 · 난이도 · 입장
+infoCard = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.53, 0), Size = UDim2.new(0, 820, 0, 470), BackgroundColor3 = Color3.fromRGB(16, 11, 10), Visible = false, ZIndex = 15 }, hud)
+local infoScale = mk("UIScale", { Scale = K }, infoCard)
+local MP = {   -- 지점별 소개 글
+  T = "마을로 돌아가 장비 · 스킬 · 퀘스트를 정비합니다.",
+  R = "끝없이 이어지는 심연의 균열. 층을 처음 깰 때마다 레벨이 오르고, 5층마다 보스가 지킵니다. 10층부터는 층마다 정해진 변형이 붙습니다. 100층을 깨면 졸업하고 새 콘텐츠가 열립니다.",
+  RTW = "심연의 문지기를 쓰러뜨리자 솟아난 붉은 탑. 20층마다 벽이 있어 장비를 갖춰야 넘을 수 있습니다. 벽 층을 처음 넘으면 사탄 장비 1개가 확정으로 나옵니다.",
+  RE = "쉬지 않고 몰려오는 적을 상대로 오래 버틸수록 보상이 커집니다. 하루 입장 횟수가 정해져 있습니다.",
+  RG = "금화와 보따리가 쏟아지는 보물고. 골드 위주 보상입니다. 운이 좋으면 거대 보물상자가 나타납니다.",
+  RX = "심연의 문지기 모르가스와의 레이드. 결계석을 부숴 가며 싸워야 합니다. 처음 쓰러뜨리면 붉은 탑이 솟아오릅니다.",
+  RB = "6명의 군주가 기다리는 관문. 열쇠 1개로 입장하며 단계가 높을수록 강하고 보상이 좋습니다. 처치하면 보스 전용 스킬이 나옵니다.",
+  RTP = "계시의 돌과 세공의 인장을 얻는 신전. 솟아난 탑을 높이 오를수록 더 깊은 단계가 열립니다.",
+  RR = "탑에서 내려온 붉은 군단의 본거지. 난이도마다 처음 깨면 전직의 서를 얻습니다.",
+  RCD = "하드 레이드를 깨고 3차 전직을 마친 사람만 들어올 수 있습니다. 참이 나옵니다.",
+  RWD = "문지기가 공명 구슬을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않아 직접 눌러 터뜨려야 합니다.",
+  RTW2 = "20층까지 이어지는 새 탑입니다.",
+}
+local BOSSCOL = { void = Color3.fromRGB(200, 120, 255), hive = Color3.fromRGB(255, 160, 90), titan = Color3.fromRGB(220, 205, 180), storm = Color3.fromRGB(255, 230, 90), frost = Color3.fromRGB(150, 225, 255), poison = Color3.fromRGB(140, 255, 110) }
+local mpSel = {}   -- 창마다 고른 층 · 보스 · 단계 (다시 열어도 유지)
 local function showInfo(t)
-  infoCard:ClearAllChildren(); infoCard:SetAttribute("Skinned", nil); corner(infoCard, 14); stroke(infoCard, GOLD, 2.5); Skin.frame(infoCard, "ui_panel", 0.2, 0.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
+  infoCard:ClearAllChildren(); infoCard:SetAttribute("Skinned", nil); infoCard.BackgroundTransparency = 0
+  corner(infoCard, 12); stroke(infoCard, GOLD, 2.5); Skin.frame(infoCard, "ui_panel", 0.2, 0.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
   local st, hint, prog = nodeState(t)
-  mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 10), Size = UDim2.new(1, -80, 0, 30), Font = Enum.Font.GothamBlack, TextSize = 22, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = t.icon .. "  " .. t.name .. (prog and ("   " .. prog) or ""), ZIndex = 16 }, infoCard)
-  do local b = button(infoCard, "X", UDim2.new(1, -50, 0, 10), UDim2.new(0, 36, 0, 32), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 16; b:SetAttribute("SkinClose", true) end
-  local desc = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 18, 0, 44), Size = UDim2.new(1, -36, 0, 94), Font = Enum.Font.GothamMedium, TextSize = 14, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(225, 220, 245), Text = "", ZIndex = 16 }, infoCard)
-  local row = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 1, -58), Size = UDim2.new(1, -32, 0, 44), ZIndex = 16 }, infoCard)
-  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, row)
-  local order = 0
-  local function rb(text, cb, col, w) order += 1; local b = button(row, text, UDim2.new(), UDim2.new(0, w or 92, 0, 40), cb, col); b.LayoutOrder = order; b.ZIndex = 17; b.TextSize = 15; return b end
-  if st == "locked" then desc.Text = "🔒 " .. (hint or "아직 열리지 않았습니다"); infoCard.Visible = true; return end
-  -- 층 선택 (균열 · 탑)
-  local function floors(maxN, def, specFn, what, showMods)
-    local num = def
-    local lbl
-    local function upd()
-      lbl.Text = string.format("%d층", num)
-      local t = what
-      if showMods then   -- 균열 변형 (10층부터, 층마다 정해져 있음 — 웹 riftMods)
-        local ok, mods = pcall(function() return require(RS.Game.Battle).riftMods(num) end)
-        if ok then for _, m in ipairs(mods) do t ..= "\n" .. string.format("변형 %s: %s", m.name, m.text) end end
-      end
-      if showMods then   -- 권장 전투력 (시뮬레이션 보정: 이 전투력이면 대체로 깬다)
-        local okP, PW = pcall(require, RS.Game.Power)
-        if okP then local rec = PW.recRift(num); local my = summary and summary.power or 0
-          t ..= "\n" .. string.format("권장 전투력 %s · 내 전투력 %s", n(rec), n(my)) .. (my >= rec and "  ✓" or "") end
-      end
-      desc.Text = t
-    end
-    rb("−", function() num = math.max(1, num - 1); upd() end, nil, 40)
-    lbl = rb("", function() end, Color3.fromRGB(40, 34, 70), 80)
-    rb("+", function() num = math.min(maxN, num + 1); upd() end, nil, 40)
-    rb("도전!", function() launch(specFn(num)) end, Color3.fromRGB(170, 60, 60), 110)
-    upd()
+  local s = summary; local my = s.power or 0
+  local okP, PW = pcall(require, RS.Game.Power)
+  local CF = require(RS.Game.Data.Config).CFG
+  local function L(parent, text, size, pos, sz, col, xa, wrap)
+    local l = mk("TextLabel", { BackgroundTransparency = 1, Position = pos, Size = sz, Text = text, Font = Theme.FONT, TextSize = size, TextColor3 = col or Color3.fromRGB(230, 220, 205),
+      TextXAlignment = xa or Enum.TextXAlignment.Left, TextYAlignment = wrap and Enum.TextYAlignment.Top or Enum.TextYAlignment.Center, TextWrapped = wrap or false, ZIndex = 17 }, parent)
+    return l
   end
-  local s = summary
-  if t.id == "T" then desc.Text = "마을로 돌아가 장비 · 스킬 · 퀘스트를 정비합니다."; rb("마을로", function() setScreen("town") end, Color3.fromRGB(110, 80, 30), 120)
-  elseif t.stage then desc.Text = t.stage == 5 and "초원의 보스. 쓰러뜨리면 심연의 균열이 열립니다." or ("초원 " .. t.stage .. "번째 전투. 권장 레벨 " .. t.stage); rb("도전!", function() launch(stageSpec(t.stage)) end, Color3.fromRGB(170, 60, 60), 120)
-  elseif t.id == "R" then floors(math.min(100, s.riftBest + 1), math.min(100, s.riftBest + 1), riftSpec, "층을 깰 때마다 레벨이 1 오릅니다. 100층을 깨면 졸업.", true)
-  elseif t.id == "RTW" then floors(math.min(100, s.best + 1), math.min(100, s.best + 1), towerSpec, "솔로 탑. 100층을 깨면 새 문지기가 열립니다.")
-  elseif t.id == "RE" then desc.Text = "하루 3번 · 오래 버틸수록 보상"; rb("입장", function() launch(playSpec("무한 균열", { kind = "endless" })) end, Color3.fromRGB(170, 60, 60))
-  elseif t.id == "RG" then desc.Text = "골드 위주 보상 (보석 없음)"; rb("입장", function() launch(playSpec("황금 보물고", { kind = "vault" })) end, Color3.fromRGB(170, 60, 60))
-  elseif t.id == "RX" then desc.Text = "문지기 모르가스 레이드. 처음 쓰러뜨리면 붉은 탑이 솟아오릅니다."; rb("도전", function() launch(playSpec("심연의 문", { kind = "raid" })) end, Color3.fromRGB(170, 60, 60))
+  -- 머리: 지도 아이콘 · 이름 · 진행
+  local ic = Sprites.art(st == "locked" and "mi_lock" or MAPICON[t.id] or (t.stage and (t.stage == 5 and "mi_boss" or "mi_stage")) or "")
+  if ic then mk("ImageLabel", { Position = UDim2.new(0, 22, 0, 14), Size = UDim2.new(0, 64, 0, 64), BackgroundTransparency = 1, ImageContent = ic.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 17 }, infoCard) end
+  local tl = L(infoCard, t.name, 30, UDim2.new(0, 98, 0, 16), UDim2.new(1, -200, 0, 36), Color3.fromRGB(255, 222, 150)); mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(12, 6, 4) }, tl)
+  L(infoCard, prog and ("기록 " .. prog) or (st == "done" and "클리어 ✓" or ""), 15, UDim2.new(0, 100, 0, 52), UDim2.new(1, -200, 0, 20), Color3.fromRGB(190, 175, 150))
+  do local b = button(infoCard, "X", UDim2.new(1, -58, 0, 16), UDim2.new(0, 40, 0, 40), function() infoCard.Visible = false end, Color3.fromRGB(130, 44, 64)); b.ZIndex = 18; b:SetAttribute("SkinClose", true) end
+  mk("Frame", { Position = UDim2.new(0, 22, 0, 88), Size = UDim2.new(1, -44, 0, 2), BackgroundColor3 = Color3.fromRGB(120, 92, 48), BorderSizePixel = 0, ZIndex = 17 }, infoCard)
+  local body = mk("Frame", { Position = UDim2.new(0, 22, 0, 100), Size = UDim2.new(1, -44, 1, -120), BackgroundTransparency = 1, ZIndex = 16 }, infoCard)
+  if st == "locked" then
+    L(body, MP[t.id] or "", 17, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 120), nil, nil, true)
+    L(body, "🔒 " .. (hint or "아직 열리지 않았습니다"), 20, UDim2.new(0, 0, 1, -40), UDim2.new(1, 0, 0, 36), Color3.fromRGB(255, 140, 120), Enum.TextXAlignment.Center)
+    infoCard.Visible = true; return
+  end
+  -- 오른쪽(또는 전체) 정보 칸: refresh 로 내용만 다시 채운다
+  local hasList = t.id == "R" or t.id == "RTW" or t.id == "RB"
+  local left = hasList and mk("ScrollingFrame", { Size = UDim2.new(0, 230, 1, 0), BackgroundColor3 = Color3.fromRGB(12, 8, 7), BackgroundTransparency = 0.2, BorderSizePixel = 0, ScrollBarThickness = 5,
+    ScrollBarImageColor3 = Color3.fromRGB(150, 115, 60), CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 17 }, body)
+  if left then corner(left, 8); stroke(left, Color3.fromRGB(90, 68, 36), 1.5); mk("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, left); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 10), PaddingBottom = UDim.new(0, 6) }, left) end
+  local R = mk("Frame", { Position = UDim2.new(0, hasList and 250 or 0, 0, 0), Size = UDim2.new(1, hasList and -250 or 0, 1, 0), BackgroundTransparency = 1, ZIndex = 17 }, body)
+  local function clearR() for _, c in ipairs(R:GetChildren()) do c:Destroy() end end
+  local y
+  local function line(text, size, col, h) local l = L(R, text, size or 16, UDim2.new(0, 0, 0, y), UDim2.new(1, 0, 0, h or 24), col, nil, (h or 24) > 26); y += (h or 24) + 4; return l end
+  local function recLine(rec)   -- 권장 전투력 · 내 전투력 (넘으면 초록)
+    if not rec then return end
+    local ok = my >= rec
+    line(string.format("권장 전투력  %s", n(rec)), 18, Color3.fromRGB(255, 205, 110))
+    line(string.format("내 전투력  %s   %s", n(my), ok and "✓ 충분합니다" or "▼ 부족합니다"), 16, ok and Color3.fromRGB(140, 235, 140) or Color3.fromRGB(255, 130, 110))
+  end
+  local function tabs(list, cur, onPick)   -- 난이도 · 단계 고르기
+    local f = mk("Frame", { Position = UDim2.new(0, 0, 0, y), Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, ZIndex = 17 }, R); y += 48
+    mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, f)
+    for i, it in ipairs(list) do
+      local b = button(f, it.text, UDim2.new(), UDim2.new(0, it.w or 110, 1, 0), function() if it.ok ~= false then onPick(i) end end, i == cur and Color3.fromRGB(200, 150, 60) or Color3.fromRGB(70, 66, 70))
+      b.LayoutOrder = i; b.ZIndex = 18; b.TextSize = 15; if it.ok == false then b.AutoButtonColor = false; b.TextTransparency = 0.5 end
+    end
+  end
+  local function go(text, cb)   -- 입장 버튼 (오른쪽 아래)
+    local b = button(R, text, UDim2.new(1, -230, 1, -54), UDim2.new(0, 230, 0, 54), cb, Color3.fromRGB(170, 60, 60)); b.ZIndex = 18; b.TextSize = 20
+  end
+  -- 층 목록 (균열 · 탑): 깬 층 ✓ · 보스 층 · 벽 층 표시, 고르면 목록은 그대로 두고 색만 바꾼다
+  local rows = {}
+  local function floorList(maxN, best, cur, mark, onPick)
+    local shown = math.min(100, maxN + 3)
+    for f = 1, shown do
+      local lock = f > maxN
+      local b = mk("TextButton", { Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = Color3.fromRGB(30, 22, 18), AutoButtonColor = false, Text = "", LayoutOrder = -f, ZIndex = 18 }, left); corner(b, 6)
+      local sk = stroke(b, Color3.fromRGB(70, 52, 30), 1)
+      local tag, tcol = mark(f)
+      L(b, string.format("%d층", f), 17, UDim2.new(0, 10, 0, 0), UDim2.new(0.5, 0, 1, 0), lock and Color3.fromRGB(110, 100, 95) or (f <= best and Color3.fromRGB(170, 160, 145) or Color3.fromRGB(245, 232, 205))).ZIndex = 19
+      L(b, (f <= best and "✓ " or "") .. (tag or ""), 14, UDim2.new(0.45, 0, 0, 0), UDim2.new(0.55, -8, 1, 0), tcol or Color3.fromRGB(140, 220, 140), Enum.TextXAlignment.Right).ZIndex = 19
+      rows[f] = { b = b, sk = sk }
+      if not lock then b.MouseButton1Click:Connect(function() onPick(f) end) end
+    end
+    local function paint(c) for f, r in pairs(rows) do r.b.BackgroundColor3 = f == c and Color3.fromRGB(90, 60, 26) or Color3.fromRGB(30, 22, 18); r.sk.Color = f == c and GOLD or Color3.fromRGB(70, 52, 30); r.sk.Thickness = f == c and 2 or 1 end end
+    paint(cur)
+    task.defer(function() local r = rows[cur]; if r and left.Parent then left.CanvasPosition = Vector2.new(0, math.max(0, r.b.AbsolutePosition.Y - left.AbsolutePosition.Y + left.CanvasPosition.Y - left.AbsoluteSize.Y / 2)) end end)
+    return paint
+  end
+  if t.id == "R" or t.id == "RTW" then
+    local isR = t.id == "R"
+    local best = isR and s.riftBest or s.best
+    local maxN = math.min(100, best + 1)
+    local cur = math.clamp(mpSel[t.id] or maxN, 1, maxN)
+    local paint
+    local function refresh()
+      clearR(); y = 0; mpSel[t.id] = cur; if paint then paint(cur) end
+      local tt = L(R, string.format("%d층", cur), 34, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 40), Color3.fromRGB(255, 225, 160)); mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(12, 6, 4) }, tt); y = 46
+      if isR then
+        recLine(okP and PW.recRift(cur) or nil)
+        local okM, mods = pcall(function() return require(RS.Game.Battle).riftMods(cur) end)
+        if okM and #mods > 0 then for _, m in ipairs(mods) do line(string.format("변형 · %s: %s", m.name, m.text), 14, Color3.fromRGB(215, 160, 255), 40) end end
+        line(string.format("드랍: 장비 T%d · 아르카나 조각 · 골드%s", math.min(5, math.floor(cur / 20) + 1), cur % 5 == 0 and " · 보스 보상" or ""), 15, Color3.fromRGB(150, 210, 255))
+        if cur > best then line("처음 깨면 레벨이 1 오릅니다.", 15, Color3.fromRGB(200, 190, 175)) end
+      else
+        recLine(okP and CF.SPIRE and PW.recTier(CF.SPIRE.TAB[cur], true) or nil)
+        local wall = cur % 20 == 0
+        line(wall and "🧱 벽 층: 처음 넘으면 사탄 장비 1개 확정" or string.format("다음 벽 %d층", math.min(100, math.ceil(cur / 20) * 20)), 15, wall and Color3.fromRGB(255, 150, 120) or Color3.fromRGB(200, 190, 175))
+        line("드랍: 장비(전설 비중 높음) · 사탄 장비 확률 · 구슬 · 조각 · 골드", 15, Color3.fromRGB(150, 210, 255), 40)
+      end
+      if y <= 350 - 130 then L(R, MP[t.id], 14, UDim2.new(0, 0, 1, -130), UDim2.new(1, 0, 0, 70), Color3.fromRGB(175, 165, 150), nil, true) end   -- 정보가 길면 소개 글은 생략 (겹치지 않게)
+      go(string.format("%d층 도전", cur), function() launch(isR and riftSpec(cur) or towerSpec(cur)) end)
+      -- 위 · 아래 한 층씩
+      local up = button(R, "▲", UDim2.new(1, -330, 1, -54), UDim2.new(0, 44, 0, 54), function() if cur < maxN then cur += 1; refresh() end end, Color3.fromRGB(70, 66, 70)); up.ZIndex = 18
+      local dn = button(R, "▼", UDim2.new(1, -282, 1, -54), UDim2.new(0, 44, 0, 54), function() if cur > 1 then cur -= 1; refresh() end end, Color3.fromRGB(70, 66, 70)); dn.ZIndex = 18
+    end
+    paint = floorList(maxN, best, cur, function(f)
+      if isR then if f % 5 == 0 then return "보스", Color3.fromRGB(255, 120, 100) end
+      else if f % 20 == 0 then return "벽", Color3.fromRGB(255, 150, 120) end end
+    end, function(f) cur = f; refresh() end)
+    refresh()
   elseif t.id == "RB" then
-    desc.Text = "보스마다 1~4단계 · 상위 관문(노말 레이드 클리어 후, 열쇠 5개). 처치하면 보스 전용 스킬이 나옵니다."
-    rb("관문 열기", function() infoCard.Visible = false; openPanel("보스 관문", { { "보스 관문", "bosshub" }, { "상위 관문", "bosshub_up" } }) end, Color3.fromRGB(110, 60, 160), 140)
-  elseif t.id == "RTP" then desc.Text = "계시의 돌 · 세공의 인장"; rb("1단계", function() launch(playSpec("돌의 신전 1단계", { kind = "temple", vsel = 1 })) end); rb("2단계", function() launch(playSpec("돌의 신전 2단계", { kind = "temple", vsel = 2 })) end)
-  elseif t.id == "RR" then desc.Text = "이지 · 노말 · 하드 최초 클리어마다 전직의 서"
-    for i, d in ipairs({ "이지", "노말", "하드" }) do rb(d, function() launch(playSpec("레이드 던전 " .. d, { kind = "craid", diff = i })) end) end
-  elseif t.id == "RCD" then desc.Text = "하드 레이드 + 3차 전직 · 참 드랍"; rb("입장", function() launch(playSpec("참 던전", { kind = "craid", diff = 3, charm = true })) end, Color3.fromRGB(170, 60, 60))
-  elseif t.id == "RWD" then desc.Text = "공명 구슬이 터지기 전에 직접 눌러 없애는 실시간 전투"; rb("입장", function() infoCard.Visible = false; openPanel("새 문지기", { { "문지기", "warden" } }) end, Color3.fromRGB(170, 60, 60))
-  elseif t.id == "RTW2" then desc.Text = "20층 탑"; rb("1층", function() launch({ title = "새 탑", call = function() return rpc:InvokeServer("tower2", 1) end }) end); rb("다음 층", function() launch({ title = "새 탑", call = function() return rpc:InvokeServer("tower2", 99) end }) end, Color3.fromRGB(170, 60, 60))
+    local okM, Mon = pcall(require, RS.Game.Data.Monsters)
+    local cur = mpSel.RB or 1; local stage = mpSel.RBs or 1; local upper = mpSel.RBu or false
+    local brow = {}
+    local function refresh()
+      clearR(); y = 0; mpSel.RB, mpSel.RBs, mpSel.RBu = cur, stage, upper
+      for i, r in ipairs(brow) do r.b.BackgroundColor3 = i == cur and Color3.fromRGB(90, 60, 26) or Color3.fromRGB(30, 22, 18); r.sk.Color = i == cur and GOLD or Color3.fromRGB(70, 52, 30) end
+      local hb = HUB[cur]; local col = BOSSCOL[hb[1]] or Color3.new(1, 1, 1)
+      local tt = L(R, hb[2], 28, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 36), col); mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(12, 6, 4) }, tt); y = 42
+      local desc
+      if okM then
+        if Mon.EB[hb[1]] then desc = Mon.EB[hb[1]].boss.desc else for _, bd in ipairs(Mon.BOSSES) do if bd.id == "void" then desc = bd.desc end end end
+      end
+      if desc then line(desc, 14, Color3.fromRGB(205, 195, 180), 40) end
+      tabs({ { text = "관문", w = 90 }, { text = "상위 관문", w = 120, ok = U.up } }, upper and 2 or 1, function(i) upper = i == 2; refresh() end)
+      tabs({ { text = "1단계", w = 84 }, { text = "2단계", w = 84 }, { text = "3단계", w = 84 }, { text = "4단계", w = 84 } }, stage, function(i) stage = i; refresh() end)
+      local tiers = upper and U.upTiers or U.gateTiers
+      recLine(okP and tiers and PW.recTier(tiers[stage]) or nil)
+      local have, need = U[hb[3]] or 0, upper and 5 or 1
+      line(string.format("%s  %d개 (입장에 %d개)", hb[4], have, need), 16, have >= need and Color3.fromRGB(255, 220, 140) or Color3.fromRGB(255, 130, 110))
+      if upper and not U.up then line("상위 관문은 노말 레이드를 깬 뒤 열립니다.", 14, Color3.fromRGB(255, 140, 120)) end
+      go(string.format("%d단계 입장", stage), function() launch(playSpec(string.format("%s %d단계", hb[2], stage), { kind = hb[1], vsel = stage, upper = upper or nil })) end)
+    end
+    for i, hb in ipairs(HUB) do
+      local b = mk("TextButton", { Size = UDim2.new(1, 0, 0, 52), BackgroundColor3 = Color3.fromRGB(30, 22, 18), AutoButtonColor = false, Text = "", LayoutOrder = i, ZIndex = 18 }, left); corner(b, 6)
+      local sk = stroke(b, Color3.fromRGB(70, 52, 30), 1.5)
+      L(b, hb[2], 15, UDim2.new(0, 10, 0, 4), UDim2.new(1, -16, 0, 24), BOSSCOL[hb[1]]).ZIndex = 19
+      L(b, string.format("%s %d개", hb[4], U[hb[3]] or 0), 13, UDim2.new(0, 10, 0, 26), UDim2.new(1, -16, 0, 20), Color3.fromRGB(180, 170, 155)).ZIndex = 19
+      brow[i] = { b = b, sk = sk }
+      b.MouseButton1Click:Connect(function() cur = i; refresh() end)
+    end
+    refresh()
+  else
+    y = 0
+    local function refresh(fn) clearR(); y = 0; fn() end
+    local function intro() line(MP[t.id] or "", 17, Color3.fromRGB(225, 215, 200), 80) end
+    if t.id == "T" then intro(); go("마을로", function() infoCard.Visible = false; setScreen("town") end)
+    elseif t.stage then
+      line(t.stage == 5 and "초원의 보스, 들판의 군주 그룸. 쓰러뜨리면 심연의 균열이 열립니다." or string.format("초원 %d번째 전투. 몬스터를 모두 쓰러뜨리세요.", t.stage), 17, Color3.fromRGB(225, 215, 200), 60)
+      line(string.format("권장 레벨 %d", t.stage), 17, Color3.fromRGB(255, 205, 110))
+      go("도전", function() launch(stageSpec(t.stage)) end)
+    elseif t.id == "RE" then intro(); line(string.format("오늘 남은 입장  %d회", U.endlessLeft or 0), 18, Color3.fromRGB(255, 205, 110)); go("입장", function() launch(playSpec("무한 균열", { kind = "endless" })) end)
+    elseif t.id == "RG" then intro(); go("입장", function() launch(playSpec("황금 보물고", { kind = "vault" })) end)
+    elseif t.id == "RX" then intro(); recLine(okP and PW.recTier(CF.RIFT_END) or nil); go("도전", function() launch(playSpec("심연의 문", { kind = "raid" })) end)
+    elseif t.id == "RTP" then
+      local open = 0; for _, need in ipairs(CF.TEMPLE.NEED) do if need == 0 or (U.spireBest or 0) >= need then open += 1 end end
+      local cur = math.clamp(mpSel.RTP or open, 1, math.max(1, open))
+      local function draw()
+        refresh(function()
+          intro()
+          local list = {}; for i = 1, #CF.TEMPLE.TIERS do list[i] = { text = string.format("%d단계", i), w = 96, ok = i <= open } end
+          tabs(list, cur, function(i) cur = i; mpSel.RTP = i; draw() end)
+          recLine(okP and PW.recTier(CF.TEMPLE.TIERS[cur], true) or nil)
+          if open < #CF.TEMPLE.TIERS then line(string.format("다음 단계: 솟아난 탑 %d층", CF.TEMPLE.NEED[open + 1]), 15, Color3.fromRGB(200, 190, 175)) end
+          go(string.format("%d단계 입장", cur), function() launch(playSpec("돌의 신전 " .. cur .. "단계", { kind = "temple", vsel = cur })) end)
+        end)
+      end
+      draw()
+    elseif t.id == "RR" then
+      local names = { "이지", "노말", "하드" }
+      local open = 1 + ((U.craidDone and U.craidDone[1]) and 1 or 0) + ((U.craidDone and U.craidDone[1] and U.craidDone[2]) and 1 or 0)
+      local cur = math.clamp(mpSel.RR or open, 1, open)
+      local function draw()
+        refresh(function()
+          intro()
+          local list = {}; for i = 1, 3 do list[i] = { text = names[i] .. ((U.craidDone and U.craidDone[i]) and " ✓" or ""), w = 110, ok = i <= open } end
+          tabs(list, cur, function(i) cur = i; mpSel.RR = i; draw() end)
+          recLine(okP and PW.recTier(CF.CRAID.TIERS[cur + 1], true) or nil)
+          line(string.format("처음 깨면 %d차 전직의 서", cur), 15, Color3.fromRGB(255, 220, 140))
+          go("레이드 " .. names[cur] .. " 입장", function() launch(playSpec("레이드 던전 " .. names[cur], { kind = "craid", diff = cur })) end)
+        end)
+      end
+      draw()
+    elseif t.id == "RCD" then intro(); recLine(okP and PW.recTier(CF.CRAID.TIERS[4], true) or nil); go("입장", function() launch(playSpec("참 던전", { kind = "craid", diff = 3, charm = true })) end)
+    elseif t.id == "RWD" then intro(); go("입장", function() infoCard.Visible = false; openPanel("새 문지기", { { "문지기", "warden" } }) end)
+    elseif t.id == "RTW2" then intro()
+      local b2 = button(R, "1층부터", UDim2.new(1, -420, 1, -54), UDim2.new(0, 170, 0, 54), function() launch({ title = "새 탑", call = function() return rpc:InvokeServer("tower2", 1) end }) end, Color3.fromRGB(70, 66, 70)); b2.ZIndex = 18
+      go("다음 층 도전", function() launch({ title = "새 탑", call = function() return rpc:InvokeServer("tower2", 99) end }) end)
+    end
   end
   infoCard.Visible = true
 end
@@ -962,8 +1113,6 @@ buildMap = function()
 end
 
 -- 보스 관문: 보스 6종 × 1~4단계 (상위 관문은 열쇠 5개, 노말 레이드 클리어 후) — 서버 Content.play 가 단계·열쇠를 확인한다
-local HUB = { { "void", "공허의 군주 모르가스", "keys", "공허의 열쇠" }, { "hive", "화염 정령왕 아스카", "keys2", "불씨의 징표" }, { "titan", "철갑의 투사 그라크", "keys3", "철갑의 징표" },
-  { "storm", "뇌제 라이곤", "keys4", "뇌전의 징표" }, { "frost", "서리 여왕 글라시아", "keys5", "서리의 징표" }, { "poison", "독니의 군주 베노크", "keys6", "맹독의 징표" } }
 local function hubView(upper)
   clear()
   local okU, ru = pcall(function() return rpc:InvokeServer("unlocks") end); if okU and ru.u then U = ru.u end

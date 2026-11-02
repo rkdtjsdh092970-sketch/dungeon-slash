@@ -510,7 +510,11 @@ function M.tower2(sv, n) return Content.tower2(sv, n) end
 function M.unlocks(sv)   -- 어떤 콘텐츠가 열려 있는지 (화면 표시용)
   local grad = Content.graduated(sv); local raidDone = sv.raid and (sv.raid.cleared or 0) > 0
   return { graduated = grad, void = grad, bosses = grad, raid = grad, vault = grad, endless = grad, temple = raidDone or false, craid = (sv.raid and sv.raid.tower) and true or false,
-    warden = Content.wardenOpen(sv), tower2 = Content.tower2Open(sv), class = (sv.raid and sv.raid.tower) and true or false, charm = (sv.cls or 0) >= 3, keys = sv.keys or 0, keys2 = sv.keys2 or 0, keys3 = sv.keys3 or 0, keys4 = sv.keys4 or 0, keys5 = sv.keys5 or 0, keys6 = sv.keys6 or 0 }
+    warden = Content.wardenOpen(sv), tower2 = Content.tower2Open(sv), class = (sv.raid and sv.raid.tower) and true or false, charm = (sv.cls or 0) >= 3, keys = sv.keys or 0, keys2 = sv.keys2 or 0, keys3 = sv.keys3 or 0, keys4 = sv.keys4 or 0, keys5 = sv.keys5 or 0, keys6 = sv.keys6 or 0,
+    -- 지도 전용 창 표시용: 레이드 클리어 · 상위 관문 · 신전 단계 · 무한 균열 남은 횟수 · 관문 난이도
+    craidDone = { (sv.craid and sv.craid[1] == 1) or false, (sv.craid and sv.craid[2] == 1) or false, (sv.craid and sv.craid[3] == 1) or false }, up = (sv.craid and sv.craid[2]) and true or false,
+    spireBest = sv.spire and sv.spire.best or 0, endlessLeft = math.max(0, CFG.ENDLESS_DAILY + Econ.atlasVal(sv, "endless") - ((sv.endless and sv.endless.day == math.floor(os.time() / 86400) and sv.endless.used) or 0)),
+    gateTiers = Content.GATE_TIERS, upTiers = Content.UP_TIERS }
 end
 
 return M
