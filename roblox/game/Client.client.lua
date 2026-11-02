@@ -291,7 +291,7 @@ mk("UITextSizeConstraint", { MaxTextSize = 30, MinTextSize = 14 }, panelTitle); 
 local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 54), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)   -- 탭은 가운데
 local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 96), Size = UDim2.new(1, -32, 1, -112), BackgroundColor3 = Color3.fromRGB(12, 9, 9), BackgroundTransparency = 0.35, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
-corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6) }, list)
+corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6) }, list)
 local msg = label(root, "", 14, UDim2.new(0.5, 0, 1, -22), UDim2.new(0, 0, 0, 28)); msg.ZIndex = 30; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
 msg.AnchorPoint = Vector2.new(0.5, 1); msg.AutomaticSize = Enum.AutomaticSize.X; msg.BackgroundColor3 = Color3.fromRGB(16, 10, 8); msg.BackgroundTransparency = 1; corner(msg, 8)
 mk("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, msg)

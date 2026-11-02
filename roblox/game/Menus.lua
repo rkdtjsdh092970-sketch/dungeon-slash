@@ -901,13 +901,16 @@ local function pbar(parent, pos, size, frac, color)
 end
 -- 한 줄 카드 (아이콘 · 제목 · 설명 · 진행 바 · 오른쪽 버튼)
 local function rowCard(o)
-  local f = mk("Frame", { Size = UDim2.new(1, -16, 0, o.h or 74), BackgroundColor3 = o.done and Color3.fromRGB(34, 52, 44) or M.PANEL }, C.list); corner(f, 10); stroke(f, o.ready and M.GOLD or Color3.fromRGB(80, 66, 130), o.ready and 2.5 or 1.5)
+  local f = mk("Frame", { Size = UDim2.new(1, -16, 0, o.h or (o.reward and 92 or 82)), BackgroundColor3 = o.done and Color3.fromRGB(34, 52, 44) or M.PANEL, LayoutOrder = o.order or 0 }, C.list); corner(f, 10)
   Skin.frame(f, "ui_card", 0.25, 0.5)
-  local x = 12
-  if o.emoji or o.art then local t = M.tile(f, 52, { art = o.art, emoji = o.emoji, color = o.color or M.GOLD }); t.Position = UDim2.new(0, 10, 0.5, -26); x = 72 end
-  txt(f, o.title, 16, UDim2.new(0, x, 0, 8), UDim2.new(1, -x - 150, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
-  if o.desc then txt(f, o.desc, 13, UDim2.new(0, x, 0, 30), UDim2.new(1, -x - 150, 0, 18), Color3.fromRGB(215, 210, 235)) end
-  if o.frac then pbar(f, UDim2.new(0, x, 1, -18), UDim2.new(1, -x - 160, 0, 10), o.frac, o.done and Color3.fromRGB(120, 120, 140) or nil) end
+  if o.ready then local g = mk("UIStroke", { Color = M.GOLD, Thickness = 2, Transparency = 0.2 }, f); TweenService:Create(g, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.8 }):Play() end   -- 받을 수 있으면 금빛이 숨쉰다
+  if o.done then f.BackgroundTransparency = 0.4 end
+  local x = 18
+  if o.emoji or o.art then local t = M.tile(f, 52, { art = o.art, emoji = o.emoji, color = o.color or M.GOLD }); t.Position = UDim2.new(0, 16, 0.5, -26); x = 80 end
+  local tl = txt(f, o.title, 16, UDim2.new(0, x, 0, 13), UDim2.new(1, -x - 160, 0, 20), o.done and Color3.fromRGB(170, 160, 140) or Color3.fromRGB(255, 225, 140), M.FONT); tl.TextTruncate = Enum.TextTruncate.AtEnd
+  if o.desc then local d = txt(f, o.desc, 13, UDim2.new(0, x, 0, 35), UDim2.new(1, -x - 160, 0, 18), Color3.fromRGB(215, 210, 225)); d.TextTruncate = Enum.TextTruncate.AtEnd end
+  if o.reward then local rw = txt(f, "보상  " .. o.reward, 13, UDim2.new(0, x, 0, 54), UDim2.new(1, -x - 160, 0, 16), Color3.fromRGB(240, 200, 120), M.FONT); rw.TextTruncate = Enum.TextTruncate.AtEnd end
+  if o.frac then pbar(f, UDim2.new(0, x, 1, -20), UDim2.new(1, -x - 170, 0, 9), o.frac, o.done and Color3.fromRGB(110, 110, 120) or (o.ready and Color3.fromRGB(240, 190, 70) or Color3.fromRGB(90, 200, 110))) end
   if o.btn then local b = M.btn(f, o.btn, UDim2.new(0, 128, 0, 40), o.btnColor or M.BTN.green, o.click); b.AnchorPoint = Vector2.new(1, 0.5); b.Position = UDim2.new(1, -12, 0.5, 0); b.Active = o.click ~= nil; b.AutoButtonColor = o.click ~= nil end
   return f
 end
@@ -1102,9 +1105,20 @@ end
 function M.quests()
   C.clear()
   local r = C.rpc:InvokeServer("quests"); if r.err then C.msg.Text = tostring(r.err); return end
-  for _, q in ipairs(r.rows or {}) do
+  local rows = r.rows or {}
+  local RANK = { done = 0, active = 1, claimed = 2 }
+  table.sort(rows, function(a, b) return (RANK[a.state] or 1) < (RANK[b.state] or 1) end)
+  local readyN = 0; for _, q in ipairs(rows) do if q.state == "done" then readyN += 1 end end
+  if readyN > 1 then   -- 모두 받기
+    local f = mk("Frame", { Size = UDim2.new(1, -16, 0, 44), BackgroundTransparency = 1, LayoutOrder = -1 }, C.list)
+    local b = M.btn(f, string.format("보상 모두 받기 (%d)", readyN), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
+      for _, q in ipairs(rows) do if q.state == "done" then local e = C.rpc:InvokeServer("questclaim", q.id); if e.summary then C.setSummary(e.summary) end end end
+      M.quests()
+    end); b.AnchorPoint = Vector2.new(0.5, 0); b.Position = UDim2.new(0.5, 0, 0, 2)
+  end
+  for i, q in ipairs(rows) do
     local ready, done = q.state == "done", q.state == "claimed"
-    rowCard({ emoji = done and "✓" or "📜", color = ready and M.GOLD or (done and Color3.fromRGB(110, 200, 130) or Color3.fromRGB(150, 140, 190)), title = string.format("%s (%d/%d)", q.title, math.min(q.p, q.n), q.n), desc = q.desc, frac = q.n > 0 and q.p / q.n or 0, ready = ready, done = done,
+    rowCard({ order = i, reward = q.reward, emoji = done and "✓" or "📜", color = ready and M.GOLD or (done and Color3.fromRGB(110, 200, 130) or Color3.fromRGB(150, 140, 190)), title = string.format("%s (%d/%d)", q.title, math.min(q.p, q.n), q.n), desc = q.desc, frac = q.n > 0 and q.p / q.n or 0, ready = ready, done = done,
       btn = done and "완료" or (ready and "보상 받기" or "진행 중"), btnColor = ready and M.BTN.green or M.BTN.gray,
       click = ready and function() local e = C.rpc:InvokeServer("questclaim", q.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.quests() end or nil })
   end

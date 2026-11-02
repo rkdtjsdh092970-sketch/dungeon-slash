@@ -143,7 +143,9 @@ function M.questView(sv)
   sv.q = sv.q or {}; local out = {}
   for _, d in ipairs(M.QUESTS) do
     local st = sv.q[d.id] or { p = 0, state = "active" }
-    out[#out + 1] = { id = d.id, title = d.title, desc = d.desc, n = d.n, p = st.p, state = st.state }
+    local RN = { gold = "골드", ore = "강화석", orbC = "혼돈 구슬", arcana = "아르카나 조각", hone = "아르카나 조각", shards = "균열 조각", keys = "공허의 열쇠", gems = "보석" }
+    local rw = {}; for k, v in pairs(d.reward or {}) do rw[#rw + 1] = string.format("%s %s", RN[k] or k, tostring(v)) end; table.sort(rw); rw[#rw + 1] = "아르카나 조각 5"
+    out[#out + 1] = { id = d.id, title = d.title, desc = d.desc, n = d.n, p = st.p, state = st.state, reward = table.concat(rw, " · ") }
   end
   return out
 end
