@@ -34,7 +34,7 @@ function M.shopStock(sv)
   return rows
 end
 function M.buySkill(sv, id)
-  local d = SKILL_BY[id]; if not d or isSpecial(d) then return false, "살 수 없는 스킬" end
+  local d = SKILL_BY[id]; if not d or isSpecial(d) then return false, "살 수 없는 아르카나" end
   if (d.unlock or 1) > M.skillAct(sv) then return false, "아직 해금되지 않았습니다" end
   local price = skillPrice(d, 0); if sv.gold < price then return false, "골드가 부족합니다" end
   sv.gold -= price; local inst = { uid = sv.nextUid, id = id, rarity = (d.slot == "passive") and (d.pt or 0) or 0 }; sv.nextUid += 1
@@ -43,7 +43,7 @@ end
 local function findSkill(sv, uid) for _, k in ipairs(sv.skills) do if k.uid == uid then return k end end end
 function M.honeCost(lvl, rarity) return floor((3 + 2 * lvl) * (HONE_RMUL[(rarity or 0) + 1] or 1) + 0.5) end
 function M.levelUpSkill(sv, uid)
-  local k = findSkill(sv, uid); if not k then return false, "없는 스킬" end
+  local k = findSkill(sv, uid); if not k then return false, "없는 아르카나" end
   local lvl = k.lvl or 1; if lvl >= M.SKILL_MAX_LV then return false, "최대 레벨입니다" end
   local c = M.honeCost(lvl, k.rarity); if (sv.hone or 0) < c then return false, "연마석이 부족합니다" end
   sv.hone -= c; k.lvl = lvl + 1; return true
@@ -51,7 +51,7 @@ end
 -- 장착: slotIdx 는 1~sv.slots. 이미 다른 칸에 있으면 그 칸을 비운다
 function M.equipSkill(sv, slotIdx, uid, rule)
   if slotIdx < 1 or slotIdx > sv.slots then return false, "열리지 않은 칸입니다" end
-  local k = findSkill(sv, uid); if not k then return false, "없는 스킬" end
+  local k = findSkill(sv, uid); if not k then return false, "없는 아르카나" end
   local d = SKILL_BY[k.id]; if d.slot == "passive" then sv.passive = uid; return true end
   for i, l in ipairs(sv.loadout) do if l and l.uid == uid then sv.loadout[i] = false end end
   sv.loadout[slotIdx] = { uid = uid, rule = rule or "front" }; return true
@@ -61,7 +61,7 @@ M.SKILL_DIS_ARC = { 1, 2, 5, 15, 40 }   -- 스킬 분해 → 아르카나 조각
 -- 아르카나 조각 (스킬 소환 전용): 전투 · 과제 보상으로 준다
 function M.addArcana(sv, n) n = math.max(0, math.floor(n or 0)); sv.arcana = (sv.arcana or 0) + n; return n end
 function M.sellSkill(sv, uid)
-  local k = findSkill(sv, uid); if not k then return false, "없는 스킬" end
+  local k = findSkill(sv, uid); if not k then return false, "없는 아르카나" end
   if sv.passive == uid then return false, "장착 중입니다" end
   for _, l in ipairs(sv.loadout) do if l and l.uid == uid then return false, "장착 중입니다" end end
   local v = floor(M.SKILL_DIS_ARC[math.min(5, (k.rarity or 0) + 1)] * (1 + 0.25 * ((k.lvl or 1) - 1)) + 0.5)   -- 분해: 아르카나 조각
@@ -170,17 +170,14 @@ function M.rerollAffix(sv, it, idx, rng)   -- idx 는 0부터 (JS 와 같다)
   it.affixes[idx + 1] = Loot.mkAff(rng, wpickAff(rng, pool), it.ilvl, it.rarity); it.rr = (it.rr or 0) + 1; it.rrIdx = idx
   sv.gold -= c.gold; sv.ore -= c.ore; return true
 end
+-- 혼돈 구슬: 장비 옵션의 수치를 (같은 옵션 · 같은 티어 안에서) 다시 굴린다. 예전 신성 구슬 효과 — 신성 구슬은 폐지 (2026-11-02)
 function M.addAffix(sv, it, rng)
-  if it.uniq or #it.affixes >= 5 or (sv.orbC or 0) < 1 then return false, (sv.orbC or 0) < 1 and "혼돈 구슬이 없습니다" or "옵션은 최대 5줄입니다" end
-  local pool = Loot.affixPool(it); if #pool == 0 then return false, "붙일 수 있는 옵션이 없습니다" end
-  it.affixes[#it.affixes + 1] = Loot.mkAff(rng, wpickAff(rng, pool), it.ilvl, it.rarity); sv.orbC -= 1; return true
-end
-function M.divine(sv, it, rng)
-  if it.uniq or #it.affixes == 0 or (sv.orbD or 0) < 1 then return false, "신성한 구슬이 없습니다" end
+  if it.uniq or #it.affixes == 0 or (sv.orbC or 0) < 1 then return false, (sv.orbC or 0) < 1 and "혼돈 구슬이 없습니다" or "옵션이 없는 장비입니다" end
   local by = {}; for _, a in ipairs(Items.AFFIXES) do by[a.k] = a end
   for i, a in ipairs(it.affixes) do it.affixes[i] = Loot.mkAff(rng, by[a.k], it.ilvl, it.rarity, a.t) end
-  sv.orbD -= 1; return true
+  sv.orbC -= 1; return true
 end
+M.divine = M.addAffix   -- 예전 요청 이름 호환
 
 -- ---------- 돌 (원초의 돌 → 확인 → 소켓) ----------
 local STONE_CAP = 100
@@ -285,7 +282,7 @@ function M.gachaPull(sv, n, pay, rng, fam)
   local G = M.GACHA; n = (n == 10) and 10 or 1
   if pay == "gem" then local c = n == 10 and G.GEM10 or G.GEM1; if (sv.gems or 0) < c then return nil, "보석이 부족합니다" end; sv.gems -= c
   else local c = n == 10 and G.ARC10 or G.ARC1; if (sv.arcana or 0) < c then return nil, "아르카나 조각이 부족합니다" end; sv.arcana -= c end
-  local pool = gachaPool(sv, fam); if #pool == 0 then return nil, "뽑을 스킬이 없습니다" end
+  local pool = gachaPool(sv, fam); if #pool == 0 then return nil, "뽑을 아르카나가 없습니다" end
   local out, gotHigh = {}, false
   for i = 1, n do
     sv.gachaPity = (sv.gachaPity or 0) + 1

@@ -326,7 +326,7 @@ function M.records(sv)
     { "스테이지", string.format("%d/5", sv.cleared or 0) }, { "균열 최고층", string.format("%d층", sv.rift and sv.rift.best or 0) },
     { "솟아난 탑 최고층", string.format("%d층", sv.spire and sv.spire.best or 0) }, { "무한 균열 최고 웨이브", tostring(sv.endless and sv.endless.best or 0) },
     { "문지기 처치", (sv.raid and (sv.raid.cleared or 0) > 0) and "예" or "아니오" }, { "전직", string.format("%d차", sv.cls or 0) },
-    { "보유 장비", tostring(#sv.inv) }, { "보유 스킬", tostring(#sv.skills) }, { "균열 조각", tostring(sv.shards or 0) } }, owned = owned }
+    { "보유 장비", tostring(#sv.inv) }, { "보유 아르카나", tostring(#sv.skills) }, { "균열 조각", tostring(sv.shards or 0) } }, owned = owned }
 end
 function M.skillClean(sv, rules, keepBest)
   local busy = {}
@@ -418,17 +418,17 @@ function M.fight(sv, kind, n, seed)
     if kind == "rift" then Extras.questEvent(sv, "rift", 1); if boss and rng:NextNumber() < 0.2 then local rid = Extras.randomRune(rng); Extras.addRune(sv, rid); res.rune = rid end end
     local mfv = math.max(0, Stats.computeStats(sv).mf + Econ.atlasVal(sv, "mf") + 0.01 * (sv.guildLv or 0))
     local d = Loot.fieldDrops(rng, sv, node, boss, 1 + mfv / (1 + mfv / CFG.MF_HALF))   -- 웹 mfEff
-    do local om = 1 + Econ.atlasVal(sv, "orb"); local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0); d.orbD = roll(d.orbD or 0) end   -- 혼돈의 인장
-    sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
+    do local om = 1 + Econ.atlasVal(sv, "orb"); local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0) end   -- 혼돈의 인장
+    if (d.orbC or 0) > 0 then sv.orbC = (sv.orbC or 0) + d.orbC; res.orbC = d.orbC end; if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
     d.ore = floor(d.ore * (1 + Econ.atlasVal(sv, "ore")) + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.arcana = (sv.arcana or 0) + d.hone; res.arcana = (res.arcana or 0) + d.hone end   -- (연마석 드랍 → 아르카나 조각); if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
     if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it) } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true
-      if n >= 3 and sv.slots < 3 then sv.slots = 3; res.note = "3번 스킬 칸이 열렸습니다!" end
+      if n >= 3 and sv.slots < 3 then sv.slots = 3; res.note = "3번 아르카나 칸이 열렸습니다!" end
       if n >= CFG.STAGES then
-        if sv.slots < 4 then sv.slots = 4; res.note = "4번 스킬 칸이 열렸습니다!" end
+        if sv.slots < 4 then sv.slots = 4; res.note = "4번 아르카나 칸이 열렸습니다!" end
         sv.lanesBase = CFG.ENDGAME_LANES; res.note = (res.note or "") .. " 스테이지 클리어! 영구 3레인과 '심연의 균열'이 열립니다."
       end
     end
@@ -446,7 +446,25 @@ end
 -- 경제 API (서버가 RPC 로 호출)
 function M.shop(sv) return Econ.shopStock(sv) end
 function M.buySkill(sv, id) return Econ.buySkill(sv, id) end
-function M.skills(sv) return Econ.skillList(sv) end
+-- 아르카나(스킬) 목록 + 실제 수치: 쿨타임(쿨감 적용) · 사거리 · 마나 · 1회 위력 · 초당 피해(내 능력치로 계산) · 범위 모양
+local AREA = { single = "단일", multi = "3x3 범위", cone = "앞 부채꼴", pierce = "한 줄 관통", chain = "연쇄", nova = "사거리 안 전체", meteor = "무작위 낙하", zone = "한 줄 3칸 지속", zone2 = "구역 지속",
+  spray = "여러 발 난사", orbit = "주위를 도는 구체", aura = "앞줄 지속", trap = "지뢰 3x3", rain = "무작위 낙뢰", summon = "소환수", hole = "끌어당기는 구역", bounce = "튕기며 여러 번", shuri = "구간 지속", boomer = "줄 관통 왕복", buff = "강화", heal = "회복" }
+function M.skills(sv)
+  local rows = Econ.skillList(sv)
+  local s = Stats.computeStats(sv)
+  local byUid = {}; for _, k in ipairs(sv.skills) do byUid[k.uid] = k end
+  for _, r in ipairs(rows) do
+    local inst = byUid[r.uid]
+    if inst then
+      local k = Battle.skillOf(inst)
+      r.cd = math.max(0.2, (k.cd or 1) * (1 - (s.cdr or 0))); r.range = k.range; r.mana = math.floor((k.mana or 0) + 0.5)
+      r.mult = k.mult * ((k.hits or 1) * (k.hitMul or 1)); r.area = AREA[k.kind] or k.kind; r.elem = k.elem; r.basic = k.slot == "basic"
+      r.count = k.count; r.jumps = k.jumps; r.dur = k.dur
+      local ok, d = pcall(Power.detail, s, { k }, 1); r.dps = ok and d and d.dps or nil
+    end
+  end
+  return rows
+end
 function M.levelUp(sv, uid) return Econ.levelUpSkill(sv, uid) end
 function M.equipSkill(sv, slot, uid, rule) return Econ.equipSkill(sv, slot, uid, rule) end
 function M.sellSkill(sv, uid) return Econ.sellSkill(sv, uid) end

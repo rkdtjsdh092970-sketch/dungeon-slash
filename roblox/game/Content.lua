@@ -187,8 +187,7 @@ function M.play(sv, spec, seed)
   local shards = floor((1 + floor((node.tier or 1) / 6) + 3 + waves + (kind == "void" and 2 * (node.vsel or 1) or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5)
   sv.shards = (sv.shards or 0) + shards; res.shards = shards
   local oc = orbs(kind, node, waves)
-  local c = floor(oc) + (rng:NextNumber() < oc - floor(oc) and 1 or 0); sv.orbC = (sv.orbC or 0) + c; res.orbC = c
-  local od = oc * 0.05; local d = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0); sv.orbD = (sv.orbD or 0) + d
+  local od = oc * 0.05; local c = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0); sv.orbC = (sv.orbC or 0) + c; res.orbC = c   -- 혼돈 구슬: 예전 신성 구슬 확률
   -- 원초의 돌
   if kind == "void" or EBk or kind == "endless" or kind == "raid" then
     local chance = kind == "raid" and 2.0 or 1.2; local cnt = 0

@@ -19,7 +19,7 @@
 %s (Lv%d · %d명)	%s (Lv%d · %d members)
 %s · Lv%d · %d명 · 코인 %d	%s · Lv%d · %d members · Coins %d
 (없음)	(None)
-1) 도전 탭 → 스테이지 1~5를 차례로 클리어하세요 (3·5 클리어 시 스킬 칸이 열립니다).	1) Challenge tab → Clear Stages 1~5 in order (Skill slots unlock after 3·5).
+1) 도전 탭 → 스테이지 1~5를 차례로 클리어하세요 (3·5 클리어 시 아르카나 칸이 열립니다).	1) Challenge tab → Clear Stages 1~5 in order (Arcana slots unlock after 3·5).
 10만 기부	Donate 100,000
 10초 동안 독니 새끼들이 앞줄의 적을 물어 중독시킨다	Fang Hatchlings bite and Poison front-row enemies for 10s
 10초 동안 불꽃 정령이 앞줄의 적을 태우며 베어낸다	A Fire Spirit burns and slashes front-row enemies for 10s
@@ -29,20 +29,20 @@
 10초 동안 폭풍의 화신이 앞줄의 적을 번개로 지진다	A Storm Avatar zaps front-row enemies with Lightning for 10s
 1단계	Phase 1
 1층	Floor 1
-2) 상점에서 스킬을 사고, 장비 탭에서 더 좋은 장비를 장착하세요. 안 쓰는 장비는 판매/분해.	2) Buy Skills at the shop, then Equip better Gear in the Gear tab. Sell/Dismantle unused Gear.
+2) 상점에서 아르카나를 사고, 장비 탭에서 더 좋은 장비를 장착하세요. 안 쓰는 장비는 판매/분해.	2) Buy Arcana at the shop, then Equip better Gear in the Gear tab. Sell/Dismantle unused Gear.
 20층 탑	20-Floor Tower
 2단계	Phase 2
 3) 대장간에서 강화·옵션 재굴림, 패시브 탭에서 포인트를 찍습니다 (자동 배분 있음).	3) Enhance·reroll Affixes at the Forge, and spend points in the Passive tab (Auto allocation available).
 3.5초 동안 독 가시 12개가 무작위 적에게 떨어져 중독시킨다	12 Poison Thorns fall on random enemies over 3.5s, inflicting Poison
 3.5초 동안 용암 덩어리 12개가 무작위 적에게 떨어져 점화시킨다	12 Lava Chunks fall on random enemies over 3.5s, inflicting Ignite
 3.5초 동안 하늘에서 번개 16줄기가 무작위 적을 내리친다	16 Lightning bolts strike random enemies from above over 3.5s
-3번 스킬 칸이 열렸습니다!	Skill slot 3 unlocked!
+3번 아르카나 칸이 열렸습니다!	Arcana slot 3 unlocked!
 3차 전직 후에 쓸 수 있습니다	Requires Class Advancement 3
 3차 전직 후에 장착할 수 있습니다.	Can be equipped after Class Advancement 3.
 3초 동안 적을 빨아들이며 갈아버리는 심연을 연다	Opens an abyss that pulls in and shreds enemies for 3s
 3초 동안 하늘에서 번개 8줄기가 무작위 적을 내리친다	8 Lightning bolts strike random enemies from above over 3s
 4) 스테이지 5를 깨면 '균열'이 열립니다. 100층을 깨면 졸업 → 탑 · 콘텐츠 · 전직 · 참 · 문지기.	4) Clear Stage 5 to unlock 'Rift'. Clear Floor 100 to graduate → Tower · Content · Class Advancement · Charm · Warden.
-4번 스킬 칸이 열렸습니다!	Skill slot 4 unlocked!
+4번 아르카나 칸이 열렸습니다!	Arcana slot 4 unlocked!
 4초 동안 거대한 아가리가 열려 주변 적을 끌어당기며 갈아버린다	A giant maw opens for 4s, pulling in and shredding nearby enemies
 4초 동안 공허의 빛줄기 14개가 무작위 적을 내리치고 주변을 휩쓴다	14 Void beams strike random enemies and sweep the area over 4s
 5) 일일 탭에서 매일 보상과 오프라인 보상을 받고, 길드에 가입해 주간 목표·보스에 참여하세요.	5) Claim Daily and Offline Rewards in the Daily tab, and join a Guild for weekly goals·Bosses.
@@ -56,7 +56,7 @@
 8초 동안 구체 3개가 주위를 돌며 가까운 적을 때린다	3 spheres orbit for 8s, striking nearby enemies
 8초 동안 정령이 앞줄의 적을 쉬지 않고 베어낸다	A Spirit relentlessly slashes front-row enemies for 8s
 8초 동안 주는 피해 +30%	For 8s, Damage dealt +30%
-8초 주기 중 5초간 물리 스킬 피해 +40% (화염 변환)	Every 8s, Physical Skill Damage for 5s +40% (Fire conversion)
+8초 주기 중 5초간 물리 아르카나 피해 +40% (화염 변환)	Every 8s, Physical Arcana Damage for 5s +40% (Fire conversion)
 EditableImage 사용 불가 → 그림 없이 진행:	EditableImage unavailable → Continuing without images:
 G · 이름은 2~12자	G · Name must be 2~12 characters
 MF +10% · 골드 획득 +12% · 광역 피해 +5%	MF +10% · Gold Gain +12% · Area Damage +5%
@@ -89,7 +89,7 @@ T6 장비 + 계시의 돌 풀 장착	T6 Gear + Fully socketed Stones of Revelati
 [패시브] 모든 피해 +14%, 공격·주문 5% 추가 증가, 쿨타임 -6%, 방어·저항 10% 관통, 연쇄 +1	[Passive] All Damage +14%, ATK·SPL increased by an additional 5%, Cooldown -6%, DEF·Resistance Penetration 10%, Chain +1
 [패시브] 방어·저항 10% 관통, 모든 피해 +8%, 쿨타임 -4%	[Passive] DEF·Resistance Penetration 10%, All Damage +8%, Cooldown -4%
 [패시브] 싸울수록 강해진다 — 공격력·주문력 +7%, 쿨타임 -5%, 흡혈 +0.4%	[Passive] Grow stronger in battle — ATK·SPL +7%, Cooldown -5%, Lifesteal +0.4%
-[패시브] 연쇄 +1회(번개·연쇄 스킬), 모든 피해 +10%, 치명타 +6%, 방어 감소 +6%	[Passive] Chain +1 (Lightning·Chain Skills), All Damage +10%, Crit Chance +6%, DEF Reduction +6%
+[패시브] 연쇄 +1회(번개·연쇄 아르카나), 모든 피해 +10%, 치명타 +6%, 방어 감소 +6%	[Passive] Chain +1 (Lightning·Chain Arcana), All Damage +10%, Crit Chance +6%, DEF Reduction +6%
 [패시브] 피부가 단단해진다 — 방어력 +10%, 최대 체력 +6%	[Passive] Tougher skin — DEF +10%, Max HP +6%
 [패시브] 흔들리지 않는 요새 — 방어력 +16%, 체력 +12%, 받는 피해 -4%	[Passive] Unshakable fortress — DEF +16%, HP +12%, Damage taken -4%
 manaOnKill +400% · 초당 마나 재생 +0.40%	manaOnKill +400% · Mana Regen per second +0.40%
@@ -98,7 +98,7 @@ rpc 오류:	rpc error:
 가방 칸 +{v}	Bag Slots +{v}
 가방 확장	Expand Bag
 가속	Haste
-가시 갑옷! 스킬로 때릴수록 피해가 되돌아온다!	Thorn Armor! Skill hits reflect Damage back at you!
+가시 갑옷! 아르카나로 때릴수록 피해가 되돌아온다!	Thorn Armor! Arcana hits reflect Damage back at you!
 가입	Join
 가입!	Join!
 각성자	Awakened
@@ -236,7 +236,7 @@ rpc 오류:	rpc error:
 광역 피해 +25%	Area Damage +25%
 광역 피해 +4%	Area Damage +4%
 광역 피해 +5%	Area Damage +5%
-광역 피해 +50%, 단일 대상 스킬 피해 -30%	Area Damage +50%, Single-Target Skill Damage -30%
+광역 피해 +50%, 단일 대상 아르카나 피해 -30%	Area Damage +50%, Single-Target Arcana Damage -30%
 광역 피해 +6%	Area Damage +6%
 광역 피해 +8% · 쿨타임 감소 +2%	Area Damage +8% · Cooldown Reduction +2%
 광역 피해 +{v}	Area Damage +{v}
@@ -245,7 +245,7 @@ rpc 오류:	rpc error:
 구매	Buy
 구슬	Orb
 구슬 %.1f초	Orb %.1fs
-구슬이 터지기 전에 직접 눌러 없애야 합니다 (스킬은 통하지 않음).	Tap Orbs to destroy them before they explode (Skills do not work).
+구슬이 터지기 전에 직접 눌러 없애야 합니다 (아르카나는 통하지 않음).	Tap Orbs to destroy them before they explode (Arcana do not work).
 군주의 부름	Lord's Call
 군집	Swarm
 군집의 인장	Seal of the Swarm
@@ -333,11 +333,11 @@ rpc 오류:	rpc error:
 단단한 적 사냥	Tough Enemy Hunt
 단련	Conditioning
 단련된 피부	Hardened Skin
-단일 대상 스킬 피해 +15% · 지속·장판 스킬 피해 +15% · 소환 스킬 피해 +15% · 보스 전용기 피해 +30% · 쿨타임 감소 +3%	Single-Target Skill Damage +15% · Ongoing·Ground Skill Damage +15% · Summon Skill Damage +15% · Boss Specialist Skill Damage +30% · Cooldown Reduction +3%
-단일 대상 스킬 피해 +2%	Single-Target Skill Damage +2%
-단일 대상 스킬 피해 +4%	Single-Target Skill Damage +4%
-단일 대상 스킬 피해 +6%	Single-Target Skill Damage +6%
-단일 대상 스킬 피해 +8%	Single-Target Skill Damage +8%
+단일 대상 아르카나 피해 +15% · 지속·장판 아르카나 피해 +15% · 소환 아르카나 피해 +15% · 보스 전용기 피해 +30% · 쿨타임 감소 +3%	Single-Target Arcana Damage +15% · Ongoing·Ground Arcana Damage +15% · Summon Arcana Damage +15% · Boss Specialist Arcana Damage +30% · Cooldown Reduction +3%
+단일 대상 아르카나 피해 +2%	Single-Target Arcana Damage +2%
+단일 대상 아르카나 피해 +4%	Single-Target Arcana Damage +4%
+단일 대상 아르카나 피해 +6%	Single-Target Arcana Damage +6%
+단일 대상 아르카나 피해 +8%	Single-Target Arcana Damage +8%
 단죄	Condemnation
 달성한 목표가 없습니다	No goals achieved
 대마법사	Archmage
@@ -470,7 +470,7 @@ rpc 오류:	rpc error:
 마나 흡수 II	Mana Leech II
 마나(고정)	Mana (Flat)
 마나가 0일 때 방어력 +200%	At 0 Mana, DEF +200%
-마나가 80% 이상이면 모든 스킬 피해 +20%	With Mana at least 80%, All Skill Damage +20%
+마나가 80% 이상이면 모든 아르카나 피해 +20%	With Mana at least 80%, All Arcana Damage +20%
 마나가 가득 찼을 때 주는 피해 +30%, 아니면 -10%	At full Mana, Damage dealt +30%, otherwise -10%
 마나가 가득 찼을 때 피해 +{v}	Damage at Full Mana +{v}
 마나의 샘	Wellspring of Mana
@@ -530,7 +530,7 @@ rpc 오류:	rpc error:
 마왕이 진정한 힘을 드러낸다!	The Demon King reveals his true power!
 마을	Village
 마을로	To Village
-마을로 돌아가 장비 · 스킬 · 퀘스트를 정비합니다.	Return to the Village to manage Gear · Skills · Quests.
+마을로 돌아가 장비 · 아르카나 · 퀘스트를 정비합니다.	Return to the Village to manage Gear · Arcana · Quests.
 마지막 숨	Last Breath
 맞으면 중독된다	Hits inflict Poison
 맞힌 적 뒤로 번개가 2번 튄다	Lightning bounces 2 times behind the enemy hit
@@ -546,9 +546,9 @@ rpc 오류:	rpc error:
 맹독의 징표	Mark of Venom
 머리가 재생한다!	Its heads regenerate!
 명)	members)
-모든 스킬 쿨타임 -15%, 마나 소모 +40%	All Skill Cooldowns -15%, Mana Cost +40%
-모든 스킬 피해 +20%, 쿨타임 +40%	All Skill Damage +20%, Cooldown +40%
-모든 스킬이 쿨타임 중이 아닐 때 주는 피해 +50%	When no Skills are on Cooldown, Damage dealt +50%
+모든 아르카나 쿨타임 -15%, 마나 소모 +40%	All Arcana Cooldowns -15%, Mana Cost +40%
+모든 아르카나 피해 +20%, 쿨타임 +40%	All Arcana Damage +20%, Cooldown +40%
+모든 아르카나가 쿨타임 중이 아닐 때 주는 피해 +50%	When no Arcana are on Cooldown, Damage dealt +50%
 모든 피해 +{v}	All Damage +{v}
 모래 장막! 졸개를 처치해야 한다!	Sand Veil! Defeat the minions!
 모래 전갈	Sand Scorpion
@@ -676,7 +676,7 @@ rpc 오류:	rpc error:
 번개 도약 +1 · 번개 피해 +15%	Lightning Bounces +1 · Lightning Damage +15%
 번개 도약 +1 · 쿨타임 감소 +2%	Lightning Bounces +1 · Cooldown Reduction +2%
 번개 숙련	Lightning Mastery
-번개 스킬이 적중하면 25% 확률로 다른 적에게 번개가 튀어 피해의 50%를 줌	Lightning Skill hits have an arc chance of 25%, hitting another enemy for Damage equal to 50%
+번개 아르카나가 적중하면 25% 확률로 다른 적에게 번개가 튀어 피해의 50%를 줌	Lightning Arcana hits have an arc chance of 25%, hitting another enemy for Damage equal to 50%
 번개 찌르기	Lightning Thrust
 번개 피해 %	Lightning Damage %
 번개 피해 +5%	Lightning Damage +5%
@@ -753,7 +753,6 @@ rpc 오류:	rpc error:
 불씨의 기술	Ember Arts
 붉은 탑의 문지기	Red Tower Warden
 붙일 수 있는 옵션이 없습니다	No Affixes available to add
-비어 있음	Empty
 비전 갈증	Arcane Thirst
 비전 구체	Arcane Sphere
 비전 순환	Arcane Circulation
@@ -762,11 +761,11 @@ rpc 오류:	rpc error:
 비전 전환	Arcane Conversion
 비전 집중	Arcane Concentration
 빈 소켓이 없습니다	No empty Sockets
-빈 스킬 칸 하나당 주는 피해 +25%	Per empty Skill slot, Damage dealt +25%
+빈 아르카나 칸 하나당 주는 피해 +25%	Per empty Arcana slot, Damage dealt +25%
 빈 칸 	Empty Slot 
 빙결 파동	Freezing Wave
 빙결 파쇄	Frost Shatter
-빙결(스킬 정지) · 강타 충전	Freeze (Skills disabled) · Charging Smash
+빙결(아르카나 정지) · 강타 충전	Freeze (Arcana disabled) · Charging Smash
 빙하 낙하	Glacier Drop
 빠르고 공격이 느려지게 한다	Fast and slows your attacks
 빠른 단일 공격	Quick single-target attack
@@ -778,7 +777,7 @@ rpc 오류:	rpc error:
 사냥꾼의 직감	Hunter's Intuition
 사탄	Satan
 사탄 장비	Satan Gear
-살 수 없는 스킬	Skill unavailable for purchase
+살 수 없는 아르카나	Arcana unavailable for purchase
 살점 꿰기	Flesh Skewer
 상위 관문은 노말 레이드 클리어 후 열립니다	Higher Gates unlock after clearing the Normal Raid
 상자가 금화를 토해낸다!	The chest spews Gold!
@@ -807,7 +806,7 @@ rpc 오류:	rpc error:
 서리 거인 요툰	Jotun, Frost Giant
 서리 늑대	Frost Wolf
 서리 상처! 생명력 흡수·회복이 반감된다!	Frost Wound! Lifesteal·Healing halved!
-서리 숨결! 스킬이 얼어붙는다!	Frost Breath! Skills freeze!
+서리 숨결! 아르카나가 얼어붙는다!	Frost Breath! Arcana freeze!
 서리 여왕	Frost Queen
 서리 여왕 글라시아	Glacia, Frost Queen
 서리 여왕의 왕관	Frost Queen's Crown
@@ -834,10 +833,10 @@ rpc 오류:	rpc error:
 소환 · 방어막 · 충전 · 저주 · 불비 · 분노 · 치유 감소	Summon · Barrier · Charge · Curse · Fire Rain · Enrage · Healing Reduction
 소환 · 일격 충전 · 저주 · 분노	Summon · Charging Strike · Curse · Enrage
 소환 숙련	Summon Mastery
-소환 스킬 피해 +10%	Summon Skill Damage +10%
-소환 스킬 피해 +4%	Summon Skill Damage +4%
-소환 스킬 피해 +50%	Summon Skill Damage +50%
-소환 스킬 피해 +6%	Summon Skill Damage +6%
+소환 아르카나 피해 +10%	Summon Arcana Damage +10%
+소환 아르카나 피해 +4%	Summon Arcana Damage +4%
+소환 아르카나 피해 +50%	Summon Arcana Damage +50%
+소환 아르카나 피해 +6%	Summon Arcana Damage +6%
 소환사의 길	Summoner's Path
 속도	Speed
 속박	Root
@@ -861,37 +860,37 @@ rpc 오류:	rpc error:
 수호의 맹세	Oath of Protection
 숙련된 손	Skilled Hands
 숙련된 손놀림	Deft Hands
-스킬	Skill
-스킬 	Skill 
-스킬 구매	Buy Skill
-스킬 마나 소모 -15%	Skill Mana Cost -15%
-스킬 마스터	Skill Master
-스킬 상점	Skill Shop
-스킬 세부 85	Skill Node 85
-스킬 세부 86	Skill Node 86
-스킬 세부 87	Skill Node 87
-스킬 세부 88	Skill Node 88
-스킬 세부 89	Skill Node 89
-스킬 세부 90	Skill Node 90
-스킬 세부 91	Skill Node 91
-스킬 세부 92	Skill Node 92
-스킬 세부 93	Skill Node 93
-스킬 세부 94	Skill Node 94
-스킬 세부 95	Skill Node 95
-스킬 세부 96	Skill Node 96
-스킬 세부 97	Skill Node 97
-스킬 세부 98	Skill Node 98
-스킬 숙련	Skill Mastery
-스킬 연계	Skill Combo
-스킬 정비소	Skill Workshop
-스킬 지속시간 +25%	Skill Duration +25%
-스킬 지속시간 +6%	Skill Duration +6%
-스킬 지속시간 +8%	Skill Duration +8%
-스킬 지속시간 +{v}	Skill Duration +{v}
-스킬 카드의 '룬' 버튼으로 끼울 스킬을 고릅니다 (아래 스킬을 먼저 선택).	Use the 'Rune' button on a Skill card to choose its host Skill (select a Skill below first).
-스킬 쿨타임 +25%	Skill Cooldown +25%
-스킬의 정점	Pinnacle of Skills
-스킬이 적중할 때 8% 확률로 피해가 두 배로 들어가는 겹침 타격	Skill hits can deal double Damage with an overlapping strike, chance 8%
+아르카나	Arcana
+아르카나 	Arcana 
+아르카나 구매	Buy Arcana
+아르카나 마나 소모 -15%	Arcana Mana Cost -15%
+아르카나 마스터	Arcana Master
+아르카나 상점	Arcana Shop
+아르카나 세부 85	Arcana Node 85
+아르카나 세부 86	Arcana Node 86
+아르카나 세부 87	Arcana Node 87
+아르카나 세부 88	Arcana Node 88
+아르카나 세부 89	Arcana Node 89
+아르카나 세부 90	Arcana Node 90
+아르카나 세부 91	Arcana Node 91
+아르카나 세부 92	Arcana Node 92
+아르카나 세부 93	Arcana Node 93
+아르카나 세부 94	Arcana Node 94
+아르카나 세부 95	Arcana Node 95
+아르카나 세부 96	Arcana Node 96
+아르카나 세부 97	Arcana Node 97
+아르카나 세부 98	Arcana Node 98
+아르카나 숙련	Arcana Mastery
+아르카나 연계	Arcana Combo
+아르카나 정비소	Arcana Workshop
+아르카나 지속시간 +25%	Arcana Duration +25%
+아르카나 지속시간 +6%	Arcana Duration +6%
+아르카나 지속시간 +8%	Arcana Duration +8%
+아르카나 지속시간 +{v}	Arcana Duration +{v}
+아르카나 카드의 '룬' 버튼으로 끼울 아르카나를 고릅니다 (아래 아르카나를 먼저 선택).	Use the 'Rune' button on a Arcana card to choose its host Arcana (select a Arcana below first).
+아르카나 쿨타임 +25%	Arcana Cooldown +25%
+아르카나의 정점	Pinnacle of Arcana
+아르카나가 적중할 때 8% 확률로 피해가 두 배로 들어가는 겹침 타격	Arcana hits can deal double Damage with an overlapping strike, chance 8%
 스테이지 	Stage 
 스테이지 5 — 들판의 군주 그룸	Stage 5 — Groom, Lord of the Fields
 스테이지 5(그룸)를 클리어하면 열립니다	Unlocks after clearing Stage 5 (Groom)
@@ -944,7 +943,7 @@ rpc 오류:	rpc error:
 없는 룬	Rune not found
 없는 목표	Goal not found
 없는 상품	Product not found
-없는 스킬	Skill not found
+없는 아르카나	Arcana not found
 없는 시트	Sheet not found
 없는 장비	Gear not found
 없는 줄	Affix not found
@@ -1064,7 +1063,7 @@ rpc 오류:	rpc error:
 이지 · 노말 · 하드 최초 클리어마다 전직의 서	Tome of Advancement for each first clear on Easy · Normal · Hard
 일격	Strike
 일반	Common
-일반 등급 스킬만 장착했을 때 주는 피해 +100%	With only Common Skills equipped, Damage dealt +100%
+일반 등급 아르카나만 장착했을 때 주는 피해 +100%	With only Common Arcana equipped, Damage dealt +100%
 일반 몹에게 추가 피해를 주는 광역	Area attack with bonus Damage to normal monsters
 일반 분해	Dismantle Common
 일반 적은 체력이 10% 아래로 떨어지면 즉시 소멸 (정예 · 보스 제외)	Normal enemies vanish instantly below HP 10% (excludes Elites · Bosses)
@@ -1128,8 +1127,8 @@ rpc 오류:	rpc error:
 적을 처치할 때 8% 확률로 골드를 5배로 얻음	On kill, chance 8%: gain 5 times the Gold
 적이 모이는 곳에 지뢰를 묻는다. 밟으면 3x3 대폭발	Plants a mine where enemies gather. Triggers a massive 3x3 explosion when stepped on
 적이 있는 레인 하나당 주는 피해 +5% (최대 4레인)	Per lane with enemies, Damage dealt +5% (up to 4 lanes)
-적중 시 12% 확률로 장착한 번개 스킬 하나를 마나 없이 발동	On hit, chance 12%: trigger an equipped Lightning Skill at no Mana cost
-적중 시 8% 확률로 쿨타임 · 마나를 무시하고 장착한 스킬 하나 추가 발동	On hit, chance 8%: trigger an extra equipped Skill, ignoring Cooldown · Mana
+적중 시 12% 확률로 장착한 번개 아르카나 하나를 마나 없이 발동	On hit, chance 12%: trigger an equipped Lightning Arcana at no Mana cost
+적중 시 8% 확률로 쿨타임 · 마나를 무시하고 장착한 아르카나 하나 추가 발동	On hit, chance 8%: trigger an extra equipped Arcana, ignoring Cooldown · Mana
 적중 시 마나 흡수(최대 마나) +0.03%	Mana Leech on Hit (Max Mana) +0.03%
 적중 시 마나 흡수(최대 마나) +0.10%	Mana Leech on Hit (Max Mana) +0.10%
 적중 시 마나 흡수(최대 마나) +0.15%	Mana Leech on Hit (Max Mana) +0.15%
@@ -1147,7 +1146,7 @@ rpc 오류:	rpc error:
 전직 %d차 · 포인트 %d / %d · 전직의 서 %d/%d/%d	Class Advancement %d · Points %d / %d · Tome of Advancement %d/%d/%d
 전투 기술	Combat Arts
 전투 마술	Battle Magic
-전투 시작 시 모든 스킬을 바로 쓸 수 있다	All Skills are ready at the start of battle
+전투 시작 시 모든 아르카나를 바로 쓸 수 있다	All Arcana are ready at the start of battle
 전투 시작 후 3초간 주는 피해 +60%	For 3s after battle starts, Damage dealt +60%
 전투 시작 후 3초간 주는 피해 +{v}	Damage dealt +{v} for 3s after battle starts
 전투 중입니다	In battle
@@ -1188,7 +1187,7 @@ rpc 오류:	rpc error:
 주간 길드 목표	Weekly Guild Goals
 주기적으로 독에 중독	Periodically Poisoned
 주는 피해 %	Damage Dealt %
-주는 피해 +10% · 쿨타임 감소 +4% · 스킬 지속시간 +10%	Damage dealt +10% · Cooldown Reduction +4% · Skill Duration +10%
+주는 피해 +10% · 쿨타임 감소 +4% · 아르카나 지속시간 +10%	Damage dealt +10% · Cooldown Reduction +4% · Arcana Duration +10%
 주는 피해 +12% · 물리 치명타 확률 +6% · 공격력 +10%	Damage dealt +12% · Physical Crit Chance +6% · ATK +10%
 주는 피해 +4%	Damage dealt +4%
 주문 가속	SPL Haste
@@ -1234,10 +1233,10 @@ rpc 오류:	rpc error:
 지속 피해 +20% · 출혈 확률 +10%	Damage over Time +20% · Bleed Chance +10%
 지속 피해 +35%, 치명타 피해 -35%	Damage over Time +35%, Crit Damage -35%
 지속 피해 +6%	Damage over Time +6%
-지속·장판 스킬 피해 +2%	Ongoing·Ground Skill Damage +2%
-지속·장판 스킬 피해 +3% · 소환 스킬 피해 +3%	Ongoing·Ground Skill Damage +3% · Summon Skill Damage +3%
-지속·장판 스킬 피해 +6%	Ongoing·Ground Skill Damage +6%
-지속·장판 스킬 피해 +8% · 스킬 지속시간 +6%	Ongoing·Ground Skill Damage +8% · Skill Duration +6%
+지속·장판 아르카나 피해 +2%	Ongoing·Ground Arcana Damage +2%
+지속·장판 아르카나 피해 +3% · 소환 아르카나 피해 +3%	Ongoing·Ground Arcana Damage +3% · Summon Arcana Damage +3%
+지속·장판 아르카나 피해 +6%	Ongoing·Ground Arcana Damage +6%
+지속·장판 아르카나 피해 +8% · 아르카나 지속시간 +6%	Ongoing·Ground Arcana Damage +8% · Arcana Duration +6%
 지속시간·횟수 +30%, 번개 도약 +2	Duration·Hit Count +30%, Lightning Bounces +2
 지속의 달인	Duration Master
 지옥견	Hellhound
@@ -1297,8 +1296,8 @@ rpc 오류:	rpc error:
 철벽 한계	Iron Wall Limit
 철벽의 부적	Talisman of Iron Walls
 첫 군주	First Lord
-첫 번째 칸 스킬 피해 +40%, 나머지 -10%	First Slot Skill Damage +40%, other slots -10%
-첫 번째 칸 스킬 피해 +{v}	First Slot Skill Damage +{v}
+첫 번째 칸 아르카나 피해 +40%, 나머지 -10%	First Slot Arcana Damage +40%, other slots -10%
+첫 번째 칸 아르카나 피해 +{v}	First Slot Arcana Damage +{v}
 체력	HP
 체력 %	HP %
 체력 %s · 공격 %s · 주문 %s · 방어 %s · 치명 %.0f%%\n스테이지 %d/5 · 균열 %d/100 · 탑 %d/100	HP %s · ATK %s · SPL %s · DEF %s · Crit %.0f%%\nStage %d/5 · Rift %d/100 · Tower %d/100
@@ -1400,10 +1399,10 @@ rpc 오류:	rpc error:
 쿨타임 감소 +0.40%	Cooldown Reduction +0.40%
 쿨타임 감소 +0.6% · 광역 피해 +2%	Cooldown Reduction +0.6% · Area Damage +2%
 쿨타임 감소 +0.8%	Cooldown Reduction +0.8%
-쿨타임 감소 +1% · 단일 대상 스킬 피해 +3%	Cooldown Reduction +1% · Single-Target Skill Damage +3%
+쿨타임 감소 +1% · 단일 대상 아르카나 피해 +3%	Cooldown Reduction +1% · Single-Target Arcana Damage +3%
 쿨타임 감소 +10%, 마나 소모 +60%	Cooldown Reduction +10%, Mana Cost +60%
 쿨타임 감소 +2%	Cooldown Reduction +2%
-쿨타임 감소 +2% · 단일 대상 스킬 피해 +6%	Cooldown Reduction +2% · Single-Target Skill Damage +6%
+쿨타임 감소 +2% · 단일 대상 아르카나 피해 +6%	Cooldown Reduction +2% · Single-Target Arcana Damage +6%
 쿨타임 감소 +2% · 주문 치명타 확률 +3%	Cooldown Reduction +2% · SPL Crit Chance +3%
 쿨타임 감소 +3% · 마나 소모 감소 +4%	Cooldown Reduction +3% · Mana Cost Reduction +4%
 쿨타임 감소 +3% · 물리 치명타 확률 +3%	Cooldown Reduction +3% · Physical Crit Chance +3%
@@ -1525,8 +1524,8 @@ rpc 오류:	rpc error:
 회피 +{v}	Dodge +{v}
 회피 감각	Dodge Instinct
 회피 상한 +20%, 회피 확률의 50%만큼 방어력 증가	Dodge Cap +20%, DEF increased by a share of Dodge Chance: 50%
-회피 시 다음 스킬 피해 +30%	After a Dodge, Next Skill Damage +30%
-회피 시 다음 스킬 피해 +{v}	Next Skill Damage +{v} after a Dodge
+회피 시 다음 아르카나 피해 +30%	After a Dodge, Next Arcana Damage +30%
+회피 시 다음 아르카나 피해 +{v}	Next Arcana Damage +{v} after a Dodge
 회피 훈련	Dodge Training
 회피의 흐름	Dodge Flow
 효율	Efficiency
@@ -1587,11 +1586,11 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 남은 포인트 %d / %d	Points Left %d / %d
 노드 %d개를 찍었습니다	Allocated %d nodes
 다음 단계	Next Stage
-보유 스킬 %d개	My Skills (%d)
+보유 아르카나 %d개	My Arcana (%d)
 분해 %d	Dismantle %d
 빈 칸	Empty
-스킬 정보	Skill Info
-스킬을 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 스킬은 마을의 [스킬 상점]에서 삽니다.	Tap a skill to see its details and the Level Up / Equip buttons.\nBuy new skills at the [Skill Shop] in the village.
+아르카나 정보	Arcana Info
+아르카나를 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 아르카나는 마을의 [아르카나 상점]에서 삽니다.	Tap a arcana to see its details and the Level Up / Equip buttons.\nBuy new arcana at the [Arcana Shop] in the village.
 여러 개 선택	Select Multiple
 위력 %d%%	Power %d%%
 유지	Keep
@@ -1633,25 +1632,25 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 매직까지 판매	Sell up to Magic
 빈 소켓이 있는 착용 장비가 없습니다.	None of your equipped gear has an empty socket.
 소켓 %d개	Sockets: %d
-스킬을 눌러 설명을 보고 골드로 구매하세요. 산 스킬은 [스킬 정비소]에서 장착합니다.	Tap a skill to read about it and buy it with gold. Equip bought skills at the [Skill Workshop].
+아르카나를 눌러 설명을 보고 골드로 구매하세요. 산 아르카나는 [아르카나 정비소]에서 장착합니다.	Tap a arcana to read about it and buy it with gold. Equip bought arcana at the [Arcana Workshop].
 신성한 구슬 (%d) · 수치 다시	Divine Orb (%d) · Reroll Values
 옵션	Affixes
 재굴림	Reroll
 착용 장비	Equipped Gear
 착용한 장비가 없습니다. 먼저 [장비]에서 장착하세요.	You have no gear equipped. Equip some in [Gear] first.
-판매 중인 스킬 %d개	Skills for Sale (%d)
+판매 중인 아르카나 %d개	Arcana for Sale (%d)
 혼돈 구슬 (%d) · 옵션 추가	Chaos Orb (%d) · Add Affix
 확인하기	Reveal
 🔒 잠김	🔒 Locked
 %s · 룬 없음	%s · No Rune
 %s · 룬: %s	%s · Rune: %s
 끼우기	Insert
-룬을 끼울 스킬이 없습니다.	No skills to put a rune in.
+룬을 끼울 아르카나가 없습니다.	No arcana to put a rune in.
 룬이 없습니다. 전투에서 얻을 수 있습니다.	No runes yet. You can get them from battles.
 보관함 %d개	Storage (%d)
 보유 룬 %d개	My Runes (%d)
 빈 칸 %d	Empty Slot %d
-스킬 고르기	Choose a Skill
+아르카나 고르기	Choose a Arcana
 아직 찍을 수 없습니다 (앞 노드 · 포인트 · 전직 단계 확인)	Can't take this yet (check previous node · points · advancement tier)
 장착 중	Equipped
 전직 %d차 · 남은 포인트 %d / %d	Advancement Tier %d · Points Left %d / %d
@@ -1720,10 +1719,10 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 프리셋	Presets
 프리셋 %d 불러옴	Loaded preset %d
 프리셋 %d 저장	Saved preset %d
-현재 장비와 스킬 구성을 몇 번에 저장할까요? (1~3, 기본 %d)	Save your current gear and skills to which preset? (1-3, default %d)
+현재 장비와 아르카나 구성을 몇 번에 저장할까요? (1~3, 기본 %d)	Save your current gear and arcana to which preset? (1-3, default %d)
 %d번 소켓의 돌(%s)을 삭제할까요? 회수할 수 없습니다. 삭제하려면 '삭제'라고 입력하세요.	Delete the stone in socket %d (%s)? It cannot be recovered. Type 'delete' to confirm.
-%s 스킬	%s Skills
-같은 스킬 가장 좋은 1개는 유지	Keep the best copy of each skill
+%s 아르카나	%s Arcana
+같은 아르카나 가장 좋은 1개는 유지	Keep the best copy of each arcana
 대상: %s	Target: %s
 보스 우선	Boss First
 빈 소켓입니다	That socket is empty
@@ -1734,12 +1733,12 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 소켓 수를 1~3개 중 무작위로 다시 정합니다. 끼운 돌은 사라집니다. 진행하려면 '사용'이라고 입력하세요.	Rerolls the socket count to 1-3 at random. Socketed stones are lost. Type 'use' to continue.
 소켓의 돌을 삭제했습니다	Removed the socketed stone
 소켓이 있는 전설 장비에만 쓸 수 있습니다	Only usable on Legendary gear with sockets
-스킬 정리: %d개 판매 · 골드 +%s	Skill Clean: sold %d · Gold +%s
+아르카나 정리: %d개 판매 · 골드 +%s	Arcana Clean: sold %d · Gold +%s
 앞열	Front Row
 오토	Auto
 원거리 우선	Ranged First
 일반 우선	Normal First
-자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방과 스킬을 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다.	While auto-repeating, your bag and skills are cleaned with these rules after every battle. Enhanced or Satan gear and equipped, preset, runed or leveled skills are never touched.
+자동 반복 중 전투가 끝날 때마다 위 규칙으로 가방과 아르카나를 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 아르카나는 건드리지 않습니다.	While auto-repeating, your bag and arcana are cleaned with these rules after every battle. Enhanced or Satan gear and equipped, preset, runed or leveled arcana are never touched.
 정예 우선	Elite First
 %d층	Floor %d
 변형 %s: %s	Modifier %s: %s
@@ -1748,12 +1747,12 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 %s %d단계	%s Stage %d
 공허의 열쇠	Void Key
 관문 열기	Open Gate
-보스마다 1~4단계 · 상위 관문(노말 레이드 클리어 후, 열쇠 5개). 처치하면 보스 전용 스킬이 나옵니다.	Each boss has Stages 1-4 · Upper Gate (after clearing Normal Raid, 5 keys). Defeating them drops boss-exclusive skills.
+보스마다 1~4단계 · 상위 관문(노말 레이드 클리어 후, 열쇠 5개). 처치하면 보스 전용 아르카나가 나옵니다.	Each boss has Stages 1-4 · Upper Gate (after clearing Normal Raid, 5 keys). Defeating them drops boss-exclusive arcana.
 불씨의 징표	Ember Sigil
 상위 관문	Upper Gate
 상위 보스 관문	Upper Boss Gate
 열쇠 1개로 입장합니다. 단계가 높을수록 강하고 보상이 좋습니다.	Costs 1 key to enter. Higher stages are tougher with better rewards.
-열쇠 5개 · 노말 레이드를 클리어해야 열립니다. 더 높은 등급의 스킬이 나옵니다.	5 keys · Unlocks after clearing the Normal Raid. Drops higher-rarity skills.
+열쇠 5개 · 노말 레이드를 클리어해야 열립니다. 더 높은 등급의 아르카나가 나옵니다.	5 keys · Unlocks after clearing the Normal Raid. Drops higher-rarity arcana.
 %d차	Tier %d
 가격 %s 골드	Price %s Gold
 균열 최고층	Best Rift Floor
@@ -1764,11 +1763,11 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 문지기 처치	Warden Defeated
 물리	Physical
 미보유	Not owned
-보유 스킬	Skills Owned
+보유 아르카나	Arcana Owned
 보유 장비	Gear Owned
 보유 중	Owned
 솟아난 탑 최고층	Best Risen Tower Floor
-스킬 %d / %d 보유	Skills %d / %d owned
+아르카나 %d / %d 보유	Arcana %d / %d owned
 스테이지	Stage
 아니오	No
 예	Yes
@@ -1808,10 +1807,10 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 보석은 일일 과제(+10)와 우편으로 얻습니다.	Gems come from daily tasks (+10) and mail.
 보석이 부족합니다	Not enough gems
 보유 보석 %s · 골드 %s	Gems %s · Gold %s
-뽑을 스킬이 없습니다	No skills to summon
-스킬 소환	Skill Summon
-스킬은 소환으로만 얻습니다. 이미 같거나 더 높은 등급을 가진 스킬이 나오면 연마석으로 바뀝니다.	Skills come only from summons. A skill you already own at the same or higher rarity turns into Honing Stones.
-스킬을 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 스킬은 마을의 [스킬 소환]에서 뽑습니다.	Tap a skill to see its details and the Level Up / Equip buttons.\nGet new skills at [Skill Summon] in the village.
+뽑을 아르카나가 없습니다	No arcana to summon
+아르카나 소환	Arcana Summon
+아르카나는 소환으로만 얻습니다. 이미 같거나 더 높은 등급을 가진 아르카나가 나오면 연마석으로 바뀝니다.	Arcana come only from summons. A arcana you already own at the same or higher rarity turns into Honing Stones.
+아르카나를 누르면 설명과 레벨업 · 장착 버튼이 나옵니다.\n새 아르카나는 마을의 [아르카나 소환]에서 뽑습니다.	Tap a arcana to see its details and the Level Up / Equip buttons.\nGet new arcana at [Arcana Summon] in the village.
 연마석 +%d	Honing Stone +%d
 전설 이상 보장까지 %d / %d회	Legendary+ guarantee %d / %d
 카드를 누르세요	Tap the card
@@ -1833,11 +1832,11 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 자동 분해: 일반	Auto Salvage: Normal
 자동 분해: 매직까지	Auto Salvage: ≤ Magic
 자동 분해: 레어까지	Auto Salvage: ≤ Rare
-전투가 끝날 때마다 위 장비 규칙으로 가방을 정리하고, 자동 반복 중에는 스킬도 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다.	After every battle your bag is cleaned with the gear rules above; during auto-repeat skills are cleaned too. Enhanced or Satan gear and equipped, preset, runed or leveled skills are never touched.
+전투가 끝날 때마다 위 장비 규칙으로 가방을 정리하고, 자동 반복 중에는 아르카나도 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 아르카나는 건드리지 않습니다.	After every battle your bag is cleaned with the gear rules above; during auto-repeat arcana are cleaned too. Enhanced or Satan gear and equipped, preset, runed or leveled arcana are never touched.
 정렬: %s	Sort: %s
 지금 분해	Salvage Now
-스킬 목록	Skill List
-소환 가능한 스킬 %d종 · 보유 %d종	%d summonable skills · %d owned
+아르카나 목록	Arcana List
+소환 가능한 아르카나 %d종 · 보유 %d종	%d summonable arcana · %d owned
 레벨 %d부터 소환에 나옵니다	Appears in summons from Lv %d
 보유: %s	Owned: %s
 x4 배속	x4 Speed
@@ -1845,7 +1844,7 @@ x4 배속	x4 Speed
 곧 판매할 예정입니다	Coming soon
 보석 꾸러미	Gem Pack
 상점	Shop
-스킬 소환에 쓰는 보석.	Gems used for skill summons.
+아르카나 소환에 쓰는 보석.	Gems used for arcana summons.
 전투 재생을 x4 배속으로 볼 수 있습니다 (x1~x3 은 무료). 한 번 사면 영구.	Watch battles at x4 speed (x1–x3 are free). Permanent once bought.
 전투에서 얻는 골드 1.5배 (영구).	Gold from battles x1.5 (permanent).
 준비 중	Coming Soon
@@ -1865,7 +1864,7 @@ x4 배속	x4 Speed
 자동 분해 설정	Auto Salvage Settings
 자동 분해 설정을 불러오지 못했습니다	Could not load auto salvage settings
 장비 자동 분해	Gear auto salvage
-장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 스킬은 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다.	Gear is cleaned after each battle by the bag [Auto Salvage] settings; skills are cleaned during auto-repeat by the rules above. Equipped, preset, runed or leveled skills are never touched.
+장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 아르카나는 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 아르카나는 건드리지 않습니다.	Gear is cleaned after each battle by the bag [Auto Salvage] settings; arcana are cleaned during auto-repeat by the rules above. Equipped, preset, runed or leveled arcana are never touched.
 전설 옵션 티어 기준	Legendary affix tier rule
 전투가 끝날 때마다 아래 규칙으로 가방의 장비를 정리합니다. 고유 · 프리셋 · 착용 중 장비는 항상 유지됩니다.	After every battle your bag is cleaned with these rules. Unique, preset and equipped gear is always kept.
 정리 완료: %d개 판매 · %d개 분해 · 골드 +%s · 강화석 +%s	Done: %d sold · %d salvaged · Gold +%s · Ore +%s
@@ -1883,7 +1882,7 @@ x4 배속	x4 Speed
 전투력 %s%s	Power %s%s
 지금이 가장 강한 조합입니다	Already your strongest setup
 분해 · 연마석을 얻었습니다	Salvaged · gained Honing Stones
-스킬 정리: %d개 분해 · 연마석 +%s	Skill cleanup: %d salvaged · Honing +%s
+아르카나 정리: %d개 분해 · 연마석 +%s	Arcana cleanup: %d salvaged · Honing +%s
 아르카나 조각	Arcana Shards
 아르카나 조각 %s · 보석 %s	Arcana Shards %s · Gems %s
 아르카나 조각 +	Arcana Shards +
@@ -1905,11 +1904,11 @@ x4 배속	x4 Speed
 마법사	Mage
 물리 소환	Physical
 분해 · 아르카나 조각을 얻었습니다	Salvaged · gained Arcana Shards
-스킬 정리: %d개 분해 · 아르카나 조각 +%s	Skill cleanup: %d salvaged · Arcana +%s
-스킬은 소환으로만 얻습니다. 가진 스킬이 또 나오면 그 스킬 레벨이 1 오릅니다 (최대 레벨이면 아르카나 조각).	Skills come only from summons. A duplicate raises that skill by 1 level (Arcana Shards at max level).
+아르카나 정리: %d개 분해 · 아르카나 조각 +%s	Arcana cleanup: %d salvaged · Arcana +%s
+아르카나는 소환으로만 얻습니다. 가진 아르카나가 또 나오면 그 아르카나 레벨이 1 오릅니다 (최대 레벨이면 아르카나 조각).	Arcana come only from summons. A duplicate raises that arcana by 1 level (Arcana Shards at max level).
 아르카나 조각 20개	20 Arcana Shards
 아르카나 조각 5 · 800G	Arcana Shards 5 · 800G
-아르카나 조각을 받았습니다! 마을의 [스킬 소환]에서 스킬을 뽑아 보세요.	You received Arcana Shards! Summon skills at [Skill Summon] in town.
+아르카나 조각을 받았습니다! 마을의 [아르카나 소환]에서 아르카나를 뽑아 보세요.	You received Arcana Shards! Summon arcana at [Arcana Summon] in town.
 없는 직업	Unknown class
 이미 시작했습니다	Already started
 전사	Warrior
@@ -1943,7 +1942,7 @@ x4 배속	x4 Speed
 20층까지 이어지는 새 탑입니다.	A new tower that rises to floor 20.
 3단계	Stage 3
 4단계	Stage 4
-6명의 군주가 기다리는 관문. 열쇠 1개로 입장하며 단계가 높을수록 강하고 보상이 좋습니다. 처치하면 보스 전용 스킬이 나옵니다.	Six lords await beyond this gate. Enter with 1 key; higher stages are tougher with better rewards. Bosses drop exclusive skills.
+6명의 군주가 기다리는 관문. 열쇠 1개로 입장하며 단계가 높을수록 강하고 보상이 좋습니다. 처치하면 보스 전용 아르카나가 나옵니다.	Six lords await beyond this gate. Enter with 1 key; higher stages are tougher with better rewards. Bosses drop exclusive arcana.
 ▼ 부족합니다	▼ Too weak
 ✓ 충분합니다	✓ Ready
 계시의 돌과 세공의 인장을 얻는 신전. 솟아난 탑을 높이 오를수록 더 깊은 단계가 열립니다.	A temple of Revelation Stones and Artisan Seals. Climb the Risen Tower to unlock deeper stages.
@@ -1962,7 +1961,7 @@ x4 배속	x4 Speed
 드랍: 장비 T%d · 아르카나 조각 · 골드%s	Drops: T%d gear · Arcana Shards · Gold%s
 드랍: 장비(전설 비중 높음) · 사탄 장비 확률 · 구슬 · 조각 · 골드	Drops: gear (more legendaries) · chance of Satan gear · orbs · shards · gold
 레이드 	Raid 
-문지기가 공명 구슬을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않아 직접 눌러 터뜨려야 합니다.	The Warden keeps spawning resonance orbs. Skills cannot hit them — tap them yourself to burst them.
+문지기가 공명 구슬을 계속 만들어 냅니다. 구슬은 아르카나가 통하지 않아 직접 눌러 터뜨려야 합니다.	The Warden keeps spawning resonance orbs. Arcana cannot hit them — tap them yourself to burst them.
 벽	Wall
 변형 · %s: %s	Modifier · %s: %s
 상위 관문은 노말 레이드를 깬 뒤 열립니다.	The Upper Gate opens after clearing the Normal raid.
@@ -1980,53 +1979,53 @@ x4 배속	x4 Speed
 하드 레이드를 깨고 3차 전직을 마친 사람만 들어올 수 있습니다. 참이 나옵니다.	Only those who cleared the Hard raid and finished their 3rd class may enter. Drops Charms.
 🧱 벽 층: 처음 넘으면 사탄 장비 1개 확정	🧱 Wall floor: first clear guarantees 1 Satan item
 1) 장비: 가방의 [자동 장착]. 초록 ▲가 붙은 장비는 지금보다 좋습니다. 무기 · 장갑 · 목걸이가 특히 중요해요.	1) Gear: press [Auto Equip] in your bag. Items marked with a green ▲ are upgrades. Weapon, gloves and amulet matter most.
-2) 스킬: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 스킬을 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.	2) Skills: fill all 4 slots with one family (physical or magic). Pulling a skill again levels it up, and higher rarities are stronger.
+2) 아르카나: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 아르카나를 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.	2) Arcana: fill all 4 slots with one family (physical or magic). Pulling a arcana again levels it up, and higher rarities are stronger.
 3) 패시브: 레벨마다 2점. 내 무기 계열 갈래(물리 · 마법)부터 찍고, 고민되면 [자동 배분].	3) Passives: 2 points per level. Start with the branch that matches your weapon (Might or Arcana), or press [Auto Allocate].
 4) 강화: 제련소에서 장비 강화 · 옵션 재굴림. 좋은 옵션(공격력 · 주문력 · 내 계열 피해 · 치명타)을 남기세요.	4) Upgrade: enhance and reroll gear at the Smeltery. Keep good stats (Attack, Spell Power, your damage type, Crit).
 5) 레벨: 균열 층을 처음 깨면 레벨이 오릅니다. 막히면 아래층을 돌며 장비를 모으세요.	5) Level: each first clear of a Rift floor raises your level. If stuck, farm lower floors for gear.
-Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 스킬 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 스킬을 뽑아 볼까요?	Arcana Slayer is an auto-battle game. Your hero fights on their own — you make them stronger with skills, gear and passives. Shall we summon some skills first?
+Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 아르카나 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 아르카나를 뽑아 볼까요?	Arcana Slayer is an auto-battle game. Your hero fights on their own — you make them stronger with arcana, gear and passives. Shall we summon some arcana first?
 가방 열기	Open Bag
 강화	Upgrade
 검을 든 근접 전사	A sword-wielding melee fighter
 게임의 흐름	How the game flows
-골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 스킬 소환(1회 10개 · 10회 90개).	Gold: upgrades and shops. Enhance Stones: gear enhancing. Arcana Shards: skill summons (10 for 1 pull, 90 for 10).
+골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 아르카나 소환(1회 10개 · 10회 90개).	Gold: upgrades and shops. Enhance Stones: gear enhancing. Arcana Shards: arcana summons (10 for 1 pull, 90 for 10).
 나중에	Later
 다음	Next
 다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 더 자세한 공략은 마을 [안내소 → 도움말]에 있습니다.	Next is Groom, Lord of the Fields! Compare your Power (top left) with the Recommended Power on the map panel. Defeat Groom to open the Abyssal Rift. More tips are in the village [Info Desk → Help].
 단단한 체력과 강한 물리 공격	Sturdy health and strong physical attacks
 도움말 보기	Open Help
 레벨이 오르면 패시브 포인트가 생깁니다. [패시브]에서 노드를 눌러 찍으세요. 고민되면 [자동 배분]을 누르면 무기에 맞게 찍어 줍니다.	Leveling up gives passive points. Click nodes in [Passive] to allocate them. Not sure? [Auto Allocate] picks for your weapon.
-마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 스킬을 또 뽑으면 스킬 레벨도 오릅니다. 막히면 강화 · 장비 · 스킬 레벨부터 올리세요.	Enhancing gear at the village [Smeltery] raises your Power. Pulling the same skill again raises its level. When stuck, upgrade gear and skill levels first.
+마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 아르카나를 또 뽑으면 아르카나 레벨도 오릅니다. 막히면 강화 · 장비 · 아르카나 레벨부터 올리세요.	Enhancing gear at the village [Smeltery] raises your Power. Pulling the same arcana again raises its level. When stuck, upgrade gear and arcana levels first.
 막혔을 때	When you are stuck
 매일 할 일	Daily to-do
 멀리서 화면을 쓸어버리는 마법	Magic that sweeps the screen from afar
 보스와 그 너머	The boss and beyond
 불씨 · 체인 라이트닝 · 폭열탄	Ember · Chain Lightning · Firebomb
 뽑았어요	Done
-스킬 칸	Skill slots
-스킬: 	Skills: 
-아르카나 조각으로 스킬 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 스킬이 또 나오면 그 스킬 레벨이 오릅니다.	Skill cards are summoned with Arcana Shards. You got enough for a 10x summon as a welcome gift — press [10x Summon]. Duplicates level that skill up.
-안 쓰는 장비는 분해하면 강화석, 안 쓰는 스킬은 분해하면 아르카나 조각이 됩니다. 가방의 [자동 분해] 설정으로 전투마다 알아서 정리할 수 있어요.	Dismantle unused gear for Enhance Stones and unused skills for Arcana Shards. Set [Auto Dismantle] in your bag to clean up after every battle.
+아르카나 칸	Arcana slots
+아르카나: 	Arcana: 
+아르카나 조각으로 아르카나 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 아르카나가 또 나오면 그 아르카나 레벨이 오릅니다.	Arcana cards are summoned with Arcana Shards. You got enough for a 10x summon as a welcome gift — press [10x Summon]. Duplicates level that arcana up.
+안 쓰는 장비는 분해하면 강화석, 안 쓰는 아르카나는 분해하면 아르카나 조각이 됩니다. 가방의 [자동 분해] 설정으로 전투마다 알아서 정리할 수 있어요.	Dismantle unused gear for Enhance Stones and unused arcana for Arcana Shards. Set [Auto Dismantle] in your bag to clean up after every battle.
 알겠어요	Got it
-원거리 몹에게 많이 맞으면 사거리가 긴 스킬을, 몹이 많으면 범위 스킬을 섞어 보세요.	If ranged monsters hit you a lot, use longer-range skills; if there are many monsters, mix in area skills.
+원거리 몹에게 많이 맞으면 사거리가 긴 아르카나를, 몹이 많으면 범위 아르카나를 섞어 보세요.	If ranged monsters hit you a lot, use longer-range arcana; if there are many monsters, mix in area arcana.
 일격 · 찢기(범위) · 강타	Strike · Rend (area) · Smash
 자동 반복(결과 화면)을 켜 두면 같은 층을 계속 돌며 장비와 조각을 모읍니다.	Turn on Auto Repeat (result screen) to keep farming the same floor for gear and shards.
 전투력 올리는 법 (중요한 순서)	How to raise your Power (most important first)
 전투에서 장비를 얻었습니다! 가방([가방] 아이콘)의 [자동 장착]을 누르면 더 좋은 장비를 바로 낍니다. 초록 ▲ 표시는 지금보다 좋은 장비예요.	You got gear from battle! Press [Auto Equip] in your bag to wear the best items instantly. A green ▲ means an upgrade.
-전투에서는 스킬 칸에 넣은 스킬만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 스킬을 끌어다 칸에 넣어 보세요.	Only skills in your slots are used in battle. Matching your family (physical for warriors, magic for mages) is stronger. Drag a new skill into a slot.
+전투에서는 아르카나 칸에 넣은 아르카나만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 아르카나를 끌어다 칸에 넣어 보세요.	Only arcana in your slots are used in battle. Matching your family (physical for warriors, magic for mages) is stronger. Drag a new arcana into a slot.
 제련소 열기	Open Smeltery
 지도 창의 [권장 전투력]과 내 전투력을 비교하세요. 내 전투력이 낮으면 위의 순서대로 올리면 됩니다.	Compare [Recommended Power] on the map panel with yours. If yours is lower, improve in the order above.
 지도에서 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다. 이기면 장비와 경험치를 얻습니다.	On the map, tap [Meadow 1] and press [Challenge]. The battle plays automatically. Winning gives gear and experience.
 지팡이를 든 원소 마법사	A staff-wielding elemental mage
-처음 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.	This sets your first weapon and 3 skills. You can switch paths later by changing weapons.
+처음 무기와 아르카나 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.	This sets your first weapon and 3 arcana. You can switch paths later by changing weapons.
 첫 전투	First battle
 초원 1~5 → 심연의 균열 1~100층(층을 처음 깰 때마다 레벨 +1) → 균열 100층 졸업 → 보스 관문 · 무한 균열 · 보물고 · 심연의 문 → 솟아난 탑 · 돌의 신전 · 레이드 → 전직 · 참.	Meadow 1–5 → Abyssal Rift floors 1–100 (each first clear: level +1) → graduate at floor 100 → Boss Gate · Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms.
-캐릭터는 자동으로 싸웁니다. 여러분은 스킬 · 장비 · 패시브로 강해지고, 더 높은 곳에 도전합니다.	Your hero fights automatically. You grow stronger with skills, gear and passives, and push ever higher.
+캐릭터는 자동으로 싸웁니다. 여러분은 아르카나 · 장비 · 패시브로 강해지고, 더 높은 곳에 도전합니다.	Your hero fights automatically. You grow stronger with arcana, gear and passives, and push ever higher.
 퀘스트 게시판의 일일 과제와 우편함 보상을 챙기세요. 무한 균열은 하루 입장 횟수가 정해져 있습니다.	Collect daily tasks from the Quest Board and rewards from the mailbox. The Endless Rift has limited daily entries.
 패시브 열기	Open Passives
 환영합니다, 	Welcome, 
-스킬: 일격 · 찢기(범위) · 강타	Skills: Strike · Rend (area) · Smash
-스킬: 불씨 · 체인 라이트닝 · 폭열탄	Skills: Ember · Chain Lightning · Firebomb
+아르카나: 일격 · 찢기(범위) · 강타	Arcana: Strike · Rend (area) · Smash
+아르카나: 불씨 · 체인 라이트닝 · 폭열탄	Arcana: Ember · Chain Lightning · Firebomb
 %s · %d번 소켓에 끼울 돌	Stone for %s · socket %d
 끼울 수 있는 돌이 없습니다.	No stones to socket.
 누르면 이 돌을 삭제할 수 있습니다 (회수 불가)	Click to destroy this stone (cannot be recovered)
@@ -2042,9 +2041,80 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 가방이 거의 찼습니다 · 자동 분해를 켜 두세요	Bag almost full · turn on Auto Salvage
 골라 정리	Select & Clear
 균열 조각: 특별한 콘텐츠 입장 · 보상에 씁니다.	Rift Shards: used for special content entry and rewards.
-스킬 소환에 쓰는 보석입니다.	Gems used for skill summons.
-스킬 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 스킬 분해로 얻습니다.	Used for skill summons (10 for 1 · 90 for 10). Earned from battles, quests and dismantling skills.
+아르카나 소환에 쓰는 보석입니다.	Gems used for arcana summons.
+아르카나 소환에 씁니다 (1회 10개 · 10회 90개). 전투 · 퀘스트 · 아르카나 분해로 얻습니다.	Used for arcana summons (10 for 1 · 90 for 10). Earned from battles, quests and dismantling arcana.
 아르카나	Arcana
 장비 강화 · 옵션 재굴림에 씁니다. 장비를 분해하면 얻습니다.	Used to enhance gear and reroll affixes. Earned by dismantling gear.
 장비 옵션 수치를 다시 굴립니다 (대장간).	Rerolls the values of gear affixes (Forge).
 장비에 옵션을 하나 더 붙입니다 (대장간).	Adds one more affix to gear (Forge).
+8초 주기 중 5초간 물리 스킬 피해 +40% (화염 변환)	Every 8s, Physical Arcana Damage for 5s +40% (Fire conversion)
+Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 스킬 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 스킬을 뽑아 볼까요?	Arcana Slayer is an auto-battle game. Your hero fights on their own — you make them stronger with arcana, gear and passives. Shall we summon some arcana first?
+[패시브] 연쇄 +1회(번개·연쇄 스킬), 모든 피해 +10%, 치명타 +6%, 방어 감소 +6%	[Passive] Chain +1 (Lightning·Chain Arcana), All Damage +10%, Crit Chance +6%, DEF Reduction +6%
+가시 갑옷! 스킬로 때릴수록 피해가 되돌아온다!	Thorn Armor! Arcana hits reflect Damage back at you!
+광역 피해 +50%, 단일 대상 스킬 피해 -30%	Area Damage +50%, Single-Target Arcana Damage -30%
+마나가 80% 이상이면 모든 스킬 피해 +20%	With Mana at least 80%, All Arcana Damage +20%
+모든 스킬 쿨타임 -15%, 마나 소모 +40%	All Arcana Cooldowns -15%, Mana Cost +40%
+모든 스킬 피해 +20%, 쿨타임 +40%	All Arcana Damage +20%, Cooldown +40%
+모든 스킬이 쿨타임 중이 아닐 때 주는 피해 +50%	When no Arcana are on Cooldown, Damage dealt +50%
+번개 스킬이 적중하면 25% 확률로 다른 적에게 번개가 튀어 피해의 50%를 줌	Lightning Arcana hits have an arc chance of 25%, hitting another enemy for Damage equal to 50%
+빈 스킬 칸 하나당 주는 피해 +25%	Per empty Arcana slot, Damage dealt +25%
+빙결(스킬 정지) · 강타 충전	Freeze (Arcana disabled) · Charging Smash
+서리 숨결! 스킬이 얼어붙는다!	Frost Breath! Arcana freeze!
+소환 스킬 피해 +50%	Summon Arcana Damage +50%
+스킬 마나 소모 -15%	Arcana Mana Cost -15%
+스킬 지속시간 +25%	Arcana Duration +25%
+스킬 지속시간 +{v}	Arcana Duration +{v}
+스킬 칸	Arcana slots
+스킬 쿨타임 +25%	Arcana Cooldown +25%
+스킬이 적중할 때 8% 확률로 피해가 두 배로 들어가는 겹침 타격	Arcana hits can deal double Damage with an overlapping strike, chance 8%
+일반 등급 스킬만 장착했을 때 주는 피해 +100%	With only Common Arcana equipped, Damage dealt +100%
+적중 시 12% 확률로 장착한 번개 스킬 하나를 마나 없이 발동	On hit, chance 12%: trigger an equipped Lightning Arcana at no Mana cost
+적중 시 8% 확률로 쿨타임 · 마나를 무시하고 장착한 스킬 하나 추가 발동	On hit, chance 8%: trigger an extra equipped Arcana, ignoring Cooldown · Mana
+전투 시작 시 모든 스킬을 바로 쓸 수 있다	All Arcana are ready at the start of battle
+전투에서는 스킬 칸에 넣은 스킬만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 스킬을 끌어다 칸에 넣어 보세요.	Only arcana in your slots are used in battle. Matching your family (physical for warriors, magic for mages) is stronger. Drag a new arcana into a slot.
+첫 번째 칸 스킬 피해 +40%, 나머지 -10%	First Slot Arcana Damage +40%, other slots -10%
+첫 번째 칸 스킬 피해 +{v}	First Slot Arcana Damage +{v}
+룬: 	
+%.1f초	%.1fs
+%d칸	%d tiles
+1회 위력	Power per cast
+3x3 범위	3x3 area
+구간 지속	Section, lasting
+구역 지속	Area, lasting
+기본	Basic
+끌어당기는 구역	Pulling vortex
+단일	Single target
+무작위 낙뢰	Random lightning
+무작위 낙하	Random impacts
+범위	Area
+보유한 아르카나 %d장	Owned Arcana: %d
+보조	Support
+사거리	Range
+사거리 안 전체	All in range
+소환수	Summon
+앞 부채꼴	Frontal cone
+앞줄 지속	Front row, lasting
+여러 발 난사	Multi-shot barrage
+옵션이 없는 장비입니다	This gear has no affixes
+이 분류에 해당하는 아르카나가 없습니다.	No Arcana in this category.
+장비 옵션의 수치를 (같은 옵션 · 티어 안에서) 다시 굴립니다 (대장간). 귀하게 나옵니다.	Rerolls gear affix values (same affix and tier) at the Forge. Rare drop.
+장착한 아르카나 (%d칸)	Equipped Arcana (%d slots)
+주문	Spell
+주위를 도는 구체	Orbiting orbs
+줄 관통 왕복	Row pierce, returns
+지뢰 3x3	Mine 3x3
+초당 피해	DPS
+쿨타임	Cooldown
+\n\n룬: 	\n\nRune: 
+%d번 칸\n비어 있음\n(끌어다 놓기)	Slot %d\nEmpty\n(drag here)
+아르카나 카드를 누르면 위력 · 쿨타임 · 사거리 · 범위와 설명이 나옵니다.\n카드를 위의 칸으로 끌어다 놓으면 장착됩니다.\n새 아르카나는 마을의 [아르카나 소환]에서 뽑습니다.	Tap an Arcana card to see its power, cooldown, range, area and description.\nDrag a card onto a slot above to equip it.\nSummon new Arcana at the village [Arcana Summon].
+튕기며 여러 번	Bounces, multiple hits
+피해순	By DPS
+한 줄 3칸 지속	3 tiles in a row, lasting
+한 줄 관통	Pierces a row
+혼돈 구슬 (%d) · 옵션 수치 다시 굴리기	Chaos Orb (%d) · Reroll affix values
+혼돈 구슬 1 · 균열 조각 5	Chaos Orb 1 · Rift Shards 5
+회복	Heal
+회피 시 다음 스킬 피해 +30%	After a Dodge, Next Arcana Damage +30%
+회피 시 다음 스킬 피해 +{v}	Next Arcana Damage +{v} after a Dodge
+비어 있음	Empty

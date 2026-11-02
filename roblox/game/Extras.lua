@@ -8,7 +8,7 @@ M.DAILY_TASKS = {
   { id = "kill", name = "몬스터 처치", n = 300, key = "kills", reward = { arcana = 5, gold = 800 }, text = "아르카나 조각 5 · 800G" },
   { id = "clear", name = "스테이지 클리어", n = 8, key = "clears", reward = { ore = 12 }, text = "강화석 12" },
   { id = "boss", name = "보스 처치", n = 3, key = "bosses", reward = { orbC = 1 }, text = "혼돈 구슬 1" },
-  { id = "rift", name = "균열 클리어 (엔드게임)", n = 3, key = "rifts", reward = { orbD = 1, shards = 5 }, text = "신성한 구슬 1 · 균열 조각 5", endgame = true },
+  { id = "rift", name = "균열 클리어 (엔드게임)", n = 3, key = "rifts", reward = { orbC = 1, shards = 5 }, text = "혼돈 구슬 1 · 균열 조각 5", endgame = true },
 }
 local function today() return floor(os.time() / 86400) end
 function M.dailyState(sv)
@@ -107,7 +107,7 @@ function M.runeView(sv)
 end
 local function findSkill(sv, uid) for _, k in ipairs(sv.skills) do if k.uid == uid then return k end end end
 function M.runeEquip(sv, skillUid, runeUid)
-  local k = findSkill(sv, skillUid); if not k then return false, "없는 스킬" end
+  local k = findSkill(sv, skillUid); if not k then return false, "없는 아르카나" end
   for i, r in ipairs(sv.runes or {}) do
     if r.uid == runeUid then
       table.remove(sv.runes, i)

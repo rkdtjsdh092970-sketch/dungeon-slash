@@ -154,6 +154,7 @@ local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTranspa
 local statLbl = mk("Frame", { Active = true, BackgroundColor3 = Color3.fromRGB(16, 11, 10), BackgroundTransparency = 0.08, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 400, 0, 92), ZIndex = 11 }, hud)
 corner(statLbl, 8); stroke(statLbl, GOLD, 2); local statScale = mk("UIScale", { Scale = K }, statLbl)
 local statVal, statProg, statLv, statGold, statFace, statPow = {}, nil, nil, nil, nil, nil
+local statArc, openPanelFn   -- 아르카나 조각 표시 · 창 열기 (아래에서 정함)
 local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
 local passNoticed = false
 local startShown, showStartPick, tutorial = false, nil, nil   -- 새 계정: 시작 직업 고르기 창 · 튜토리얼 (아래에서 정함)
@@ -194,6 +195,15 @@ do
   statGold = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -58, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(255, 210, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, gp)
   mk("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 8 }, statGold)
   mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 16, 4) }, statGold)
+  -- 아르카나 조각 (아르카나 소환에 쓰는 귀한 재화): 골드 바로 옆 보랏빛 판, 누르면 소환 창
+  local ap = mk("TextButton", { Position = UDim2.new(0, 208, 1, 8), Size = UDim2.new(0, 170, 0, 40), BackgroundColor3 = Color3.fromRGB(34, 16, 44), Text = "", AutoButtonColor = false, ZIndex = 11 }, statLbl); corner(ap, 8); stroke(ap, Color3.fromRGB(200, 120, 255), 2)
+  Skin.frame(ap, "ui_pill", 0.3, 0.5)
+  local aa = Sprites.art("i_arcana")
+  if aa then mk("ImageLabel", { Position = UDim2.new(0, 4, 0.5, -20), Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, ImageContent = aa.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, ap)
+  else local dot = mk("Frame", { Position = UDim2.new(0, 12, 0.5, -10), Size = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(230, 140, 255), Rotation = 45, ZIndex = 13 }, ap); corner(dot, 3) end
+  statArc = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -56, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(240, 190, 255), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, ap)
+  mk("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 8 }, statArc); mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(24, 6, 30) }, statArc)
+  ap.MouseButton1Click:Connect(function() if openPanelFn then openPanelFn("아르카나 소환", { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } }) end end)
 end
 -- 오른쪽 아래: 지도 ⇄ 마을 큰 버튼 (마을에선 지도, 지도에선 마을)
 local dock = mk("TextButton", { Name = "MapBtn", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(20, 14, 12), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
@@ -239,7 +249,7 @@ local summary
 local function setSummary(s)
   if not s then return end
   summary = s
-  statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold)
+  statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold); if statArc then statArc.Text = n(s.arcana or 0) end
   if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end
   if not s.needStart and s.tut and s.tut < 3 and not startShown then startShown = true; task.delay(1, function() if tutorial then tutorial(0) end end) end   -- 튜토리얼 도중에 나갔다 오면 처음부터 짧게
   if s.passNotice and not passNoticed then passNoticed = true; task.delay(2, function() toast("패시브 트리가 새로 바뀌었습니다! 찍었던 포인트를 모두 돌려드렸어요.", Color3.fromRGB(255, 220, 120)) end) end
@@ -386,7 +396,7 @@ function views.warden()
   if not u.warden then card("새 문지기", { "솟아난 탑 100층을 클리어하면 열립니다." }, {}); return end
   local st = rpc:InvokeServer("wstate").st
   if not st then
-    card("새 문지기 — 공명 구슬", { "구슬이 터지기 전에 직접 눌러 없애야 합니다 (스킬은 통하지 않음).", "터진 구슬은 큰 피해를 주고 문지기를 회복시킵니다." }, { { "도전", function() local e = rpc:InvokeServer("wstart"); msg.Text = e.err or "시작!"; views.warden() end } })
+    card("새 문지기 — 공명 구슬", { "구슬이 터지기 전에 직접 눌러 없애야 합니다 (아르카나는 통하지 않음).", "터진 구슬은 큰 피해를 주고 문지기를 회복시킵니다." }, { { "도전", function() local e = rpc:InvokeServer("wstart"); msg.Text = e.err or "시작!"; views.warden() end } })
     return
   end
   local info = card
@@ -433,7 +443,7 @@ function views.quests()
 end
 function views.runes()
   clear(); local r = rpc:InvokeServer("runes")
-  card("보유 룬 " .. #r.runes, { "스킬 카드의 '룬' 버튼으로 끼울 스킬을 고릅니다 (아래 스킬을 먼저 선택)." }, {})
+  card("보유 룬 " .. #r.runes, { "아르카나 카드의 '룬' 버튼으로 끼울 아르카나를 고릅니다 (아래 아르카나를 먼저 선택)." }, {})
   for _, k in ipairs(r.skills) do
     local btns = {}
     if k.rune then btns[#btns + 1] = { "룬 해제", function() rpc:InvokeServer("runeremove", k.uid); views.runes() end } end
@@ -464,21 +474,21 @@ end
 function views.help()
   clear()
   card("게임의 흐름", {
-    "캐릭터는 자동으로 싸웁니다. 여러분은 스킬 · 장비 · 패시브로 강해지고, 더 높은 곳에 도전합니다.",
+    "캐릭터는 자동으로 싸웁니다. 여러분은 아르카나 · 장비 · 패시브로 강해지고, 더 높은 곳에 도전합니다.",
     "초원 1~5 → 심연의 균열 1~100층(층을 처음 깰 때마다 레벨 +1) → 균열 100층 졸업 → 보스 관문 · 무한 균열 · 보물고 · 심연의 문 → 솟아난 탑 · 돌의 신전 · 레이드 → 전직 · 참." }, {})
   card("전투력 올리는 법 (중요한 순서)", {
     "1) 장비: 가방의 [자동 장착]. 초록 ▲가 붙은 장비는 지금보다 좋습니다. 무기 · 장갑 · 목걸이가 특히 중요해요.",
-    "2) 스킬: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 스킬을 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.",
+    "2) 아르카나: 같은 계열(물리 또는 마법)로 4칸을 채우세요. 같은 아르카나를 또 뽑으면 레벨이 오르고, 높은 등급일수록 강합니다.",
     "3) 패시브: 레벨마다 2점. 내 무기 계열 갈래(물리 · 마법)부터 찍고, 고민되면 [자동 배분].",
     "4) 강화: 제련소에서 장비 강화 · 옵션 재굴림. 좋은 옵션(공격력 · 주문력 · 내 계열 피해 · 치명타)을 남기세요.",
     "5) 레벨: 균열 층을 처음 깨면 레벨이 오릅니다. 막히면 아래층을 돌며 장비를 모으세요." }, {})
   card("막혔을 때", {
     "지도 창의 [권장 전투력]과 내 전투력을 비교하세요. 내 전투력이 낮으면 위의 순서대로 올리면 됩니다.",
-    "원거리 몹에게 많이 맞으면 사거리가 긴 스킬을, 몹이 많으면 범위 스킬을 섞어 보세요.",
+    "원거리 몹에게 많이 맞으면 사거리가 긴 아르카나를, 몹이 많으면 범위 아르카나를 섞어 보세요.",
     "자동 반복(결과 화면)을 켜 두면 같은 층을 계속 돌며 장비와 조각을 모읍니다." }, {})
   card("재화", {
-    "골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 스킬 소환(1회 10개 · 10회 90개).",
-    "안 쓰는 장비는 분해하면 강화석, 안 쓰는 스킬은 분해하면 아르카나 조각이 됩니다. 가방의 [자동 분해] 설정으로 전투마다 알아서 정리할 수 있어요." }, {})
+    "골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 아르카나 소환(1회 10개 · 10회 90개).",
+    "안 쓰는 장비는 분해하면 강화석, 안 쓰는 아르카나는 분해하면 아르카나 조각이 됩니다. 가방의 [자동 분해] 설정으로 전투마다 알아서 정리할 수 있어요." }, {})
   card("매일 할 일", { "퀘스트 게시판의 일일 과제와 우편함 보상을 챙기세요. 무한 균열은 하루 입장 횟수가 정해져 있습니다." }, {})
   card("베타 안내", { "베타 테스트 중입니다. 진행 데이터는 저장되지만 밸런스·보상은 바뀔 수 있습니다.", "버그나 이상한 점은 게임 설명란/디스코드로 알려 주세요." }, {})
 end
@@ -512,7 +522,8 @@ end
 root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
 -- 창 바깥(어두운 바탕)을 눌러도 닫히지 않는다: 닫기는 X 버튼으로만 (실수로 나가지 않게)
 do local b = button(root, "X", UDim2.new(1, -56, 0, 10), UDim2.new(0, 42, 0, 36), closePanel, Color3.fromRGB(130, 44, 64)); b.ZIndex = 23; b.TextSize = 20; b:SetAttribute("SkinClose", true) end
-local function openPanel(title, tabs, first)
+local openPanel
+openPanel = function(title, tabs, first)
   fitPanel(); panelTitle.Text = title; panelLayer.Visible = true; hudShow(false); resultLayer.Visible = false; if cancelAutoFn then cancelAutoFn() end
   for _, c in ipairs(tabRow:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
   local btns = {}
@@ -523,6 +534,7 @@ local function openPanel(title, tabs, first)
   if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 110, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; b:SetAttribute("SkinTab", true); btns[t[2]] = b end end
   sel(first or tabs[1][2])
 end
+openPanelFn = openPanel
 
 -- ── 설정 창: 일반(언어) · 그래픽 · 소리 · 베타 관리(게임 주인만) ──
 local SoundService = game:GetService("SoundService")
@@ -602,10 +614,10 @@ function views.set_auto()
   optRow("장비 자동 분해", nil, { { "설정 열기", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }); Menus.openAuto() end, false, w = 110 } })
   for i, nm in ipairs({ "일반", "희귀", "전설" }) do
     local k = "sr" .. i
-    optRow(string.format("%s 스킬", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "분해", function() pick(k, 1) end, OPT[k] == 1 } })
+    optRow(string.format("%s 아르카나", nm), nil, { { "유지", function() pick(k, 0) end, OPT[k] == 0 }, { "분해", function() pick(k, 1) end, OPT[k] == 1 } })
   end
-  optRow("같은 스킬 가장 좋은 1개는 유지", nil, { { "켜기", function() pick("sbest", true) end, OPT.sbest }, { "끄기", function() pick("sbest", false) end, not OPT.sbest } })
-  card("자동 정리", { "장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 스킬은 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 스킬은 건드리지 않습니다." }, {})
+  optRow("같은 아르카나 가장 좋은 1개는 유지", nil, { { "켜기", function() pick("sbest", true) end, OPT.sbest }, { "끄기", function() pick("sbest", false) end, not OPT.sbest } })
+  card("자동 정리", { "장비는 가방의 [자동 분해] 설정대로 전투가 끝날 때마다 정리하고, 아르카나는 자동 반복 중에 위 규칙으로 정리합니다. 강화한 장비·사탄 장비, 장착·프리셋·룬·레벨업한 아르카나는 건드리지 않습니다." }, {})
 end
 local function openSettings()
   local tabs = { { "언어", "set_general" }, { "그래픽", "set_graphics" }, { "소리", "set_sound" } }
@@ -615,7 +627,7 @@ local function openSettings()
 end
 
 -- 새 메뉴 화면 연결 (장비 · 스킬 · 패시브 트리는 Menus 모듈)
-local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "스킬", pass = "패시브", stones = "돌", shop = "스킬 상점", quests = "퀘스트" }
+local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "아르카나", pass = "패시브", stones = "돌", shop = "아르카나 상점", quests = "퀘스트" }
 Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
   openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
@@ -639,7 +651,7 @@ local function resultLines(x)
   if x.items and #x.items > 0 then ex[#ex + 1] = "장비 " .. #x.items .. "개" end
   if type(x.ore) == "number" and x.ore > 0 then ex[#ex + 1] = "강화석 +" .. x.ore end
   if type(x.arcana) == "number" and x.arcana > 0 then ex[#ex + 1] = "아르카나 조각 +" .. x.arcana end
-  if x.skills and #x.skills > 0 then ex[#ex + 1] = "스킬 " .. #x.skills .. "개" end
+  if x.skills and #x.skills > 0 then ex[#ex + 1] = "아르카나 " .. #x.skills .. "개" end
   if x.charms and #x.charms > 0 then ex[#ex + 1] = "참 " .. #x.charms .. "개" end
   if x.stones and x.stones > 0 then ex[#ex + 1] = "돌 " .. x.stones end
   if x.stonesHi then ex[#ex + 1] = "계시의 돌 1" end
@@ -684,7 +696,7 @@ showResultPanel = function(x, spec)
       autoJob = nil
       if OPT.sr1 + OPT.sr2 + OPT.sr3 > 0 then
         local ok, e = pcall(function() return rpc:InvokeServer("skillclean", { rules = { OPT.sr1, OPT.sr2, OPT.sr3 }, best = OPT.sbest }) end)
-        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("스킬 정리: %d개 분해 · 아르카나 조각 +%s", e.res.sold, n(e.res.arcana or 0))) end
+        if ok and e.res and e.res.sold > 0 then setSummary(e.summary); toast(string.format("아르카나 정리: %d개 분해 · 아르카나 조각 +%s", e.res.sold, n(e.res.arcana or 0))) end
       end
       launch(target)
     end)
@@ -704,7 +716,7 @@ end)
 -- ── 상점 (로벅스): 마을 왼쪽 [상점] 버튼. 개발자 상품 · 게임패스 ID 를 채우면 판매가 열린다 ──
 local SHOP = {
   { kind = "pass", id = SPEED4_ID, name = "x4 배속", desc = "전투 재생을 x4 배속으로 볼 수 있습니다 (x1~x3 은 무료). 한 번 사면 영구.", owned = function() return owns4 end },
-  { kind = "product", id = 0, name = "보석 꾸러미", desc = "스킬 소환에 쓰는 보석." },
+  { kind = "product", id = 0, name = "보석 꾸러미", desc = "아르카나 소환에 쓰는 보석." },
   { kind = "pass", id = 0, name = "가방 확장", desc = "가방 · 창고 +100칸 (영구)." },
   { kind = "pass", id = 0, name = "골드 +50%", desc = "전투에서 얻는 골드 1.5배 (영구)." },
 }
@@ -758,11 +770,11 @@ local function playSpec(title, arg) return { title = title, call = function() re
 -- ── 마을 (웹 초원 마을: 건물을 눌러 기능을 연다. 비슷한 기능은 한 건물에 탭으로 묶었다) ──
 local BUILD = {   -- 건물은 배경 그림(bg/town.jpg)에 함께 그려져 있다. box = 그림 기준 영역(x0, y0, x1, y1), 이름은 영역 아래쪽에
   { key = "b_guild", name = "길드", box = { 0.206, 0.17, 0.434, 0.47 }, tabs = { { "길드", "guild" }, { "랭킹", "ranking" } } },
-  { key = "b_skill_shop", name = "스킬 소환", box = { 0.455, 0.06, 0.635, 0.50 }, tabs = { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } } },
+  { key = "b_skill_shop", name = "아르카나 소환", box = { 0.455, 0.06, 0.635, 0.50 }, tabs = { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } } },
   { key = "b_notice", name = "안내소", box = { 0.67, 0.20, 0.815, 0.51 }, tabs = { { "우편함", "mail" }, { "도움말", "help" }, { "도감", "codex" }, { "기록", "records" } } },
   { key = "b_trainer", name = "훈련소", box = { 0.0, 0.38, 0.25, 0.59 }, badge = "pass", tabs = { { "패시브", "pass" }, { "허수아비", "dummy" }, { "심연 각인", "atlas" }, { "전직", "class" }, { "참", "charm" } } },
   { key = "b_quest_board", name = "퀘스트 게시판", box = { 0.83, 0.38, 0.99, 0.65 }, badge = "quest", tabs = { { "퀘스트", "quests" }, { "일일", "daily" } } },
-  { key = "b_skill_hall", name = "스킬 정비소", box = { 0.06, 0.53, 0.335, 0.85 }, tabs = { { "스킬", "skills" }, { "룬", "runes" } } },
+  { key = "b_skill_hall", name = "아르카나 정비소", box = { 0.06, 0.53, 0.335, 0.85 }, tabs = { { "아르카나", "skills" }, { "룬", "runes" } } },
   { key = "b_forge", name = "제련소", box = { 0.338, 0.53, 0.553, 0.87 }, smoke = { 0.375, 0.0 }, tabs = { { "대장간", "forge" }, { "돌", "stones" } } },
   { key = "b_shop", name = "창고", box = { 0.565, 0.60, 0.837, 0.885 }, tabs = { { "창고", "stash" }, { "장비", "inv" } } },   -- 장비 보관 (가방 아이콘과 같은 창, 창고 먼저)
 }
@@ -884,17 +896,17 @@ local HUB = { { "void", "공허의 군주 모르가스", "keys", "공허의 열�
 infoCard = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.53, 0), Size = UDim2.new(0, 820, 0, 470), BackgroundColor3 = Color3.fromRGB(16, 11, 10), Visible = false, ZIndex = 15 }, hud)
 local infoScale = mk("UIScale", { Scale = K }, infoCard)
 local MP = {   -- 지점별 소개 글
-  T = "마을로 돌아가 장비 · 스킬 · 퀘스트를 정비합니다.",
+  T = "마을로 돌아가 장비 · 아르카나 · 퀘스트를 정비합니다.",
   R = "끝없이 이어지는 심연의 균열. 층을 처음 깰 때마다 레벨이 오르고, 5층마다 보스가 지킵니다. 10층부터는 층마다 정해진 변형이 붙습니다. 100층을 깨면 졸업하고 새 콘텐츠가 열립니다.",
   RTW = "심연의 문지기를 쓰러뜨리자 솟아난 붉은 탑. 20층마다 벽이 있어 장비를 갖춰야 넘을 수 있습니다. 벽 층을 처음 넘으면 사탄 장비 1개가 확정으로 나옵니다.",
   RE = "쉬지 않고 몰려오는 적을 상대로 오래 버틸수록 보상이 커집니다. 하루 입장 횟수가 정해져 있습니다.",
   RG = "금화와 보따리가 쏟아지는 보물고. 골드 위주 보상입니다. 운이 좋으면 거대 보물상자가 나타납니다.",
   RX = "심연의 문지기 모르가스와의 레이드. 결계석을 부숴 가며 싸워야 합니다. 처음 쓰러뜨리면 붉은 탑이 솟아오릅니다.",
-  RB = "6명의 군주가 기다리는 관문. 열쇠 1개로 입장하며 단계가 높을수록 강하고 보상이 좋습니다. 처치하면 보스 전용 스킬이 나옵니다.",
+  RB = "6명의 군주가 기다리는 관문. 열쇠 1개로 입장하며 단계가 높을수록 강하고 보상이 좋습니다. 처치하면 보스 전용 아르카나가 나옵니다.",
   RTP = "계시의 돌과 세공의 인장을 얻는 신전. 솟아난 탑을 높이 오를수록 더 깊은 단계가 열립니다.",
   RR = "탑에서 내려온 붉은 군단의 본거지. 난이도마다 처음 깨면 전직의 서를 얻습니다.",
   RCD = "하드 레이드를 깨고 3차 전직을 마친 사람만 들어올 수 있습니다. 참이 나옵니다.",
-  RWD = "문지기가 공명 구슬을 계속 만들어 냅니다. 구슬은 스킬이 통하지 않아 직접 눌러 터뜨려야 합니다.",
+  RWD = "문지기가 공명 구슬을 계속 만들어 냅니다. 구슬은 아르카나가 통하지 않아 직접 눌러 터뜨려야 합니다.",
   RTW2 = "20층까지 이어지는 새 탑입니다.",
 }
 local BOSSCOL = { void = Color3.fromRGB(200, 120, 255), hive = Color3.fromRGB(255, 160, 90), titan = Color3.fromRGB(220, 205, 180), storm = Color3.fromRGB(255, 230, 90), frost = Color3.fromRGB(150, 225, 255), poison = Color3.fromRGB(140, 255, 110) }
@@ -1146,7 +1158,7 @@ end
 local function hubView(upper)
   clear()
   local okU, ru = pcall(function() return rpc:InvokeServer("unlocks") end); if okU and ru.u then U = ru.u end
-  card(upper and "상위 보스 관문" or "보스 관문", { upper and "열쇠 5개 · 노말 레이드를 클리어해야 열립니다. 더 높은 등급의 스킬이 나옵니다." or "열쇠 1개로 입장합니다. 단계가 높을수록 강하고 보상이 좋습니다." }, {})
+  card(upper and "상위 보스 관문" or "보스 관문", { upper and "열쇠 5개 · 노말 레이드를 클리어해야 열립니다. 더 높은 등급의 아르카나가 나옵니다." or "열쇠 1개로 입장합니다. 단계가 높을수록 강하고 보상이 좋습니다." }, {})
   for _, b in ipairs(HUB) do
     local have = U[b[3]] or 0
     local btns = {}
@@ -1182,7 +1194,7 @@ end
 dock.MouseButton1Click:Connect(function() closePanel(); setScreen(screen == "map" and "town" or "map") end)
 -- 메뉴 아이콘 (오른쪽 위)
 topButton(1, "m_bag", "🎒", "가방", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }) end)
-topButton(2, "m_skill", "📘", "스킬", function() openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } }) end)
+topButton(2, "m_skill", "📘", "아르카나", function() openPanel("아르카나", { { "아르카나", "skills" }, { "룬", "runes" } }) end)
 topButton(3, "m_passive", "✦", "패시브", function() openPanel("패시브", { { "패시브", "pass" } }) end)
 topButton(3.5, "m_stats", "📊", "스탯", function() openPanel("스탯", { { "스탯", "stats" } }) end)
 shopBtn = mk("TextButton", { Name = "ShopBtn", Position = UDim2.new(0, 12, 0, INSET + 8 + 158 * K), Size = UDim2.new(0, 150, 0, 60), BackgroundColor3 = Color3.fromRGB(150, 50, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
@@ -1197,7 +1209,7 @@ end
 shopBtn.MouseButton1Click:Connect(function() openPanel("상점", { { "상점", "robux" } }) end)
 statLbl.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then openPanel("스탯", { { "스탯", "stats" } }) end end)
 topButton(4, "m_quest", "📜", "퀘스트", function() openPanel("퀘스트", { { "퀘스트", "quests" }, { "일일", "daily" } }) end)
-topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } }) end)
+topButton(5, "m_gacha", "🔮", "소환", function() openPanel("아르카나 소환", { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } }) end)
 topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "우편함", "mail" } }) end)
 topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 
@@ -1234,11 +1246,11 @@ tutorial = function(step)
     coach("환영합니다, " .. cls .. "!", "Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 스킬 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 스킬을 뽑아 볼까요?",
       { { "건너뛰기", function() coachClose(); tutSet(99) end, 110, Color3.fromRGB(70, 66, 70) }, { "다음", function() tutorial(1) end } })
   elseif step == 1 then
-    openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } })
-    coach("스킬 소환", "아르카나 조각으로 스킬 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 스킬이 또 나오면 그 스킬 레벨이 오릅니다.",
+    openPanel("아르카나 소환", { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } })
+    coach("아르카나 소환", "아르카나 조각으로 아르카나 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 아르카나가 또 나오면 그 아르카나 레벨이 오릅니다.",
       { { "뽑았어요", function() tutorial(2) end } })
   elseif step == 2 then
-    openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } })
+    openPanel("아르카나", { { "아르카나", "skills" }, { "룬", "runes" } })
     coach("스킬 칸", "전투에서는 스킬 칸에 넣은 스킬만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 스킬을 끌어다 칸에 넣어 보세요.",
       { { "다음", function() tutorial(3) end } })
   elseif step == 3 then
@@ -1250,7 +1262,7 @@ end
 local TUT_STAGE = {
   { "장비", "전투에서 장비를 얻었습니다! 가방([가방] 아이콘)의 [자동 장착]을 누르면 더 좋은 장비를 바로 낍니다. 초록 ▲ 표시는 지금보다 좋은 장비예요.", "가방 열기", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }) end },
   { "패시브", "레벨이 오르면 패시브 포인트가 생깁니다. [패시브]에서 노드를 눌러 찍으세요. 고민되면 [자동 배분]을 누르면 무기에 맞게 찍어 줍니다.", "패시브 열기", function() openPanel("패시브", { { "패시브", "pass" } }) end },
-  { "강화", "마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 스킬을 또 뽑으면 스킬 레벨도 오릅니다. 막히면 강화 · 장비 · 스킬 레벨부터 올리세요.", "제련소 열기", function() openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }) end },
+  { "강화", "마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 아르카나를 또 뽑으면 아르카나 레벨도 오릅니다. 막히면 강화 · 장비 · 아르카나 레벨부터 올리세요.", "제련소 열기", function() openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }) end },
   { "보스와 그 너머", "다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 더 자세한 공략은 마을 [안내소 → 도움말]에 있습니다.", "도움말 보기", function() openPanel("안내소", { { "도움말", "help" } }) end },
 }
 tutAfterStage = function(k)
@@ -1263,9 +1275,9 @@ showStartPick = function()
   local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(6, 3, 3), BackgroundTransparency = 0.08, Text = "", AutoButtonColor = false, ZIndex = 40 }, gui)
   local t = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.04, 0), Size = UDim2.new(0.8, 0, 0.08, 0), BackgroundTransparency = 1, Text = "길을 고르세요", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), ZIndex = 42 }, ov)
   mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, t)
-  local sub = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.12, 0), Size = UDim2.new(0.8, 0, 0.04, 0), BackgroundTransparency = 1, Text = "처음 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(200, 185, 165), ZIndex = 42 }, ov)
-  for i, c in ipairs({ { "warrior", "warrior", "전사", "검을 든 근접 전사", "단단한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타", Color3.fromRGB(235, 110, 80) },
-                       { "mage", "mage", "마법사", "지팡이를 든 원소 마법사", "멀리서 화면을 쓸어버리는 마법", "스킬: 불씨 · 체인 라이트닝 · 폭열탄", Color3.fromRGB(150, 130, 255) } }) do
+  local sub = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.12, 0), Size = UDim2.new(0.8, 0, 0.04, 0), BackgroundTransparency = 1, Text = "처음 무기와 아르카나 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(200, 185, 165), ZIndex = 42 }, ov)
+  for i, c in ipairs({ { "warrior", "warrior", "전사", "검을 든 근접 전사", "단단한 체력과 강한 물리 공격", "아르카나: 일격 · 찢기(범위) · 강타", Color3.fromRGB(235, 110, 80) },
+                       { "mage", "mage", "마법사", "지팡이를 든 원소 마법사", "멀리서 화면을 쓸어버리는 마법", "아르카나: 불씨 · 체인 라이트닝 · 폭열탄", Color3.fromRGB(150, 130, 255) } }) do
     local card = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(i == 1 and 0.28 or 0.72, 0, 0.19, 0), Size = UDim2.new(0.38, 0, 0.74, 0), BackgroundColor3 = Color3.fromRGB(22, 15, 13), Text = "", AutoButtonColor = false, ZIndex = 42 }, ov)
     corner(card, 12); local cs = mk("UIStroke", { Color = Color3.fromRGB(120, 92, 48), Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
     Skin.frame(card, "ui_panel", 0.2, 0.5)
@@ -1344,7 +1356,7 @@ gui:GetAttributeChangedSignal("Debug"):Connect(function()
   elseif v == "tut" then tutorial(0)          -- 시험: 튜토리얼 (기존 계정은 진행이 저장되지 않음)
   elseif v == "tutst" then tutAfterStage(1)
   elseif v == "gachafx" then   -- 소환 연출 시험 (가짜 결과, 재화 소모 없음)
-    openPanel("스킬 소환", { { "스킬 소환", "gacha" }, { "스킬 목록", "gachalist" } })
+    openPanel("아르카나 소환", { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } })
     local R = {}; for i, r in ipairs({ 0, 1, 0, 2, 0, 1, 3, 0, 1, 4 }) do R[i] = { id = i % 2 == 0 and "rapid" or "strike", name = i % 2 == 0 and "연사" or "일격", rarity = r, dup = (r == 0) and 2 or nil, new = r > 0 or nil } end
     Menus.revealResults(R)
   elseif views[v] then openPanel(v, { { v, v } }) end

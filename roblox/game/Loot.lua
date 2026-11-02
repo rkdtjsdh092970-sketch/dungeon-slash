@@ -120,8 +120,7 @@ function M.fieldDrops(rng, sv, node, boss, mf)   -- mf: 실효 MF 가중치 1 + 
     if rng:NextNumber() < chance then c += 1 end; out.stones = c
   end
   local oc = isRift and (0.4 + node.tier / 30) or ((boss and kind == "boss") and 0.4 or 0.03)
-  out.orbC = floor(oc) + (rng:NextNumber() < oc - floor(oc) and 1 or 0)
-  local od = oc * 0.05; out.orbD = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0)
+  local od = oc * 0.05; out.orbC = floor(od) + (rng:NextNumber() < od - floor(od) and 1 or 0)   -- 혼돈 구슬: 예전 신성 구슬 확률 (2026-11-02)
   return out
 end
 

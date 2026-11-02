@@ -153,6 +153,7 @@ M.ART = {
   i_divine = { w = 96, h = 96, foot = 0.99, file = "art_i_divine.rgba", id = nil },
   i_stone = { w = 96, h = 96, foot = 0.99, file = "art_i_stone.rgba", id = nil },
   i_speed = { w = 96, h = 96, foot = 0.906, file = "art_i_speed.rgba", id = nil },
+  i_arcana = { w = 96, h = 96, foot = 0.938, file = "art_i_arcana.rgba", id = nil },
   fx_bg_town_fire0 = { w = 280, h = 41, foot = 0.951, file = "art_fx_bg_town_fire0.rgba", id = nil },
   fx_bg_town_fire1 = { w = 248, h = 37, foot = 0.946, file = "art_fx_bg_town_fire1.rgba", id = nil },
   fx_bg_town_fire2 = { w = 288, h = 44, foot = 1.0, file = "art_fx_bg_town_fire2.rgba", id = nil },
