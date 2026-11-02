@@ -270,7 +270,10 @@ local function setSummary(s)
   if not s then return end
   if summary and (summary.power or 0) > 0 and s.power and s.power ~= summary.power then showPowerChange(summary.power, s.power); if tutSignal then task.defer(tutSignal, "power") end end
   summary = s
-  statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold); if statArc then statArc.Text = n(s.arcana or 0) end
+  statLv.Text = "Lv " .. tostring(s.level)
+  do local f = statLv:FindFirstChild("ExpFill") or mk("Frame", { Name = "ExpFill", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(120, 200, 255), BorderSizePixel = 0 }, statLv)   -- 경험치 막대 (글자를 가리지 않게 아래 3px)
+    f.Size = UDim2.new(math.clamp((s.exp or 0) / math.max(1, s.expNeed or 1), 0, 1), 0, 0, 3) end
+  statGold.Text = n(s.gold); if statArc then statArc.Text = n(s.arcana or 0) end
   if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end
   if not s.needStart and s.tut and s.tut < 3 and not startShown then startShown = true; task.delay(1, function() if tutorial then tutorial(0) end end) end   -- 튜토리얼 도중에 나갔다 오면 처음부터 짧게
   if s.passNotice and not passNoticed then passNoticed = true; task.delay(2, function() toast("The passive tree has been remade! All your points were refunded.", Color3.fromRGB(255, 220, 120)) end) end
@@ -681,6 +684,13 @@ corner(resStat, 15); mk("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRig
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder }, resStat)
 local resText = mk("Frame", { Position = UDim2.new(0, 28, 0, 122), Size = UDim2.new(1, -56, 0, 128), BackgroundTransparency = 1, ZIndex = 27 }, resBox)   -- 보상 칩
 mk("UIGridLayout", { CellSize = UDim2.new(0, 192, 0, 36), CellPadding = UDim2.new(0, 8, 0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, resText)
+-- 경험치 막대 (승리 시): 레벨 · 채워지는 막대 · 숫자
+local resExp = mk("Frame", { Position = UDim2.new(0, 28, 0, 248), Size = UDim2.new(1, -56, 0, 16), BackgroundColor3 = Color3.fromRGB(10, 8, 14), ZIndex = 27, Visible = false }, resBox); corner(resExp, 8)
+mk("UIStroke", { Color = Color3.fromRGB(90, 140, 200), Thickness = 1.5 }, resExp)
+local resExpFill = mk("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(110, 190, 255), BorderSizePixel = 0, ZIndex = 28 }, resExp); corner(resExpFill, 8)
+mk("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(80, 140, 255), Color3.fromRGB(150, 230, 255)) }, resExpFill)
+local resExpText = mk("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.new(1, 1, 1), Text = "", ZIndex = 29 }, resExp)
+mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, resExpText)
 local resCount = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 24, 1, -96), Size = UDim2.new(1, -48, 0, 22), Font = Theme.FONT, TextSize = 16, TextColor3 = Color3.fromRGB(140, 255, 160), Text = "", ZIndex = 27 }, resBox)
 local resBtns = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -20), Size = UDim2.new(1, -40, 0, 46), ZIndex = 27 }, resBox)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, resBtns)
@@ -710,6 +720,15 @@ showResultPanel = function(x, spec)
   for _, c in ipairs(resText:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
   local o = 0; local function chip(art, t, col) o += 1; resChip(o, art, t, col) end
   if x.first then chip(nil, "★ First Clear!", Color3.fromRGB(255, 220, 120)) end
+  if x.exp and x.exp > 0 then chip(nil, "EXP +" .. n(x.exp), Color3.fromRGB(150, 200, 255)) end
+  resExp.Visible = x.expNeed ~= nil
+  if x.expNeed then
+    local to = math.clamp(x.expNow / math.max(1, x.expNeed), 0, 1)
+    local from = x.levelUps and 0 or math.clamp((x.expNow - (x.exp or 0)) / math.max(1, x.expNeed), 0, 1)
+    resExpText.Text = string.format("Lv %d   %s / %s EXP", x.lv or 0, n(x.expNow), n(x.expNeed)); resExpText:SetAttribute("NoTr", true)
+    resExpFill.Size = UDim2.new(from, 0, 1, 0)
+    TweenService:Create(resExpFill, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(to, 0, 1, 0) }):Play()
+  end
   if x.levelUps then chip(nil, "Level +" .. x.levelUps, Color3.fromRGB(150, 230, 255)) end
   if (x.gold or 0) > 0 then chip("i_gold", "Gold +" .. n(x.gold), Color3.fromRGB(255, 215, 110)) end
   if type(x.arcana) == "number" and x.arcana > 0 then chip("i_arcana", "Arcana Shards +" .. x.arcana, Color3.fromRGB(240, 170, 255)) end

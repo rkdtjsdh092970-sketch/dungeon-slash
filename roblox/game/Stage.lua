@@ -101,8 +101,8 @@ function M.create(parent, W, H, replayAct)
   S.root = root; S.layer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 3 }, root)
   -- 플레이어
   S.plX, S.plY = S.ox + 104 * u, S.oy + 336 * u   -- 웹 PLAYER_POS
-  S.pl = Sprites.artLabel(S.layer, M.heroKey(), 104 * u); S.plArt = S.pl ~= nil
-  if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 96 * u) end
+  S.pl = Sprites.artLabel(S.layer, M.heroKey(), 138 * u); S.plArt = S.pl ~= nil
+  if not S.plArt then S.pl, S.plInfo = Sprites.label(S.layer, "warrior", 0, false, 128 * u) end
   S.pl.Position = UDim2.new(0, S.plX, 0, S.plY); S.pl.ZIndex = 5
   -- 상태 바
   -- ── 전투 HUD (웹 battleHudBuild 구성): 로블록스 상단 버튼 줄(M.TOP) 아래부터. 크기는 Client 의 HUD 배율 M.HUD ──
@@ -195,7 +195,7 @@ end
 -- 영웅 동작을 정한다 (BattleFx 가 스킬마다 부른다): lunge = 대상 쪽으로 힘껏 돌진, slam = 뛰어올라 내려찍기, cast = 지팡이를 치켜드는 시전, throw = 짧게 던지기
 function M:heroPose(name, arg)
   local tx = type(arg) == "number" and arg or nil
-  local reach = tx and math.clamp((tx - self.plX) * 0.42, 40 * self.u, 230 * self.u) or 60 * self.u
+  local reach = tx and math.clamp((tx - self.plX) * 0.22, 30 * self.u, 100 * self.u) or 45 * self.u   -- 짧게 내딛어 벤다 (멀리 날아가지 않게, 2026-11-03)
   self.plAnim = { name = name, t = 0, reach = reach, big = arg == true }
   if (name == "lunge" or name == "slam") and self.plArt then   -- 잔상: 돌진 길에 흐릿한 그림자가 남는다
     for i = 1, 3 do
@@ -312,7 +312,7 @@ local function unitFor(S, e, lanes)
   local u = S.units[e.id]; if u then return u end
   local boss = e.bs ~= nil
   local key, hue = e.sp, e.hu
-  local size = (boss and math.min(224, 64 * (e.scl or 3)) or (e.tier == "elite" and 96 or 64)) * S.u * dep   -- 웹과 같은 비율 (일반 64 · 정예 96 · 보스 sc*64)
+  local size = (boss and math.min(290, 84 * (e.scl or 3)) or (e.tier == "elite" and 124 or 86)) * S.u * dep   -- 웹보다 약 1.33배 크게 (일반 86 · 정예 124 · 보스 sc*84, 2026-11-03)
   local lab, info
   if boss then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size)   -- 보스 그림 (있으면 색조와 상관없이)
   else

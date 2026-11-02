@@ -45,7 +45,7 @@ end
 function M.summary(sv)
   if sv.passNotice then task.delay(5, function() sv.passNotice = nil end) end   -- 안내는 한 번만 (접속 직후 요약들에 실어 보낸 뒤 지운다)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice, needStart = sv.needStart or nil, tut = sv.tut }   -- hero: 지팡이를 끼면 마법사 모습
+  return { level = sv.level, exp = floor(sv.exp or 0), expNeed = M.expNeed(sv.level), gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, arcana = sv.arcana or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, sockTix = sv.sockTix or 0, gems = sv.gems or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set, hero = (sv.equipped.weapon and sv.equipped.weapon.wt == "staff") and "mage" or "warrior", power = Power.display(powerOf(sv)), passNotice = sv.passNotice, needStart = sv.needStart or nil, tut = sv.tut }   -- hero: 지팡이를 끼면 마법사 모습
 end
 -- 화면용 상세: 기본 능력치 · 옵션(티어) · 사탄 효과를 따로
 function M.itemDetail(it)
@@ -408,6 +408,21 @@ function M.battle(sv, floorN, seed)
 end
 
 -- 스테이지(1~4) · 보스(5) · 균열(1~100) 도전. kind = "stage" | "rift", n = 번호.
+-- 경험치 (2026-11-03): 승리하면 그 콘텐츠 레벨(스테이지 n · 균열 n층 = n+1) 필요량의 일부, 처음 깨면 보너스.
+-- 내 레벨이 콘텐츠보다 높을수록 한 단계마다 x0.75 (반복 파밍도 오르지만 진행이 훨씬 빠르다)
+function M.expNeed(L) return floor(100 * 1.12 ^ ((L or 1) - 1)) end
+local function grantExp(sv, amount)
+  sv.exp = (sv.exp or 0) + amount; local ups = 0
+  while sv.level < CFG.LEVEL_CAP and sv.exp >= M.expNeed(sv.level) do sv.exp -= M.expNeed(sv.level); sv.level += 1; ups += 1 end
+  if sv.level >= CFG.LEVEL_CAP then sv.exp = 0 end
+  return ups
+end
+local function winExp(sv, kind, n, first, boss)
+  local L0 = n + 1
+  local base = (kind == "stage" and 0.12 or 0.12) * M.expNeed(L0) * (boss and 1.5 or 1) * 0.75 ^ math.max(0, sv.level - L0)
+  local bonus = first and (kind == "stage" and 0.9 or 0.5) * M.expNeed(L0) or 0
+  return floor((base + bonus) * (1 + math.max(0, Stats.computeStats(sv).expFind or 0)) + 0.5)
+end
 function M.fight(sv, kind, n, seed)
   n = math.floor(n or 1)
   local node
@@ -444,9 +459,13 @@ function M.fight(sv, kind, n, seed)
     do local first = (kind == "stage" and res.first) or (kind == "rift" and n > sv.rift.best)
       res.arcana = Econ.addArcana(sv, (kind == "rift" and 1 + floor(n / 20) or 1) + (boss and 3 or 0) + (first and 5 or 0)) end
     if kind == "rift" and n > sv.rift.best then
-      local gain = math.max(0, math.min(CFG.LEVEL_CAP, 1 + n) - sv.level); sv.rift.best = n; res.first = true
-      if gain > 0 then sv.level += gain; res.levelUps = gain end
+      sv.rift.best = n; res.first = true
       if n >= CFG.RIFT_END then res.graduated = true; sv.graduated = true end
+    end
+    if kind == "stage" or kind == "rift" then
+      local first = res.first == true; local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
+      res.exp = winExp(sv, kind, n, first, boss); local ups = grantExp(sv, res.exp); if ups > 0 then res.levelUps = ups end
+      res.lv, res.expNow, res.expNeed = sv.level, floor(sv.exp or 0), M.expNeed(sv.level)   -- 결과 창 경험치 막대
     end
   else res.gold = floor(b.gold * 0.5); sv.gold += res.gold end
   return res
