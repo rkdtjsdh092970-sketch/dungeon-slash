@@ -30,6 +30,8 @@ M.ART = {
   card_burst3 = { w = 384, h = 384, foot = 0.982, file = "art_card_burst3.rgba", id = nil },
   card_burst4 = { w = 384, h = 384, foot = 1.0, file = "art_card_burst4.rgba", id = nil },
   ui_panel = { w = 384, h = 384, foot = 0.997, file = "art_ui_panel.rgba", id = nil },
+  tut_corner = { w = 128, h = 128, foot = 0.914, file = "art_tut_corner.rgba", id = nil },
+  tut_arrow = { w = 128, h = 128, foot = 0.938, file = "art_tut_arrow.rgba", id = nil },
   ui_title = { w = 384, h = 96, foot = 0.792, file = "art_ui_title.rgba", id = nil },
   ui_card = { w = 384, h = 96, foot = 0.812, file = "art_ui_card.rgba", id = nil },
   ui_btn_gold = { w = 288, h = 96, foot = 0.823, file = "art_ui_btn_gold.rgba", id = nil },
