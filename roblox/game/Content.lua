@@ -105,7 +105,7 @@ function M.play(sv, spec, seed)
     node = { kind = kind, act = 10, tier = spec.upper and UP_TIERS[vs] or GATE_TIERS[vs], vsel = vs, upper = spec.upper and 1 or nil }
   elseif kind == "raid" then
     if not graduated(sv) then return nil, "Requires clearing Rift Floor 100" end
-    node = { kind = "raid", act = 10, tier = CFG.RIFT_END }
+    node = { kind = "raid", act = 10, tier = CFG.RAID.TIER or CFG.RIFT_END }
   elseif kind == "temple" then
     if not (sv.raid and sv.raid.cleared > 0) then return nil, "Defeat the Abyssal Warden first" end
     local open = 0; for _, need in ipairs(CFG.TEMPLE.NEED) do if need == 0 or ((sv.spire and sv.spire.best or 0) >= need) then open += 1 end end

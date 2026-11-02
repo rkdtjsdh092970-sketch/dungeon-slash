@@ -1192,7 +1192,7 @@ local function showInfo(t)
       go("Challenge", function() launch(stageSpec(t.stage)) end)
     elseif t.id == "RE" then intro(); line(string.format("Entries left today  %d", U.endlessLeft or 0), 18, Color3.fromRGB(255, 205, 110)); go("Enter", function() launch(playSpec("Endless Rift", { kind = "endless" })) end)
     elseif t.id == "RG" then intro(); go("Enter", function() launch(playSpec("Golden Vault", { kind = "vault" })) end)
-    elseif t.id == "RX" then intro(); recLine(okP and PW.recTier(CF.RIFT_END) or nil); go("Challenge", function() launch(playSpec("Abyss Gate", { kind = "raid" })) end)
+    elseif t.id == "RX" then intro(); recLine(okP and PW.recTier(CF.RAID.TIER or CF.RIFT_END) or nil); go("Challenge", function() launch(playSpec("Abyss Gate", { kind = "raid" })) end)
     elseif t.id == "RTP" then
       local open = 0; for _, need in ipairs(CF.TEMPLE.NEED) do if need == 0 or (U.spireBest or 0) >= need then open += 1 end end
       local cur = math.clamp(mpSel.RTP or open, 1, math.max(1, open))

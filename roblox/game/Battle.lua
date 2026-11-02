@@ -923,7 +923,7 @@ function M.new(sv, node, seed)
   local stage = isFloor and 4 or (node.stage or CFG.STAGES)
   local scAct = (node.tier or isFloor) and 1 or act
   local riftMul
-  if kind == "raid" then riftMul = floorMult(CFG.RIFT_END)
+  if kind == "raid" then riftMul = floorMult(node.tier or CFG.RIFT_END)   -- 모르가스 강함 = CFG.RAID.TIER (균열 곡선과 따로)
   elseif node.tier then riftMul = (kind == "void" or EBk) and bossRiftMult(node.tier) or floorMult(node.tier)
   elseif isFloor then riftMul = floorMult(CFG.RIFT_END) else riftMul = 1 end
   local sub = (kind == "spire" and node.floor) or (kind == "rift" and node.tier) or nil
