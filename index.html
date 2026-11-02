@@ -3,7 +3,7 @@
 <title>Dungeon Slash</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;height:100%;background:#0a0814;overflow:hidden;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#eee;user-select:none}
-#tutHi{position:absolute;z-index:900;pointer-events:none;border:3px solid #ffd24a;border-radius:10px;box-shadow:0 0 0 3px #0008,0 0 18px #ffd24a;animation:tutp 1s ease-in-out infinite}@keyframes tutp{50%{box-shadow:0 0 0 3px #0008,0 0 34px #ffd24a;transform:scale(1.04)}}#tutBox{position:absolute;z-index:901;right:10px;bottom:46px;width:280px;background:#150f26f2;border:2px solid #ffd24a;border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.5}#tutBox .tt{color:#ffd24a;font-weight:700;font-size:15px;margin-bottom:2px}#tutBox .btn{margin-top:6px}#app{position:absolute;left:50%;top:50%;width:960px;height:540px;transform-origin:center;transform:translate(-50%,-50%);background:#000;overflow:hidden}
+#tutHi{position:absolute;z-index:900;pointer-events:none;border:3px solid #ffd24a;border-radius:10px;box-shadow:0 0 0 9999px #0007,0 0 18px #ffd24a;animation:tutp 1s ease-in-out infinite}@keyframes tutp{50%{box-shadow:0 0 0 9999px #0007,0 0 34px #ffd24a}}#tutArrow{position:absolute;z-index:902;width:44px;height:52px;pointer-events:none;background:linear-gradient(#ffe48a,#d89a2a);clip-path:polygon(30% 0,70% 0,70% 55%,100% 55%,50% 100%,0 55%,30% 55%);filter:drop-shadow(0 0 6px #000);animation:tuta .6s ease-in-out infinite alternate}#tutArrow.up{transform:rotate(180deg);animation-name:tutb}@keyframes tuta{to{margin-top:10px}}@keyframes tutb{to{margin-top:-10px}}.tutw{display:flex;gap:14px;align-items:center;margin:6px 0 10px;max-width:520px}.tutw img{height:150px}.tutw p{margin:6px 0;line-height:1.6}#tutBox{position:absolute;z-index:901;right:10px;bottom:46px;width:280px;background:#150f26f2;border:2px solid #ffd24a;border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.5}#tutBox .tt{color:#ffd24a;font-weight:700;font-size:15px;margin-bottom:2px}#tutBox .btn{margin-top:6px}#app{position:absolute;left:50%;top:50%;width:960px;height:540px;transform-origin:center;transform:translate(-50%,-50%);background:#000;overflow:hidden}
 #cv{position:absolute;left:0;top:0;width:960px;height:540px;image-rendering:pixelated}
 .hidden{display:none!important}
 .ico{image-rendering:pixelated;vertical-align:middle}
@@ -267,7 +267,7 @@ input.txt{font:inherit;font-size:13px;background:#241d42;color:#fff;border:1px s
 </style></head><body>
 <div id="ttpop" class="hidden"></div>
 <div id="app">
-<canvas id="cv" width="960" height="540"></canvas><div id="tutHi" style="display:none"></div><div id="tutBox" style="display:none"><div class="tt"></div><div class="tx"></div><button class="btn xs" onclick="tutSkip()">안내 건너뛰기</button></div>
+<canvas id="cv" width="960" height="540"></canvas><div id="tutHi" style="display:none"></div><div id="tutArrow" style="display:none"></div><div id="tutBox" style="display:none"><div class="tt"></div><div class="tx"></div><button class="btn xs" onclick="tutSkip()">안내 건너뛰기</button></div>
 <div id="title" class="hidden"></div>
 <div id="top" class="hidden"><span class="lv" id="t-lv"></span><div class="xp"><i id="t-exp"></i></div>
  <span class="cur pw" id="t-pow-w" data-tipk="pow" style="color:#ffd070;cursor:pointer;font-weight:700"><small style="opacity:.8">전투력</small>&nbsp;<span id="t-pow">0</span></span>
@@ -5097,7 +5097,7 @@ function openClassPick() {
   const card = (cls, name, col, d1, d2, sk) => `<div class="cpick" data-a="pick" data-c="${cls}"><img src="${artURL(cls) || ""}" alt=""><b style="color:${col}">${name}</b><div class="dim">${d1}</div><div class="dim">${d2}</div><div style="color:#ffd98a;font-size:12px">${sk}</div></div>`;
   Modal.open(`<h2>길을 고르세요</h2><div class="dim center">첫 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 길도 바꿀 수 있어요.</div>
     <div class="cpicks">${card("warrior", "전사", "#ff8a6a", "검을 쓰는 근접 전사", "튼튼한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타")}${card("mage", "마법사", "#a89aff", "지팡이를 쓰는 마법사", "멀리서 꾸준한 비전 마법", "스킬: 비전 탄 · 비전 미사일 · 비전 폭발")}</div>`, { cls: "wide", noClose: true, on: {
-    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; save.tut5 = 0; save.seen.guide = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = null; openTown(1); toast("소환 조각 90개를 받았습니다 — 마을의 [스킬 소환]에서 10연 소환을 해 보세요!", "ok"); },
+    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; save.tut5 = 0; save.seen.guide = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = null; openTown(1); setTimeout(tutWelcome, 300); },
   } });
 }
 function continueGame() {
@@ -6697,7 +6697,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-061246";
+const BUILD_ID = "20261103-061516";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7028,20 +7028,35 @@ function tutEvent(ev) {
   if (save.tut5 >= TUT5.length) { save.tut5 = 99; setTimeout(() => toast("다음은 들판의 군주 그룸! 지도에서 권장 전투력과 내 전투력을 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다.", "ok"), 600); }
   saveGame();
 }
+// 시작 인사 (로블록스판 coach): 직업을 고른 직후
+function tutWelcome() {
+  const mage = save.equipped.weapon && save.equipped.weapon.wt === "staff";
+  Modal.open(`<h2>환영합니다, ${mage ? "마법사" : "전사"}!</h2><div class="tutw"><img src="${artURL(mage ? "mage" : "warrior") || ""}" alt=""><div>
+    <p>던전 슬래시는 <b>자동 전투</b> 게임입니다. 영웅은 스스로 싸우고, 여러분은 <b>스킬 · 장비 · 패시브</b>로 영웅을 강하게 만듭니다.</p>
+    <p>화면에서 <b style="color:#ffd24a">반짝이는 곳</b>을 차례대로 눌러 보세요. 오른쪽 아래 안내 상자가 다음 할 일을 알려 줍니다.</p></div></div>
+    <div class="pbtns"><button class="btn" data-a="skip">안내 건너뛰기</button><button class="btn pri big" data-a="go">시작하기</button></div>`, { noClose: true, on: {
+    go: () => { Modal.close(true); snd("click"); }, skip: () => { tutSkip(); Modal.close(true); },
+  } });
+}
 function tutSkip() { if (save) { save.tut5 = 99; saveGame(); } }
 // 매 프레임: 지금 단계의 안내 글 · 반짝이는 테두리
+let tutScrollEl = null;
 function tutTick() {
   const hi = $("#tutHi"), box = $("#tutBox"); if (!hi) return;
   const T = TUT5[tutStep()], waiting = T && T.after && (save.cleared[0] || 0) < T.after;
-  if (!save || !T || waiting || G.screen === "battle" || G.screen === "title") { hi.style.display = "none"; box.style.display = "none"; return; }
+  if (!save || !T || waiting || G.screen === "battle" || G.screen === "title" || (Modal.isOpen() && document.querySelector("#mbox .tutw"))) { hi.style.display = "none"; box.style.display = "none"; if ($("#tutArrow")) $("#tutArrow").style.display = "none"; return; }
   box.style.display = ""; box.querySelector(".tt").textContent = T.title; box.querySelector(".tx").innerHTML = T.text;
   let t = null; try { t = T.target(); } catch (e) {}
   let r = null;
   if (t && t.map) { const n = MAP.byId[t.map], cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (n) r = { left: cr.left + (n.x - MapView.cam.x - 24) * k, top: cr.top + (n.y - MapView.cam.y - 24) * k, width: 48 * k, height: 48 * k }; }
   else if (t && t.town) { const s = townSpots().find((x) => x.id === t.town), cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (s) r = { left: cr.left + (s.x - s.w) * k, top: cr.top + (s.y - s.h) * k, width: s.w * 2 * k, height: (s.h + 30) * k }; }
-  else if (t && t.getBoundingClientRect) { const b = t.getBoundingClientRect(); if (b.width > 0) r = b; }
-  if (!r) { hi.style.display = "none"; return; }
+  else if (t && t.getBoundingClientRect) { const ap = $("#app").getBoundingClientRect(); let b = t.getBoundingClientRect();
+    if (b.width > 0 && (b.bottom > ap.bottom - 4 || b.top < ap.top + 40) && t.scrollIntoView && tutScrollEl !== t) { tutScrollEl = t; t.scrollIntoView({ block: "center" }); b = t.getBoundingClientRect(); }   // 창 안에서 가려져 있으면 보이게
+    if (b.width > 0) r = b; }
+  if (!r) { hi.style.display = "none"; if ($("#tutArrow")) $("#tutArrow").style.display = "none"; return; }
   const app = $("#app").getBoundingClientRect(), sc = app.width / CW;
+  const ar = $("#tutArrow"); if (ar) { ar.style.display = ""; const below = r.top - app.top < 120 * sc; ar.style.left = (r.left - app.left + r.width / 2) / sc - 22 + "px"; ar.style.top = (below ? (r.top - app.top + r.height) / sc + 6 : (r.top - app.top) / sc - 58) + "px"; ar.classList.toggle("up", below); }
+  { const bx = (r.left - app.left) / sc, low = (r.top - app.top) / sc > 300 && bx > 560; box.style.bottom = low ? "auto" : "46px"; box.style.top = low ? "60px" : "auto"; }   // 안내 상자가 대상을 가리지 않게
   hi.style.display = ""; hi.style.left = (r.left - app.left) / sc - 6 + "px"; hi.style.top = (r.top - app.top) / sc - 6 + "px"; hi.style.width = r.width / sc + 12 + "px"; hi.style.height = r.height / sc + 12 + "px";
 }
 
@@ -7106,6 +7121,10 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.03", date: "11/3", title: "안내 개선", items: [
+    "새로 시작하면 환영 인사가 나오고, 안내 중에는 눌러야 할 곳만 밝게 보이고 나머지는 어두워집니다. 반짝이는 화살표가 위치를 가리킵니다.",
+    "창 안에서 가려진 버튼은 안내가 자동으로 보이게 스크롤하고, 안내 상자가 버튼을 가리지 않게 자리를 옮깁니다.",
+  ] },
   { ver: "5.02", date: "11/3", title: "화면 테마 개편", items: [
     "모든 창 · 버튼 · 탭 · 위 메뉴를 새 테마(검붉은 바탕 · 금테 장식 틀 · 그림 버튼 · 메뉴 아이콘)로 바꿨습니다.",
     "지도 창에 권장 전투력과 내 전투력이 나옵니다 (균열 · 탑 · 보스 관문 · 신전 · 레이드).",

@@ -23,19 +23,34 @@ function tutEvent(ev) {
   if (save.tut5 >= TUT5.length) { save.tut5 = 99; setTimeout(() => toast("다음은 들판의 군주 그룸! 지도에서 권장 전투력과 내 전투력을 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다.", "ok"), 600); }
   saveGame();
 }
+// 시작 인사 (로블록스판 coach): 직업을 고른 직후
+function tutWelcome() {
+  const mage = save.equipped.weapon && save.equipped.weapon.wt === "staff";
+  Modal.open(`<h2>환영합니다, ${mage ? "마법사" : "전사"}!</h2><div class="tutw"><img src="${artURL(mage ? "mage" : "warrior") || ""}" alt=""><div>
+    <p>던전 슬래시는 <b>자동 전투</b> 게임입니다. 영웅은 스스로 싸우고, 여러분은 <b>스킬 · 장비 · 패시브</b>로 영웅을 강하게 만듭니다.</p>
+    <p>화면에서 <b style="color:#ffd24a">반짝이는 곳</b>을 차례대로 눌러 보세요. 오른쪽 아래 안내 상자가 다음 할 일을 알려 줍니다.</p></div></div>
+    <div class="pbtns"><button class="btn" data-a="skip">안내 건너뛰기</button><button class="btn pri big" data-a="go">시작하기</button></div>`, { noClose: true, on: {
+    go: () => { Modal.close(true); snd("click"); }, skip: () => { tutSkip(); Modal.close(true); },
+  } });
+}
 function tutSkip() { if (save) { save.tut5 = 99; saveGame(); } }
 // 매 프레임: 지금 단계의 안내 글 · 반짝이는 테두리
+let tutScrollEl = null;
 function tutTick() {
   const hi = $("#tutHi"), box = $("#tutBox"); if (!hi) return;
   const T = TUT5[tutStep()], waiting = T && T.after && (save.cleared[0] || 0) < T.after;
-  if (!save || !T || waiting || G.screen === "battle" || G.screen === "title") { hi.style.display = "none"; box.style.display = "none"; return; }
+  if (!save || !T || waiting || G.screen === "battle" || G.screen === "title" || (Modal.isOpen() && document.querySelector("#mbox .tutw"))) { hi.style.display = "none"; box.style.display = "none"; if ($("#tutArrow")) $("#tutArrow").style.display = "none"; return; }
   box.style.display = ""; box.querySelector(".tt").textContent = T.title; box.querySelector(".tx").innerHTML = T.text;
   let t = null; try { t = T.target(); } catch (e) {}
   let r = null;
   if (t && t.map) { const n = MAP.byId[t.map], cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (n) r = { left: cr.left + (n.x - MapView.cam.x - 24) * k, top: cr.top + (n.y - MapView.cam.y - 24) * k, width: 48 * k, height: 48 * k }; }
   else if (t && t.town) { const s = townSpots().find((x) => x.id === t.town), cv = $("#cv"), cr = cv.getBoundingClientRect(), k = cr.width / CW; if (s) r = { left: cr.left + (s.x - s.w) * k, top: cr.top + (s.y - s.h) * k, width: s.w * 2 * k, height: (s.h + 30) * k }; }
-  else if (t && t.getBoundingClientRect) { const b = t.getBoundingClientRect(); if (b.width > 0) r = b; }
-  if (!r) { hi.style.display = "none"; return; }
+  else if (t && t.getBoundingClientRect) { const ap = $("#app").getBoundingClientRect(); let b = t.getBoundingClientRect();
+    if (b.width > 0 && (b.bottom > ap.bottom - 4 || b.top < ap.top + 40) && t.scrollIntoView && tutScrollEl !== t) { tutScrollEl = t; t.scrollIntoView({ block: "center" }); b = t.getBoundingClientRect(); }   // 창 안에서 가려져 있으면 보이게
+    if (b.width > 0) r = b; }
+  if (!r) { hi.style.display = "none"; if ($("#tutArrow")) $("#tutArrow").style.display = "none"; return; }
   const app = $("#app").getBoundingClientRect(), sc = app.width / CW;
+  const ar = $("#tutArrow"); if (ar) { ar.style.display = ""; const below = r.top - app.top < 120 * sc; ar.style.left = (r.left - app.left + r.width / 2) / sc - 22 + "px"; ar.style.top = (below ? (r.top - app.top + r.height) / sc + 6 : (r.top - app.top) / sc - 58) + "px"; ar.classList.toggle("up", below); }
+  { const bx = (r.left - app.left) / sc, low = (r.top - app.top) / sc > 300 && bx > 560; box.style.bottom = low ? "auto" : "46px"; box.style.top = low ? "60px" : "auto"; }   // 안내 상자가 대상을 가리지 않게
   hi.style.display = ""; hi.style.left = (r.left - app.left) / sc - 6 + "px"; hi.style.top = (r.top - app.top) / sc - 6 + "px"; hi.style.width = r.width / sc + 12 + "px"; hi.style.height = r.height / sc + 12 + "px";
 }

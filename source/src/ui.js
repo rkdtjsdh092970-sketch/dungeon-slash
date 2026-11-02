@@ -78,7 +78,7 @@ function openClassPick() {
   const card = (cls, name, col, d1, d2, sk) => `<div class="cpick" data-a="pick" data-c="${cls}"><img src="${artURL(cls) || ""}" alt=""><b style="color:${col}">${name}</b><div class="dim">${d1}</div><div class="dim">${d2}</div><div style="color:#ffd98a;font-size:12px">${sk}</div></div>`;
   Modal.open(`<h2>길을 고르세요</h2><div class="dim center">첫 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 길도 바꿀 수 있어요.</div>
     <div class="cpicks">${card("warrior", "전사", "#ff8a6a", "검을 쓰는 근접 전사", "튼튼한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타")}${card("mage", "마법사", "#a89aff", "지팡이를 쓰는 마법사", "멀리서 꾸준한 비전 마법", "스킬: 비전 탄 · 비전 미사일 · 비전 폭발")}</div>`, { cls: "wide", noClose: true, on: {
-    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; save.tut5 = 0; save.seen.guide = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = null; openTown(1); toast("소환 조각 90개를 받았습니다 — 마을의 [스킬 소환]에서 10연 소환을 해 보세요!", "ok"); },
+    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; save.tut5 = 0; save.seen.guide = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = null; openTown(1); setTimeout(tutWelcome, 300); },
   } });
 }
 function continueGame() {
