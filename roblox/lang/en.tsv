@@ -1786,7 +1786,7 @@ x4 배속을 쓸 수 있습니다!	x4 speed unlocked!
 허수아비	Training Dummy
 허수아비 DPS	Dummy DPS
 내용	Message
-모든 플레이어의 우편함에 공지와 보상을 보냅니다. 보상 형식 예: gold=5000, ore=20 (gold · ore · hone · orbC · orbD · shards · keys)	Sends a notice and rewards to every player's mailbox. Reward format e.g. gold=5000, ore=20 (gold · ore · hone · orbC · orbD · shards · keys)
+모든 플레이어의 우편함에 공지와 보상을 보냅니다. 보상 형식 예: gold=5000, ore=20 (gold · ore · hone · orbC · orbD · keys)	Sends a notice and rewards to every player's mailbox. Reward format e.g. gold=5000, ore=20 (gold · ore · hone · orbC · orbD · keys)
 받은 우편이 없습니다.	No mail.
 받을 수 없는 우편입니다	This mail cannot be claimed
 받음	Claimed
