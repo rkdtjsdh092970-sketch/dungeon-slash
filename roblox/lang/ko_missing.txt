@@ -1,3 +1,5 @@
+
+Tap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are revealed, tap the screen again to close.
   (at +0)
   (me)
 %s  Lv %d
@@ -22,6 +24,7 @@ Dmg
 Dragging
 DungeonSlashV1
 English
+Fam
 Frame
 Game
 Hud

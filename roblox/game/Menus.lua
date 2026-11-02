@@ -1789,6 +1789,7 @@ local function revealResults(res, from)
 end
 M.revealResults = revealResults   -- (시험용: 가짜 결과로 연출 확인)
 local gachaFam   -- 소환 계열 (처음엔 내 무기 계열)
+function M.gachaFamily() return gachaFam end   -- 튜토리얼: 직업에 맞는 계열이 골라져 있는지
 function M.gacha()
   C.clear()
   local r = C.rpc:InvokeServer("gacha"); if r.summary then C.setSummary(r.summary) end
@@ -1838,7 +1839,7 @@ function M.gacha()
   local ft = mk("Frame", { Position = UDim2.new(0, 14, 0, 32), Size = UDim2.new(1, -28, 0, 30), BackgroundTransparency = 1 }, R)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
   for i, f in ipairs({ { "phys", "Physical" }, { "mag", "Magic" }, { "all", "All" } }) do
-    local b = M.btn(ft, f[2], UDim2.new(0.333, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14
+    local b = M.btn(ft, f[2], UDim2.new(0.333, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14; b:SetAttribute("Fam", f[1])
   end
   local function group(y, title, art, have, c1, c10, pay, col1, col10)
     local hdr = mk("Frame", { Position = UDim2.new(0, 14, 0, y), Size = UDim2.new(1, -28, 0, 22), BackgroundTransparency = 1 }, R)

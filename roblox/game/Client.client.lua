@@ -1404,12 +1404,21 @@ tutorial = function(step)
     coach("Welcome, " .. cls .. "!", "Arcana Slayer is an auto-battle game. Your hero fights on their own — you make them stronger with arcana, gear and passives. Tap the glowing spots in order!",
       { { "Skip", skipAll, 110, Color3.fromRGB(70, 66, 70) }, { "Start", function() tutorial(1) end } })
   elseif step == 1 then
+    local want = summary and summary.hero == "mage" and "mag" or "phys"   -- 전사 = 물리 계열, 마법사 = 마법 계열 소환
+    local function famOk() return not Menus.gachaFamily or Menus.gachaFamily() == want end
     guide("Arcana Summon", "You got 90 Arcana Shards as a welcome gift. Open [Summon] in the top menu and press the glowing [Summon x10] to draw 10 cards. Tap the screen when done to continue.",
-      function() if panelLayer.Visible then return findBtn(function(d) return d.AbsoluteSize.Y > 40 and hasText(d, "Summon x10") end) end; return topBtn("m_gacha") end,
+      function()
+        if panelLayer.Visible then
+          if not famOk() then return findBtn(function(d) return d:GetAttribute("Fam") == want end) end
+          return findBtn(function(d) return d.AbsoluteSize.Y > 40 and hasText(d, "Summon x10") end)
+        end
+        return topBtn("m_gacha")
+      end,
       "pulled", function() tutorial(2) end,
       function()
         if not panelLayer.Visible then return "① You received 90 Arcana Shards as a starter gift.\nTap the glowing [Summon] icon (card deck) in the top menu." end
-        return "② The Summon window is open. Tap the glowing [Summon x10] button on the right to draw 10 Arcana cards for 90 shards.\nWhen all cards are revealed, tap the screen again to close."
+        if not famOk() then return want == "mag" and "② Mages use magic Arcana. Pick the glowing [Magic] tab so you only draw Arcana your staff can use." or "② Warriors use physical Arcana. Pick the glowing [Physical] tab so you only draw Arcana your sword can use." end
+        return (want == "mag" and "③ [Magic] is selected — only Arcana for Mages will come out." or "③ [Physical] is selected — only Arcana for Warriors will come out.") .. "\nTap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are revealed, tap the screen again to close."
       end)
   elseif step == 2 then
     guide("Arcana slots", "Only Arcana in the 4 top slots are used in battle. Open [Arcana], tap the glowing new card, then press the empty [To Slot 4].",
