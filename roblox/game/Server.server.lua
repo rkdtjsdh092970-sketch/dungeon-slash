@@ -289,6 +289,7 @@ local handle = function(player, action, arg)
   elseif action == "autoset" then if type(arg) == "table" and type(arg.k) == "string" then Game.autoSet(sv, arg.k, arg.v) end; return { view = Game.autoView(sv) }
   elseif action == "passview" then return { view = Game.passView(sv), summary = Game.summary(sv) }
   elseif action == "passtake" then local n = Game.passTake(sv, arg); return { n = n, view = Game.passView(sv), summary = Game.summary(sv) }
+  elseif action == "passpreview" then return { pv = Game.passPreview(sv, arg) }
   elseif action == "passdrop" then local ok, err = Game.passDrop(sv, arg); return { ok = ok, err = err, view = Game.passView(sv), summary = Game.summary(sv) }
   elseif action == "unlocks" then return { u = Game.unlocks(sv), summary = Game.summary(sv) }
   elseif action == "play" then

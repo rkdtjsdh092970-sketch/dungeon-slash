@@ -823,8 +823,8 @@ function M.pass()
   end
   -- 오른쪽: 효과 합계 · 고른 노드 정보 (refresh 때 내용만 다시 채움)
   local R = box(A, UDim2.new(1, -230, 0, 44), UDim2.new(0, 230, 1, -44), "찍은 효과 합계")
-  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 34), Size = UDim2.new(1, -16, 1, -150), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 4 }, R)
-  local I = mk("Frame", { Position = UDim2.new(0, 8, 1, -112), Size = UDim2.new(1, -16, 0, 104), BackgroundTransparency = 1 }, R)
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 8, 0, 34), Size = UDim2.new(1, -16, 1, -196), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 4 }, R)
+  local I = mk("Frame", { Position = UDim2.new(0, 8, 1, -158), Size = UDim2.new(1, -16, 0, 150), BackgroundTransparency = 1 }, R)
   local function sumPanel()
     for _, ch in ipairs(sc:GetChildren()) do ch:Destroy() end
     mk("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
@@ -850,6 +850,22 @@ function M.pass()
     if not path then txt(I, "이어진 길이 없습니다", 13, UDim2.new(0, 0, 1, -30), UDim2.new(1, 0, 0, 26), Color3.fromRGB(255, 130, 120)); return end
     local can = pathCost <= v.left
     local b = M.btn(I, string.format("찍기 · %d칸 %d점", #path, pathCost), UDim2.new(1, 0, 0, 34), can and M.BTN.green or M.BTN.gray, function() take(sel) end); b.Position = UDim2.new(0, 0, 1, -36)
+    -- 길 전체를 찍으면: 능력치 합계 (여러 칸이면 모두 더해서) + 예상 전투력 변화
+    if #path > 1 then
+      local gain = {}
+      for _, id in ipairs(path) do local d = BY[id]; if d then for k, val in pairs(d.per) do gain[k] = (k:sub(-4) == "More") and (gain[k] or 1) * val or (gain[k] or 0) + val end end end
+      local parts = {}
+      for k, val in pairs(gain) do parts[#parts + 1] = LB(k) .. " " .. (k:sub(-4) == "More" and string.format("+%g%%", math.floor((val - 1) * 1000 + 0.5) / 10) or (math.abs(val) < 5 and string.format("%s%g%%", val >= 0 and "+" or "", math.floor(val * 1000 + 0.5) / 10) or string.format("+%g", val))) end
+      table.sort(parts)
+      noTr(txt(I, string.format("길 %d칸 합계: %s", #path, table.concat(parts, " · ")), 11, UDim2.new(0, 0, 0, 54), UDim2.new(1, 0, 0, 30), Color3.fromRGB(150, 230, 160))).TextWrapped = true
+    end
+    local pl = txt(I, "예상 전투력 계산 중…", 12, UDim2.new(0, 0, 0, 88), UDim2.new(1, 0, 0, 18), Color3.fromRGB(255, 210, 120), M.FONT)
+    task.spawn(function()
+      local ok, e = pcall(function() return C.rpc:InvokeServer("passpreview", sel.id) end)
+      if not pl.Parent then return end
+      if ok and e and e.pv then local d = e.pv.after - e.pv.before; pl.Text = string.format("찍으면 전투력 %s → %s  (%s%s)", n(e.pv.before), n(e.pv.after), d >= 0 and "+" or "", n(d)); pl:SetAttribute("NoTr", nil)
+      else pl.Text = "" end
+    end)
   end
   refresh = function()
     if not sf.Parent then return end

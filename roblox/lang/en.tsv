@@ -2164,3 +2164,6 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 희귀 이상 1장 보장	1 Rare or better guaranteed
 아르카나 덱	Arcana Deck
 화면을 누르면 한꺼번에 공개	Tap to reveal all at once
+길 %d칸 합계: %s	Path of %d nodes total: %s
+예상 전투력 계산 중…	Calculating power…
+찍으면 전투력 %s → %s  (%s%s)	Power after: %s → %s  (%s%s)

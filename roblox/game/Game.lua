@@ -209,6 +209,14 @@ function M.passView(sv)
 end
 function M.passTake(sv, id) return Econ.addPassivePath(sv, tostring(id)) end
 function M.passDrop(sv, id) return Econ.dropPassive(sv, tostring(id)) end
+-- 찍기 전에 미리 보기: 그 노드까지 길을 모두 찍으면 전투력이 얼마나 오르는지 (세이브는 바꾸지 않는다)
+function M.passPreview(sv, id)
+  local P = Econ.passivePath(sv, tostring(id)); if not P then return nil end
+  local before = Power.score(sv)
+  local old = sv.pass; local tmp = table.clone(old or {}); for _, k in ipairs(P.ids) do tmp[k] = 1 end
+  sv.pass = tmp; local after = Power.score(sv); sv.pass = old
+  return { before = before, after = after, cost = P.cost, n = #P.ids }
+end
 function M.atlasView(sv) return Econ.atlasView(sv) end
 -- ---------- 창고 (웹 openStash: 장비 보관, 100칸에서 골드로 10칸씩 최대 500) ----------
 local STASH_MAX, STASH_STEP = 500, 10
