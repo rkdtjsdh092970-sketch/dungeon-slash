@@ -1442,7 +1442,7 @@ tutorial = function(step)
       "pulled", function() tutorial(2) end,
       function()
         if not panelLayer.Visible then return "① You received 90 Arcana Shards as a starter gift.\nTap the glowing [Summon] icon (card deck) in the top menu." end
-        if not famOk() then return want == "mag" and "② Mages use magic Arcana. Pick the glowing [Magic] tab so you only draw Arcana your staff can use." or "② Warriors use physical Arcana. Pick the glowing [Physical] tab so you only draw Arcana your sword can use." end
+        if not famOk() then return want == "mag" and "② Mages use magic Arcana. Pick the glowing [Magic · Mage] tab so you only draw Arcana your staff can use." or "② Warriors use physical Arcana. Pick the glowing [Physical · Warrior] tab so you only draw Arcana your sword can use." end
         return (want == "mag" and "③ [Magic] is selected — only Arcana for Mages will come out." or "③ [Physical] is selected — only Arcana for Warriors will come out.") .. "\nTap the glowing [Summon x10] to draw 10 cards for 90 shards. When all cards are revealed, tap the screen again to close."
       end)
   elseif step == 2 then

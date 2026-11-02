@@ -1835,11 +1835,16 @@ function M.gacha()
     M.gacha(); revealResults(e.res, dp)
   end
   if not gachaFam then local hs = C.summary(); gachaFam = hs and (hs.hero == "mage" and "mag" or "phys") or "all" end
-  txt(R, "Which Arcana will you summon?", 14, UDim2.new(0, 14, 0, 10), UDim2.new(1, -28, 0, 18), Color3.fromRGB(210, 195, 230), M.FONT)
-  local ft = mk("Frame", { Position = UDim2.new(0, 14, 0, 32), Size = UDim2.new(1, -28, 0, 30), BackgroundTransparency = 1 }, R)
+  -- 계열 고르기: 금빛 테두리 상자로 묶어 "물리 · 마법이 따로 뽑힌다"를 분명히 (고른 계열은 빛난다)
+  local fb = mk("Frame", { Position = UDim2.new(0, 8, 0, 4), Size = UDim2.new(1, -16, 0, 64), BackgroundColor3 = Color3.fromRGB(24, 16, 10), BackgroundTransparency = 0.2 }, R); corner(fb, 8)
+  mk("UIStroke", { Color = Color3.fromRGB(214, 168, 70), Thickness = 2 }, fb)
+  txt(fb, "Summon pool — Physical and Magic Arcana are summoned separately", 13, UDim2.new(0, 10, 0, 4), UDim2.new(1, -20, 0, 18), Color3.fromRGB(255, 215, 140), M.FONT)
+  local ft = mk("Frame", { Position = UDim2.new(0, 8, 0, 26), Size = UDim2.new(1, -16, 0, 30), BackgroundTransparency = 1 }, fb)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
-  for i, f in ipairs({ { "phys", "Physical" }, { "mag", "Magic" }, { "all", "All" } }) do
-    local b = M.btn(ft, f[2], UDim2.new(0.333, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14; b:SetAttribute("Fam", f[1])
+  for i, f in ipairs({ { "phys", "Physical · Warrior" }, { "mag", "Magic · Mage" }, { "all", "All" } }) do
+    local b = M.btn(ft, f[2], UDim2.new(i == 3 and 0.2 or 0.4, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14; b:SetAttribute("Fam", f[1])
+    if gachaFam == f[1] then local st = mk("UIStroke", { Color = Color3.fromRGB(255, 235, 170), Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+      TweenService:Create(st, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.7 }):Play() end
   end
   local function group(y, title, art, have, c1, c10, pay, col1, col10)
     local hdr = mk("Frame", { Position = UDim2.new(0, 14, 0, y), Size = UDim2.new(1, -28, 0, 22), BackgroundTransparency = 1 }, R)

@@ -23,6 +23,7 @@ Desc
 Dmg
 Dragging
 DungeonSlashV1
+EXP +
 English
 Fam
 Frame
@@ -32,6 +33,7 @@ Key
 Lang
 Lv
 Lv 
+Lv %d   %s / %s EXP
 Lv %d  %s
 Might
 More
