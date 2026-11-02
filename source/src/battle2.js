@@ -73,6 +73,9 @@ const SKILL_KINDS2 = {
   hole(b, sk) { const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.42; b.persist.push({ kind: "hole", lane: centerLane(p), col: Math.max(2, p.col), t: sk.dur, tick: 0.1, every: sk.every, sk }); sfx(b, sk.sfx); return true; },
 };
 function runPersist(b, p) {
+  b._pfx = !b.noFx; try { runPersist0(b, p); } finally { b._pfx = false; }
+}
+function runPersist0(b, p) {
   const sk = p.sk;
   if (p.kind === "blades") { for (const e of b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= sk.range)) hitEnemy(b, e, sk.mult, sk, { aoe: true }); }
   else if (p.kind === "orbs") { const c = aliveIn(b, 3); if (c.length) { const e = pick(c), P = e.vx != null ? { x: e.vx, y: e.vy - 30 } : { x: 400, y: 300 }; hitEnemy(b, e, sk.mult, sk); pushFx(b, { kind: "boom", x: P.x, y: P.y + 30, t: 0.25, life: 0.25, color: sk.color, r: 40 }); } }

@@ -88,10 +88,11 @@ function frame(ms) {
   else if (G.screen === "battle" && G.battle) {
     const b = G.battle;
     if (!G.paused && !b.over && $("#modal").classList.contains("hidden")) {
-      const steps = G.speed; for (let i = 0; i < steps; i++) stepBattle(b, rawDt);
+      if (b.hitstop > 0) b.hitstop -= rawDt; else { const steps = G.speed; for (let i = 0; i < steps; i++) stepBattle(b, rawDt); }   // 5.0: 타격감 (짧게 멈춤)
     }
     for (const n of b.sfxq) AU.sfx(n); b.sfxq.length = 0;
     if (b.over) { if (b.endT == null) initEndFx(b); fxTick(b, rawDt * (b.endT < 0.8 ? 0.4 : 1)); b.endT += rawDt; }
+    if (!G.paused && $("#modal").classList.contains("hidden")) FX5.update(b, rawDt * Math.min(2, G.speed));
     G.dt = rawDt; drawBattle(g, b, rawDt, gtime); if (b.over) drawEndOverlay(g, b); battleHud(b);
     if (b.next && b.endT >= b.resultAt) { const nx = b.next; b.next = null; nx(); }
     if (b.over && b.fin && !b.next && G.pending && $("#modal").classList.contains("hidden") && $("#unique").classList.contains("hidden")) showResult(G.pending[0], G.pending[1], true);

@@ -5,8 +5,8 @@
 (function theme5() {
   const U = (k) => `url("${ART_BASE}ui_${k}.png")`;
   const css = `
-  #mbox{background:${U("panel")} center/100% 100% no-repeat, #120c10 !important;border:18px solid transparent !important;border-image:${U("panel")} 120 fill / 18px stretch !important;border-radius:0 !important;padding:6px 10px !important;box-shadow:0 10px 40px #000 !important}
-  #mbox h2{font-family:Georgia,"Times New Roman",serif;color:#f0d08a !important;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px #c08a3a66;background:${U("header")} center/100% 100% no-repeat;padding:6px 40px 8px;margin:-4px auto 8px !important;max-width:520px}
+  #mbox{background:${U("panel")} center/100% 100% no-repeat, #120c10 !important;border:12px solid transparent !important;border-image:${U("panel")} 120 fill / 12px stretch !important;border-radius:0 !important;padding:2px 8px !important;max-height:532px !important;box-shadow:0 10px 40px #000 !important}
+  #mbox h2{font-family:Georgia,"Times New Roman",serif;color:#f0d08a !important;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px #c08a3a66;background:${U("header")} center/100% 100% no-repeat;padding:3px 40px 4px;margin:0 auto 4px !important;max-width:460px;font-size:19px !important}
   .btn{background:transparent !important;border:10px solid transparent !important;border-image:${U("btn_gray")} 36 fill / 10px stretch !important;border-radius:0 !important;box-shadow:none !important;color:#f5e8cd !important;text-shadow:0 1px 2px #000;padding:2px 8px !important}
   .btn.pri{border-image:${U("btn_red")} 36 fill / 10px stretch !important}
   .btn.big{padding:6px 14px !important}

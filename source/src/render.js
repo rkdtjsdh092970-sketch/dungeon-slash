@@ -53,7 +53,7 @@ function drawEnemy(ctx, b, e, time) {
     const off = e.charge ? Math.sin(time * 40) * 3 : 0;
     ctx.save(); ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(x, y - 2, D.w * 50, 14, 0, 0, 7); ctx.fill(); ctx.restore();
     const bim = bossArtImg(bossArt(D), e.winding > 0);
-    if (bim) drawArt(ctx, bim, x + off - p * 16, y + bob * 0.3, 64 * D.sc * 1.12, { alpha: appear, sy: opt.sy, sx: opt.sx, tint });   // 일러스트 (로블록스판과 같은 그림)
+    e._sz = 64 * D.sc * 1.12; if (bim) drawArt(ctx, bim, x + off - p * 16, y + bob * 0.3, 64 * D.sc * 1.12, { alpha: appear, sy: opt.sy, sx: opt.sx, tint });   // 일러스트 (로블록스판과 같은 그림)
     else drawBossSprite(ctx, bossArt(D), x + off - p * 10, y + bob * 0.3, D.sc, Object.assign(opt, { tint, hue: D.hue }));
     if (e.shield || e.guard) { ctx.save(); ctx.strokeStyle = `rgba(140,220,255,${0.5 + 0.3 * Math.sin(time * 6)})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(x, y - D.sc * 30, D.sc * 34, D.sc * 34, 0, 0, 7); ctx.stroke(); ctx.fillStyle = "rgba(120,200,255,.12)"; ctx.fill(); ctx.restore(); }
     if (e.reflect) { ctx.save(); ctx.strokeStyle = `rgba(255,120,220,${0.5 + 0.3 * Math.sin(time * 8)})`; ctx.setLineDash([10, 8]); ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(x, y - D.sc * 30, D.sc * 34, D.sc * 34, 0, 0, 7); ctx.stroke(); ctx.restore(); }
@@ -73,7 +73,7 @@ function drawEnemy(ctx, b, e, time) {
   if (mim) {   // 일러스트: 숨쉬듯 둥실, 걸을 때 통통, 공격 준비 때 뒤로 젖혔다 찌르듯 앞으로
     const hh = meta.h * sc * 1.35 * (b.artBg ? 0.8 + 0.2 * (e.lane / Math.max(1, b.lanes - 1)) : 1), wp = e.winding > 0 ? 1 - e.winding / e.windup : 0, walk = anim === "walk" ? Math.abs(Math.sin(e.age * 9)) * 4 : 0;
     const lean = wp < 0.7 ? wp / 0.7 * 6 : -(wp - 0.7) / 0.3 * 14;
-    drawArt(ctx, mim, x + lean, y + (appear < 1 ? (1 - appear) * 12 : 0) - walk, hh, { alpha: appear, tint, sy: 1 + Math.sin(time * 3 + e.id) * 0.015 - (e.hurtT > 0 ? 0.05 : 0), sx: 1 + (e.hurtT > 0 ? 0.04 : 0) });
+    e._sz = hh; drawArt(ctx, mim, x + lean, y + (appear < 1 ? (1 - appear) * 12 : 0) - walk, hh, { alpha: appear, tint, sy: 1 + Math.sin(time * 3 + e.id) * 0.015 - (e.hurtT > 0 ? 0.05 : 0), sx: 1 + (e.hurtT > 0 ? 0.04 : 0) });
   } else drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
   if (e.tier === "elite" || e.hp < e.maxHp) drawEnemyBar(ctx, e, x, top);
   if (e.winding > 0) drawPx(ctx, "!", x - 4, top - 8, "#ff5a5a", 3);
@@ -136,7 +136,7 @@ function drawBattle(ctx, b, dt, time) {
   if (!b.raid && !bgA) drawRoads(ctx, b, time);
   // 장판 (화염 벽)
   for (const z of b.zones) drawZone(ctx, b, z, time);
-  drawPersist(ctx, b, time); drawGrand(ctx, b);
+  drawPersist(ctx, b, time); drawGrand(ctx, b); FX5.draw(ctx, b, 0);   // 영웅 뒤 마법진 · 바닥 문장
   // 플레이어
   if (!b.raid) {
   const P = PLAYER_POS; let pa = "idle", pt = time; if (b.over && !b.win) { pa = "death"; pt = Math.min(0.5, b.time - (b.deadAt || (b.deadAt = b.time))); } else if (b.pHurt > 0) { pa = "hurt"; pt = 0; } else if (b.pAtk > 0) { pa = "attack"; pt = 0.42 - b.pAtk; }
@@ -144,10 +144,14 @@ function drawBattle(ctx, b, dt, time) {
   if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.18 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 40, 58, 70, 0, 0, 7); ctx.fill(); }
   const htint = b.pHurt > 0 ? "rgba(255,90,80,.45)" : b.debuffs.freeze ? "rgba(140,210,255,.5)" : b.debuffs.poison ? "rgba(120,255,120,.3)" : null;
   const isMage = save && save.equipped && save.equipped.weapon && save.equipped.weapon.wt === "staff", hb = isMage ? "mage" : "warrior";   // 지팡이 = 마법사 모습
-  const hk = pa === "attack" ? (isMage ? (pt < 0.12 ? "mage_raise" : "mage_cast") : (pt < 0.12 ? "warrior_windup" : "warrior_slash")) : hb, him = artGet(hk) || artGet(hb);
+  const P5 = FX5.heroPose(b, 0.85); let pk = P5.pk; if (isMage) { if (pk === "windup" || pk === "overhead") pk = "raise"; else if (pk === "slash") pk = "cast"; } else { if (pk === "raise") pk = "windup"; else if (pk === "cast") pk = "slash"; }
+  const hk = pk ? hb + "_" + pk : pa === "attack" && !b.pose ? (isMage ? (pt < 0.12 ? "mage_raise" : "mage_cast") : (pt < 0.12 ? "warrior_windup" : "warrior_slash")) : hb, him = artGet(hk) || artGet(hb);
+  const hidden = b.blink && b.fx5 && b.fx5.now < b.blink.until;   // 순보 중에는 영웅이 사라진다
+  if (him && b.blinkGhosts && b.fx5) { b.blinkGhosts = b.blinkGhosts.filter((g) => b.fx5.now - g.t0 < 0.22); for (const g of b.blinkGhosts) drawArt(ctx, him, g.x + (b.fx5.now - g.t0) / 0.22 * 24, g.y, 122, { alpha: 0.9 * (1 - (b.fx5.now - g.t0) / 0.22), rot: g.rot * Math.PI / 180, tint: "rgba(255,230,220,.35)" }); }
   if (him) {   // 일러스트 영웅: 숨쉬기, 공격 때 앞으로 내딛음, 쓰러지면 뒤로 눕듯이 사라짐
     const dead = pa === "death", step = pa === "attack" ? Math.sin(Math.min(1, pt / 0.42) * Math.PI) * 18 : 0;
-    drawArt(ctx, him, P.x + 18 + step, P.y + 2, 122, { tint: htint, sy: 1 + Math.sin(time * 2.4) * 0.012, alpha: dead ? Math.max(0, 1 - pt * 1.6) : 1, rot: dead ? -pt * 1.2 : 0 });
+    if (b.ghost > 0 && P5.dx > 6) for (let gi = 1; gi <= 3; gi++) drawArt(ctx, him, P.x + 18 + P5.dx - gi * 14, P.y + 2 + P5.dy, 122, { alpha: 0.35 - gi * 0.08, rot: P5.rot, tint: "rgba(255,200,160,.5)" });   // 돌진 잔상
+    if (!hidden) drawArt(ctx, him, P.x + 18 + (b.pose ? P5.dx : step), P.y + 2 + P5.dy, 122, { tint: htint, sy: 1 + Math.sin(time * 2.4) * 0.012, alpha: dead ? Math.max(0, 1 - pt * 1.6) : 1, rot: dead ? -pt * 1.2 : P5.rot });
   } else drawSprite(ctx, getSheet("warrior", 0), paf.row, paf.frame, P.x, P.y, 3, false, 1, b.debuffs.freeze ? "rgba(140,210,255,.5)" : b.debuffs.poison ? "rgba(120,255,120,.3)" : null);
   }
   // 적
@@ -169,6 +173,7 @@ function drawBattle(ctx, b, dt, time) {
     drawSprite(ctx, sheet, af.row, af.frame, c.x, c.y, c.tier === "elite" && cm.cell === 48 ? 2.5 : c.def.sc, true, a);
   }
   for (const f of b.fx) drawFx(ctx, b, f, time);
+  FX5.draw(ctx, b, 1);
   for (const t of b.texts) { const a = clamp(t.t / (t.life * 0.5), 0, 1); ctx.globalAlpha = a; if (t.word) { ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#000"; ctx.fillText(t.text, t.x + 2, t.y + 2); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y); } else drawPx(ctx, t.text, t.x - pxWidth(t.text, t.big ? 4 : 3) / 2, t.y, t.color, t.big ? 4 : 3); ctx.globalAlpha = 1; }
   ctx.restore();
   if (b.flash > 0 && save && save.opt && save.opt.hitflash) { ctx.fillStyle = `rgba(255,30,30,${0.22 * save.opt.hitflash * b.flash / 0.18})`; ctx.fillRect(0, 0, CW, CH); }

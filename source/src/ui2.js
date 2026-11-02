@@ -46,7 +46,7 @@ function openSummon(res) {
     : `<div class="sumintro"><img src="${artURL("cardback") || ""}" alt=""><div class="dim">같은 스킬이 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼).<br>스킬 등급은 스킬마다 정해져 있습니다.<br><b>계열 소환</b>: 고른 계열의 공격 스킬과 계열 없는 스킬(버프 · 치유)만 나옵니다.</div></div>`;
   const pity = GACHA.PITY_HARD - (save.gachaPity || 0), f = fam === "all" ? null : fam;
   Modal.open(`<h2>스킬 소환</h2><div class="res">${iconImg("shard", 1)} 아르카나 조각 <b>${fmtN(save.hone)}</b></div>
-    <div class="center" style="margin-top:30px">${tabs}</div><div class="dim center" style="font-size:12px;margin-top:4px">${rates}<br>10연 소환은 희귀 이상 1장 보장 · 전설 이상 확정까지 ${pity}회</div>${got}
+    <div class="center" style="margin-top:4px">${tabs}</div><div class="dim center" style="font-size:12px;margin-top:4px">${rates}<br>10연 소환은 희귀 이상 1장 보장 · 전설 이상 확정까지 ${pity}회</div>${got}
     <div class="center" style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri big" data-a="s1" ${save.hone < GACHA.ARC1 ? "disabled" : ""}>1회 소환<br><small>조각 ${GACHA.ARC1}</small></button><button class="btn pri big" data-a="s10" ${save.hone < GACHA.ARC10 ? "disabled" : ""}>10회 소환<br><small>조각 ${GACHA.ARC10}</small></button><button class="btn" data-a="gshop">골드 상점<br><small>일반 · 희귀</small></button></div>`, { cls: "wide", on: {
     fam: (el) => { G.sumFam = el.dataset.f; openSummon(); },
     s1: () => { const r = gachaPull(save, 1, f); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); if (typeof tutEvent === "function") tutEvent("pulled"); },

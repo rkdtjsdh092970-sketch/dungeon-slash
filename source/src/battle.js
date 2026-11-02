@@ -47,7 +47,7 @@ function displace(b, e) {
   }
   if (n) { sfx(b, "thud"); b.shake = Math.max(b.shake, e.tier === "boss" ? 0.35 : 0.18); const P = cellXY(b, e.lane, e.col, e.w, e.h); fx(b, { kind: "ring", x: P.x, y: P.y, t: 0.3, life: 0.3, color: "#ffd9a0", r: 60 }); }
 }
-const fx = (b, o) => { if (!b.noFx) b.fx.push(o); };
+const fx = (b, o) => { if (!b.noFx && !b._pfx) b.fx.push(o); };   // 5.0: 플레이어 스킬 연출은 FX5 가 그린다 (예전 도트 연출은 끔)
 const sfx = (b, n) => { if (!b.noFx) b.sfxq.push(n); };
 const say = (b, text, cls) => { b.banner = { text, t: 3.0, cls: cls || "" }; sfx(b, "alert"); };
 function pushText(b, x, y, text, color, big) { if (!b.noFx) b.texts.push({ x: x + rnd(-10, 10), y, text: String(text), color, big: !!big, t: 0.8, life: 0.8 }); }
@@ -370,6 +370,7 @@ function ebMatch(kind, sk) {
   return sk.elem === pool;
 }
 function hitEnemy(b, e, mult, sk, o) {
+  if (b._hits) b._hits.push(e);
   o = o || {}; const st = b.stats, mag = sk.dtype === "mag";
   let inc = 1 + st.allDmg + (mag ? st.magDmg : st.physDmg); if (sk.elem) inc += st.elemDmg + st[sk.elem + "Dmg"];
   let dmg = (mag ? st.mag * CFG.MAG_BASE : st.atk * CFG.PHYS_BASE) * sk.mult * mult * inc * vsMult(sk, st, e) * statusMul(st, sk, e) * (b.buffs.cry ? 1 + b.buffs.cry.power : 1) * rnd(0.92, 1.08) * satMult(b, e, sk) * cxMult(b, e, sk);
@@ -421,7 +422,9 @@ function healPlayer(b, amt) { if (b.stats.sat.healamp) amt *= 1.5; if (b.debuffs
 // ---------------- 스킬 ----------------
 function castSkill(b, sk) {
   const cost = (sk.mana || 0) * b.stats.manaCostMul; if (b.mana < cost) return false;
-  const ok = castSkillRaw(b, sk); if (ok) { b.mana -= cost; if (sk.mythOnly && !b.noFx && !(typeof save !== "undefined" && save && save.opt && save.opt.grand === 0)) { b.grand = { name: sk.name, t: 1.5, life: 1.5, color: sk.color }; b.shake = Math.max(b.shake, 0.45); } } return ok;
+  const fx5 = !b.noFx && typeof FX5 !== "undefined", ev0 = b.events.length; if (fx5) { b._hits = []; b._pfx = true; }
+  const ok = castSkillRaw(b, sk); if (fx5) { b._pfx = false; for (let i = ev0; i < b.events.length; i++) b.events[i].pfx = true; const hs = b._hits; b._hits = null; if (ok) { const extra = hs.length ? hs : b.enemies.filter((e) => !e.dead && e.col <= (sk.range || 6)).sort((a, c) => a.col - c.col).slice(0, 6); try { FX5.cast(b, sk, [...new Set(extra)]); } catch (e) {} } }
+  if (ok) { b.mana -= cost; if (sk.mythOnly && !b.noFx && !(typeof save !== "undefined" && save && save.opt && save.opt.grand === 0)) { b.grand = { name: sk.name, t: 1.5, life: 1.5, color: sk.color }; b.shake = Math.max(b.shake, 0.45); } } return ok;
 }
 function castSkillRaw(b, sk) {
   const K = sk.kind; if (SKILL_KINDS2[K]) return SKILL_KINDS2[K](b, sk);
@@ -557,7 +560,7 @@ function stepBattle(b, dt) {
   if (b.mods.some((m) => m.poison)) { b.poisonCd -= dt; if (b.poisonCd <= 0) { b.debuffs.poison = { t: 5, dps: 0.012 }; b.poisonCd = 14; } }
   // 지연 이벤트
   for (const ev of b.events) ev.t -= dt;
-  const due = b.events.filter((e) => e.t <= 0); if (due.length) { b.events = b.events.filter((e) => e.t > 0); for (const ev of due) ev.fn(); }
+  const due = b.events.filter((e) => e.t <= 0); if (due.length) { b.events = b.events.filter((e) => e.t > 0); for (const ev of due) { b._pfx = !!ev.pfx; ev.fn(); b._pfx = false; } }
   // 출현
   b.spawnCd -= dt; if (b.spawnCd <= 0 && b.plan.length) trySpawn(b);
   // 적 행동

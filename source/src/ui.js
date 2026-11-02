@@ -222,7 +222,7 @@ function mapGo() {
 // ---------- 마을 ----------
 function openTown(act) {
   if (typeof mailPoll === "function") mailPoll();
-  G.townAct = act; TownView.act = act; showScreen("town"); if (typeof notesUnread === "function" && notesUnread() && save.tut.done) setTimeout(() => toast("📜 새 패치 노트가 있습니다 — 마을의 '업데이트 게시판'"), 600); $("#townbar .tname").textContent = `${ACTS[act - 1].name} 마을`;
+  G.townAct = act; TownView.act = act; showScreen("town"); if (typeof notesUnread === "function" && notesUnread() && save.tut.done && !G.notesToasted) setTimeout(() => !Modal.isOpen() && (G.notesToasted = 1) && toast("📜 새 패치 노트가 있습니다 — 마을의 '업데이트 게시판'"), 600); $("#townbar .tname").textContent = `${ACTS[act - 1].name} 마을`;
   if (G.guide === "map") { setGuide("마을에서는 스킬·제련소·퀘스트·상점을 이용할 수 있어요.<br>이제 위쪽의 <b>🗺 지도</b> 버튼을 눌러 첫 스테이지로 가봅시다!"); $("#b-map").classList.add("pulse"); }
   else { setGuide(null); $("#b-map").classList.remove("pulse"); }
 }
