@@ -5,7 +5,7 @@ const SCALES = { maj: [0, 2, 4, 5, 7, 9, 11], min: [0, 2, 3, 5, 7, 8, 10], dor: 
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 const AU = {
-  ctx: null, master: null, bgmG: null, sfxG: null, noiseBuf: null, vol: { master: 0.8, bgm: 0.5, sfx: 0.8 }, muted: false,
+  ctx: null, master: null, bgmG: null, sfxG: null, noiseBuf: null, vol: { master: 0.8, bgm: 0.5, sfx: 0.8 }, muted: (() => { try { return localStorage.getItem("ds_mute") === "1"; } catch (e) { return false; } })(),
   track: null, trackName: "", timer: null, step: 0, nextT: 0, last: {}, dest: null, seqCache: {},
   init() {
     if (this.ctx) return true;
@@ -22,7 +22,7 @@ const AU = {
   resume() { if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
   applyVol() { if (!this.ctx) return; const m = this.muted ? 0 : this.vol.master; this.master.gain.value = m; this.bgmG.gain.value = this.vol.bgm * 0.5; this.sfxG.gain.value = this.vol.sfx * 0.8; },
   setVol(k, v) { this.vol[k] = v; this.applyVol(); },
-  setMuted(m) { this.muted = m; this.applyVol(); },
+  setMuted(m) { this.muted = m; try { localStorage.setItem("ds_mute", m ? "1" : "0"); } catch (e) {} this.applyVol(); },   // 음소거는 기기에 저장 (업데이트 · 새로고침 뒤에도 유지)
   // ---- 기본 음원 ----
   tone(f, t0, dur, type, vol, dest, o) {
     o = o || {}; const c = this.ctx, osc = c.createOscillator(), g = c.createGain();

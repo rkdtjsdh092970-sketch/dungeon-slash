@@ -4493,7 +4493,7 @@ const SCALES = { maj: [0, 2, 4, 5, 7, 9, 11], min: [0, 2, 3, 5, 7, 8, 10], dor: 
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 const AU = {
-  ctx: null, master: null, bgmG: null, sfxG: null, noiseBuf: null, vol: { master: 0.8, bgm: 0.5, sfx: 0.8 }, muted: false,
+  ctx: null, master: null, bgmG: null, sfxG: null, noiseBuf: null, vol: { master: 0.8, bgm: 0.5, sfx: 0.8 }, muted: (() => { try { return localStorage.getItem("ds_mute") === "1"; } catch (e) { return false; } })(),
   track: null, trackName: "", timer: null, step: 0, nextT: 0, last: {}, dest: null, seqCache: {},
   init() {
     if (this.ctx) return true;
@@ -4510,7 +4510,7 @@ const AU = {
   resume() { if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
   applyVol() { if (!this.ctx) return; const m = this.muted ? 0 : this.vol.master; this.master.gain.value = m; this.bgmG.gain.value = this.vol.bgm * 0.5; this.sfxG.gain.value = this.vol.sfx * 0.8; },
   setVol(k, v) { this.vol[k] = v; this.applyVol(); },
-  setMuted(m) { this.muted = m; this.applyVol(); },
+  setMuted(m) { this.muted = m; try { localStorage.setItem("ds_mute", m ? "1" : "0"); } catch (e) {} this.applyVol(); },   // 음소거는 기기에 저장 (업데이트 · 새로고침 뒤에도 유지)
   // ---- 기본 음원 ----
   tone(f, t0, dur, type, vol, dest, o) {
     o = o || {}; const c = this.ctx, osc = c.createOscillator(), g = c.createGain();
@@ -7100,7 +7100,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-075249";
+const BUILD_ID = "20261103-075351";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -8062,6 +8062,9 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.23", date: "11/3", title: "음소거 유지", items: [
+    "고침: 설정에서 음소거를 켜도 업데이트 · 새로고침을 하면 다시 소리가 나던 것. 음소거는 이 기기에 저장되어 계속 유지됩니다.",
+  ] },
   { ver: "5.22", date: "11/3", title: "보스 체력바 고침", items: [
     "고침: 그룸 등 보스 체력바의 빨간 막대가 장식 틀 안에 들어가지 않고 위로 삐져나오던 것 (모든 보스 공통). 긴 보스 이름은 한 줄로 줄여 보여 줍니다.",
   ] },
