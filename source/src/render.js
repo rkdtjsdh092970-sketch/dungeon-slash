@@ -260,7 +260,8 @@ const MapView = {
     }
     g.save(); g.translate(shx, shy);
     HELL_SET = null;   // 5.08: 지옥 스테이지 폐지
-    g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH);
+    { const wa = this.worldArt && artGet("bg_world"); if (wa) { const kx = wa.width / MAP_W, ky = wa.height / MAP_H; g.save(); g.imageSmoothingEnabled = true; g.drawImage(wa, this.cam.x * kx, this.cam.y * ky, CW * kx, CH * ky, 0, 0, CW, CH); g.restore(); }   // 원본 그림에서 바로 (중간 캔버스를 거치면 흐려짐)
+      else g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH); }
     // 길
     g.lineWidth = 4; g.setLineDash([2, 10]); g.lineCap = "round";
     for (const [a, b2] of MAP.edges) { const A = MAP.byId[a], B = MAP.byId[b2]; if (!A || !B || this.hidden(A) || this.hidden(B)) continue; const open = nodeUnlocked(sv, B) && nodeUnlocked(sv, A) || (A.kind === "town" && nodeUnlocked(sv, A)); g.strokeStyle = open ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.22)"; g.beginPath(); g.moveTo(A.x - this.cam.x, A.y - this.cam.y); g.lineTo(B.x - this.cam.x, B.y - this.cam.y); g.stroke(); }
@@ -326,7 +327,7 @@ function townSpots() {
 const TownView = {
   cv: null, g: null, hover: null, act: 1,
   draw(sv, time) {
-    const g = this.g; g.imageSmoothingEnabled = false; const tim = artGet("bg_town");
+    const g = this.g; g.imageSmoothingEnabled = true; const tim = artGet("bg_town");
     if (tim) return this.drawArt(sv, time, tim);
     g.drawImage(makeBackground(this.act), 0, 0);
     const A = ACTS[this.act - 1]; g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(0, 380, CW, 160);

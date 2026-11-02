@@ -3,7 +3,9 @@
 // =========================================================
 let CV, CTX, lastT = 0, gtime = 0, accumSave = 0;
 function canvasPos(ev) { const r = CV.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * CW, ((ev.clientY - r.top) / r.height) * CH]; }
-function fitApp() { const a = $("#app"), s = Math.min(window.innerWidth / CW, window.innerHeight / CH); a.style.transform = `translate(-50%,-50%) scale(${s})`; }
+let CVR = 1;   // 캔버스 내부 해상도 배율: 화면에 실제로 그려지는 크기만큼 (작은 그림을 늘려 흐릿해지지 않게)
+function fitApp() { const a = $("#app"), s = Math.min(window.innerWidth / CW, window.innerHeight / CH); a.style.transform = `translate(-50%,-50%) scale(${s})`;
+  const r = Math.max(1, Math.min(3, Math.ceil(s * (window.devicePixelRatio || 1) * 4) / 4)); if (typeof CV !== "undefined" && CV && r !== CVR) { CVR = r; CV.width = Math.round(CW * r); CV.height = Math.round(CH * r); } }
 
 function pickEnemy(b, mx, my) {
   let best = null, bd = 1e9;
@@ -86,7 +88,7 @@ function bgStart() {
 function bgStop() { if (bgW) { bgW.terminate(); bgW = null; } if (bgTimer) { clearInterval(bgTimer); bgTimer = 0; } if (G.battle) G.battle.noFx = false; lastT = performance.now(); }
 document.addEventListener("visibilitychange", () => { if (document.hidden) bgStart(); else bgStop(); });
 function frame(ms) {
-  requestAnimationFrame(frame); try { tutTick(); } catch (e) {} const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX;
+  requestAnimationFrame(frame); try { tutTick(); } catch (e) {} const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX; g.setTransform(CVR, 0, 0, CVR, 0, 0); g.imageSmoothingQuality = "high";
   if (G.screen === "title") drawTitle(g, gtime);
   else if (G.screen === "map") MapView.draw(save, gtime, rawDt);
   else if (G.screen === "town") TownView.draw(save, gtime);
@@ -108,7 +110,7 @@ function frame(ms) {
 }
 
 window.addEventListener("load", () => {
-  CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
+  CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput(); CVR = 0; fitApp();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
   loadAssets(() => artWaitAll(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); }));
 });

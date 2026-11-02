@@ -4,7 +4,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;height:100%;background:#0a0814;overflow:hidden;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#eee;user-select:none}
 #tutHi{position:absolute;z-index:900;pointer-events:none;border:3px solid #ffd24a;border-radius:10px;box-shadow:0 0 0 9999px #0007,0 0 18px #ffd24a;animation:tutp 1s ease-in-out infinite}@keyframes tutp{50%{box-shadow:0 0 0 9999px #0007,0 0 34px #ffd24a}}#tutArrow{position:absolute;z-index:902;width:44px;height:52px;pointer-events:none;background:linear-gradient(#ffe48a,#d89a2a);clip-path:polygon(30% 0,70% 0,70% 55%,100% 55%,50% 100%,0 55%,30% 55%);filter:drop-shadow(0 0 6px #000);animation:tuta .6s ease-in-out infinite alternate}#tutArrow.up{transform:rotate(180deg);animation-name:tutb}@keyframes tuta{to{margin-top:10px}}@keyframes tutb{to{margin-top:-10px}}.tutw{display:flex;gap:14px;align-items:center;margin:6px 0 10px;max-width:520px}.tutw img{height:150px}.tutw p{margin:6px 0;line-height:1.6}#tutBox{position:absolute;z-index:901;right:10px;bottom:46px;width:280px;background:#150f26f2;border:2px solid #ffd24a;border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.5}#tutBox .tt{color:#ffd24a;font-weight:700;font-size:15px;margin-bottom:2px}#tutBox .btn{margin-top:6px}#app{position:absolute;left:50%;top:50%;width:960px;height:540px;transform-origin:center;transform:translate(-50%,-50%);background:#000;overflow:hidden}
-#cv{position:absolute;left:0;top:0;width:960px;height:540px;image-rendering:pixelated}
+#cv{position:absolute;left:0;top:0;width:960px;height:540px}
 .hidden{display:none!important}
 .ico{image-rendering:pixelated;vertical-align:middle}
 .btn{font:inherit;font-weight:bold;color:#fff;background:#3b3560;border:2px solid #8a7ab0;border-bottom-width:4px;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 2px 0 #0006}
@@ -4975,7 +4975,8 @@ const MapView = {
     }
     g.save(); g.translate(shx, shy);
     HELL_SET = null;   // 5.08: 지옥 스테이지 폐지
-    g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH);
+    { const wa = this.worldArt && artGet("bg_world"); if (wa) { const kx = wa.width / MAP_W, ky = wa.height / MAP_H; g.save(); g.imageSmoothingEnabled = true; g.drawImage(wa, this.cam.x * kx, this.cam.y * ky, CW * kx, CH * ky, 0, 0, CW, CH); g.restore(); }   // 원본 그림에서 바로 (중간 캔버스를 거치면 흐려짐)
+      else g.drawImage(this.world, this.cam.x, this.cam.y, CW, CH, 0, 0, CW, CH); }
     // 길
     g.lineWidth = 4; g.setLineDash([2, 10]); g.lineCap = "round";
     for (const [a, b2] of MAP.edges) { const A = MAP.byId[a], B = MAP.byId[b2]; if (!A || !B || this.hidden(A) || this.hidden(B)) continue; const open = nodeUnlocked(sv, B) && nodeUnlocked(sv, A) || (A.kind === "town" && nodeUnlocked(sv, A)); g.strokeStyle = open ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.22)"; g.beginPath(); g.moveTo(A.x - this.cam.x, A.y - this.cam.y); g.lineTo(B.x - this.cam.x, B.y - this.cam.y); g.stroke(); }
@@ -5041,7 +5042,7 @@ function townSpots() {
 const TownView = {
   cv: null, g: null, hover: null, act: 1,
   draw(sv, time) {
-    const g = this.g; g.imageSmoothingEnabled = false; const tim = artGet("bg_town");
+    const g = this.g; g.imageSmoothingEnabled = true; const tim = artGet("bg_town");
     if (tim) return this.drawArt(sv, time, tim);
     g.drawImage(makeBackground(this.act), 0, 0);
     const A = ACTS[this.act - 1]; g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(0, 380, CW, 160);
@@ -7201,7 +7202,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-084023";
+const BUILD_ID = "20261103-084908";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -8198,6 +8199,10 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.32", date: "11/3", title: "화면 선명하게", items: [
+    "큰 화면에서 마을 · 지도 · 전투 화면이 흐릿하던 것: 게임 화면을 실제 모니터 크기에 맞는 해상도로 그리고, 배경 그림도 원본 해상도(최대 1920)로 바꿨습니다.",
+    "지도 배경은 원본 그림에서 바로 그려 한 번 더 흐려지던 단계를 없앴습니다.",
+  ] },
   { ver: "5.31", date: "11/3", title: "알림이 화면을 가리지 않게", items: [
     "제련소에서 강화 성공 · 실패, 재굴림 같은 결과는 화면 위 알림 대신 강화 칸 바로 아래 결과 줄에 나옵니다.",
     "다른 창이 열려 있을 때 알림은 화면 맨 아래에 작게 뜹니다 (창 내용을 가리지 않게).",
@@ -8879,7 +8884,9 @@ function openNotes() {
 // =========================================================
 let CV, CTX, lastT = 0, gtime = 0, accumSave = 0;
 function canvasPos(ev) { const r = CV.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * CW, ((ev.clientY - r.top) / r.height) * CH]; }
-function fitApp() { const a = $("#app"), s = Math.min(window.innerWidth / CW, window.innerHeight / CH); a.style.transform = `translate(-50%,-50%) scale(${s})`; }
+let CVR = 1;   // 캔버스 내부 해상도 배율: 화면에 실제로 그려지는 크기만큼 (작은 그림을 늘려 흐릿해지지 않게)
+function fitApp() { const a = $("#app"), s = Math.min(window.innerWidth / CW, window.innerHeight / CH); a.style.transform = `translate(-50%,-50%) scale(${s})`;
+  const r = Math.max(1, Math.min(3, Math.ceil(s * (window.devicePixelRatio || 1) * 4) / 4)); if (typeof CV !== "undefined" && CV && r !== CVR) { CVR = r; CV.width = Math.round(CW * r); CV.height = Math.round(CH * r); } }
 
 function pickEnemy(b, mx, my) {
   let best = null, bd = 1e9;
@@ -8962,7 +8969,7 @@ function bgStart() {
 function bgStop() { if (bgW) { bgW.terminate(); bgW = null; } if (bgTimer) { clearInterval(bgTimer); bgTimer = 0; } if (G.battle) G.battle.noFx = false; lastT = performance.now(); }
 document.addEventListener("visibilitychange", () => { if (document.hidden) bgStart(); else bgStop(); });
 function frame(ms) {
-  requestAnimationFrame(frame); try { tutTick(); } catch (e) {} const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX;
+  requestAnimationFrame(frame); try { tutTick(); } catch (e) {} const rawDt = Math.min(0.1, (ms - lastT) / 1000 || 0); lastT = ms; gtime += rawDt; const g = CTX; g.setTransform(CVR, 0, 0, CVR, 0, 0); g.imageSmoothingQuality = "high";
   if (G.screen === "title") drawTitle(g, gtime);
   else if (G.screen === "map") MapView.draw(save, gtime, rawDt);
   else if (G.screen === "town") TownView.draw(save, gtime);
@@ -8984,7 +8991,7 @@ function frame(ms) {
 }
 
 window.addEventListener("load", () => {
-  CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput();
+  CV = $("#cv"); CTX = CV.getContext("2d"); MapView.g = CTX; TownView.g = CTX; bindInput(); CVR = 0; fitApp();
   setInterval(() => { if (save && (G.screen === "map" || G.screen === "town")) updateWorld(); }, 1000);
   loadAssets(() => artWaitAll(() => { if (typeof tipInit === "function") tipInit(); setInterval(() => { if (G.screen === "town" && typeof mailPoll === "function") mailPoll(); }, 60000); $("#loading").remove(); openTitle(); requestAnimationFrame(frame); srvAutoLogin(); srvMark(); { const v = document.createElement('div'); v.id = 'verlab'; v.textContent = 'v' + BUILD_ID; $('#app').appendChild(v); } checkUpdate(); setInterval(checkUpdate, 60000); }));
 });

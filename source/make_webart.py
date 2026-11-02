@@ -13,8 +13,8 @@ for f in sorted(os.listdir(os.path.join(R, 'bosses'))):
     J.append(('boss0' if k == 'groom' else k, 'bosses/' + f, 320))
 for f in sorted(os.listdir(os.path.join(R, 'hero'))):
     J.append((os.path.splitext(f)[0], 'hero/' + f, 256))
-J += [('bg1', 'bg/act1.jpg', 960), ('bg8', 'bg/act8.png', 960), ('bg_title', 'bg/title.jpg', 960), ('bg_town', 'bg/town.jpg', 960), ('bg_world', 'map/world.jpg', 1800),
-      ('bg_raid', 'raid/raid_arena.jpg', 960), ('cardback', 'cards/back.png', 300), ('cardf0', 'cards/frame0.png', 300), ('cardf1', 'cards/frame1.png', 300), ('cardf2', 'cards/frame2.png', 300), ('cardf3', 'cards/frame3.png', 300), ('cardf4', 'cards/frame4.png', 300), ('cburst2', 'cards/burst2.png', 300), ('cburst3', 'cards/burst3.png', 300), ('cburst4', 'cards/burst4.png', 300), ('morgath', 'raid/morgath.png', 512), ('morgath_rage', 'raid/morgath_rage.png', 512), ('ward_crystal', 'raid/ward_crystal.png', 160)]
+J += [('bg1', 'bg/act1.jpg', 1920), ('bg8', 'bg/act8.png', 1920), ('bg_title', 'bg/title.jpg', 1920), ('bg_town', 'bg/town.jpg', 1920), ('bg_world', 'map/world.jpg', 1920),
+      ('bg_raid', 'raid/raid_arena.jpg', 1920), ('cardback', 'cards/back.png', 300), ('cardf0', 'cards/frame0.png', 300), ('cardf1', 'cards/frame1.png', 300), ('cardf2', 'cards/frame2.png', 300), ('cardf3', 'cards/frame3.png', 300), ('cardf4', 'cards/frame4.png', 300), ('cburst2', 'cards/burst2.png', 300), ('cburst3', 'cards/burst3.png', 300), ('cburst4', 'cards/burst4.png', 300), ('morgath', 'raid/morgath.png', 512), ('morgath_rage', 'raid/morgath_rage.png', 512), ('ward_crystal', 'raid/ward_crystal.png', 160)]
 J += [('summon_altar', 'summon/altar.png', 400), ('summon_deck', 'summon/deck.png', 300)]   # 소환 제단 · 카드 덱
 for f in sorted(os.listdir(os.path.join(R, 'cards', 'skill'))):   # 스킬(아르카나) 카드 그림
     J.append(('card_s_' + os.path.splitext(f)[0], 'cards/skill/' + f, 300))
@@ -31,7 +31,7 @@ for k, src, mx in J:
     if not bg and not k.startswith('card_'):   # 투명 여백 잘라내기 (발밑 기준 정렬이 정확해진다)
         bb = im.getchannel('A').point(lambda a: 255 if a > 12 else 0).getbbox()
         if bb: im = im.crop(bb)
-    im.thumbnail((mx, mx) if not bg else (mx, mx * 9 // 16 + 200), Image.LANCZOS)
-    p = os.path.join(O, k + '.webp'); im.save(p, 'WEBP', quality=82 if bg else 88, method=4)
+    im.thumbnail((mx, mx) if not bg else (mx, mx), Image.LANCZOS)   # 배경은 원본 해상도 그대로 (최대 1920, 큰 화면에서도 선명하게)
+    p = os.path.join(O, k + '.webp'); im.save(p, 'WEBP', quality=86 if bg else 88, method=4)
     total += os.path.getsize(p)
 print(len(J), 'files', total // 1024, 'KB')
