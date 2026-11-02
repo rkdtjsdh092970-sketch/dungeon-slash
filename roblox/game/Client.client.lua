@@ -251,8 +251,24 @@ local function toast(text, color)
 end
 
 local summary
+-- 전투력 변화 알림: 강화 · 재굴림 · 패시브 · 장착 등 무엇이든 전투력이 바뀌면 화면 위 가운데에 "전투력 ▲ +N" 이 떠올랐다 사라진다
+local powPop
+local function showPowerChange(old, new)
+  if powPop then powPop:Destroy() end
+  local up = new > old
+  local f = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, INSET + 70), Size = UDim2.new(0, 0, 0, 44), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(14, 9, 8), BackgroundTransparency = 0.1, ZIndex = 70 }, gui)
+  corner(f, 10); stroke(f, up and Color3.fromRGB(120, 230, 130) or Color3.fromRGB(240, 110, 100), 2); mk("UIScale", { Scale = K }, f); powPop = f
+  mk("UIPadding", { PaddingLeft = UDim.new(0, 18), PaddingRight = UDim.new(0, 18) }, f)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, f)
+  local a = mk("TextLabel", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = "전투력 " .. n(new), Font = Theme.FONT, TextSize = 22, TextColor3 = Color3.fromRGB(255, 225, 150), LayoutOrder = 1, ZIndex = 71 }, f)
+  local b = mk("TextLabel", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = string.format("%s %s%s", up and "▲" or "▼", up and "+" or "−", n(math.abs(new - old))), Font = Theme.FONT, TextSize = 24, TextColor3 = up and Color3.fromRGB(130, 255, 140) or Color3.fromRGB(255, 120, 110), LayoutOrder = 2, ZIndex = 71 }, f)
+  b:SetAttribute("NoTr", true)
+  for _, l in ipairs({ a, b }) do mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, l) end
+  task.delay(1.8, function() if f.Parent then local t = TweenService:Create(f, TweenInfo.new(0.4), { BackgroundTransparency = 1, Position = f.Position - UDim2.new(0, 0, 0, 16) }); t:Play(); for _, l in ipairs({ a, b }) do TweenService:Create(l, TweenInfo.new(0.4), { TextTransparency = 1 }):Play() end; t.Completed:Wait(); f:Destroy() end end)
+end
 local function setSummary(s)
   if not s then return end
+  if summary and summary.power and s.power and s.power ~= summary.power then showPowerChange(summary.power, s.power) end
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold); if statArc then statArc.Text = n(s.arcana or 0) end
   if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end
@@ -266,14 +282,20 @@ end
 
 -- ── 가운데 창 (건물 · 장비 · 문지기 등): 제목 + 탭 + 내용 목록 + 메시지 ──
 local root = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, INSET / 2), Size = UDim2.new(0, 880, 0, 540), BackgroundColor3 = Color3.fromRGB(24, 20, 44), ZIndex = 21 }, panelLayer)
-corner(root, 14); stroke(root, GOLD, 2.5); Skin.frame(root, "ui_panel", 0.2, 0.6)
+corner(root, 14); Skin.frame(root, "ui_panel", 0.2, 0.6)   -- 노란 테두리 없이 장식 틀만
 local panelScale = mk("UIScale", { Scale = 1 }, root)
-local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 44, 0, 12), Size = UDim2.new(1, -90, 0, 36), Font = Theme.FONT, TextSize = 28, TextColor3 = Color3.fromRGB(255, 220, 120), TextXAlignment = Enum.TextXAlignment.Left, Text = "", ZIndex = 22 }, root)
-local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 50), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
-mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)
-local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 92), Size = UDim2.new(1, -32, 1, -136), BackgroundColor3 = Color3.fromRGB(12, 9, 9), BackgroundTransparency = 0.35, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
+local titleBand = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, -16), Size = UDim2.new(0, 400, 0, 62), BackgroundColor3 = Color3.fromRGB(40, 16, 14), ZIndex = 24 }, root)
+corner(titleBand, 10); Skin.frame(titleBand, "ui_title", 0.3, 0.5)   -- 창 위 가장자리에 걸친 이름 띠
+local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 20, 0, 0), Size = UDim2.new(1, -40, 1, 0), Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(255, 225, 150), Text = "", ZIndex = 25 }, titleBand)
+mk("UITextSizeConstraint", { MaxTextSize = 30, MinTextSize = 14 }, panelTitle); mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 6, 4) }, panelTitle)
+local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 54), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
+mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)   -- 탭은 가운데
+local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 96), Size = UDim2.new(1, -32, 1, -112), BackgroundColor3 = Color3.fromRGB(12, 9, 9), BackgroundTransparency = 0.35, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
 corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6) }, list)
-local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 34)); msg.ZIndex = 22; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
+local msg = label(root, "", 14, UDim2.new(0.5, 0, 1, -22), UDim2.new(0, 0, 0, 28)); msg.ZIndex = 30; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
+msg.AnchorPoint = Vector2.new(0.5, 1); msg.AutomaticSize = Enum.AutomaticSize.X; msg.BackgroundColor3 = Color3.fromRGB(16, 10, 8); msg.BackgroundTransparency = 1; corner(msg, 8)
+mk("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, msg)
+msg:GetPropertyChangedSignal("Text"):Connect(function() msg.BackgroundTransparency = msg.Text == "" and 1 or 0.1 end)   -- 알림이 있을 때만 띠가 보인다
 -- 창 내용 지우기: 옛 내용은 바로 지우지 않고, 새 내용이 들어오는 순간 바꿔치기한다 (서버 응답을 기다리는 동안 화면이 비어 깜빡이지 않게)
 local pendingOld = {}
 local swapNew, swapLast, swapStart   -- (아래 깜빡임 없는 다시 그리기)
@@ -552,7 +574,8 @@ openPanel = function(title, tabs, first)
     for k, b in pairs(btns) do b.BackgroundColor3 = k == key and Color3.fromRGB(160, 116, 40) or Color3.fromRGB(60, 52, 100) end
     clear(); views[key](); swapNow()   -- 다 그렸으면 바로 보이기
   end
-  if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 110, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; b:SetAttribute("SkinTab", true); btns[t[2]] = b end end
+  if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 120, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; b:SetAttribute("SkinTab", true); btns[t[2]] = b end end
+  local top = #tabs > 1 and 96 or 58; list.Position = UDim2.new(0, 16, 0, top); list.Size = UDim2.new(1, -32, 1, -top - 16)
   sel(first or tabs[1][2])
 end
 openPanelFn = openPanel
@@ -649,8 +672,8 @@ end
 
 -- 새 메뉴 화면 연결 (장비 · 스킬 · 패시브 트리는 Menus 모듈)
 local TAB_TITLE = { daily = "일일", forge = "대장간", inv = "장비", skills = "아르카나", pass = "패시브", stones = "돌", shop = "아르카나 상점", quests = "퀘스트" }
-Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, done = function() swapNow() end, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
-  openTab = function(key) openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end, opt = function() return OPT end, setOpt = setOpt })
+Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, done = function() swapNow() end, scale = function() return panelScale.Scale end, setSummary = setSummary, summary = function() return summary end, toast = toast, prompt = prompt, Sprites = Sprites,
+  openTab = function(key) if key == "forge" or key == "stones" then openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }, key) else openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
 views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
@@ -934,7 +957,7 @@ local BOSSCOL = { void = Color3.fromRGB(200, 120, 255), hive = Color3.fromRGB(25
 local mpSel = {}   -- 창마다 고른 층 · 보스 · 단계 (다시 열어도 유지)
 local function showInfo(t)
   infoCard:ClearAllChildren(); infoCard:SetAttribute("Skinned", nil); infoCard.BackgroundTransparency = 0
-  corner(infoCard, 12); stroke(infoCard, GOLD, 2.5); Skin.frame(infoCard, "ui_panel", 0.2, 0.5); infoScale = mk("UIScale", { Scale = K }, infoCard)
+  corner(infoCard, 12); Skin.frame(infoCard, "ui_panel", 0.2, 0.5)   -- 노란 테두리 없이 장식 틀만; infoScale = mk("UIScale", { Scale = K }, infoCard)
   local st, hint, prog = nodeState(t)
   local s = summary; local my = s.power or 0
   local okP, PW = pcall(require, RS.Game.Power)
@@ -1160,7 +1183,15 @@ buildMap = function()
           if t.stage and t.stage < 5 then local nn = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0.6, 0, 0.6, 0), BackgroundTransparency = 1, Text = tostring(t.stage), TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 240, 210), ZIndex = b.ZIndex + 1 }, b); mk("UIStroke", { Thickness = 2.5, Color = Color3.new(0, 0, 0) }, nn) end
         end
       end
-      if t == target then TweenService:Create(ring, TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8 }):Play() end
+      ring.Transparency = 1   -- 노란 테두리는 쓰지 않는다
+      if t == target then   -- 다음 목표: 금빛 빛무리 + 위에서 까딱이는 표식
+        local ga = Sprites.art("fx_glow")
+        if ga then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, t.x * ms, 0, t.y * ms), Size = UDim2.new(0, sz * 3, 0, sz * 3), BackgroundTransparency = 1, ImageContent = ga.content, ImageColor3 = Color3.fromRGB(255, 210, 120), ImageTransparency = 0.35, ZIndex = 4 }, mapLayer)
+          TweenService:Create(g, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.7, Size = UDim2.new(0, sz * 2.4, 0, sz * 2.4) }):Play() end
+        local ar = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0, t.x * ms, 0, t.y * ms - sz * 0.6), Size = UDim2.new(0, 30 * K, 0, 26 * K), BackgroundTransparency = 1, Text = "▼", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 130), ZIndex = 7 }, mapLayer)
+        mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 12, 4) }, ar)
+        TweenService:Create(ar, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Position = ar.Position - UDim2.new(0, 0, 0, 8 * K) }):Play()
+      end
       if st ~= "locked" then local ga = Sprites.art("fx_glow")   -- 열린 지점 뒤 빛 (숨쉬기)
         if ga then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, t.x * ms, 0, t.y * ms), Size = UDim2.new(0, sz * 2.4, 0, sz * 2.4), BackgroundTransparency = 1, ImageContent = ga.content, ImageColor3 = t.col, ImageTransparency = 0.55, ZIndex = 4 }, mapLayer)
           TweenService:Create(g, TweenInfo.new(1.4 + math.random() * 0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.85, Size = UDim2.new(0, sz * 2.0, 0, sz * 2.0) }):Play() end

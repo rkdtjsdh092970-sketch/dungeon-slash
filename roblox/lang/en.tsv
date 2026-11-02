@@ -2143,3 +2143,7 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 효과 %d%%	Effect %d%%
 보유 %d장	Owned %d
 공격 대상: %s  (눌러서 바꾸기)	Target: %s  (tap to change)
+가방 장비	Bag Gear
+가방에 장비가 없습니다.	No gear in your bag.
+강화하러 가기 (대장간)	Go Enhance (Forge)
+전투력 	Power 

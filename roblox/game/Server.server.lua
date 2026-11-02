@@ -215,7 +215,7 @@ local handle = function(player, action, arg)
   elseif action == "resetpass" then Game.resetPassives(sv); return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }
   elseif action == "enhlist" then return { rows = Game.enhCosts(sv), summary = Game.summary(sv) }
   elseif action == "enhance" then local ok, msg = Game.enhance(sv, tonumber(arg)); return { ok = ok, msg = msg, rows = Game.enhCosts(sv), summary = Game.summary(sv) }
-  elseif action == "forge" then return { rows = Game.forgeList(sv), summary = Game.summary(sv) }
+  elseif action == "forge" then return { rows = Game.forgeList(sv, type(arg) == "table" and arg.bag == true), summary = Game.summary(sv) }
   elseif action == "reroll" then local ok, e = Game.reroll(sv, tonumber(arg.uid), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "chaos" then local ok, e = Game.chaos(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
   elseif action == "divine" then local ok, e = Game.divine(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }

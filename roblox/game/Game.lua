@@ -487,10 +487,16 @@ local function findItem(sv, uid)
   for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == uid then return sv.equipped[slot] end end
   for _, x in ipairs(sv.inv) do if x.uid == uid then return x end end
 end
-function M.forgeList(sv)
+function M.forgeList(sv, bag)   -- bag = true 이면 가방 장비 (좋은 것부터 최대 120개)
   local out = {}
-  for _, slot in ipairs(Items.EQ_SLOTS) do
-    local it = sv.equipped[slot]
+  local src = {}
+  if bag then
+    for _, x in ipairs(sv.inv) do src[#src + 1] = { x.slot, x } end
+    table.sort(src, function(a, b) local x, y = a[2], b[2]; if (x.rarity or 0) ~= (y.rarity or 0) then return (x.rarity or 0) > (y.rarity or 0) end; return (x.ilvl or 0) > (y.ilvl or 0) end)
+    while #src > 120 do table.remove(src) end
+  else for _, slot in ipairs(Items.EQ_SLOTS) do src[#src + 1] = { slot, sv.equipped[slot] } end end
+  for _, pr in ipairs(src) do
+    local slot, it = pr[1], pr[2]
     if it then
       local c = Econ.enhCost(it); local rc = Econ.rerollCost(it); local affs = {}
       for i, a in ipairs(it.affixes) do affs[i] = { text = M.affixText(a):gsub("%s+%[T%d+%]$", ""), locked = Econ.rerollLocked(it, i - 1), t = a.t and (a.t + 1) or nil } end

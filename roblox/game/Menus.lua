@@ -159,7 +159,7 @@ function M.tile(parent, size, o)
   return b
 end
 -- 화면 영역: 창의 내용 목록 안에 고정 높이 판을 하나 만든다
-local function area(h) return mk("Frame", { Size = UDim2.new(1, -16, 0, h or 392), BackgroundTransparency = 1 }, C.list) end
+local function area(h) local full = math.floor(C.list.AbsoluteSize.Y / math.max(0.01, C.scale and C.scale() or 1)) - 14; return mk("Frame", { Size = UDim2.new(1, -16, 0, math.max(h or 392, full)), BackgroundTransparency = 1 }, C.list) end   -- 창 높이를 꽉 채운다
 local function box(parent, pos, size, title)
   local f = mk("Frame", { Position = pos, Size = size, BackgroundColor3 = Color3.fromRGB(16, 12, 12), BackgroundTransparency = 0.1 }, parent); corner(f, 6); stroke(f, Color3.fromRGB(120, 92, 48), 1.5)
   if title then
@@ -311,7 +311,7 @@ invRender = function()
       local a = C.Sprites.art(c[1])
       if a then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
       else local dot = mk("Frame", { Size = UDim2.new(0, 10, 0, 10), Position = UDim2.new(0, 3, 0, 3), BackgroundColor3 = c[4] }, f); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, dot) end
-      local t = txt(f, (c[5] or c[2]) .. " " .. n(c[3] or 0), 15, UDim2.new(0, 26, 0, 0), UDim2.new(1, -26, 1, 0), c[4], M.FONT); t.TextTruncate = Enum.TextTruncate.AtEnd   -- 이름도 함께 (아이콘만으론 무엇인지 모름)
+      local t = txt(f, (c[5] or c[2]) .. " " .. n(c[3] or 0), 15, UDim2.new(0, 26, 0, 0), UDim2.new(1, -26, 1, 0), c[4], M.FONT); t.TextScaled = true; mk("UITextSizeConstraint", { MaxTextSize = 15, MinTextSize = 8 }, t)   -- 이름도 함께, 길면 글자를 줄여 칸에 맞춘다
       local tp = { title = string.format("%s  %s", c[2], n(c[3] or 0)), color = c[4], lines = { CUR_DESC[c[1]] or "" } }; f.MouseEnter:Connect(function() tipShow(tp) end); f.MouseLeave:Connect(tipHide)
     end
   end
@@ -386,11 +386,12 @@ invRender = function()
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
   local function act(name) local e = C.rpc:InvokeServer(name, it.uid); if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.err and tostring(e.err) or ""; if name ~= "equip" then invSel = nil end; M.inv() end
   if not it.equipped then
-    M.btn(ab, "장착", UDim2.new(0, 84, 1, 0), M.BTN.green, function() act("equip") end).LayoutOrder = 1
-    M.btn(ab, "판매", UDim2.new(0, 84, 1, 0), M.BTN.gold, function() act("sell") end).LayoutOrder = 2
-    M.btn(ab, "분해", UDim2.new(0, 84, 1, 0), M.BTN.red, function() act("dismantle") end).LayoutOrder = 3
+    M.btn(ab, "장착", UDim2.new(0.25, -5, 1, 0), M.BTN.green, function() act("equip") end).LayoutOrder = 1
+    M.btn(ab, "강화", UDim2.new(0.25, -5, 1, 0), M.BTN.blue, function() M.forgeOpen(it.uid, true); C.openTab("forge") end).LayoutOrder = 2   -- 이 장비를 고른 채 대장간으로
+    M.btn(ab, "판매", UDim2.new(0.25, -5, 1, 0), M.BTN.gold, function() act("sell") end).LayoutOrder = 3
+    M.btn(ab, "분해", UDim2.new(0.25, -5, 1, 0), M.BTN.red, function() act("dismantle") end).LayoutOrder = 4
   else
-    M.btn(ab, "강화하러 가기", UDim2.new(0, 160, 1, 0), M.BTN.blue, function() C.openTab("forge") end).LayoutOrder = 1
+    M.btn(ab, "강화하러 가기 (대장간)", UDim2.new(1, 0, 1, 0), M.BTN.blue, function() M.forgeOpen(it.uid, false); C.openTab("forge") end).LayoutOrder = 1
   end
   end
   fillDetail()
@@ -912,10 +913,11 @@ local function rowCard(o)
 end
 
 -- ───────── 대장간 (강화 · 옵션 재굴림 · 혼돈/신성 구슬 · 소켓) ─────────
-local forgeSel
+local forgeSel, forgeBag, forgeScroll = nil, false, 0   -- 고른 장비 · 가방 보기 · 목록 스크롤 (다시 그려도 유지)
+function M.forgeOpen(uid, bag) forgeSel = uid; forgeBag = bag and true or false; forgeScroll = 0 end   -- 다른 창(장비)에서 "강화하러 가기"
 function M.forge()
   C.clear()
-  local r = C.rpc:InvokeServer("forge"); if r.summary then C.setSummary(r.summary) end
+  local r = C.rpc:InvokeServer("forge", { bag = forgeBag }); if r.summary then C.setSummary(r.summary) end
   if r.err then C.msg.Text = tostring(r.err); return end
   local rows = r.rows or {}; local s = C.summary() or {}
   local A = area(392)
@@ -925,10 +927,21 @@ function M.forge()
   cost(top, { { "i_gold", s.gold or 0, Color3.fromRGB(255, 220, 120), "골드" }, { "i_ore", s.ore or 0, Color3.fromRGB(200, 220, 255), "강화석" }, { "i_chaos", s.orbC or 0, Color3.fromRGB(220, 170, 255), "혼돈" },
     { "i_seal", s.sockTix or 0, Color3.fromRGB(190, 160, 255), "인장" }, { "i_stone", s.stones or 0, Color3.fromRGB(160, 220, 255), "돌" } }, UDim2.new(0, 46, 0, 3))
   -- 왼쪽: 착용 장비 목록 (칸마다 부위 · 티어 · 강화 · 이름)
-  local L = box(A, UDim2.new(0, 0, 0, 36), UDim2.new(0, 250, 1, -36), "착용 장비")
-  local sc0 = mk("ScrollingFrame", { Position = UDim2.new(0, 6, 0, 30), Size = UDim2.new(1, -12, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 4 }, L)
+  local L = box(A, UDim2.new(0, 0, 0, 36), UDim2.new(0, 250, 1, -36))
+  -- 착용 / 가방 전환 (가방 장비도 바로 강화)
+  local sw = mk("Frame", { Position = UDim2.new(0, 6, 0, 4), Size = UDim2.new(1, -12, 0, 26), BackgroundTransparency = 1 }, L)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sw)
+  for i, t in ipairs({ { false, "착용 장비" }, { true, "가방 장비" } }) do local b = M.btn(sw, t[2], UDim2.new(0.5, -2, 1, 0), (forgeBag == t[1]) and M.BTN.gold or M.BTN.gray, function() forgeBag = t[1]; forgeScroll = 0; M.forge() end); b.LayoutOrder = i; b.TextSize = 13 end
+  local sc0 = mk("ScrollingFrame", { Position = UDim2.new(0, 6, 0, 34), Size = UDim2.new(1, -12, 1, -40), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 4 }, L)
   mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, sc0)
-  if #rows == 0 then txt(L, "착용한 장비가 없습니다. 먼저 [장비]에서 장착하세요.", 13, UDim2.new(0, 10, 0, 40), UDim2.new(1, -20, 0, 60), Color3.fromRGB(190, 185, 210)); return end
+  -- 스크롤 위치 유지 (장비를 눌러도 맨 위로 튀지 않게)
+  local restored, want = false, forgeScroll or 0
+  sc0:GetPropertyChangedSignal("CanvasPosition"):Connect(function() if restored then forgeScroll = sc0.CanvasPosition.Y end end)
+  task.spawn(function()   -- 목록 크기가 잡힌 뒤(화면에 보인 뒤) 예전 위치로
+    for _ = 1, 60 do if not sc0.Parent then return end; if sc0.AbsoluteCanvasSize.Y > want + 10 and sc0.Visible and sc0.AbsoluteSize.Y > 0 then break end; game:GetService("RunService").Heartbeat:Wait() end
+    if sc0.Parent then sc0.CanvasPosition = Vector2.new(0, want) end; restored = true
+  end)
+  if #rows == 0 then txt(L, forgeBag and "가방에 장비가 없습니다." or "착용한 장비가 없습니다. 먼저 [장비]에서 장착하세요.", 13, UDim2.new(0, 10, 0, 40), UDim2.new(1, -20, 0, 60), Color3.fromRGB(190, 185, 210)).TextWrapped = true; return end
   local sel
   for _, it in ipairs(rows) do if it.uid == forgeSel then sel = it end end
   sel = sel or rows[1]; forgeSel = sel.uid
