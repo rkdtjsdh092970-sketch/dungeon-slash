@@ -619,7 +619,7 @@ function M.skills()
     local rcol = M.SK_RCOL[(k.rarity or 0) + 1] or M.SK_RCOL[1]
     local big = arcCard(D, k, 92, 136, {}); big.Position = UDim2.new(0, 12, 0, 12)
     local nm = txt(D, k.name, 20, UDim2.new(0, 114, 0, 12), UDim2.new(1, -124, 0, 26), Color3.new(1, 1, 1), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-    txt(D, (d.slot ~= "basic" and (k.lvl or 1) < (k.maxLv or 20)) and string.format("%s · Lv %d / %d  (duplicates %d/%d)", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20, k.dup or 0, k.lvl or 1)
+    txt(D, ((k.lvl or 1) < (k.maxLv or 20)) and string.format("%s · Lv %d / %d  (duplicates %d/%d)", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20, k.dup or 0, k.lvl or 1)
       or string.format("%s · Lv %d / %d", M.SK_RAR[(k.rarity or 0) + 1] or "", k.lvl or 1, k.maxLv or 20), 14, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 18), rcol, M.FONT)
     local tags = { k.basic and "Basic Attack" or "Spell", d.dtype == "mag" and "Arcana" or (d.dtype == "phys" and "Physical" or "Support") }
     if k.elem and ELEM_NAME[k.elem] then tags[#tags + 1] = ELEM_NAME[k.elem] end
@@ -670,9 +670,6 @@ function M.skills()
       end
       if #parts > 0 then pw.Text = "Power if equipped:  " .. table.concat(parts, "   "); pw:SetAttribute("NoTr", true); pw.TextColor3 = Color3.fromRGB(230, 220, 170) end
     end)
-    if isBasic and k.upCost and (k.lvl or 1) < (k.maxLv or 20) then   -- 평타는 골드로 강화
-      M.btn(ab, string.format("Upgrade %sG", n(k.upCost)), UDim2.new(), M.BTN.gold, function() res(C.rpc:InvokeServer("levelup", k.uid)) end).LayoutOrder = 0
-    end
     if k.slot == 0 and not isBasic then M.btn(ab, "Dismantle", UDim2.new(), M.BTN.red, function() skSel = nil; local e = C.rpc:InvokeServer("sellskill", k.uid); res(e); if e and e.ok ~= false and not e.err then C.msg.Text = "Salvaged · gained Arcana Shards" end end).LayoutOrder = 20 end
     if k.slot > 0 and d.slot ~= "passive" then   -- 대상 규칙: 누를 때마다 다음 규칙
       local RULE = { "front", "auto", "boss", "ranged", "elite", "normal" }

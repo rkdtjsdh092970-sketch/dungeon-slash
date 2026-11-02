@@ -114,7 +114,6 @@ local function upkeep(sv, fam, rng)
     for _, it in pairs(sv.equipped) do if it and (it.enh or 0) < 10 and (not low or (it.enh or 0) < (low.enh or 0)) then low = it end end
     if not low or not Econ.enhance(sv, low, rng) then break end
   end
-  for _ = 1, 5 do local l = sv.loadout[1]; if not l or not Econ.levelUpSkill(sv, l.uid) then break end end   -- 평타는 남는 골드로 강화
   if #sv.inv > 150 then for i = #sv.inv, 60, -1 do table.remove(sv.inv, i) end end
 end
 function P.run(seed, cls, freePulls, budget, onBattle)   -- onBattle(sv, battles): 측정용 (상태 저장 등)

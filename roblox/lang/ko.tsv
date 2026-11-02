@@ -1637,7 +1637,7 @@ Chance          Lowest roll  →  Highest roll (at this gear tier)	확률       
 ★ Reroll line	★ 재굴림 줄
 Reroll this line?	이 줄을 다시 굴릴까요?
 Each item can reroll only ONE line. Once you reroll this line, it becomes this item's reroll line and the other lines stay as they are.	장비마다 한 줄만 다시 굴릴 수 있습니다. 이 줄을 굴리면 이 장비의 재굴림 줄이 되고, 나머지 줄은 그대로 고정됩니다.
-2) Arcana: slot 1 is your basic attack (new ones unlock as you level, upgrade with gold). Fill slots 2–4 with Arcana of your family (physical or magic) from Summon — pulling the same Arcana again levels it up.	2) 아르카나: 1번 칸은 평타입니다 (레벨이 오르면 새 평타가 열리고, 골드로 강화). 2~4번 칸은 소환에서 얻은 내 계열(물리 또는 마법) 아르카나로 채우세요 — 같은 아르카나를 또 뽑으면 레벨이 오릅니다.
+2) Arcana: slot 1 is your basic attack (new ones and level-ups drop from Boss Gates). Fill slots 2–4 with Arcana of your family (physical or magic) from Summon — pulling the same Arcana again levels it up.	2) 아르카나: 1번 칸은 평타입니다 (새 평타와 레벨업은 보스 관문에서 드랍). 2~4번 칸은 소환에서 얻은 내 계열(물리 또는 마법) 아르카나로 채우세요 — 같은 아르카나를 또 뽑으면 레벨이 오릅니다.
 Meadow 1–5 → Abyssal Rift floors 1–100 (win battles for EXP) · Boss Gates open at Rift 20/40/70/100 and drop basic attacks (keys come from key monsters) → graduate at floor 100 → Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms.	초원 1~5 → 심연의 균열 1~100층 (전투에서 이기면 경험치) · 보스 관문은 균열 20/40/70/100층에 단계별로 열리고 평타를 떨어뜨립니다 (열쇠는 열쇠 몹에게서) → 100층 졸업 → 무한 균열 · 보물고 · 심연의 문 → 솟아난 탑 · 돌의 신전 · 레이드 → 전직 · 참.
 Key monsters (golden glow) drop Boss Gate keys — Boss Gates drop basic attacks	열쇠 몹(금빛 기운)이 보스 관문 열쇠를 떨어뜨립니다 — 보스 관문에서 평타가 나옵니다
 Open — requires Rift floor %d	열림 — 균열 %d층 필요
@@ -1653,3 +1653,4 @@ Stage 4	4단계
 Drops — Basic attacks (30–50%%): %s	드랍 — 평타 (30~50%%): %s
 Duplicate · %d/%d to next Lv	중복 · 다음 레벨까지 %d/%d
 %s · Lv %d / %d  (duplicates %d/%d)	%s · Lv %d / %d  (중복 %d/%d)
+Level up by getting the same Arcana again	같은 아르카나를 다시 얻으면 레벨이 오릅니다
