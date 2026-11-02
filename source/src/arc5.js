@@ -147,3 +147,23 @@ function openHelp5() {
   ${C("재화", ["골드: 강화 · 상점. 강화석: 장비 강화. 아르카나 조각: 아르카나 소환 (1회 10개, 10회 90개).", "안 쓰는 장비는 분해해 강화석을, 안 쓰는 아르카나는 분해해 아르카나 조각을 얻으세요. 가방의 [자동 분해]를 켜면 전투마다 정리됩니다."])}
   ${C("매일 할 일", ["퀘스트 게시판에서 일일 목표를, 우편함에서 보상을 받으세요. 끝없는 균열은 하루 입장 횟수가 정해져 있습니다."])}</div>`, { cls: "wide" });
 }
+// 도감 (로블록스판 Menus.codex): 아르카나 카드 전체 · 분류 · 고르면 오른쪽에 정보 (안 가진 것은 회색)
+const CXA = { f: "all", sel: null };
+function openCodex() {
+  const owned = {}; for (const k of save.skills) owned[k.id] = Math.max(owned[k.id] == null ? -1 : owned[k.id], k.rarity);
+  const F = [["all", "전체"], ["have", "보유"], ["basic", "평타"], ["phys", "물리"], ["fire", "화염"], ["cold", "냉기"], ["light", "번개"], ["void", "공허"]];
+  const all = SKILLS.filter((d) => d.slot !== "passive" && d.id !== "p_none"), have = all.filter((d) => owned[d.id] != null).length;
+  const list = all.filter((d) => CXA.f === "all" || (CXA.f === "have" && owned[d.id] != null) || (CXA.f === "basic" && d.slot === "basic") || (CXA.f === "phys" && d.dtype === "phys") || d.elem === CXA.f)
+    .sort((a, b) => ((owned[b.id] != null) - (owned[a.id] != null)) || ((a.unlock || 0) - (b.unlock || 0)));
+  const card = (d, w, h) => `<div class="ac5 ${CXA.sel === d.id ? "sel" : ""} ${owned[d.id] == null ? "gray5" : ""}" style="width:${w}px;height:${h}px;--rc:${SK_RCOL5[skillTier(d)]}" data-a="cxs" data-id="${d.id}">${arcCard(d.id, skillTier(d), {})}</div>`;
+  let R = `<div class="dim pad">카드를 누르면 능력이 나옵니다. 회색 카드는 아직 가지지 않은 아르카나입니다.</div>`;
+  const d = CXA.sel && all.find((x) => x.id === CXA.sel);
+  if (d) { const own = owned[d.id] != null, tags = [d.slot === "basic" ? "평타" : "아르카나", d.dtype === "mag" ? "마법" : d.dtype === "phys" ? "물리" : "지원"]; if (d.elem && ELEM_NAME[d.elem]) tags.push(ELEM_NAME[d.elem]);
+    R = `<div class="adh5"><div class="${own ? "" : "gray5"}">${arcCard(d.id, skillTier(d), {})}</div><div style="min-width:0"><b class="adn5">${d.name}</b><div style="color:${own ? "#8ceb8c" : "#ff8c78"};font-size:13px;margin:2px 0">${own ? `보유 · 최고 등급 ${SKILL_RARITY[owned[d.id]].name}` : "미보유 · [아르카나 소환]에서 얻습니다"}</div><div class="tg5">${tags.join(" · ")}</div></div></div>
+      <div class="ag5 c3"><div><small>기본 위력</small><b>${d.mult ? Math.round(d.mult * 100) + "%" : "–"}</b></div><div><small>쿨타임</small><b>${d.cd ? d.cd.toFixed(1) + "초" : "–"}</b></div><div><small>사거리</small><b>${d.range ? d.range + "칸" : "–"}</b></div><div><small>마나</small><b>${d.mana ? d.mana : "없음"}</b></div></div>
+      <div class="adesc5" style="height:auto;min-height:120px">${d.desc || ""}</div>`; }
+  Modal.open(`<h2>도감</h2><div class="arc5"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><div class="cxf5">${F.map(([k, n]) => `<button class="btn xs ${CXA.f === k ? "gold" : ""}" data-a="cxf" data-f="${k}">${n}</button>`).join("")}</div>
+    <div class="tbl5" style="flex:1"><div class="th5">아르카나 도감  ${have} / ${all.length}</div><div class="og5">${list.map((x) => card(x, 60, 88)).join("") || `<div class="dim pad">이 분류에 아르카나가 없습니다.</div>`}</div></div></div><div class="box5 ar5">${R}</div></div>`, { cls: "wide", on: {
+    cxf: (el) => { CXA.f = el.dataset.f; openCodex(); }, cxs: (el) => { CXA.sel = el.dataset.id; snd("click"); openCodex(); },
+  } });
+}

@@ -7,7 +7,7 @@ const TOWN5 = [
   { id: "guild", name: "길드", box: [0.206, 0.17, 0.434, 0.47], tabs: [["길드", () => openGuild()], ["랭킹", () => openRanking()]] },
   { id: "skillshop", name: "아르카나 소환", box: [0.455, 0.06, 0.635, 0.5], tabs: [["아르카나 소환", () => openSummon()], ["아르카나 목록", () => openGachaList5()]] },
   { id: "notice", name: "업데이트 게시판", box: [0.67, 0.2, 0.815, 0.51], badge: () => typeof notesUnread === "function" && notesUnread(),
-    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도움말", () => openHelp5()], ["도감", () => { CX.sel = null; openCodex(); }], ["기록", () => openRecords()]] },
+    tabs: [["업데이트 게시판", () => openNotes()], ["우편함", () => openMail()], ["도움말", () => openHelp5()], ["도감", () => openCodex()], ["기록", () => openRecords()]] },
   { id: "trainer", name: "훈련소", box: [0.0, 0.38, 0.25, 0.59], badge: () => passivePoints(save) - passiveSpent(save) > 0,
     tabs: [["패시브", () => openPassives()], ["허수아비", () => openDummy()], ["전직", () => openClass(() => {})], ["참", () => openCharms()]] },
   { id: "board", name: "퀘스트 게시판", box: [0.83, 0.38, 0.99, 0.65], badge: () => q5Ready(save) || dailyReady5(save),
