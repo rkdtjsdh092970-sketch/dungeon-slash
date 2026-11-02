@@ -151,9 +151,9 @@ local function guildHome(v)
     mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, dr)
     for i, amt in ipairs({ 10000, 50000, 100000 }) do local b = M.btn(dr, n(amt) .. " 기부", UDim2.new(0.333, -4, 1, 0), (s.gold or 0) >= amt and M.BTN.gold or M.BTN.gray, function() gcall("g_donate", amt) end); b.LayoutOrder = i end
     local fx = row(R, 110, 0); fx.Position = UDim2.new(0, 0, 0, 182); fx.Size = UDim2.new(1, 0, 1, -182)
-    txt(fx, "✦ 길드 효과 (길드원 모두)", 14, UDim2.new(0, 12, 0, 6), UDim2.new(1, -24, 0, 18), Color3.fromRGB(255, 210, 120), M.FONT)
+    txt(fx, "✨ 길드 효과 (길드원 모두)", 14, UDim2.new(0, 12, 0, 6), UDim2.new(1, -24, 0, 18), Color3.fromRGB(255, 210, 120), M.FONT)
     local lines = {}
-    for _, gp in ipairs(require(script.Parent.Data.Config).GUILD_PASSIVES or {}) do lines[#lines + 1] = (v.lv >= gp.lv and "✔ " or "🔒 ") .. string.format("Lv %d  %s", gp.lv, gp.text) end
+    for _, gp in ipairs(require(script.Parent.Data.Config).GUILD_PASSIVES or {}) do lines[#lines + 1] = (v.lv >= gp.lv and "✔ " or "🔒 ") .. string.format("Lv %d  %s", gp.lv, require(script.Parent.Lang).tr(gp.text)) end   -- 효과 글을 따로 번역 (합친 줄은 사전에 없다)
     local ef = txt(fx, table.concat(lines, "\n"), 12, UDim2.new(0, 14, 0, 28), UDim2.new(1, -28, 1, -32), Color3.fromRGB(215, 205, 190)); ef.TextWrapped = true; ef.TextYAlignment = Enum.TextYAlignment.Top
   elseif gTab == "members" then
     if manage then
@@ -165,7 +165,7 @@ local function guildHome(v)
     for i, m in ipairs(v.members) do
       local f = row(sc, 46, i)
       local rb = mk("TextLabel", { Position = UDim2.new(0, 10, 0.5, -11), Size = UDim2.new(0, 76, 0, 22), BackgroundColor3 = Color3.fromRGB(10, 8, 6), Text = ROLE[m.role], Font = M.FONT, TextSize = 12, TextColor3 = ROLE_COL[m.role] }, f); corner(rb, 11)
-      local nm = txt(f, m.name .. (m.me and "  (나)" or ""), 15, UDim2.new(0, 96, 0, 0), UDim2.new(0.3, 0, 1, 0), Color3.new(1, 1, 1), M.FONT); nm.TextYAlignment = Enum.TextYAlignment.Center; nm:SetAttribute("NoTr", true)
+      local nm = txt(f, m.name .. (m.me and (require(script.Parent.Lang).lang == "en" and "  (me)" or "  (나)") or ""), 15, UDim2.new(0, 96, 0, 0), UDim2.new(0.3, 0, 1, 0), Color3.new(1, 1, 1), M.FONT); nm.TextYAlignment = Enum.TextYAlignment.Center; nm:SetAttribute("NoTr", true)
       local pw = txt(f, "전투력 " .. n(m.power), 13, UDim2.new(0.42, 0, 0, 0), UDim2.new(0.18, 0, 1, 0), Color3.fromRGB(255, 205, 110), M.FONT); pw.TextYAlignment = Enum.TextYAlignment.Center
       local ct = txt(f, "기여도 " .. n(m.contrib), 13, UDim2.new(0.6, 0, 0, 0), UDim2.new(0.16, 0, 1, 0), Color3.fromRGB(190, 220, 170), M.FONT); ct.TextYAlignment = Enum.TextYAlignment.Center
       if v.role == "leader" and not m.me then
@@ -184,10 +184,11 @@ local function guildHome(v)
     for i, g in ipairs(v.goals) do
       local y = 36 + (i - 1) * 34
       txt(f, (g.id == "kill" and "몬스터 처치" or (g.id == "boss" and "보스 처치" or "전투 클리어")) .. (g.done and "  ✔" or ""), 13, UDim2.new(0, 14, 0, y), UDim2.new(0, 140, 0, 18), g.done and Color3.fromRGB(150, 230, 150) or Color3.fromRGB(220, 210, 195))
-      pbar(f, UDim2.new(0, 160, 0, y + 2), UDim2.new(1, -330, 0, 12), g.goal > 0 and g.prog / g.goal or 0, g.done and Color3.fromRGB(240, 190, 70) or Color3.fromRGB(90, 200, 110))
-      local pv = txt(f, string.format("%s / %s", n(g.prog), n(g.goal)), 12, UDim2.new(1, -165, 0, y), UDim2.new(0, 0, 0, 18), Color3.fromRGB(200, 190, 175)); pv.AutomaticSize = Enum.AutomaticSize.X; pv:SetAttribute("NoTr", true)
+      pbar(f, UDim2.new(0, 160, 0, y + 2), UDim2.new(1, -400, 0, 12), g.goal > 0 and g.prog / g.goal or 0, g.done and Color3.fromRGB(240, 190, 70) or Color3.fromRGB(90, 200, 110))
+      local pv = txt(f, string.format("%s / %s", n(g.prog), n(g.goal)), 12, UDim2.new(1, -232, 0, y), UDim2.new(0, 0, 0, 18), Color3.fromRGB(200, 190, 175)); pv.AutomaticSize = Enum.AutomaticSize.X; pv:SetAttribute("NoTr", true)
     end
-    local cb = M.btn(f, "보상 받기", UDim2.new(0, 140, 0, 40), M.BTN.green, function() gcall("g_claim") end); cb.AnchorPoint = Vector2.new(1, 0); cb.Position = UDim2.new(1, -12, 0, 10)
+    local anyDone = false; for _, g in ipairs(v.goals) do if g.done then anyDone = true end end   -- 달성한 목표가 없으면 회색
+    local cb = M.btn(f, "보상 받기", UDim2.new(0, 140, 0, 40), anyDone and M.BTN.green or M.BTN.gray, function() gcall("g_claim") end); cb.AnchorPoint = Vector2.new(1, 0); cb.Position = UDim2.new(1, -12, 0, 10)
     local b2 = row(sc, 190, 2)
     txt(b2, string.format("👹 길드 보스  ·  60초 동안 최대 피해  ·  이번 주 남은 도전 %d회  ·  길드 합계 %s", v.bossTries, n(v.bossTotal)), 14, UDim2.new(0, 14, 0, 8), UDim2.new(1, -170, 0, 20), Color3.fromRGB(255, 210, 120), M.FONT)
     local rl = {}; for i, x in ipairs(v.bossRank) do if i <= 5 then rl[#rl + 1] = string.format("%d위  %s   %s", i, x.name, n(x.damage)) end end
@@ -237,8 +238,15 @@ local function guildHome(v)
       txt(st, "길드 설정", 15, UDim2.new(0, 14, 0, 8), UDim2.new(1, -28, 0, 20), Color3.fromRGB(255, 210, 120), M.FONT)
       local set = { emblem = table.clone(v.emblem), desc = v.desc, join = v.join, minLv = v.minLv }
       local em = M.emblem(st, set.emblem, 64); em.Position = UDim2.new(0, 14, 0, 36)
-      local sym = M.btn(st, "문양 바꾸기", UDim2.new(0, 120, 0, 30), M.BTN.gray, function() set.emblem.s = set.emblem.s % #G_SYM + 1; gcall("g_set", set) end); sym.Position = UDim2.new(0, 90, 0, 36)
-      local colb = M.btn(st, "색 바꾸기", UDim2.new(0, 120, 0, 30), M.BTN.gray, function() set.emblem.c = set.emblem.c % #G_COL + 1; gcall("g_set", set) end); colb.Position = UDim2.new(0, 90, 0, 70)
+      for i = 1, #G_SYM do   -- 문양 · 색을 바로 고른다 (창설 화면과 같은 칸)
+        local e = M.emblem(st, { s = i, c = set.emblem.c }, 30); e.Position = UDim2.new(0, 90 + (i - 1) * 35, 0, 36)
+        if i == set.emblem.s then e:FindFirstChildOfClass("UIStroke").Thickness = 3; e:FindFirstChildOfClass("UIStroke").Color = Color3.new(1, 1, 1) end
+        mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "" }, e).MouseButton1Click:Connect(function() set.emblem.s = i; gcall("g_set", set) end)
+      end
+      for i, c in ipairs(G_COL) do
+        local b = mk("TextButton", { Position = UDim2.new(0, 90 + (i - 1) * 35, 0, 72), Size = UDim2.new(0, 30, 0, 26), BackgroundColor3 = c, Text = "", AutoButtonColor = false }, st); corner(b, 6)
+        stroke(b, i == set.emblem.c and Color3.new(1, 1, 1) or Color3.fromRGB(60, 50, 40), i == set.emblem.c and 3 or 1.5); b.MouseButton1Click:Connect(function() set.emblem.c = i; gcall("g_set", set) end)
+      end
       txt(st, "소개", 13, UDim2.new(0, 14, 0, 110), UDim2.new(1, -28, 0, 16), Color3.fromRGB(220, 200, 160), M.FONT)
       input(st, UDim2.new(0, 14, 0, 128), UDim2.new(1, -28, 0, 40), set.desc, "길드 소개", function(t) if t ~= set.desc then set.desc = t; gcall("g_set", set) end end)
       txt(st, "공지", 13, UDim2.new(0, 14, 0, 174), UDim2.new(1, -28, 0, 16), Color3.fromRGB(220, 200, 160), M.FONT)
