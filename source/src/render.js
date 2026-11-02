@@ -129,7 +129,7 @@ function drawRoads(ctx, b, time) {
 }
 function drawBattle(ctx, b, dt, time) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
-  const sk = b.shake > 0 && !(save && save.opt && save.opt.shake === 0) ? [rnd(-1, 1) * b.shake * 12, rnd(-1, 1) * b.shake * 8] : [0, 0]; ctx.translate(sk[0], sk[1]);
+  /* 5.18: 화면 흔들림 없음 (들썩거림 제거) */
   const bgA = battleBgArt(b);
   if (b.raid) drawRaidBack(ctx, b, time); else if (bgA) { drawCover(ctx, bgA, CW, CH); ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.fillRect(0, 0, CW, CH); } else ctx.drawImage(makeBackground(b.kind === "hell" ? 12 : b.kind === "spire" || b.kind === "craid" || b.kind === "warden" ? 13 : RIFTLIKE[b.kind] ? 11 : Math.min(10, b.act)), 0, 0);
   const lh = laneH(b), lt = laneTop(b);
@@ -137,8 +137,8 @@ function drawBattle(ctx, b, dt, time) {
   // 장판 (화염 벽)
   for (const z of b.zones) drawZone(ctx, b, z, time);
   drawPersist(ctx, b, time); drawGrand(ctx, b); FX5.draw(ctx, b, 0);   // 영웅 뒤 마법진 · 바닥 문장
-  // 플레이어
-  if (!b.raid) {
+  // 플레이어 (레이드도 일러스트가 있으면 평소 영웅 그림)
+  if (!b.raid || RV_ART()) {
   const P = PLAYER_POS; let pa = "idle", pt = time; if (b.over && !b.win) { pa = "death"; pt = Math.min(0.5, b.time - (b.deadAt || (b.deadAt = b.time))); } else if (b.pHurt > 0) { pa = "hurt"; pt = 0; } else if (b.pAtk > 0) { pa = "attack"; pt = 0.42 - b.pAtk; }
   const paf = animFrame("warrior", pa, pt); ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 38, 8, 0, 0, 7); ctx.fill(); ctx.restore();
   if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.18 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 40, 58, 70, 0, 0, 7); ctx.fill(); }

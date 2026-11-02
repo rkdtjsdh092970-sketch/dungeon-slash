@@ -61,7 +61,7 @@ function showUniqueFx(items, done, idx) {
   el.classList.remove("hidden");
   el.innerHTML = `<canvas id="ufx" width="960" height="540"></canvas><div class="utxt"><div class="u1"><span class="tn${TI}">✦ ${U_TIERS[TI].name} 고유 획득 ✦</span></div><div class="u2">${UNIQUE_BY_ID[it.uniq] ? uniqueIconImg(it.uniq, 8) : iconImg(it.slot, 8)}</div><div class="u3"><span class="tn${TI}">${U.name}</span></div><div class="u4">${SLOT_NAME[it.slot]} · Lv.${it.ilvl}${items.length > 1 ? ` · ${idx + 1}/${items.length}` : ""}</div><div class="u5">${uniqueLines(U, it.umods).map((t) => `<div>${t}</div>`).join("")}</div><div class="u6">“${U.flavor}”</div><div class="u7">클릭하여 계속 · 잠시 후 자동으로 닫힙니다</div></div>`;
   snd(TI >= 3 ? "unique2" : "unique");
-  const app = $("#app"); app.classList.remove("shake"); if (TI >= 2) { void app.offsetWidth; app.classList.add("shake"); setTimeout(() => app.classList.remove("shake"), TI === 4 ? 1400 : 700); }
+  // 5.18: 화면 전체를 흔드는 연출은 없앴다 (들썩거림)
   const cv = $("#ufx"), g = cv.getContext("2d"), r = seeded(it.uid * 7 + 3), W = 960, H = 540, cx = W / 2, cy = 215, P = [];
   const rgb = (c) => { const n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }, [cr, cg, cb] = rgb(TC), col = (a) => `rgba(${cr},${cg},${cb},${a})`;
   // 등급별 입자 초기화

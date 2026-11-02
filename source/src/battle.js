@@ -119,7 +119,7 @@ function createBattle(sv, node) {
   const st = computeStats(sv), mods = node.mods || [];
   const act = Math.max(1, Math.min(10, node.act)), stage = RIFTLIKE[node.kind] ? 4 : node.stage || CFG.STAGES;
   const floorKind = !!node.tier || RIFTLIKE[node.kind], scAct = floorKind ? 1 : act;   // 균열류는 몬스터 외형만 지역(act)을 따르고, 강도는 층 배율이 정한다
-  if (node.kind === "raid") { PLAYER_POS.x = 480; PLAYER_POS.y = 478; } else { PLAYER_POS.x = 104; PLAYER_POS.y = LAY.cy + 44; }
+  if (node.kind === "raid") { const art = typeof RV_ART === "function" && RV_ART(); PLAYER_POS.x = art ? 150 : 480; PLAYER_POS.y = art ? 420 : 478; } else { PLAYER_POS.x = 104; PLAYER_POS.y = LAY.cy + 44; }
   let riftMul = node.kind === "raid" ? floorMult(node.tier || CFG.RAID.TIER || CFG.RIFT_END) : node.tier ? (node.kind === "void" || isEB(node.kind) ? bossRiftMult(node.tier) : floorMult(node.tier)) : floorKind ? floorMult(CFG.RIFT_END) : 1;
   if (node.kind === "spire" && node.floor % 5 === 0 && node.floor % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;
   if (node.kind === "rift" && node.tier % 5 === 0 && node.tier % 20 !== 0) riftMul *= CFG.BOSS_FLOOR_K;   // 5층마다 나오는 중간 보스 층은 몬스터 강도를 조금 낮춰 갑작스러운 벽이 되지 않게 한다 (20층 단위 보스는 그대로)

@@ -94,12 +94,24 @@ function rvBuildPlayer() {
 }
 function rvInit() { if (RV.boss) return; RV.boss = rvBuildBoss(false); RV.bossR = rvBuildBoss(true); RV.back = rvBuildBack(); RV.floor = rvBuildFloor(); RV.plr = rvBuildPlayer(); }
 
+// 5.18 (로블록스판 Stage raidMode): 전용 투기장 일러스트 배경 · 모르가스 앞모습 일러스트 (화면 가운데 오른쪽) · 영웅은 평소 그림
+const RV_ART = () => !!(artGet("bg_raid") && artGet("morgath"));
+const RV_BX = 634, RV_FOOT = () => PLAYER_POS.y + 60;
 function drawRaidBack(ctx, b, time) {
-  rvInit(); ctx.drawImage(RV.back, 0, 0);
+  if (RV_ART()) { drawCover(ctx, artGet("bg_raid"), CW, CH); }
+  else { rvInit(); ctx.drawImage(RV.back, 0, 0); }
   // 떠다니는 불씨
   for (let i = 0; i < 46; i++) { const k = (time * (14 + (i % 7) * 4) + i * 53) % 560, x = (i * 97) % 960 + Math.sin(time * 0.8 + i) * 14, y = 540 - k; ctx.fillStyle = `rgba(255,${130 + (i % 5) * 20},50,${0.55 * (1 - k / 560)})`; ctx.fillRect(x, y, 2 + (i % 3), 2 + (i % 3)); }
 }
 function drawMorgas(ctx, b, e, time, alpha, dying) {
+  if (RV_ART()) {
+    const R = e && e.raid, enr = e && e.enraged, im = (enr && artGet("morgath_rage")) || artGet("morgath"), fy = RV_FOOT(), H = 430, cy = fy - H * 0.5, a = alpha == null ? 1 : alpha;
+    ctx.save(); const rg = ctx.createRadialGradient(RV_BX, cy, 10, RV_BX, cy, 260); rg.addColorStop(0, hexA(enr ? "#ff2a10" : "#ff6a20", 0.18 * a)); rg.addColorStop(1, hexA("#ff6a20", 0)); ctx.fillStyle = rg; ctx.fillRect(RV_BX - 260, cy - 260, 520, 520); ctx.restore();
+    drawArt(ctx, im, RV_BX, fy + Math.sin(time * 1.3) * 2, H, { alpha: a, sy: dying ? 1 - (1 - a) * 0.3 : 1, tint: e && e.flash > 0 ? "rgba(255,255,255,.55)" : null });
+    if (R && R.sealed) { const pulse = 0.5 + 0.5 * Math.sin(time * 4); ctx.save(); ctx.strokeStyle = `rgba(120,200,255,${0.55 + 0.3 * pulse})`; ctx.lineWidth = 5; ctx.fillStyle = `rgba(90,170,255,${0.10 + 0.06 * pulse})`; ctx.beginPath(); ctx.ellipse(RV_BX, cy, 170, 215, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    if (R && R.vuln > 0) { ctx.save(); ctx.globalAlpha = 0.25 + 0.15 * Math.sin(time * 8); ctx.fillStyle = "#fff2a0"; ctx.fillRect(0, 0, 960, 540); ctx.restore(); }
+    return;
+  }
   const R = e && e.raid, enr = e && e.enraged, S = RV.sc, ox = RV_OX(), oy = RV_OY() + Math.sin(time * 1.3) * 2.5;
   const gl = (x, y, r, col, a) => { const rg = ctx.createRadialGradient(x, y, 2, x, y, r); rg.addColorStop(0, hexA(col, a)); rg.addColorStop(1, hexA(col, 0)); ctx.fillStyle = rg; ctx.fillRect(x - r, y - r, r * 2, r * 2); };
   ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.imageSmoothingEnabled = false;
@@ -118,7 +130,7 @@ function drawMorgas(ctx, b, e, time, alpha, dying) {
 }
 function drawRaidCrystal(ctx, b, e, time) {
   const x = e.vx, y = e.vy + Math.sin(time * 2 + e.id) * 4, h = 92, w = 38, pulse = 0.5 + 0.5 * Math.sin(time * 4 + e.id), hpR = Math.max(0, e.hp / e.maxHp);
-  const bg = b.bossRef; if (bg && !bg.dead) { ctx.save(); ctx.strokeStyle = `rgba(140,210,255,${0.25 + 0.2 * pulse})`; ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.lineDashOffset = -time * 40; ctx.beginPath(); ctx.moveTo(x, y - h * 0.5); ctx.lineTo(480, 270); ctx.stroke(); ctx.restore(); }
+  const bg = b.bossRef; if (bg && !bg.dead) { ctx.save(); ctx.strokeStyle = `rgba(140,210,255,${0.25 + 0.2 * pulse})`; ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.lineDashOffset = -time * 40; ctx.beginPath(); ctx.moveTo(x, y - h * 0.5); ctx.lineTo(bg.vx || 480, bg.vy || 270); ctx.stroke(); ctx.restore(); }
   const rg = ctx.createRadialGradient(x, y, 4, x, y, 90); rg.addColorStop(0, `rgba(120,200,255,${0.45 + 0.2 * pulse})`); rg.addColorStop(1, "rgba(120,200,255,0)"); ctx.fillStyle = rg; ctx.fillRect(x - 90, y - 90, 180, 180);
   const flash = e.flash > 0; ctx.save(); ctx.translate(x, y); ctx.lineJoin = "miter";
   const facets = [[[0, -h / 2], [w / 2, -h * 0.12], [0, 0]], [[0, -h / 2], [-w / 2, -h * 0.12], [0, 0]], [[w / 2, -h * 0.12], [w * 0.36, h * 0.3], [0, h / 2], [0, 0]], [[-w / 2, -h * 0.12], [-w * 0.36, h * 0.3], [0, h / 2], [0, 0]]], cols = ["#b8ecff", "#6ab4f0", "#3a78d8", "#2a58b8"];
@@ -144,11 +156,12 @@ function drawRaidPlayer(ctx, b, time) {
 
 function drawRaidEnemies(ctx, b, dt, time) {
   const boss = b.enemies.find((e) => e.def && e.def.raid && !e.dead);
-  if (boss) { boss.vx = 480; boss.vy = 265; drawMorgas(ctx, b, boss, time, 1, false); }
-  ctx.drawImage(RV.floor, 0, 0);
+  const art = RV_ART();
+  if (boss) { boss.vx = art ? RV_BX : 480; boss.vy = art ? RV_FOOT() - 215 : 265; drawMorgas(ctx, b, boss, time, 1, false); }
+  if (!art) ctx.drawImage(RV.floor, 0, 0);
   for (const e of b.enemies) if (e.crystal && !e.dead) { const p = cellXY(b, e.lane, e.col); e.vx = p.x; e.vy = p.y; drawRaidCrystal(ctx, b, e, time); }
-  if (boss && b.designated === boss) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(480, 392, 150, 20, 0, 0, 7); ctx.stroke(); }
-  drawRaidPlayer(ctx, b, time);
+  if (boss && b.designated === boss) { ctx.strokeStyle = "#ffd24a"; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(art ? RV_BX : 480, art ? RV_FOOT() : 392, 150, 20, 0, 0, 7); ctx.stroke(); }
+  if (!art) drawRaidPlayer(ctx, b, time);
 }
 
 // ---- 황금 보물고의 몬스터: 코인 / 골드 보따리 (코드로 그린 픽셀 느낌의 유닛) ----
