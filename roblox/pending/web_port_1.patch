@@ -1,0 +1,178 @@
+diff --git a/roblox/game/Game.lua b/roblox/game/Game.lua
+index 269e8cb..f44bd52 100644
+--- a/roblox/game/Game.lua
++++ b/roblox/game/Game.lua
+@@ -64,12 +64,16 @@ function M.inventory(sv)
+     local b, a, sat = M.itemDetail(it)
+     local P = bestWith(sv, it); local dp = Power.display(P) - baseD; local up = P > base * 1.0005
+     -- +0 기준 비교: 이 장비와 같은 부위에 낀 장비를 모두 강화 없이 놓고 비교 (강화는 옮겨 다시 하면 되므로)
+-    local keepE = { [it] = it.enh }; for _, k in ipairs(slotsFor(it)) do local e = sv.equipped[k]; if e then keepE[e] = e.enh end end
+-    for x in pairs(keepE) do x.enh = 0 end
+-    local base0 = powerOf(sv); local P0 = bestWith(sv, it)
+-    for x, e in pairs(keepE) do x.enh = e end
+-    local dp0 = Power.display(P0) - Power.display(base0); local up0 = P0 > base0 * 1.0005
+-    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, dp = dp, up0 = up0, dp0 = dp0, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
++    -- +0 · 돌 제외 비교: 이 장비와 같은 부위에 낀 장비를 강화 없이 / 소켓 돌 없이 놓고 비교 (강화 · 돌은 옮겨 다시 하면 되므로)
++    local function cmpWith(noEnh, noStone)
++      local keep = { [it] = { it.enh, it.sock } }; for _, k in ipairs(slotsFor(it)) do local e = sv.equipped[k]; if e then keep[e] = { e.enh, e.sock } end end
++      for x in pairs(keep) do if noEnh then x.enh = 0 end; if noStone and x.sock then local t = {}; for j = 1, #x.sock do t[j] = false end; x.sock = t end end
++      local b0 = powerOf(sv); local p0 = bestWith(sv, it)
++      for x, v in pairs(keep) do x.enh = v[1]; x.sock = v[2] end
++      return Power.display(p0) - Power.display(b0), p0 > b0 * 1.0005
++    end
++    local dp0, up0 = cmpWith(true, false); local dpS, upS = cmpWith(false, true); local dpZS, upZS = cmpWith(true, true)
++    out[i] = { uid = it.uid, slot = it.slot, title = M.itemTitle(it), lines = M.itemLines(it), base = b, aff = a, satText = sat, up = up, dp = dp, up0 = up0, dp0 = dp0, upS = upS, dpS = dpS, upZS = upZS, dpZS = dpZS, wt = it.wt, sat = it.sat ~= nil, rarity = it.rarity or 0, enh = it.enh or 0, ilvl = it.ilvl }
+   end
+   return out
+ end
+@@ -316,8 +320,8 @@ function M.setSwitch(sv, kind, i)
+   if cur == i then return true end
+   sv.presets = sv.presets or { false, false, false }
+   for j = 1, 3 do if not sv.presets[j] then sv.presets[j] = { equip = {}, loadout = {} } end end
+-  if kind == "gear" then saveEquip(sv, cur); if sv.presets[i].eqSet then loadEquip(sv, sv.presets[i]) else saveEquip(sv, i) end
+-  elseif kind == "skill" then saveLo(sv, cur); if sv.presets[i].loSet then loadLo(sv, sv.presets[i]) else saveLo(sv, i) end
++  if kind == "gear" then saveEquip(sv, cur); if sv.presets[i].eqSet then loadEquip(sv, sv.presets[i]) else loadEquip(sv, { equip = {} }); saveEquip(sv, i) end   -- 빈 세트: 장비를 모두 벗은 상태로 시작
++  elseif kind == "skill" then saveLo(sv, cur); if sv.presets[i].loSet then loadLo(sv, sv.presets[i]) else for k = 2, 4 do sv.loadout[k] = false end; saveLo(sv, i) end   -- 빈 세트: 평타만 남긴다
+   else
+     sv.passSets = sv.passSets or {}
+     sv.passSets[cur] = table.clone(sv.pass or {})
+@@ -547,7 +551,7 @@ local function findItem(sv, uid)
+   for _, slot in ipairs(Items.EQ_SLOTS) do if sv.equipped[slot] and sv.equipped[slot].uid == uid then return sv.equipped[slot] end end
+   for _, x in ipairs(sv.inv) do if x.uid == uid then return x end end
+ end
+-function M.forgeList(sv, bag)   -- bag = true 이면 가방 장비 (좋은 것부터 최대 120개)
++function M.forgeList(sv, bag, selUid)   -- bag = true 이면 가방 장비 (좋은 것부터 최대 120개) · selUid = 고른 장비 (가방은 그 장비만 전투력 계산)
+   local out = {}
+   local src = {}
+   if bag then
+@@ -561,7 +565,16 @@ function M.forgeList(sv, bag)   -- bag = true 이면 가방 장비 (좋은 것
+       local c = Econ.enhCost(it); local rc = Econ.rerollCost(it); local affs = {}
+       for i, a in ipairs(it.affixes) do affs[i] = { text = M.affixText(a):gsub("%s+%[T%d+%]$", ""), locked = Econ.rerollLocked(it, i - 1), t = a.t and (a.t + 1) or nil } end
+       local socks = {}; for i, s2 in ipairs(it.sock or {}) do socks[i] = s2 and (AFFIX_BY[s2.k] and AFFIX_BY[s2.k].name or s2.k) .. " +" .. (s2.v < 5 and string.format("%.1f%%", s2.v * 100) or tostring(s2.v)) or false end
+-      out[#out + 1] = { uid = it.uid, slot = slot, title = M.itemTitle(it), enh = it.enh or 0, enhGold = c.gold, enhOre = c.ore, rerollGold = rc.gold, rerollOre = rc.ore, affixes = affs, sockets = socks, affCount = #it.affixes, rarity = it.rarity or 0, sat = it.sat ~= nil, ilvl = it.ilvl }
++      -- 전투력: 착용 장비 = 강화 성공 시 변화, 가방 장비 = 착용하면 · 강화 후 착용하면 (웹 5.11과 같게)
++      local calc = not bag or it.uid == selUid or (selUid == nil and pr == src[1])
++      local pBase = calc and powerOf(sv) or 0; local eqd = not bag
++      local function pw(enh) local e0 = it.enh; it.enh = enh; local v = eqd and powerOf(sv) or bestWith(sv, it); it.enh = e0; return v end
++      local pNow = calc and pw(it.enh or 0) or 0; local pNext = (calc and (it.enh or 0) < 10) and pw((it.enh or 0) + 1) or nil
++      local powNow, powEnh = calc and Power.display(pBase) or nil, nil
++      local dEquip = (calc and not eqd) and (Power.display(pNow) - powNow) or nil
++      if pNext then powEnh = Power.display(pNext) - (eqd and powNow or Power.display(pNow)) end
++      local dEquipEnh = (not eqd and pNext) and (Power.display(pNext) - powNow) or nil
++      out[#out + 1] = { powNow = powNow, powEnh = powEnh, dEquip = dEquip, dEquipEnh = dEquipEnh, uid = it.uid, slot = slot, title = M.itemTitle(it), enh = it.enh or 0, enhGold = c.gold, enhOre = c.ore, rerollGold = rc.gold, rerollOre = rc.ore, affixes = affs, sockets = socks, affCount = #it.affixes, rarity = it.rarity or 0, sat = it.sat ~= nil, ilvl = it.ilvl }
+     end
+   end
+   return out
+diff --git a/roblox/game/Menus.lua b/roblox/game/Menus.lua
+index 35f2e12..49a233c 100644
+--- a/roblox/game/Menus.lua
++++ b/roblox/game/Menus.lua
+@@ -90,7 +90,10 @@ function M.itemCard(parent, it, order, head)
+   if head then line(head, 12, Color3.fromRGB(170, 160, 150), 0) end
+   local t = line(it.title or "", 18, col, 1, M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, t)
+   local dp, up, z0 = it.dp, it.up, ""
+-  if M.cmpZero and it.dp0 ~= nil then dp, up, z0 = it.dp0, it.up0, (PLangTop.lang == "en") and "  (at +0)" or "  (+0 기준)" end   -- 장비 창의 "+0 기준 비교"
++  local ko = PLangTop.lang ~= "en"   -- 장비 창의 "+0 기준 비교" · "돌 제외 비교"
++  if M.cmpZero and M.cmpStone and it.dpZS ~= nil then dp, up, z0 = it.dpZS, it.upZS, ko and "  (+0 · 돌 제외 기준)" or "  (at +0, no stones)"
++  elseif M.cmpZero and it.dp0 ~= nil then dp, up, z0 = it.dp0, it.up0, ko and "  (+0 기준)" or "  (at +0)"
++  elseif M.cmpStone and it.dpS ~= nil then dp, up, z0 = it.dpS, it.upS, ko and "  (돌 제외 기준)" or "  (no stones)" end
+   if dp and dp ~= 0 then line(string.format("Power %s%s%s", dp > 0 and "+" or "", n(dp), z0), 14, dp > 0 and Color3.fromRGB(120, 255, 140) or Color3.fromRGB(255, 120, 110), 2, M.FONT)
+   elseif up then line("▲ Stronger than current" .. z0, 13, Color3.fromRGB(120, 255, 140), 2, M.FONT) end
+   rule(3)
+@@ -245,7 +248,12 @@ local CUR_DESC = {   -- 재화 설명 (마우스를 올리면)
+   i_gem = "Gems used for arcana summons.", i_arcana = "Used for arcana summons (10 for 1 · 90 for 10). Earned from battles, quests and dismantling arcana.",
+ }
+ M.cmpZero = false   -- 장비 비교를 강화 없이(+0) 할지
+-local function upOf(it) if M.cmpZero and it.up0 ~= nil then return it.up0 == true end return it.up == true end
++M.cmpStone = false   -- 장비 비교를 소켓 돌 없이 할지
++local function upOf(it)
++  if M.cmpZero and M.cmpStone and it.upZS ~= nil then return it.upZS == true end
++  if M.cmpZero and it.up0 ~= nil then return it.up0 == true end
++  if M.cmpStone and it.upS ~= nil then return it.upS == true end
++  return it.up == true end
+ local function sortInv(inv)   -- 자동 정렬: 등급 → 부위 → 아이템 레벨
+   table.sort(inv, function(a, b)
+     if upOf(a) ~= upOf(b) then return upOf(a) end   -- 끼면 강해지는 장비(▲)가 맨 앞
+@@ -333,6 +341,9 @@ invRender = function()
+   do   -- +0 기준 비교 켜기/끄기 (강화 수치를 빼고 장비 자체만 비교)
+     local zb = M.btn(B, M.cmpZero and "+0 Compare: On" or "+0 Compare: Off", UDim2.new(0, 96, 0, 22), M.cmpZero and M.BTN.gold or M.BTN.gray, function() M.cmpZero = not M.cmpZero; tipHide(); M.itemTipHide(); invRender() end)
+     zb.AnchorPoint = Vector2.new(1, 0); zb.Position = UDim2.new(1, -8, 0, 4)
++    local sb = M.btn(B, M.cmpStone and "No Stones: On" or "No Stones: Off", UDim2.new(0, 96, 0, 22), M.cmpStone and M.BTN.gold or M.BTN.gray, function() M.cmpStone = not M.cmpStone; tipHide(); M.itemTipHide(); invRender() end)
++    sb.AnchorPoint = Vector2.new(1, 0); sb.Position = UDim2.new(1, -110, 0, 4)
++    sb.MouseEnter:Connect(function() tipShow({ title = "Compare without stones", lines = { "When on, compares the new item and your equipped item both without socketed stones.", "Stones can be moved, so use this to see whether the item itself is better." } }) end); sb.MouseLeave:Connect(tipHide)
+     zb.MouseEnter:Connect(function() tipShow({ title = "Compare at +0", lines = { "When on, compares the new item and your equipped item both without enhancement (+0).", "You can re-enhance after swapping, so use this to see whether the item itself is better." } }) end); zb.MouseLeave:Connect(tipHide)
+   end
+   if #inv >= INV_MAX * 0.9 then local w = txt(B, "Bag almost full · turn on Auto Salvage", 11, UDim2.new(0, 150, 0, 6), UDim2.new(1, -260, 0, 16), Color3.fromRGB(255, 130, 110), M.FONT, Enum.TextXAlignment.Right); w.TextTruncate = Enum.TextTruncate.AtEnd end
+@@ -585,7 +596,7 @@ function M.skills()
+     end
+     local k = inSlot[i]
+     local c
+-    if k then c = arcCard(row, k, 88, 130, { order = i * 2, sel = skSel == k.uid, slot = i, click = function() select(k.uid) end }); reg(k.uid, c); M.drag(c, { kind = "skill", uid = k.uid }, cardArt(k.id))
++    if k then c = arcCard(row, k, 88, 130, { order = i * 2, sel = skSel == k.uid, click = function() select(k.uid) end }); reg(k.uid, c); M.drag(c, { kind = "skill", uid = k.uid }, cardArt(k.id))
+     else   -- 빈 칸: 카드 뒷면을 흐리게
+       c = mk("Frame", { Size = UDim2.new(0, 88, 0, 130), BackgroundColor3 = Color3.fromRGB(16, 10, 24), LayoutOrder = i * 2 }, row); corner(c, 8)
+       local bk = C.Sprites.art("card_back"); if bk then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = bk.content, ImageTransparency = 0.75 }, c) end
+@@ -611,7 +622,7 @@ function M.skills()
+   -- 분류 탭 (전체 · 물리 · 마법 · 장착 중 · 기본 공격) + 정렬 (등급 / 초당 피해 / 레벨)
+   local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 384, 0, 24), BackgroundTransparency = 1 }, table0)
+   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
+-  for i, f in ipairs({ { "all", "All" }, { "phys", "Physical" }, { "mag", "Magic" }, { "eq", "Equipped" }, { "basic", "Basic" } }) do
++  for i, f in ipairs({ { "all", "All" }, { "phys", "Physical" }, { "mag", "Magic" }, { "basic", "Basic" } }) do
+     local b = M.btn(ft, f[2], UDim2.new(0, 54, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i + 1; b.TextSize = 12
+   end
+   local SORT_NAME = { rar = "Rarity", dps = "By DPS", lvl = "Level" }
+@@ -621,7 +632,7 @@ function M.skills()
+   local order = {}
+   for _, k in ipairs(rows) do
+     local d = SK_BY[k.id] or {}
+-    if arcFilter == "all" or (arcFilter == "eq" and k.slot > 0) or (arcFilter == "basic" and k.basic) or (arcFilter == "phys" and d.dtype == "phys") or (arcFilter == "mag" and d.dtype == "mag") then order[#order + 1] = k end
++    if k.slot == 0 and (arcFilter == "all" or arcFilter == "eq" or (arcFilter == "basic" and k.basic) or (arcFilter == "phys" and d.dtype == "phys") or (arcFilter == "mag" and d.dtype == "mag")) then order[#order + 1] = k end   -- 장착한 카드는 위 칸에만 (보유 목록에서 뺀다)
+   end
+   table.sort(order, function(x, y)
+     if (x.slot > 0) ~= (y.slot > 0) then return x.slot > 0 end
+@@ -631,7 +642,7 @@ function M.skills()
+   end)
+   if #order == 0 then txt(g, "No Arcana in this category.", 13, UDim2.new(), UDim2.new(0, 300, 0, 20), Color3.fromRGB(190, 170, 220)) end
+   for i, k in ipairs(order) do
+-    local c = arcCard(g, k, 60, 88, { order = i, sel = skSel == k.uid, slot = k.slot, click = function() select(k.uid) end }); reg(k.uid, c)
++    local c = arcCard(g, k, 60, 88, { order = i, sel = skSel == k.uid, click = function() select(k.uid) end }); reg(k.uid, c)
+     M.drag(c, { kind = "skill", uid = k.uid }, cardArt(k.id))
+   end
+   -- 오른쪽: 고른 아르카나 정보 (큰 카드 + 수치 + 설명 + 버튼) — 고를 때 이 칸만 다시 채운다
+@@ -1026,7 +1037,7 @@ local forgeSel, forgeBag, forgeScroll = nil, false, 0   -- 고른 장비 · 가
+ function M.forgeOpen(uid, bag) forgeSel = uid; forgeBag = bag and true or false; forgeScroll = 0 end   -- 다른 창(장비)에서 "강화하러 가기"
+ function M.forge()
+   C.clear()
+-  local r = C.rpc:InvokeServer("forge", { bag = forgeBag }); if r.summary then C.setSummary(r.summary) end
++  local r = C.rpc:InvokeServer("forge", { bag = forgeBag, sel = forgeSel }); if r.summary then C.setSummary(r.summary) end
+   if r.err then C.msg.Text = tostring(r.err); return end
+   local rows = r.rows or {}; local s = C.summary() or {}
+   local A = area(392)
+@@ -1072,6 +1083,14 @@ function M.forge()
+   txt(E, string.format("Enhance +%d", sel.enh), 22, UDim2.new(0, 12, 0, 12), UDim2.new(0, 120, 0, 28), Color3.fromRGB(255, 220, 120), M.FONT)
+   cost(E, { { "i_gold", sel.enhGold, (s.gold or 0) >= sel.enhGold and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) }, { "i_ore", sel.enhOre, (s.ore or 0) >= sel.enhOre and Color3.new(1, 1, 1) or Color3.fromRGB(255, 120, 120) } }, UDim2.new(0, 130, 0, 14))
+   local eb = M.btn(E, string.format("Enhance to +%d", sel.enh + 1), UDim2.new(0, 120, 0, 38), M.BTN.green, function() res(C.rpc:InvokeServer("enhance", sel.uid)) end); eb.AnchorPoint = Vector2.new(1, 0.5); eb.Position = UDim2.new(1, -8, 0.5, 0)
++  do   -- 전투력 변화 (착용 장비 = 강화 성공 시, 가방 장비 = 착용하면 · 강화 후 착용하면)
++    local function dv(v) return string.format("%s%s", v >= 0 and "▲+" or "▼", n(math.abs(v))) end
++    local t
++    if sel.powNow and not forgeBag then t = string.format("Power %s%s", n(sel.powNow), sel.powEnh and ("  ·  on success " .. dv(sel.powEnh)) or "")
++    elseif sel.dEquip then t = string.format("Equip %s%s", dv(sel.dEquip), sel.dEquipEnh and ("  ·  enhanced then equip " .. dv(sel.dEquipEnh)) or "") end
++    if t then local pl = txt(R, t, 12, UDim2.new(0, 14, 0, 26), UDim2.new(1, -110, 0, 12), Color3.fromRGB(200, 240, 200), M.FONT); pl:SetAttribute("NoTr", true) end
++    if sel.powEnh and sel.enh < 10 then local s2 = txt(eb, dv(sel.powEnh), 11, UDim2.new(0, 0, 1, -13), UDim2.new(1, 0, 0, 12), sel.powEnh >= 0 and Color3.fromRGB(140, 255, 150) or Color3.fromRGB(255, 130, 120), M.FONT, Enum.TextXAlignment.Center); s2:SetAttribute("NoTr", true) end
++  end
+   -- 옵션 (티어 표시 · 재굴림)
+   txt(R, "Affixes", 15, UDim2.new(0, 14, 0, 94), UDim2.new(0, 80, 0, 20), Color3.fromRGB(255, 225, 140), M.FONT)
+   local anyRR = false; for _, a in ipairs(sel.affixes or {}) do if a.locked then anyRR = true end end
+diff --git a/roblox/game/Server.server.lua b/roblox/game/Server.server.lua
+index 716580a..b18a7ae 100644
+--- a/roblox/game/Server.server.lua
++++ b/roblox/game/Server.server.lua
+@@ -268,7 +268,7 @@ local handle = function(player, action, arg)
+   elseif action == "resetpass" then Game.resetPassives(sv); return { info = Game.passiveInfo(sv), summary = Game.summary(sv) }
+   elseif action == "enhlist" then return { rows = Game.enhCosts(sv), summary = Game.summary(sv) }
+   elseif action == "enhance" then local ok, msg = Game.enhance(sv, tonumber(arg)); return { ok = ok, msg = msg, rows = Game.enhCosts(sv), summary = Game.summary(sv) }
+-  elseif action == "forge" then return { rows = Game.forgeList(sv, type(arg) == "table" and arg.bag == true), summary = Game.summary(sv) }
++  elseif action == "forge" then return { rows = Game.forgeList(sv, type(arg) == "table" and arg.bag == true, type(arg) == "table" and tonumber(arg.sel) or nil), summary = Game.summary(sv) }
+   elseif action == "affixlist" then return { list = Game.affixList(sv, tonumber(arg)) }
+   elseif action == "reroll" then local ok, e = Game.reroll(sv, tonumber(arg.uid), tonumber(arg.idx)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
+   elseif action == "chaos" then local ok, e = Game.chaos(sv, tonumber(arg)); return { ok = ok, err = (not ok) and e or nil, rows = Game.forgeList(sv), summary = Game.summary(sv) }
