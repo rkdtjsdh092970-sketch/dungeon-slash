@@ -133,6 +133,7 @@ function M.computeStats(sv)
   s.manaRate = CFG.MANA_REGEN + s.manaRegen; s.manaCostMul = ml * (1 - math.min(0.6, s.manaCostRed)); s.manaShield = math.min(0.8, s.manaShield)
   s.atk = (s.wAtk * (1 + s.atkPct) + s.atkFlat) * lm * s.atkMore
   s.mag = ((s.wMag * lm + s.manaToSpell * s.maxMana) * (1 + s.magPct) + s.magFlat * lm) * s.magMore
+  do local w = sv.equipped and sv.equipped.weapon; if w and w.wt ~= "staff" then s.hpMore *= 1 + CFG.WARRIOR_HP_LV * ((sv.level or 1) - 1) end end   -- 전사의 강인함: 물리 무기를 들면 레벨당 최대 체력 증가 (마법사의 마나 → 체력에 대응, 2026-11-02)
   s.maxHp = math.max(10, (s.hpFlat + s.manaToHp * s.maxMana) * (1 + math.max(-0.9, s.hpPct)) * lm * s.hpMore); s.def = s.def * lm * (1 + s.defPct) * s.defMore
   s.dodge = s.noDodge ~= 0 and 0 or math.max(0, math.min(s.dodgeCap, s.dodge)); s.cdr = math.min(s.cdrCap, s.cdr)
   s.critChance = math.min(0.8, s.critChance); s.spellCrit = math.min(0.8, s.spellCrit)
