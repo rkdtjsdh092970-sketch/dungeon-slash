@@ -47,7 +47,7 @@ ART = [
     *[('p_' + os.path.splitext(f)[0], 'passive/' + f, (96, 96)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'passive')))],
     *[('card_s_' + os.path.splitext(f)[0], 'cards/skill/' + f, (160, 240)) for f in sorted(os.listdir(os.path.join(HERE, 'art', 'cards', 'skill')))],   # 스킬 타로 카드 그림
     ('i_staff', 'icons/staff.png', (96, 96)), ('mage', 'hero/mage.png', (256, 256)),
-    *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed', 'arcana')],
+    *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed', 'arcana', 'gem', 'shard')],
 ]
 # 배경 불 패치 (fire_anim.py 가 만든 art/fx/<배경>_fires.json): 8프레임 시트, 배경 해상도 그대로
 import json, glob

@@ -17,7 +17,7 @@ M.SHOP = {   -- 길드 코인 상점 (주간 한도, 길드 레벨이 되어야 
   { id = "hone",   name = "아르카나 조각 20개", cost = 70,  weekly = 4, grant = { arcana = 20 }, lv = 1, icon = "i_arcana" },
   { id = "gold",   name = "골드 주머니", cost = 50,  weekly = 5, grant = { gold = 30000 }, lv = 2, icon = "i_gold" },
   { id = "orbC",   name = "혼돈 구슬 3개", cost = 90,  weekly = 3, grant = { orbC = 3 }, lv = 3, icon = "i_chaos" },
-  { id = "shards", name = "균열 조각 30개", cost = 80,  weekly = 3, grant = { shards = 30 }, lv = 4, icon = "i_rift" },
+  { id = "shards", name = "균열 조각 30개", cost = 80,  weekly = 3, grant = { shards = 30 }, lv = 4, icon = "i_shard" },
   { id = "keys",   name = "입장 열쇠 1개", cost = 120, weekly = 2, grant = { upKeys = 1 }, lv = 5, icon = "i_stone" },
 }
 -- 길드 연구 (길드 패시브): 길드장 · 부길드장이 길드 코인으로 올린다. 단계 상한 = 길드 레벨. 길드원 모두에게 적용
