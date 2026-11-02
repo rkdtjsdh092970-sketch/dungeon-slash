@@ -147,6 +147,13 @@ local function displace(b, e)
     o.lane = dest[1]; o.col = dest[2]; o.moveCd = CFG.MOVE_TIME * 1.5; o.hurtT = 0.25
   end
 end
+-- 보스 뒤에 가려진 일반 몹: 그 보스 (없으면 nil). 보스 뒤에 서 있으면 사거리 안이어도 보스 앞까지 나온다 (2026-11-02, 보기 좋게)
+local function bossInFront(b, e)
+  if e.tier ~= "normal" then return nil end
+  for _, o in ipairs(b.enemies) do
+    if o.tier == "boss" and not o.dead and e.lane >= o.lane and e.lane < o.lane + o.h and e.col >= o.col then return o end
+  end
+end
 local function aliveIn(b, range) return filter(b.enemies, function(e) return not e.dead and e.lane < b.lanes and e.col <= range end) end
 local function boxHits(b, lane, col, r)
   return filter(b.enemies, function(e)
@@ -994,10 +1001,16 @@ function M.step(b, dt)
       if #e.traits > 0 and hasTrait(e, "regen") then e.hp = min(e.maxHp, e.hp + e.maxHp * 0.025 * dt) end
       if (e.stun or 0) <= 0 then
         local stalled = b.time - b.lastDealT > 8 and e.col > b.maxReach
-        if e.col > e.range or stalled or (e.tier == "normal" and e.col == 2 and e.range <= 2 and #occupants(b, e.lane, 1) == 0 and not e.charge) then
+        local bo = bossInFront(b, e)
+        if e.col > e.range or stalled or bo or (e.tier == "normal" and e.col == 2 and e.range <= 2 and #occupants(b, e.lane, 1) == 0 and not e.charge) then
           e.moveCd -= d2
           if e.moveCd <= 0 then
             if canPlace(b, e, e.lane, e.col - 1, true) then e.col -= 1; e.moveCd = e.moveT; if e.tier ~= "normal" then displace(b, e) end
+            elseif bo and bo.col > 1 and (function()   -- 보스를 지나 보스 바로 앞 칸으로 (같은 줄 → 옆 줄)
+                for _, l in ipairs({ e.lane, e.lane - 1, e.lane + 1 }) do
+                  if canPlace(b, e, l, bo.col - 1) then e.moveCd = e.moveT * (e.col - bo.col + 1); e.lane = l; e.col = bo.col - 1; return true end
+                end
+              end)() then
             elseif e.h == 1 then
               local moved = false
               for _, l in ipairs(shuffle(b, { e.lane - 1, e.lane + 1 })) do
