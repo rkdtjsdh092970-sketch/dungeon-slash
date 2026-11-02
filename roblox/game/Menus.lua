@@ -140,7 +140,19 @@ function M.inv()
   end
   M.presetBar(L, UDim2.new(0, 10, 1, -88), UDim2.new(1, -20, 0, 32))
   local s = C.summary()
-  if s then txt(L, string.format("체력 %s · 공격 %s · 주문 %s\n방어 %s · 치명 %.0f%%", n(s.maxHp), n(s.atk), n(s.mag), n(s.def), (s.crit or 0) * 100), 12, UDim2.new(0, 10, 1, -48), UDim2.new(1, -20, 0, 44), Color3.fromRGB(220, 215, 240)) end
+  if s then   -- 재화 (강화석 · 연마석 · 혼돈/신성 구슬 · 보석 · 균열 조각)
+    local cg = mk("Frame", { Position = UDim2.new(0, 10, 1, -54), Size = UDim2.new(1, -20, 0, 52), BackgroundTransparency = 1 }, L)
+    mk("UIGridLayout", { CellSize = UDim2.new(0.5, -3, 0, 16), CellPadding = UDim2.new(0, 6, 0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, cg)
+    for i, c in ipairs({ { "i_ore", "강화석", s.ore, Color3.fromRGB(150, 170, 200) }, { "i_hone", "연마석", s.hone, Color3.fromRGB(110, 210, 150) }, { "i_chaos", "혼돈 구슬", s.orbC, Color3.fromRGB(230, 90, 80) },
+      { "i_divine", "신성 구슬", s.orbD, Color3.fromRGB(255, 220, 120) }, { "i_gem", "보석", s.gems, Color3.fromRGB(90, 220, 255) }, { "i_shard", "균열 조각", s.shards, Color3.fromRGB(190, 120, 240) } }) do
+      local f = mk("Frame", { BackgroundTransparency = 1, LayoutOrder = i }, cg)
+      local a = C.Sprites.art(c[1])
+      if a then mk("ImageLabel", { Size = UDim2.new(0, 16, 0, 16), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit }, f)
+      else local dot = mk("Frame", { Size = UDim2.new(0, 10, 0, 10), Position = UDim2.new(0, 3, 0, 3), BackgroundColor3 = c[4] }, f); mk("UICorner", { CornerRadius = UDim.new(1, 0) }, dot) end
+      local t = txt(f, n(c[3] or 0), 13, UDim2.new(0, 20, 0, 0), UDim2.new(1, -20, 1, 0), c[4], M.FONT)
+      local tp = { title = c[2], color = c[4], lines = {} }; t.MouseEnter:Connect(function() tipShow(tp) end); t.MouseLeave:Connect(tipHide)
+    end
+  end
   -- 가운데: 가방
   local B = box(A, UDim2.new(0, 240, 0, 0), UDim2.new(1, -240 - 300, 1, 0), string.format("가방 %d개", #inv))
   local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, -78), 62)

@@ -37,6 +37,8 @@ ART = [
     *[(f'ui_btn_{c}', f'ui/btn_{c}.png', (192, 64)) for c in ('gold', 'red', 'blue', 'gray')],
     ('ui_tab', 'ui/tab.png', (128, 48)), ('ui_tab_on', 'ui/tab_on.png', (128, 48)), ('ui_close', 'ui/close.png', (64, 64)),
     ('ui_slot', 'ui/slot.png', (128, 128)), ('ui_pill', 'ui/pill.png', (192, 48)),
+    # 메뉴 아이콘 (오른쪽 위 줄 · 오른쪽 아래 지도/마을 버튼)
+    *[('m_' + k, f'menu/{k}.png', (128, 128)) for k in ('bag', 'skill', 'passive', 'quest', 'mail', 'gacha', 'settings', 'map', 'town')],
     *[('i_' + k, f'icons/{k}.png', (96, 96)) for k in ('weapon', 'helm', 'armor', 'gloves', 'boots', 'ring', 'neck', 'gold', 'ore', 'hone', 'chaos', 'divine', 'stone', 'speed')],
 ]
 IDS = {}   # 예: 'warrior': 'rbxassetid://123'

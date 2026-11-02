@@ -137,24 +137,10 @@ local panelLayer = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundCo
 local resultLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.5, ZIndex = 25, Visible = false }, gui)
 local toastLayer = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 30 }, gui)
 
--- 상단 자원 (로블록스 상단 줄 가운데: 양 끝의 로블록스 버튼과 겹치지 않음)
-local pillRow = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, INSET / 2), Size = UDim2.new(0, 620, 0, 34), ZIndex = 11 }, hud)
-local pillScale = mk("UIScale", { Scale = K }, pillRow)
-mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, pillRow)
-local PILLS = { { "lv", Color3.fromRGB(240, 200, 70), "Lv", 64 }, { "gold", Color3.fromRGB(240, 190, 60), "골드", 104 }, { "ore", Color3.fromRGB(150, 170, 200), "강화석", 96 }, { "hone", Color3.fromRGB(110, 210, 150), "연마석", 96 }, { "orb", Color3.fromRGB(190, 120, 240), "구슬", 90 }, { "gem", Color3.fromRGB(90, 220, 255), "보석", 90 } }
-local pillLbl = {}
-for i, p in ipairs(PILLS) do
-  local f = mk("Frame", { Size = UDim2.new(0, p[4], 0, 30), BackgroundColor3 = DARK, BackgroundTransparency = 0.1, LayoutOrder = i, ZIndex = 11 }, pillRow); corner(f); stroke(f, p[2], 1.5); Skin.frame(f, "ui_pill", 0.3, 0.5)
-  local ic = ({ gold = "i_gold", ore = "i_ore", hone = "i_hone", orb = "i_chaos" })[p[1]]   -- 재화 아이콘 (없으면 색 점)
-  local ia = ic and Sprites.art(ic)
-  if ia then mk("ImageLabel", { Size = UDim2.new(0, 26, 0, 26), Position = UDim2.new(0, 2, 0.5, -13), BackgroundTransparency = 1, ImageContent = ia.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 12 }, f)
-  else local dot = mk("Frame", { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(0, 9, 0.5, -6), BackgroundColor3 = p[2], ZIndex = 12 }, f); corner(dot) end
-  pillLbl[p[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 26, 0, 0), Size = UDim2.new(1, -30, 1, 0), TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Text = "-", ZIndex = 12 }, f)
-end
 -- 왼쪽 위 능력치 카드 (마을 · 지도에서): 영웅 초상화 + 능력치 칸 + 진행도
 local statLbl = mk("Frame", { BackgroundColor3 = DARK, BackgroundTransparency = 0.15, Position = UDim2.new(0, 12, 0, INSET + 8), Size = UDim2.new(0, 384, 0, 78), ZIndex = 11 }, hud)
 corner(statLbl, 8); stroke(statLbl, GOLD, 1.5); local statScale = mk("UIScale", { Scale = K }, statLbl); Skin.frame(statLbl, "ui_card", 0.25, 0.5)
-local statVal, statProg = {}, nil
+local statVal, statProg, statLv, statGold = {}, nil, nil, nil
 do
   local pf = mk("Frame", { Position = UDim2.new(0, 9, 0, 9), Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = Color3.fromRGB(14, 10, 12), ZIndex = 12 }, statLbl); corner(pf, 6); Skin.frame(pf, "ui_slot", 0.3, 0.4)
   local wa = Sprites.art("warrior")
@@ -166,18 +152,46 @@ do
     statVal[st[1]] = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, x, 0, 22), Size = UDim2.new(0, 58, 0, 22), Text = "", Font = Theme.FONT, TextSize = 19, TextScaled = false, TextColor3 = st[3], ZIndex = 12 }, statLbl)
     mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, statVal[st[1]])
   end
+  statLv = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 6), Size = UDim2.new(0, 52, 0, 18), BackgroundColor3 = Color3.fromRGB(20, 12, 10), Text = "", Font = Theme.FONT, TextSize = 13, TextColor3 = Color3.fromRGB(255, 214, 110), ZIndex = 15 }, pf); corner(statLv, 6); stroke(statLv, GOLD, 1.5)
+  -- 골드: 카드 아래 금빛 판
+  local gp = mk("Frame", { Position = UDim2.new(0, 0, 1, 6), Size = UDim2.new(0, 200, 0, 40), BackgroundColor3 = Color3.fromRGB(40, 28, 14), ZIndex = 11 }, statLbl); corner(gp, 8); stroke(gp, GOLD, 2)
+  Skin.frame(gp, "ui_pill", 0.3, 0.5)
+  local ga = Sprites.art("i_gold")
+  if ga then mk("ImageLabel", { Position = UDim2.new(0, 4, 0.5, -20), Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, ImageContent = ga.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, gp) end
+  statGold = mk("TextLabel", { Position = UDim2.new(0, 48, 0, 0), Size = UDim2.new(1, -58, 1, 0), BackgroundTransparency = 1, Text = "", Font = Theme.FONT, TextSize = 22, TextColor3 = Color3.fromRGB(255, 210, 90), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, gp)
+  mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(30, 16, 4) }, statGold)
   statProg = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 80, 0, 50), Size = UDim2.new(1, -90, 0, 18), Text = "", Font = Enum.Font.GothamMedium, TextSize = 12, TextColor3 = Color3.fromRGB(215, 205, 195), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 }, statLbl)
 end
--- 오른쪽 아래 이동 버튼 (모바일 점프 버튼 자리 — 이 게임은 이동 조작을 숨겼으므로 비어 있다)
-local dock = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -12), Size = UDim2.new(0, 4 * 84 + 3 * 8, 0, 72), ZIndex = 11 }, hud)
-local dockScale = mk("UIScale", { Scale = K }, dock)
-mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, dock)
-local dockBtn = {}
-local function dockButton(i, icon, text, cb)
-  local b = mk("TextButton", { Size = UDim2.new(0, 84, 0, 72), BackgroundColor3 = PANEL, BackgroundTransparency = 0.05, Text = "", LayoutOrder = i, ZIndex = 11 }, dock); corner(b, 14); stroke(b, GOLD, 2)
-  mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 40), Position = UDim2.new(0, 0, 0, 4), Text = icon, TextSize = 30, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1), ZIndex = 12 }, b)
-  mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 22), Position = UDim2.new(0, 0, 1, -26), Text = text, TextSize = 14, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1), ZIndex = 12 }, b)
-  b.MouseButton1Click:Connect(cb); dockBtn[text] = b; return b
+-- 오른쪽 아래: 지도 ⇄ 마을 큰 버튼 (마을에선 지도, 지도에선 마을)
+local dock = mk("TextButton", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -16), Size = UDim2.new(0, 230, 0, 76), BackgroundColor3 = Color3.fromRGB(180, 130, 50), Text = "", AutoButtonColor = false, ZIndex = 11 }, hud)
+corner(dock, 10); stroke(dock, GOLD, 2.5); local dockScale = mk("UIScale", { Scale = K }, dock)
+Skin.frame(dock, "ui_btn_gold", 0.3, 0.6)
+local dockIcon = mk("ImageLabel", { Position = UDim2.new(0, 10, 0.5, -34), Size = UDim2.new(0, 68, 0, 68), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Fit, ZIndex = 13 }, dock)
+local dockEmoji = mk("TextLabel", { Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(0, 68, 1, 0), BackgroundTransparency = 1, TextSize = 36, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1), Text = "", ZIndex = 13 }, dock)
+local dockText = mk("TextLabel", { Position = UDim2.new(0, 82, 0, 0), Size = UDim2.new(1, -92, 1, 0), BackgroundTransparency = 1, TextSize = 32, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 240, 210), Text = "", ZIndex = 13 }, dock)
+mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(30, 14, 6) }, dockText)
+dock.MouseEnter:Connect(function() dock.Size = UDim2.new(0, 238, 0, 80) end); dock.MouseLeave:Connect(function() dock.Size = UDim2.new(0, 230, 0, 76) end)
+local function dockSet(toMap)
+  local a = Sprites.art(toMap and "m_map" or "m_town")
+  dockIcon.ImageContent = a and a.content or Content.none; dockEmoji.Text = a and "" or (toMap and "🗺" or "🏠")
+  dockText.Text = toMap and "지도" or "마을"
+end
+
+-- 오른쪽 위: 메뉴 아이콘 줄 (마을 · 지도에서)
+local topBar = mk("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, INSET + 8), Size = UDim2.new(0, 7 * 66 + 6 * 6, 0, 80), ZIndex = 11 }, hud)
+local topScale = mk("UIScale", { Scale = K }, topBar)
+mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, topBar)
+local function topButton(i, key, emoji, text, cb)
+  local b = mk("TextButton", { Size = UDim2.new(0, 66, 0, 80), BackgroundTransparency = 1, Text = "", LayoutOrder = i, ZIndex = 11 }, topBar)
+  local fr = mk("Frame", { Size = UDim2.new(0, 62, 0, 62), Position = UDim2.new(0.5, -31, 0, 0), BackgroundColor3 = PANEL, ZIndex = 11 }, b); corner(fr, 10); stroke(fr, GOLD, 2)
+  Skin.frame(fr, "ui_slot", 0.3, 0.45)
+  local a = Sprites.art(key)
+  local ic = a and mk("ImageLabel", { Size = UDim2.new(1, -8, 1, -8), Position = UDim2.new(0, 4, 0, 4), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 12 }, fr)
+    or mk("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = emoji, TextSize = 30, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1), ZIndex = 12 }, fr)
+  local l = mk("TextLabel", { Position = UDim2.new(0, -4, 0, 60), Size = UDim2.new(1, 8, 0, 20), BackgroundTransparency = 1, Text = text, TextSize = 14, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 235, 200), ZIndex = 12 }, b)
+  mk("UIStroke", { Thickness = 2, Color = Color3.fromRGB(10, 6, 8) }, l)
+  b.MouseEnter:Connect(function() fr.Position = UDim2.new(0.5, -31, 0, -3) end); b.MouseLeave:Connect(function() fr.Position = UDim2.new(0.5, -31, 0, 0) end)
+  b.MouseButton1Click:Connect(cb); return b
 end
 
 -- 알림 (상단 자원 아래 가운데)
@@ -191,7 +205,7 @@ local summary
 local function setSummary(s)
   if not s then return end
   summary = s
-  pillLbl.lv.Text = "Lv " .. tostring(s.level); pillLbl.gold.Text = n(s.gold); pillLbl.ore.Text = n(s.ore); pillLbl.hone.Text = n(s.hone); pillLbl.orb.Text = n(s.orbC); pillLbl.gem.Text = n(s.gems)
+  statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold)
   statVal.hp.Text = n(s.maxHp); statVal.atk.Text = n(s.atk); statVal.mag.Text = n(s.mag); statVal.def.Text = n(s.def); statVal.crit.Text = string.format("%.0f%%", s.crit * 100)
   statProg.Text = string.format("스테이지 %d/5 · 균열 %d/100 · 탑 %d/100", s.cleared, s.riftBest, s.best)
 end
@@ -430,8 +444,8 @@ local function closePanel() panelLayer.Visible = false; clear(); if screen == "b
 local function setScreen(name)
   screen = name
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
-  dock.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
-  for t, b in pairs(dockBtn) do b.BackgroundColor3 = ((t == "마을" and name == "town") or (t == "지도" and name == "map")) and Color3.fromRGB(110, 80, 30) or PANEL end
+  dock.Visible = name ~= "battle"; topBar.Visible = name ~= "battle"; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
+  dockSet(name ~= "map")
   if name == "town" then buildTown() elseif name == "map" then buildMap() end
 end
 root.Active = true   -- 창 안을 눌러도 바깥(닫기)으로 새지 않게
@@ -881,17 +895,21 @@ do
 end
 
 -- 이동 버튼
-dockButton(1, "🏠", "마을", function() closePanel(); setScreen("town") end)
-dockButton(2, "🗺", "지도", function() closePanel(); setScreen("map") end)
-dockButton(3, "🎒", "장비", function() openPanel("장비", { { "장비", "inv" } }) end)
-dockButton(4, "⚙", "설정", function() openSettings() end)
+dock.MouseButton1Click:Connect(function() closePanel(); setScreen(screen == "map" and "town" or "map") end)
+-- 메뉴 아이콘 (오른쪽 위)
+topButton(1, "m_bag", "🎒", "가방", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }) end)
+topButton(2, "m_skill", "📘", "스킬", function() openPanel("스킬", { { "스킬", "skills" }, { "룬", "runes" } }) end)
+topButton(3, "m_passive", "✦", "패시브", function() openPanel("패시브", { { "패시브", "pass" }, { "스탯", "stats" } }) end)
+topButton(4, "m_quest", "📜", "퀘스트", function() openPanel("퀘스트", { { "퀘스트", "quests" }, { "일일", "daily" } }) end)
+topButton(5, "m_gacha", "🔮", "소환", function() openPanel("스킬 소환", { { "스킬 소환", "gacha" } }) end)
+topButton(6, "m_mail", "✉", "우편", function() openPanel("우편함", { { "우편함", "mail" } }) end)
+topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 
 -- 화면 크기가 바뀌면 다시 배치 (전투 재생 중이면 끝난 뒤 반영)
 local relayPending = false
 relayout = function()
   relayPending = false; calcK()
-  pillScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
-  pillRow.Position = UDim2.new(0.5, 0, 0, INSET / 2)
+  topScale.Scale = K; statScale.Scale = K; dockScale.Scale = K; resScale.Scale = K
   if mainStage and not mainStage.conn then makeStage() end
   townBuilt = false
   if screen == "town" then buildTown() elseif screen == "map" then buildMap() end
