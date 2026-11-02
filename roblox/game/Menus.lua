@@ -1698,7 +1698,7 @@ local function revealResults(res, from)
   ov.MouseButton1Click:Connect(function()
     if done then
       local t = TweenService:Create(ov, TweenInfo.new(0.2), { BackgroundTransparency = 1 }); t:Play(); for _, c in ipairs(ov:GetDescendants()) do if c:IsA("GuiObject") then c.Visible = false end end
-      task.delay(0.2, function() ov:Destroy() end)
+      task.delay(0.2, function() ov:Destroy(); if M.onPulled then M.onPulled() end end)
     else skip = true; for i = 1, n0 do if cards[i] then task.spawn(flip, i) end end end
   end)
 end

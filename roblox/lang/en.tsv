@@ -2181,3 +2181,16 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 장	 cards
 혼돈 구슬 +	Chaos Orb +
 %s 장비 %d개	%s gear x%d
+Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 아르카나 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 빛나는 곳을 차례로 눌러 보세요!	Arcana Slayer is an auto-battle game. Your hero fights on their own — you make them stronger with arcana, gear and passives. Tap the glowing spots in order!
+다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 막히면 마을 [안내소 → 도움말]을 보세요.	Next is Groom, Lord of the Fields! Compare your Power (top left) with the Recommended Power on the map panel. Defeat Groom to open the Abyssal Rift. If stuck, see the village [Info Desk → Help].
+레벨이 올라 패시브 포인트가 생겼어요. 위 메뉴 [패시브]를 열고 [자동 배분]을 누르세요. 나중에는 노드를 직접 눌러 찍을 수도 있어요.	You leveled up and earned passive points. Open [Passive] from the top menu and press [Auto Allocate]. Later you can click nodes yourself.
+마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 무기를 골라 빛나는 [강화] 버튼을 눌러 보세요.	Enhancing gear at the village [Smeltery] raises your Power. Pick your weapon and press the glowing [Enhance] button.
+번 칸에	To Slot
+시작	Start
+시작 선물로 아르카나 조각 90개를 드렸어요. 위 메뉴의 [소환]을 열고 빛나는 [10회 소환]을 눌러 카드 10장을 뽑으세요. 다 보고 화면을 누르면 다음으로 넘어갑니다.	You got 90 Arcana Shards as a welcome gift. Open [Summon] in the top menu and press the glowing [Summon x10] to draw 10 cards. Tap the screen when done to continue.
+장비 강화	Enhance Gear
+장비 장착	Equip Gear
+전투에서 장비를 얻었어요! 마을로 나가 위 메뉴 [가방]을 열고 [자동 장착]을 누르세요. 초록 ▲ 는 지금보다 좋은 장비입니다.	You got gear from battle! Head to the village, open [Bag] from the top menu and press [Auto Equip]. A green ▲ marks an upgrade.
+전투에서는 위쪽 칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 아래 새 카드를 위 빈칸으로 끌어다 놓거나, 카드를 누르고 [N번 칸에]를 누르세요.	Only arcana in the top slots are used in battle. Open [Arcana], then drag a new card into an empty slot, or tap a card and press [To Slot N].
+창을 닫고 오른쪽 아래 [지도]를 누른 뒤, 금빛 ▼ 표시가 있는 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다.	Close the window, press [Map] at the bottom right, tap [Meadow 1] with the golden ▼ and press [Challenge]. The battle plays automatically.
+튜토리얼 건너뛰기	Skip Tutorial

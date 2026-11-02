@@ -162,7 +162,7 @@ local statVal, statProg, statLv, statGold, statFace, statPow = {}, nil, nil, nil
 local statArc, openPanelFn   -- 아르카나 조각 표시 · 창 열기 (아래에서 정함)
 local heroChanged   -- 지팡이 ⇄ 검: 모습이 바뀌면 (아래에서 정함)
 local passNoticed = false
-local startShown, showStartPick, tutorial = false, nil, nil   -- 새 계정: 시작 직업 고르기 창 · 튜토리얼 (아래에서 정함)
+local startShown, showStartPick, tutorial, tutSignal = false, nil, nil, nil   -- 새 계정: 시작 직업 고르기 창 · 튜토리얼 (아래에서 정함)
 do
   local CELL, EDGE = Color3.fromRGB(28, 20, 17), Color3.fromRGB(110, 84, 44)
   -- 초상화 칸 + 아래 Lv 띠
@@ -268,7 +268,7 @@ local function showPowerChange(old, new)
 end
 local function setSummary(s)
   if not s then return end
-  if summary and (summary.power or 0) > 0 and s.power and s.power ~= summary.power then showPowerChange(summary.power, s.power) end
+  if summary and (summary.power or 0) > 0 and s.power and s.power ~= summary.power then showPowerChange(summary.power, s.power); if tutSignal then task.defer(tutSignal, "power") end end
   summary = s
   statLv.Text = "Lv " .. tostring(s.level); statGold.Text = n(s.gold); if statArc then statArc.Text = n(s.arcana or 0) end
   if s.needStart and not startShown then startShown = true; task.defer(function() if showStartPick then showStartPick() end end) end
@@ -561,6 +561,7 @@ local function hudShow(on) local v = on and screen ~= "battle"; dock.Visible = v
 local function closePanel() panelLayer.Visible = false; hudShow(true); clear(true); if screen == "battle" and mainStage and not mainStage.conn then resultLayer.Visible = true end end
 local function setScreen(name)
   screen = name
+  if name == "battle" and tutSignal then task.defer(tutSignal, "battle") end
   townLayer.Visible = name == "town"; mapLayer.Visible = name == "map"; stageHolder.Visible = name == "battle"
   dock.Visible = name ~= "battle"; topBar.Visible = name ~= "battle"; if shopBtn then shopBtn.Visible = name ~= "battle" end; statLbl.Visible = name ~= "battle"; infoCard.Visible = false; resultLayer.Visible = false
   dockSet(name ~= "map")
@@ -908,7 +909,7 @@ buildTown = function()
         TweenService:Create(nm, TweenInfo.new(0.18), { TextTransparency = on and 0 or 0.15, TextColor3 = on and Color3.fromRGB(255, 236, 190) or Color3.fromRGB(240, 222, 196), TextSize = on and 23 or 20 }):Play()
       end
       hit.MouseEnter:Connect(function() hover(true) end); hit.MouseLeave:Connect(function() hover(false) end)
-      hit.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
+      hit:SetAttribute("Key", b.key); hit.MouseButton1Click:Connect(function() openPanel(b.name, b.tabs) end)
       if b.smoke then Ambient.smoke(hit, b.smoke[1], b.smoke[2]) end   -- 대장간 굴뚝 연기
       -- 알림: 이름 옆 작은 붉은 불씨
       if b.badge then
@@ -926,6 +927,7 @@ end
 local MW, MH = 1800, 1100
 local MAPICON = { T = "mi_town", R = "mi_rift", RE = "mi_endless", RB = "mi_bossgate", RG = "mi_vault", RX = "mi_abyssdoor", RTW = "mi_tower", RTP = "mi_temple", RR = "mi_raid", RWD = "mi_warden", RCD = "mi_truedungeon", RTW2 = "mi_newtower" }   -- 지도 아이콘 그림 (art/mapicon)
 local NODES, BYID = {}, {}
+local mapTarget   -- 지도에서 다음 목표 지점 버튼 (튜토리얼이 짚는다)
 local function node(t) NODES[#NODES + 1] = t; BYID[t.id] = t; return t end
 -- 위치는 월드맵 그림(map/world.jpg)에 맞춤: 왼쪽 아래 마을 → 길을 따라 스테이지 → 가운데 보라 균열 → 오른쪽 위 화산 고원(탑)
 node({ id = "T", name = "초원 마을", icon = "🏠", x = 250, y = 790, col = Color3.fromRGB(230, 200, 140) })
@@ -1216,6 +1218,7 @@ buildMap = function()
         end
       end
       ring.Transparency = 1   -- 노란 테두리는 쓰지 않는다
+      if t == target then mapTarget = b end
       if t == target then   -- 다음 목표: 금빛 빛무리 + 위에서 까딱이는 표식
         local ga = Sprites.art("fx_glow")
         if ga then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, t.x * ms, 0, t.y * ms), Size = UDim2.new(0, sz * 3, 0, sz * 3), BackgroundTransparency = 1, ImageContent = ga.content, ImageColor3 = Color3.fromRGB(255, 210, 120), ImageTransparency = 0.35, ZIndex = 4 }, mapLayer)
@@ -1301,59 +1304,114 @@ topButton(7, "m_settings", "⚙", "설정", function() openSettings() end)
 -- 튜토리얼 (새 계정): 직업 선택 → 스킬 소환 → 스킬 칸 → 스테이지 1. 스테이지 1~4를 처음 깰 때마다 한 가지씩 알려 주고, 나머지는 [안내소 → 도움말]로 넘긴다
 local coachBox, coachHl
 local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end end
-local function coach(title, text, btns, target)
-  coachClose()
-  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -10),   -- 화면 아래 (열린 창의 버튼을 가리지 않게)
-    Size = UDim2.new(0, 660, 0, 190), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
-  corner(coachBox, 10); stroke(coachBox, GOLD, 2.5); mk("UIScale", { Scale = K }, coachBox); Skin.frame(coachBox, "ui_panel", 0.2, 0.5)
-  local tl = mk("TextLabel", { Position = UDim2.new(0, 36, 0, 18), Size = UDim2.new(1, -72, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 24, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
-  mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, tl)
-  mk("TextLabel", { Position = UDim2.new(0, 36, 0, 52), Size = UDim2.new(1, -72, 0, 70), BackgroundTransparency = 1, Text = text, TextSize = 17, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
-  local row = mk("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -30, 1, -18), Size = UDim2.new(1, -32, 0, 40), BackgroundTransparency = 1, ZIndex = 47 }, coachBox)
-  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
-  for i, bt in ipairs(btns) do local b = button(row, bt[1], UDim2.new(), UDim2.new(0, bt[3] or 130, 1, 0), bt[2], bt[4] or Color3.fromRGB(200, 150, 60)); b.LayoutOrder = i; b.ZIndex = 48; b.TextSize = 16 end
-  if target then   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다
+local coach_hl
+coach_hl = function(target)   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다
     coachHl = mk("Frame", { BackgroundTransparency = 1, ZIndex = 45 }, gui)
     local sk = mk("UIStroke", { Color = Color3.fromRGB(255, 220, 120), Thickness = 4 }, coachHl); corner(coachHl, 10)
     TweenService:Create(sk, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Thickness = 8, Transparency = 0.4 }):Play()
     local hl = coachHl
     local conn; conn = game:GetService("RunService").RenderStepped:Connect(function()
       if not hl.Parent or not target.Parent then conn:Disconnect(); if hl.Parent then hl:Destroy() end; return end
-      hl.Position = UDim2.new(0, target.AbsolutePosition.X - 6, 0, target.AbsolutePosition.Y - 6 + (gui.IgnoreGuiInset and 0 or 0)); hl.Size = UDim2.new(0, target.AbsoluteSize.X + 12, 0, target.AbsoluteSize.Y + 12)
+      hl.Position = UDim2.new(0, target.AbsolutePosition.X - 6, 0, target.AbsolutePosition.Y - 6); hl.Size = UDim2.new(0, target.AbsoluteSize.X + 12, 0, target.AbsoluteSize.Y + 12)
     end)
-  end
+end
+local function coach(title, text, btns, target)
+  coachClose()
+  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -12),   -- 화면 아래 (열린 창의 버튼을 가리지 않게)
+    Size = UDim2.new(0, 460, 0, 200), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
+  corner(coachBox, 10); stroke(coachBox, GOLD, 2.5); mk("UIScale", { Scale = K }, coachBox); Skin.frame(coachBox, "ui_panel", 0.2, 0.5)
+  local tl = mk("TextLabel", { Position = UDim2.new(0, 30, 0, 16), Size = UDim2.new(1, -60, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 22, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
+  mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, tl)
+  mk("TextLabel", { Position = UDim2.new(0, 30, 0, 50), Size = UDim2.new(1, -60, 0, 96), BackgroundTransparency = 1, Text = text, TextSize = 16, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
+  local row = mk("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -30, 1, -18), Size = UDim2.new(1, -32, 0, 40), BackgroundTransparency = 1, ZIndex = 47 }, coachBox)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+  for i, bt in ipairs(btns) do local b = button(row, bt[1], UDim2.new(), UDim2.new(0, bt[3] or 130, 1, 0), bt[2], bt[4] or Color3.fromRGB(200, 150, 60)); b.LayoutOrder = i; b.ZIndex = 48; b.TextSize = 16 end
+  if target then coach_hl(target) end
 end
 local function tutSet(n) task.spawn(function() local ok, e = pcall(function() return rpc:InvokeServer("tut", n) end); if ok and e and e.summary then setSummary(e.summary) end end) end
+-- 따라 하기 튜토리얼: 짚어 준 곳을 실제로 눌러야 다음으로 넘어간다 (버튼은 "튜토리얼 건너뛰기"뿐)
+-- guide(제목, 글, 찾기 함수, 완료 신호): 찾기 함수가 지금 눌러야 할 버튼을 돌려주면 금빛 테두리가 따라간다 (창이 바뀌면 다시 찾음)
+local tutStep, tutWait, tutNext
+local function findBtn(pred) for _, d in ipairs(gui:GetDescendants()) do if d:IsA("GuiButton") and d.Visible and pred(d) then return d end end end
+local function hasText(d, t)
+  if d.Text and string.find(d:GetAttribute("_src") or d.Text, t, 1, true) then return true end
+  for _, l in ipairs(d:GetDescendants()) do if l:IsA("TextLabel") and string.find(l:GetAttribute("_src") or l.Text, t, 1, true) then return true end end
+  return false
+end
+local function skipAll() coachClose(); tutStep, tutWait, tutNext = nil, nil, nil; tutSet(99) end
+local function guide(title, text, finder, waitFor, nextFn)
+  coach(title, text, { { "튜토리얼 건너뛰기", skipAll, 170, Color3.fromRGB(70, 66, 70) } })
+  tutWait, tutNext = waitFor, nextFn
+  local box = coachBox
+  task.spawn(function()   -- 눌러야 할 곳을 계속 다시 찾아 테두리를 옮긴다
+    local cur
+    while coachBox == box and box.Parent do
+      local t = finder and finder() or nil
+      if t ~= cur then cur = t; if coachHl then coachHl:Destroy(); coachHl = nil end; if t then coach_hl(t) end end
+      task.wait(0.3)
+    end
+  end)
+end
+Menus.onPulled = function() if tutSignal then tutSignal("pulled") end end
+tutSignal = function(ev)   -- 소환을 닫음(pulled) · 전투력이 바뀜(power) · 전투 시작(battle) 이 오면 다음 단계
+  if tutWait and ev == tutWait then local f = tutNext; tutWait, tutNext = nil, nil; coachClose(); if f then task.delay(0.4, f) end end
+end
+local function topBtn(name) local b = topBar:FindFirstChild(name); return b and b.Visible and b or nil end
 tutorial = function(step)
+  tutStep = step
   local cls = summary and summary.hero == "mage" and "마법사" or "전사"
   if step == 0 then
-    coach("환영합니다, " .. cls .. "!", "Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 스킬 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 먼저 스킬을 뽑아 볼까요?",
-      { { "건너뛰기", function() coachClose(); tutSet(99) end, 110, Color3.fromRGB(70, 66, 70) }, { "다음", function() tutorial(1) end } })
+    coach("환영합니다, " .. cls .. "!", "Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고, 여러분은 아르카나 · 장비 · 패시브로 캐릭터를 강하게 만듭니다. 빛나는 곳을 차례로 눌러 보세요!",
+      { { "건너뛰기", skipAll, 110, Color3.fromRGB(70, 66, 70) }, { "시작", function() tutorial(1) end } })
   elseif step == 1 then
-    openPanel("아르카나 소환", { { "아르카나 소환", "gacha" }, { "아르카나 목록", "gachalist" } })
-    coach("아르카나 소환", "아르카나 조각으로 아르카나 카드를 뽑습니다. 시작 선물로 10회 소환만큼 드렸어요. [10회 소환]을 눌러 보세요. 같은 아르카나가 또 나오면 그 아르카나 레벨이 오릅니다.",
-      { { "뽑았어요", function() tutorial(2) end } })
+    guide("아르카나 소환", "시작 선물로 아르카나 조각 90개를 드렸어요. 위 메뉴의 [소환]을 열고 빛나는 [10회 소환]을 눌러 카드 10장을 뽑으세요. 다 보고 화면을 누르면 다음으로 넘어갑니다.",
+      function() if panelLayer.Visible then return findBtn(function(d) return d.AbsoluteSize.Y > 40 and hasText(d, "10회 소환") end) end; return topBtn("m_gacha") end,
+      "pulled", function() tutorial(2) end)
   elseif step == 2 then
-    openPanel("아르카나", { { "아르카나", "skills" }, { "룬", "runes" } })
-    coach("스킬 칸", "전투에서는 스킬 칸에 넣은 스킬만 씁니다. 같은 계열(전사는 물리, 마법사는 마법)을 넣으면 더 강해요. 새 스킬을 끌어다 칸에 넣어 보세요.",
-      { { "다음", function() tutorial(3) end } })
+    guide("아르카나 칸", "전투에서는 위쪽 칸에 넣은 아르카나만 씁니다. [아르카나]를 열고 아래 새 카드를 위 빈칸으로 끌어다 놓거나, 카드를 누르고 [N번 칸에]를 누르세요.",
+      function()
+        local pt = panelTitle:GetAttribute("_src") or panelTitle.Text
+        if not panelLayer.Visible then return topBtn("m_skill") end
+        if pt ~= "아르카나" then return nil end
+        return findBtn(function(d) return hasText(d, "번 칸에") end) or findBtn(function(d) return d.AbsoluteSize.X > 50 and d.AbsoluteSize.X < 70 and d.AbsoluteSize.Y > 80 end)
+      end,
+      "power", function() tutorial(3) end)
   elseif step == 3 then
-    closePanel(); setScreen("map"); tutSet(3)
-    coach("첫 전투", "지도에서 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다. 이기면 장비와 경험치를 얻습니다.", { { "알겠어요", function() coachClose() end } })
+    tutSet(3)
+    guide("첫 전투", "창을 닫고 오른쪽 아래 [지도]를 누른 뒤, 금빛 ▼ 표시가 있는 [초원 1]을 누르고 [도전]하세요. 전투는 자동으로 진행됩니다.",
+      function()
+        if panelLayer.Visible then return root:FindFirstChildWhichIsA("TextButton") end
+        if screen ~= "map" then return dock end
+        if infoCard.Visible then return findBtn(function(d) return d:IsDescendantOf(infoCard) and d.AbsoluteSize.X > 150 end) end
+        return mapTarget
+      end,
+      "battle", nil)
   end
 end
--- 스테이지 1~4를 처음 깼을 때 한 가지씩
+-- 초원 1~3 을 처음 깼을 때: 장비 → 패시브 → 강화 를 직접 해 보게 (전투력이 바뀌면 다음), 4 는 안내만
+local function leaveBattleBtn() return findBtn(function(d) return d:IsDescendantOf(resultLayer) and hasText(d, "마을") end) end
 local TUT_STAGE = {
-  { "장비", "전투에서 장비를 얻었습니다! 가방([가방] 아이콘)의 [자동 장착]을 누르면 더 좋은 장비를 바로 낍니다. 초록 ▲ 표시는 지금보다 좋은 장비예요.", "가방 열기", function() openPanel("장비", { { "장비", "inv" }, { "창고", "stash" } }) end },
-  { "패시브", "레벨이 오르면 패시브 포인트가 생깁니다. [패시브]에서 노드를 눌러 찍으세요. 고민되면 [자동 배분]을 누르면 무기에 맞게 찍어 줍니다.", "패시브 열기", function() openPanel("패시브", { { "패시브", "pass" } }) end },
-  { "강화", "마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 소환으로 같은 아르카나를 또 뽑으면 아르카나 레벨도 오릅니다. 막히면 강화 · 장비 · 아르카나 레벨부터 올리세요.", "제련소 열기", function() openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }) end },
-  { "보스와 그 너머", "다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 더 자세한 공략은 마을 [안내소 → 도움말]에 있습니다.", "도움말 보기", function() openPanel("안내소", { { "도움말", "help" } }) end },
+  { "장비 장착", "전투에서 장비를 얻었어요! 마을로 나가 위 메뉴 [가방]을 열고 [자동 장착]을 누르세요. 초록 ▲ 는 지금보다 좋은 장비입니다.",
+    function() if screen == "battle" then return leaveBattleBtn() end; if not panelLayer.Visible then return topBtn("m_bag") end; return findBtn(function(d) return hasText(d, "자동 장착") end) end },
+  { "패시브", "레벨이 올라 패시브 포인트가 생겼어요. 위 메뉴 [패시브]를 열고 [자동 배분]을 누르세요. 나중에는 노드를 직접 눌러 찍을 수도 있어요.",
+    function() if screen == "battle" then return leaveBattleBtn() end; if not panelLayer.Visible then return topBtn("m_passive") end; return findBtn(function(d) return hasText(d, "자동 배분") end) end },
+  { "장비 강화", "마을 [제련소]에서 장비를 강화하면 전투력이 오릅니다. 무기를 골라 빛나는 [강화] 버튼을 눌러 보세요.",
+    function()
+      if screen == "battle" then return leaveBattleBtn() end
+      if not panelLayer.Visible then if screen == "town" then local b; for _, d in ipairs(townLayer:GetChildren()) do if d:IsA("TextButton") and d:GetAttribute("Key") == "b_forge" then b = d end end; return b end; return dock end
+      return findBtn(function(d) return hasText(d, "강화") and d.AbsoluteSize.X < 200 and d.AbsoluteSize.Y > 30 end)
+    end },
 }
 tutAfterStage = function(k)
   local tt = summary and summary.tut
-  if not tt or tt >= 99 or not TUT_STAGE[k] or tt >= 3 + k then return end
-  local T = TUT_STAGE[k]; tutSet(k >= 4 and 99 or 3 + k)
-  coach(T[1], T[2], { { "나중에", function() coachClose() end, 110, Color3.fromRGB(70, 66, 70) }, { T[3], function() coachClose(); T[4]() end, 150 } })
+  if not tt or tt >= 99 or tt >= 3 + k then return end
+  if k == 4 then tutSet(99)
+    coach("보스와 그 너머", "다음은 들판의 군주 그룸! 왼쪽 위 전투력을 지도 창의 권장 전투력과 비교해 보세요. 그룸을 쓰러뜨리면 심연의 균열이 열립니다. 막히면 마을 [안내소 → 도움말]을 보세요.",
+      { { "알겠어요", function() coachClose() end, 110 }, { "도움말 보기", function() coachClose(); openPanel("안내소", { { "도움말", "help" } }) end, 150 } }); return
+  end
+  local T = TUT_STAGE[k]; if not T then return end
+  tutSet(3 + k)
+  guide(T[1], T[2], T[3], "power", nil)
 end
 showStartPick = function()
   local ov = mk("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(6, 3, 3), BackgroundTransparency = 0.08, Text = "", AutoButtonColor = false, ZIndex = 40 }, gui)
