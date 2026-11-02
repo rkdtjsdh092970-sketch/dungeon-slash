@@ -36,7 +36,7 @@ function packSave(sv) { const o = Object.assign({}, sv), rev = [], u = [0, 0]; f
 function unpackStones(sv) { if (!sv.stoneU) return; if (!Array.isArray(sv.stones)) sv.stones = []; for (let h = 0; h < 2; h++) for (let i = 0, n = Math.min(200000, sv.stoneU[h] | 0); i < n; i++) sv.stones.push(newStone(sv, h)); delete sv.stoneU; }
 function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave(save))); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
-  const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
+  const hadNeed = "needStart" in s; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; if (!hadNeed) { s.needStart = false; s.tut5 = 99; s.slots = Math.max(s.slots || 1, 4); }   // 5.0: 예전 세이브는 직업 선택 · 안내 없이 (칸 4개) for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
     if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;

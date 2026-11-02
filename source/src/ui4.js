@@ -47,9 +47,9 @@ function loginDialog(after) {
       const r = await srvLogin(n, p); if (r.err) { $("#lg-e").textContent = r.err; return; }
       if (r.save && save && save.tut && (save.tut.done || save.level > 1)) {   // 서버 세이브와 현재 진행이 둘 다 있을 때
         Modal.open(`<h2>세이브 선택</h2><div class="center pad">서버에 Lv.${r.save.level} 세이브가 있습니다.<br>현재 진행은 Lv.${save.level} 입니다.</div><div class="pbtns"><button class="btn pri" data-a="useS">서버 세이브 불러오기</button><button class="btn" data-a="useL">현재 진행을 서버에 덮어쓰기</button></div>`, { cls: "sm", persistent: true, noClose: true, on: {
-          useS: () => { save = Object.assign(newSave(), r.save); clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); refreshTop(); (after || openTitle)(); },
+          useS: () => { save = Object.assign(newSave(), r.save); if (!("needStart" in r.save)) { save.needStart = false; save.tut5 = 99; save.slots = Math.max(save.slots || 1, 4); } clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); refreshTop(); (after || openTitle)(); },
           useL: () => { srvQueue(); saveGame(); Modal.close(true); toast("현재 진행을 서버에 저장합니다", "ok"); (after || (() => {}))(); } } });
-      } else if (r.save) { save = Object.assign(newSave(), r.save); clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); if (after) after(); else openTitle(); }
+      } else if (r.save) { save = Object.assign(newSave(), r.save); if (!("needStart" in r.save)) { save.needStart = false; save.tut5 = 99; save.slots = Math.max(save.slots || 1, 4); } clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); if (after) after(); else openTitle(); }
       else { if (save) srvQueue(); Modal.close(true); toast(r.created ? "계정이 만들어졌습니다" : "접속했습니다", "ok"); if (after) after(); }
     },
     lgout: () => { srvLogout(); Modal.close(); toast("로그아웃했습니다"); }, lgx: () => Modal.close(),

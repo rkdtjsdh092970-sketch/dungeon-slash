@@ -4,7 +4,7 @@ const src = ['util','data','data2','data3','data4','data5','data6','data7','data
 global.localStorage = { getItem: () => null, setItem() {} }; global.document = { createElement: () => ({ getContext: () => ({}) }) }; global.window = {};
 const seed = +process.argv[2] || 1, BUDGET = +process.argv[3] || 720, CLS = process.argv[4] || 'warrior';
 let s0 = seed * 9301 + 49297; Math.random = () => { s0 = (s0 * 16807) % 2147483647; return (s0 - 1) / 2147483646; };
-const A = new Function(src + `;return { newSave, createBattle, stepBattle, finishBattle, botEquip, enhance, gachaPull, autoPassives, computeStats, playerPower, SKILLS, MAP, RIFT_MODS, seeded, TUTORIAL, EQ_SLOTS, CFG, riftRegion, skillTier, pickStart, rerollAffix, affixPool, availableQuests, acceptQuest, claimQuest, revealStone, socketItem, socketUsable, mkAff, powerOf5, slotType: typeof slotType !== 'undefined' ? slotType : null };`)();
+const A = new Function(src + `;return { newSave, createBattle, stepBattle, finishBattle, botEquip, enhance, gachaPull, autoPassives, computeStats, playerPower, SKILLS, MAP, RIFT_MODS, seeded, TUTORIAL, EQ_SLOTS, CFG, riftRegion, skillTier, pickStart, rerollAffix, affixPool, availableQuests, acceptQuest, claimQuest, revealStone, socketItem, socketUsable, mkAff, powerOf5, addAffix, dailyClaim, DAILY_TASKS, RUNES, slotType: typeof slotType !== 'undefined' ? slotType : null };`)();
 const riftMods = (tier) => { const r = A.seeded(tier * 131 + 7), n = tier < 10 ? 0 : tier < 30 ? 1 : tier < 60 ? 2 : 3, pool = A.RIFT_MODS.slice(), out = []; for (let i = 0; i < n; i++) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]); return out; };
 const sv = A.newSave();
 const run = (node) => { const b = A.createBattle(sv, node); b.noFx = true; let n = 0; while (!b.over && n < 30000) { A.stepBattle(b, 0.05); n++; } const r = A.finishBattle(sv, b); return b.win; };
@@ -39,7 +39,12 @@ function tuneGear() {
   for (const slot of A.EQ_SLOTS) { const it = sv.equipped[slot]; if (!it || it.uniq) continue; const V = validOf(slot);
     for (let n = 0; n < 40; n++) { let i = it.rrIdx != null ? (V.has((it.affixes[it.rrIdx] || {}).k) ? -1 : it.rrIdx) : it.affixes.findIndex((a) => !V.has(a.k)); if (i < 0) break; if (!A.rerollAffix(sv, it, i)) break; } }
 }
+const RUNE_PRI = ['power', 'swift', 'keen', 'pierce', 'wide', 'fang', 'thrift'];
 function extras() {
+  for (const t of A.DAILY_TASKS) A.dailyClaim(sv, t.id);
+  for (let n = 0; n < 5 && (sv.orbC || 0) > 0; n++) { const k = A.EQ_SLOTS[Math.floor(Math.random() * A.EQ_SLOTS.length)], it = sv.equipped[k]; if (!it || it.uniq || !(it.affixes || []).length) continue; const base = power(); while ((sv.orbC || 0) > 0) { A.addAffix(sv, it); if (power() > base) break; } }
+  for (const l of sv.loadout) { if (!l) continue; const k = sv.skills.find((x) => x.uid === l.uid); if (!k) continue;
+    for (const id of RUNE_PRI) { const r = (sv.runes || []).find((x) => x.id === id); if (r && (!k.rune || RUNE_PRI.indexOf(id) < RUNE_PRI.indexOf(k.rune))) { sv.runes = sv.runes.filter((x) => x !== r); if (k.rune) sv.runes.push({ uid: sv.nextUid++, id: k.rune }); k.rune = id; break; } } }
   for (const q of A.availableQuests(sv)) A.acceptQuest(sv, q.id);
   for (const id in sv.q) if (sv.q[id].state === 'done') A.claimQuest(sv, id, []);
   for (const st of (sv.stones || []).slice()) if (!st.rev) { const r = A.revealStone(sv, st); if (r && r.ok === false) break; }
@@ -49,14 +54,14 @@ function extras() {
       it.sock[idx] = cur; if (bs) A.socketItem(sv, it, bs, idx); } }
 }
 function upkeep() {
-  while ((sv.hone || 0) >= 10) A.gachaPull(sv, sv.hone >= 90 ? 10 : 1);
+  while ((sv.hone || 0) >= 10) A.gachaPull(sv, sv.hone >= 90 ? 10 : 1, CLS === 'mage' ? 'mag' : 'phys');   // 로블록스 봇처럼 계열 소환
   sv.inv = sv.inv.filter((it) => !(it.slot === 'weapon' && it.wt !== (CLS === 'mage' ? 'staff' : 'sword')));   // 계열에 맞는 무기만
   smartEquip(); tuneGear(); sv.pass = {}; A.autoPassives(sv); bestLoadout();
   for (let i = 0; i < 40; i++) { let low = null; for (const k of A.EQ_SLOTS) { const it = sv.equipped[k]; if (it && (it.enh || 0) < 10 && (!low || (it.enh || 0) < (low.enh || 0))) low = it; } if (!low) break; const r = A.enhance(sv, low); if (!r || r.ok === false) break; }
   if (sv.inv.length > 150) sv.inv.splice(60);
 }
 // 튜토리얼 → 스테이지 1~5 → 균열
-A.pickStart(sv, CLS); sv.tut.done = true;
+A.pickStart(sv, CLS); sv.tut.done = true; sv.hone += 100;   // 로블록스 봇: 시작 무료 소환 10회분
 upkeep();
 let battles = 0, fails = 0; const marks = [];
 while (battles < BUDGET) {

@@ -195,12 +195,12 @@ const MapView = {
     const w = document.createElement("canvas"); w.width = MAP_W; w.height = MAP_H; const wg = w.getContext("2d"); wg.imageSmoothingEnabled = false; wg.drawImage(c, 0, 0, W, H, 0, 0, W * sc, H * sc); this.world = w;
   },
   nodeIcon(g, n, st, time, hot) {
-    const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1 + 0.12 * Math.sin(time * 3 + n.x);
+    const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1;   // 5.0: 크기 꿀렁임 제거
     {   // 일러스트 지도 아이콘 (로블록스판과 같은 그림)
       const MI = { stage: "mi_stage", boss: "mi_boss", town: "mi_town", rift: "mi_rift", endless: "mi_endless", bosshub: "mi_bossgate", bosshub2: "mi_bossgate", temple: "mi_temple", raid: "mi_abyssdoor", craid: n.sub === "warden" ? "mi_warden" : n.sub === "charm" ? "mi_truedungeon" : "mi_raid", vault: "mi_vault", tower2: "mi_newtower", tower: this.rise >= 1 ? "mi_tower" : null };
       const k = st === "locked" && n.kind !== "tower" ? "mi_lock" : st === "hell" ? null : MI[n.kind], im = artGet(k);
       if (im) {
-        const big = n.kind !== "stage" && st !== "locked", sz = (big ? 50 : st === "locked" ? 30 : 38) * (st === "open" || big ? pulse : 1);
+        const big = n.kind !== "stage" && st !== "locked", sz = big ? 50 : st === "locked" ? 30 : 38;   // 5.0: 아이콘 크기는 고정 (꿀렁임 제거), 빛만 숨쉰다
         if (st !== "locked" && (st === "open" || big)) { g.save(); g.globalAlpha = 0.35 + 0.15 * Math.sin(time * 3 + n.x); const gl = g.createRadialGradient(x, y, 2, x, y, sz * 0.8); gl.addColorStop(0, "rgba(255,220,140,.8)"); gl.addColorStop(1, "rgba(255,220,140,0)"); g.fillStyle = gl; g.beginPath(); g.arc(x, y, sz * 0.8, 0, 7); g.fill(); g.restore(); }
         g.save(); g.imageSmoothingEnabled = true; if (st === "cleared") g.globalAlpha = 0.85; g.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); g.restore();
         if (st === "cleared") { g.fillStyle = "#7dff9a"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("✓", x + sz * 0.38, y - sz * 0.25); }

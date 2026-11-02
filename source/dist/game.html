@@ -1967,7 +1967,7 @@ function packSave(sv) { const o = Object.assign({}, sv), rev = [], u = [0, 0]; f
 function unpackStones(sv) { if (!sv.stoneU) return; if (!Array.isArray(sv.stones)) sv.stones = []; for (let h = 0; h < 2; h++) for (let i = 0, n = Math.min(200000, sv.stoneU[h] | 0); i < n; i++) sv.stones.push(newStone(sv, h)); delete sv.stoneU; }
 function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.skdex || (save.skdex = {}); for (const x of save.skills) dx[x.id] = 1; } try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave(save))); } catch (e) {} if (typeof srvQueue === "function") srvQueue(); }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
-  const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
+  const hadNeed = "needStart" in s; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; if (!hadNeed) { s.needStart = false; s.tut5 = 99; s.slots = Math.max(s.slots || 1, 4); }   // 5.0: 예전 세이브는 직업 선택 · 안내 없이 (칸 4개) for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
     if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;
@@ -4339,12 +4339,12 @@ const MapView = {
     const w = document.createElement("canvas"); w.width = MAP_W; w.height = MAP_H; const wg = w.getContext("2d"); wg.imageSmoothingEnabled = false; wg.drawImage(c, 0, 0, W, H, 0, 0, W * sc, H * sc); this.world = w;
   },
   nodeIcon(g, n, st, time, hot) {
-    const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1 + 0.12 * Math.sin(time * 3 + n.x);
+    const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1;   // 5.0: 크기 꿀렁임 제거
     {   // 일러스트 지도 아이콘 (로블록스판과 같은 그림)
       const MI = { stage: "mi_stage", boss: "mi_boss", town: "mi_town", rift: "mi_rift", endless: "mi_endless", bosshub: "mi_bossgate", bosshub2: "mi_bossgate", temple: "mi_temple", raid: "mi_abyssdoor", craid: n.sub === "warden" ? "mi_warden" : n.sub === "charm" ? "mi_truedungeon" : "mi_raid", vault: "mi_vault", tower2: "mi_newtower", tower: this.rise >= 1 ? "mi_tower" : null };
       const k = st === "locked" && n.kind !== "tower" ? "mi_lock" : st === "hell" ? null : MI[n.kind], im = artGet(k);
       if (im) {
-        const big = n.kind !== "stage" && st !== "locked", sz = (big ? 50 : st === "locked" ? 30 : 38) * (st === "open" || big ? pulse : 1);
+        const big = n.kind !== "stage" && st !== "locked", sz = big ? 50 : st === "locked" ? 30 : 38;   // 5.0: 아이콘 크기는 고정 (꿀렁임 제거), 빛만 숨쉰다
         if (st !== "locked" && (st === "open" || big)) { g.save(); g.globalAlpha = 0.35 + 0.15 * Math.sin(time * 3 + n.x); const gl = g.createRadialGradient(x, y, 2, x, y, sz * 0.8); gl.addColorStop(0, "rgba(255,220,140,.8)"); gl.addColorStop(1, "rgba(255,220,140,0)"); g.fillStyle = gl; g.beginPath(); g.arc(x, y, sz * 0.8, 0, 7); g.fill(); g.restore(); }
         g.save(); g.imageSmoothingEnabled = true; if (st === "cleared") g.globalAlpha = 0.85; g.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); g.restore();
         if (st === "cleared") { g.fillStyle = "#7dff9a"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("✓", x + sz * 0.38, y - sz * 0.25); }
@@ -6343,9 +6343,9 @@ function loginDialog(after) {
       const r = await srvLogin(n, p); if (r.err) { $("#lg-e").textContent = r.err; return; }
       if (r.save && save && save.tut && (save.tut.done || save.level > 1)) {   // 서버 세이브와 현재 진행이 둘 다 있을 때
         Modal.open(`<h2>세이브 선택</h2><div class="center pad">서버에 Lv.${r.save.level} 세이브가 있습니다.<br>현재 진행은 Lv.${save.level} 입니다.</div><div class="pbtns"><button class="btn pri" data-a="useS">서버 세이브 불러오기</button><button class="btn" data-a="useL">현재 진행을 서버에 덮어쓰기</button></div>`, { cls: "sm", persistent: true, noClose: true, on: {
-          useS: () => { save = Object.assign(newSave(), r.save); clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); refreshTop(); (after || openTitle)(); },
+          useS: () => { save = Object.assign(newSave(), r.save); if (!("needStart" in r.save)) { save.needStart = false; save.tut5 = 99; save.slots = Math.max(save.slots || 1, 4); } clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); refreshTop(); (after || openTitle)(); },
           useL: () => { srvQueue(); saveGame(); Modal.close(true); toast("현재 진행을 서버에 저장합니다", "ok"); (after || (() => {}))(); } } });
-      } else if (r.save) { save = Object.assign(newSave(), r.save); clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); if (after) after(); else openTitle(); }
+      } else if (r.save) { save = Object.assign(newSave(), r.save); if (!("needStart" in r.save)) { save.needStart = false; save.tut5 = 99; save.slots = Math.max(save.slots || 1, 4); } clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); if (after) after(); else openTitle(); }
       else { if (save) srvQueue(); Modal.close(true); toast(r.created ? "계정이 만들어졌습니다" : "접속했습니다", "ok"); if (after) after(); }
     },
     lgout: () => { srvLogout(); Modal.close(); toast("로그아웃했습니다"); }, lgx: () => Modal.close(),
@@ -6677,7 +6677,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-054301";
+const BUILD_ID = "20261103-060329";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7029,6 +7029,16 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.0", date: "11/3", title: "대개편: 아르카나 슬레이어와 같은 게임으로", items: [
+    "시작할 때 전사 / 마법사를 고릅니다 (첫 무기 · 스킬 3개 · 소환 조각 90개). 스킬 칸은 처음부터 4칸이고, 단계별 안내가 소환 → 스킬 칸 → 첫 전투 → 장비 · 패시브 · 강화를 짚어 줍니다.",
+    "경험치가 생겼습니다: 승리할 때마다 경험치를 얻어 레벨이 오릅니다 (필요량 1.12배씩). 레벨마다 패시브 1점.",
+    "패시브 트리가 새로 바뀌었습니다: 가운데에서 물리 · 마법 · 재화 · 방어 4갈래 × 50노드. 찍어 둔 포인트는 모두 돌려드렸습니다. [자동 배분] 버튼이 생겼습니다.",
+    "전투력 계산이 바뀌었습니다: 균열 1층 권장 = 100, 몬스터 강함에 정비례 (2배 = 2배 강한 층). 장비 비교 · 추천 장착도 새 전투력으로 합니다.",
+    "장비: 착용 레벨 제한이 없어졌고, 강화 효과가 모든 티어에서 100%입니다 (예전 T1~3 60%). 체력 · 방어 수치가 티어마다 크게 올랐습니다 (가지고 있던 장비도 함께). '마나 1당 체력'은 일반 옵션에서 사탄 효과로 바뀌었습니다.",
+    "균열 · 탑 · 신전 · 레이드 · 문지기 난이도와 스킬 위력을 새 성장 속도에 맞게 다시 맞췄습니다. 보스 관문은 균열 20 · 40 · 80 · 100층에서 단계별로 열립니다.",
+    "심연 각인은 없어졌습니다 (새긴 균열 조각은 모두 돌려드렸습니다).",
+    "스킬 창 · 소환 · 패배 결과창('강해지는 방법')을 새로 만들었고, 전투에서 몬스터가 땅 위에 서고 마법사는 마법사 모습으로 싸웁니다. 지도 지점이 꿀렁이지 않게 했습니다.",
+  ] },
   { ver: "4.54", date: "11/3", title: "보스 관문 평타 드랍", items: [
     "보스 관문 보스가 그 속성의 평타를 떨어뜨립니다 (거신: 연사 · 파쇄타 · 쌍아참 · 파천일섬 · 천참 / 폭풍: 번개 찌르기 · 질풍 연사 · 뇌전 채찍 / 맹독: 독침 난사 · 찢기 · 피의 갈퀴 / 군단: 불씨 탄 · 화염구 · 혜성탄 / 공허: 공허 탄 · 비전 연사 / 서리: 서리 화살 · 뇌전 채찍).",
     "단계가 높을수록 좋은 평타가 나옵니다: 1단계 일반 · 2단계 희귀까지 · 3단계 희귀~전설 · 4단계 전설~신화 (확률 30 · 35 · 40 · 50%). 같은 평타가 또 나오면 레벨이 오릅니다.",
