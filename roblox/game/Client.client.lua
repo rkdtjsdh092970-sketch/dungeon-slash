@@ -1206,12 +1206,12 @@ local coachBox, coachHl
 local function coachClose() if coachBox then coachBox:Destroy(); coachBox = nil end; if coachHl then coachHl:Destroy(); coachHl = nil end end
 local function coach(title, text, btns, target)
   coachClose()
-  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, INSET + 120 * K), Size = UDim2.new(0, 640, 0, 170), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
+  coachBox = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, INSET + 120 * K), Size = UDim2.new(0, 660, 0, 190), BackgroundColor3 = Color3.fromRGB(16, 11, 10), ZIndex = 46 }, gui)
   corner(coachBox, 10); stroke(coachBox, GOLD, 2.5); mk("UIScale", { Scale = K }, coachBox); Skin.frame(coachBox, "ui_panel", 0.2, 0.5)
-  local tl = mk("TextLabel", { Position = UDim2.new(0, 20, 0, 12), Size = UDim2.new(1, -40, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 24, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
+  local tl = mk("TextLabel", { Position = UDim2.new(0, 36, 0, 18), Size = UDim2.new(1, -72, 0, 30), BackgroundTransparency = 1, Text = title, TextSize = 24, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47 }, coachBox)
   mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, tl)
-  mk("TextLabel", { Position = UDim2.new(0, 20, 0, 46), Size = UDim2.new(1, -40, 0, 70), BackgroundTransparency = 1, Text = text, TextSize = 17, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
-  local row = mk("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -16, 1, -12), Size = UDim2.new(1, -32, 0, 40), BackgroundTransparency = 1, ZIndex = 47 }, coachBox)
+  mk("TextLabel", { Position = UDim2.new(0, 36, 0, 52), Size = UDim2.new(1, -72, 0, 70), BackgroundTransparency = 1, Text = text, TextSize = 17, TextWrapped = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(230, 220, 205), TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 47 }, coachBox)
+  local row = mk("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -30, 1, -18), Size = UDim2.new(1, -32, 0, 40), BackgroundTransparency = 1, ZIndex = 47 }, coachBox)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i, bt in ipairs(btns) do local b = button(row, bt[1], UDim2.new(), UDim2.new(0, bt[3] or 130, 1, 0), bt[2], bt[4] or Color3.fromRGB(200, 150, 60)); b.LayoutOrder = i; b.ZIndex = 48; b.TextSize = 16 end
   if target then   -- 눌러야 할 곳에 금빛 테두리가 숨쉰다
@@ -1262,8 +1262,8 @@ showStartPick = function()
   local t = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.04, 0), Size = UDim2.new(0.8, 0, 0.08, 0), BackgroundTransparency = 1, Text = "길을 고르세요", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(255, 220, 140), ZIndex = 42 }, ov)
   mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, t)
   local sub = mk("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.12, 0), Size = UDim2.new(0.8, 0, 0.04, 0), BackgroundTransparency = 1, Text = "처음 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 다른 길로도 갈 수 있습니다.", TextScaled = true, Font = Theme.FONT, TextColor3 = Color3.fromRGB(200, 185, 165), ZIndex = 42 }, ov)
-  for i, c in ipairs({ { "warrior", "warrior", "전사", "검을 든 근접 전사", "단단한 체력과 강한 물리 공격", "일격 · 찢기(범위) · 강타", Color3.fromRGB(235, 110, 80) },
-                       { "mage", "mage", "마법사", "지팡이를 든 원소 마법사", "멀리서 화면을 쓸어버리는 마법", "불씨 · 체인 라이트닝 · 폭열탄", Color3.fromRGB(150, 130, 255) } }) do
+  for i, c in ipairs({ { "warrior", "warrior", "전사", "검을 든 근접 전사", "단단한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타", Color3.fromRGB(235, 110, 80) },
+                       { "mage", "mage", "마법사", "지팡이를 든 원소 마법사", "멀리서 화면을 쓸어버리는 마법", "스킬: 불씨 · 체인 라이트닝 · 폭열탄", Color3.fromRGB(150, 130, 255) } }) do
     local card = mk("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(i == 1 and 0.28 or 0.72, 0, 0.19, 0), Size = UDim2.new(0.38, 0, 0.74, 0), BackgroundColor3 = Color3.fromRGB(22, 15, 13), Text = "", AutoButtonColor = false, ZIndex = 42 }, ov)
     corner(card, 12); local cs = mk("UIStroke", { Color = Color3.fromRGB(120, 92, 48), Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
     Skin.frame(card, "ui_panel", 0.2, 0.5)
@@ -1273,7 +1273,7 @@ showStartPick = function()
     local img = a and mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.36, 0), Size = UDim2.new(0.85, 0, 0.6, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 44 }, card)
     local nm = mk("TextLabel", { Position = UDim2.new(0, 0, 0.665, 0), Size = UDim2.new(1, 0, 0.09, 0), BackgroundTransparency = 1, Text = c[3], TextScaled = true, Font = Theme.FONT, TextColor3 = c[7], ZIndex = 44 }, card)
     mk("UIStroke", { Thickness = 3, Color = Color3.new(0, 0, 0) }, nm)
-    for j, line in ipairs({ c[4], c[5], "스킬: " .. c[6] }) do
+    for j, line in ipairs({ c[4], c[5], c[6] }) do
       local l = mk("TextLabel", { Position = UDim2.new(0.06, 0, 0.765 + (j - 1) * 0.055, 0), Size = UDim2.new(0.88, 0, 0.045, 0), BackgroundTransparency = 1, Text = line, TextScaled = true, Font = Theme.FONT, TextColor3 = j == 3 and Color3.fromRGB(255, 220, 150) or Color3.fromRGB(220, 210, 195), ZIndex = 44 }, card)
       mk("UITextSizeConstraint", { MaxTextSize = 24 }, l)
     end
