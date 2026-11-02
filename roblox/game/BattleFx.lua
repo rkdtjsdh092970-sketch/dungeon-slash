@@ -249,6 +249,98 @@ local function flourish(S, tier, col, tx, ty)
     M.glow(S, S.plX, S.plY - 50 * u, 200 * u, Color3.fromRGB(255, 40, 30), 0.6, 0.3)
   end
 end
+-- ── 아르카나 전용 연출 (진화 아르카나 · 새 평타, 2026-11-03): 공용 연출 대신 그 아르카나의 개념에 맞게 ──
+-- X = { S, u, col, tx, ty, list, tg, hx, hy, big }
+local SIG = {}
+local function each(X, n, gap, f) for i, h in ipairs(X.list) do if i > n then break end; task.delay((i - 1) * gap, function() f(h, i) end) end end
+local function hy(h) return (h.ty or h.y) - h.size * 0.45 end
+local function vslash(S, x, y, len, col, w)   -- 위에서 아래로 내려 긋는 세로 베기 (빛줄기)
+  local o = img(S, "fx_beam", { AnchorPoint = Vector2.new(0, 0.5), Position = at(x, y - len), Size = sz(4, w), Rotation = 90, ImageColor3 = col, ZIndex = 16 })
+  if o then tw(o, 0.1, { Size = sz(len * 2, w) }, nil, false).Completed:Connect(function() tw(o, 0.3, { ImageTransparency = 1, Size = sz(len * 2, w * 0.2) }) end) end
+  local c = img(S, "fx_beam", { AnchorPoint = Vector2.new(0, 0.5), Position = at(x, y - len), Size = sz(4, w * 0.35), Rotation = 90, ImageColor3 = WHITE, ZIndex = 17 })
+  if c then tw(c, 0.1, { Size = sz(len * 2, w * 0.35) }, nil, false).Completed:Connect(function() tw(c, 0.25, { ImageTransparency = 1 }) end) end
+end
+SIG.twinfang = function(X) local S, u = X.S, X.u; S:heroPose("lunge", X.tx)   -- X자 쌍베기
+  task.delay(0.08, function() M.slash(S, X.tx, X.ty, 120 * u, X.col, 40); M.slash(S, X.tx, X.ty, 120 * u, WHITE, -40); M.sparks(S, X.tx, X.ty, X.col, 6, 40); S.hitstop = 0.03 end) end
+SIG.skycleave = function(X) local S, u = X.S, X.u; S:heroPose("lunge", X.tx)   -- 하늘을 가르는 세로 일섬
+  task.delay(0.08, function() vslash(S, X.tx, X.ty, 140 * u, X.col, 26 * u); M.ring(S, X.tx, X.tg and (X.tg.ty or X.tg.y) or X.ty, 80 * u, X.col, 0.3); S.hitstop = 0.04 end) end
+SIG.heavensplit = function(X) local S, u = X.S, X.u; S:heroPose("slam", X.tx)   -- 화면을 세로로 쪼개는 일격 + 3x3 충격
+  task.delay(0.14, function()
+    vslash(S, X.tx, X.ty, S.H * 0.45, WHITE:Lerp(X.col, 0.3), 46 * u); M.screen(S, WHITE, 0.7, 0.2)
+    M.ring(S, X.tx, X.tg and (X.tg.ty or X.tg.y) or X.ty, 200 * u, X.col, 0.5); M.erupt(S, X.tx, X.tg and (X.tg.ty or X.tg.y) or X.ty, Color3.fromRGB(200, 200, 210), "rock", 90)
+    S.shake = math.max(S.shake or 0, 0.3); S.hitstop = 0.08 end) end
+SIG.galeshot = function(X) local S, u = X.S, X.u; S:heroPose("attack")   -- 바람 칼날 두 줄
+  for k = 0, 1 do task.delay(k * 0.06, function() local o = img(S, "fx_beam", { AnchorPoint = Vector2.new(0, 0.5), Position = at(S.plX + 30 * u, X.ty + (k - 0.5) * 14 * u), Size = sz(10, 8 * u), ImageColor3 = Color3.fromRGB(170, 255, 190), ZIndex = 15 }); if o then tw(o, 0.12, { Size = sz(X.tx - S.plX, 8 * u) }, nil, false).Completed:Connect(function() tw(o, 0.2, { ImageTransparency = 1 }) end) end; M.slash(S, X.tx, X.ty, 70 * u, X.col, math.random(-30, 30)) end) end end
+SIG.stormdance = function(X) local S, u = X.S, X.u; S:heroPose("throw")   -- 칼날 폭풍: 회오리 + 칼날 비
+  M.ring(S, S.plX + 40 * u, S.plY - 40 * u, 110 * u, Color3.fromRGB(190, 210, 230), 0.5, 1)
+  each(X, 12, 0.03, function(h) M.proj(S, S.plX + 30 * u, S.plY - 60 * u, h.tx, hy(h), X.col, 0.14, "shard", function() M.slash(S, h.tx, hy(h), 60 * u, X.col, math.random(-60, 60)) end) end) end
+SIG.bloodclaw = function(X) local S, u = X.S, X.u; S:heroPose("lunge", X.tx)   -- 진홍빛 세 줄 할퀴기
+  task.delay(0.08, function() for k = -1, 1 do M.slash(S, X.tx + k * 10 * u, X.ty + k * 8 * u, 90 * u, Color3.fromRGB(255, 70, 90), 60) end; M.glow(S, X.tx, X.ty, 60 * u, Color3.fromRGB(255, 60, 80), 0.3, 0.3) end) end
+SIG.fanghail = function(X) local S, u = X.S, X.u; S:heroPose("throw")   -- 독 가시가 적 사이를 튄다
+  local px, py = S.plX + 30 * u, S.plY - 60 * u
+  each(X, 5, 0.07, function(h) local qx, qy = h.tx, hy(h); M.proj(S, px, py, qx, qy, X.col, 0.08, "shard", function() M.erupt(S, qx, h.ty or h.y, X.col, "bubble", 60) end); px, py = qx, qy end) end
+SIG.hydra = function(X) local S, u = X.S, X.u; S:heroPose("cast")   -- 독룡의 머리 셋이 위에서 덮친다
+  M.sigil(S, X.tx, X.tg and (X.tg.ty or X.tg.y) or X.ty, 110 * u, X.col, 0.9)
+  for k = 1, 3 do task.delay(k * 0.12, function() local h = X.list[((k - 1) % math.max(1, #X.list)) + 1] or X.tg; if h then M.proj(S, h.tx - 60 * u + k * 40 * u, -20 * u, h.tx, hy(h), X.col, 0.22, "big", function() M.claw(S, h.tx, hy(h), 80 * u, X.col); M.erupt(S, h.tx, h.ty or h.y, X.col, "bubble", 70) end) end end) end end
+SIG.twinlance = function(X) local S, u = X.S, X.u; S:heroPose("lunge", X.tx)   -- 두 자루 창: 나란한 두 줄 섬광
+  task.delay(0.08, function() for k = -1, 1, 2 do M.beam(S, S.plX + 40 * u, X.ty + k * 10 * u, S.W, 24 * u, X.col) end; for _, h in ipairs(X.list) do M.sparks(S, h.tx, hy(h), X.col, 3, 30) end; S.hitstop = 0.04 end) end
+SIG.dragoon = function(X) local S, u = X.S, X.u; S:heroPose("slam", X.tx)   -- 용기병: 뛰어올라 내리꽂고 한 줄 + 위아래 줄 충격
+  task.delay(0.16, function()
+    M.beam(S, S.plX + 40 * u, X.ty, S.W, 54 * u, X.col); for k = -1, 1, 2 do M.beam(S, S.plX + 60 * u, X.ty + k * 70 * u, S.W, 16 * u, X.col) end
+    for _, h in ipairs(X.list) do M.slash(S, h.tx, hy(h), 90 * u, X.col, 0) end; S.shake = math.max(S.shake or 0, 0.2); S.hitstop = 0.06 end) end
+SIG.skypierce = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 하늘에서 거대한 창이 꽂힌다
+  M.skyCircle(S, X.tx, 60 * u, 120 * u, X.col, 0.8)
+  task.delay(0.2, function()
+    local o = img(S, "fx_shard", { Position = at(X.tx, 40 * u), Size = sz(40 * u, 160 * u), ImageColor3 = WHITE:Lerp(X.col, 0.3), ZIndex = 16 })
+    if o then tw(o, 0.16, { Position = at(X.tx, X.ty) }, Enum.EasingStyle.Quad, false).Completed:Connect(function()
+      if o.Parent then o:Destroy() end
+      M.beam(S, S.plX + 40 * u, X.ty, S.W, 60 * u, X.col); M.ring(S, X.tx, X.tg and (X.tg.ty or X.tg.y) or X.ty, 220 * u, WHITE, 0.5); M.screen(S, WHITE, 0.7, 0.2)
+      S.shake = math.max(S.shake or 0, 0.35); S.hitstop = 0.08 end) end end) end
+SIG.groundslam = function(X) local S, u = X.S, X.u; S:heroPose("slam", X.tx)   -- 바닥이 갈라지며 바위가 솟는다
+  task.delay(0.16, function() local gy = X.tg and (X.tg.ty or X.tg.y) or X.ty; M.ring(S, X.tx, gy, 160 * u, Color3.fromRGB(210, 170, 110), 0.45); each(X, 6, 0.03, function(h) M.erupt(S, h.tx, h.ty or h.y, Color3.fromRGB(170, 130, 90), "rock", 90) end); S.shake = math.max(S.shake or 0, 0.25); S.hitstop = 0.06 end) end
+SIG.giantmaul = function(X) local S, u = X.S, X.u; S:heroPose("slam", X.tx)   -- 거인의 망치: 더 큰 충격파 + 바위 + 섬광
+  task.delay(0.16, function() local gy = X.tg and (X.tg.ty or X.tg.y) or X.ty
+    for k = 0, 2 do task.delay(k * 0.08, function() M.ring(S, X.tx, gy, (150 + k * 70) * u, k == 1 and WHITE or Color3.fromRGB(230, 180, 90), 0.5) end) end
+    each(X, 9, 0.02, function(h) M.erupt(S, h.tx, h.ty or h.y, Color3.fromRGB(180, 140, 90), "rock", 120) end); M.screen(S, WHITE, 0.8, 0.15); S.shake = math.max(S.shake or 0, 0.4); S.hitstop = 0.1 end) end
+SIG.phoenix = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 불새가 한 줄을 날아간다 (날개 같은 불길 + 긴 꼬리)
+  local x0, y0 = S.plX + 30 * u, X.ty
+  local core = img(S, "fx_glow", { Position = at(x0, y0), Size = sz(80 * u, 50 * u), ImageColor3 = Color3.fromRGB(255, 200, 90), ZIndex = 16 })
+  if core then tw(core, 0.45, { Position = at(S.W + 40 * u, y0) }, Enum.EasingStyle.Quad, true) end
+  task.spawn(function() for k = 1, 12 do if not S.layer.Parent then return end; local x = x0 + (S.W - x0) * k / 12
+    local w = img(S, "fx_glow", { Position = at(x, y0 - 20 * u), Size = sz(70 * u, 30 * u), Rotation = -25, ImageColor3 = Color3.fromRGB(255, 140, 40), ImageTransparency = 0.2, ZIndex = 15 }); tw(w, 0.4, { ImageTransparency = 1, Position = at(x - 30 * u, y0 - 40 * u) })
+    local w2 = img(S, "fx_glow", { Position = at(x, y0 + 20 * u), Size = sz(70 * u, 30 * u), Rotation = 25, ImageColor3 = Color3.fromRGB(255, 140, 40), ImageTransparency = 0.2, ZIndex = 15 }); tw(w2, 0.4, { ImageTransparency = 1, Position = at(x - 30 * u, y0 + 40 * u) })
+    task.wait(0.035) end end)
+  for _, h in ipairs(X.list) do task.delay(0.15 + (h.tx - x0) / S.W * 0.4, function() M.burst(S, h.tx, hy(h), 60 * u, X.col) end) end end
+SIG.suncore = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 하늘 마법진에서 작은 태양들이 떨어진다
+  M.skyCircle(S, X.tx, 60 * u, 170 * u, Color3.fromRGB(255, 220, 120), 1.2); M.screen(S, Color3.fromRGB(255, 230, 160), 0.8, 0.3)
+  each(X, 4, 0.14, function(h) M.proj(S, X.tx + math.random(-60, 60) * u, 60 * u, h.tx, hy(h), Color3.fromRGB(255, 230, 140), 0.26, "big", function()
+    M.burst(S, h.tx, hy(h), 110 * u, Color3.fromRGB(255, 200, 80)); M.ring(S, h.tx, h.ty or h.y, 140 * u, WHITE, 0.4); M.erupt(S, h.tx, h.ty or h.y, X.col, "lava", 90); S.shake = math.max(S.shake or 0, 0.25) end) end) end
+SIG.icecage = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 적마다 얼음 감옥 (얼음 가시가 둘러 솟는다)
+  M.ring(S, S.plX, S.plY, 380 * u, X.col, 0.55)
+  each(X, 9, 0.03, function(h) for k = -1, 1, 2 do M.erupt(S, h.tx + k * 18 * u, h.ty or h.y, X.col, "ice", 120) end; M.glow(S, h.tx, hy(h), 70 * u, WHITE, 0.4, 0.4) end) end
+SIG.voideye = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 하늘에 거대한 공허의 눈이 뜬다
+  local ex, ey = S.W * 0.6, 90 * u
+  local lid = img(S, "fx_glow", { Position = at(ex, ey), Size = sz(260 * u, 6 * u), ImageColor3 = Color3.fromRGB(150, 60, 255), ZIndex = 12 })
+  if lid then tw(lid, 0.25, { Size = sz(260 * u, 120 * u) }, nil, false); task.delay(0.9, function() if lid.Parent then tw(lid, 0.25, { Size = sz(260 * u, 4 * u), ImageTransparency = 1 }) end end) end
+  local iris = img(S, "fx_glow", { Position = at(ex, ey), Size = sz(10 * u), ImageColor3 = Color3.fromRGB(255, 80, 220), ZIndex = 13 })
+  if iris then tw(iris, 0.3, { Size = sz(70 * u) }, nil, false); task.delay(0.9, function() if iris.Parent then tw(iris, 0.25, { ImageTransparency = 1 }) end end) end
+  M.screen(S, Color3.fromRGB(60, 0, 90), 0.6, 0.6)
+  each(X, 8, 0.05, function(h) task.delay(0.3, function() M.bolt(S, ex, ey, h.tx, hy(h), X.col, 0.25); M.burst(S, h.tx, hy(h), 50 * u, X.col) end) end) end
+SIG.cometbolt = function(X) local S, u = X.S, X.u; S:heroPose("cast")   -- 작은 혜성이 떨어진다 (평타)
+  M.fall(S, X.tx, X.ty, Color3.fromRGB(170, 220, 255), "big", function() M.burst(S, X.tx, X.ty, 60 * u, X.col); M.ring(S, X.tx, X.tg and (X.tg.ty or X.tg.y) or X.ty, 80 * u, X.col, 0.3) end) end
+SIG.arcbarrage = function(X) local S, u = X.S, X.u; S:heroPose("cast")   -- 비전 탄 연사 (평타)
+  local hx, hy0 = X.hx, X.hy; for k = 0, 2 do task.delay(k * 0.05, function() M.proj(S, hx, hy0 + (k - 1) * 8 * u, X.tx, X.ty, X.col, 0.12, "orb", function() M.sparks(S, X.tx, X.ty, X.col, 2, 20) end) end) end end
+SIG.voidorb = function(X) local S, u = X.S, X.u; S:heroPose("cast")   -- 공허 구체 셋이 영웅 둘레를 돈다
+  for k = 1, 3 do local o = img(S, "fx_glow", { Position = at(S.plX, S.plY - 50 * u), Size = sz(36 * u), ImageColor3 = X.col, ZIndex = 14 })
+    if o then task.spawn(function() local t0 = os.clock(); while o.Parent and os.clock() - t0 < 2.4 do local a = (os.clock() - t0) * 4 + k * 2.09; o.Position = at(S.plX + math.cos(a) * 70 * u, S.plY - 50 * u + math.sin(a) * 30 * u); task.wait() end; if o.Parent then tw(o, 0.2, { ImageTransparency = 1 }) end end) end end
+  each(X, 3, 0.15, function(h) M.proj(S, S.plX, S.plY - 50 * u, h.tx, hy(h), X.col, 0.2, "orb", function() M.burst(S, h.tx, hy(h), 30 * u, X.col) end) end) end
+SIG.riftsplit = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 차원 균열: 바닥 문장 + 공허 금 + 끓어오르는 기운
+  local gy = X.tg and (X.tg.ty or X.tg.y) or X.ty; M.sigil(S, X.tx, gy, 140 * u, X.col, 1)
+  for k = 1, 4 do task.delay(k * 0.06, function() M.bolt(S, X.tx + math.random(-80, 80) * u, gy, X.tx + math.random(-80, 80) * u, gy - math.random(10, 40) * u, X.col, 0.3) end) end
+  each(X, 9, 0.04, function(h) M.erupt(S, h.tx, h.ty or h.y, X.col, "bubble", 110) end) end
+SIG.eternalwinter = function(X) local S, u = X.S, X.u; S:heroPose("cast", true)   -- 끝나지 않는 겨울: 하얀 눈보라 화면 + 얼음 가시 · 떨어지는 얼음
+  M.screen(S, Color3.fromRGB(220, 240, 255), 0.6, 0.8); M.skyCircle(S, X.tx, 60 * u, 180 * u, X.col, 1.2)
+  each(X, 9, 0.06, function(h) M.erupt(S, h.tx, h.ty or h.y, X.col, "ice", 150); M.fall(S, h.tx, hy(h), WHITE, "shard") end) end
 -- 스킬 연출: c = { id, color, elem, kind }, hits = 이번에 피해를 받은 몹들(가까운 순), first = 가장 가까운 몹
 function M.cast(S, c, hits, first)
   local d = BY[c[1]] or {}
@@ -261,6 +353,12 @@ function M.cast(S, c, hits, first)
   local mag = d.dtype == "mag"
   local big = (d.cd or 0) >= 8 or (d.mult or 0) >= 6 or tier >= 3
   if d.slot ~= "basic" and tier >= 2 then task.delay(0.12, function() flourish(S, tier, col, tx, ty) end) end
+  if SIG[c[1]] then   -- 전용 연출
+    local hx0, hy0 = heroTip(S)
+    if mag and d.slot ~= "basic" then M.magicCircle(S, S.plX - 10 * u, S.plY - 62 * u, (big and 80 or 58) * u, col, big and 0.8 or 0.5, 4); M.sigil(S, S.plX, S.plY + 4 * u, (big and 100 or 70) * u, col, big and 0.8 or 0.5) end
+    SIG[c[1]]({ S = S, u = u, col = col, tx = tx, ty = ty, list = list, tg = tg, hx = hx0, hy = hy0, big = big })
+    return
+  end
   if d.dtype == "buff" or d.dtype == "heal" or kind == "buff" or kind == "heal" then   -- 버프 · 치유: 영웅 둘레 빛 기둥
     M.ring(S, S.plX, S.plY, 90 * u, col, 0.6); M.glow(S, S.plX, S.plY - 50 * u, 120 * u, col, 0.6, 0.3)
     for i = 1, 6 do task.delay(i * 0.05, function() M.sparks(S, S.plX + math.random(-30, 30) * u, S.plY - math.random(0, 80) * u, col, 1, 30) end) end
