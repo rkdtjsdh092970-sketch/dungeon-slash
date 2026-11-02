@@ -28,7 +28,7 @@ ART = [
     *[(f'card_burst{r}', f'cards/burst{r}.png', (384, 384)) for r in (2, 3, 4)],
     # UI 키트 (9-slice 로 늘려 씀, game/Skin.lua)
     ('ui_panel', 'ui/panel.png', (384, 384)), ('ui_title', 'ui/title.png', (384, 96)), ('ui_card', 'ui/card.png', (384, 96)),
-    *[(f'ui_btn_{c}', f'ui/btn_{c}.png', (192, 64)) for c in ('gold', 'red', 'blue', 'gray')],
+    *[(f'ui_btn_{c}', f'ui/btn_{c}.png', (288, 96)) for c in ('gold', 'red', 'blue', 'gray', 'purple', 'green')],
     ('ui_tab', 'ui/tab.png', (128, 48)), ('ui_tab_on', 'ui/tab_on.png', (128, 48)), ('ui_close', 'ui/close.png', (64, 64)),
     ('ui_slot', 'ui/slot.png', (128, 128)), ('ui_pill', 'ui/pill.png', (192, 48)),
     ('ui_header', 'ui/header.png', (768, 69)), ('ui_divider', 'ui/divider.png', (768, 36)),   # 창 머리 띠 · 구분선
