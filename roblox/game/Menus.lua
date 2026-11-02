@@ -872,7 +872,8 @@ local function revealResults(res)
   local function flip()
     local r, card = cur.r, cur.card; if not card then return end
     busyFlip = true
-    local t1 = TweenService:Create(card, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1.04, 0) }); t1:Play(); t1.Completed:Wait()
+    local t1 = TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.new(0.04, 0, 0.9, 0), Rotation = -38 }); t1:Play(); t1.Completed:Wait()
+    card.Rotation = 38
     card:ClearAllChildren()
     local col = M.SK_RCOL[r.rarity + 1]; local scol, icon = M.skStyle(r.id)
     local face = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(18, 13, 26), ZIndex = 63 }, card); corner(face, 12)
@@ -883,7 +884,7 @@ local function revealResults(res)
     local rr = txt(card, M.SK_RAR[r.rarity + 1] or "", 20, UDim2.new(0, 10, 0.74, 0), UDim2.new(1, -20, 0, 26), col, M.FONT, Enum.TextXAlignment.Center); rr.ZIndex = 66
     local tg = txt(card, r.dup and string.format("연마석 +%d", r.dup) or "NEW", 15, UDim2.new(0, 10, 0.86, 0), UDim2.new(1, -20, 0, 20), r.dup and Color3.fromRGB(150, 230, 170) or Color3.fromRGB(255, 230, 120), M.FONT, Enum.TextXAlignment.Center); tg.ZIndex = 66
     if not r.dup then tg:SetAttribute("NoTr", true) end
-    local t2 = TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) }); t2:Play()
+    local t2 = TweenService:Create(card, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0), Rotation = 0 }); t2:Play()
     -- 공개 순간: 빛 폭발 그림 (등급이 높을수록 크고 오래) · 신화 이상 화면 번쩍임 · 사탄 흔들림
     if r.rarity >= 2 then
       if cur.aura then cur.aura:Destroy() end
