@@ -164,11 +164,11 @@ function M:buildLanes(lanes)
   if self.roads then self.roads:Destroy() end
   local u = self.u
   local R = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 2 }, self.root); self.roads = R
-  local x0 = self.ox + (196 - 70) * u
   for l = 0, (lanes or 2) - 1 do
+    local x0 = self.ox + (196 - 70 + self:laneShift(l, lanes)) * u
     local cy, lh = self:laneY(l, lanes)
     local yc = cy + lh * 0.3                       -- 몬스터 발이 놓이는 높이 (applySnap 과 같은 위치)
-    local hh = math.min(26 * u, lh * 0.26)
+    local hh = lh * 0.3
     -- 다져진 흙길: 가운데가 밝고 위아래로 갈수록 어두워지며 바닥에 스며든다 (둥근 끝 없음, 왼쪽은 흐려지며 시작)
     local band = mk("Frame", { Position = UDim2.new(0, x0, 0, yc - hh), Size = UDim2.new(1, -x0, 0, hh * 2), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ZIndex = 2 }, R)
     mk("UIGradient", { Rotation = 90, Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 14, 12)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 56, 44)), ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 14, 12)) }),
@@ -177,13 +177,16 @@ function M:buildLanes(lanes)
       mk("Frame", { Position = UDim2.new(0, 0, ey, 0), Size = UDim2.new(1, 0, 0, math.max(1, 2 * u)), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 2 }, band)
     end
     for c = 1, 6 do   -- 칸 자리 발판
-      local pad = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, self:colX(c), 0, yc), Size = UDim2.new(0, self.cw * u * 0.62, 0, hh * 0.9), BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.82, BorderSizePixel = 0, ZIndex = 2 }, R)
+      local pad = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, self:colX(c, l, lanes), 0, yc), Size = UDim2.new(0, self.cw * u * 0.62, 0, hh * 0.9), BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.82, BorderSizePixel = 0, ZIndex = 2 }, R)
       mk("UICorner", { CornerRadius = UDim.new(1, 0) }, pad)
     end
   end
 end
-function M:laneY(l, lanes) lanes = lanes or 2; local lh = lanes <= 3 and 116 or 88; local top = 292 - lh * lanes / 2; return self.oy + (top + (l + 0.5) * lh) * self.u, lh * self.u end
-function M:colX(c) return self.ox + (196 + (c - 0.5) * self.cw) * self.u end
+-- 2.5D 원근 배치: 레인 간격을 좁히고, 뒤(위) 레인일수록 오른쪽으로 밀고(사선) 작게 그린다. 앞 레인이 뒤 레인을 가린다
+function M:laneY(l, lanes) lanes = lanes or 2; local lh = (lanes <= 3 and 116 or 88) * 0.68; local top = 338 - lh * lanes / 2; return self.oy + (top + (l + 0.5) * lh) * self.u, lh * self.u end
+function M:laneShift(l, lanes) lanes = lanes or 2; return (lanes - 1 - (l or 0)) * self.cw * 0.3 end
+function M:depth(l, lanes) lanes = lanes or 2; return 1 - 0.09 * (lanes - 1 - (l or 0)) end
+function M:colX(c, l, lanes) return self.ox + (196 + (c - 0.5) * self.cw + self:laneShift(l, lanes)) * self.u end
 
 function M:floatText(text, x, y, color, size)
   if not M.OPT.dmg then return end
@@ -200,10 +203,11 @@ function M:flash(color, x1, y1, x2, y2)
 end
 
 local function unitFor(S, e, lanes)
+  local dep = e.bs and 1 or S:depth(e.l, lanes)
   local u = S.units[e.id]; if u then return u end
   local boss = e.bs ~= nil
   local key, hue = e.sp, e.hu
-  local size = (boss and math.min(224, 64 * (e.scl or 3)) or (e.tier == "elite" and 96 or 64)) * S.u   -- 웹과 같은 비율 (일반 64 · 정예 96 · 보스 sc*64)
+  local size = (boss and math.min(224, 64 * (e.scl or 3)) or (e.tier == "elite" and 96 or 64)) * S.u * dep   -- 웹과 같은 비율 (일반 64 · 정예 96 · 보스 sc*64)
   local lab, info
   if boss then if (e.bh or 0) == 0 then lab = Sprites.artLabel(S.layer, "boss" .. (e.bs or 0), size) end
   elseif key and (hue or 0) == 0 then lab = Sprites.artLabel(S.layer, key, size) end   -- 일러스트(색조 변형은 아직 도트)
@@ -211,10 +215,12 @@ local function unitFor(S, e, lanes)
   if art then -- 일러스트 사용
   elseif boss then lab, info = Sprites.label(S.layer, "bosses", e.bh or 0, true, size); Sprites.setBoss(lab, info, e.bs)
   else lab, info = Sprites.label(S.layer, key or "ghoul", hue or 0, true, size) end
-  lab.ZIndex = 4 + (e.l or 0)
+  lab.ZIndex = 5 + (e.l or 0) * 2
+  local shadow = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, size * 0.55, 0, size * 0.13), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 4 + (e.l or 0) * 2 }, S.layer)
+  mk("UICorner", { CornerRadius = UDim.new(1, 0) }, shadow)
   local bar = mk("Frame", { Size = UDim2.new(0, size * 0.7, 0, math.max(4, 5 * S.u)), AnchorPoint = Vector2.new(0.5, 1), BackgroundColor3 = Color3.fromRGB(18, 14, 30), ZIndex = 15 }, S.layer)
   local fill = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = boss and Color3.fromRGB(230, 90, 60) or (e.tier == "elite" and Color3.fromRGB(240, 190, 60) or Color3.fromRGB(110, 210, 110)), ZIndex = 16 }, bar)
-  u = { lab = lab, info = info, art = art, bar = bar, fill = fill, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
+  u = { lab = lab, info = info, art = art, shadow = shadow, bar = bar, fill = fill, boss = boss, key = key, size = size, x = S.W + 40, y = 0, t = math.random() * 3, dying = nil }
   S.units[e.id] = u; return u
 end
 
@@ -234,7 +240,7 @@ function M:applySnap(s, lanes)
     seen[e.id] = true
     local u = unitFor(self, e, lanes)
     local cy, lh = self:laneY(e.l, lanes); local cw = (self.W - 150) / 6
-    local x = self:colX(e.c + ((e.w or 1) - 1) / 2); local y = cy + ((e.h or 1) - 1) * lh / 2 + lh * 0.3
+    local x = self:colX(e.c + ((e.w or 1) - 1) / 2, e.l + ((e.h or 1) - 1) / 2, lanes); local y = cy + ((e.h or 1) - 1) * lh / 2 + lh * 0.3
     if not u.boss and e.tier == "normal" then local n = (e.id % 3) - 1; x += n * 14 * self.u; y += n * 5 * self.u end
     if not u.placed then u.placed = true; u.x = self.W + u.size * 0.6; u.y = y end   -- 오른쪽 끝에서 길을 따라 걸어 들어온다
     u.tx, u.ty = x, y; u.hp = e.hp
@@ -294,7 +300,7 @@ function M:pickSpeed(i)
   if H.onSpeed then H.onSpeed(i) end
 end
 function M:play(replay, onDone, maxSec, hud)
-  for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy() end; self.units = {}
+  for id, u in pairs(self.units) do u.lab:Destroy(); u.bar:Destroy(); if u.shadow then u.shadow:Destroy() end end; self.units = {}
   self.buildBg(replay.act or 1); self:buildLanes(replay.lanes or 2)
   if hud then self:setHud(hud) end
   self.kills = 0; self.killLbl.Text = string.format("처치 %d", 0); self.boss.Visible = false; self.skillBar.Visible = next(self.skillCells) ~= nil
@@ -320,6 +326,7 @@ function M:play(replay, onDone, maxSec, hud)
       u.t += dt
       if u.tx then local dx = (u.tx - u.x) * k; local cap = 420 * self.u * dt * self.spd * (self.userSpd or 1); u.x += math.clamp(dx, -cap, cap); u.y += (u.ty - u.y) * k end   -- 걷는 속도 상한
       u.lab.Position = UDim2.new(0, u.x, 0, u.y)
+      u.shadow.Position = UDim2.new(0, u.x, 0, u.y); u.shadow.BackgroundTransparency = u.dying and math.min(1, 0.55 + u.dying) or 0.55
       u.bar.Position = UDim2.new(0, u.x, 0, u.y - u.size * 0.95); u.fill.Size = UDim2.new(math.clamp(u.hp or 1, 0, 1), 0, 1, 0)
       if u.art then   -- 일러스트 (묵직하게): 이동은 미끄러지듯 · 공격 직전 움츠렸다 돌진 · 피격 시 뒤로 밀리며 떨림 · 사망 시 어두워지며 쓰러짐
         local ox, oy, rot = 0, 0, 0
@@ -336,7 +343,7 @@ function M:play(replay, onDone, maxSec, hud)
         local row, frame = Sprites.anim(u.key, anim, anim == "death" and u.dying or u.t); Sprites.setFrame(u.lab, u.info, row, frame)
       elseif u.boss and u.dying then u.lab.ImageTransparency = math.min(1, u.dying) end
       if u.hit and u.hit > 0 then u.hit -= dt; if not u.dying then u.lab.ImageColor3 = Color3.new(1, 1 - 0.5 * M.OPT.flash, 1 - 0.5 * M.OPT.flash) end elseif not u.dying then u.lab.ImageColor3 = Color3.new(1, 1, 1) end
-      if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); self.units[id] = nil end end
+      if u.dying then u.dying += dt; u.bar.Visible = false; if u.dying > 1.1 then u.lab:Destroy(); u.bar:Destroy(); u.shadow:Destroy(); self.units[id] = nil end end
     end
     if self.plArt then self.plAnim.t += dt; M.artPose(self)
     elseif self.plInfo then
