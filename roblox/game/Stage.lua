@@ -26,7 +26,7 @@ function M.create(parent, W, H, replayAct)
   -- 웹 게임 좌표(높이 540)를 화면 높이에 꽉 맞추고, 가로는 화면 비율대로 늘린다 (여백 없음. u = 가상 1픽셀의 실제 크기)
   -- 16:9 에서는 가로 960 으로 웹과 같고, 더 넓거나 좁은 화면은 몬스터 칸 간격(cw)이 늘거나 준다
   local u = H / 540
-  local S = { W = W, H = H, u = u, ox = 0, oy = 60 * u, cw = math.max(70, (W / u - 216) / 6), f = u * 540 / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }   -- oy: 레인을 웹보다 60 아래로 (배경 그림의 땅 높이에 맞춤)
+  local S = { W = W, H = H, u = u, ox = 0, oy = 22 * u, cw = math.max(70, (W / u - 216) / 6), f = u * 540 / 260, units = {}, t = 0, idx = 0, spd = 1, alive = true }   -- oy: 레인을 웹보다 60 아래로 (배경 그림의 땅 높이에 맞춤)
   local root = mk("Frame", { Size = UDim2.new(0, W, 0, H), BackgroundColor3 = Color3.fromRGB(40, 30, 70), BorderSizePixel = 0, ClipsDescendants = true }, parent)
   local bg = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 1 }, root)
   local function buildBg(act)
@@ -169,13 +169,15 @@ function M:buildLanes(lanes)
     local cy, lh = self:laneY(l, lanes)
     local yc = cy + lh * 0.3                       -- 몬스터 발이 놓이는 높이 (applySnap 과 같은 위치)
     local hh = math.min(26 * u, lh * 0.26)
-    local band = mk("Frame", { Position = UDim2.new(0, x0, 0, yc - hh), Size = UDim2.new(1, -x0, 0, hh * 2), BackgroundColor3 = Color3.fromRGB(14, 10, 12), BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 2 }, R)
-    mk("UICorner", { CornerRadius = UDim.new(0, hh) }, band)
-    mk("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.08, 0), NumberSequenceKeypoint.new(1, 0) }) }, band)
-    mk("UIStroke", { Color = Color3.fromRGB(150, 110, 70), Transparency = 0.45, Thickness = 2 }, band)
-    mk("Frame", { Position = UDim2.new(0, 0, 0.5, -1), Size = UDim2.new(1, 0, 0, 2), BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.6, BorderSizePixel = 0, ZIndex = 2 }, band)
+    -- 다져진 흙길: 가운데가 밝고 위아래로 갈수록 어두워지며 바닥에 스며든다 (둥근 끝 없음, 왼쪽은 흐려지며 시작)
+    local band = mk("Frame", { Position = UDim2.new(0, x0, 0, yc - hh), Size = UDim2.new(1, -x0, 0, hh * 2), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ZIndex = 2 }, R)
+    mk("UIGradient", { Rotation = 90, Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 14, 12)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 56, 44)), ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 14, 12)) }),
+      Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.85), NumberSequenceKeypoint.new(0.18, 0.5), NumberSequenceKeypoint.new(0.5, 0.42), NumberSequenceKeypoint.new(0.82, 0.5), NumberSequenceKeypoint.new(1, 0.85) }) }, band)
+    for _, ey in ipairs({ 0.1, 0.9 }) do   -- 길 가장자리 자국
+      mk("Frame", { Position = UDim2.new(0, 0, ey, 0), Size = UDim2.new(1, 0, 0, math.max(1, 2 * u)), BackgroundColor3 = Color3.fromRGB(10, 6, 6), BackgroundTransparency = 0.55, BorderSizePixel = 0, ZIndex = 2 }, band)
+    end
     for c = 1, 6 do   -- 칸 자리 발판
-      local pad = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, self:colX(c), 0, yc), Size = UDim2.new(0, self.cw * u * 0.62, 0, hh * 0.9), BackgroundColor3 = Color3.fromRGB(255, 230, 190), BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = 2 }, R)
+      local pad = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, self:colX(c), 0, yc), Size = UDim2.new(0, self.cw * u * 0.62, 0, hh * 0.9), BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.82, BorderSizePixel = 0, ZIndex = 2 }, R)
       mk("UICorner", { CornerRadius = UDim.new(1, 0) }, pad)
     end
   end
