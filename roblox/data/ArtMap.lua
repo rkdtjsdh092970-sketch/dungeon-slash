@@ -41,6 +41,8 @@ M.ART = {
   ui_close = { w = 64, h = 64, foot = 0.953, file = "art_ui_close.rgba", id = nil },
   ui_slot = { w = 128, h = 128, foot = 0.945, file = "art_ui_slot.rgba", id = nil },
   ui_pill = { w = 192, h = 48, foot = 0.854, file = "art_ui_pill.rgba", id = nil },
+  ui_header = { w = 768, h = 69, foot = 1.0, file = "art_ui_header.rgba", id = nil },
+  ui_divider = { w = 768, h = 36, foot = 0.667, file = "art_ui_divider.rgba", id = nil },
   m_bag = { w = 128, h = 128, foot = 0.938, file = "art_m_bag.rgba", id = nil },
   m_skill = { w = 128, h = 128, foot = 0.945, file = "art_m_skill.rgba", id = nil },
   m_passive = { w = 128, h = 128, foot = 0.984, file = "art_m_passive.rgba", id = nil },

@@ -1128,14 +1128,25 @@ function M.daily()
   local o = C.rpc:InvokeServer("offline"); if o.summary then C.setSummary(o.summary) end
   if o.r then rowCard({ emoji = "💤", title = "오프라인 보상", desc = string.format("%d분 동안 자리를 비웠습니다: 골드 %s · 강화석 %s", o.r.mins, n(o.r.gold), n(o.r.ore)), color = Color3.fromRGB(140, 200, 255), done = true }) end
   local r = C.rpc:InvokeServer("daily"); if r.err then C.msg.Text = tostring(r.err); return end
-  for _, t in ipairs(r.rows or {}) do
+  local drows = r.rows or {}
+  local function st(t) return (t.p >= t.n and not t.claimed) and 0 or (t.claimed and 2 or 1) end
+  table.sort(drows, function(a, b) return st(a) < st(b) end)   -- 받을 것 · 진행 중 · 받은 것
+  local readyN = 0; for _, t in ipairs(drows) do if st(t) == 0 then readyN += 1 end end
+  if readyN > 1 then
+    local f = mk("Frame", { Size = UDim2.new(1, -16, 0, 44), BackgroundTransparency = 1, LayoutOrder = -1 }, C.list)
+    local b = M.btn(f, string.format("보상 모두 받기 (%d)", readyN), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
+      for _, t in ipairs(drows) do if st(t) == 0 then local e = C.rpc:InvokeServer("dailyclaim", t.id); if e.summary then C.setSummary(e.summary) end end end
+      M.daily()
+    end); b.AnchorPoint = Vector2.new(0.5, 0); b.Position = UDim2.new(0.5, 0, 0, 2)
+  end
+  for i, t in ipairs(drows) do
     local ready = t.p >= t.n and not t.claimed
-    rowCard({ emoji = t.claimed and "✓" or "📅", color = ready and M.GOLD or Color3.fromRGB(150, 140, 190), title = string.format("%s (%d/%d)", t.name, t.p, t.n), desc = "보상: " .. tostring(t.text), frac = t.n > 0 and t.p / t.n or 0, ready = ready, done = t.claimed,
+    rowCard({ emoji = t.claimed and "✓" or "📅", color = ready and M.GOLD or Color3.fromRGB(150, 140, 190), order = i, title = string.format("%s (%d/%d)", t.name, math.min(t.p, t.n), t.n), reward = tostring(t.text), frac = t.n > 0 and t.p / t.n or 0, ready = ready, done = t.claimed,
       btn = t.claimed and "수령 완료" or (ready and "받기" or "진행 중"), btnColor = ready and M.BTN.green or M.BTN.gray,
       click = ready and function() local e = C.rpc:InvokeServer("dailyclaim", t.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.daily() end or nil })
   end
   -- 일괄 정리 (강화·사탄 장비 제외)
-  local f = rowCard({ emoji = "🧹", title = "장비 일괄 정리", desc = "강화했거나 사탄 장비는 건드리지 않습니다.", color = Color3.fromRGB(150, 140, 190), h = 112 })
+  local f = rowCard({ order = 999, emoji = "🧹", title = "장비 일괄 정리", desc = "강화했거나 사탄 장비는 건드리지 않습니다.", color = Color3.fromRGB(150, 140, 190), h = 112 })
   local bar = mk("Frame", { Position = UDim2.new(0, 72, 1, -48), Size = UDim2.new(1, -84, 0, 40), BackgroundTransparency = 1 }, f)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
   local function bulk(rr, mode) local e = C.rpc:InvokeServer("bulk", { r = rr, mode = mode }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = e.res and (mode == "sell" and string.format("%d개 판매", e.res.n) or string.format("%d개 분해", e.res.n)) or tostring(e.err); M.daily() end
@@ -1267,45 +1278,73 @@ function M.atlas()
 end
 
 -- ───────── 스탯 ─────────
+local STAT_COL = { Color3.fromRGB(255, 200, 110), Color3.fromRGB(235, 110, 90), Color3.fromRGB(150, 140, 255), Color3.fromRGB(120, 210, 140), Color3.fromRGB(110, 200, 230), Color3.fromRGB(230, 160, 240) }
 function M.stats()
   C.clear()
   local r = C.rpc:InvokeServer("stats"); if r.summary then C.setSummary(r.summary) end
   if r.err or not r.groups then C.msg.Text = tostring(r.err); return end
+  local s = C.summary() or {}
   local A = area(392)
-  local sc = mk("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6 }, A)
-  mk("UIGridLayout", { CellSize = UDim2.new(1 / 3, -8, 0, 186), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  -- 위: 핵심 수치 띠 (전투력 · 레벨 · 체력 · 공격력 · 주문력 · 방어력 · 치명타)
+  local top = mk("Frame", { Size = UDim2.new(1, 0, 0, 56), BackgroundColor3 = Color3.fromRGB(30, 18, 12) }, A); corner(top, 8)
+  mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(60, 34, 18), Color3.fromRGB(22, 14, 10)) }, top); mk("UIStroke", { Color = Color3.fromRGB(150, 110, 50), Thickness = 1.5 }, top)
+  local tl = mk("Frame", { Size = UDim2.new(1, -16, 1, 0), Position = UDim2.new(0, 8, 0, 0), BackgroundTransparency = 1 }, top)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, tl)
+  for i, kv in ipairs({ { "전투력", n(s.power or 0), Color3.fromRGB(255, 205, 90) }, { "레벨", tostring(s.level or 1), Color3.fromRGB(255, 225, 150) }, { "체력", n(s.maxHp or 0), Color3.fromRGB(235, 90, 80) },
+      { "공격력", n(s.atk or 0), Color3.fromRGB(240, 170, 80) }, { "주문력", n(s.mag or 0), Color3.fromRGB(150, 140, 255) }, { "방어력", n(s.def or 0), Color3.fromRGB(140, 190, 230) }, { "치명타", string.format("%.0f%%", (s.crit or 0) * 100), Color3.fromRGB(255, 220, 110) } }) do
+    local c = mk("Frame", { Size = UDim2.new(0, 104, 0, 44), BackgroundColor3 = Color3.fromRGB(14, 9, 7), BackgroundTransparency = 0.2, LayoutOrder = i }, tl); corner(c, 6)
+    txt(c, kv[1], 11, UDim2.new(0, 0, 0, 3), UDim2.new(1, 0, 0, 14), Color3.fromRGB(190, 170, 140), M.FONT, Enum.TextXAlignment.Center)
+    local v = txt(c, kv[2], 18, UDim2.new(0, 0, 0, 18), UDim2.new(1, 0, 0, 22), kv[3], M.FONT, Enum.TextXAlignment.Center); v:SetAttribute("NoTr", true); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, v)
+  end
+  -- 아래: 묶음별 상세 (묶음마다 색 띠 · 줄마다 번갈아 어두운 줄무늬)
+  local sc = mk("ScrollingFrame", { Position = UDim2.new(0, 0, 0, 64), Size = UDim2.new(1, 0, 1, -64), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6 }, A)
+  mk("UIGridLayout", { CellSize = UDim2.new(1 / 3, -8, 0, 230), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
   for gi, g in ipairs(r.groups) do
-    local B = box(sc, UDim2.new(), UDim2.new(), g[1]); B.LayoutOrder = gi
-    local lst = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 1, -34), BackgroundTransparency = 1 }, B)
-    mk("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
+    local col = STAT_COL[(gi - 1) % #STAT_COL + 1]
+    local B = mk("Frame", { BackgroundColor3 = Color3.fromRGB(16, 12, 12), LayoutOrder = gi }, sc); corner(B, 8); mk("UIStroke", { Color = col:Lerp(Color3.new(0, 0, 0), 0.4), Thickness = 1.5 }, B)
+    local hb = mk("Frame", { Size = UDim2.new(1, 0, 0, 28), BackgroundColor3 = col:Lerp(Color3.new(0, 0, 0), 0.65) }, B); corner(hb, 8)
+    local ht = txt(hb, g[1], 15, UDim2.new(0, 10, 0, 0), UDim2.new(1, -20, 1, 0), col, M.FONT); ht.TextYAlignment = Enum.TextYAlignment.Center; mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, ht)
+    local lst = mk("ScrollingFrame", { Position = UDim2.new(0, 6, 0, 32), Size = UDim2.new(1, -12, 1, -36), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 3 }, B)
+    mk("UIListLayout", { Padding = UDim.new(0, 0), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
     for ri, row in ipairs(g[2]) do
-      local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = ri }, lst)
-      txt(f, row[1], 12, UDim2.new(), UDim2.new(0.6, 0, 1, 0), Color3.fromRGB(200, 195, 225))
-      local v = txt(f, row[2], 12, UDim2.new(0.6, 0, 0, 0), UDim2.new(0.4, 0, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); v:SetAttribute("NoTr", true)
+      local f = mk("Frame", { Size = UDim2.new(1, -4, 0, 19), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = ri % 2 == 0 and 0.95 or 1, LayoutOrder = ri }, lst)
+      local k = txt(f, row[1], 13, UDim2.new(0, 4, 0, 0), UDim2.new(0.62, -4, 1, 0), Color3.fromRGB(205, 195, 210)); k.TextTruncate = Enum.TextTruncate.AtEnd; k.TextYAlignment = Enum.TextYAlignment.Center
+      local v = txt(f, row[2], 13, UDim2.new(0.62, 0, 0, 0), UDim2.new(0.38, -4, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); v:SetAttribute("NoTr", true); v.TextYAlignment = Enum.TextYAlignment.Center
     end
   end
 end
 
 
 -- ───────── 창고 (가방 ⇄ 창고: 누르면 옮김) ─────────
+local stashTab = "all"   -- 창고 부위 분류
 function M.stash()
   C.clear()
   local r = C.rpc:InvokeServer("stash"); if r.summary then C.setSummary(r.summary) end
   if r.err or not r.view then C.msg.Text = tostring(r.err); return end
   local v = r.view
   local A = area(392)
-  local function side(x, title, list, to)
-    local B = box(A, UDim2.new(x, x > 0 and 4 or 0, 0, 0), UDim2.new(0.5, -4, 1, 0), title)
+  -- 부위 분류 탭 (가방 · 창고 함께 거른다)
+  local tb = mk("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 }, A)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, tb)
+  for i, k in ipairs(INV_TABS) do
+    local on = stashTab == k
+    local b = M.btn(tb, k == "all" and "전체" or (Items.SLOT_NAME[k] or k), UDim2.new(0, 74, 1, 0), on and M.BTN.gold or M.BTN.gray, function() stashTab = k; M.stash() end); b.LayoutOrder = i; b.TextSize = 13
+  end
+  local function keep(it) return stashTab == "all" or it.slot == stashTab or (stashTab == "ring" and it.slot == "ring2") end
+  local function side(x, title, list0, to)
+    local list = {}; for _, it in ipairs(list0) do if keep(it) then list[#list + 1] = it end end
+    local B = box(A, UDim2.new(x, x > 0 and 4 or 0, 0, 36), UDim2.new(0.5, -4, 1, -36), title)
     local g = grid(B, UDim2.new(0, 6, 0, 30), UDim2.new(1, -12, 1, to == "stash" and -36 or -80), 60)
+    if #list == 0 then txt(B, "이 분류의 장비가 없습니다.", 13, UDim2.new(0, 12, 0, 40), UDim2.new(1, -24, 0, 20), Color3.fromRGB(190, 175, 160)) end
     for i, it in ipairs(list) do
       local t = M.tile(g, 60, { order = i, tip = { title = it.title, color = itemColor(it), lines = it.lines }, art = artOf(it), emoji = SLOT_EMOJI[it.slot], color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or nil, br = it.ilvl and ("i" .. it.ilvl) or nil,
         click = function() local e = C.rpc:InvokeServer("stashmove", { uid = it.uid, to = to }); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end })
-      t.MouseEnter:Connect(function() C.msg.Text = it.title .. " · " .. table.concat(it.lines or {}, " · ") end)
     end
     return B
   end
-  side(0, string.format("가방 %d개 → 창고로", #v.inv), v.inv, "stash")
-  local S = side(0.5, string.format("창고 %d / %d → 가방으로", #v.items, v.cap), v.items, "inv")
+  side(0, string.format("가방 %d개  ·  누르면 창고로", #v.inv), v.inv, "stash")
+  local S = side(0.5, string.format("창고 %d / %d칸  ·  누르면 가방으로", #v.items, v.cap), v.items, "inv")
+  pbar(S, UDim2.new(0, 8, 0, 24), UDim2.new(1, -16, 0, 4), #v.items / math.max(1, v.cap), #v.items >= v.cap and Color3.fromRGB(230, 90, 80) or Color3.fromRGB(200, 160, 70))   -- 창고가 얼마나 찼는지
   if v.expandCost then
     local b = M.btn(S, string.format("창고 +10칸 (골드 %s)", n(v.expandCost)), UDim2.new(1, -12, 0, 38), M.BTN.gold, function()
       local e = C.rpc:InvokeServer("stashexpand"); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.stash() end)
@@ -1482,18 +1521,31 @@ function M.ranking()
 end
 
 -- ───────── 우편함 ─────────
-local MAIL_NAME = { gold = "골드", ore = "강화석", hone = "연마석", orbC = "혼돈 구슬", orbD = "신성한 구슬", shards = "균열 조각", keys = "공허의 열쇠" }
+local MAIL_NAME = { gold = "골드", ore = "강화석", hone = "아르카나 조각", arcana = "아르카나 조각", orbC = "혼돈 구슬", orbD = "혼돈 구슬", shards = "균열 조각", keys = "공허의 열쇠", gems = "보석" }
 function M.mail()
   C.clear()
   local r = C.rpc:InvokeServer("mail"); if r.err then C.msg.Text = tostring(r.err); return end
-  if #(r.rows or {}) == 0 then rowCard({ emoji = "✉", title = "우편함", desc = "받은 우편이 없습니다.", color = Color3.fromRGB(150, 140, 190) }); return end
-  for i = #r.rows, 1, -1 do
-    local m = r.rows[i]
-    local rw = {}; for k, v in pairs(m.reward or {}) do rw[#rw + 1] = string.format("%s +%s", MAIL_NAME[k] or k, n(v)) end
-    local has = #rw > 0
-    rowCard({ emoji = m.got and "✓" or "✉", color = (has and not m.got) and M.GOLD or Color3.fromRGB(150, 140, 190), title = tostring(m.title), desc = tostring(m.body or "") .. (has and (string.char(10) .. table.concat(rw, " · ")) or ""), h = has and 86 or nil, ready = has and not m.got, done = m.got,
-      btn = has and (m.got and "받음" or "받기") or nil, btnColor = (has and not m.got) and M.BTN.green or M.BTN.gray,
-      click = (has and not m.got) and function() local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.mail() end or nil })
+  local rows = r.rows or {}
+  if #rows == 0 then rowCard({ emoji = "✉", title = "우편함이 비어 있습니다", desc = "공지 · 보상 우편이 오면 여기에 쌓입니다.", color = Color3.fromRGB(150, 140, 190) }); return end
+  -- 받을 것 먼저 (최근 순), 받은 것은 아래
+  local order = {}; for i = #rows, 1, -1 do order[#order + 1] = rows[i] end
+  local function has(m) return next(m.reward or {}) ~= nil end
+  table.sort(order, function(a, b) local ra, rb = has(a) and not a.got, has(b) and not b.got; if ra ~= rb then return ra end; return false end)
+  local ready = 0; for _, m in ipairs(order) do if has(m) and not m.got then ready += 1 end end
+  if ready > 1 then
+    local f = mk("Frame", { Size = UDim2.new(1, -16, 0, 44), BackgroundTransparency = 1, LayoutOrder = -1 }, C.list)
+    local b = M.btn(f, string.format("우편 모두 받기 (%d)", ready), UDim2.new(0, 220, 0, 40), M.BTN.green, function()
+      for _, m in ipairs(order) do if has(m) and not m.got then local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end end end
+      M.mail()
+    end); b.AnchorPoint = Vector2.new(0.5, 0); b.Position = UDim2.new(0.5, 0, 0, 2)
+  end
+  for i, m in ipairs(order) do
+    local rw = {}; for k, v in pairs(m.reward or {}) do rw[#rw + 1] = string.format("%s %s", MAIL_NAME[k] or k, n(v)) end; table.sort(rw)
+    local hs = #rw > 0
+    rowCard({ order = i, emoji = m.got and "✓" or "✉", color = (hs and not m.got) and M.GOLD or Color3.fromRGB(150, 140, 190), title = tostring(m.title), desc = tostring(m.body or ""), reward = hs and table.concat(rw, " · ") or nil,
+      ready = hs and not m.got, done = m.got or nil,
+      btn = hs and (m.got and "받음" or "받기") or nil, btnColor = (hs and not m.got) and M.BTN.green or M.BTN.gray,
+      click = (hs and not m.got) and function() local e = C.rpc:InvokeServer("mailclaim", m.id); if e.summary then C.setSummary(e.summary) end; C.msg.Text = tostring(e.err or ""); M.mail() end or nil })
   end
 end
 
@@ -1606,21 +1658,33 @@ function M.gacha()
   C.clear()
   local r = C.rpc:InvokeServer("gacha"); if r.summary then C.setSummary(r.summary) end
   if r.err or not r.view then C.msg.Text = tostring(r.err); return end
-  local v = r.view; local s = C.summary() or {}
+  local v = r.view
   local A = area(392)
-  local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0.42, -4, 1, 0), "아르카나 소환")
-  txt(L, "아르카나는 소환으로만 얻습니다. 가진 아르카나가 또 나오면 그 아르카나 레벨이 1 오릅니다 (최대 레벨이면 아르카나 조각).", 13, UDim2.new(0, 14, 0, 32), UDim2.new(1, -28, 0, 36), Color3.fromRGB(205, 200, 225))
-  local rl = mk("Frame", { Position = UDim2.new(0, 14, 0, 76), Size = UDim2.new(1, -28, 0, 140), BackgroundTransparency = 1 }, L)
-  mk("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, rl)
+  -- 왼쪽: 점성술 탁자 위 카드 더미 (돌아가는 마법진 + 숨쉬는 빛) · 등급 확률 · 천장
+  local L = mk("Frame", { Size = UDim2.new(0.42, -4, 1, 0), BackgroundColor3 = Color3.fromRGB(20, 10, 30), ClipsDescendants = true }, A); corner(L, 8)
+  mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(46, 20, 64), Color3.fromRGB(12, 6, 18)) }, L)
+  mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1.5, Transparency = 0.3 }, L)
+  local ci = C.Sprites.art("fx_circle")
+  if ci then local m = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 120), Size = UDim2.new(0, 250, 0, 250), BackgroundTransparency = 1, ImageContent = ci.content, ImageColor3 = Color3.fromRGB(190, 120, 255), ImageTransparency = 0.55 }, L)
+    TweenService:Create(m, TweenInfo.new(24, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = 360 }):Play() end
+  local gl = C.Sprites.art("fx_glow")
+  if gl then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 120), Size = UDim2.new(0, 220, 0, 220), BackgroundTransparency = 1, ImageContent = gl.content, ImageColor3 = Color3.fromRGB(220, 130, 255), ImageTransparency = 0.5 }, L)
+    TweenService:Create(g, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.8 }):Play() end
+  local bk = C.Sprites.art("card_back")
+  if bk then for i = 3, 1, -1 do mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, (i - 2) * 10, 0, 120 - (i - 2) * 4), Size = UDim2.new(0, 96, 0, 144), Rotation = (i - 2) * 7, BackgroundTransparency = 1, ImageContent = bk.content, ScaleType = Enum.ScaleType.Fit }, L) end end
+  local hd = txt(L, "아르카나 소환", 18, UDim2.new(0, 12, 0, 8), UDim2.new(1, -24, 0, 22), Color3.fromRGB(235, 205, 255), M.FONT); mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, hd)
+  local rl = mk("Frame", { Position = UDim2.new(0, 14, 0, 210), Size = UDim2.new(1, -28, 0, 110), BackgroundTransparency = 1 }, L)
+  mk("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, rl)
   for i, pct in ipairs(v.rates) do
-    local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, LayoutOrder = i }, rl)
-    txt(f, M.SK_RAR[i], 15, UDim2.new(0, 0, 0, 2), UDim2.new(0.5, 0, 1, 0), M.SK_RCOL[i], M.FONT)
-    local pv = txt(f, string.format("%g%%", pct), 15, UDim2.new(0.5, 0, 0, 2), UDim2.new(0.5, 0, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); pv:SetAttribute("NoTr", true)
+    local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.6, LayoutOrder = i }, rl); corner(f, 4)
+    local chip = mk("Frame", { Position = UDim2.new(0, 6, 0.5, -5), Size = UDim2.new(0, 10, 0, 10), BackgroundColor3 = M.SK_RCOL[i], Rotation = 45 }, f)
+    txt(f, M.SK_RAR[i], 14, UDim2.new(0, 24, 0, 0), UDim2.new(0.5, 0, 1, 0), M.SK_RCOL[i], M.FONT).TextYAlignment = Enum.TextYAlignment.Center
+    local pv = txt(f, string.format("%g%%", pct), 14, UDim2.new(0.5, 0, 0, 0), UDim2.new(0.5, -8, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); pv:SetAttribute("NoTr", true); pv.TextYAlignment = Enum.TextYAlignment.Center
   end
-  txt(L, string.format("전설 이상 보장까지 %d / %d회", v.pity, v.pityMax), 14, UDim2.new(0, 14, 1, -66), UDim2.new(1, -28, 0, 20), Color3.fromRGB(255, 200, 120), M.FONT)
-  pbar(L, UDim2.new(0, 14, 1, -40), UDim2.new(1, -28, 0, 14), v.pity / v.pityMax, Color3.fromRGB(255, 150, 40))
-  txt(L, "10회 소환은 희귀 이상 1개 보장", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
-  local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0), string.format("아르카나 조각 %s · 보석 %s", n(v.arcana), n(v.gems)))
+  txt(L, string.format("전설 이상 보장까지 %d / %d회", v.pity, v.pityMax), 13, UDim2.new(0, 14, 1, -46), UDim2.new(1, -28, 0, 18), Color3.fromRGB(255, 200, 120), M.FONT)
+  pbar(L, UDim2.new(0, 14, 1, -24), UDim2.new(1, -28, 0, 12), v.pity / v.pityMax, Color3.fromRGB(255, 150, 40))
+  -- 오른쪽: 계열 고르기 · 조각/보석으로 1회 · 10회 (모자라면 흐리게, 가진 양 표시)
+  local R = box(A, UDim2.new(0.42, 4, 0, 0), UDim2.new(0.58, -4, 1, 0))
   local function pull(nn, pay)
     if pulling then return end; pulling = true
     local e = C.rpc:InvokeServer("gachapull", { n = nn, pay = pay, fam = gachaFam ~= "all" and gachaFam or nil }); pulling = false
@@ -1628,24 +1692,32 @@ function M.gacha()
     if e.err or not e.res then C.msg.Text = tostring(e.err); return end
     M.gacha(); revealResults(e.res)
   end
-  local function costRow(parent, art, val) return M.cost(parent, { { art, val, nil, art == "i_arcana" and "조각" or nil } }, UDim2.new(0.58, 0, 0, 22)) end
-  local function bb(y, title, art, val, col, cb)
-    local b = M.btn(R, "", UDim2.new(1, -28, 0, 58), col, cb); b.Position = UDim2.new(0, 14, 0, y)
-    txt(b, title, 22, UDim2.new(0, 18, 0, 14), UDim2.new(0.55, 0, 0, 30), Color3.new(1, 1, 1), M.FONT)
-    costRow(b, art, val)
-  end
-  -- 소환 계열: 물리 / 마법 / 전체 (천장은 함께 센다)
   if not gachaFam then local hs = C.summary(); gachaFam = hs and (hs.hero == "mage" and "mag" or "phys") or "all" end
-  local ft = mk("Frame", { Position = UDim2.new(0, 14, 0, 34), Size = UDim2.new(1, -28, 0, 30), BackgroundTransparency = 1 }, R)
+  txt(R, "어떤 아르카나를 부를까요?", 14, UDim2.new(0, 14, 0, 10), UDim2.new(1, -28, 0, 18), Color3.fromRGB(210, 195, 230), M.FONT)
+  local ft = mk("Frame", { Position = UDim2.new(0, 14, 0, 32), Size = UDim2.new(1, -28, 0, 30), BackgroundTransparency = 1 }, R)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
-  for i, f in ipairs({ { "phys", "물리 소환" }, { "mag", "마법 소환" }, { "all", "전체 소환" } }) do
+  for i, f in ipairs({ { "phys", "물리 계열" }, { "mag", "마법 계열" }, { "all", "전체" } }) do
     local b = M.btn(ft, f[2], UDim2.new(0.333, -4, 1, 0), gachaFam == f[1] and M.BTN.gold or M.BTN.gray, function() gachaFam = f[1]; M.gacha() end); b.LayoutOrder = i; b.TextSize = 14
   end
-  bb(72, "1회 소환", "i_arcana", v.arc1, M.BTN.blue, function() pull(1, "arcana") end)   -- 아르카나 조각 (전투 · 과제 보상)
-  bb(136, "10회 소환", "i_arcana", v.arc10, M.BTN.gold, function() pull(10, "arcana") end)
-  bb(208, "1회 소환", "i_divine", v.gem1, M.BTN.purple, function() pull(1, "gem") end)
-  bb(272, "10회 소환", "i_divine", v.gem10, M.BTN.red, function() pull(10, "gem") end)
-  txt(R, "아르카나 조각은 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트로 얻습니다. 보석은 일일 과제와 상점으로.", 12, UDim2.new(0, 14, 1, -22), UDim2.new(1, -28, 0, 16), Color3.fromRGB(180, 175, 200))
+  local function group(y, title, art, have, c1, c10, pay, col1, col10)
+    local hdr = mk("Frame", { Position = UDim2.new(0, 14, 0, y), Size = UDim2.new(1, -28, 0, 22), BackgroundTransparency = 1 }, R)
+    local ia = C.Sprites.art(art); if ia then mk("ImageLabel", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, ImageContent = ia.content, ScaleType = Enum.ScaleType.Fit }, hdr) end
+    txt(hdr, string.format("%s  ·  보유 %s", title, n(have)), 14, UDim2.new(0, 28, 0, 0), UDim2.new(1, -28, 1, 0), Color3.fromRGB(240, 200, 255), M.FONT).TextYAlignment = Enum.TextYAlignment.Center
+    for i, o in ipairs({ { 1, c1, col1, "1회 소환", nil }, { 10, c10, col10, "10회 소환", "희귀 이상 1장 보장" } }) do
+      local ok = have >= o[2]
+      local b = M.btn(R, "", UDim2.new(0.5, -18, 0, 70), ok and o[3] or M.BTN.gray, function() if ok then pull(o[1], pay) else C.msg.Text = string.format("%s 부족", title) end end)
+      b.Position = UDim2.new((i - 1) * 0.5, i == 1 and 14 or 4, 0, y + 26)
+      txt(b, o[4], 20, UDim2.new(0, 0, 0, 8), UDim2.new(1, 0, 0, 24), ok and Color3.new(1, 1, 1) or Color3.fromRGB(170, 160, 160), M.FONT, Enum.TextXAlignment.Center)
+      local cr = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 34), Size = UDim2.new(0, 0, 0, 20), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1 }, b)
+      mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 4) }, cr)
+      if ia then mk("ImageLabel", { Size = UDim2.new(0, 18, 0, 18), BackgroundTransparency = 1, ImageContent = ia.content, ScaleType = Enum.ScaleType.Fit }, cr) end
+      local cv = mk("TextLabel", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = n(o[2]), Font = M.FONT, TextSize = 16, TextColor3 = ok and Color3.fromRGB(255, 235, 200) or Color3.fromRGB(255, 120, 110) }, cr); cv:SetAttribute("NoTr", true)
+      if o[5] then txt(b, o[5], 11, UDim2.new(0, 0, 1, -16), UDim2.new(1, 0, 0, 14), Color3.fromRGB(255, 230, 160), M.FONT, Enum.TextXAlignment.Center) end
+    end
+  end
+  group(74, "아르카나 조각", "i_arcana", v.arcana or 0, v.arc1, v.arc10, "arcana", M.BTN.blue, M.BTN.gold)
+  group(182, "보석", "i_gem", v.gems or 0, v.gem1, v.gem10, "gem", M.BTN.purple, M.BTN.red)
+  local ft2 = txt(R, "아르카나 조각: 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트 · 아르카나 분해\n보석: 일일 과제 · 상점", 12, UDim2.new(0, 14, 1, -40), UDim2.new(1, -28, 0, 34), Color3.fromRGB(180, 170, 200)); ft2.TextWrapped = true
 end
 -- 소환 목록: 뽑을 수 있는 스킬 전체 (아직 잠긴 것은 흐리게, 가진 것은 최고 등급 표시)
 function M.gachalist()
@@ -1671,7 +1743,7 @@ function M.gachalist()
 end
 
 -- 창 함수가 끝나면 Client 에 알려 새 화면을 바로 보이게 한다 (다 그리기 전엔 예전 화면이 그대로 → 깜빡임 없음)
-for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "atlas", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist" }) do
+for _, k in ipairs({ "inv", "skills", "pass", "forge", "stones", "shop", "quests", "daily", "runes", "class", "charm", "atlas", "stats", "stash", "records", "codex", "dummy", "ranking", "gacha", "gachalist", "mail" }) do
   local f = M[k]
   if type(f) == "function" then M[k] = function(...) f(...); if C and C.done then C.done() end end end
 end

@@ -2150,3 +2150,15 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 보상  	Reward  
 보상 모두 받기 (%d)	Claim All (%d)
 아르카나 조각 5	Arcana Shards 5
+%s  ·  보유 %s	%s  ·  Owned %s
+가방 %d개  ·  누르면 창고로	Bag %d  ·  tap to store
+공지 · 보상 우편이 오면 여기에 쌓입니다.	Notices and reward mail will appear here.
+아르카나 조각: 전투 승리 · 보스 · 첫 클리어 · 일일 과제 · 퀘스트 · 아르카나 분해\n보석: 일일 과제 · 상점	Arcana Shards: victories · bosses · first clears · daily tasks · quests · dismantling Arcana\nGems: daily tasks · shop
+어떤 아르카나를 부를까요?	Which Arcana will you summon?
+우편 모두 받기 (%d)	Claim All Mail (%d)
+우편함이 비어 있습니다	Your mailbox is empty
+%s 부족	Not enough %s
+이 분류의 장비가 없습니다.	No gear in this category.
+창고 %d / %d칸  ·  누르면 가방으로	Storage %d / %d  ·  tap to move to bag
+치명타	Crit
+희귀 이상 1장 보장	1 Rare or better guaranteed

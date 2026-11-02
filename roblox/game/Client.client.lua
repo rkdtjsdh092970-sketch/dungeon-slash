@@ -288,7 +288,10 @@ local titleBand = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UD
 corner(titleBand, 10); Skin.frame(titleBand, "ui_title", 0.3, 0.5)   -- 창 위 가장자리에 걸친 이름 띠
 local panelTitle = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0, 20, 0, 0), Size = UDim2.new(1, -40, 1, 0), Font = Theme.FONT, TextScaled = true, TextColor3 = Color3.fromRGB(255, 225, 150), Text = "", ZIndex = 25 }, titleBand)
 mk("UITextSizeConstraint", { MaxTextSize = 30, MinTextSize = 14 }, panelTitle); mk("UIStroke", { Thickness = 2.5, Color = Color3.fromRGB(20, 6, 4) }, panelTitle)
-local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 54), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
+-- 머리 띠: 다마스크 무늬 그림(ui_header) + 아래 보석 구분선(ui_divider) — 위쪽이 밋밋하지 않게, 본문과 다른 색
+local headStrip = mk("ImageLabel", { Position = UDim2.new(0, 14, 0, 22), Size = UDim2.new(1, -28, 0, 72), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Stretch, ZIndex = 21 }, root)
+local headDiv = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 94), Size = UDim2.new(0.9, 0, 0, 30), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Stretch, ZIndex = 23 }, root)
+local tabRow = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 52), Size = UDim2.new(1, -32, 0, 34), ZIndex = 22 }, root)
 mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, tabRow)   -- 탭은 가운데
 local list = mk("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 96), Size = UDim2.new(1, -32, 1, -112), BackgroundColor3 = Color3.fromRGB(12, 9, 9), BackgroundTransparency = 0.35, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8, ZIndex = 22 }, root)
 corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list); mk("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6) }, list)
@@ -575,7 +578,9 @@ openPanel = function(title, tabs, first)
     clear(); views[key](); swapNow()   -- 다 그렸으면 바로 보이기
   end
   if #tabs > 1 then for i, t in ipairs(tabs) do local b = button(tabRow, t[1], UDim2.new(), UDim2.new(0, 120, 1, 0), function() sel(t[2]) end); b.LayoutOrder = i; b.ZIndex = 23; b.TextSize = 15; b:SetAttribute("SkinTab", true); btns[t[2]] = b end end
-  local top = #tabs > 1 and 96 or 58; list.Position = UDim2.new(0, 16, 0, top); list.Size = UDim2.new(1, -32, 1, -top - 16)
+  local top = #tabs > 1 and 104 or 70; list.Position = UDim2.new(0, 16, 0, top); list.Size = UDim2.new(1, -32, 1, -top - 16)
+  headStrip.Size = UDim2.new(1, -28, 0, top - 30); headDiv.Position = UDim2.new(0.5, 0, 0, top - 8)   -- 탭이 없으면 머리 띠도 얇게
+  if not headStrip:GetAttribute("Art") then headStrip:SetAttribute("Art", true); local ha = Sprites.art("ui_header"); if ha then headStrip.ImageContent = ha.content end; local hd = Sprites.art("ui_divider"); if hd then headDiv.ImageContent = hd.content end end
   sel(first or tabs[1][2])
 end
 openPanelFn = openPanel
