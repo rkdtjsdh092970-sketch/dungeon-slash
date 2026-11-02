@@ -506,7 +506,7 @@ function views.help()
   clear()
   card("How the game flows", {
     "Your hero fights automatically. You grow stronger with arcana, gear and passives, and push ever higher.",
-    "Meadow 1–5 → Abyssal Rift floors 1–100 (win battles for EXP) · Boss Gates open at Rift 20/40/70/100 and drop basic attacks (keys come from key monsters) → graduate at floor 100 → Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms." }, {})
+    "Meadow 1–5 → Abyssal Rift floors 1–100 (win battles for EXP) · Boss Gates open at Rift 20/40/80/100 and drop basic attacks (keys come from key monsters) → graduate at floor 100 → Endless Rift · Vault · Abyss Gate → Risen Tower · Stone Temple · Raids → Class · Charms." }, {})
   card("How to raise your Power (most important first)", {
     "1) Gear: press [Auto Equip] in your bag. Items marked with a green ▲ are upgrades. Weapon, gloves and amulet matter most.",
     "2) Arcana: slot 1 is your basic attack (new ones and level-ups drop from Boss Gates). Fill slots 2–4 with Arcana of your family (physical or magic) from Summon — pulling the same Arcana again levels it up.",
@@ -1142,11 +1142,11 @@ local function showInfo(t)
         local okS, SKd = pcall(require, RS.Game.Data.Skills)
         local RC = { Color3.fromRGB(190, 190, 200), Color3.fromRGB(110, 170, 255), Color3.fromRGB(255, 170, 70), Color3.fromRGB(200, 120, 255), Color3.fromRGB(240, 70, 70) }
         if okS and SKd.GATE_BASIC and not upper then
-          local maxT = ({ 0, 1, 2, 3 })[stage]; local names = {}
+          local maxT = ({ 0, 1, 2, 3 })[stage]; local minT = ({ 0, 0, 1, 2 })[stage]; local names = {}
           local byId = {}; for _, d in ipairs(SKd.SKILLS) do byId[d.id] = d end
-          for _, id in ipairs(SKd.GATE_BASIC[hb[1]] or {}) do local d = byId[id]; local tr = d and (d.tier or 0) or 0; if d and tr <= maxT then names[#names + 1] = d.name end end
+          for _, id in ipairs(SKd.GATE_BASIC[hb[1]] or {}) do local d = byId[id]; local tr = d and (d.tier or 0) or 0; if d and tr <= maxT and tr >= minT then names[#names + 1] = d.name end end
           line(string.format("Drops — Basic attacks (30–50%%): %s", #names > 0 and table.concat(names, ", ") or "—"), 14, RC[maxT + 1], 40)
-          line(string.format("Gear T%d · Orbs · Gold%s", ({ 2, 3, 4, 5 })[stage], U.graduated and " · Arcana of this element" or ""), 14, Color3.fromRGB(150, 210, 255))
+          line(string.format("Gear T%d · Orbs · Gold%s", ({ 2, 3, 5, 5 })[stage], U.graduated and " · Arcana of this element" or ""), 14, Color3.fromRGB(150, 210, 255))
         elseif upper then line("Drops — Satan · Doom grade Arcana · T6 gear", 14, Color3.fromRGB(255, 120, 110)) end
       end
       do   -- 보스 그림 (오른쪽 위)

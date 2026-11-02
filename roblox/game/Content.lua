@@ -11,8 +11,8 @@ local Econ = require(script.Parent.Economy)
 local M = {}
 local floor, max, min = math.floor, math.max, math.min
 local UP_TIERS, UP_KEYS = { 165.7, 171.7, 177.7, 183.6 }, 5   -- 2026-11-02 재보정: 탑 100층 비례 (참 4개 조건은 시뮬 불가)
-local GATE_TIERS = { 25, 45, 75, 105 }   -- 2026-11-03: 균열 진행 중에 차근차근 연다 (단계 = 균열 층 수준)
-local GATE_NEED = { 20, 40, 70, 100 }   -- 단계마다 필요한 균열 최고층
+local GATE_TIERS = { 25, 50, 90, 128 }   -- 2026-11-03: 균열 진행 중에 차근차근 (1~3단계 = 균열 층 수준, 4단계 = 솟아오른 탑 약 40층)
+local GATE_NEED = { 20, 40, 80, 100 }   -- 단계마다 필요한 균열 최고층
 M.GATE_NEED = GATE_NEED   -- 2026-11-02 재보정 (sim/endgame_calib.lua, 난이도당 24판 · 승률 60%)
 M.GATE_TIERS, M.UP_TIERS = GATE_TIERS, UP_TIERS   -- 지도 창 권장 전투력 표시용   -- 보스 관문 1~4단계 (2026-11-02 전 테스터 기준: T5 1등급1·2등급2·3등급2 → 1등급3·2등급2)
 local BOSS_SKILL_RW = { { 12, 42, 42, 4, 0, 0 }, { 8, 28, 55, 9, 0, 0 }, { 6, 18, 67, 9, 0, 0 }, { 5, 12, 70, 13, 0, 0 } }
@@ -64,7 +64,7 @@ end
 -- 늦은 콘텐츠 장비 드랍
 local function lateItems(rng, sv, node, kind, boss, extra)
   local ilvl = ((kind == "craid" and node.diff == 3) or kind == "warden") and 6 or 5
-  if (kind == "void" or Mon.EB[kind]) and not node.upper then ilvl = ({ 2, 3, 4, 5 })[max(1, min(4, node.vsel or 1))] end   -- 보스 관문 단계별 장비 티어
+  if (kind == "void" or Mon.EB[kind]) and not node.upper then ilvl = ({ 2, 3, 5, 5 })[max(1, min(4, node.vsel or 1))] end   -- 보스 관문 단계별 장비 티어
   local n
   if kind == "raid" then n = 8
   elseif kind == "craid" then n = 6 + 2 * (node.diff or 1)
@@ -172,11 +172,11 @@ function M.play(sv, spec, seed)
   end
   if kind == "void" or EBk then for _, k in ipairs(M.rollBossSkills(rng, sv, kind, node.vsel or 1, node.upper)) do Econ.grantSkill(sv, k.id); res.skills[#res.skills + 1] = k.id end end
   if kind == "void" or EBk then   -- 평타: 관문 단계 1 = 일반, 2 = 희귀까지, 3 = 전설까지, 4 = 신화까지 (확률 30 · 35 · 40 · 50%)
-    local st = max(1, min(4, node.vsel or 1)); local maxT = ({ 0, 1, 2, 3 })[st]
+    local st = max(1, min(4, node.vsel or 1)); local maxT = ({ 0, 1, 2, 3 })[st]; local minT = ({ 0, 0, 1, 2 })[st]   -- 단계가 높을수록 낮은 등급은 빠진다
     if rng:NextNumber() < ({ 0.3, 0.35, 0.4, 0.5 })[st] then
       local pool = {}
-      for _, id in ipairs((SK.GATE_BASIC or {})[kind] or {}) do if Econ.skillTier(id) <= maxT then pool[#pool + 1] = id end end
-      if #pool == 0 then for _, L in pairs(SK.GATE_BASIC or {}) do for _, id in ipairs(L) do if Econ.skillTier(id) <= maxT then pool[#pool + 1] = id end end end end
+      for _, id in ipairs((SK.GATE_BASIC or {})[kind] or {}) do local t = Econ.skillTier(id); if t <= maxT and t >= minT then pool[#pool + 1] = id end end
+      if #pool == 0 then for _, L in pairs(SK.GATE_BASIC or {}) do for _, id in ipairs(L) do local t = Econ.skillTier(id); if t <= maxT and t >= minT then pool[#pool + 1] = id end end end end
       if #pool > 0 then local id = pool[rng:NextInteger(1, #pool)]; local g = Econ.grantSkill(sv, id); res.skills[#res.skills + 1] = id; res.newBasic = g.new and g.name or nil end
     end
   end
