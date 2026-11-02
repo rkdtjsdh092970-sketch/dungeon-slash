@@ -36,15 +36,30 @@ function M.button(b)
   b:SetAttribute("Skinned", true); plain(b)
   b.BackgroundTransparency = 1
   -- 글자: 버튼 안쪽 여백 안에서, 넘치면 저절로 작아진다 (삐져나오지 않게). 최대 크기 = 원래 TextSize
-  local lbl = mk("TextLabel", { Name = "SkinText", BackgroundTransparency = 1, Size = UDim2.new(1, -16, 1, -8), Position = UDim2.new(0, 8, 0, 4), Text = b.Text, Font = b.Font, TextScaled = true,
-    TextColor3 = Color3.fromRGB(245, 232, 205), TextWrapped = true, ZIndex = 1 }, b)
-  local fit = mk("UITextSizeConstraint", { MaxTextSize = math.max(8, b.TextSize), MinTextSize = 7 }, lbl)
+  local lbl = mk("TextLabel", { Name = "SkinText", BackgroundTransparency = 1, Size = UDim2.new(1, -14, 1, -6), Position = UDim2.new(0, 7, 0, 3), Text = b.Text, Font = b.Font, TextSize = b.TextSize,
+    TextColor3 = Color3.fromRGB(245, 232, 205), TextWrapped = string.find(b.Text, string.char(10), 1, true) ~= nil, ZIndex = 1 }, b)
+  -- 원래 글자 크기로 그리되, 칸을 넘치면 넘치지 않을 때까지 1씩 줄인다 (삐져나오지 않게, 필요 없이 작아지지도 않게)
+  local fitting = false
+  local function fit()
+    if fitting then return end; fitting = true
+    task.defer(function()
+      lbl.TextSize = b.TextSize
+      for _ = 1, 24 do
+        if not lbl.Parent then break end
+        local over = lbl.TextBounds.X > lbl.AbsoluteSize.X + 1 or lbl.TextBounds.Y > lbl.AbsoluteSize.Y + 1
+        if not over or lbl.TextSize <= 8 then break end
+        lbl.TextSize -= 1; game:GetService("RunService").Heartbeat:Wait()
+      end
+      fitting = false
+    end)
+  end
+  fit(); lbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
   lbl:SetAttribute("NoTr", true)
   mk("UIStroke", { Thickness = 1.5, Color = Color3.fromRGB(10, 6, 8) }, lbl)
   b.TextTransparency = 1
   if b:GetAttribute("SkinClose") then lbl.Visible = false end   -- 그림에 X 가 있다
-  b:GetPropertyChangedSignal("Text"):Connect(function() lbl.Text = b.Text end)
-  b:GetPropertyChangedSignal("TextSize"):Connect(function() fit.MaxTextSize = math.max(8, b.TextSize) end)
+  b:GetPropertyChangedSignal("Text"):Connect(function() lbl.Text = b.Text; lbl.TextWrapped = string.find(b.Text, string.char(10), 1, true) ~= nil; fit() end)
+  b:GetPropertyChangedSignal("TextSize"):Connect(fit)
   b:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()   -- 선택 표시 등으로 색이 바뀌면 그림도 바꾼다
     local a = Sprites.art(pick(b)); if a then img.ImageContent = a.content end
     b.BackgroundTransparency = 1

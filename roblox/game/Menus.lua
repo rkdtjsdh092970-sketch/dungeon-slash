@@ -1652,7 +1652,7 @@ local function revealResults(res)
     -- 1) 덱에서 날아나온다 (스스스슥)
     for i, r in ipairs(res) do
       local x, y = slot(i)
-      local card = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, sx, 0, sy), Size = UDim2.new(0, W * 0.45, 0, H * 0.45), Rotation = -25, BackgroundTransparency = 1, ZIndex = 82 }, ov)
+      local card = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, sx, 0, sy), Size = UDim2.new(0, W * 0.4, 0, H * 0.4), Rotation = 90, BackgroundTransparency = 1, ZIndex = 82 }, ov)   -- 누운 덱 맨 위에서 일어나며 날아온다
       if not img(card, "card_back", { Size = UDim2.new(1, 0, 1, 0), ZIndex = 83 }) then local f = mk("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(40, 16, 22), ZIndex = 83 }, card); corner(f, 10) end
       cards[i] = card
       TweenService:Create(card, TweenInfo.new(skip and 0.01 or 0.32, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, x, 0, y), Size = UDim2.new(0, W, 0, H), Rotation = 0 }):Play()
@@ -1694,18 +1694,20 @@ function M.gacha()
   mk("UIStroke", { Color = Color3.fromRGB(150, 110, 50), Thickness = 1.5 }, L)
   local alt = C.Sprites.art("summon_altar")
   if alt then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = alt.content, ScaleType = Enum.ScaleType.Crop }, L) end
-  local deckY = 0.34   -- 성좌 원 가운데
+  local deckY = 0.47   -- 제단 윗면 (덱이 가로로 누워 있다)
   local gl = C.Sprites.art("fx_glow")
-  if gl then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, deckY, 0), Size = UDim2.new(0, 230, 0, 230), BackgroundTransparency = 1, ImageContent = gl.content, ImageColor3 = Color3.fromRGB(255, 170, 110), ImageTransparency = 0.6 }, L)
+  if gl then local g = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, deckY, -10), Size = UDim2.new(0, 260, 0, 170), BackgroundTransparency = 1, ImageContent = gl.content, ImageColor3 = Color3.fromRGB(255, 170, 110), ImageTransparency = 0.55 }, L)
     TweenService:Create(g, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { ImageTransparency = 0.85 }):Play() end
   local bk = C.Sprites.art("card_back")
-  if bk then   -- 두툼한 덱: 뒷면 카드 여러 장을 조금씩 어긋나게 쌓는다
-    local N = 9
+  if bk then   -- 가로로 눕힌 두툼한 덱: 카드 뒷면을 90도 돌려 아래로 조금씩 쌓는다 (옆면이 보여 두께가 느껴지게)
+    local N = 14
     for i = 1, N do
-      local d = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, (N - i) * 1.5, deckY, (N - i) * 1.8), Size = UDim2.new(0, 92, 0, 138), BackgroundTransparency = 1, ImageContent = bk.content, ScaleType = Enum.ScaleType.Fit,
-        ImageColor3 = i == N and Color3.new(1, 1, 1) or Color3.fromRGB(150 + i * 10, 140 + i * 10, 140 + i * 10) }, L)
+      local d = mk("ImageLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, deckY, (N - i) * 1.6), Size = UDim2.new(0, 84, 0, 126), Rotation = 90, BackgroundTransparency = 1, ImageContent = bk.content, ScaleType = Enum.ScaleType.Fit,
+        ImageColor3 = i == N and Color3.new(1, 1, 1) or Color3.fromRGB(90 + i * 8, 70 + i * 7, 60 + i * 6) }, L)
       if i == N then deckRef = d end   -- 맨 위 카드에서 날아나온다
     end
+    -- 덱 아래 그림자
+    local sh = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, deckY, N * 1.6 + 46), Size = UDim2.new(0, 150, 0, 14), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, ZIndex = 0 }, L); corner(sh)
   end
   local hd = txt(L, "아르카나 덱", 18, UDim2.new(0, 12, 0, 8), UDim2.new(1, -24, 0, 22), Color3.fromRGB(255, 220, 160), M.FONT); mk("UIStroke", { Thickness = 2, Color = Color3.new(0, 0, 0) }, hd)
   local rb = mk("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -8), Size = UDim2.new(1, -20, 0, 168), BackgroundColor3 = Color3.fromRGB(8, 4, 6), BackgroundTransparency = 0.2 }, L); corner(rb, 8)
