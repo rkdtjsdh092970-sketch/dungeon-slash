@@ -499,27 +499,6 @@ function views.runes()
     card(tostring(k.name or k.id) .. (k.rune and (" [" .. k.rune .. "]") or ""), {}, btns)
   end
 end
-function views.guild()
-  clear(); local r = rpc:InvokeServer("g_view"); if r.summary then setSummary(r.summary) end
-  local v = r.view
-  if v.none then
-    card("길드에 가입하지 않았습니다", { "창설 비용 " .. v.createCost .. "G · 이름은 2~12자" }, { { "창설", function() prompt("길드 이름 (2~12자)", "이름", function(nm) local e = rpc:InvokeServer("g_create", nm); msg.Text = e.err or "창설!"; views.guild() end) end } })
-    card("길드에 들면", { "주간 길드 목표를 함께 채워 보상을 받습니다.", "길드 보스에 도전해 순위에 따라 강화석 · 혼돈 구슬을 받습니다.", "길드 상점에서 길드 코인으로 재료를 삽니다.", "길드 레벨이 오르면 아이템 발견(MF)이 늘어납니다." }, {})
-    for _, g in ipairs(v.list) do card(string.format("%s (Lv%d · %d명)", g.name, g.lv, g.members), { "길드장 " .. g.leader }, { { "가입", function() local e = rpc:InvokeServer("g_join", g.id); msg.Text = e.err or "가입!"; views.guild() end } }) end
-    return
-  end
-  card(string.format("%s · Lv%d · %d명 · 코인 %d", v.name, v.lv, v.count, v.coins), { "공지: " .. (v.motd ~= "" and v.motd or "(없음)") }, {
-    { "10만 기부", function() local e = rpc:InvokeServer("g_donate", 100000); msg.Text = e.err or "기부 완료"; if e.summary then setSummary(e.summary) end; views.guild() end },
-    { "공지", function() prompt("길드 공지", "공지 내용", function(tx) local e = rpc:InvokeServer("g_motd", tx); msg.Text = e.err or ""; views.guild() end) end },
-    { "탈퇴", function() rpc:InvokeServer("g_leave"); views.guild() end } })
-  local gl = {}; for _, g in ipairs(v.goals) do gl[#gl + 1] = string.format("%s %d / %d%s", g.id == "kill" and "처치" or (g.id == "boss" and "보스" or "클리어"), g.prog, g.goal, g.done and " ✔" or "") end
-  card("주간 길드 목표", gl, { { "보상 받기", function() local e = rpc:InvokeServer("g_claim"); msg.Text = e.err or e.msg or ""; if e.summary then setSummary(e.summary) end; views.guild() end } })
-  local rk = {}; for i, x in ipairs(v.bossRank) do if i <= 5 then rk[#rk + 1] = string.format("%d위 %s  %s", i, x.name, tostring(math.floor(x.damage))) end end
-  card(string.format("길드 보스 (남은 도전 %d · 합계 %s)", v.bossTries, tostring(math.floor(v.bossTotal))), rk, {
-    { "도전", function() local e = rpc:InvokeServer("g_boss"); msg.Text = e.err or ("피해 " .. math.floor(e.dmg or 0)); views.guild() end },
-    { "지난주 보상", function() local e = rpc:InvokeServer("g_bossclaim"); msg.Text = e.err or e.msg or ""; if e.summary then setSummary(e.summary) end end } })
-  for _, it in ipairs(v.shop) do card(it.name .. " — 코인 " .. it.cost .. " (주 " .. it.weekly .. "회)", {}, { { "구매", function() local e = rpc:InvokeServer("g_buy", it.id); msg.Text = e.err or "구매"; if e.summary then setSummary(e.summary) end; views.guild() end } }) end
-end
 function views.help()
   clear()
   card("게임의 흐름", {
@@ -685,7 +664,7 @@ Menus.init({ rpc = rpc, list = list, msg = msg, clear = clear, done = function()
   openTab = function(key) if key == "forge" or key == "stones" then openPanel("제련소", { { "대장간", "forge" }, { "돌", "stones" } }, key) else openPanel(TAB_TITLE[key] or key, { { TAB_TITLE[key] or key, key } }) end end, opt = function() return OPT end, setOpt = setOpt })
 views.inv = Menus.inv; views.skills = Menus.skills; views.pass = Menus.pass
 views.forge = Menus.forge; views.stones = Menus.stones; views.shop = Menus.shop; views.quests = Menus.quests; views.daily = Menus.daily
-views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
+views.guild = Menus.guild; views.runes = Menus.runes; views.class = Menus.class; views.charm = Menus.charm; views.atlas = Menus.atlas; views.stats = Menus.stats; views.stash = Menus.stash; views.records = Menus.records; views.codex = Menus.codex; views.dummy = Menus.dummy; views.ranking = Menus.ranking; views.mail = Menus.mail; views.gacha = Menus.gacha; views.gachalist = Menus.gachalist; views.shop = Menus.gacha
 
 -- ── 전투 시작 → 재생 → 결과 ──
 -- 결과 창: 장식 틀 · 위 가장자리에 걸친 큰 승리/패배 띠(빛) · 전투 이름 · 시간·처치 줄 · 보상은 아이콘 칩 · 버튼

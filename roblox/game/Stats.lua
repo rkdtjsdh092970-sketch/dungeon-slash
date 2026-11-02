@@ -127,6 +127,7 @@ function M.computeStats(sv)
   if sv.guildLv then
     for _, gp in ipairs(Config.GUILD_PASSIVES) do if sv.guildLv >= gp.lv then for k, v in pairs(gp.per) do apply(k, v) end end end
   end
+  for k, v in pairs(sv.gbuff or {}) do apply(k, v) end   -- 길드 연구 (서버가 접속 · 길드 요청 때 싣는다)
   s.maxMana = math.max(10, (CFG.BASE_MANA + s.manaFlat) * (1 + s.manaPct) * ml)
   s.allDmg += s.dmgPerMana * s.maxMana / 100 * CFG.DPM_K; s.manaFlatRegen = s.manaRegenFlat * ml; s.manaKill = s.manaOnKill * ml
   s.manaRate = CFG.MANA_REGEN + s.manaRegen; s.manaCostMul = ml * (1 - math.min(0.6, s.manaCostRed)); s.manaShield = math.min(0.8, s.manaShield)

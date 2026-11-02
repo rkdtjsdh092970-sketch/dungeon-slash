@@ -13,7 +13,8 @@ local HttpService = game:GetService("HttpService")
 
 local rpc = RS:FindFirstChild("Rpc") or Instance.new("RemoteFunction"); rpc.Name = "Rpc"; rpc.Parent = RS
 local okDS, store = pcall(function() return DSS:GetDataStore("DungeonSlashV1") end)
-local sessions = {}   -- userId -> { sv = 세이브, busy = bool }
+local sessions = {}
+local gsyncFn   -- (아래 길드 부분에서 정함)   -- userId -> { sv = 세이브, busy = bool }
 
 -- Studio 시험용 "새 계정" 모드: ServerStorage 의 FreshTest 속성을 켜면 세이브를 불러오지도 저장하지도 않는다 (실서버에서는 동작하지 않음)
 local function freshTest() return game:GetService("RunService"):IsStudio() and game:GetService("ServerStorage"):GetAttribute("FreshTest") == true end
@@ -129,6 +130,7 @@ Players.PlayerAdded:Connect(function(p)
   if okLoad == false then p:Kick("Couldn't load your save data. Please rejoin in a moment. (Your progress is protected.)"); return end
   sv = sv and migrate(sv, p.UserId) or Loot.newSave(Random.new(p.UserId))
   sessions[p.UserId] = { sv = sv, busy = false, last = 0 }
+  task.spawn(function() pcall(function() if gsyncFn then gsyncFn(p.UserId, sv) end end) end)   -- 길드 효과
 end)
 -- ── 랭킹 (OrderedDataStore): 균열 최고층 · 레벨 · 허수아비 DPS. Studio 에서 막혀 있으면 빈 목록 ──
 local RANKS = { rift = "Rank_Rift", level = "Rank_Level", dps = "Rank_Dps" }
@@ -330,23 +332,46 @@ end
 local okG, gds = pcall(function() return DSS:GetDataStore("DungeonSlashGuilds") end)
 local gstore = okG and Guild.datastoreStore(gds) or Guild.memoryStore()
 if not okG then warn("길드: DataStore 사용 불가 → 메모리 저장소") end
+-- 길드 효과를 세이브에 싣는다 (길드 레벨 패시브 · 연구 → Stats). 접속 · 길드 요청마다
+local function gsync(uid, sv) local g = Guild.guildOf(gstore, uid); local b = Guild.buffOf(g); sv.guildLv = b and b.lv or 0; sv.gbuff = b and b.per or nil; return g end
+gsyncFn = function(uid, sv) return gsync(uid, sv) end
 local function gview(player, sv)
-  local g = Guild.guildOf(gstore, player.UserId)
-  if not g then return { none = true, list = Guild.list(gstore), createCost = Guild.CFG.CREATE_COST } end
+  local uid = player.UserId
+  local g = gsync(uid, sv)
+  if not g then return { none = true, list = Guild.search(gstore, "", "lv"), invites = Guild.invites(gstore, uid), createCost = Guild.CFG.CREATE_COST, joinTypes = Guild.JOIN } end
   local now = os.time()
-  local mem = {}; for uid, m in pairs(g.members) do mem[#mem + 1] = { name = m.name, donated = m.donated, leader = uid == g.leader } end
-  table.sort(mem, function(a, b) return a.donated > b.donated end)
-  return { name = g.name, lv = Guild.level(g.exp), exp = g.exp, coins = g.coins, motd = g.motd, count = Guild.memberCount(g), leader = g.leader == player.UserId,
-    members = mem, goals = Guild.goals(g, now), bossTries = Guild.bossTriesLeft(g, player.UserId, now), bossRank = Guild.bossRanking(g, now), bossTotal = Guild.bossTotal(g, now), shop = Guild.SHOP }
+  local me = g.members[uid]; if me then me.power = Game.summary(sv).power or 0; Guild.updatePower(gstore, uid, me.power) end
+  local mem = {}
+  for u, m in pairs(g.members) do mem[#mem + 1] = { uid = u, name = m.name, power = m.power or 0, contrib = m.contrib or 0, role = (u == g.leader) and "leader" or ((g.officers or {})[u] and "officer" or "member"), me = u == uid } end
+  table.sort(mem, function(a, b) local R = { leader = 0, officer = 1, member = 2 }; if R[a.role] ~= R[b.role] then return R[a.role] < R[b.role] end; return a.power > b.power end)
+  local apps = {}; if Guild.canManage(g, uid) then for u, a in pairs(g.apps or {}) do apps[#apps + 1] = { uid = u, name = a.name, lv = a.lv, power = a.power } end end
+  local lv, cur, nxt = Guild.levelInfo(g.exp)
+  local res = {}; for _, r in ipairs(Guild.RESEARCH) do local l = (g.research or {})[r.id] or 0; res[#res + 1] = { id = r.id, name = r.name, text = r.text, per = r.per, lv = l, cost = Guild.researchCost(l) } end
+  local rank; for _, r in ipairs(Guild.search(gstore, "", "lv")) do if r.id == g.id then rank = r.rank end end
+  return { id = g.id, name = g.name, lv = lv, exp = g.exp, expCur = cur, expNext = nxt, coins = g.coins, motd = g.motd, count = Guild.memberCount(g), max = Guild.CFG.MAX_MEMBERS,
+    role = g.leader == uid and "leader" or ((g.officers or {})[uid] and "officer" or "member"), emblem = g.emblem or { s = 1, c = 1 }, desc = g.desc or "", join = g.join or "open", minLv = g.minLv or 1, joinTypes = Guild.JOIN,
+    members = mem, apps = apps, power = Guild.totalPower(g), rank = rank, research = res,
+    goals = Guild.goals(g, now), bossTries = Guild.bossTriesLeft(g, uid, now), bossRank = Guild.bossRanking(g, now), bossTotal = Guild.bossTotal(g, now), shop = Guild.SHOP }
 end
 local function grant(sv, t) for k, v in pairs(t) do if k == "upKeys" then sv.upKeys = (sv.upKeys or 0) + v else sv[k] = (sv[k] or 0) + v end end end
 local function guildAction(player, sv, action, arg)
   local uid, name = player.UserId, player.Name
   if action == "g_view" then return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_create" then
-    local g, e, cost = Guild.create(gstore, uid, name, tostring(arg), sv.gold); if not g then return { err = e } end
+    local opt = type(arg) == "table" and arg or { name = arg }
+    local g, e, cost = Guild.create(gstore, uid, name, tostring(opt.name or ""), sv.gold, nil, opt); if not g then return { err = e } end
     sv.gold -= cost; return { view = gview(player, sv), summary = Game.summary(sv) }
-  elseif action == "g_join" then local g, e = Guild.join(gstore, uid, name, tostring(arg)); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_join" then local g, e = Guild.apply(gstore, uid, name, tostring(arg), sv.level, Game.summary(sv).power); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv), msg = g.applied and "가입 신청을 보냈습니다" or "가입했습니다!" }
+  elseif action == "g_search" then local a = type(arg) == "table" and arg or {}; return { list = Guild.search(gstore, a.q, a.sort) }
+  elseif action == "g_set" then local g, e = Guild.setSettings(gstore, uid, arg); if not g then return { err = e } end return { view = gview(player, sv) }
+  elseif action == "g_app" then local g, e = Guild.answerApp(gstore, uid, tonumber(arg and arg.uid), arg and arg.ok); if not g then return { err = e } end return { view = gview(player, sv) }
+  elseif action == "g_inv" then local g, e = Guild.answerInvite(gstore, uid, name, tostring(arg and arg.id), arg and arg.ok); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
+  elseif action == "g_invite" then
+    local ok, tid = pcall(function() return Players:GetUserIdFromNameAsync(tostring(arg)) end)
+    if not ok or not tid then return { err = "그 이름의 플레이어를 찾지 못했습니다" } end
+    local g, e = Guild.invite(gstore, uid, tid); if not g then return { err = e } end return { view = gview(player, sv), msg = tostring(arg) .. " 님을 초대했습니다" }
+  elseif action == "g_role" then local g, e = Guild.setRole(gstore, uid, tonumber(arg and arg.uid), arg and arg.role); if not g then return { err = e } end return { view = gview(player, sv) }
+  elseif action == "g_research" then local g, e = Guild.upgradeResearch(gstore, uid, tostring(arg)); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_leave" then local g, e = Guild.leave(gstore, uid); if not g then return { err = e } end return { view = gview(player, sv), summary = Game.summary(sv) }
   elseif action == "g_motd" then local g, e = Guild.setMotd(gstore, uid, arg); if not g then return { err = e } end return { view = gview(player, sv) }
   elseif action == "g_donate" then

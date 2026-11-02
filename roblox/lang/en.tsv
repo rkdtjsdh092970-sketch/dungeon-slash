@@ -2203,3 +2203,125 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 아직 아르카나가 없습니다. 마을의 [아르카나 소환]에서 뽑으세요.	You have no arcana yet. Summon some at the village [Arcana Summon].
 주간 길드 목표를 함께 채워 보상을 받습니다.	Complete weekly guild goals together for rewards.
 이름은 2~12자	name 2–12 characters
+  (나)	  (me)
+ 기부	 Donate
+ 님에게 길드장을 넘길까요? '위임' 이라고 입력하세요.	: transfer guild leadership? Type 'transfer'.
+ 님을 초대했습니다	 has been invited
+ 님을 추방할까요? '추방' 이라고 입력하세요.	: kick from the guild? Type 'kick'.
+ 님의 초대	's invite
+%d위  %s   %s	#%d  %s   %s
+%s   Lv %d   전투력 %s	%s   Lv %d   Power %s
+%s  Lv %d  ·  %d명	%s  Lv %d  ·  %d members
+1위 강화석 40 · 혼돈 구슬 3 / 2위 25 · 2 / 3위 15 · 1 / 그 외 강화석 8	1st: 40 Enhance Stones · 3 Chaos Orbs / 2nd: 25 · 2 / 3rd: 15 · 1 / others: 8 Enhance Stones
+Lv %d  ·  %d명	Lv %d  ·  %d members
+✦ 길드 효과 (길드원 모두)	✦ Guild Effects (all members)
+가입 방식	Join Type
+가입 신청	Apply
+가입 신청 %d건	Applications: %d
+가입 신청을 보냈습니다	Application sent
+가입했습니다!	Joined!
+강등	Demote
+거절	Decline
+검색 결과가 없습니다.	No results.
+골드 주머니	Gold Pouch
+골드 획득 +%d%%	Gold Gain +%d%%
+공격력 · 주문력 +%d%%	ATK · SPL +%d%%
+공지가 없습니다	No notice
+관리	Manage
+관리 (%d)	Manage (%d)
+균열 조각 30개	30 Rift Shards
+그 이름의 플레이어를 찾지 못했습니다	No player found with that name
+기여도 	Contribution 
+기여도 %s	Contribution %s
+기여도 %s / %s	Contribution %s / %s
+길드 Lv %d	Guild Lv %d
+길드 레벨	Guild Level
+길드 레벨 %d   ·   길드 순위 #%s	Guild Level %d   ·   Rank #%s
+길드 레벨 %d 에 열립니다	Unlocks at Guild Lv %d
+길드 레벨 순위 (길드 기여도)	Guild Level Ranking (contribution)
+길드 레벨 필요	Needs Guild Level
+길드 레벨이 더 높아야 합니다	Guild level is too low
+길드 설정	Guild Settings
+길드 소개	Guild intro
+길드 이름	Guild Name
+길드 이름 검색	Search guild name
+길드 전투력	Guild Power
+길드 전투력 순위 (길드원 전투력 합)	Guild Power Ranking (sum of members)
+길드 정보를 불러오지 못했습니다	Could not load guild info
+길드 창설	Create Guild
+길드 찾기	Find Guild
+길드 코인	Guild Coins
+길드 코인 %s  ·  목표 달성 · 기부로 모입니다  ·  주마다 구매 횟수가 초기화됩니다	Guild Coins %s  ·  earned from goals and donations  ·  purchase limits reset weekly
+길드 코인 %s  ·  연구 단계는 길드 레벨(%d)까지 올릴 수 있습니다  ·  길드장 · 부길드장만 연구	Guild Coins %s  ·  research can go up to guild level (%d)  ·  leader and officers only
+길드 탈퇴	Leave Guild
+길드가 가득 찼습니다	The guild is full
+길드원	Members
+길드원 %d / %d	Members %d / %d
+길드원에게 보일 공지	Notice shown to members
+길드장	Leader
+길드장 · 부길드장만 가능합니다	Leader and officers only
+길드장 · 부길드장만 연구할 수 있습니다	Only the leader and officers can research
+길드장 · 부길드장만 초대할 수 있습니다	Only the leader and officers can invite
+길드장이 나가면 전투력이 가장 높은 길드원이 길드장이 됩니다.	If the leader leaves, the strongest member becomes leader.
+내 직위	My Role
+다음: 	Next: 
+대상이 없습니다	No such member
+레벨 %d 이상만 가입할 수 있습니다	Level %d or higher required
+문양	Emblem
+문양 바꾸기	Change Emblem
+바로 가입	Open
+바로 가입할 수 없는 길드입니다	This guild is not open to join directly
+받은 초대	Invites
+받은 초대 (%d)	Invites (%d)
+받은 초대가 없습니다. 길드장 · 부길드장이 이름으로 초대하면 여기에 나옵니다.	No invites. When a guild leader or officer invites you by name, it shows up here.
+부길드장	Officer
+색	Color
+색 바꾸기	Change Color
+소개	Intro
+소개 (60자)	Intro (60 chars)
+소개가 없습니다	No intro
+수락	Accept
+수호 연구	Guard Research
+신청 후 승인	Apply
+신청이 없습니다.	No applications.
+아이템 발견 +%d%%	Item Find +%d%%
+아직 길드가 없습니다.	No guilds yet.
+아직 길드가 없습니다. [길드 창설]에서 첫 길드를 만들어 보세요!	No guilds yet. Create the first one in [Create Guild]!
+알 수 없는 역할	Unknown role
+없는 신청	No such application
+없는 연구	No such research
+없는 초대	No such invite
+연구	Research
+연구  (코인 %s)	Research  (coins %s)
+예: 매일 균열 같이 돌아요! 초보 환영	e.g. Daily rift runs together! Beginners welcome
+위임	Transfer
+이미 다른 길드에 있는 사람입니다	That player is already in a guild
+이번 주 기록이 없습니다	No records this week
+인원	Members
+인원 %d / %d   ·   전투력 %s\n%s   ·   레벨 %d 이상	Members %d / %d   ·   Power %s\n%s   ·   Lv %d+
+인원순	By Members
+재물 연구	Wealth Research
+전투 연구	Combat Research
+전투 클리어	Battle Clears
+전투력순	By Power
+정말 탈퇴할까요? '탈퇴' 라고 입력하세요.	Really leave? Type 'leave'.
+주 %d회	%d per week
+지금: 	Now: 
+지난주 순위 보상	Last Week Rewards
+창설  (골드 %s)	Create  (gold %s)
+체력 +%d%%	HP +%d%%
+초대	Invite
+초대로만 들어갈 수 있는 길드입니다	Invite only
+초대만	Invite Only
+초대할 플레이어 이름	Player name to invite
+최소 레벨  %d	Min Level  %d
+최소 레벨 %d	Min Level %d
+추방	Kick
+코인 %d	Coins %d
+콘텐츠	Content
+탐색 연구	Exploration Research
+홈	Home
+🎯 주간 길드 목표  ·  모두 함께 채우면 길드원 각자 보상 + 기여도	🎯 Weekly Guild Goals  ·  complete together for individual rewards + contribution
+👹 길드 보스  ·  60초 동안 최대 피해  ·  이번 주 남은 도전 %d회  ·  길드 합계 %s	👹 Guild Boss  ·  max damage in 60s  ·  tries left this week %d  ·  guild total %s
+💰 골드 기부  ·  하루 10만 골드까지 · 1,000골드 = 기여도 20 + 길드 코인 1	💰 Gold Donation  ·  up to 100K gold per day · 1,000 gold = 20 contribution + 1 guild coin
+📜 공지	📜 Notice
