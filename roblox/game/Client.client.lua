@@ -861,7 +861,7 @@ showResult = function(r) launch({ call = function() return r end, noRetry = true
 -- 전투 종류
 local stageSpec, riftSpec, towerSpec
 stageSpec = function(k) return { stage = k, title = k == 5 and "Stage 5 — Groom, Lord of the Fields" or ("Stage " .. k), call = function() return rpc:InvokeServer("fight", { kind = "stage", n = k }) end,
-  nextSpec = function() if k < 5 and summary.cleared >= k then return stageSpec(k + 1) elseif k == 5 and summary.cleared >= 5 then return riftSpec(math.min(100, summary.riftBest + 1)) end end } end
+  nextSpec = function() if k < 5 and summary.cleared >= k then return stageSpec(k + 1) end end } end   -- 보스 스테이지(5) 다음은 없음: 균열은 지도에서 연다
 riftSpec = function(f) return { title = "Abyssal Rift " .. f .. "Floor", call = function() return rpc:InvokeServer("fight", { kind = "rift", n = f }) end,
   nextSpec = function() if f < 100 and summary.riftBest >= f then return riftSpec(f + 1) end end } end
 towerSpec = function(f) return { title = "Risen Tower " .. f .. "Floor", call = function() return rpc:InvokeServer("battle", f) end,
