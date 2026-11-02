@@ -180,6 +180,9 @@ local handle = function(player, action, arg)
     local m = type(arg) == "table" and arg.op ~= "view" and betaDo(arg.op, arg.v) or nil
     return { msg = m, view = betaView() }
   elseif action == "isowner" then return { owner = isOwner(player) }
+  elseif action == "stats" then return { groups = Game.statsView(sv), summary = Game.summary(sv) }
+  elseif action == "atlas" then return { view = Game.atlasView(sv), summary = Game.summary(sv) }
+  elseif action == "atlasbuy" then local ok, e = Game.atlasBuy(sv, tostring(arg)); return { ok = ok, err = (not ok) and e or nil, view = Game.atlasView(sv), summary = Game.summary(sv) }
   elseif action == "speedpass" then return { owns = hasSpeed4(player), id = SPEED4_ID }
   elseif action == "autoclean" then return { res = Game.autoClean(sv, type(arg) == "table" and arg or {}), summary = Game.summary(sv) }
   elseif action == "passview" then return { view = Game.passView(sv), summary = Game.summary(sv) }

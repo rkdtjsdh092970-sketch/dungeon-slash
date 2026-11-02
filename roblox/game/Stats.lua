@@ -143,6 +143,7 @@ function M.computeStats(sv)
   s.stackCap = math.min(CFG.STACK_MAX, CFG.STACK_BASE + s.density)
   s.lanes = math.min(CFG.MAX_LANES, (sv.lanesBase or 3) + s.laneBonus)
   s.avgIlvl = ilvlCnt > 0 and ilvlSum / ilvlCnt or 1
+  if sv.atlas then s.add.boss += (sv.atlas.conq or 0) * 0.02; s.dmgTaken -= (sv.atlas.guard or 0) * 0.01 end   -- 심연 각인
   return s
 end
 

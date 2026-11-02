@@ -199,4 +199,32 @@ function M.stoneList(sv)
   local out = {}; for _, x in ipairs(sv.stones or {}) do out[#out + 1] = { uid = x.uid, rev = x.rev, hi = x.hi } end return out
 end
 
+-- ---------- 심연 각인: 균열 조각으로 영구 보너스 (웹 ATLAS) ----------
+M.ATLAS = {
+  { id = "gold", name = "황금의 인장", max = 10, per = 0.03, pct = true, text = "골드 획득 +3%", cost = 6 },
+  { id = "conq", name = "정복자의 인장", max = 10, per = 0.02, pct = true, text = "보스 추가 피해 +2%", cost = 14 },
+  { id = "ore", name = "단조의 인장", max = 10, per = 0.04, pct = true, text = "강화석 획득 +4%", cost = 6 },
+  { id = "orb", name = "혼돈의 인장", max = 10, per = 0.04, pct = true, text = "구슬 획득 +4%", cost = 8 },
+  { id = "shard", name = "균열의 인장", max = 10, per = 0.04, pct = true, text = "균열 조각 +4%", cost = 8 },
+  { id = "key", name = "열쇠의 인장", max = 10, per = 0.05, pct = true, text = "공허의 열쇠 획득 +5%", cost = 10 },
+  { id = "mf", name = "행운의 인장", max = 10, per = 0.02, pct = true, text = "MF +2%", cost = 10 },
+  { id = "guard", name = "수호의 인장", max = 10, per = 0.01, pct = true, text = "받는 피해 −1%", cost = 14 },
+  { id = "endless", name = "무한의 인장", max = 2, per = 1, pct = false, text = "무한 균열 하루 입장 +1", cost = 60, grow = 2.5 },
+}
+local ATLAS_BY = {}; for _, a in ipairs(M.ATLAS) do ATLAS_BY[a.id] = a end
+function M.atlasCost(a, rank) return math.floor(a.cost * 1.6 * (1 + rank * (a.grow or 0.6)) + 0.5) end
+function M.atlasVal(sv, id) local a = ATLAS_BY[id]; return a and ((sv.atlas and sv.atlas[id]) or 0) * a.per or 0 end
+function M.atlasView(sv)
+  local rows = {}
+  for _, a in ipairs(M.ATLAS) do local r = (sv.atlas and sv.atlas[a.id]) or 0; rows[#rows + 1] = { id = a.id, name = a.name, text = a.text, rank = r, max = a.max, cost = r < a.max and M.atlasCost(a, r) or 0, cur = r * a.per, pct = a.pct } end
+  return { shards = sv.shards or 0, rows = rows }
+end
+function M.atlasBuy(sv, id)
+  local a = ATLAS_BY[id]; if not a then return false, "없는 각인" end
+  sv.atlas = sv.atlas or {}; local r = sv.atlas[id] or 0
+  if r >= a.max then return false, "최대 단계입니다" end
+  local c = M.atlasCost(a, r); if (sv.shards or 0) < c then return false, "균열 조각이 부족합니다" end
+  sv.shards -= c; sv.atlas[id] = r + 1; return true
+end
+
 return M

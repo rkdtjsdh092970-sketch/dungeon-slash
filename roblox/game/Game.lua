@@ -42,7 +42,7 @@ end
 
 function M.summary(sv)
   local st = Stats.computeStats(sv)
-  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
+  return { level = sv.level, gold = floor(sv.gold), ore = sv.ore, best = sv.spire.best, riftBest = sv.rift and sv.rift.best or 0, cleared = sv.cleared or 0, hone = sv.hone or 0, orbC = sv.orbC or 0, orbD = sv.orbD or 0, shards = sv.shards or 0, stones = #(sv.stones or {}), slots = sv.slots, invCount = #sv.inv, maxHp = st.maxHp, atk = st.atk, mag = st.mag, def = st.def, crit = st.critChance, lanes = st.lanes, guildLv = sv.guildLv or 0, lang = sv.lang or "en", set = sv.set }
 end
 function M.inventory(sv)
   local out = {}
@@ -89,6 +89,25 @@ function M.passView(sv)
   return { taken = t, left = Econ.passiveLeft(sv), points = Econ.passivePoints(sv) }
 end
 function M.passTake(sv, id) return Econ.addPassivePath(sv, tostring(id)) end
+function M.atlasView(sv) return Econ.atlasView(sv) end
+-- 스탯 화면 (웹 openStats 의 묶음): { {제목, { {이름, 값 문자열}, ... }}, ... }
+function M.statsView(sv)
+  local s = Stats.computeStats(sv)
+  local function P(v, dg) return string.format("%." .. (dg or 0) .. "f%%", (v or 0) * 100) end
+  local function N(v) v = math.floor(v or 0); if v >= 1e6 then return string.format("%.1fM", v / 1e6) elseif v >= 1e4 then return string.format("%.1fK", v / 1e3) end return tostring(v) end
+  local G = {}
+  G[#G + 1] = { "공격", { { "물리 공격력", N(s.atk) }, { "주문력", N(s.mag) }, { "물리 피해", P(s.physDmg) }, { "마법 피해", P(s.magDmg) }, { "주는 피해", P(s.allDmg) },
+    { "물리 치명타", P(s.critChance, 1) .. " / +" .. P(s.critDmg) }, { "주문 치명타", P(s.spellCrit, 1) .. " / +" .. P(s.spellCritDmg or s.critDmg) }, { "쿨타임 감소", P(s.cdr) }, { "흡혈", P(s.lifesteal, 1) } } }
+  G[#G + 1] = { "방어", { { "체력", N(s.maxHp) }, { "방어력", N(s.def) }, { "회피", P(s.dodge, 1) }, { "받는 피해", P(s.dmgTaken) }, { "초당 회복", P(s.regen, 1) } } }
+  G[#G + 1] = { "마나", { { "최대 마나", N(s.maxMana) }, { "초당 재생", P(s.manaRate, 1) } } }
+  local el = {}; for _, e in ipairs(Items.ELEMS or { "fire", "cold", "light", "void" }) do el[#el + 1] = { string.format("%s 피해", (Items.ELEM_NAME or {})[e] or e), P(s[e .. "Dmg"]) } end
+  el[#el + 1] = { "원소 피해", P(s.elemDmg) }; el[#el + 1] = { "속성 저항 관통", P(s.penElem) }; el[#el + 1] = { "방어 무시", P(s.ignoreDef) }; el[#el + 1] = { "지속 피해", P(s.dotDmg) }
+  G[#G + 1] = { "속성 · 관통", el }
+  G[#G + 1] = { "추가 피해", { { "보스", P(s.add.boss) }, { "정예", P(s.add.elite) }, { "원거리", P(s.add.ranged) }, { "일반", P(s.add.normal) }, { "광역 피해", P(s.aoeDmg) }, { "레인", tostring(s.lanes) } } }
+  G[#G + 1] = { "획득", { { "MF", P(s.mf + Econ.atlasVal(sv, "mf")) }, { "골드 획득", P(s.goldFind + Econ.atlasVal(sv, "gold")) }, { "균열 조각", tostring(sv.shards or 0) } } }
+  return G
+end
+function M.atlasBuy(sv, id) return Econ.atlasBuy(sv, id) end
 function M.sell(sv, uid) return Extras.sell(sv, uid) end
 function M.bulk(sv, r, mode) return Extras.bulk(sv, tonumber(r) or 0, mode == "sell" and "sell" or "dismantle") end
 function M.daily(sv) return Extras.dailyView(sv) end
@@ -141,14 +160,17 @@ function M.fight(sv, kind, n, seed)
   local b = Battle.run(sv, node, rng:NextInteger(1, 2 ^ 30), 0.05, 700)
   local res = { win = b.win, time = b.time, kind = kind, n = n, kills = b.kills, items = {}, gold = 0 }
   if b.win then
-    res.gold = floor(b.gold); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
+    res.gold = floor(b.gold * (1 + Econ.atlasVal(sv, "gold"))); sv.gold += res.gold; sv.stats.kills += b.kills; sv.stats.clears += 1
     local boss = node.kind == "boss" or (kind == "rift" and n % 5 == 0)
     Extras.onWin(sv, b.kills, boss, kind == "rift"); Extras.setRate(sv, b.gold, b.time)
     if kind == "stage" then Extras.questEvent(sv, "kill", b.kills); if node.kind == "boss" then Extras.questEvent(sv, "boss", 1) end end
     if kind == "rift" then Extras.questEvent(sv, "rift", 1); if boss and rng:NextNumber() < 0.2 then local rid = Extras.randomRune(rng); Extras.addRune(sv, rid); res.rune = rid end end
     local d = Loot.fieldDrops(rng, sv, node, boss)
+    do local om = 1 + Econ.atlasVal(sv, "orb"); local function roll(x) x *= om; return floor(x) + (rng:NextNumber() < x - floor(x) and 1 or 0) end; d.orbC = roll(d.orbC or 0); d.orbD = roll(d.orbD or 0) end   -- 혼돈의 인장
     sv.orbD = (sv.orbD or 0) + (d.orbD or 0); if d.stones and d.stones > 0 then res.stones = d.stones; for _ = 1, d.stones do Econ.addStone(sv, false) end end
+    d.ore = floor(d.ore * (1 + Econ.atlasVal(sv, "ore")) + 0.5)
     sv.ore += d.ore; res.ore = d.ore; if d.hone then sv.hone += d.hone; res.hone = d.hone end; if d.orbC > 0 then sv.orbC += d.orbC; res.orbC = d.orbC end
+    if kind == "rift" then local sh = floor((1 + floor(n / 6) + (boss and 3 or 0)) * (1 + Econ.atlasVal(sv, "shard")) + 0.5); sv.shards = (sv.shards or 0) + sh; res.shards = sh end
     for _, it in ipairs(d.items) do if #sv.inv < M.INV_MAX then sv.inv[#sv.inv + 1] = it; res.items[#res.items + 1] = { title = M.itemTitle(it) } else res.full = true end end
     if kind == "stage" and n > (sv.cleared or 0) then
       sv.cleared = n; res.first = true

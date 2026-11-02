@@ -565,4 +565,43 @@ function M.charm()
   end
 end
 
+
+-- ───────── 심연 각인 (균열 조각 → 영구 보너스) ─────────
+function M.atlas()
+  C.clear()
+  local r = C.rpc:InvokeServer("atlas"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.view then C.msg.Text = tostring(r.err); return end
+  local v = r.view
+  local head = mk("Frame", { Size = UDim2.new(1, -16, 0, 40), BackgroundTransparency = 1 }, C.list)
+  txt(head, string.format("균열 조각 %s", n(v.shards)), 18, UDim2.new(0, 4, 0, 4), UDim2.new(0.5, 0, 0, 24), Color3.fromRGB(190, 160, 255), M.FONT)
+  txt(head, "균열 조각으로 영구 보너스를 새깁니다. 조각은 심연의 균열 등 후반 콘텐츠에서 얻습니다.", 12, UDim2.new(0.42, 0, 0, 8), UDim2.new(0.58, 0, 0, 30), Color3.fromRGB(200, 195, 225))
+  for _, a in ipairs(v.rows) do
+    local maxed = a.rank >= a.max
+    local cur = a.pct and string.format("+%d%%", math.floor(a.cur * 100 + 0.5)) or string.format("+%d", a.cur)
+    rowCard({ emoji = "◈", color = maxed and M.GOLD or Color3.fromRGB(170, 120, 255), title = string.format("%s  %d/%d", a.name, a.rank, a.max), desc = string.format("%s · 현재 %s", a.text, cur), frac = a.rank / a.max, ready = not maxed and v.shards >= a.cost,
+      btn = maxed and "최대" or string.format("새기기 %d", a.cost), btnColor = (not maxed and v.shards >= a.cost) and M.BTN.purple or M.BTN.gray,
+      click = (not maxed) and function() local e = C.rpc:InvokeServer("atlasbuy", a.id); if e.summary then C.setSummary(e.summary) end; if e.ok then C.toast("각인을 새겼습니다") else C.msg.Text = tostring(e.err) end; M.atlas() end or nil })
+  end
+end
+
+-- ───────── 스탯 ─────────
+function M.stats()
+  C.clear()
+  local r = C.rpc:InvokeServer("stats"); if r.summary then C.setSummary(r.summary) end
+  if r.err or not r.groups then C.msg.Text = tostring(r.err); return end
+  local A = area(392)
+  local sc = mk("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6 }, A)
+  mk("UIGridLayout", { CellSize = UDim2.new(1 / 3, -8, 0, 186), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, sc)
+  for gi, g in ipairs(r.groups) do
+    local B = box(sc, UDim2.new(), UDim2.new(), g[1]); B.LayoutOrder = gi
+    local lst = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 1, -34), BackgroundTransparency = 1 }, B)
+    mk("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder }, lst)
+    for ri, row in ipairs(g[2]) do
+      local f = mk("Frame", { Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, LayoutOrder = ri }, lst)
+      txt(f, row[1], 12, UDim2.new(), UDim2.new(0.6, 0, 1, 0), Color3.fromRGB(200, 195, 225))
+      local v = txt(f, row[2], 12, UDim2.new(0.6, 0, 0, 0), UDim2.new(0.4, 0, 1, 0), Color3.new(1, 1, 1), M.FONT, Enum.TextXAlignment.Right); v:SetAttribute("NoTr", true)
+    end
+  end
+end
+
 return M
