@@ -27,6 +27,7 @@ const Modal = {
   },
   scrollSnap(box) { const list = []; box.querySelectorAll("*").forEach((el) => { if (el.scrollTop > 0) { const sib = [...box.querySelectorAll(el.tagName + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""))]; list.push({ tag: el.tagName, cls: el.className, i: sib.indexOf(el), top: el.scrollTop }); } }); const h = box.querySelector("h2"); return { h2: h ? h.textContent : "", list }; },
   scrollRestore(box, list) { for (const it of list) { const sel = it.tag + (it.cls && typeof it.cls === "string" ? "." + it.cls.trim().split(/\s+/).join(".") : ""); const el = box.querySelectorAll(sel)[it.i]; if (el) el.scrollTop = it.top; } },
+  isOpen() { return !$("#modal").classList.contains("hidden"); },
   close(silent) { if ($("#modal").classList.contains("hidden")) return; $("#modal").classList.add("hidden"); this.was = false; if (!silent) snd("close"); const f = this.onClose; this.onClose = null; if (f) f(); },
 };
 function askConfirm(msg, yes, cb, danger, no) {
@@ -43,11 +44,11 @@ function initModal() {
 let _pwCache = 0;
 function curPower() {   // 현재 전투력 (전투 중에는 마지막 계산값을 쓴다)
   if (!save) return 0; if (G.screen === "battle" && _pwCache) return _pwCache;
-  try { _pwCache = playerPower(computeStats(save)); } catch (e) {} return _pwCache;
+  try { _pwCache = powerScore5(save); } catch (e) {} return _pwCache;   // 5.0: 로블록스판 전투력 (균열 1층 권장 = 100, 몬스터 강함에 정비례)
 }
 function refreshTop() {
   const s = save; $("#t-lv").textContent = "Lv." + s.level; { const pw = curPower(); $("#t-pow").textContent = fmtPow(pw); $("#t-pow-w").style.display = s.tut && s.tut.done ? "" : "none"; }
-  $("#t-exp").style.width = Math.min(100, ((s.rift ? s.rift.best : 0) / CFG.RIFT_END) * 100) + "%";   // v4: 막대 = 균열 100층 진행도
+  $("#t-exp").style.width = (s.level >= CFG.LEVEL_CAP ? 100 : Math.min(100, (s.exp || 0) / expNeed(s.level) * 100)) + "%";   // 5.0: 막대 = 경험치
   $("#t-gold").textContent = fmtN(s.gold); $("#t-ore").textContent = fmtN(s.ore); $("#t-shard").textContent = fmtN(s.shards);
   $("#t-shard-w").style.display = s.endgame ? "" : "none";
   $("#t-orb").textContent = fmtN(s.orbC); $("#t-orb-w").style.display = s.orbC || s.endgame ? "" : "none";
@@ -71,11 +72,21 @@ function openTitle() {
   $("#title").innerHTML = `<div class="logo"><div class="l1">DUNGEON</div><div class="l2">SLASH</div><div class="l3">자동 전투 핵 앤 슬래시</div></div>
   <div class="tbtns"><button class="btn big" data-t="new">새로 시작</button><button class="btn big" data-t="cont" ${has ? "" : "disabled"}>이어하기</button><button class="btn" data-t="login" ${SRV.on ? "disabled" : ""}>${SRV.on ? "☁ 로그인됨 (" + SRV.name + ")" : "☁ 서버 로그인"}</button><button class="btn" data-t="opt">소리 설정</button></div><div class="tfoot">클릭하면 소리가 켜집니다</div>`;
 }
-function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; startTutorial(); }
+function startNew() { save = newSave(); saveGame(); G.townAct = 1; G.guide = null; openClassPick(); }
+// 5.0 (로블록스판과 같게): 시작 직업 고르기 — 전사(검 · 일격 · 찢기 · 강타) / 마법사(지팡이 · 비전 탄 · 비전 미사일 · 비전 폭발)
+function openClassPick() {
+  const card = (cls, name, col, d1, d2, sk) => `<div class="cpick" data-a="pick" data-c="${cls}"><img src="${artURL(cls) || ""}" alt=""><b style="color:${col}">${name}</b><div class="dim">${d1}</div><div class="dim">${d2}</div><div style="color:#ffd98a;font-size:12px">${sk}</div></div>`;
+  Modal.open(`<h2>길을 고르세요</h2><div class="dim center">첫 무기와 스킬 3개가 정해집니다. 나중에 무기를 바꾸면 길도 바꿀 수 있어요.</div>
+    <div class="cpicks">${card("warrior", "전사", "#ff8a6a", "검을 쓰는 근접 전사", "튼튼한 체력과 강한 물리 공격", "스킬: 일격 · 찢기(범위) · 강타")}${card("mage", "마법사", "#a89aff", "지팡이를 쓰는 마법사", "멀리서 꾸준한 비전 마법", "스킬: 비전 탄 · 비전 미사일 · 비전 폭발")}</div>`, { cls: "wide", noClose: true, on: {
+    pick: (el) => { pickStart(save, el.dataset.c); save.tut.done = true; save.tut5 = 0; save.seen.guide = true; saveGame(); Modal.close(true); G.townAct = 1; G.guide = null; openTown(1); toast("소환 조각 90개를 받았습니다 — 마을의 [스킬 소환]에서 10연 소환을 해 보세요!", "ok"); },
+  } });
+}
 function continueGame() {
   const s = loadGame(); if (!s) return; save = s; if (save.skComp) { const c = save.skComp; delete save.skComp; setTimeout(() => toast(`스킬 개편 보상: 아르카나 조각 ${fmtN(c)}개! 마을의 [스킬 소환]에서 쓰세요`, "ok"), 800); } AU.vol = Object.assign(AU.vol, save.set); AU.applyVol();
   if (save.passReset) { delete save.passReset; setTimeout(() => toast("패시브 트리가 개편되어 찍어 둔 포인트가 모두 환급되었습니다. 훈련소에서 다시 찍어 주세요", "ok"), 800); }
-  if (!save.tut.done) startTutorial(); else { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
+  if (save.needStart) { openClassPick(); return; }
+  if (!save.tut.done) { save.tut.done = true; save.slots = Math.max(save.slots || 1, 4); }   // 5.0: 튜토리얼 전투 대신 바로 마을 (스킬 칸 4칸)
+  { G.townAct = Math.max(1, maxActUnlocked(save)); G.guide = save.seen.guide ? null : "map"; openTown(G.townAct); checkOffline(); }
 }
 
 // ---------- 튜토리얼 ----------
@@ -99,10 +110,10 @@ const isHell = (n) => GRADUATED(save) && n.kind === "stage" && hellNodes(Date.no
 function nodeToBattle(n) {
   if (n.kind === "trial") return { kind: "trial", act: 11, tier: G.trialTier, mods: riftMods(G.trialTier), name: `스킬 시련 ${G.trialTier}단계`, level: 100 };
   if (n.kind === "rift") return { kind: "rift", act: riftRegion(G.riftTier), tier: G.riftTier, mods: riftMods(G.riftTier), name: `심연의 균열 ${G.riftTier}단계`, level: 100 };
-  if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
+  if (n.kind === "raid") return { kind: "raid", act: 10, tier: CFG.RAID.TIER, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(save.raid && save.raid.cleared > 0), level: 100 };
   if (n.kind === "endless") return { kind: "endless", act: 10, tier: Math.max(1, save.rift.best - 2), name: "무한 균열", level: 100 };
   if (n.kind === "void" && n.upper) { const S = G.upVoidStage || 1; return { kind: "void", act: 10, tier: UP_TIERS[S - 1], vsel: S, upper: 1, name: `상위 공허의 군주 ${S}단계`, level: 100 }; }
-  if (n.kind === "void") return { kind: "void", act: 10, tier: 100, vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
+  if (n.kind === "void") return { kind: "void", act: 10, tier: GATE_TIERS[(G.voidStage || 1) - 1], vsel: G.voidStage || 1, name: `공허의 군주 ${G.voidStage || 1}단계`, level: 100 };
   if (n.kind === "craid") { const d = n.sub === "charm" ? 5 : n.sub === "warden" ? 4 : Math.max(1, Math.min(craidOpen(save), G.craidDiff || 1)); if (d === 5) return { kind: "craid", act: 10, diff: 3, charm: 1, tier: CFG.CRAID.TIERS[3], name: "참 던전", level: 100 }; if (d === 4) return { kind: "warden", act: 10, diff: 4, tier: CFG.WARDEN.TIER, name: CFG.WARDEN.NAME, level: 100 }; return { kind: "craid", act: 10, diff: d, tier: CFG.CRAID.TIERS[d], name: `레이드 던전 ${CFG.CRAID.NAMES[d]}`, level: 100 }; }
   if (n.kind === "tower2") { const P = save.spire2 || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END2, Math.min(P.best + 1, G.spire2Floor || P.best + 1))); return { kind: "spire", tw: 2, act: 10, floor: f, tier: spireTier(f, 2), first: f > P.best, name: `심층 첨탑 ${f}층`, level: 100 }; }
   if (n.kind === "tower") { const P = save.spire || { best: 0 }, f = Math.max(1, Math.min(CFG.SPIRE.END, Math.min(P.best + 1, G.spireFloor || P.best + 1))); return { kind: "spire", act: 10, floor: f, tier: spireTier(f), first: f > P.best, name: `솟아난 탑 ${f}층`, level: 100 }; }
@@ -163,7 +174,7 @@ function mapPanel() {
     btnOk = un && save.keys > 0 && save.rift.best >= VOID_NEED[S - 1]; btn = save.rift.best < VOID_NEED[S - 1] ? `균열 ${VOID_NEED[S - 1]}단계 필요` : save.keys > 0 ? "도전" : "열쇠 필요";
   } else {
     const rec = n.kind === "stage" || n.kind === "boss" ? recPower(n.act, n.stage) : n.kind === "elite" ? recPower(n.act, n.need + 1) : recPower(n.act, n.need + 3);
-    const my = playerPower(computeStats(save)), ratio = my / rec, tag = ratio >= 1.15 ? ["여유", "#8df08d"] : ratio >= 0.8 ? ["적정", "#ffe08a"] : ratio >= 0.5 ? ["위험", "#ffa060"] : ["매우 위험", "#ff6a6a"];
+    const my = powerScore5(save), ratio = my / recRift5(n.kind === "stage" || n.kind === "boss" ? n.stage : n.need + 2), tag = ratio >= 1.15 ? ["여유", "#8df08d"] : ratio >= 0.8 ? ["적정", "#ffe08a"] : ratio >= 0.5 ? ["위험", "#ffa060"] : ["매우 위험", "#ff6a6a"];
     if (isHell(n)) h += `<div class="pline hellt">🔥 지옥 스테이지 · 난이도 = 균열 ${Math.max(1, save.rift.best)}단계 수준</div><div class="pline dim">보상 대폭 증가 · 구슬/조각 · 열쇠 · 남은 시간 ${fmtTime(worldLeft())}</div>`;
     else h += `<div class="pline">권장 레벨 ${n.level} · 난이도 <b style="color:${tag[1]}">${tag[0]}</b></div>`;
     if (n.kind === "boss") h += `<div class="pline">${BOSSES[ACTS[n.act - 1].boss].desc}</div>`;
@@ -302,6 +313,7 @@ function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell:
 const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
 function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0, cost: node.upper ? UP_KEYS : 1 } : null; }
 function startBattle(node, opt) {
+  if (typeof tutEvent === "function") tutEvent("battle");
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
   showScreen("battle"); battleHudBuild(b); AU.bgm(bgmFor(node));
   if (opt.tip) tipBox(opt.title, opt.tip);
@@ -394,6 +406,7 @@ function showResult(res, b, replay) {
     },
     autotog: (el) => { const o = (save.opt = save.opt || {}); if (o.autoNext > 0) { o.autoLast = o.autoNext; o.autoNext = 0; if (G.autoCdStop) G.autoCdStop(); } else { o.autoNext = o.autoLast || 3; autoNextCountdown(res, o.autoNext); } saveGame(); el.textContent = autoNextLabel(); },
     inv: () => { IB.mode = "inv"; IB.sel = null; renderItems(); },
+    adv: (el) => adviceGo(el.dataset.k),
   } });
   if (!replay) animateResult(res);
   refreshTop();

@@ -74,6 +74,7 @@ const SAT_DEFS = [
   ["r_conv", "ring", 2, "마법 피해 -10%, 중독 효과 +40%(more)", [["magMore", 0.9], ["poisonMore", 1.4]]],
   ["n_lanes", "neck", 1, "적이 있는 레인 하나당 주는 피해 +5% (최대 4레인)", [["f:lanes", 1]]],
 ];
+SAT_DEFS.push(["a_mom", "armor", 1, "최대 마나 1당 체력 +4, 마나 재생 -30%", [["manaToHp", 4], ["manaRegenPct", -0.3]]]);   // 5.0: '마나 1당 체력'은 일반 옵션에서 사탄 효과로 (로블록스판과 같게)
 const SAT_BY_ID = {}; for (const d of SAT_DEFS) SAT_BY_ID[d[0]] = { id: d[0], slot: d[1], g: d[2], txt: d[3], fx: d[4] };
 const SAT_GRADE = [["매우 좋음", "#ffd24a"], ["좋음", "#8dff9a"], ["애매", "#9ad8ff"], ["쓰레기", "#b0a0a0"], ["쓸모없음", "#807070"]];
 const SAT_W = [5, 17, 38, 25, 15];

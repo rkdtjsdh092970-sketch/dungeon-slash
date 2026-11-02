@@ -47,9 +47,9 @@ function loginDialog(after) {
       const r = await srvLogin(n, p); if (r.err) { $("#lg-e").textContent = r.err; return; }
       if (r.save && save && save.tut && (save.tut.done || save.level > 1)) {   // 서버 세이브와 현재 진행이 둘 다 있을 때
         Modal.open(`<h2>세이브 선택</h2><div class="center pad">서버에 Lv.${r.save.level} 세이브가 있습니다.<br>현재 진행은 Lv.${save.level} 입니다.</div><div class="pbtns"><button class="btn pri" data-a="useS">서버 세이브 불러오기</button><button class="btn" data-a="useL">현재 진행을 서버에 덮어쓰기</button></div>`, { cls: "sm", persistent: true, noClose: true, on: {
-          useS: () => { save = Object.assign(newSave(), r.save); clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); refreshTop(); (after || openTitle)(); },
+          useS: () => { save = Object.assign(newSave(), r.save); if (!("needStart" in r.save)) { save.needStart = false; save.tut5 = 99; save.slots = Math.max(save.slots || 1, 4); } clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); refreshTop(); (after || openTitle)(); },
           useL: () => { srvQueue(); saveGame(); Modal.close(true); toast("현재 진행을 서버에 저장합니다", "ok"); (after || (() => {}))(); } } });
-      } else if (r.save) { save = Object.assign(newSave(), r.save); clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); if (after) after(); else openTitle(); }
+      } else if (r.save) { save = Object.assign(newSave(), r.save); if (!("needStart" in r.save)) { save.needStart = false; save.tut5 = 99; save.slots = Math.max(save.slots || 1, 4); } clampAll(save); saveGame(); Modal.close(true); toast("서버 세이브를 불러왔습니다", "ok"); if (after) after(); else openTitle(); }
       else { if (save) srvQueue(); Modal.close(true); toast(r.created ? "계정이 만들어졌습니다" : "접속했습니다", "ok"); if (after) after(); }
     },
     lgout: () => { srvLogout(); Modal.close(); toast("로그아웃했습니다"); }, lgx: () => Modal.close(),
@@ -130,7 +130,7 @@ function openRaid() {
   <div class="pline">· 결계석을 모두 부수면 문지기가 잠시 무방비가 됩니다. 제한 시간은 <b>${Math.round(CFG.RAID.LIMIT / 60)}분</b>.</div>
   <div class="pline">내 전투력 <b style="color:#ffe08a">${pw}</b> · 처치 <b>${R.cleared || 0}</b>회${R.best ? ` · 최단 <b>${R.best}초</b>` : ""}</div>
   <div class="pbtns">${ok ? `<button class="btn pri" data-a="rstart">도전하기</button>` : `<button class="btn" disabled>균열 100층 클리어 후 도전 가능</button>`}<button class="btn" data-a="rclose">닫기</button></div>`, { cls: "wide", on: {
-    rstart: () => { startBattle({ kind: "raid", act: 10, tier: CFG.RIFT_END, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(R.cleared > 0) }, { raid: 1 }); }, rclose: () => Modal.close(),
+    rstart: () => { startBattle({ kind: "raid", act: 10, tier: CFG.RAID.TIER, name: "심연의 문지기 모르가스", id: "raid", firstClear: !(R.cleared > 0) }, { raid: 1 }); }, rclose: () => Modal.close(),
   } });
 }
 

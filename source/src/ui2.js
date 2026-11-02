@@ -30,18 +30,27 @@ function openSkillShop() {
   } });
 }
 
-// ---------- 스킬 소환 (로블록스판 아르카나 소환) ----------
+// ---------- 스킬 소환 (로블록스판 아르카나 소환): 계열 탭 · 카드 뒤집기 연출 ----------
+// 카드 그림: 테두리(cardf<등급>) 안쪽에 스킬 그림 (로블록스판과 같은 비율)
+function arcCard(id, r, opt) {
+  opt = opt || {}; const d = SKILLS.find((x) => x.id === id) || {}, R = SKILL_RARITY[r] || SKILL_RARITY[0];
+  return `<div class="acard ${opt.cls || ""}" style="${opt.style || ""}"><img class="acart" src="${artURL("card_s_" + id) || ""}" alt=""><img class="acfrm" src="${artURL("cardf" + Math.min(4, r)) || ""}" alt="">
+    <div class="acname ${R.cls}">${d.name || id}</div>${opt.badge ? `<div class="acbadge">${opt.badge}</div>` : ""}</div>`;
+}
 function openSummon(res) {
-  const R = (r) => SKILL_RARITY[r], rates = GACHA.RATES.map((p, r) => `<span class="${R(r).cls}">${R(r).name} ${p}%</span>`).join(" · ");
-  const card = (g) => { const d = SKILLS.find((x) => x.id === g.id); const lab = g.new ? "NEW" : g.lvlUp ? `Lv.${g.lvlUp}!` : g.dupProg ? `${g.dupProg[0]}/${g.dupProg[1]}` : `+${g.dupHone}`;
-    return `<div class="sumc rk${g.rarity}" data-tips="${g.id}"><div class="sumi">${skillImg(d, 4)}</div><div class="${R(g.rarity).cls}" style="font-size:12px"><b>${d.name}</b></div><small class="${g.new || g.lvlUp ? "" : "dim"}">${lab}</small></div>`; };
-  const got = res ? `<div class="sumgrid">${res.map(card).join("")}</div>` : `<div class="dim center pad">같은 스킬이 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼). 스킬 등급은 스킬마다 정해져 있습니다.</div>`;
-  const pity = GACHA.PITY_HARD - (save.gachaPity || 0);
+  const R = (r) => SKILL_RARITY[r], fam = G.sumFam || (save.equipped.weapon && save.equipped.weapon.wt === "staff" ? "mag" : "phys"); G.sumFam = fam;
+  const rates = GACHA.RATES.map((p, r) => `<span class="${R(r).cls}">${R(r).name} ${p}%</span>`).join(" · ");
+  const tabs = [["phys", "⚔ 물리 · 전사"], ["mag", "✦ 마법 · 마법사"], ["all", "전체"]].map(([k, n]) => `<button class="btn ${fam === k ? "pri" : ""}" data-a="fam" data-f="${k}">${n}</button>`).join(" ");
+  const lab = (g) => g.new ? "NEW" : g.lvlUp ? `Lv.${g.lvlUp}!` : g.dupProg ? `${g.dupProg[0]}/${g.dupProg[1]}` : `+${g.dupHone}`;
+  const got = res ? `<div class="sumgrid">${res.map((g, i) => `<div class="flip r${g.rarity}" style="animation-delay:${0.15 + i * 0.13}s"><div class="fback"><img src="${artURL("cardback") || ""}" alt=""></div><div class="ffront">${arcCard(g.id, g.rarity, { badge: lab(g), cls: g.rarity >= 2 ? "glow" + g.rarity : "" })}</div></div>`).join("")}</div>`
+    : `<div class="sumintro"><img src="${artURL("cardback") || ""}" alt=""><div class="dim">같은 스킬이 또 나오면 레벨이 오릅니다 (다음 레벨까지 현재 레벨만큼).<br>스킬 등급은 스킬마다 정해져 있습니다.<br><b>계열 소환</b>: 고른 계열의 공격 스킬과 계열 없는 스킬(버프 · 치유)만 나옵니다.</div></div>`;
+  const pity = GACHA.PITY_HARD - (save.gachaPity || 0), f = fam === "all" ? null : fam;
   Modal.open(`<h2>스킬 소환</h2><div class="res">${iconImg("shard", 1)} 아르카나 조각 <b>${fmtN(save.hone)}</b></div>
-    <div class="dim center" style="font-size:12px;margin-top:30px">${rates}<br>10연 소환은 희귀 이상 1장 보장 · 전설 이상 확정까지 ${pity}회</div>${got}
+    <div class="center" style="margin-top:30px">${tabs}</div><div class="dim center" style="font-size:12px;margin-top:4px">${rates}<br>10연 소환은 희귀 이상 1장 보장 · 전설 이상 확정까지 ${pity}회</div>${got}
     <div class="center" style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri big" data-a="s1" ${save.hone < GACHA.ARC1 ? "disabled" : ""}>1회 소환<br><small>조각 ${GACHA.ARC1}</small></button><button class="btn pri big" data-a="s10" ${save.hone < GACHA.ARC10 ? "disabled" : ""}>10회 소환<br><small>조각 ${GACHA.ARC10}</small></button><button class="btn" data-a="gshop">골드 상점<br><small>일반 · 희귀</small></button></div>`, { cls: "wide", on: {
-    s1: () => { const r = gachaPull(save, 1); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); },
-    s10: () => { const r = gachaPull(save, 10); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); },
+    fam: (el) => { G.sumFam = el.dataset.f; openSummon(); },
+    s1: () => { const r = gachaPull(save, 1, f); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); if (typeof tutEvent === "function") tutEvent("pulled"); },
+    s10: () => { const r = gachaPull(save, 10, f); if (!r) return snd("error"); snd(r.some((x) => x.rarity >= 2) ? "legend" : "buy"); saveGame(); refreshTop(); openSummon(r); if (typeof tutEvent === "function") tutEvent("pulled"); },
     gshop: () => openSkillShop(),
   } });
 }
@@ -50,6 +59,7 @@ function openSummon(res) {
 
 // ---------- 심연 각인 (엔드게임 재화 트리) ----------
 function openAtlas() {
+  toast("심연 각인은 폐지되었습니다 (새긴 균열 조각은 모두 돌려드렸습니다)", "info"); return;   // 5.0
   const rows = ATLAS.map((n) => {
     const r = (save.atlas[n.id] || 0), cost = r < n.max ? atlasCost(n, r) : 0;
     return `<div class="arow"><div class="ai"><b>${n.name}</b> <span class="dim">${r}/${n.max}</span><div class="dim">${n.text} · 현재 +${Math.round(r * n.per * (n.unit === "%" ? 100 : 1))}${n.unit}</div><div class="bar"><i style="width:${(r / n.max) * 100}%"></i></div></div>

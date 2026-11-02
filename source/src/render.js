@@ -71,7 +71,7 @@ function drawEnemy(ctx, b, e, time) {
   let tint = null; if (e.flash > 0) tint = "rgba(255,255,255,.6)"; else if (e.shock > 0) tint = "rgba(255,240,110,.35)"; else if (e.chill > 0) tint = "rgba(120,200,255,.35)";
   const mim = artGet(mobArtKey(b, e));
   if (mim) {   // 일러스트: 숨쉬듯 둥실, 걸을 때 통통, 공격 준비 때 뒤로 젖혔다 찌르듯 앞으로
-    const hh = meta.h * sc * 1.35, wp = e.winding > 0 ? 1 - e.winding / e.windup : 0, walk = anim === "walk" ? Math.abs(Math.sin(e.age * 9)) * 4 : 0;
+    const hh = meta.h * sc * 1.35 * (b.artBg ? 0.8 + 0.2 * (e.lane / Math.max(1, b.lanes - 1)) : 1), wp = e.winding > 0 ? 1 - e.winding / e.windup : 0, walk = anim === "walk" ? Math.abs(Math.sin(e.age * 9)) * 4 : 0;
     const lean = wp < 0.7 ? wp / 0.7 * 6 : -(wp - 0.7) / 0.3 * 14;
     drawArt(ctx, mim, x + lean, y + (appear < 1 ? (1 - appear) * 12 : 0) - walk, hh, { alpha: appear, tint, sy: 1 + Math.sin(time * 3 + e.id) * 0.015 - (e.hurtT > 0 ? 0.05 : 0), sx: 1 + (e.hurtT > 0 ? 0.04 : 0) });
   } else drawSprite(ctx, sheet, af.row, af.frame, x, y + (appear < 1 ? (1 - appear) * 12 : 0), sc, true, appear, tint);
@@ -143,7 +143,8 @@ function drawBattle(ctx, b, dt, time) {
   const paf = animFrame("warrior", pa, pt); ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(P.x, P.y + 2, 38, 8, 0, 0, 7); ctx.fill(); ctx.restore();
   if (b.buffs.cry) { ctx.fillStyle = `rgba(255,210,70,${0.18 + 0.1 * Math.sin(time * 8)})`; ctx.beginPath(); ctx.ellipse(P.x, P.y - 40, 58, 70, 0, 0, 7); ctx.fill(); }
   const htint = b.pHurt > 0 ? "rgba(255,90,80,.45)" : b.debuffs.freeze ? "rgba(140,210,255,.5)" : b.debuffs.poison ? "rgba(120,255,120,.3)" : null;
-  const hk = pa === "attack" ? (pt < 0.12 ? "warrior_windup" : "warrior_slash") : "warrior", him = artGet(hk) || artGet("warrior");
+  const isMage = save && save.equipped && save.equipped.weapon && save.equipped.weapon.wt === "staff", hb = isMage ? "mage" : "warrior";   // 지팡이 = 마법사 모습
+  const hk = pa === "attack" ? (isMage ? (pt < 0.12 ? "mage_raise" : "mage_cast") : (pt < 0.12 ? "warrior_windup" : "warrior_slash")) : hb, him = artGet(hk) || artGet(hb);
   if (him) {   // 일러스트 영웅: 숨쉬기, 공격 때 앞으로 내딛음, 쓰러지면 뒤로 눕듯이 사라짐
     const dead = pa === "death", step = pa === "attack" ? Math.sin(Math.min(1, pt / 0.42) * Math.PI) * 18 : 0;
     drawArt(ctx, him, P.x + 18 + step, P.y + 2, 122, { tint: htint, sy: 1 + Math.sin(time * 2.4) * 0.012, alpha: dead ? Math.max(0, 1 - pt * 1.6) : 1, rot: dead ? -pt * 1.2 : 0 });
@@ -194,12 +195,12 @@ const MapView = {
     const w = document.createElement("canvas"); w.width = MAP_W; w.height = MAP_H; const wg = w.getContext("2d"); wg.imageSmoothingEnabled = false; wg.drawImage(c, 0, 0, W, H, 0, 0, W * sc, H * sc); this.world = w;
   },
   nodeIcon(g, n, st, time, hot) {
-    const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1 + 0.12 * Math.sin(time * 3 + n.x);
+    const x = n.x - this.cam.x, y = n.y - this.cam.y, pulse = 1;   // 5.0: 크기 꿀렁임 제거
     {   // 일러스트 지도 아이콘 (로블록스판과 같은 그림)
       const MI = { stage: "mi_stage", boss: "mi_boss", town: "mi_town", rift: "mi_rift", endless: "mi_endless", bosshub: "mi_bossgate", bosshub2: "mi_bossgate", temple: "mi_temple", raid: "mi_abyssdoor", craid: n.sub === "warden" ? "mi_warden" : n.sub === "charm" ? "mi_truedungeon" : "mi_raid", vault: "mi_vault", tower2: "mi_newtower", tower: this.rise >= 1 ? "mi_tower" : null };
       const k = st === "locked" && n.kind !== "tower" ? "mi_lock" : st === "hell" ? null : MI[n.kind], im = artGet(k);
       if (im) {
-        const big = n.kind !== "stage" && st !== "locked", sz = (big ? 50 : st === "locked" ? 30 : 38) * (st === "open" || big ? pulse : 1);
+        const big = n.kind !== "stage" && st !== "locked", sz = big ? 50 : st === "locked" ? 30 : 38;   // 5.0: 아이콘 크기는 고정 (꿀렁임 제거), 빛만 숨쉰다
         if (st !== "locked" && (st === "open" || big)) { g.save(); g.globalAlpha = 0.35 + 0.15 * Math.sin(time * 3 + n.x); const gl = g.createRadialGradient(x, y, 2, x, y, sz * 0.8); gl.addColorStop(0, "rgba(255,220,140,.8)"); gl.addColorStop(1, "rgba(255,220,140,0)"); g.fillStyle = gl; g.beginPath(); g.arc(x, y, sz * 0.8, 0, 7); g.fill(); g.restore(); }
         g.save(); g.imageSmoothingEnabled = true; if (st === "cleared") g.globalAlpha = 0.85; g.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); g.restore();
         if (st === "cleared") { g.fillStyle = "#7dff9a"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("✓", x + sz * 0.38, y - sz * 0.25); }
