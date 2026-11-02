@@ -151,7 +151,7 @@ function M.tile(parent, size, o)
       if not c:FindFirstChildOfClass("UICorner") then corner(c) end
       c.Visible = b:GetAttribute("Check") == true
     end) end
-  if o.click then b.MouseButton1Click:Connect(function() tipHide(); M.itemTipHide(); o.click() end) end
+  if o.click then b.MouseButton1Click:Connect(function() if b:GetAttribute("Dragging") then return end; tipHide(); M.itemTipHide(); o.click() end) end
   if o.itip then b.MouseEnter:Connect(function() M.itemTip(o.itip[1], o.itip[2]) end); b.MouseLeave:Connect(M.itemTipHide); b.AncestryChanged:Connect(function(_, par) if not par then M.itemTipHide() end end) end
   if o.tip then b.MouseEnter:Connect(function() tipShow(o.tip) end); b.MouseLeave:Connect(tipHide); b.AncestryChanged:Connect(function(_, par) if not par then tipHide() end end) end
   return b
@@ -186,6 +186,41 @@ function M.dragScroll(sf)
   return function() return drag and drag.moved end
 end
 
+-- 끌어다 놓기 (장비 · 스킬): M.drag(칸, 짐, 그림) 으로 끌 수 있게, M.drop(칸, 받는 함수) 로 놓을 곳을 정한다
+local drops = setmetatable({}, { __mode = "k" })
+local dragGui
+function M.drop(frame, fn) drops[frame] = fn end
+function M.drag(b, payload, art)
+  b.InputBegan:Connect(function(io)
+    if io.UserInputType ~= Enum.UserInputType.MouseButton1 and io.UserInputType ~= Enum.UserInputType.Touch then return end
+    local start = UIS:GetMouseLocation(); local ghost; local mv, up
+    mv = UIS.InputChanged:Connect(function(i2)
+      if i2.UserInputType ~= Enum.UserInputType.MouseMovement and i2.UserInputType ~= Enum.UserInputType.Touch then return end
+      local p = UIS:GetMouseLocation()
+      if not ghost and (p - start).Magnitude > 8 then
+        b:SetAttribute("Dragging", true); tipHide(); M.itemTipHide()
+        if not dragGui then dragGui = mk("ScreenGui", { Name = "DungeonDrag", DisplayOrder = 70, IgnoreGuiInset = true, ResetOnSpawn = false }, game:GetService("Players").LocalPlayer.PlayerGui) end
+        ghost = mk("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 56, 0, 56), BackgroundColor3 = Color3.fromRGB(30, 22, 18), BackgroundTransparency = 0.2, ZIndex = 70 }, dragGui)
+        corner(ghost, 8); stroke(ghost, M.GOLD, 2)
+        local a = art and C.Sprites.art(art)
+        if a then mk("ImageLabel", { Size = UDim2.new(0.85, 0, 0.85, 0), Position = UDim2.new(0.075, 0, 0.075, 0), BackgroundTransparency = 1, ImageContent = a.content, ScaleType = Enum.ScaleType.Fit, ZIndex = 71 }, ghost) end
+      end
+      if ghost then ghost.Position = UDim2.new(0, p.X, 0, p.Y) end
+    end)
+    up = UIS.InputEnded:Connect(function(i2)
+      if i2.UserInputType ~= Enum.UserInputType.MouseButton1 and i2.UserInputType ~= Enum.UserInputType.Touch then return end
+      mv:Disconnect(); up:Disconnect()
+      if not ghost then return end
+      ghost:Destroy(); ghost = nil
+      local p = UIS:GetMouseLocation() - game:GetService("GuiService"):GetGuiInset()
+      for _, o in ipairs(game:GetService("Players").LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(p.X, p.Y)) do
+        local f = o; while f and not drops[f] do f = f.Parent; if f and not f:IsA("GuiObject") then f = nil end end
+        if f and drops[f] then task.spawn(drops[f], payload); break end
+      end
+      task.delay(0.05, function() b:SetAttribute("Dragging", nil) end)
+    end)
+  end)
+end
 -- ───────── 장비 ─────────
 local invSel, invMulti, invPick = nil, false, {}
 local invData   -- 서버에서 받은 가방 · 착용 (클릭할 때는 다시 받지 않고 화면만 다시 그린다 → 깜빡임 없음)
@@ -213,11 +248,10 @@ function M.inv(keep)
   if invMode == "auto" then autoRender() else invRender() end
 end
 -- 착용 칸 배치 (사람 모양, PoE 식): 무기·갑옷은 세로로 길게, 반지·목걸이는 작게
-local DOLL = {
-  helm = { 86, 30, 60, 60 }, neck = { 160, 44, 44, 44 },
-  weapon = { 14, 74, 60, 136 }, armor = { 84, 98, 64, 112 },
-  ring = { 160, 106, 44, 44 }, ring2 = { 160, 160, 44, 44 },
-  gloves = { 14, 222, 60, 60 }, boots = { 158, 222, 60, 60 },
+local DOLL = {   -- 왼쪽 열: 무기 · 반지 · 장갑 / 가운데: 투구 · 갑옷 / 오른쪽 열: 목걸이 · 반지 2 · 신발 (반지는 좌우 대칭)
+  helm = { 86, 30, 60, 60 }, weapon = { 14, 40, 60, 128 }, armor = { 84, 96, 64, 108 }, neck = { 166, 104, 44, 44 },
+  ring = { 22, 176, 44, 44 }, ring2 = { 166, 176, 44, 44 },
+  gloves = { 14, 230, 60, 56 }, boots = { 158, 230, 60, 56 },
 }
 invRender = function()
   C.clear(); M.itemTipHide()
@@ -243,7 +277,7 @@ invRender = function()
   -- 왼쪽: 착용 중 (사람 모양) + 프리셋 + 재화
   local L = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(0, 232, 1, 0), "착용 중")
   do local sil = mk("Frame", { BackgroundTransparency = 1, Position = UDim2.new(0, 70, 0, 26), Size = UDim2.new(0, 92, 0, 262) }, L)
-    local body = mk("Frame", { Position = UDim2.new(0.5, -30, 0, 70), Size = UDim2.new(0, 60, 0, 150), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
+    local body = mk("Frame", { Position = UDim2.new(0.5, -30, 0, 66), Size = UDim2.new(0, 60, 0, 150), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(body, 24)
     local head = mk("Frame", { Position = UDim2.new(0.5, -22, 0, 6), Size = UDim2.new(0, 44, 0, 44), BackgroundColor3 = Color3.fromRGB(60, 44, 30), BackgroundTransparency = 0.6 }, sil); corner(head) end
   for i, slot in ipairs(Items.EQ_SLOTS) do
     local e = bySlot[slot]; local p = DOLL[slot]
@@ -251,9 +285,14 @@ invRender = function()
       tl = e and (e.enh > 0 and ("+" .. e.enh) or nil), label = not e and Items.SLOT_NAME[slot] or nil, selected = e and invSel == e.uid,
       click = function() if e then selectItem(e.uid) end end })
     t.Position = UDim2.new(0, p[1], 0, p[2]); t.ZIndex = 2
-    if e then tiles[e.uid] = t end
+    if e then tiles[e.uid] = t; M.drag(t, { kind = "eq", slot = slot }, SLOT_ART[slot]) end
+    M.drop(t, function(pl)
+      if pl.kind ~= "bag" then return end
+      local r = C.rpc:InvokeServer("equip", { uid = pl.uid, slot = slot }); if r.summary then C.setSummary(r.summary) end
+      if r.err then C.msg.Text = tostring(r.err) end; M.inv()
+    end)
   end
-  M.presetBar(L, UDim2.new(0, 10, 1, -88), UDim2.new(1, -20, 0, 32))
+  M.setTabs(L, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "gear", "세트", function() invData = nil; M.inv() end)
   local s = C.summary()
   if s then   -- 재화 (강화석 · 연마석 · 혼돈/신성 구슬 · 보석 · 균열 조각)
     local cg = mk("Frame", { Position = UDim2.new(0, 10, 1, -54), Size = UDim2.new(1, -20, 0, 52), BackgroundTransparency = 1 }, L)
@@ -291,7 +330,12 @@ invRender = function()
     tiles[it.uid] = M.tile(g, 58, { order = i, itip = { it, curOf(it) }, art = SLOT_ART[it.slot], emoji = SLOT_EMOJI[it.slot], rarity = it.rarity, color = itemColor(it), tl = it.enh > 0 and ("+" .. it.enh) or (it.up and "▲" or nil), br = it.ilvl and ("T" .. it.ilvl) or nil,
       selected = (not invMulti and invSel == it.uid) or (invMulti and invPick[it.uid]), check = invMulti and invPick[it.uid] or nil,
       click = function() if invMulti then pickItem(it.uid) else selectItem(it.uid) end end })
+    M.drag(tiles[it.uid], { kind = "bag", uid = it.uid }, SLOT_ART[it.slot])
   end
+  M.drop(B, function(pl)   -- 착용 장비를 가방에 놓으면 해제
+    if pl.kind ~= "eq" then return end
+    local r = C.rpc:InvokeServer("unequip", pl.slot); if r.summary then C.setSummary(r.summary) end; M.inv()
+  end)
   local bar = mk("Frame", { Position = UDim2.new(0, 6, 1, -42), Size = UDim2.new(1, -12, 0, 36), BackgroundTransparency = 1 }, B)
   local function bulkDo(mode)
     local cnt = 0
@@ -401,12 +445,19 @@ function M.skills()
   local A = area(392)
   -- 위: 장착 칸
   local T = box(A, UDim2.new(0, 0, 0, 0), UDim2.new(1, -300, 0, 128), string.format("장착 칸 (%d)", slots))
+  M.setTabs(T, UDim2.new(1, -150, 0, 2), UDim2.new(0, 142, 0, 26), "skill", "세트", function() M.skills() end)
   local row = mk("Frame", { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -20, 0, 90), BackgroundTransparency = 1 }, T)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, row)
   for i = 1, slots do
     local k = inSlot[i]; local d = k and SK_BY[k.id]
     local t0 = M.tile(row, 86, { order = i, tip = k and { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } } or nil, color = k and skColor(d) or Color3.fromRGB(70, 66, 90), emoji = k and skIcon(d) or tostring(i), dim = not k,
       label = k and k.name or "빈 칸", tl = k and ("Lv" .. k.lvl) or nil, selected = k and skSel == k.uid, click = function() if k then skSel = k.uid; M.skills() end end })
+    M.drop(t0, function(pl)   -- 보유 스킬을 장착 칸에 놓으면 그 칸에 장착 (다른 칸 스킬을 놓으면 자리 바꿈)
+      if pl.kind ~= "skill" then return end
+      local e = C.rpc:InvokeServer("equipskill", { slot = i, uid = pl.uid }); if e.summary then C.setSummary(e.summary) end
+      C.msg.Text = e.err and tostring(e.err) or ""; M.skills()
+    end)
+    if k then M.drag(t0, { kind = "skill", uid = k.uid }) end
   end
   -- 아래: 보유 스킬
   local B = box(A, UDim2.new(0, 0, 0, 136), UDim2.new(1, -300, 1, -136), string.format("보유 스킬 %d개", #rows))
@@ -414,6 +465,7 @@ function M.skills()
   for i, k in ipairs(rows) do
     local d = SK_BY[k.id]
     local t1 = M.tile(g, 76, { order = i, tip = { title = string.format("%s  Lv%d", k.name, k.lvl), color = skColor(d), lines = { d and d.desc or "" } }, color = skColor(d), emoji = skIcon(d), label = k.name, tl = "Lv" .. k.lvl, br = k.slot > 0 and ("#" .. k.slot) or nil, selected = skSel == k.uid, click = function() skSel = k.uid; M.skills() end })
+    M.drag(t1, { kind = "skill", uid = k.uid })
   end
   -- 오른쪽: 상세
   local D = box(A, UDim2.new(1, -292, 0, 0), UDim2.new(0, 292, 1, 0), "스킬 정보")
@@ -453,6 +505,7 @@ function M.pass()
   local v = r.view; local taken = {}; for _, id in ipairs(v.taken or {}) do taken[id] = true end
   local A = area(392)
   local head = mk("Frame", { Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1 }, A)
+  M.setTabs(head, UDim2.new(0.5, -60, 0, 6), UDim2.new(0, 142, 0, 28), "pass", "세트", function() M.pass() end)
   txt(head, string.format("남은 포인트 %d / %d", v.left, v.points), 18, UDim2.new(0, 4, 0, 8), UDim2.new(0.5, 0, 0, 26), Color3.fromRGB(255, 220, 120), M.FONT)
   local hb = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 2), Size = UDim2.new(0, 260, 0, 36), BackgroundTransparency = 1 }, head)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 6) }, hb)
@@ -870,6 +923,21 @@ function M.stash()
 end
 
 -- 장비 화면 위쪽에 붙는 프리셋 줄 (불러오기 / 현재 구성 저장)
+-- 세트 탭: [1][2][3] — 누르면 그 탭의 구성으로 바뀐다 (kind = gear / skill / pass)
+function M.setTabs(parent, pos, size, kind, label, after)
+  local f = mk("Frame", { Position = pos, Size = size, BackgroundTransparency = 1 }, parent)
+  mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center, HorizontalAlignment = Enum.HorizontalAlignment.Right }, f)
+  local r = C.rpc:InvokeServer("sets"); local cur = r and r.sets and r.sets[kind] or 1
+  local l = txt(f, label or "세트", 13, UDim2.new(), UDim2.new(0, 40, 1, 0), Color3.fromRGB(255, 225, 140), M.FONT, Enum.TextXAlignment.Right); l.TextYAlignment = Enum.TextYAlignment.Center; l.LayoutOrder = 0
+  for i = 1, 3 do
+    local b = M.btn(f, tostring(i), UDim2.new(0, 30, 1, 0), i == cur and M.BTN.gold or M.BTN.gray, function()
+      if i == cur then return end
+      local e = C.rpc:InvokeServer("setswitch", { kind = kind, i = i }); if e and e.summary then C.setSummary(e.summary) end
+      C.toast(string.format("세트 %d", i)); after()
+    end); b.LayoutOrder = i; b:SetAttribute("NoTr", true)
+  end
+  return f
+end
 function M.presetBar(parent, pos, size)
   local f = mk("Frame", { Position = pos, Size = size, BackgroundTransparency = 1 }, parent)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, f)

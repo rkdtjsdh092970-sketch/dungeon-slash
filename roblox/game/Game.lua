@@ -70,17 +70,22 @@ function M.equipped(sv)
 end
 
 -- 장착: 같은 부위 장비와 맞바꾼다 (반지는 ring / ring2 중 비어 있는 곳, 둘 다 차 있으면 ring 과 교체)
-function M.equip(sv, uid)
+function M.equip(sv, uid, toSlot)   -- toSlot: 끌어다 놓은 칸 (반지는 ring / ring2 중 고를 수 있다)
   for i, it in ipairs(sv.inv) do
     if it.uid == uid then
       local slot = it.slot
       if slot == "ring" and sv.equipped.ring and not sv.equipped.ring2 then slot = "ring2" end
+      if toSlot then if toSlot == it.slot or (it.slot == "ring" and toSlot == "ring2") then slot = toSlot else return false, "그 칸에는 낄 수 없습니다" end end
       local old = sv.equipped[slot]; sv.equipped[slot] = it; table.remove(sv.inv, i)
       if old then sv.inv[#sv.inv + 1] = old end
       return true
     end
   end
   return false, "없는 장비"
+end
+function M.unequip(sv, slot)   -- 착용 칸 → 가방
+  local it = sv.equipped[slot]; if not it then return false end
+  sv.equipped[slot] = nil; sv.inv[#sv.inv + 1] = it; return true
 end
 -- 판매/분해/일일/오프라인 (Extras)
 function M.dismantle(sv, uid) return Extras.dismantle(sv, uid) end
@@ -216,6 +221,42 @@ function M.presetLoad(sv, i)
     local l = p.loadout[k]
     if l and has[l.uid] and not seen[has[l.uid]] and k <= sv.slots then sv.loadout[k] = { uid = l.uid, rule = l.rule or "front" }; seen[has[l.uid]] = true else sv.loadout[k] = false end
   end
+  return true
+end
+-- 세트 탭 (장비 · 스킬 · 패시브 따로 1~3번): 탭을 바꾸면 지금 구성을 현재 탭에 저장하고 새 탭 구성을 불러온다.
+-- 한 번도 쓰지 않은 장비 · 스킬 탭은 지금 구성을 그대로 복사해서 시작하고, 패시브 탭은 빈 트리로 시작한다.
+local function saveEquip(sv, i) local eq = {}; for _, s in ipairs(Items.EQ_SLOTS) do if sv.equipped[s] then eq[s] = sv.equipped[s].uid end end; sv.presets[i].equip = eq; sv.presets[i].eqSet = true end
+local function saveLo(sv, i) local lo = {}; for k = 1, 4 do local l = sv.loadout[k]; lo[k] = l and { uid = l.uid, rule = l.rule } or false end; sv.presets[i].loadout = lo; sv.presets[i].loSet = true end
+local function loadEquip(sv, p)
+  for _, s in ipairs(Items.EQ_SLOTS) do if sv.equipped[s] then sv.inv[#sv.inv + 1] = sv.equipped[s]; sv.equipped[s] = nil end end
+  for _, s in ipairs(Items.EQ_SLOTS) do
+    local u = p.equip[s]
+    if u then for j, it in ipairs(sv.inv) do if it.uid == u then table.remove(sv.inv, j); sv.equipped[s] = it; break end end end
+  end
+end
+local function loadLo(sv, p)
+  local has = {}; for _, k in ipairs(sv.skills) do has[k.uid] = k.id end
+  local seen = {}
+  for k = 1, 4 do
+    local l = p.loadout[k]
+    if l and has[l.uid] and not seen[has[l.uid]] and k <= sv.slots then sv.loadout[k] = { uid = l.uid, rule = l.rule or "front" }; seen[has[l.uid]] = true else sv.loadout[k] = false end
+  end
+end
+function M.setsView(sv) local s = sv.sets or {}; return { gear = s.gear or 1, skill = s.skill or 1, pass = s.pass or 1 } end
+function M.setSwitch(sv, kind, i)
+  i = tonumber(i); if not i or i < 1 or i > 3 or (kind ~= "gear" and kind ~= "skill" and kind ~= "pass") then return false end
+  sv.sets = sv.sets or {}; local cur = sv.sets[kind] or 1
+  if cur == i then return true end
+  sv.presets = sv.presets or { false, false, false }
+  for j = 1, 3 do if not sv.presets[j] then sv.presets[j] = { equip = {}, loadout = {} } end end
+  if kind == "gear" then saveEquip(sv, cur); if sv.presets[i].eqSet then loadEquip(sv, sv.presets[i]) else saveEquip(sv, i) end
+  elseif kind == "skill" then saveLo(sv, cur); if sv.presets[i].loSet then loadLo(sv, sv.presets[i]) else saveLo(sv, i) end
+  else
+    sv.passSets = sv.passSets or {}
+    sv.passSets[cur] = table.clone(sv.pass or {})
+    sv.pass = sv.passSets[i] and table.clone(sv.passSets[i]) or {}
+  end
+  sv.sets[kind] = i
   return true
 end
 -- 스탯 화면 (웹 openStats 의 묶음): { {제목, { {이름, 값 문자열}, ... }}, ... }

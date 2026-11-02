@@ -1872,3 +1872,6 @@ x4 배속	x4 Speed
 지금 가방에서 처리될 장비 %d개	Gear to process now: %d
 지금 정리하기	Clean Now
 착용 중 (비교)	Equipped (compare)
+그 칸에는 낄 수 없습니다	Can't equip in that slot
+세트	Set
+세트 %d	Set %d
