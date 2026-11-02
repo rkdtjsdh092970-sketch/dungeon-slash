@@ -459,23 +459,27 @@ local function arcCard(parent, k, w, h, o)
   local rcol = M.SK_RCOL[(k.rarity or 0) + 1] or M.SK_RCOL[1]
   local b = mk("TextButton", { Size = UDim2.new(0, w, 0, h), BackgroundColor3 = Color3.fromRGB(14, 9, 22), Text = "", AutoButtonColor = false, LayoutOrder = o.order or 0 }, parent); corner(b, 8)
   local glow = mk("UIStroke", { Color = o.sel and Color3.fromRGB(255, 225, 140) or rcol, Thickness = o.sel and 3 or 1.5, Transparency = o.sel and 0 or 0.4 }, b)
-  local ca = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_s_" .. tostring(k.id))
-  if ca then mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ImageTransparency = o.dim and 0.5 or 0 }, b)
-  else
-    local scol, icon = M.skStyle(k.id); if o.gray then scol = Color3.fromRGB(120, 120, 120) end
-    local bg = mk("Frame", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundColor3 = scol:Lerp(Color3.new(0, 0, 0), 0.6) }, b)
-    mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(scol:Lerp(Color3.new(0, 0, 0), 0.45), Color3.fromRGB(12, 8, 18)) }, bg)
-    mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.15, 0, 0.12, 0), Size = UDim2.new(0.7, 0, 0.45, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol }, b)
-  end
-  local fr = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_f" .. math.min(4, k.rarity or 0))
-  if fr then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = fr.content, ScaleType = Enum.ScaleType.Stretch }, b) end
-  local band = mk("Frame", { Position = UDim2.new(0.07, 0, 0.66, 0), Size = UDim2.new(0.86, 0, 0.29, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0 }, b)
+  task.spawn(function()   -- 그림은 뒤에서 받아 붙인다 (카드가 많아도 창이 바로 열림). 그림 ZIndex 1 · 테두리 2 · 띠 3 · 글자 4
+    local ca = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_s_" .. tostring(k.id))
+    if not b.Parent then return end   -- 그림을 받는 사이 창이 바뀌었으면 그만
+    if ca then mk("ImageLabel", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundTransparency = 1, ImageContent = ca.content, ScaleType = Enum.ScaleType.Crop, ImageTransparency = o.dim and 0.5 or 0, ZIndex = 1 }, b)
+    else
+      local scol, icon = M.skStyle(k.id); if o.gray then scol = Color3.fromRGB(120, 120, 120) end
+      local bg = mk("Frame", { Position = UDim2.new(0.07, 0, 0.05, 0), Size = UDim2.new(0.86, 0, 0.9, 0), BackgroundColor3 = scol:Lerp(Color3.new(0, 0, 0), 0.6) }, b)
+      mk("UIGradient", { Rotation = 90, Color = ColorSequence.new(scol:Lerp(Color3.new(0, 0, 0), 0.45), Color3.fromRGB(12, 8, 18)) }, bg)
+      mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.15, 0, 0.12, 0), Size = UDim2.new(0.7, 0, 0.45, 0), Text = icon, TextScaled = true, Font = M.FONT, TextColor3 = scol }, b)
+    end
+    local fr = (o.gray and C.Sprites.artGray or C.Sprites.art)("card_f" .. math.min(4, k.rarity or 0))
+    if not b.Parent then return end   -- 그림을 받는 사이 창이 바뀌었으면 그만
+    if fr then mk("ImageLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ImageContent = fr.content, ScaleType = Enum.ScaleType.Stretch, ZIndex = 2 }, b) end
+  end)
+  local band = mk("Frame", { Position = UDim2.new(0.07, 0, 0.66, 0), Size = UDim2.new(0.86, 0, 0.29, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 3 }, b)
   mk("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.4, 0.3), NumberSequenceKeypoint.new(1, 0.1) }) }, band)
-  local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.08, 0, 0.72, 0), Size = UDim2.new(0.84, 0, 0.16, 0), Text = k.name, TextScaled = true, Font = M.FONT, TextColor3 = Color3.new(1, 1, 1) }, b)
+  local nm = mk("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(0.08, 0, 0.72, 0), Size = UDim2.new(0.84, 0, 0.16, 0), Text = k.name, TextScaled = true, Font = M.FONT, TextColor3 = Color3.new(1, 1, 1), ZIndex = 4 }, b)
   mk("UITextSizeConstraint", { MaxTextSize = math.floor(w / 6.5), MinTextSize = 8 }, nm); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-  if not o.noLv then local lv = mk("TextLabel", { Position = UDim2.new(0, 3, 0, 3), Size = UDim2.new(0, math.max(26, w * 0.34), 0, math.max(14, h * 0.11)), BackgroundColor3 = Color3.fromRGB(20, 12, 8), BackgroundTransparency = 0.15, Text = "Lv" .. (k.lvl or 1), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(255, 225, 150) }, b); corner(lv, 4) end
+  if not o.noLv then local lv = mk("TextLabel", { Position = UDim2.new(0, 3, 0, 3), Size = UDim2.new(0, math.max(26, w * 0.34), 0, math.max(14, h * 0.11)), BackgroundColor3 = Color3.fromRGB(20, 12, 8), BackgroundTransparency = 0.15, Text = "Lv" .. (k.lvl or 1), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(255, 225, 150), ZIndex = 4 }, b); corner(lv, 4) end
   if o.gray then nm.TextColor3 = Color3.fromRGB(170, 170, 170) end
-  if o.slot and o.slot > 0 then local sb = mk("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, math.max(16, h * 0.12), 0, math.max(16, h * 0.12)), BackgroundColor3 = Color3.fromRGB(200, 150, 60), Text = tostring(o.slot), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(20, 12, 8) }, b); corner(sb) end
+  if o.slot and o.slot > 0 then local sb = mk("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.new(0, math.max(16, h * 0.12), 0, math.max(16, h * 0.12)), BackgroundColor3 = Color3.fromRGB(200, 150, 60), Text = tostring(o.slot), TextScaled = true, Font = M.FONT, TextColor3 = Color3.fromRGB(20, 12, 8), ZIndex = 4 }, b); corner(sb) end
   b.MouseEnter:Connect(function() if not b:GetAttribute("Sel") then glow.Transparency = 0; glow.Thickness = 2.5 end; b.Position -= UDim2.new(0, 0, 0, 3) end)
   b.MouseLeave:Connect(function() if not b:GetAttribute("Sel") then glow.Transparency = 0.4; glow.Thickness = 1.5 end; b.Position += UDim2.new(0, 0, 0, 3) end)
   b:SetAttribute("Sel", o.sel and true or false)
@@ -532,13 +536,15 @@ function M.skills()
   local g = mk("ScrollingFrame", { Position = UDim2.new(0, 10, 0, 192), Size = UDim2.new(1, -20, 1, -198), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 5, ScrollBarImageColor3 = Color3.fromRGB(150, 100, 210) }, table0)
   mk("UIGridLayout", { CellSize = UDim2.new(0, 60, 0, 88), CellPadding = UDim2.new(0, 8, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, g)
   -- 분류 탭 (전체 · 물리 · 마법 · 장착 중 · 기본 공격) + 정렬 (등급 / 초당 피해 / 레벨)
-  local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 420, 0, 24), BackgroundTransparency = 1 }, table0)
+  local ft = mk("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 164), Size = UDim2.new(0, 440, 0, 24), BackgroundTransparency = 1 }, table0)
   mk("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, ft)
   for i, f in ipairs({ { "all", "전체" }, { "phys", "물리 계열" }, { "mag", "마법 계열" }, { "eq", "장착 중" }, { "basic", "기본" } }) do
-    local b = M.btn(ft, f[2], UDim2.new(0, 58, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i; b.TextSize = 12
+    local b = M.btn(ft, f[2], UDim2.new(0, 58, 1, 0), arcFilter == f[1] and M.BTN.gold or M.BTN.gray, function() arcFilter = f[1]; M.skills() end); b.LayoutOrder = i + 1; b.TextSize = 12
   end
   local SORT_NAME = { rar = "등급순", dps = "피해순", lvl = "레벨순" }
-  local sb = M.btn(ft, SORT_NAME[arcSort] or "등급순", UDim2.new(0, 70, 1, 0), M.BTN.purple, function() arcSort = ({ rar = "dps", dps = "lvl", lvl = "rar" })[arcSort] or "rar"; M.skills() end); sb.LayoutOrder = 9; sb.TextSize = 12
+  local sb = mk("TextButton", { Size = UDim2.new(0, 104, 1, 0), BackgroundColor3 = Color3.fromRGB(12, 8, 18), AutoButtonColor = false, Text = "⇅ 정렬: " .. (SORT_NAME[arcSort] or "등급순"), Font = M.FONT, TextSize = 12, TextColor3 = Color3.fromRGB(220, 200, 255), LayoutOrder = 0 }, ft)
+  corner(sb, 12); mk("UIStroke", { Color = Color3.fromRGB(150, 100, 210), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, sb)   -- 탭(분류)과 다르게: 둥근 어두운 상자 = 정렬
+  sb.MouseButton1Click:Connect(function() arcSort = ({ rar = "dps", dps = "lvl", lvl = "rar" })[arcSort] or "rar"; M.skills() end)
   local order = {}
   for _, k in ipairs(rows) do
     local d = SK_BY[k.id] or {}
@@ -582,7 +588,19 @@ function M.skills()
     stat(6, "마나", (k.mana or 0) > 0 and tostring(k.mana) or "없음")
     -- 설명
     local dbox = mk("Frame", { Position = UDim2.new(0, 12, 0, 156), Size = UDim2.new(1, -24, 0, 120), BackgroundColor3 = Color3.fromRGB(24, 14, 32) }, D); corner(dbox, 6); mk("UIStroke", { Color = Color3.fromRGB(110, 80, 150), Thickness = 1, Transparency = 0.3 }, dbox)
-    local ds = txt(dbox, (d.desc or "") .. (k.rune and ("\n\n룬: " .. tostring(k.rune)) or ""), 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
+    local fx = {}
+    local BN = { boss = "보스에게", elite = "정예에게", ranged = "원거리 몹에게", normal = "일반 몹에게" }
+    for key, v in pairs(k.bonus or {}) do if BN[key] and v ~= 0 then fx[#fx + 1] = string.format("%s 피해 +%d%%", BN[key], math.floor(v * 100 + 0.5)) end end
+    if (k.hits or 1) > 1 then fx[#fx + 1] = string.format("%d번 연속 타격", k.hits) end
+    if k.count then fx[#fx + 1] = string.format("%d발", k.count) end
+    if k.jumps then fx[#fx + 1] = string.format("%d번 튐", k.jumps) end
+    if k.dur then fx[#fx + 1] = string.format("%.1f초 지속", k.dur) end
+    if (k.lifesteal or 0) > 0 then fx[#fx + 1] = string.format("생명력 흡수 %d%%", math.floor(k.lifesteal * 100 + 0.5)) end
+    for _, st in ipairs({ { "bleed", "출혈" }, { "poison", "중독" }, { "ignite", "점화" } }) do if (k[st[1]] or 0) > 0 then fx[#fx + 1] = string.format("%s 확률 %d%%", st[2], math.floor(math.min(1, k[st[1]]) * 100 + 0.5)) end end
+    if (k.chill or 0) > 0 then fx[#fx + 1] = string.format("둔화 %.1f초", k.chill) end
+    if (k.power or 0) > 0 then fx[#fx + 1] = string.format("효과 %d%%", math.floor(k.power * 100 + 0.5)) end
+    local body = (d.desc or "") .. (#fx > 0 and ("\n\n• " .. table.concat(fx, "\n• ")) or "") .. (k.rune and ("\n\n룬: " .. tostring(k.rune)) or "")
+    local ds = txt(dbox, body, 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
     -- 버튼
     local ab = mk("Frame", { Position = UDim2.new(0, 10, 1, -104), Size = UDim2.new(1, -20, 0, 96), BackgroundTransparency = 1 }, D)
     mk("UIGridLayout", { CellSize = UDim2.new(0, 84, 0, 40), CellPadding = UDim2.new(0, 6, 0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, ab)
@@ -1352,9 +1370,9 @@ function M.codex()
     local d = codexSel and SK_BY[codexSel]
     if not d then txt(D, "카드를 누르면 능력을 볼 수 있습니다. 흑백 카드는 아직 갖지 못한 아르카나입니다.", 13, UDim2.new(0, 12, 0, 14), UDim2.new(1, -24, 0, 60), Color3.fromRGB(200, 190, 220)).TextWrapped = true; return end
     local own = owned[d.id] ~= nil
-    local big = arcCard(D, { id = d.id, name = d.name, rarity = 0 }, 92, 136, { gray = not own, noLv = true }); big.Position = UDim2.new(0, 12, 0, 12)
+    local big = arcCard(D, { id = d.id, name = d.name, rarity = owned[d.id] or 0 }, 92, 136, { gray = not own, noLv = true }); big.Position = UDim2.new(0, 12, 0, 12)
     local nm = txt(D, d.name, 20, UDim2.new(0, 114, 0, 12), UDim2.new(1, -124, 0, 26), Color3.new(1, 1, 1), M.FONT); mk("UIStroke", { Thickness = 1.5, Color = Color3.new(0, 0, 0) }, nm)
-    txt(D, own and "보유 중" or "아직 없음 · [아르카나 소환]에서 얻을 수 있습니다", 13, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 34), own and Color3.fromRGB(140, 235, 140) or Color3.fromRGB(200, 170, 150)).TextWrapped = true
+    txt(D, own and string.format("보유 중 · 최고 등급 %s", M.SK_RAR[(owned[d.id] or 0) + 1] or "") or "아직 없음 · [아르카나 소환]에서 얻을 수 있습니다", 13, UDim2.new(0, 114, 0, 40), UDim2.new(1, -124, 0, 34), own and Color3.fromRGB(140, 235, 140) or Color3.fromRGB(200, 170, 150)).TextWrapped = true
     local tags = { d.slot == "basic" and "기본 공격" or "주문", d.dtype == "mag" and "마법" or (d.dtype == "phys" and "물리" or "보조") }
     if d.elem and ELEM_NAME[d.elem] then tags[#tags + 1] = ELEM_NAME[d.elem] end
     txt(D, table.concat(tags, " · "), 13, UDim2.new(0, 114, 0, 76), UDim2.new(1, -124, 0, 18), Color3.fromRGB(190, 175, 210))
@@ -1367,7 +1385,7 @@ function M.codex()
     local ds = txt(dbox, d.desc or "", 14, UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 1, -16), Color3.fromRGB(235, 228, 245)); ds.TextWrapped = true; ds.TextYAlignment = Enum.TextYAlignment.Top
   end
   for i, d in ipairs(list) do
-    local c = arcCard(g, { id = d.id, name = d.name, rarity = 0 }, 60, 88, { order = i, gray = not owned[d.id], noLv = true, sel = codexSel == d.id, click = function()
+    local c = arcCard(g, { id = d.id, name = d.name, rarity = owned[d.id] or 0 }, 60, 88, { order = i, gray = not owned[d.id], noLv = true, sel = codexSel == d.id, click = function()
       if cards[codexSel] then cards[codexSel]:SetAttribute("Sel", false) end; codexSel = d.id; if cards[d.id] then cards[d.id]:SetAttribute("Sel", true) end; fill() end })
     cards[d.id] = c
   end

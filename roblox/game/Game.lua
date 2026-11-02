@@ -320,7 +320,7 @@ function M.gachaPull(sv, n, pay, fam) return Econ.gachaPull(sv, n, pay, Random.n
 -- 기록 (웹 openRecords)
 function M.records(sv)
   local st = sv.stats or {}
-  local owned = {}; for _, k in ipairs(sv.skills) do owned[k.id] = true end
+  local owned = {}; for _, k in ipairs(sv.skills) do owned[k.id] = math.max(owned[k.id] or 0, k.rarity or 0) end   -- 가진 것 중 가장 높은 등급 (도감 테두리)
   return { rows = {
     { "레벨", tostring(sv.level) }, { "처치한 몬스터", tostring(st.kills or 0) }, { "클리어한 전투", tostring(st.clears or 0) },
     { "스테이지", string.format("%d/5", sv.cleared or 0) }, { "균열 최고층", string.format("%d층", sv.rift and sv.rift.best or 0) },
@@ -459,7 +459,7 @@ function M.skills(sv)
       local k = Battle.skillOf(inst)
       r.cd = math.max(0.2, (k.cd or 1) * (1 - (s.cdr or 0))); r.range = k.range; r.mana = math.floor((k.mana or 0) + 0.5)
       r.mult = k.mult * ((k.hits or 1) * (k.hitMul or 1)); r.area = AREA[k.kind] or k.kind; r.elem = k.elem; r.basic = k.slot == "basic"
-      r.count = k.count; r.jumps = k.jumps; r.dur = k.dur
+      r.count = k.count; r.jumps = k.jumps; r.dur = k.dur; r.bonus = k.bonus; r.lifesteal = k.lifesteal; r.bleed = k.bleed; r.poison = k.poison; r.ignite = k.ignite; r.chill = k.chill; r.power = k.power; r.hits = k.hits
       local ok, d = pcall(Power.detail, s, { k }, 1); r.dps = ok and d and d.dps or nil
     end
   end

@@ -276,13 +276,25 @@ corner(list, 8); mk("UIListLayout", { Padding = UDim.new(0, 6) }, list); mk("UIP
 local msg = label(root, "", 14, UDim2.new(0, 18, 1, -40), UDim2.new(1, -36, 0, 34)); msg.ZIndex = 22; msg.TextColor3 = Color3.fromRGB(255, 230, 150)
 -- 창 내용 지우기: 옛 내용은 바로 지우지 않고, 새 내용이 들어오는 순간 바꿔치기한다 (서버 응답을 기다리는 동안 화면이 비어 깜빡이지 않게)
 local pendingOld = {}
+local swapNew, swapLast, swapStart   -- (아래 깜빡임 없는 다시 그리기)
 local function clear(hard)
   msg.Text = ""
   for _, c in ipairs(list:GetChildren()) do if c:IsA("Frame") then if hard then c:Destroy() else pendingOld[c] = true end end end
-  if hard then pendingOld = {} end
+  if hard then pendingOld = {}; swapNew = {} end
 end
+-- 깜빡임 없는 다시 그리기: 새 화면은 숨긴 채로 다 채운 뒤(새 요소가 더 붙지 않고 0.06초 지나면, 길어도 1.2초) 예전 화면과 한 번에 바꾼다
+swapNew, swapLast, swapStart = {}, 0, 0
+list.DescendantAdded:Connect(function() swapLast = os.clock() end)
 list.ChildAdded:Connect(function(c)
-  if c:IsA("Frame") and not pendingOld[c] and next(pendingOld) then for o in pairs(pendingOld) do o:Destroy() end; pendingOld = {} end
+  if not c:IsA("Frame") or pendingOld[c] or not next(pendingOld) then return end
+  c.Visible = false; swapNew[#swapNew + 1] = c
+  if #swapNew > 1 then return end
+  swapStart = os.clock(); swapLast = os.clock()
+  task.spawn(function()
+    while os.clock() - swapLast < 0.06 and os.clock() - swapStart < 1.2 do game:GetService("RunService").Heartbeat:Wait() end
+    for o in pairs(pendingOld) do o:Destroy() end; pendingOld = {}
+    for _, f in ipairs(swapNew) do if f.Parent then f.Visible = true end end; swapNew = {}
+  end)
 end)
 local function card(title, lines, btns)
   local f = Instance.new("Frame"); f.BackgroundColor3 = Color3.fromRGB(20, 15, 15); f.AutomaticSize = Enum.AutomaticSize.Y; f.Size = UDim2.new(1, -16, 0, 0); f.Parent = list

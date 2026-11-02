@@ -2124,3 +2124,20 @@ Arcana Slayer는 자동 전투 게임입니다. 캐릭터는 알아서 싸우고
 아르카나 도감  %d / %d	Arcana Codex  %d / %d
 아직 없음 · [아르카나 소환]에서 얻을 수 있습니다	Not owned · obtain from [Arcana Summon]
 카드를 누르면 능력을 볼 수 있습니다. 흑백 카드는 아직 갖지 못한 아르카나입니다.	Tap a card to see its abilities. Gray cards are Arcana you do not own yet.
+%.1f초 지속	Lasts %.1fs
+%d발	%d shots
+%d번 연속 타격	%d consecutive hits
+%d번 튐	Jumps %d times
+%s 피해 +%d%%	%s +%d%% damage
+%s 확률 %d%%	%s chance %d%%
+⇅ 정렬: 	⇅ Sort: 
+둔화 %.1f초	Slow %.1fs
+보스에게	vs Bosses
+보유 중 · 최고 등급 %s	Owned · best rarity %s
+생명력 흡수 %d%%	Life steal %d%%
+원거리 몹에게	vs Ranged
+일반 몹에게	vs Normal
+정예에게	vs Elites
+중독	Poison
+출혈	Bleed
+효과 %d%%	Effect %d%%
