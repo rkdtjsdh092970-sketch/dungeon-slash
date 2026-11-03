@@ -532,6 +532,10 @@ body:has(#modal:not(.hidden)) #top{visibility:hidden}
 .ag5 .dpst5{display:none!important}.ag5 .dpsw5:hover .dpst5{display:block!important}
 .fmsg5{height:18px;line-height:18px;margin:3px 2px 0;font-size:13px;font-weight:700;color:#e8dcc8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fmsg5 .35s}.fmsg5.ok{color:#8dff9a}.fmsg5.bad{color:#ff8a8a}.fmsg5.off{visibility:hidden}@keyframes fmsg5{from{transform:scale(1.15);filter:brightness(1.8)}}
 body:has(#modal:not(.hidden)) #toasts{top:auto;bottom:6px}body:has(#modal:not(.hidden)) .toast{font-size:12px;padding:3px 10px;opacity:.92}
+/* 5.33: 제련소를 촘촘하게 (옵션 5줄 · 소켓이 스크롤 없이 보이게) */
+.frb5{padding:4px 10px!important}.frb5 .fh5{margin-bottom:0;font-size:15px}.frb5 .fpw5{margin:0 0 3px}.frb5 .enh5{padding:4px 10px}.frb5 .enh5>b{font-size:17px}.frb5 .enh5 .btn{height:36px}
+.frb5 .fmsg5{height:15px;line-height:15px;margin:1px 2px 0}.frb5 .afh5{margin:2px 0 2px}.frb5 .afl5{gap:2px}.frb5 .af5{min-height:24px;padding:1px 6px;font-size:12px}.frb5 .af5 .btn.xs{height:20px!important;font-size:11px!important}.frb5 .tbd5{height:16px;line-height:16px}
+.frb5 .socks{margin:2px 0 0;padding:2px 4px;display:flex;flex-wrap:wrap;gap:4px}.frb5 .sock{flex:1;min-width:0;padding:1px 4px!important;font-size:11px;min-height:22px;box-sizing:border-box;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden}.frb5 .sock .btn.xs{height:18px!important;font-size:10px!important}.frb5 .sock small{display:none}.frb5 .enh5{margin-bottom:0}.frb5 .afh5{margin:1px 0}.frb5 .orb5{margin-top:4px}.frb5 .orb5 .btn{height:34px}
 /* ---- 5.0 제련소 ---- */
 .fpw5{font-size:13px;margin:-2px 0 6px;color:#d8ccb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frb5{display:flex;flex-direction:column;overflow:hidden!important}.frb5 .afl5{flex:1;min-height:0;overflow-y:auto;padding-right:4px}.frb5 .orb5{flex:none;flex-wrap:nowrap}.frb5 .orb5 .btn{min-width:0;line-height:1.1}
@@ -1122,6 +1126,9 @@ BOSSES.push({ id: "chest", name: "거대 보물상자", w: 2, h: 2, hp: 30000, a
   abilities: [{ id: "summon", every: 8, count: 6, type: "coin", text: "상자가 금화를 토해낸다!" }], desc: "황금 보물고의 확률 보스 · 부수면 골드를 아주 많이 준다" });
 const CHEST_BOSS = BOSSES[BOSSES.length - 1];
 CFG.VAULT_CHEST = 0.3;   // 황금 보물고에서 거대 보물상자가 나올 확률
+
+// 5.33: 보스 관문 열쇠 하나로 (여섯 보스 모두 같은 열쇠)
+for (const k in EB) { EB[k].key = "keys"; EB[k].keyName = "보스 관문 열쇠"; }
 
 // =========================================================
 // 전투 계산 · 마나 · 옵션 풀 · 고유 장비(등급/출처) 데이터
@@ -2253,6 +2260,7 @@ function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.sk
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
   const hadNeed = "needStart" in s; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; if (!hadNeed) { s.needStart = false; s.tut5 = 99; s.slots = Math.max(s.slots || 1, 4); }   // 5.0: 예전 세이브는 직업 선택 · 안내 없이 (칸 4개) for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
+    for (const k of ["keys2", "keys3", "keys4", "keys5", "keys6"]) if (s[k]) { s.keys = (s.keys || 0) + s[k]; s[k] = 0; }   // 5.33: 열쇠 통합
     if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;
     if (s.passRev !== 7) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passPresets = [null, null, null]; s.passRev = 7; }   // 5.0 패시브 v2: 기존 포인트는 전부 환급   // 패시브 트리 개편: 기존 포인트는 전부 환급
@@ -3550,12 +3558,8 @@ function killEnemy(b, e) {
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   b.corpses.push({ x: p.x, y: p.y, def: e.def, type: e.type, tier: e.tier, t: 0, w: e.w, h: e.h, boss: e.tier === "boss", flip: true, va: e.va });
   if (e.traits && e.traits.includes("split") && !e.exploded) for (let i = 0; i < 2; i++) spawnNear(b, "imp", e.lane, e.col);
-  if (e.type === "warp") { b.keys++; say(b, "공허의 열쇠를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "hwarp") { b.keys2++; say(b, "정령의 불씨를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "twarp") { b.keys3++; say(b, "철갑의 징표를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "vwarp") { b.keys6++; say(b, "맹독의 징표를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "fwarp") { b.keys5++; say(b, "서리의 징표를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "swarp") { b.keys4++; say(b, "뇌전의 징표를 얻었다!", "good"); sfx(b, "key"); }
+  // 5.33: 열쇠는 '보스 관문 열쇠' 하나로 합침. 열쇠 몬스터 종류는 그대로 6가지지만 잡을 때 1/3 확률로 열쇠 (예전 한 종류의 약 2배)
+  if (/warp$/.test(e.type || "") && Math.random() < 1 / 3) { b.keys++; say(b, "보스 관문 열쇠를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
   if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다
@@ -4231,7 +4235,7 @@ function drawArt(ctx, im, x, y, h, opt) {
 // 일반 · 정예 몬스터 그림: 지역(1~10) × 역할. 1지역은 옛 그림(c_*) 이름
 function mobArtKey(b, e) {
   if (e.type && /warp$/.test(e.type)) return null;
-  const va = e.va != null ? e.va : Math.min(10, b.act) - 1; if (va > 9) return null;
+  let va = e.va != null ? e.va : Math.min(10, b.act) - 1; if (va === 10) va = 8; else if (va === 11) va = 9; if (va > 9) return null;   // 5.33: 돌의 신전 = 천공성(금빛) 그림, 솟아난 탑 · 레이드 던전 = 마계(붉은 악마) 그림
   const role = e.type === "sniper" ? "archer" : e.type; if (ROLE_IDX[role] == null) return null;
   const k = "a" + (va + 1) + "_" + role; if (ART_SET.has(k)) return k;
   const r = ROSTER[va][ROLE_IDX[role]]; if (r && !(r[1]) && ART_SET.has(r[0])) return r[0];
@@ -4243,7 +4247,7 @@ const artPending = (k) => !!k && ART_SET.has(k) && !(ART[k] && ART[k].ok);   // 
 // 전투 배경 그림이 있는 지역
 function battleBgArt(b) {
   if (b.raid) return null;
-  const k = b.kind === "hell" || b.kind === "spire" || b.kind === "craid" || b.kind === "warden" ? null : RIFTLIKE[b.kind] ? "bg8" : "bg" + Math.min(10, b.act);   // 균열 계열 = 심연 배경 (로블록스판과 같게)
+  const k = b.kind === "spire" || b.kind === "craid" || b.kind === "warden" || b.kind === "temple" || RIFTLIKE[b.kind] ? "bg8" : "bg" + Math.min(10, b.act);   // 5.33: 탑 · 레이드 던전 · 신전도 심연 일러스트 배경   // 균열 계열 = 심연 배경 (로블록스판과 같게)
   return artGet(k);
 }
 function drawCover(ctx, im, W, H) { const s = Math.max(W / im.width, H / im.height), w = im.width * s, h = im.height * s; ctx.save(); ctx.imageSmoothingEnabled = true; ctx.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); ctx.restore(); }
@@ -5912,7 +5916,7 @@ function openSettings(tab) {
 function bgmFor(node) { return { boss: "boss", raid: "void", rift: "rift", hell: "hell", endless: "endless", void: "void", hive: "hell", titan: "hell", storm: "hell", frost: "hell", poison: "hell", temple: "void", spire: "void", craid: "void", tutorial: "tutorial" }[node.kind] || "battle" + Math.min(10, node.act); }
 // 자동 반복이 가능한 전투. 열쇠를 쓰는 보스(공허의 군주 · 속성 보스)는 반복할 때마다 열쇠 1개를 쓰고, 열쇠가 모자라면 멈춘다
 const AUTO_KINDS = ["stage", "boss", "elite", "treasure", "rift", "hell", "trial", "vault", "temple", "spire", "craid", "void", "hive", "titan", "storm", "frost", "poison", "raid"];
-function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "공허의 열쇠" : EB[node.kind].keyName, have: save[k] || 0, cost: node.upper ? UP_KEYS : 1 } : null; }
+function autoKeyInfo(node) { const k = node.kind === "void" ? "keys" : isEB(node.kind) ? EB[node.kind].key : null; return k ? { key: k, name: node.kind === "void" ? "보스 관문 열쇠" : EB[node.kind].keyName, have: save[k] || 0, cost: node.upper ? UP_KEYS : 1 } : null; }
 function startBattle(node, opt) {
   if (typeof tutEvent === "function") tutEvent("battle");
   opt = opt || {}; G.pending = null; Modal.close(true); const b = createBattle(save, node); b.total = b.plan.length; G.battle = b; G.node = node; G.retry = opt; G.speed = G.speed || 1; G.paused = false;
@@ -6210,7 +6214,7 @@ function renderItems() {
   const bar = `<div class="itbar"><select data-i="frar"><option value="-1">전체 등급</option>${ITEM_RARITY.map((r, i) => `<option value="${i}" ${IB.rar === i ? "selected" : ""}>${r.name}</option>`).join("")}<option value="9" ${IB.rar === 9 ? "selected" : ""}>사탄</option></select><select data-i="fsort"><option value="rar" ${IB.sort === "rar" ? "selected" : ""}>등급순</option><option value="ilvl" ${IB.sort === "ilvl" ? "selected" : ""}>레벨순</option><option value="up" ${IB.sort === "up" ? "selected" : ""}>전투력순</option></select><button class="tab ${IB.lockOnly ? "on" : ""}" data-a="flock">🔒만</button><button class="tab ${IB.multi ? "on" : ""}" data-a="mtog">☑ 선택</button><button class="btn xs" data-a="bulk">일괄 정리</button><button class="btn xs" data-a="autodis">자동 분해</button><button class="btn xs" data-a="openstash">📦 창고</button></div>`;
   if (m === "inv") return renderBag5(list, nUp);   // 5.0: 로블록스판 가방 창
   if (m === "forge") return renderForge5(list);   // 5.0: 로블록스판 제련소
-  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys || save.keys2 || save.keys3 || save.keys4 || save.keys5 || save.keys6) ? `<br><small>열쇠 &nbsp;<span data-tipk="keys" style="color:#d8b0ff">공허 ${save.keys || 0}</span> · <span data-tipk="keys2" style="color:#ffb070">불씨 ${save.keys2 || 0}</span> · <span data-tipk="keys3" style="color:#d8c8b0">철갑 ${save.keys3 || 0}</span> · <span data-tipk="keys4" style="color:#ffe45a">뇌전 ${save.keys4 || 0}</span> · <span data-tipk="keys5" style="color:#9ae0ff">서리 ${save.keys5 || 0}</span> · <span data-tipk="keys6" style="color:#8aff6a">맹독 ${save.keys6 || 0}</span></small>` : ""}</div>
+  const html = `<h2>${title}</h2><div class="res"><span data-tipk="gold">${iconImg("gold", 1)} ${fmtN(save.gold)}</span> &nbsp; <span data-tipk="ore">${iconImg("ore", 1)} ${fmtN(save.ore)}</span> &nbsp; <span data-tipk="orbC">${iconImg("orb", 1)} 혼돈 ${save.orbC}</span> &nbsp; <span data-tipk="orbD">${iconImg("orb", 1)} 신성 ${save.orbD}</span>${save.sockTix ? ` &nbsp; <span data-tipk="sockTix" style="color:${SOCK_TIX.color}">${SOCK_TIX.ico} 인장 ${save.sockTix}</span>` : ""}${m === "inv" && (save.endgame || save.keys) ? `<br><span data-tipk="keys" style="color:#ffd78c">🗝 보스 관문 열쇠 ${save.keys || 0}</span>` : ""}</div>
   <div class="cols"><div class="col c1">${eqCol}${left}</div>
   <div class="col c2"><div class="tabs">${tabs}</div>${bar}<div class="grid">${list.map((it) => tileHtml(it, IB.multi ? { chk: IB.chk.has(it.uid), attr: `data-a="mpick" data-u="${it.uid}"` } : { sel: IB.sel === it, attr: `data-a="pick" data-u="${it.uid}"` })).join("") || `<div class="dim pad" style="grid-column:1/-1;white-space:nowrap">비어 있습니다</div>`}</div><div class="dim">${save.inv.length} / ${invMax(save)}</div></div>
   <div class="col c3">${IB.multi && m !== "forge" ? multiPanel(list) : itemDetail(IB.sel)}</div></div>`;
@@ -6787,7 +6791,7 @@ const TIP_CUR = {
   orbD: ["신성한 구슬", "장비 옵션 수치를 높은 수치가 잘 나오게 다시 굴립니다 (고유 제외). 대장간에서 사용합니다.", "혼돈 구슬이 나올 때 약 5% 확률로 함께 드랍 (아주 귀함)"],
   dice: ["공허의 주사위", "옵션 / 고유 능력의 수치를 범위 안에서 균등하게 다시 굴립니다. 고유 장비에도 쓸 수 있습니다.", "균열 · 지옥 · 무한 균열 · 스킬 시련 · 공허의 군주 · 화염 정령왕 · 철갑의 투사 · 뇌제에서 아주 낮은 확률"],
   hone: ["아르카나 조각", "스킬 소환(마을의 스킬 상점 탑)에 쓰입니다. 같은 스킬이 또 나오면 레벨이 오릅니다.", "스킬 시련 · 스킬 분해/보상 등 (스킬 시련의 주 보상)"],
-  keys: ["공허의 열쇠", "공허의 군주에 입장할 때 1개를 소모합니다.", "균열·지옥·무한 균열·스킬 시련에서 전투당 1% 확률로 나오는 왜곡체(보라색 눈알)를 처치"],
+  keys: ["보스 관문 열쇠", "보스 관문의 여섯 군주(상위 관문은 5개)에 입장할 때 씁니다.", "균열 · 솟아난 탑에서 가끔 나오는 열쇠 몬스터(금빛)를 잡으면 얻습니다."],
   pow: ["전투력", "장비 · 스킬 · 패시브 · 레벨을 모두 반영한 '예상 초당 피해 × 유효 체력' 기준의 추정값입니다. 몬스터 구성에 따라 실제 전투 결과는 달라집니다. 누르면 스탯 창이 열립니다. 서버에 로그인해 있으면 랭킹에 올라갑니다.", "장비 강화·옵션·패시브·스킬 레벨업으로 올립니다"],
   keys2: ["정령의 불씨", "화염 정령왕에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 정령의 불씨(주황색 눈알)를 처치"],
   keys3: ["철갑의 징표", "철갑의 투사에 입장할 때 1개를 소모합니다.", "심연의 균열·지옥 스테이지에서 전투당 1% 확률로 나오는 철갑의 징표(회백색 눈알)를 처치"],
@@ -7202,7 +7206,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-084908";
+const BUILD_ID = "20261103-092222";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -7280,7 +7284,7 @@ const fmtP = (v) => (v >= 1e12 ? (v / 1e12).toFixed(1) + "T" : v >= 1e9 ? Math.r
 function hubBosses() {
   const mk = (kind, D, o) => Object.assign({ kind, D, name: D.name }, o);
   return [
-    mk("void", VOID_BOSS, { short: "공허의 군주", pool: "void", key: "keys", keyName: "공허의 열쇠", stage: "voidStage", need: VOID_NEED, tiers: VOID_TIER, color: "#c070ff", feat: "공허 · 독 마법 빌드", eye: "보라색 눈알", icon: "🌀" }),
+    mk("void", VOID_BOSS, { short: "공허의 군주", pool: "void", key: "keys", keyName: "보스 관문 열쇠", stage: "voidStage", need: VOID_NEED, tiers: VOID_TIER, color: "#c070ff", feat: "공허 · 독 마법 빌드", eye: "보라색 눈알", icon: "🌀" }),
     ...["hive", "titan", "storm", "frost", "poison"].map((k) => { const E = EB[k]; return mk(k, E.boss, { short: E.name, pool: E.pool, key: E.key, keyName: E.keyName, stage: E.stage, need: E.need, tiers: E.tiers, color: E.color, icon: E.icon, feat: { hive: "화염 · 점화 빌드", titan: "물리 · 출혈 빌드 (지속 피해 필요)", storm: "번개 · 감전 빌드", frost: "냉기 · 빙결 빌드", poison: "독 · 중독 빌드 (중독 시 재생 정지)" }[k], eye: { hive: "주황색", titan: "회백색", storm: "노란색", frost: "하늘색", poison: "연두색" }[k] + " 눈알" }); }),
   ];
 }
@@ -7699,7 +7703,7 @@ function showResult(res, b, replay) {
   if (res.charms && res.charms.length) chip(null, `참 ${res.charms.length}개`, "#ffbee6");
   if (res.stonesHi) chip("i_stone", "계시의 돌 +" + res.stonesHi, "#ffdc8c");
   if (res.sockTix) chip(null, "세공의 인장 +" + res.sockTix, "#c8aaff");
-  const KN = [["keys", "공허의 열쇠"], ["keys2", "정령의 불씨"], ["keys3", "철갑의 징표"], ["keys4", "뇌전의 징표"], ["keys5", "서리의 징표"], ["keys6", "맹독의 징표"]];
+  const KN = [["keys", "보스 관문 열쇠"]];
   for (const [k, n] of KN) if (res[k] > 0) chip(null, `🗝 ${n} +${res[k]}`, "#e6c88c");
   for (const r of res.runes || []) chip(null, `◆ ${RUNES[r].name}`, RUNES[r].color);
   if (!C.length) chip(null, win ? "보상 없음" : "다시 도전 · 장비 · 아르카나 · 패시브를 올리면 이길 수 있습니다", "#c8beb4");
@@ -8199,6 +8203,11 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.33", date: "11/3", title: "열쇠 통합 · 엔드 콘텐츠 몬스터 그림 · 제련소", items: [
+    "보스 관문 열쇠가 하나로 합쳐졌습니다: 여섯 군주 모두 '보스 관문 열쇠'로 입장합니다. 가지고 있던 불씨 · 징표들은 모두 보스 관문 열쇠로 바뀌었습니다. 열쇠 몬스터를 잡으면 1/3 확률로 열쇠가 나옵니다 (예전 한 종류보다 약 2배 자주).",
+    "솟아난 탑 · 레이드 던전은 붉은 악마(마계) 몬스터, 돌의 신전은 금빛 천사(천공성) 몬스터가 새 일러스트로 나오고, 배경도 일러스트로 바뀌었습니다.",
+    "제련소: 옵션 5줄과 소켓이 스크롤 없이 한 화면에 보입니다 (소켓은 한 줄로).",
+  ] },
   { ver: "5.32", date: "11/3", title: "화면 선명하게", items: [
     "큰 화면에서 마을 · 지도 · 전투 화면이 흐릿하던 것: 게임 화면을 실제 모니터 크기에 맞는 해상도로 그리고, 배경 그림도 원본 해상도(최대 1920)로 바꿨습니다.",
     "지도 배경은 원본 그림에서 바로 그려 한 번 더 흐려지던 단계를 없앴습니다.",

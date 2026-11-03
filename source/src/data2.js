@@ -204,3 +204,6 @@ BOSSES.push({ id: "chest", name: "거대 보물상자", w: 2, h: 2, hp: 30000, a
   abilities: [{ id: "summon", every: 8, count: 6, type: "coin", text: "상자가 금화를 토해낸다!" }], desc: "황금 보물고의 확률 보스 · 부수면 골드를 아주 많이 준다" });
 const CHEST_BOSS = BOSSES[BOSSES.length - 1];
 CFG.VAULT_CHEST = 0.3;   // 황금 보물고에서 거대 보물상자가 나올 확률
+
+// 5.33: 보스 관문 열쇠 하나로 (여섯 보스 모두 같은 열쇠)
+for (const k in EB) { EB[k].key = "keys"; EB[k].keyName = "보스 관문 열쇠"; }

@@ -41,7 +41,7 @@ function showResult(res, b, replay) {
   if (res.charms && res.charms.length) chip(null, `참 ${res.charms.length}개`, "#ffbee6");
   if (res.stonesHi) chip("i_stone", "계시의 돌 +" + res.stonesHi, "#ffdc8c");
   if (res.sockTix) chip(null, "세공의 인장 +" + res.sockTix, "#c8aaff");
-  const KN = [["keys", "공허의 열쇠"], ["keys2", "정령의 불씨"], ["keys3", "철갑의 징표"], ["keys4", "뇌전의 징표"], ["keys5", "서리의 징표"], ["keys6", "맹독의 징표"]];
+  const KN = [["keys", "보스 관문 열쇠"]];
   for (const [k, n] of KN) if (res[k] > 0) chip(null, `🗝 ${n} +${res[k]}`, "#e6c88c");
   for (const r of res.runes || []) chip(null, `◆ ${RUNES[r].name}`, RUNES[r].color);
   if (!C.length) chip(null, win ? "보상 없음" : "다시 도전 · 장비 · 아르카나 · 패시브를 올리면 이길 수 있습니다", "#c8beb4");

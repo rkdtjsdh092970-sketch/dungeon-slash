@@ -38,6 +38,7 @@ function saveGame() { if (save) { save.lastSeen = Date.now(); const dx = save.sk
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const s = JSON.parse(t); if (!s || s.v !== 3) return null;
   const hadNeed = "needStart" in s; const d = newSave(); for (const k in d) if (!(k in s)) s[k] = d[k]; if (!hadNeed) { s.needStart = false; s.tut5 = 99; s.slots = Math.max(s.slots || 1, 4); }   // 5.0: 예전 세이브는 직업 선택 · 안내 없이 (칸 4개) for (const k in s.pass) if (!PASSIVE_BY_ID[k]) delete s.pass[k];
     purgeClearedQuests(s); clampAll(s);
+    for (const k of ["keys2", "keys3", "keys4", "keys5", "keys6"]) if (s[k]) { s.keys = (s.keys || 0) + s[k]; s[k] = 0; }   // 5.33: 열쇠 통합
     if (!s.charms) s.charms = [null, null, null, null]; if (!s.charmInv) s.charmInv = [];
     if (!s.cbook) s.cbook = [0, 0, 0, 0]; if (!s.craid) s.craid = [0, 0, 0, 0]; if (!s.cpass) s.cpass = {}; if (s.cls == null) s.cls = 0;
     if (s.passRev !== 7) { if (Object.keys(s.pass || {}).length) s.passReset = true; s.pass = {}; s.passPresets = [null, null, null]; s.passRev = 7; }   // 5.0 패시브 v2: 기존 포인트는 전부 환급   // 패시브 트리 개편: 기존 포인트는 전부 환급

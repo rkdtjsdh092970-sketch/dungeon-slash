@@ -6,7 +6,7 @@ const fmtP = (v) => (v >= 1e12 ? (v / 1e12).toFixed(1) + "T" : v >= 1e9 ? Math.r
 function hubBosses() {
   const mk = (kind, D, o) => Object.assign({ kind, D, name: D.name }, o);
   return [
-    mk("void", VOID_BOSS, { short: "공허의 군주", pool: "void", key: "keys", keyName: "공허의 열쇠", stage: "voidStage", need: VOID_NEED, tiers: VOID_TIER, color: "#c070ff", feat: "공허 · 독 마법 빌드", eye: "보라색 눈알", icon: "🌀" }),
+    mk("void", VOID_BOSS, { short: "공허의 군주", pool: "void", key: "keys", keyName: "보스 관문 열쇠", stage: "voidStage", need: VOID_NEED, tiers: VOID_TIER, color: "#c070ff", feat: "공허 · 독 마법 빌드", eye: "보라색 눈알", icon: "🌀" }),
     ...["hive", "titan", "storm", "frost", "poison"].map((k) => { const E = EB[k]; return mk(k, E.boss, { short: E.name, pool: E.pool, key: E.key, keyName: E.keyName, stage: E.stage, need: E.need, tiers: E.tiers, color: E.color, icon: E.icon, feat: { hive: "화염 · 점화 빌드", titan: "물리 · 출혈 빌드 (지속 피해 필요)", storm: "번개 · 감전 빌드", frost: "냉기 · 빙결 빌드", poison: "독 · 중독 빌드 (중독 시 재생 정지)" }[k], eye: { hive: "주황색", titan: "회백색", storm: "노란색", frost: "하늘색", poison: "연두색" }[k] + " 눈알" }); }),
   ];
 }

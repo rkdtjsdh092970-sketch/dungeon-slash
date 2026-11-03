@@ -395,12 +395,8 @@ function killEnemy(b, e) {
   const p = e.vx != null ? { x: e.vx, y: e.vy } : cellXY(b, e.lane, e.col, e.w, e.h);
   b.corpses.push({ x: p.x, y: p.y, def: e.def, type: e.type, tier: e.tier, t: 0, w: e.w, h: e.h, boss: e.tier === "boss", flip: true, va: e.va });
   if (e.traits && e.traits.includes("split") && !e.exploded) for (let i = 0; i < 2; i++) spawnNear(b, "imp", e.lane, e.col);
-  if (e.type === "warp") { b.keys++; say(b, "공허의 열쇠를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "hwarp") { b.keys2++; say(b, "정령의 불씨를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "twarp") { b.keys3++; say(b, "철갑의 징표를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "vwarp") { b.keys6++; say(b, "맹독의 징표를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "fwarp") { b.keys5++; say(b, "서리의 징표를 얻었다!", "good"); sfx(b, "key"); }
-  if (e.type === "swarp") { b.keys4++; say(b, "뇌전의 징표를 얻었다!", "good"); sfx(b, "key"); }
+  // 5.33: 열쇠는 '보스 관문 열쇠' 하나로 합침. 열쇠 몬스터 종류는 그대로 6가지지만 잡을 때 1/3 확률로 열쇠 (예전 한 종류의 약 2배)
+  if (/warp$/.test(e.type || "") && Math.random() < 1 / 3) { b.keys++; say(b, "보스 관문 열쇠를 얻었다!", "good"); sfx(b, "key"); }
   if (e.def && (e.def.titan || e.def.storm)) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.pylon) { x.hp = 0; killEnemy(b, x); }   // 보스가 쓰러지면 피뢰침도 사라진다
   if (e.def && e.def.raid) for (const x of b.enemies.slice()) if (x !== e && !x.dead && x.crystal) { x.hp = 0; killEnemy(b, x); }   // 문지기가 쓰러지면 결계석도 사라진다
   if (e.def && e.def.hive) { b.plan.length = 0; for (const x of b.enemies.slice()) if (x !== e && !x.dead) { x.hp = 0; killEnemy(b, x); } }   // 왕이 쓰러지면 정령들도 사라진다

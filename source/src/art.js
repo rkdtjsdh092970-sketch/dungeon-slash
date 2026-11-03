@@ -39,7 +39,7 @@ function drawArt(ctx, im, x, y, h, opt) {
 // 일반 · 정예 몬스터 그림: 지역(1~10) × 역할. 1지역은 옛 그림(c_*) 이름
 function mobArtKey(b, e) {
   if (e.type && /warp$/.test(e.type)) return null;
-  const va = e.va != null ? e.va : Math.min(10, b.act) - 1; if (va > 9) return null;
+  let va = e.va != null ? e.va : Math.min(10, b.act) - 1; if (va === 10) va = 8; else if (va === 11) va = 9; if (va > 9) return null;   // 5.33: 돌의 신전 = 천공성(금빛) 그림, 솟아난 탑 · 레이드 던전 = 마계(붉은 악마) 그림
   const role = e.type === "sniper" ? "archer" : e.type; if (ROLE_IDX[role] == null) return null;
   const k = "a" + (va + 1) + "_" + role; if (ART_SET.has(k)) return k;
   const r = ROSTER[va][ROLE_IDX[role]]; if (r && !(r[1]) && ART_SET.has(r[0])) return r[0];
@@ -51,7 +51,7 @@ const artPending = (k) => !!k && ART_SET.has(k) && !(ART[k] && ART[k].ok);   // 
 // 전투 배경 그림이 있는 지역
 function battleBgArt(b) {
   if (b.raid) return null;
-  const k = b.kind === "hell" || b.kind === "spire" || b.kind === "craid" || b.kind === "warden" ? null : RIFTLIKE[b.kind] ? "bg8" : "bg" + Math.min(10, b.act);   // 균열 계열 = 심연 배경 (로블록스판과 같게)
+  const k = b.kind === "spire" || b.kind === "craid" || b.kind === "warden" || b.kind === "temple" || RIFTLIKE[b.kind] ? "bg8" : "bg" + Math.min(10, b.act);   // 5.33: 탑 · 레이드 던전 · 신전도 심연 일러스트 배경   // 균열 계열 = 심연 배경 (로블록스판과 같게)
   return artGet(k);
 }
 function drawCover(ctx, im, W, H) { const s = Math.max(W / im.width, H / im.height), w = im.width * s, h = im.height * s; ctx.save(); ctx.imageSmoothingEnabled = true; ctx.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); ctx.restore(); }
