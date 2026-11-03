@@ -154,7 +154,7 @@ function createBattle(sv, node) {
 // ---------------- 레이드: 심연의 문지기 ----------------
 function spawnRaid(b) {
   b.raid = true; b.spawnCd = 1e9; const e = spawnAt(b, "boss", 0, 2); e.h = b.lanes; e.w = 3; e.range = 99; e.label = RAID_BOSS.name;
-  e.raid = { limit: CFG.RAID.THR[0] * e.maxHp, idx: 0, sealed: false, t: 0, vuln: 0, blast: 0, cap: e.maxHp, prev: e.maxHp, fails: 0 };
+  e.raid = { limit: CFG.RAID.THR[0] * e.maxHp, idx: 0, sealed: false, t: 0, vuln: 0, blast: 0, cap: e.maxHp, prev: e.maxHp, fails: 0, atk0: e.atk };
   e.crystalHp = CFG.RAID.CRYSTAL * b.hpM * 1000;   // 결계석 총 체력(레인에 나눠 가진다)
 }
 function spawnCrystals(b, e) {
@@ -165,6 +165,8 @@ function spawnCrystals(b, e) {
 }
 function raidTick(b, e, dt) {
   const R = e.raid, K = CFG.RAID; if (!R) return; if (R.vuln > 0) R.vuln -= dt;
+  // 5.34 격노: 시간이 지날수록 공격력이 오른다 (방어 · 흡혈만 쌓아 오래 버티며 잡는 것을 막음)
+  if (K.ENR_T && b.time > K.ENR_T) { const m = 1 + K.ENR_R * (b.time - K.ENR_T); e.atk = R.atk0 * m; e.dmgBase = e.atk; if (!R.enrSaid) { R.enrSaid = true; say(b, "문지기가 격노한다! 시간이 지날수록 공격이 거세진다!", "boss"); } }
   if (!R.sealed) {
     if (R.limit > 0 && e.hp <= R.limit + 1) {
       R.sealed = true; R.t = 0; R.blast = K.BLAST; R.cap = R.prev; spawnCrystals(b, e); R.fails = 0;

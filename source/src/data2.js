@@ -197,7 +197,7 @@ BOSSES.push({ id: "gate", name: "심연의 문지기 모르가스", w: 3, h: 2, 
   abilities: [{ id: "rain", every: 11, hits: 6, mult: 0.5, text: "문지기가 심연의 불을 쏟아붓는다!" }, { id: "wound", every: 19, dur: 6, mult: 0.5, text: "저주받은 낙인! 생명력 흡수·회복이 반감된다!" },
     { id: "charge", every: 27, windup: 3.0, mult: 4.5, interrupt: 0.01, text: "문지기가 대지를 내려찍을 준비를 한다!" }, { id: "enrage", at: 0.15, text: "문지기가 마지막 힘을 쥐어짠다!" }], desc: "결계석 · 체력 되살아남 · 심연의 불 · 대지 강타" });
 const RAID_BOSS = BOSSES[BOSSES.length - 1];
-CFG.RAID = { ATK: 10, K: 150, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 720, THR: [0.75, 0.5, 0.25] };
+CFG.RAID = { ATK: 10, K: 300, CRYSTAL: 1.0, REGEN: 0.012, BLAST: 14, BLASTM: 2.0, VULN: 8, VULNM: 1.3, LIMIT: 480, THR: [0.75, 0.5, 0.25], ENR_T: 240, ENR_R: 0.02 };   // 5.34: 체력 x2 · 제한 8분 · 4분부터 격노(초당 공격력 +2%) — 기준 빌드는 2~6분에 잡고, 약한 딜 · 방어만 쌓은 빌드는 못 잡게
 
 // 거대 보물상자: 황금 보물고에서 가끔 나오는 확률 보스. 금화를 토해내고, 부수면 골드를 많이 준다.
 BOSSES.push({ id: "chest", name: "거대 보물상자", w: 2, h: 2, hp: 30000, atk: 10, range: 2, interval: 3.2, windup: 1.0, exp: 0, gold: 300, sc: 5, hue: 0, art: 0, chest: true,
