@@ -21,7 +21,8 @@ function tickDots(b, e, dt) {
 }
 const aliveIn = (b, range) => b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= range);
 const centerLane = (e) => e.lane + (e.h > 1 ? rint(0, e.h - 1) : 0);
-const boxHits = (b, lane, col, r) => b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, c]) => Math.abs(l - lane) <= r && Math.abs(c - col) <= r));
+const boxHits = (b, lane, col, r) => { if (r === 1) [lane, col] = fit3(b, lane, col); return boxHits0(b, lane, col, r); };
+const boxHits0 = (b, lane, col, r) => b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, c]) => Math.abs(l - lane) <= r && Math.abs(c - col) <= r));
 const pushFx = (b, o) => fx(b, o);
 
 const SKILL_KINDS2 = {
@@ -70,7 +71,7 @@ const SKILL_KINDS2 = {
     b.persist = b.persist.filter((q) => q.kind !== "shuri"); b.persist.push({ kind: "shuri", col, t: sk.dur, tick: 0.1, every: sk.every, sk, rot: 0 }); sfx(b, sk.sfx);
     const P = cellXY(b, p.lane, p.col); pushFx(b, { kind: "ring", x: P.x, y: P.y, t: 0.4, life: 0.4, color: sk.color, r: 100 }); return true;
   },
-  hole(b, sk) { const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.42; b.persist.push({ kind: "hole", lane: centerLane(p), col: Math.max(2, p.col), t: sk.dur, tick: 0.1, every: sk.every, sk }); sfx(b, sk.sfx); return true; },
+  hole(b, sk) { const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.42; b.persist.push({ kind: "hole", lane: fit3(b, centerLane(p), p.col)[0], col: fit3(b, 0, p.col)[1], t: sk.dur, tick: 0.1, every: sk.every, sk }); sfx(b, sk.sfx); return true; },
 };
 function runPersist(b, p) {
   b._pfx = !b.noFx; try { runPersist0(b, p); } finally { b._pfx = false; }
@@ -91,7 +92,7 @@ function runPersist0(b, p) {
   } else if (p.kind === "mine") {
     if (p.arm > 0) { p.arm -= p.every; return; }
     const hit = b.enemies.some((e) => !e.dead && cellsOf(e).some(([l, c]) => l === p.lane && c === p.col));
-    if (hit || p.t <= p.every) { for (const e of boxHits(b, p.lane, p.col, 1)) hitEnemy(b, e, cellsOf(e).some(([l, c]) => l === p.lane && c === p.col) ? 1 : 0.7, sk, { aoe: true }); const P = cellXY(b, p.lane, p.col); pushFx(b, { kind: "boom", x: P.x, y: P.y + 20, t: 0.5, life: 0.5, color: sk.color, r: 130 }); sfx(b, "boom"); b.shake = Math.max(b.shake, 0.3); p.t = 0; }
+    if (hit || p.t <= p.every) { for (const e of boxHits(b, p.lane, p.col, 1)) hitEnemy(b, e, cellsOf(e).some(([l, c]) => l === p.lane && c === p.col) ? 1 : 0.7, sk, { aoe: true }); const F = fit3(b, p.lane, p.col), P = cellXY(b, F[0], F[1]); pushFx(b, { kind: "boom", x: P.x, y: P.y + 20, t: 0.5, life: 0.5, color: sk.color, r: 130 }); sfx(b, "boom"); b.shake = Math.max(b.shake, 0.3); p.t = 0; }
   }
 }
 function tickExtra(b, dt) {

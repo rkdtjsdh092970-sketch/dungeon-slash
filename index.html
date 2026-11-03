@@ -3176,6 +3176,7 @@ const PLAYER_POS = { x: 104, y: LAY.cy + 44 };
 
 const tierOf = (e) => e.tier;
 const tagsOf = (e) => (e.def.ranged ? [e.tier, "ranged"] : [e.tier]);
+const fit3 = (b, lane, col) => [Math.max(1, Math.min(b.lanes - 2, lane)), Math.max(2, Math.min(CFG.COLS - 1, col))];   // 3x3 범위 중심: 맨 위·아래 줄, 맨 앞·뒤 칸이면 한 칸 안쪽으로
 function cellsOf(e) { const o = []; for (let l = e.lane; l < e.lane + e.h; l++) for (let c = e.col; c < e.col + e.w; c++) o.push([l, c]); return o; }
 const occupants = (b, lane, col) => b.enemies.filter((e) => !e.dead && lane >= e.lane && lane < e.lane + e.h && col >= e.col && col < e.col + e.w);
 const PUSH_MAX = { elite: 4, boss: 8 };
@@ -3601,7 +3602,7 @@ function castSkillRaw(b, sk) {
     const P = cellXY(b, p.lane, p.col, p.w, p.h);   // (위: 연타)
     fx(b, { kind: "slash", x: p.vx != null ? p.vx : P.x, y: (p.vy != null ? p.vy : P.y) - 30, t: 0.2, life: 0.2, color: col }); fx(b, { kind: "shot", t: 0.14, life: 0.14, e: p, color: col });
   } else if (K === "multi") {
-    const c = ctr(p), cx = cellXY(b, c.lane, c.col); const box = [c.lane - 1, c.lane + 1, c.col - 1, c.col + 1];
+    const c = ctr(p), f = fit3(b, c.lane, c.col), cx = cellXY(b, f[0], f[1]); const box = [f[0] - 1, f[0] + 1, f[1] - 1, f[1] + 1];   // 판 가장자리에서도 3x3 그대로 (안쪽으로 밈)
     const hits = b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, cc]) => l >= box[0] && l <= box[1] && cc >= box[2] && cc <= box[3]));
     for (const e of hits) hitEnemy(b, e, cellsOf(e).some(([l, cc]) => l === c.lane && cc === c.col) ? 1 : sk.side, sk, { aoe: true });
     fx(b, { kind: "boom", x: cx.x, y: cx.y, t: 0.45, life: 0.45, color: col, r: 100 }); fx(b, { kind: "shot", t: 0.16, life: 0.16, e: p, color: col });
@@ -3644,7 +3645,7 @@ function castSkillRaw(b, sk) {
     for (let i = 0; i < Math.min(sk.count, pool.length); i++) {
       const tgt = pool[i];
       b.events.push({ t: 0.35 + i * 0.28, fn: () => {
-        const c = ctr(tgt), cx = cellXY(b, c.lane, c.col); const box = [c.lane - 1, c.lane + 1, c.col - 1, c.col + 1];
+        const c = ctr(tgt), f = fit3(b, c.lane, c.col), cx = cellXY(b, f[0], f[1]); const box = [f[0] - 1, f[0] + 1, f[1] - 1, f[1] + 1];
         for (const e of b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, cc]) => l >= box[0] && l <= box[1] && cc >= box[2] && cc <= box[3]))) hitEnemy(b, e, cellsOf(e).some(([l, cc]) => l === c.lane && cc === c.col) ? 1 : sk.side, sk, { aoe: true });
         fx(b, { kind: "boom", x: cx.x, y: cx.y, t: 0.5, life: 0.5, color: col, r: 120 }); sfx(b, "boom"); b.shake = Math.max(b.shake, 0.25);
       } });
@@ -3881,7 +3882,8 @@ function tickDots(b, e, dt) {
 }
 const aliveIn = (b, range) => b.enemies.filter((e) => !e.dead && e.lane < b.lanes && e.col <= range);
 const centerLane = (e) => e.lane + (e.h > 1 ? rint(0, e.h - 1) : 0);
-const boxHits = (b, lane, col, r) => b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, c]) => Math.abs(l - lane) <= r && Math.abs(c - col) <= r));
+const boxHits = (b, lane, col, r) => { if (r === 1) [lane, col] = fit3(b, lane, col); return boxHits0(b, lane, col, r); };
+const boxHits0 = (b, lane, col, r) => b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, c]) => Math.abs(l - lane) <= r && Math.abs(c - col) <= r));
 const pushFx = (b, o) => fx(b, o);
 
 const SKILL_KINDS2 = {
@@ -3930,7 +3932,7 @@ const SKILL_KINDS2 = {
     b.persist = b.persist.filter((q) => q.kind !== "shuri"); b.persist.push({ kind: "shuri", col, t: sk.dur, tick: 0.1, every: sk.every, sk, rot: 0 }); sfx(b, sk.sfx);
     const P = cellXY(b, p.lane, p.col); pushFx(b, { kind: "ring", x: P.x, y: P.y, t: 0.4, life: 0.4, color: sk.color, r: 100 }); return true;
   },
-  hole(b, sk) { const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.42; b.persist.push({ kind: "hole", lane: centerLane(p), col: Math.max(2, p.col), t: sk.dur, tick: 0.1, every: sk.every, sk }); sfx(b, sk.sfx); return true; },
+  hole(b, sk) { const p = pickPrimary(b, sk); if (!p) return false; b.pAtk = 0.42; b.persist.push({ kind: "hole", lane: fit3(b, centerLane(p), p.col)[0], col: fit3(b, 0, p.col)[1], t: sk.dur, tick: 0.1, every: sk.every, sk }); sfx(b, sk.sfx); return true; },
 };
 function runPersist(b, p) {
   b._pfx = !b.noFx; try { runPersist0(b, p); } finally { b._pfx = false; }
@@ -3951,7 +3953,7 @@ function runPersist0(b, p) {
   } else if (p.kind === "mine") {
     if (p.arm > 0) { p.arm -= p.every; return; }
     const hit = b.enemies.some((e) => !e.dead && cellsOf(e).some(([l, c]) => l === p.lane && c === p.col));
-    if (hit || p.t <= p.every) { for (const e of boxHits(b, p.lane, p.col, 1)) hitEnemy(b, e, cellsOf(e).some(([l, c]) => l === p.lane && c === p.col) ? 1 : 0.7, sk, { aoe: true }); const P = cellXY(b, p.lane, p.col); pushFx(b, { kind: "boom", x: P.x, y: P.y + 20, t: 0.5, life: 0.5, color: sk.color, r: 130 }); sfx(b, "boom"); b.shake = Math.max(b.shake, 0.3); p.t = 0; }
+    if (hit || p.t <= p.every) { for (const e of boxHits(b, p.lane, p.col, 1)) hitEnemy(b, e, cellsOf(e).some(([l, c]) => l === p.lane && c === p.col) ? 1 : 0.7, sk, { aoe: true }); const F = fit3(b, p.lane, p.col), P = cellXY(b, F[0], F[1]); pushFx(b, { kind: "boom", x: P.x, y: P.y + 20, t: 0.5, life: 0.5, color: sk.color, r: 130 }); sfx(b, "boom"); b.shake = Math.max(b.shake, 0.3); p.t = 0; }
   }
 }
 function tickExtra(b, dt) {
@@ -7208,7 +7210,7 @@ function checkOffline(after) {
 }
 
 // ---- 업데이트 알림: 서버에 새 버전이 올라오면 화면 상단에 "업데이트하기" 표시 (누를 때만 새로고침) ----
-const BUILD_ID = "20261103-093301";
+const BUILD_ID = "20261104-011807";
 function showUpdateBar() {
   if ($("#updbar")) return; const d = document.createElement("div"); d.id = "updbar";
   d.innerHTML = `<span>새 업데이트가 있습니다</span><button class="btn pri" id="updgo">업데이트하기</button><button class="btn xs" id="updlater">나중에</button>`;
@@ -8205,6 +8207,9 @@ function tutTick() {
 // 업데이트 게시판: 마을에서 버전과 패치 내용을 확인한다. 업데이트할 때마다 맨 위에 항목을 추가한다.
 // =========================================================
 const PATCH_NOTES = [
+  { ver: "5.35", date: "11/4", title: "3x3 광역 범위 수정", items: [
+    "3x3 범위 아르카나(광역 일격 · 메테오류 · 블랙홀 · 폭발 지뢰 · 낙뢰 튀김)가 맨 위·아래 줄이나 맨 앞·뒤 칸을 노리면 범위가 판 밖으로 잘려 2x3 · 2x2만 맞던 문제를 고쳤습니다. 이제 범위를 판 안쪽으로 밀어 항상 9칸을 맞힙니다.",
+  ] },
   { ver: "5.34", date: "11/3", title: "심연의 문지기 모르가스 강화", items: [
     "모르가스: 체력 2배, 제한 시간 12분 → 8분, 4분이 지나면 격노해 공격력이 초마다 2%씩 오릅니다. 방어 · 체력 · 흡혈만 쌓아 오래 버티며 잡는 방법은 더 이상 통하지 않습니다.",
     "목표 기준: 테스터 기준표의 '심연의 문' 장비(T5 · 1~2티어 옵션 + 전설 2 · 신화 2)로 2~6분 안에 잡을 수 있게 맞췄습니다.",

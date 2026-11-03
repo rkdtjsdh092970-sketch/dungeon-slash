@@ -13,6 +13,7 @@ const PLAYER_POS = { x: 104, y: LAY.cy + 44 };
 
 const tierOf = (e) => e.tier;
 const tagsOf = (e) => (e.def.ranged ? [e.tier, "ranged"] : [e.tier]);
+const fit3 = (b, lane, col) => [Math.max(1, Math.min(b.lanes - 2, lane)), Math.max(2, Math.min(CFG.COLS - 1, col))];   // 3x3 범위 중심: 맨 위·아래 줄, 맨 앞·뒤 칸이면 한 칸 안쪽으로
 function cellsOf(e) { const o = []; for (let l = e.lane; l < e.lane + e.h; l++) for (let c = e.col; c < e.col + e.w; c++) o.push([l, c]); return o; }
 const occupants = (b, lane, col) => b.enemies.filter((e) => !e.dead && lane >= e.lane && lane < e.lane + e.h && col >= e.col && col < e.col + e.w);
 const PUSH_MAX = { elite: 4, boss: 8 };
@@ -438,7 +439,7 @@ function castSkillRaw(b, sk) {
     const P = cellXY(b, p.lane, p.col, p.w, p.h);   // (위: 연타)
     fx(b, { kind: "slash", x: p.vx != null ? p.vx : P.x, y: (p.vy != null ? p.vy : P.y) - 30, t: 0.2, life: 0.2, color: col }); fx(b, { kind: "shot", t: 0.14, life: 0.14, e: p, color: col });
   } else if (K === "multi") {
-    const c = ctr(p), cx = cellXY(b, c.lane, c.col); const box = [c.lane - 1, c.lane + 1, c.col - 1, c.col + 1];
+    const c = ctr(p), f = fit3(b, c.lane, c.col), cx = cellXY(b, f[0], f[1]); const box = [f[0] - 1, f[0] + 1, f[1] - 1, f[1] + 1];   // 판 가장자리에서도 3x3 그대로 (안쪽으로 밈)
     const hits = b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, cc]) => l >= box[0] && l <= box[1] && cc >= box[2] && cc <= box[3]));
     for (const e of hits) hitEnemy(b, e, cellsOf(e).some(([l, cc]) => l === c.lane && cc === c.col) ? 1 : sk.side, sk, { aoe: true });
     fx(b, { kind: "boom", x: cx.x, y: cx.y, t: 0.45, life: 0.45, color: col, r: 100 }); fx(b, { kind: "shot", t: 0.16, life: 0.16, e: p, color: col });
@@ -481,7 +482,7 @@ function castSkillRaw(b, sk) {
     for (let i = 0; i < Math.min(sk.count, pool.length); i++) {
       const tgt = pool[i];
       b.events.push({ t: 0.35 + i * 0.28, fn: () => {
-        const c = ctr(tgt), cx = cellXY(b, c.lane, c.col); const box = [c.lane - 1, c.lane + 1, c.col - 1, c.col + 1];
+        const c = ctr(tgt), f = fit3(b, c.lane, c.col), cx = cellXY(b, f[0], f[1]); const box = [f[0] - 1, f[0] + 1, f[1] - 1, f[1] + 1];
         for (const e of b.enemies.filter((e) => !e.dead && cellsOf(e).some(([l, cc]) => l >= box[0] && l <= box[1] && cc >= box[2] && cc <= box[3]))) hitEnemy(b, e, cellsOf(e).some(([l, cc]) => l === c.lane && cc === c.col) ? 1 : sk.side, sk, { aoe: true });
         fx(b, { kind: "boom", x: cx.x, y: cx.y, t: 0.5, life: 0.5, color: col, r: 120 }); sfx(b, "boom"); b.shake = Math.max(b.shake, 0.25);
       } });
